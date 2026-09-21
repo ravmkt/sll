@@ -20,7 +20,7 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       
       {/* Rota pública de Login */}
-      <Route path="/auth" element={<Login />} />
+      <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       
       {/* Rota protegida */}
       <Route 
@@ -41,4 +41,5 @@ export default function App() {
     </Router>
   );
 }
+
 
