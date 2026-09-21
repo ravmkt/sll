@@ -50,15 +50,15 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4 font-sans">
-      <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-full max-w-md border border-gray-100">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#f8fafc] p-4 overflow-hidden">
+      <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-full max-w-md border border-gray-100 relative z-10">
         
         {/* Identidade Visual SLL - Logotipo Oficial */}
         <div className="flex flex-col items-center justify-center mb-8">
           <img 
             src="/assets/sll-logotipo-b.png" 
             alt="Sistema Loja Lucrativa" 
-            className="h-20 w-auto object-contain" 
+            className="w-56 h-auto object-contain drop-shadow-sm" 
           />
         </div>
 
@@ -101,6 +101,22 @@ export default function Auth() {
           </button>
         </div>
       </div>
+
+      {/* Rodapé / Créditos SLL */}
+      <footer className="mt-8 text-center text-sm text-slate-500 z-10">
+        <p>&copy; {new Date().getFullYear()} Sistema Loja Lucrativa. Todos os direitos reservados.</p>
+        <p className="mt-1">
+          <a 
+            href="https://sistemalojalucrativa.com.br" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="font-medium hover:underline transition-all"
+            style={{ color: '#0094eb' }}
+          >
+            sistemalojalucrativa.com.br
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }
