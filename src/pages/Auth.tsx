@@ -192,7 +192,7 @@ export default function Auth() {
             target="_blank" 
             rel="noopener noreferrer" 
             className="font-bold hover:opacity-80 transition-opacity"
-            style={{ color: '#fd8539' }}
+            style={{ color: '#0094eb' }}
           >
             sistemalojalucrativa.com.br
           </a>
