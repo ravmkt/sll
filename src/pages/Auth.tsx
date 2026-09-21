@@ -185,18 +185,14 @@ export default function Auth() {
       {/* Rodapé do Sistema */}
       <footer className="relative z-10 mt-6 text-center text-sm text-gray-300">
         <p>&copy; {new Date().getFullYear()} Sistema Loja Lucrativa. Todos os direitos reservados.</p>
-        <p className="mt-1">
-          Saiba mais em{' '}
-          <a 
-            href="https://sistemalojalucrativa.com.br" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="font-bold hover:opacity-80 transition-opacity"
-            style={{ color: '#fd8539' }}
-          >
-            sistemalojalucrativa.com.br
-          </a>
-        </p>
+        <a 
+          href="https://sistemalojalucrativa.com.br" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="block mt-1 font-bold hover:opacity-80 transition-opacity text-[#fd8539]"
+        >
+          sistemalojalucrativa.com.br
+        </a>
       </footer>
     </div>
   );
