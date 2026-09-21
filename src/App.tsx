@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Dashboard from './pages/Dashboard';
@@ -20,16 +19,16 @@ function AppRoutes() {
       {/* Redireciona a raiz para a dashboard */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       
-      {/* Rota pública de Login (se já estiver logado, o próprio componente redireciona) */}
+      {/* Rota pública de Login */}
       <Route path="/auth" element={<Login />} />
       
-      {/* Rota protegida: Se tem user mostra Dashboard, senão joga pro /auth */}
+      {/* Rota protegida */}
       <Route 
         path="/dashboard" 
         element={user ? <Dashboard /> : <Navigate to="/auth" replace />} 
       />
       
-      {/* Rota de fallback para qualquer endereço não encontrado */}
+      {/* Rota de fallback */}
       <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   );
