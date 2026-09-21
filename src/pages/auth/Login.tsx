@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 
 export default function Auth() {
@@ -20,9 +20,10 @@ export default function Auth() {
     if (error) alert('Erro no login com Google: ' + error.message);
   };
 
-  const handleAuth = async (e) => {
+  const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) alert('Erro ao fazer login: ' + error.message);
@@ -68,16 +69,18 @@ export default function Auth() {
         <form onSubmit={handleAuth} className="flex flex-col gap-4">
           {!isLogin && (
             <>
-              <input type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium" required />
+              <input type="text" placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium" required />
               <input type="text" placeholder="Nome da loja" value={loja} onChange={(e) => setLoja(e.target.value)} className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium" required />
             </>
           )}
-          {isLogin && (
-            <>
-              <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium" required />
-              <input type="password" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium" required />
-            </>
+          
+          <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium" required />
+          <input type="password" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium" required />
+          
+          {!isLogin && (
+             <input type="password" placeholder="Confirmar Senha" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium" required />
           )}
+
           <button type="submit" disabled={loading} className="w-full py-3.5 mt-2 rounded-xl font-bold text-white transition-all hover:opacity-90 shadow-md" style={{ backgroundColor: '#0094eb' }}>{loading ? 'Processando...' : (isLogin ? 'Entrar' : 'Criar conta')}</button>
         </form>
 
@@ -93,7 +96,7 @@ export default function Auth() {
         </button>
 
         <div className="text-center">
-          <button onClick={() => setIsLogin(!isLogin)} className="font-bold hover:underline transition-all" style={{ color: '#0094eb' }}>
+          <button onClick={() => setIsLogin(!isLogin)} type="button" className="font-bold hover:underline transition-all" style={{ color: '#0094eb' }}>
             {isLogin ? 'Criar conta' : 'Já tenho conta'}
           </button>
         </div>
