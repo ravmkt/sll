@@ -1,4 +1,4 @@
-import { LayoutDashboard, ShoppingCart, Settings, Users, Video, LogOut } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Settings, Video, LogOut } from 'lucide-react';
 
 export function Sidebar() {
   // Simulação do caminho atual
