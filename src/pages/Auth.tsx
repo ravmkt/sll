@@ -190,10 +190,11 @@ export default function Auth() {
           target="_blank" 
           rel="noopener noreferrer" 
           className="block mt-1 font-bold hover:opacity-80 transition-opacity text-[#fd8539]"
-        >
+         style={{ color: '#fd8539', fontWeight: 'bold' }}>
           sistemalojalucrativa.com.br
         </a>
       </footer>
     </div>
   );
 }
+
