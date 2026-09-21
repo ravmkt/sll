@@ -50,11 +50,20 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#f8fafc] p-4 overflow-hidden">
-      {/* px-8 pb-8 pt-6 para diminuir o respiro no topo */}
-      <div className="bg-white px-8 pb-8 pt-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-full max-w-md border border-gray-100 relative z-10">
+    <div 
+      className="min-h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden relative bg-slate-900"
+      style={{ 
+        backgroundImage: "url('/assets/bg-login.jpg')", 
+        backgroundSize: 'cover', 
+        backgroundPosition: 'center' 
+      }}
+    >
+      {/* Overlay escuro para dar destaque ao card */}
+      <div className="absolute inset-0 bg-black/60 z-0"></div>
+
+      {/* Card de Login */}
+      <div className="bg-white px-8 pb-8 pt-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-full max-w-md border border-gray-100 relative z-10">
         
-        {/* mb-2 para diminuir o espaçamento entre logo e título */}
         <div className="flex flex-col items-center justify-center mb-2">
           <img 
             src="/assets/sll-logotipo-b.png" 
@@ -103,15 +112,15 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Rodapé / Créditos SLL */}
-      <footer className="mt-6 text-center text-sm text-slate-500 z-10">
+      {/* Rodapé claro para contrastar com o fundo escuro */}
+      <footer className="mt-6 text-center text-sm text-slate-300 relative z-10 drop-shadow-md">
         <p>&copy; {new Date().getFullYear()} Sistema Loja Lucrativa. Todos os direitos reservados.</p>
         <p className="mt-1">
           <a 
             href="https://sistemalojalucrativa.com.br" 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="font-medium hover:underline transition-all"
+            className="font-medium hover:text-white transition-all"
             style={{ color: '#0094eb' }}
           >
             sistemalojalucrativa.com.br
