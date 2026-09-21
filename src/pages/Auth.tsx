@@ -1,4 +1,3 @@
-$content = @'
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -62,7 +61,7 @@ export default function Auth() {
       {/* Card Principal */}
       <div className="relative z-10 bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100">
         
-        {/* Identidade Visual SLL (Logo Maior e Margens Reduzidas) */}
+        {/* Identidade Visual SLL */}
         <div className="flex flex-col items-center justify-center mb-6">
           <div 
             className="w-24 h-24 rounded-2xl flex items-center justify-center mb-2 shadow-lg"
@@ -201,13 +200,4 @@ export default function Auth() {
       </footer>
     </div>
   );
-}
-'@
-
-$file = Get-ChildItem -Path . -Filter "Auth.tsx" -Recurse -File | Select-Object -First 1
-if ($file) {
-    Set-Content -Path $file.FullName -Value $content -Encoding UTF8
-    Write-Host "Arquivo atualizado com sucesso: $($file.FullName)" -ForegroundColor Green
-} else {
-    Write-Host "Erro: Auth.tsx não encontrado." -ForegroundColor Red
 }
