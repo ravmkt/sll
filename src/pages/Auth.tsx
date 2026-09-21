@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabase'; // Ajuste o caminho da sua config do supabase, se necessário
+import { supabase } from '../lib/supabase';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,7 +9,6 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // FUNÇÃO DE LOGIN COM GOOGLE AQUI
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -74,60 +73,21 @@ export default function Auth() {
         <form onSubmit={handleEmailAuth} className="flex flex-col gap-4">
           {!isLogin && (
             <>
-              <input
-                type="text"
-                placeholder="Seu Nome Completo"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                className="p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0094eb] text-white transition-all"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Nome da sua Loja"
-                value={loja}
-                onChange={(e) => setLoja(e.target.value)}
-                className="p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0094eb] text-white transition-all"
-                required
-              />
+              <input type="text" placeholder="Seu Nome Completo" value={nome} onChange={(e) => setNome(e.target.value)} className="p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0094eb] text-white transition-all" required />
+              <input type="text" placeholder="Nome da sua Loja" value={loja} onChange={(e) => setLoja(e.target.value)} className="p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0094eb] text-white transition-all" required />
             </>
           )}
-          <input
-            type="email"
-            placeholder="Seu E-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0094eb] text-white transition-all"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Sua Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0094eb] text-white transition-all"
-            required
-            minLength={6}
-          />
+          <input type="email" placeholder="Seu E-mail" value={email} onChange={(e) => setEmail(e.target.value)} className="p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0094eb] text-white transition-all" required />
+          <input type="password" placeholder="Sua Senha" value={password} onChange={(e) => setPassword(e.target.value)} className="p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0094eb] text-white transition-all" required minLength={6} />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 mt-2 rounded-lg font-bold text-white transition duration-300 hover:opacity-90 shadow-lg"
-            style={{ backgroundColor: '#fd8539' }}
-          >
+          <button type="submit" disabled={loading} className="w-full py-3 mt-2 rounded-lg font-bold text-white transition duration-300 hover:opacity-90 shadow-lg" style={{ backgroundColor: '#fd8539' }}>
             {loading ? 'Processando...' : (isLogin ? 'Entrar no Hub' : 'Criar Conta')}
           </button>
         </form>
 
         <p className="text-center mt-6 text-sm text-gray-400">
           {isLogin ? 'Ainda não tem uma conta?' : 'Já possui uma conta?'}
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="ml-2 font-semibold hover:underline"
-            style={{ color: '#0094eb' }}
-          >
+          <button type="button" onClick={() => setIsLogin(!isLogin)} className="ml-2 font-semibold hover:underline" style={{ color: '#0094eb' }}>
             {isLogin ? 'Cadastre-se' : 'Faça login'}
           </button>
         </p>
