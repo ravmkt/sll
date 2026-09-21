@@ -51,10 +51,11 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#f8fafc] p-4 overflow-hidden">
-      <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-full max-w-md border border-gray-100 relative z-10">
+      {/* px-8 pb-8 pt-6 para diminuir o respiro no topo */}
+      <div className="bg-white px-8 pb-8 pt-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-full max-w-md border border-gray-100 relative z-10">
         
-        {/* Identidade Visual SLL - Logotipo Oficial */}
-        <div className="flex flex-col items-center justify-center mb-8">
+        {/* mb-2 para diminuir o espaçamento entre logo e título */}
+        <div className="flex flex-col items-center justify-center mb-2">
           <img 
             src="/assets/sll-logotipo-b.png" 
             alt="Sistema Loja Lucrativa" 
@@ -62,7 +63,7 @@ export default function Auth() {
           />
         </div>
 
-        <h2 className="text-xl font-extrabold text-slate-900 mb-6">
+        <h2 className="text-xl font-extrabold text-slate-900 mb-5">
           {isLogin ? 'Entrar' : 'Criar conta'}
         </h2>
 
@@ -103,7 +104,7 @@ export default function Auth() {
       </div>
 
       {/* Rodapé / Créditos SLL */}
-      <footer className="mt-8 text-center text-sm text-slate-500 z-10">
+      <footer className="mt-6 text-center text-sm text-slate-500 z-10">
         <p>&copy; {new Date().getFullYear()} Sistema Loja Lucrativa. Todos os direitos reservados.</p>
         <p className="mt-1">
           <a 
