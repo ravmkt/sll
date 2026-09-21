@@ -1,103 +1,177 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
-import { Navigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
-export default function Login() {
-  const { user } = useAuth();
+export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [nome, setNome] = useState('');
+  const [loja, setLoja] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Se já estiver logado, redireciona para a dashboard
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+    if (error) alert('Erro no login com Google: ' + error.message);
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
-    try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        alert('Cadastro realizado! Se o Supabase exigir confirmação, verifique seu e-mail.');
+    if (isLogin) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) alert('Erro ao fazer login: ' + error.message);
+    } else {
+      if (password !== confirmPassword) {
+        alert('As senhas não coincidem!');
+        setLoading(false);
+        return;
       }
-    } catch (err: any) {
-      setError(err.message || 'Ocorreu um erro na autenticação.');
-    } finally {
-      setLoading(false);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            nome_completo: nome,
+            nome_loja: loja
+          }
+        }
+      });
+      if (error) alert('Erro ao cadastrar: ' + error.message);
+      else alert('Cadastro realizado com sucesso! Verifique seu email.');
     }
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md border-t-4 border-[#0094eb]">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sistema Loja Lucrativa
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {isLogin ? 'Faça login na sua conta' : 'Crie sua nova conta'}
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4 font-sans">
+      <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-full max-w-md border border-gray-100">
+        
+        {/* Identidade Visual SLL */}
+        <div className="flex flex-col items-center justify-center mb-8">
+          <div 
+            className="w-16 h-16 rounded-xl flex items-center justify-center mb-3 shadow-lg shadow-blue-200"
+            style={{ backgroundColor: '#0094eb' }}
+          >
+             <span className="text-white text-2xl font-bold tracking-wider">SLL</span>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800">Sistema Loja Lucrativa</h1>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
+
+        <h2 className="text-xl font-extrabold text-slate-900 mb-6">
+          {isLogin ? 'Entrar' : 'Criar conta'}
+        </h2>
+
+        <form onSubmit={handleAuth} className="flex flex-col gap-4">
+          {!isLogin && (
+            <>
+              <input
+                type="text"
+                placeholder="Nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium"
+                required
+              />
               <input
                 type="email"
-                required
+                placeholder="E-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-[#0094eb] focus:border-[#0094eb] focus:z-10 sm:text-sm"
-                placeholder="E-mail"
+                className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium"
+                required
               />
-            </div>
-            <div>
               <input
                 type="password"
-                required
+                placeholder="Senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-[#0094eb] focus:border-[#0094eb] focus:z-10 sm:text-sm"
-                placeholder="Senha"
+                className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium"
+                required
+                minLength={6}
               />
-            </div>
-          </div>
-
-          {error && (
-            <div className="text-red-500 text-sm text-center font-medium">
-              {error}
-            </div>
+              <input
+                type="password"
+                placeholder="Confirme a senha"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium"
+                required
+                minLength={6}
+              />
+              <input
+                type="text"
+                placeholder="Nome da empresa/loja"
+                value={loja}
+                onChange={(e) => setLoja(e.target.value)}
+                className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium"
+                required
+              />
+            </>
           )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#0094eb] hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0094eb] transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Processando...' : isLogin ? 'Entrar no sistema' : 'Criar conta'}
-            </button>
-          </div>
-          
-          <div className="text-center">
-            <button
-              type="button"
-              className="text-sm font-medium text-[#fd8539] hover:text-orange-600 transition-colors"
-              onClick={() => setIsLogin(!isLogin)}
-            >
-              {isLogin ? 'Ainda não tem conta? Cadastre-se' : 'Já tem uma conta? Faça login'}
-            </button>
-          </div>
+          {isLogin && (
+            <>
+              <input
+                type="email"
+                placeholder="E-mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium"
+                required
+              />
+              <input
+                type="password"
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium"
+                required
+              />
+            </>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 mt-2 rounded-xl font-bold text-white transition-all hover:opacity-90 shadow-md"
+            style={{ backgroundColor: '#0094eb' }}
+          >
+            {loading ? 'Processando...' : (isLogin ? 'Entrar' : 'Criar conta')}
+          </button>
         </form>
+
+        <div className="flex items-center my-6">
+          <div className="flex-grow border-t border-slate-200"></div>
+          <span className="px-4 text-slate-400 text-xs font-bold uppercase tracking-wider">ou</span>
+          <div className="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        <button
+          onClick={handleGoogleLogin}
+          type="button"
+          className="w-full flex items-center justify-center gap-3 bg-white text-slate-700 py-3.5 px-4 rounded-xl font-bold border border-slate-200 hover:bg-slate-50 transition-all mb-6 shadow-sm"
+        >
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+          {isLogin ? 'Entrar com Google' : 'Cadastrar com Google'}
+        </button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            className="font-bold hover:underline transition-all"
+            style={{ color: '#0094eb' }}
+          >
+            {isLogin ? 'Criar conta' : 'Já tenho conta'}
+          </button>
+        </div>
       </div>
     </div>
   );
