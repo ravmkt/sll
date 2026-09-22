@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+﻿import React, { useState, useEffect, useMemo } from "react";
 import { LiveCommerceDatabaseService } from '@/services/LiveCommerceDatabaseService';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,7 +66,7 @@ export function LiveFormDialog({
   storeId,
   liveId,
   allowsLive,
-  products,
+  products = [],
   onSaved,
 }: LiveFormDialogProps) {
   // Controle de Etapas: 1 | 2 | 3 | 4 | 5
