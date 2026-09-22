@@ -524,3 +524,5 @@ export function LiveCommerce() {
   );
 }
 
+
+export default LiveCommerce;
