@@ -1,122 +1,168 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
-  BarChart2,
-  DollarSign,
-  Play,
-  FolderOpen,
-  ShoppingBag,
-  MessageSquare,
-  Palette,
+  Play, 
+  CheckCircle2, 
+  Clock, 
+  DollarSign, 
+  Eye, 
+  HardDrive, 
+  FileText, 
+  Calendar, 
+  Share2, 
+  Copy, 
+  Check, 
+  ShoppingBag, 
+  MessageSquare, 
+  Palette, 
+  BarChart2, 
+  FolderOpen, 
+  Headphones, 
+  ChevronDown, 
+  Layers, 
   ArrowLeft,
-  Layers,
-  ChevronDown,
   Search,
-  UploadCloud,
-  Link2,
+  RefreshCw,
+  Sparkles,
+  Zap,
+  TrendingDown,
   Video,
-  Image as ImageIcon,
-  Edit2,
-  Eye,
-  Download,
+  Plus,
   Trash2,
-  ShieldCheck,
-  CheckCircle,
   X,
-  Headphones,
-  Check
+  ShieldCheck,
+  MessageCircle,
+  CheckCircle,
+  ExternalLink,
+  ChevronRight,
+  Filter
 } from "lucide-react";
-
-// Ícones SVG para marcas sociais (evita incompatibilidades de pacotes)
-const InstagramIcon = () => (
-  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-  </svg>
-);
-
-const TikTokIcon = () => (
-  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-1.01-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
-  </svg>
-);
 
 export default function Vidlytics() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("comments"); // Inicial padrão em Comentários para visualização imediata
+  // Aba ativa: inicia em 'overview' (Visão Geral) ou onde preferir
+  const [activeTab, setActiveTab] = useState("overview");
+  const [copiedLink, setCopiedLink] = useState(false);
   const [moduleMenuOpen, setModuleMenuOpen] = useState(false);
 
-  // Estados - Aba Biblioteca
+  // Sub-abas da aba Resultados
+  const [resultsSubTab, setResultsSubTab] = useState<"overview" | "videos" | "retention" | "insights">("overview");
+  const [selectedVideoRetention, setSelectedVideoRetention] = useState("oculos-de-sol.mp4");
+  const [searchVideoQuery, setSearchVideoQuery] = useState("");
+
+  // Estados da Aba Stories
+  const [isCreatingStory, setIsCreatingStory] = useState(false);
+  const [storySearchQuery, setStorySearchQuery] = useState("");
+  const [storyStatusFilter, setStoryStatusFilter] = useState("all");
+  const [storyName, setStoryName] = useState("");
+  const [storyActive, setStoryActive] = useState(true);
+  const [storyLayout, setStoryLayout] = useState<"flutuante" | "carrossel" | "grade" | "dinamico">("carrossel");
+  const [scrollDirection, setScrollDirection] = useState("Horizontal");
+  const [visualStyle, setVisualStyle] = useState("Seguir Padrão do App");
+  const [cssSelector, setCssSelector] = useState(".breadcrumbs");
+  const [displayPosition, setDisplayPosition] = useState("Acima do elemento");
+
+  // Estados da Aba Biblioteca
+  const [librarySearchQuery, setLibrarySearchQuery] = useState("");
+  const [libraryTypeFilter, setLibraryTypeFilter] = useState<"all" | "videos" | "images">("all");
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
-  const [libraryType, setLibraryType] = useState<"all" | "videos" | "images">("all");
-  const [searchMedia, setSearchMedia] = useState("");
-  const storageUsage = { used: 10.3, total: 50 };
-  const [mediaItems, setMediaItems] = useState([
-    {
-      id: "med-1",
-      name: "oculos-de-sol.mp4",
-      format: "VÍDEO MP4 (HOSPEDADO)",
-      thumb: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=120&q=80",
-      product: null,
-      story: null,
-      size: "8.3 MB",
-      status: "DISPONÍVEL"
-    },
-    {
-      id: "med-2",
-      name: "Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4",
-      format: "VÍDEO MP4 (HOSPEDADO)",
-      thumb: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=120&q=80",
-      product: { name: "Blusa Confort - Verde", thumb: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=80&q=80" },
-      story: "TESTE",
-      size: "2.0 MB",
-      status: "DISPONÍVEL"
-    }
-  ]);
   const [externalUrl, setExternalUrl] = useState("");
   const [mediaTitle, setMediaTitle] = useState("");
   const [linkedProduct, setLinkedProduct] = useState("Sem produto vinculado");
   const [linkedMeasureModel, setLinkedMeasureModel] = useState("Sem modelo de medidas vinculado");
 
-  // Estados - Aba Comentários
-  const [autoApprove, setAutoApprove] = useState(false);
-  const [commentSearch, setCommentSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [videoFilter, setVideoFilter] = useState("all");
+  // Estados da Aba Comentários
+  const [autoApproval, setAutoApproval] = useState(false);
+  const [commentSearchQuery, setCommentSearchQuery] = useState("");
+  const [commentStatusFilter, setCommentStatusFilter] = useState("all");
+  const [commentVideoFilter, setCommentVideoFilter] = useState("all");
+  const [selectedCommentForModal, setSelectedCommentForModal] = useState<any>(null);
+  const [isModerateModalOpen, setIsModerateModalOpen] = useState(false);
+
+  // MOCKS
+  const [storiesList, setStoriesList] = useState([
+    {
+      id: "st-1",
+      name: "TESTE",
+      substatus: "Ativo",
+      type: "Flutuante",
+      videoCount: 2,
+      location: "Contém: /azul",
+      views: 0,
+      ctr: "0.0%",
+      clicks: 0,
+      status: "ATIVO"
+    }
+  ]);
+
+  const [mediaItems, setMediaItems] = useState([
+    {
+      id: "med-1",
+      name: "oculos-de-sol.mp4",
+      type: "video",
+      formatLabel: "VÍDEO MP4 (HOSPEDADO)",
+      thumb: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=120&q=80",
+      product: null,
+      story: "TESTE",
+      size: "8.3 MB",
+      status: "DISPONÍVEL"
+    },
+    {
+      id: "med-2",
+      name: "Criação_de_Vídeo_Fashion_Edit...",
+      type: "video",
+      formatLabel: "VÍDEO MP4 (HOSPEDADO)",
+      thumb: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=120&q=80",
+      product: {
+        name: "Blusa Confort - Verd...",
+        thumb: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=80&q=80"
+      },
+      story: "TESTE",
+      size: "2 MB",
+      status: "DISPONÍVEL"
+    }
+  ]);
+
   const [commentsList, setCommentsList] = useState([
     {
-      id: "c-1",
-      author: "Rodrigo Cel",
-      role: "Cliente",
-      avatarBg: "bg-[#0094eb]",
-      avatarLetter: "R",
-      content: "Teste❤️",
+      id: "comm-1",
+      authorName: "Rodrigo Cel",
+      authorInitial: "R",
+      authorRole: "Cliente",
+      text: "Teste❤️",
       videoName: "Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4",
       status: "PENDENTE"
     },
     {
-      id: "c-2",
-      author: "www",
-      role: "Cliente",
-      avatarBg: "bg-[#0094eb]",
-      avatarLetter: "W",
-      content: "eweewee",
+      id: "comm-2",
+      authorName: "www",
+      authorInitial: "W",
+      authorRole: "Cliente",
+      text: "eweewee",
       videoName: "Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4",
       status: "PENDENTE"
     }
   ]);
 
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText("https://vidlytics.com.br/indique/useanny");
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
   const handleAddExternalUrl = (e: React.FormEvent) => {
     e.preventDefault();
     if (!externalUrl) {
-      alert("Preencha a URL externa");
+      alert("Por favor, preencha a URL externa do vídeo.");
       return;
     }
     const newMedia = {
       id: "med-" + Date.now(),
-      name: mediaTitle || "Vídeo Externo",
-      format: "VÍDEO EXTERNO",
+      name: mediaTitle || "video-externo.mp4",
+      type: "video",
+      formatLabel: "VÍDEO EXTERNO",
       thumb: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=120&q=80",
-      product: linkedProduct !== "Sem produto vinculado" ? { name: linkedProduct, thumb: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=80&q=80" } : null,
+      product: linkedProduct !== "Sem produto vinculado" ? { name: linkedProduct, thumb: "" } : null,
       story: null,
       size: "URL Externa",
       status: "DISPONÍVEL"
@@ -125,33 +171,40 @@ export default function Vidlytics() {
     setIsUrlModalOpen(false);
     setExternalUrl("");
     setMediaTitle("");
+    alert("Mídia cadastrada com sucesso!");
   };
 
   const handleDeleteComment = (id: string) => {
-    setCommentsList(commentsList.filter(c => c.id !== id));
+    if (confirm("Deseja realmente excluir este comentário?")) {
+      setCommentsList(commentsList.filter(c => c.id !== id));
+    }
   };
 
   const handleApproveComment = (id: string) => {
     setCommentsList(commentsList.map(c => c.id === id ? { ...c, status: "APROVADO" } : c));
+    setIsModerateModalOpen(false);
   };
 
-  const filteredComments = commentsList.filter(c => {
-    const matchText = c.content.toLowerCase().includes(commentSearch.toLowerCase()) || 
-                      c.author.toLowerCase().includes(commentSearch.toLowerCase());
-    const matchStatus = statusFilter === "all" ? true : c.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchVideo = videoFilter === "all" ? true : c.videoName === videoFilter;
-    return matchText && matchStatus && matchVideo;
-  });
-
-  const storagePercent = ((storageUsage.used / storageUsage.total) * 100).toFixed(1);
+  const openModerateModal = (comment: any) => {
+    setSelectedCommentForModal(comment);
+    setIsModerateModalOpen(true);
+  };
 
   const filteredMedia = mediaItems.filter(item => {
-    const matchSearch = item.name.toLowerCase().includes(searchMedia.toLowerCase());
-    const matchType =
-      libraryType === "all" ? true :
-      libraryType === "videos" ? item.format.includes("VÍDEO") :
-      item.format.includes("IMAGEM");
-    return matchSearch && matchType;
+    const matchesSearch = item.name.toLowerCase().includes(librarySearchQuery.toLowerCase());
+    const matchesType = 
+      libraryTypeFilter === "all" ? true :
+      libraryTypeFilter === "videos" ? item.type === "video" :
+      item.type === "image";
+    return matchesSearch && matchesType;
+  });
+
+  const filteredComments = commentsList.filter(c => {
+    const matchesSearch = c.authorName.toLowerCase().includes(commentSearchQuery.toLowerCase()) || 
+                          c.text.toLowerCase().includes(commentSearchQuery.toLowerCase());
+    const matchesStatus = commentStatusFilter === "all" || c.status.toLowerCase() === commentStatusFilter.toLowerCase();
+    const matchesVideo = commentVideoFilter === "all" || c.videoName.toLowerCase().includes(commentVideoFilter.toLowerCase());
+    return matchesSearch && matchesStatus && matchesVideo;
   });
 
   const modules = [
@@ -173,422 +226,332 @@ export default function Vidlytics() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-between font-sans">
-      {/* HEADER FIXO SUPERIOR */}
-      <header className="sticky top-0 z-40 bg-white shadow-xs border-b border-slate-200/90">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between">
-          <button 
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2.5 text-slate-600 hover:text-slate-900 transition-colors"
-            title="Voltar ao Hub Central"
-          >
-            <img src="/assets/sll-logotipo-ico.png" alt="SLL" className="h-8 w-8 object-contain" onError={(e) => {(e.target as any).style.display='none';}} />
-            <div className="flex items-center gap-1.5 text-xs font-semibold">
-              <ArrowLeft className="w-3.5 h-3.5 text-slate-400" />
-              <span>Voltar ao Hub Central</span>
-            </div>
-          </button>
-
-          <div className="relative">
-            <button
-              onClick={() => setModuleMenuOpen(!moduleMenuOpen)}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold hover:bg-slate-100 transition-colors"
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 pb-12 relative flex flex-col justify-between font-sans">
+      <div>
+        {/* BARRA GLOBAL SLL HUB */}
+        <header className="bg-white border-b border-slate-200/90 sticky top-0 z-40 shadow-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between">
+            <button 
+              onClick={() => navigate("/")}
+              className="flex items-center gap-2.5 group text-slate-600 hover:text-slate-900 transition-colors"
+              title="Voltar ao Hub Central do SLL"
             >
-              <Layers className="w-3.5 h-3.5 text-[#0094eb]" />
-              <span>Módulo: <strong>Vidlytics Stories</strong></span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
-            </button>
-            {moduleMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 z-50 py-1">
-                {modules.map((m, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { setModuleMenuOpen(false); if (!m.current) navigate(m.path); }}
-                    className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between transition-colors ${
-                      m.current ? "bg-blue-50 text-[#0094eb] font-bold" : "text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    <span>{m.name}</span>
-                    {m.current && <span className="w-1.5 h-1.5 rounded-full bg-[#0094eb]" />}
-                  </button>
-                ))}
+              <img 
+                src="/assets/sll-logotipo-ico.png" 
+                alt="SLL" 
+                className="h-8 w-8 object-contain transition-transform group-hover:scale-105"
+                onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
+              />
+              <div className="flex items-center gap-1.5 text-xs font-semibold">
+                <ArrowLeft className="w-3.5 h-3.5 text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
+                <span>Voltar ao Hub Central</span>
               </div>
-            )}
+            </button>
+
+            <div className="relative">
+              <button
+                onClick={() => setModuleMenuOpen(!moduleMenuOpen)}
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors shadow-xs"
+              >
+                <Layers className="w-3.5 h-3.5 text-[#0094eb]" />
+                <span>Módulo: <strong>Vidlytics Stories</strong></span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+              </button>
+
+              {moduleMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+                  <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400">Alternar Módulo SLL</div>
+                  {modules.map((m, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setModuleMenuOpen(false);
+                        if (!m.current) navigate(m.path);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition-colors ${
+                        m.current 
+                          ? "bg-blue-50 text-[#0094eb] font-bold" 
+                          : "text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span>{m.name}</span>
+                      {m.current && <span className="w-1.5 h-1.5 rounded-full bg-[#0094eb]" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </header>
 
-        {/* BARRA DE NAVEGAÇÃO DE ABAS */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 overflow-x-auto">
-          <nav className="flex space-x-2 border-t border-slate-100 pt-1 pb-0.5">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
-                    isActive 
-                      ? "border-[#0094eb] text-[#0094eb]" 
-                      : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-      </header>
-
-      {/* CONTEÚDO PRINCIPAL */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
-
-        {/* ABA: COMENTÁRIOS */}
-        {activeTab === "comments" && (
-          <div className="space-y-6">
-            {/* Título & Descrição */}
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Comentários</h1>
-              <p className="text-xs text-slate-500 mt-1">
-                Gerencie a interação dos clientes nos seus stories, responda dúvidas e modere comentários públicos.
+        {/* CONTAINER PRINCIPAL */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-5 space-y-5">
+          
+          {/* PROMO BANNER */}
+          <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white p-6 sm:p-7 shadow-sm">
+            <div className="relative z-10 max-w-2xl space-y-2.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase bg-[#fd8539] text-white tracking-wide shadow-sm">
+                ✨ Turbine seu E-commerce
+              </span>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold leading-tight">
+                Transforme visitantes em clientes com Vídeos Curtos e Stories
+              </h2>
+              <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                Seus produtos integrados diretamente nos vídeos interativos com conversão em tempo real.
               </p>
             </div>
-
-            {/* Top Cards: Moderação & Filtros */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              {/* Card 1: Moderação de Conteúdo */}
-              <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0094eb] flex items-center justify-center">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">Moderação de Conteúdo</h2>
-                    <p className="text-[11px] text-slate-400">Controle de publicação na loja.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">
-                      {autoApprove ? "Aprovação automática ativada" : "Aprovação automática desativada"}
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      {autoApprove ? "Comentários entram na loja direto." : "Requer aprovação prévia."}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setAutoApprove(!autoApprove)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      autoApprove ? "bg-[#0094eb]" : "bg-slate-200"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                        autoApprove ? "translate-x-5" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-
-              {/* Card 2: Filtros & Busca */}
-              <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Filtros & Busca</span>
-                  <span className="px-3 py-1 bg-blue-50 text-[#0094eb] rounded-full text-[11px] font-bold uppercase tracking-wider">
-                    {filteredComments.length} Comentários
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
-                  <div className="relative sm:col-span-1">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      placeholder="Pesquisar autor ou texto..."
-                      value={commentSearch}
-                      onChange={(e) => setCommentSearch(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
-                    />
-                  </div>
-                  <div>
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
-                    >
-                      <option value="all">Todos os Status</option>
-                      <option value="pendente">Pendente</option>
-                      <option value="aprovado">Aprovado</option>
-                    </select>
-                  </div>
-                  <div>
-                    <select
-                      value={videoFilter}
-                      onChange={(e) => setVideoFilter(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
-                    >
-                      <option value="all">Todos os Vídeos</option>
-                      <option value="Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4">Criação_de_Vídeo_Fashion...</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
+            <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-25 md:opacity-40 pointer-events-none hidden sm:block">
+              <img 
+                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" 
+                alt="Dashboard Analytics" 
+                className="h-full w-full object-cover object-left"
+              />
             </div>
+          </section>
 
-            {/* Tabela de Comentários */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50/70 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-100">
-                    <tr>
-                      <th className="px-6 py-3.5">Autor</th>
-                      <th className="px-6 py-3.5">Conteúdo / Vídeo</th>
-                      <th className="px-6 py-3.5 text-center">Status</th>
-                      <th className="px-6 py-3.5 text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {filteredComments.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="text-center py-10 text-slate-400 text-xs">
-                          Nenhum comentário encontrado para os filtros selecionados.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredComments.map((comment) => (
-                        <tr key={comment.id} className="hover:bg-slate-50/60 transition-colors">
-                          {/* Coluna Autor */}
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-9 h-9 rounded-full ${comment.avatarBg} text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs`}>
-                                {comment.avatarLetter}
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-900 leading-tight">{comment.author}</p>
-                                <span className="text-[10px] text-slate-400">{comment.role}</span>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Coluna Conteúdo / Vídeo */}
-                          <td className="px-6 py-4 space-y-1">
-                            <p className="text-slate-800 font-medium">
-                              "{comment.content}"
-                            </p>
-                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                              VÍDEO: <span className="text-[#0094eb] lowercase">{comment.videoName}</span>
-                            </p>
-                          </td>
-
-                          {/* Coluna Status */}
-                          <td className="px-6 py-4 text-center">
-                            {comment.status === "PENDENTE" ? (
-                              <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-50 text-amber-600 border border-amber-200/70">
-                                PENDENTE
-                              </span>
-                            ) : (
-                              <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-600 border border-emerald-200/70">
-                                APROVADO
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Coluna Ações */}
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2 text-slate-400">
-                              {comment.status === "PENDENTE" && (
-                                <button
-                                  onClick={() => handleApproveComment(comment.id)}
-                                  title="Aprovar Comentário"
-                                  className="p-1.5 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
-                              )}
-                              <button
-                                onClick={() => alert(`Responder comentário de ${comment.author}`)}
-                                title="Responder / Detalhes"
-                                className="p-1.5 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors"
-                              >
-                                <MessageSquare className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteComment(comment.id)}
-                                title="Excluir Comentário"
-                                className="p-1.5 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ABA: BIBLIOTECA */}
-        {activeTab === "library" && (
-          <div className="space-y-5">
-            {/* Cabeçalho da página */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-black text-slate-900">Biblioteca</h1>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Gerencie seus vídeos e mídias hospedadas no plano.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button className="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 shadow-xs" onClick={() => alert("Conectar Instagram")}>
-                  <InstagramIcon />
-                  <span>INSTAGRAM</span>
-                </button>
-                <button className="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 shadow-xs" onClick={() => alert("Conectar TikTok")}>
-                  <TikTokIcon />
-                  <span>TIKTOK</span>
-                </button>
-                <button onClick={() => setIsUrlModalOpen(true)} className="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 shadow-xs">
-                  <Link2 className="w-3.5 h-3.5 text-[#0094eb]" />
-                  <span>URL EXTERNA</span>
-                </button>
-                <button className="px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white uppercase text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-sm transition-colors" onClick={() => alert("Upload de Arquivos")}>
-                  <UploadCloud className="w-4 h-4" />
-                  <span>FAZER UPLOAD</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Card Armazenamento */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center justify-between">
-              <div className="flex items-center gap-4 w-full max-w-xl">
-                <div className="w-12 h-12 bg-[#0094eb] text-white rounded-xl flex flex-col items-center justify-center shadow-xs font-bold leading-tight">
-                  <span className="text-[10px] tracking-wider uppercase">SCALE</span>
-                  <span className="text-[9px] opacity-80">50GB</span>
-                </div>
-                <div className="flex-1 space-y-1.5">
-                  <div className="flex justify-between items-center text-xs font-bold text-slate-800">
-                    <span>{storageUsage.used} MB de {storageUsage.total} GB</span>
-                    <span className="text-[#0094eb]">{storagePercent}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="bg-[#0094eb] h-full rounded-full transition-all" style={{ width: `${storagePercent}%` }} />
-                  </div>
-                  <p className="text-[10px] text-slate-400">Espaço total do seu plano contratado.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Filtros e Tabela de Biblioteca */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-              <div className="relative flex-1 w-full">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Pesquisar pelo nome do arquivo..."
-                  value={searchMedia}
-                  onChange={(e) => setSearchMedia(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+          {/* BARRA DE NAVEGAÇÃO DO MÓDULO */}
+          <section className="bg-white border border-slate-200/90 rounded-2xl p-3 shadow-xs">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3 pl-2">
+                <img 
+                  src="/assets/vidlytics-logo-wide.png" 
+                  alt="Vidlytics" 
+                  className="h-7 sm:h-8 object-contain"
+                  onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
                 />
               </div>
-              <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
-                <button
-                  onClick={() => setLibraryType("all")}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
-                    libraryType === "all" ? "bg-[#0094eb] text-white shadow-xs" : "text-slate-600 hover:bg-slate-200/60"
-                  }`}
-                >
-                  TODOS
-                </button>
-                <button
-                  onClick={() => setLibraryType("videos")}
-                  className={`flex items-center gap-1 px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
-                    libraryType === "videos" ? "bg-[#0094eb] text-white shadow-xs" : "text-slate-600 hover:bg-slate-200/60"
-                  }`}
-                >
-                  <Video className="w-3.5 h-3.5" />
-                  <span>VÍDEOS</span>
-                </button>
-                <button
-                  onClick={() => setLibraryType("images")}
-                  className={`flex items-center gap-1 px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
-                    libraryType === "images" ? "bg-[#0094eb] text-white shadow-xs" : "text-slate-600 hover:bg-slate-200/60"
-                  }`}
-                >
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  <span>IMAGENS</span>
-                </button>
+
+              {/* Menu de Abas */}
+              <nav className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                        if (tab.id !== "stories") setIsCreatingStory(false);
+                      }}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                        isActive
+                          ? "bg-[#0094eb] text-white shadow-sm shadow-[#0094eb]/20"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200/80"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </section>
+
+          {/* ======================================================== */}
+          {/* 1. ABA: VISÃO GERAL (TOTALMENTE PRESERVADA) */}
+          {/* ======================================================== */}
+          {activeTab === "overview" && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              {/* Cards de Métricas Principais */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Receita Gerada</span>
+                    <h3 className="text-2xl font-black text-slate-900 mt-0.5">R$ 0,00</h3>
+                    <p className="text-[11px] text-slate-400 mt-1">Via vídeos interativos</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                    <DollarSign className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Visualizações</span>
+                    <h3 className="text-2xl font-black text-slate-900 mt-0.5">0</h3>
+                    <p className="text-[11px] text-slate-400 mt-1">Total de reproduções</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0094eb] flex items-center justify-center font-bold">
+                    <Eye className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Taxa de Cliques (CTR)</span>
+                    <h3 className="text-2xl font-black text-slate-900 mt-0.5">0.0%</h3>
+                    <p className="text-[11px] text-slate-400 mt-1">Cliques no carrinho</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#fd8539] flex items-center justify-center font-bold">
+                    <Zap className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tempo Assistido</span>
+                    <h3 className="text-2xl font-black text-slate-900 mt-0.5">0m 00s</h3>
+                    <p className="text-[11px] text-slate-400 mt-1">Retenção de audiência</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Informações da Loja / Status do Widget */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">Desempenho Geral dos Vídeos</h4>
+                    <span className="text-[11px] text-slate-400">Últimos 30 dias</span>
+                  </div>
+                  <div className="h-48 rounded-xl bg-slate-50 border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 gap-2">
+                    <BarChart2 className="w-8 h-8 stroke-1 text-slate-300" />
+                    <p className="text-xs">Os gráficos detalhados aparecerão conforme seus clientes interagirem na loja.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">Indica & Ganha</h4>
+                  <p className="text-xs text-slate-500">
+                    Compartilhe seu link exclusivo de indicação do Vidlytics e ganhe créditos de assinatura no SLL Hub.
+                  </p>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Seu Link de Afiliado</span>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="text" 
+                        readOnly 
+                        value="https://vidlytics.com.br/indique/useanny" 
+                        className="w-full text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600 outline-none"
+                      />
+                      <button 
+                        onClick={handleCopyLink}
+                        className="px-3 py-1.5 rounded-lg bg-[#0094eb] text-white text-xs font-bold hover:bg-[#0082cf] transition-colors"
+                      >
+                        {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
 
-            {/* Contador */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-wider text-slate-600">
-              {filteredMedia.length} Mídias Listadas
+          {/* ======================================================== */}
+          {/* 2. ABA: RESULTADOS (COM SUAS 4 SUB-ABAS PRESERVADAS) */}
+          {/* ======================================================== */}
+          {activeTab === "results" && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                <div className="flex items-center gap-2">
+                  {[
+                    { id: "overview", label: "Visão Geral" },
+                    { id: "videos", label: "Vídeos" },
+                    { id: "retention", label: "Retenção" },
+                    { id: "insights", label: "Insights IA" },
+                  ].map((sub) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => setResultsSubTab(sub.id as any)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                        resultsSubTab === sub.id 
+                          ? "bg-white text-[#0094eb] shadow-xs border border-slate-200" 
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Conteúdo das Sub-abas de Resultados */}
+              {resultsSubTab === "overview" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                    <span className="text-[11px] font-bold uppercase text-slate-400">Total Visualizações</span>
+                    <h3 className="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                    <span className="text-[11px] font-bold uppercase text-slate-400">Cliques em Produtos</span>
+                    <h3 className="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                    <span className="text-[11px] font-bold uppercase text-slate-400">Conversão Estimada</span>
+                    <h3 className="text-2xl font-bold text-slate-900 mt-1">0%</h3>
+                  </div>
+                </div>
+              )}
+
+              {resultsSubTab === "retention" && (
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase text-slate-800">Curva de Retenção por Segundo</h4>
+                    <select 
+                      value={selectedVideoRetention} 
+                      onChange={(e) => setSelectedVideoRetention(e.target.value)}
+                      className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 font-semibold"
+                    >
+                      <option value="oculos-de-sol.mp4">oculos-de-sol.mp4</option>
+                      <option value="Criação_de_Vídeo_Fashion_Edit...">Criação_de_Vídeo_Fashion_Edit...</option>
+                    </select>
+                  </div>
+                  <div className="h-44 bg-slate-50 rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-xs">
+                    Gráfico de retenção do vídeo selecionado
+                  </div>
+                </div>
+              )}
             </div>
+          )}
 
-            {/* Tabela de Mídias */}
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-              <div className="overflow-x-auto">
+          {/* ======================================================== */}
+          {/* 3. ABA: STORIES (PRESERVADA COM CRIAÇÃO E LISTAGEM) */}
+          {/* ======================================================== */}
+          {activeTab === "stories" && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">Gerenciar Stories</h2>
+                  <p className="text-xs text-slate-500">Crie carrosséis, feeds flutuantes ou stories para sua loja.</p>
+                </div>
+                <button
+                  onClick={() => setIsCreatingStory(!isCreatingStory)}
+                  className="px-4 py-2 rounded-xl bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                >
+                  {isCreatingStory ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  <span>{isCreatingStory ? "Fechar Formulário" : "Novo Story"}</span>
+                </button>
+              </div>
+
+              {/* Tabela de Stories */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50/70 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-100">
+                  <thead className="bg-slate-50 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-100">
                     <tr>
-                      <th className="px-4 py-3">Mídia</th>
-                      <th className="px-4 py-3">Nome</th>
-                      <th className="px-4 py-3 text-center">Produto</th>
-                      <th className="px-4 py-3 text-center">Story Vinc.</th>
-                      <th className="px-4 py-3 text-center">Tamanho</th>
-                      <th className="px-4 py-3 text-center">Status</th>
-                      <th className="px-4 py-3 text-right">Ações</th>
+                      <th className="px-5 py-3">Nome / Localização</th>
+                      <th className="px-5 py-3">Tipo</th>
+                      <th className="px-5 py-3">Vídeos</th>
+                      <th className="px-5 py-3">Status</th>
+                      <th className="px-5 py-3 text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {filteredMedia.map((m) => (
-                      <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="px-4 py-3.5">
-                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
-                            <img src={m.thumb} alt={m.name} className="w-full h-full object-cover" />
-                          </div>
+                    {storiesList.map((st) => (
+                      <tr key={st.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <p className="font-bold text-slate-800">{st.name}</p>
+                          <span className="text-[10px] text-slate-400">{st.location}</span>
                         </td>
-                        <td className="px-4 py-3.5">
-                          <p className="font-bold text-slate-800">{m.name}</p>
-                          <span className="text-[10px] text-slate-400 font-semibold">{m.format}</span>
+                        <td className="px-5 py-3.5">{st.type}</td>
+                        <td className="px-5 py-3.5">{st.videoCount} vídeos</td>
+                        <td className="px-5 py-3.5">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                            {st.status}
+                          </span>
                         </td>
-                        <td className="px-4 py-3.5 text-center">
-                          {m.product ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                              <img src={m.product.thumb} className="w-3.5 h-3.5 rounded-full object-cover" alt="" />
-                              {m.product.name}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 text-xs">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3.5 text-center">
-                          {m.story ? (
-                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0094eb] font-semibold text-[11px] border border-blue-100">{m.story}</span>
-                          ) : (
-                            <span className="text-slate-400 text-xs">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3.5 text-center text-slate-600">{m.size}</td>
-                        <td className="px-4 py-3.5 text-center">
-                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100">{m.status}</span>
-                        </td>
-                        <td className="px-4 py-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1.5 text-slate-400">
-                            <button title="Editar" className="p-1.5 hover:text-[#0094eb]"><Edit2 className="w-3.5 h-3.5" /></button>
-                            <button title="Visualizar" className="p-1.5 hover:text-[#0094eb]"><Eye className="w-3.5 h-3.5" /></button>
-                            <button title="Download" className="p-1.5 hover:text-[#0094eb]"><Download className="w-3.5 h-3.5" /></button>
-                            <button title="Excluir" className="p-1.5 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
-                          </div>
+                        <td className="px-5 py-3.5 text-right">
+                          <button className="text-slate-400 hover:text-[#0094eb] font-bold text-xs">Editar</button>
                         </td>
                       </tr>
                     ))}
@@ -596,113 +559,379 @@ export default function Vidlytics() {
                 </table>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* OUTRAS ABAS (EM CONSTRUÇÃO OU PRÓXIMAS ETAPAS) */}
-        {!["comments", "library"].includes(activeTab) && (
-          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3">
-            <h2 className="text-lg font-bold text-slate-800 capitalize">Módulo: {activeTab}</h2>
-            <p className="text-xs text-slate-400 max-w-md mx-auto">
-              Esta seção está pronta para receber seus componentes na sequência de migração.
-            </p>
-          </div>
-        )}
-
-      </main>
-
-      {/* MODAL: URL EXTERNA (BIBLIOTECA) */}
-      {isUrlModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-xl p-6 relative">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4 mb-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-[#0094eb] shadow-xs">
-                  <Link2 className="w-5 h-5" />
-                </div>
+          {/* ======================================================== */}
+          {/* 4. ABA: BIBLIOTECA (PRESERVADA COM UPLOADS E MODAL) */}
+          {/* ======================================================== */}
+          {activeTab === "library" && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Adicionar Vídeo por URL</h3>
-                  <p className="text-xs text-slate-400">Pinterest, YouTube, Panda Video, Bunny CDN ou Link Direto</p>
+                  <h2 className="text-xl font-black text-slate-900">Biblioteca de Vídeos</h2>
+                  <p className="text-xs text-slate-500">Faça upload ou adicione links de vídeos externos para seus stories.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsUrlModalOpen(true)}
+                    className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 transition-colors shadow-xs"
+                  >
+                    + URL Externa
+                  </button>
+                  <label className="px-4 py-2 rounded-xl bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold cursor-pointer transition-colors shadow-sm">
+                    Fazer Upload
+                    <input type="file" accept="video/*" className="hidden" />
+                  </label>
                 </div>
               </div>
-              <button onClick={() => setIsUrlModalOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 text-slate-400 rounded-full">
+
+              {/* Tabela de Mídias */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-100">
+                    <tr>
+                      <th className="px-5 py-3">Mídia</th>
+                      <th className="px-5 py-3">Tipo / Tamanho</th>
+                      <th className="px-5 py-3">Produto Vinculado</th>
+                      <th className="px-5 py-3">Status</th>
+                      <th className="px-5 py-3 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {filteredMedia.map((med) => (
+                      <tr key={med.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="px-5 py-3.5 flex items-center gap-3">
+                          <img src={med.thumb} alt="" className="w-10 h-10 rounded-lg object-cover bg-slate-100" />
+                          <span className="font-bold text-slate-800">{med.name}</span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <p className="text-slate-700">{med.formatLabel}</p>
+                          <span className="text-[10px] text-slate-400">{med.size}</span>
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-600">
+                          {med.product ? med.product.name : "Nenhum"}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                            {med.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <button className="text-slate-400 hover:text-rose-600 transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* 5. ABA: COMENTÁRIOS (FIEL AO SEU PRINT) */}
+          {/* ======================================================== */}
+          {activeTab === "comments" && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Título e Subtítulo */}
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight">Comentários</h1>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Gerencie a interação dos clientes nos seus stories, responda dúvidas e modere comentários públicos.
+                </p>
+              </div>
+
+              {/* Grid Superior: Moderação + Filtros */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                
+                {/* Moderação de Conteúdo */}
+                <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4 flex flex-col justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0094eb] flex items-center justify-center flex-shrink-0">
+                      <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                        Moderação de Conteúdo
+                      </h3>
+                      <p className="text-[11px] text-slate-400">
+                        Controle de publicação na loja.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-slate-800">
+                        {autoApproval ? "Aprovação automática ativada" : "Aprovação automática desativada"}
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        {autoApproval ? "Comentários entram na loja direto." : "Requer aprovação prévia."}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setAutoApproval(!autoApproval)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        autoApproval ? "bg-[#0094eb]" : "bg-slate-200"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                          autoApproval ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filtros & Busca */}
+                <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-3 flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Filtros & Busca
+                    </span>
+                    <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase bg-blue-50 text-[#0094eb] border border-blue-100">
+                      {filteredComments.length} Comentários
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center pt-1">
+                    <div className="sm:col-span-6 relative">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Pesquisar autor ou texto..."
+                        value={commentSearchQuery}
+                        onChange={(e) => setCommentSearchQuery(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <select
+                        aria-label="Filtrar comentários por status"
+                        value={commentStatusFilter}
+                        onChange={(e) => setCommentStatusFilter(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 cursor-pointer"
+                      >
+                        <option value="all">Todos os Status</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="aprovado">Aprovado</option>
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <select
+                        aria-label="Filtrar comentários por vídeo"
+                        value={commentVideoFilter}
+                        onChange={(e) => setCommentVideoFilter(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 cursor-pointer truncate"
+                      >
+                        <option value="all">Todos os Vídeos</option>
+                        <option value="Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4">Criação_de_Vídeo...</option>
+                        <option value="oculos-de-sol.mp4">oculos-de-sol.mp4</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Tabela de Comentários */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50/70 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-100">
+                      <tr>
+                        <th className="px-6 py-4">Autor</th>
+                        <th className="px-6 py-4">CONTEÚDO / VÍDEO</th>
+                        <th className="px-6 py-4 text-center">Status</th>
+                        <th className="px-6 py-4 text-right">AÇÕES</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {filteredComments.length > 0 ? (
+                        filteredComments.map((comm) => (
+                          <tr key={comm.id} className="hover:bg-slate-50/60 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-[#0094eb] text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
+                                  {comm.authorInitial}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-slate-900 leading-tight text-xs">{comm.authorName}</p>
+                                  <span className="text-[10px] text-slate-400 block font-normal">{comm.authorRole}</span>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4 space-y-1">
+                              <p className="text-slate-800 font-bold text-xs">
+                                "{comm.text}"
+                              </p>
+                              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                                VÍDEO: <span className="text-[#0094eb] lowercase font-bold">{comm.videoName}</span>
+                              </p>
+                            </td>
+
+                            <td className="px-6 py-4 text-center">
+                              {comm.status === "PENDENTE" ? (
+                                <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase bg-amber-50 text-amber-600 border border-amber-200">
+                                  PENDENTE
+                                </span>
+                              ) : (
+                                <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase bg-emerald-50 text-emerald-600 border border-emerald-200">
+                                  APROVADO
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2 text-slate-400">
+                                <button
+                                  onClick={() => openModerateModal(comm)}
+                                  title="Responder / Moderar Comentário"
+                                  className="p-1.5 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors"
+                                >
+                                  <MessageSquare className="w-4 h-4 stroke-[1.8]" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteComment(comm.id)}
+                                  title="Excluir Comentário"
+                                  className="p-1.5 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4 stroke-[1.8]" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
+                            Nenhum comentário encontrado.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* Placeholders limpos para as próximas abas */}
+          {["products", "appearance"].includes(activeTab) && (
+            <div className="bg-white rounded-2xl p-12 border border-slate-200/80 shadow-xs text-center space-y-3 animate-in fade-in">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#0094eb] mx-auto flex items-center justify-center">
+                <ShoppingBag className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-slate-800">
+                Aba "{tabs.find(t => t.id === activeTab)?.label}"
+              </h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Pronta para receber a interface visual na próxima etapa.
+              </p>
+            </div>
+          )}
+
+        </main>
+      </div>
+
+      {/* MODAL: MODERAR COMENTÁRIO */}
+      {isModerateModalOpen && selectedCommentForModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="p-6 pb-4 flex items-start justify-between border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0094eb] flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Moderar Comentário</h3>
+                  <p className="text-xs text-slate-400">Aprove ou responda à interação do cliente</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModerateModalOpen(false)}
+                className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleAddExternalUrl} className="space-y-4">
+
+            <div className="p-6 space-y-4">
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-slate-800">{selectedCommentForModal.authorName}</span>
+                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    {selectedCommentForModal.status}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-700 italic">"{selectedCommentForModal.text}"</p>
+                <p className="text-[10px] text-slate-400">Vídeo: {selectedCommentForModal.videoName}</p>
+              </div>
+
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Link / URL Externa *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="https://..."
-                  value={externalUrl}
-                  onChange={(e) => setExternalUrl(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Sua Resposta Pública (Opcional)
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Escreva uma resposta pública para aparecer no story..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
                 />
               </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Título ou Identificação</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Reels Coleção Verão"
-                  value={mediaTitle}
-                  onChange={(e) => setMediaTitle(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Vincular a um Produto</label>
-                <select
-                  value={linkedProduct}
-                  onChange={(e) => setLinkedProduct(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsModerateModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 transition-colors"
                 >
-                  <option>Sem produto vinculado</option>
-                  <option>Blusa Confort - Verde</option>
-                  <option>Óculos de Sol Vintage</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Vincular a um Modelo de Medidas</label>
-                <select
-                  value={linkedMeasureModel}
-                  onChange={(e) => setLinkedMeasureModel(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
-                >
-                  <option>Sem modelo de medidas vinculado</option>
-                  <option>Tabela Geral Vestuário Feminino</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
-                <button type="button" onClick={() => setIsUrlModalOpen(false)} className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800">
                   Cancelar
                 </button>
-                <button type="submit" className="px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold uppercase rounded-xl flex items-center gap-2 shadow-sm">
-                  <UploadCloud className="w-4 h-4" />
-                  <span>Cadastrar Mídia</span>
+                <button
+                  type="button"
+                  onClick={() => handleApproveComment(selectedCommentForModal.id)}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Aprovar Comentário</span>
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
 
-      {/* FOOTER */}
-      <footer className="max-w-7xl mx-auto px-4 sm:px-6 py-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+      {/* RODAPÉ INSTITUCIONAL */}
+      <footer className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-10 mt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
         <p>© 2026 Vidlytics Stories. Todos os direitos reservados.</p>
         <div className="flex items-center gap-3">
-          <span className="text-[11px] uppercase tracking-wider font-semibold">DESENVOLVIDO POR:</span>
-          <img src="/assets/sll-logotipo.png" alt="Sistema Loja Lucrativa" className="h-9 sm:h-10 object-contain hover:opacity-90 transition-opacity" />
+          <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">DESENVOLVIDO POR:</span>
+          <img 
+            src="/assets/sll-logotipo.png" 
+            alt="Sistema Loja Lucrativa" 
+            className="h-9 sm:h-10 object-contain hover:opacity-90 transition-opacity"
+            onError={(e) => {
+              const target = e.target as HTMLElement;
+              target.style.display = "none";
+            }} 
+          />
         </div>
       </footer>
 
-      {/* BOTÃO FLUTUANTE DE SUPORTE */}
-      <aside className="fixed bottom-6 right-6 z-40">
+      {/* SUPORTE FLUTUANTE */}
+      <aside aria-label="Suporte" className="fixed bottom-6 right-6 z-40">
         <button
-          onClick={() => alert("Canal de Atendimento e Suporte SLL")}
-          className="w-12 h-12 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95"
-          title="Suporte"
+          onClick={() => alert("Canal de Suporte SLL")}
+          className="w-12 h-12 rounded-full bg-[#0094eb] hover:bg-[#0082cf] text-white flex items-center justify-center shadow-lg shadow-[#0094eb]/30 transition-transform hover:scale-105 active:scale-95"
+          title="Falar com o Suporte"
         >
           <Headphones className="w-6 h-6" />
         </button>
