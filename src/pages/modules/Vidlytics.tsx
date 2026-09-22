@@ -363,8 +363,8 @@ export default function VidlyticsPage() {
       )}
 
       {/* ============================================================ */}
-      {/* ABA 1: CATÁLOGO DE VÍDEOS                                   */}                                   */}
-      {/* ============================================================ */}
+      {/* ABA 1: CATÁLOGO DE VÍDEOS */}
+{/* ============================================================ */}
       {activeTab === 'catalog' && (
         <div className="space-y-6">
           {/* Cards de Métricas Rápidas */}
