@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
+import { LiveCommerceDatabaseService } from "@/services/LiveCommerceDatabaseService";
 import { MODULES } from "@/lib/modules";
 import { useTenant } from "@/context/TenantContext";
 import { Button } from "@/components/ui/button";
@@ -118,28 +119,26 @@ export function LiveCommercePage() {
   }, [tenantStoreId]);
 
   async function loadLives(currentStoreId: string) {
-    const { data, error } = await supabase
-      .from("lives")
-      .select("id, title, youtube_video_id, youtube_thumbnail_url, status, is_active, scheduled_at, created_at")
-      .eq("store_id", currentStoreId)
-      .order("scheduled_at", { ascending: true, nullsFirst: false });
-
-    if (!error && data) setLives(data as LiveRow[]);
+    try {
+      const data = await LiveCommerceDatabaseService.getLives(currentStoreId);
+      if (data) setLives(data as LiveRow[]);
+    } catch (error) {
+      console.error("Erro ao carregar lives:", error);
+    }
   }
 
   async function loadAppearance(currentStoreId: string) {
-    const { data, error } = await supabase
-      .from("live_settings")
-      .select("widget_divulgacao, widget_aovivo, player_settings")
-      .eq("store_id", currentStoreId)
-      .maybeSingle();
-
-    if (!error && data) {
-      setAppearanceData({
-        divulgacao: (data.widget_divulgacao as any) || null,
-        aoVivo: (data.widget_aovivo as any) || null,
-        player: (data.player_settings as any) || null,
-      });
+    try {
+      const data = await LiveCommerceDatabaseService.getLiveSettings(currentStoreId);
+      if (data) {
+        setAppearanceData({
+          divulgacao: (data.widget_divulgacao as any) || null,
+          aoVivo: (data.widget_aovivo as any) || null,
+          player: (data.player_settings as any) || null,
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao carregar configurações de aparência:", error);
     }
   }
 
@@ -152,19 +151,11 @@ export function LiveCommercePage() {
     try {
       setSavingAppearance(true);
 
-      const { error } = await supabase
-        .from("live_settings")
-        .upsert(
-          {
-            store_id: storeId,
-            widget_divulgacao: divulgacao,
-            widget_aovivo: aoVivo,
-            player_settings: player,
-          },
-          { onConflict: "store_id" }
-        );
-
-      if (error) throw error;
+      await LiveCommerceDatabaseService.upsertLiveSettings(storeId, {
+        widget_divulgacao: divulgacao,
+        widget_aovivo: aoVivo,
+        player_settings: player,
+      });
 
       setAppearanceData({ divulgacao, aoVivo, player });
       toast.success("Aparência da Live salva com sucesso!");
@@ -198,8 +189,7 @@ export function LiveCommercePage() {
   const handleDelete = async (liveId: string) => {
     if (!confirm("Tem certeza que deseja excluir esta live? Essa ação não pode ser desfeita.")) return;
     try {
-      const { error } = await supabase.from("lives").delete().eq("id", liveId);
-      if (error) throw error;
+      await LiveCommerceDatabaseService.deleteLive(liveId);
       toast.success("Live excluída.");
       if (storeId) await loadLives(storeId);
     } catch (err: any) {
@@ -218,66 +208,58 @@ export function LiveCommercePage() {
   };
 
   const handleOpenAdminPanel = (liveId: string) => {
-    window.open(`/live-commerce/${liveId}/administrar`, "_blank", "noopener,noreferrer");
+    navigate(`/app/live-admin/${liveId}`);
   };
 
-  const onFormSaved = async () => {
-    if (storeId) await loadLives(storeId);
-  };
-
-  const statusBadge = (live: LiveRow) => {
-    if (live.is_active && live.status === "live") {
-      return (
-        <Badge className="bg-rose-600 text-white flex items-center gap-1.5 animate-pulse">
-          <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
-          AO VIVO
-        </Badge>
-      );
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "live":
+        return <Badge className="bg-red-500 text-white animate-pulse">AO VIVO</Badge>;
+      case "scheduled":
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">Agendada</Badge>;
+      case "finished":
+        return <Badge variant="outline" className="text-gray-500">Encerrada</Badge>;
+      default:
+        return null;
     }
-    if (live.status === "scheduled") {
-      return (
-        <Badge variant="outline" className="border-amber-500 text-amber-500 flex items-center gap-1.5">
-          <Clock className="h-3 w-3" />
-          Programada
-        </Badge>
-      );
-    }
-    return <Badge variant="secondary">Finalizada</Badge>;
   };
 
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+        <RefreshCw className="h-8 w-8 animate-spin text-[#0094eb]" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-500">
-            <Radio className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Live Commerce</h1>
-            <p className="text-muted-foreground text-sm">
-              Programe, divulgue e gerencie todas as suas lives em um só lugar.
-            </p>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
+            <Radio className="h-6 w-6 text-[#fd8539]" />
+            Live Commerce
+          </h1>
+          <p className="text-sm text-gray-500">
+            Transmita ao vivo e venda seus produtos em tempo real no seu e-commerce.
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             onClick={() => setAppearanceOpen(true)}
-            className="gap-2"
+            className="flex items-center gap-2"
           >
             <Palette className="h-4 w-4" />
             Aparência
           </Button>
-          <Button onClick={handleCreateNew} disabled={!allowsLive} className="gap-2 bg-rose-600 hover:bg-rose-700 text-white">
+
+          <Button
+            onClick={handleCreateNew}
+            disabled={!allowsLive}
+            className="bg-[#0094eb] hover:bg-[#0080cc] text-white flex items-center gap-2"
+          >
             <Plus className="h-4 w-4" />
             Nova Live
           </Button>
@@ -285,130 +267,202 @@ export function LiveCommercePage() {
       </div>
 
       {!allowsLive && (
-        <div className="p-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <AlertCircle className="h-6 w-6 text-amber-500 mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-foreground">Recurso Exclusivo dos Planos Pro e Scale</h3>
-              <p className="text-sm text-muted-foreground">
-                Seu plano atual ({planName || "Starter"}) não inclui Live Commerce.
-              </p>
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-amber-800">
+                  Módulo de Live Commerce não incluído no seu plano ({planName})
+                </h3>
+                <p className="mt-1 text-sm text-amber-700">
+                  Faça upgrade de sua assinatura para desbloquear transmissões ao vivo com catálogo de produtos interativo.
+                </p>
+              </div>
             </div>
-          </div>
-          <Button onClick={() => navigate("/billing")} className="bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap">
-            Fazer Upgrade Agora
-          </Button>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      {/* Filtros e Busca */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-lg border">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Buscar live pelo título..."
+            placeholder="Buscar por título da live..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-        >
-          <option value="all">Todos os status</option>
-          <option value="scheduled">Programadas</option>
-          <option value="live">Ao vivo</option>
-          <option value="finished">Finalizadas</option>
-        </select>
+
+        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+          <Button
+            size="sm"
+            variant={statusFilter === "all" ? "default" : "outline"}
+            onClick={() => setStatusFilter("all")}
+            className={statusFilter === "all" ? "bg-[#0094eb] hover:bg-[#0080cc]" : ""}
+          >
+            Todas
+          </Button>
+          <Button
+            size="sm"
+            variant={statusFilter === "live" ? "default" : "outline"}
+            onClick={() => setStatusFilter("live")}
+            className={statusFilter === "live" ? "bg-red-500 hover:bg-red-600" : ""}
+          >
+            Ao Vivo
+          </Button>
+          <Button
+            size="sm"
+            variant={statusFilter === "scheduled" ? "default" : "outline"}
+            onClick={() => setStatusFilter("scheduled")}
+            className={statusFilter === "scheduled" ? "bg-[#0094eb] hover:bg-[#0080cc]" : ""}
+          >
+            Agendadas
+          </Button>
+          <Button
+            size="sm"
+            variant={statusFilter === "finished" ? "default" : "outline"}
+            onClick={() => setStatusFilter("finished")}
+            className={statusFilter === "finished" ? "bg-[#0094eb] hover:bg-[#0080cc]" : ""}
+          >
+            Encerradas
+          </Button>
+        </div>
       </div>
 
+      {/* Lista de Lives */}
       {filteredLives.length === 0 ? (
-        <Card className="border-border/60">
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Radio className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">Nenhuma live encontrada.</p>
-            <Button variant="link" onClick={handleCreateNew} disabled={!allowsLive} className="mt-2 text-primary">
-              Criar sua primeira live
-            </Button>
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+            <Radio className="h-12 w-12 text-gray-300 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">Nenhuma live encontrada</h3>
+            <p className="mt-1 text-sm text-gray-500 max-w-sm mb-4">
+              {search || statusFilter !== "all"
+                ? "Não foram encontradas lives com os filtros aplicados."
+                : "Você ainda não criou nenhuma live. Clique no botão abaixo para começar."}
+            </p>
+            {!search && statusFilter === "all" && (
+              <Button
+                onClick={handleCreateNew}
+                disabled={!allowsLive}
+                className="bg-[#0094eb] hover:bg-[#0080cc] text-white"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Criar Primeira Live
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {filteredLives.map((live) => {
-            const isLiveNow = Boolean(live.is_active && live.status === "live");
-            return (
-              <Card key={live.id} className="border-border/60 hover:border-border transition-colors">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="h-16 w-24 rounded-lg bg-muted overflow-hidden flex-shrink-0 flex items-center justify-center border border-border/40">
-                    {live.youtube_thumbnail_url ? (
-                      <img src={live.youtube_thumbnail_url} alt={live.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <Radio className="h-6 w-6 text-muted-foreground" />
-                    )}
-                  </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredLives.map((live) => (
+            <Card key={live.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <div className="relative aspect-video bg-gray-900 overflow-hidden group">
+                <img
+                  src={
+                    live.youtube_thumbnail_url ||
+                    (live.youtube_video_id ? `https://img.youtube.com/vi/${live.youtube_video_id}/hqdefault.jpg` : "/placeholder.svg")
+                  }
+                  alt={live.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute top-2 left-2 flex gap-1">
+                  {getStatusBadge(live.status)}
+                </div>
+              </div>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      {statusBadge(live)}
-                    </div>
-                    <p className="font-semibold text-sm truncate">{live.title}</p>
-                    {live.scheduled_at && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {new Date(live.scheduled_at).toLocaleString("pt-BR", {
-                          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
-                        })}
-                      </p>
-                    )}
-                  </div>
+              <CardContent className="p-4 space-y-3">
+                <h3 className="font-semibold text-gray-900 line-clamp-1" title={live.title}>
+                  {live.title}
+                </h3>
 
-                  <div className="flex items-center gap-2">
-                    {isLiveNow && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleOpenAdminPanel(live.id)}
-                        title="Administrar Live (Painel de Controle)"
-                        className="text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300"
-                      >
-                        <MonitorPlay className="h-4 w-4" />
-                      </Button>
-                    )}
+                <div className="flex items-center text-xs text-gray-500 gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  {live.scheduled_at
+                    ? new Date(live.scheduled_at).toLocaleString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "Sem data agendada"}
+                </div>
+
+                <div className="pt-2 border-t flex items-center justify-between gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleOpenAdminPanel(live.id)}
+                    className="text-[#0094eb] hover:bg-blue-50 px-2 text-xs flex items-center gap-1"
+                  >
+                    <MonitorPlay className="h-3.5 w-3.5" />
+                    Painel
+                  </Button>
+
+                  <div className="flex items-center gap-1">
                     <Button
-                      variant="outline"
                       size="icon"
+                      variant="ghost"
                       onClick={() => handleOpenMetrics(live)}
-                      title="Métricas da Live"
-                      className="text-rose-600 hover:bg-rose-50 hover:border-rose-300"
+                      className="h-8 w-8 text-gray-500 hover:text-[#0094eb]"
+                      title="Métricas"
                     >
                       <TrendingUp className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => handleShare(live)} title="Divulgar">
+
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleShare(live)}
+                      className="h-8 w-8 text-gray-500 hover:text-[#0094eb]"
+                      title="Compartilhar"
+                    >
                       <Share2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => handleEdit(live.id)} title="Editar">
+
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleEdit(live.id)}
+                      className="h-8 w-8 text-gray-500 hover:text-amber-600"
+                      title="Editar"
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => handleDelete(live.id)} title="Excluir" className="text-destructive hover:bg-destructive/10">
+
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleDelete(live.id)}
+                      className="h-8 w-8 text-gray-500 hover:text-red-600"
+                      title="Excluir"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 
+      {/* Modais */}
       {storeId && (
         <LiveFormDialog
           open={formOpen}
-          onOpenChange={setFormOpen}
+          onOpenChange={(open) => {
+            setFormOpen(open);
+            if (!open) setEditingLiveId(null);
+          }}
           storeId={storeId}
           liveId={editingLiveId}
-          allowsLive={allowsLive}
-          products={products}
-          onSaved={onFormSaved}
+          onSaved={() => {
+            if (storeId) loadLives(storeId);
+          }}
         />
       )}
 
@@ -416,27 +470,27 @@ export function LiveCommercePage() {
         <ShareLiveModal
           open={shareModalOpen}
           onOpenChange={setShareModalOpen}
-          liveTitle={shareLive.title}
-          youtubeVideoId={shareLive.youtube_video_id}
-          isLiveNow={Boolean(shareLive.is_active && shareLive.status === "live")}
+          live={shareLive}
         />
       )}
 
-      <LiveAppearanceModal
-        isOpen={appearanceOpen}
-        onClose={() => setAppearanceOpen(false)}
-        onSave={handleSaveAppearance}
-        isSaving={savingAppearance}
-        initialData={appearanceData}
-      />
+      {selectedLiveForMetrics && (
+        <LiveMetricsModal
+          open={metricsModalOpen}
+          onOpenChange={setMetricsModalOpen}
+          live={selectedLiveForMetrics}
+        />
+      )}
 
-      <LiveMetricsModal
-        open={metricsModalOpen}
-        onOpenChange={setMetricsModalOpen}
-        live={selectedLiveForMetrics}
-      />
+      {appearanceOpen && (
+        <LiveAppearanceModal
+          open={appearanceOpen}
+          onOpenChange={setAppearanceOpen}
+          onSave={handleSaveAppearance}
+          saving={savingAppearance}
+          initialValues={appearanceData}
+        />
+      )}
     </div>
   );
 }
-
-
