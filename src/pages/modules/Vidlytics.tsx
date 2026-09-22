@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+﻿import { useEffect, useState, useCallback } from 'react';
 import type { FormEvent } from 'react';
+import { toast } from 'sonner';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { useStore } from '../../contexts/StoreContext';
 import { VidlyticsDatabaseService, StoryItem } from '../../services/VidlyticsDatabaseService';
@@ -82,6 +83,7 @@ export default function Vidlytics() {
       setStories((data as StoryItem[]) || []);
     } catch (err) {
       console.error('Erro ao carregar stories:', err);
+      toast.error('Erro ao carregar os stories.');
     } finally {
       setLoadingStories(false);
     }
@@ -172,10 +174,11 @@ export default function Vidlytics() {
 
       setStoryTitle('');
       setIsStoryModalOpen(false);
+      toast.success('Story cadastrado com sucesso!');
       await loadStories();
     } catch (err) {
       console.error('Erro ao cadastrar story:', err);
-      alert('Ocorreu um erro ao criar o story.');
+      toast.error('Ocorreu um erro ao criar o story.');
     } finally {
       setSavingStory(false);
     }
@@ -186,9 +189,10 @@ export default function Vidlytics() {
     try {
       await VidlyticsDatabaseService.deleteStory(storyId);
       setStories((prev) => prev.filter((s) => s.id !== storyId));
+      toast.success('Story excluÃ­do com sucesso.');
     } catch (err) {
       console.error('Erro ao excluir story:', err);
-      alert('Erro ao excluir story.');
+      toast.error('Erro ao excluir story.');
     }
   };
 
