@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
+import { LayoutDashboard,
   Film,
   Play,
   Eye,
@@ -27,12 +27,13 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { SLLDatabaseService } from '@/services/SLLDatabaseService';
-import { VidlyticsDatabaseService } from '@/services/VidlyticsDatabaseService';
-import { Video, Story, Appearance } from '@/types/vidlytics';
+import { LayoutDashboard, SLLDatabaseService } from '@/services/SLLDatabaseService';
+import { LayoutDashboard, VidlyticsDatabaseService } from '@/services/VidlyticsDatabaseService';
+import { LayoutDashboard, Video, Story, Appearance } from '@/types/vidlytics';
 import VideoThumbnail from '@/components/vidlytics/VideoThumbnail';
 import WidgetPreview from '@/components/vidlytics/WidgetPreview';
-import { toast } from 'sonner';
+import VidlyticsOverviewTab from '@/components/vidlytics/VidlyticsOverviewTab';
+import { LayoutDashboard, toast } from 'sonner';
 
 export default function VidlyticsPage() {
   const [activeTab, setActiveTab] = useState<'catalog' | 'stories' | 'appearance' | 'integration'>('catalog');

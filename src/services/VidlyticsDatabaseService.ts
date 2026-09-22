@@ -1,4 +1,4 @@
-import { supabaseVidlytics, supabasePublic } from './supabaseClients';
+﻿import { supabaseVidlytics, supabasePublic } from './supabaseClients';
 
 export interface NewVideoInput {
   store_id: string;
@@ -221,6 +221,9 @@ export const VidlyticsDatabaseService = {
   // ==========================================
   // --- CATÁLOGO DE PRODUTOS (public.products) ---
   // ==========================================
+  // ==========================================
+  // --- CATÁLOGO DE PRODUTOS (public.products) ---
+  // ==========================================
   async getProducts(storeId: string) {
     const { data, error } = await supabasePublic
       .from('products')
@@ -228,6 +231,70 @@ export const VidlyticsDatabaseService = {
       .eq('store_id', storeId)
       .order('name', { ascending: true });
     if (error) throw error;
-    return data || [];
+    return data;
+  },
+
+  // ==========================================
+  // --- VISÃO GERAL / DASHBOARD ---
+  // ==========================================
+  async getDashboardOverview(storeId: string) {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
+    const [
+      videosRes,
+      storiesRes,
+      appearancesRes,
+      conversionsRes,
+      activityRes,
+      usageRes
+    ] = await Promise.allSettled([
+      supabaseVidlytics.from('videos').select('id', { count: 'exact', head: true }).eq('store_id', storeId),
+      supabaseVidlytics.from('stories').select('id', { count: 'exact', head: true }).eq('store_id', storeId),
+      supabaseVidlytics.from('appearances').select('id', { count: 'exact', head: true }).eq('store_id', storeId),
+      supabaseVidlytics.from('conversions').select('order_value, status, created_at').eq('store_id', storeId),
+      supabaseVidlytics.from('activity_logs').select('*').eq('store_id', storeId).order('created_at', { ascending: false }).limit(15),
+      supabaseVidlytics.from('daily_video_metrics').select('views_count').eq('store_id', storeId).gte('date', `${currentMonth}-01`),
+    ]);
+
+    const videosCount = videosRes.status === 'fulfilled' ? videosRes.value.count || 0 : 0;
+    const storiesCount = storiesRes.status === 'fulfilled' ? storiesRes.value.count || 0 : 0;
+    const appearancesCount = appearancesRes.status === 'fulfilled' ? appearancesRes.value.count || 0 : 0;
+    const activities = activityRes.status === 'fulfilled' ? (activityRes.value.data || []) : [];
+
+    let paidRevenue = 0;
+    let paidCount = 0;
+    let pendingRevenue = 0;
+    let pendingCount = 0;
+
+    if (conversionsRes.status === 'fulfilled' && conversionsRes.value.data) {
+      for (const item of conversionsRes.value.data) {
+        const val = Number(item.order_value) || 0;
+        const st = String(item.status || 'pending').toLowerCase();
+        if (st === 'paid' || st === 'approved' || st === 'completed') {
+          paidRevenue += val;
+          paidCount += 1;
+        } else {
+          pendingRevenue += val;
+          pendingCount += 1;
+        }
+      }
+    }
+
+    let viewsUsedMonth = 0;
+    if (usageRes.status === 'fulfilled' && usageRes.value.data) {
+      viewsUsedMonth = usageRes.value.data.reduce((acc: number, curr: any) => acc + (Number(curr.views_count) || 0), 0);
+    }
+
+    return {
+      videosCount,
+      storiesCount,
+      appearancesCount,
+      activities,
+      paidRevenue,
+      paidCount,
+      pendingRevenue,
+      pendingCount,
+      viewsUsedMonth
+    };
   }
 };
