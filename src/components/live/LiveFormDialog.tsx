@@ -669,7 +669,7 @@ export function LiveFormDialog({
                         <div className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-xl bg-slate-50/50">
                           <div className="w-48 aspect-video bg-slate-200 rounded-lg overflow-hidden border flex items-center justify-center relative shadow-sm shrink-0">
                             {youtubeThumbnailUrl ? (
-                              <img src={youtubeThumbnailUrl} alt="Thumb" className="w-full h-full object-cover" />
+                              <img loading="lazy" decoding="async" src={youtubeThumbnailUrl} alt="Thumb" className="w-full h-full object-cover" />
                             ) : (
                               <ImageIcon className="w-8 h-8 text-slate-400" />
                             )}
@@ -893,7 +893,7 @@ export function LiveFormDialog({
                                   <td className="p-2 text-center">
                                     <div className="w-9 h-9 rounded-lg bg-slate-100 border overflow-hidden mx-auto flex items-center justify-center">
                                       {prod.image_url ? (
-                                        <img src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" />
+                                        <img loading="lazy" decoding="async" src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" />
                                       ) : (
                                         <ShoppingBag className="w-4 h-4 text-slate-400" />
                                       )}
@@ -1042,7 +1042,7 @@ export function LiveFormDialog({
                           {promoMediaType === "video" ? (
                             <video src={promoMediaUrl} className="w-full" controls muted />
                           ) : (
-                            <img src={promoMediaUrl} alt="Mídia" className="w-full object-cover" />
+                            <img loading="lazy" decoding="async" src={promoMediaUrl} alt="Mídia" className="w-full object-cover" />
                           )}
                           <Button
                             type="button"
@@ -1274,7 +1274,7 @@ export function LiveFormDialog({
                     >
                       <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden shrink-0 border flex items-center justify-center">
                         {p.image_url ? (
-                          <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
                         ) : (
                           <ShoppingBag className="w-4 h-4 text-slate-400" />
                         )}
@@ -1318,4 +1318,5 @@ export function LiveFormDialog({
     </>
   );
 }
+
 

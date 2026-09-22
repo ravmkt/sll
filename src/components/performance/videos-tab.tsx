@@ -484,7 +484,7 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-16 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200/60 dark:border-[#ff7a29]/20">
                           {video.thumbnail_url ? (
-                            <img
+                            <img loading="lazy" decoding="async"
                               src={video.thumbnail_url}
                               alt={video.title}
                               className="h-full w-full object-cover"
@@ -626,3 +626,4 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
     </TooltipProvider>
   );
 }
+
