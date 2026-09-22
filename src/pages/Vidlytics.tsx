@@ -21,11 +21,18 @@ import {
   ChevronDown, 
   Layers, 
   ArrowLeft,
-  TrendingUp,
-  MousePointerClick,
-  Filter,
-  ArrowUpRight,
-  Sparkles
+  Search,
+  RefreshCw,
+  Sparkles,
+  Zap,
+  TrendingDown,
+  LogOut,
+  HelpCircle,
+  Compass,
+  Heart,
+  Percent,
+  Video,
+  ChevronRight
 } from "lucide-react";
 
 export default function Vidlytics() {
@@ -33,7 +40,11 @@ export default function Vidlytics() {
   const [activeTab, setActiveTab] = useState("results");
   const [copiedLink, setCopiedLink] = useState(false);
   const [moduleMenuOpen, setModuleMenuOpen] = useState(false);
-  const [periodFilter, setPeriodFilter] = useState("30d");
+  
+  // Sub-abas da aba Resultados
+  const [resultsSubTab, setResultsSubTab] = useState<"overview" | "videos" | "retention" | "insights">("overview");
+  const [selectedVideoRetention, setSelectedVideoRetention] = useState("oculos-de-sol.mp4");
+  const [searchVideoQuery, setSearchVideoQuery] = useState("");
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText("https://vidlytics.com.br/indique/useanny");
@@ -75,52 +86,40 @@ export default function Vidlytics() {
     { title: "Configurações da loja salvas: Use Anny", date: "10 de set. às 08:30" },
   ];
 
-  // Mock de dados para a aba Resultados
-  const topVideos = [
+  // Lista de vídeos para a tabela e filtro
+  const videoList = [
     {
-      id: 1,
-      title: "Vestido Midi Floral Primavera",
-      thumbnail: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=150&q=80",
-      views: "1.420",
-      clicks: 342,
-      orders: 28,
-      revenue: "R$ 5.572,00",
-      conversion: "8.18%"
+      id: "vid-1",
+      title: "oculos-de-sol.mp4",
+      status: "Ativo",
+      thumb: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=120&q=80",
+      views: 0,
+      ctr: "0,0%",
+      conversions: 0,
+      revenue: "—",
+      likes: 1,
+      comments: 0,
+      shares: 0,
+      duration: "—"
     },
     {
-      id: 2,
-      title: "Conjunto Alfaiataria Elegance",
-      thumbnail: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80",
-      views: "980",
-      clicks: 210,
-      orders: 19,
-      revenue: "R$ 4.313,00",
-      conversion: "9.04%"
-    },
-    {
-      id: 3,
-      title: "Bolsa Couro Legítimo Nude",
-      thumbnail: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=150&q=80",
-      views: "810",
-      clicks: 145,
-      orders: 12,
-      revenue: "R$ 2.628,00",
-      conversion: "8.27%"
-    },
-    {
-      id: 4,
-      title: "Blazer Casual Terracota",
-      thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-      views: "640",
-      clicks: 98,
-      orders: 7,
-      revenue: "R$ 1.673,00",
-      conversion: "7.14%"
+      id: "vid-2",
+      title: "Criação_de_Vídeo_Fashion_...",
+      status: "Ativo",
+      thumb: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=120&q=80",
+      views: 0,
+      ctr: "0,0%",
+      conversions: 0,
+      revenue: "—",
+      likes: 2,
+      comments: 0,
+      shares: 0,
+      duration: "—"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 pb-12 relative flex flex-col justify-between">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 pb-12 relative flex flex-col justify-between font-sans">
       <div>
         {/* 1. BARRA GLOBAL SLL HUB */}
         <header className="bg-white border-b border-slate-200/90 sticky top-0 z-40 shadow-xs">
@@ -219,7 +218,7 @@ export default function Vidlytics() {
                 />
               </div>
 
-              {/* Abas */}
+              {/* Menu de Abas Principais */}
               <nav className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
                 {tabs.map((tab) => {
                   const isActive = activeTab === tab.id;
@@ -241,10 +240,11 @@ export default function Vidlytics() {
             </div>
           </section>
 
-          {/* RENDERIZAÇÃO CONDICIONAL DAS ABAS */}
+          {/* ======================================================== */}
+          {/* CONTEÚDO DA ABA 1: VISÃO GERAL */}
+          {/* ======================================================== */}
           {activeTab === "overview" && (
             <div className="space-y-5 animate-in fade-in duration-200">
-              {/* Barra de Status Compacta */}
               <section className="bg-white rounded-xl px-4 py-2 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <span className="font-bold text-slate-800 text-xs sm:text-sm">Olá, <strong>Use Anny</strong></span>
@@ -510,278 +510,694 @@ export default function Vidlytics() {
           )}
 
           {/* ======================================================== */}
-          {/* ABA 2: RESULTADOS (DETALHADO E ANALÍTICO) */}
+          {/* CONTEÚDO DA ABA 2: RESULTADOS (COM SUAS 4 SUB-ABAS) */}
           {/* ======================================================== */}
           {activeTab === "results" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-5 animate-in fade-in duration-200">
               
-              {/* Filtro de Período e Resumo Rápido */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+              {/* CABEÇALHO DA SEÇÃO DE RESULTADOS */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <BarChart2 className="w-4 h-4 text-[#0094eb]" />
-                    Desempenho de Vendas e Conversão
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Acompanhe o retorno sobre o investimento gerado diretamente pelos stories na sua loja.
+                  <h1 className="text-2xl font-black text-slate-900">Resultados</h1>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Métricas reais de <strong className="text-[#0094eb] font-bold">Joias e Semijoias</strong> comparadas aos benchmarks nacionais de 2026.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-                    <button 
-                      onClick={() => setPeriodFilter("7d")}
-                      className={`px-3 py-1 rounded-lg transition-all ${periodFilter === "7d" ? "bg-white text-slate-800 shadow-xs font-bold" : "text-slate-500 hover:text-slate-800"}`}
-                    >
-                      7 Dias
-                    </button>
-                    <button 
-                      onClick={() => setPeriodFilter("30d")}
-                      className={`px-3 py-1 rounded-lg transition-all ${periodFilter === "30d" ? "bg-white text-slate-800 shadow-xs font-bold" : "text-slate-500 hover:text-slate-800"}`}
-                    >
-                      30 Dias
-                    </button>
-                    <button 
-                      onClick={() => setPeriodFilter("all")}
-                      className={`px-3 py-1 rounded-lg transition-all ${periodFilter === "all" ? "bg-white text-slate-800 shadow-xs font-bold" : "text-slate-500 hover:text-slate-800"}`}
-                    >
-                      Total
-                    </button>
-                  </div>
-                  <button className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600">
-                    <Filter className="w-4 h-4" />
-                  </button>
+                  <select 
+                    aria-label="Selecionar período"
+                    className="bg-white border border-slate-200 rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 cursor-pointer"
+                  >
+                    <option value="30">30 dias</option>
+                    <option value="7">7 dias</option>
+                    <option value="90">90 dias</option>
+                    <option value="all">Todo o período</option>
+                  </select>
                 </div>
               </div>
 
-              {/* 1. KPIs DE CONVERSÃO & FATURAMENTO */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                {/* Total Vendas Pagas */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-2">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-xs font-bold uppercase tracking-wider">Faturamento Gerado</span>
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                      <DollarSign className="w-4 h-4" />
-                    </div>
-                  </div>
-                  <div className="text-2xl font-black text-slate-900">R$ 14.186,00</div>
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold">
-                    <TrendingUp className="w-3.5 h-3.5" />
-                    <span>+18.4%</span>
-                    <span className="text-slate-400 font-normal">vs. período anterior</span>
-                  </div>
-                </div>
+              {/* NAVEGAÇÃO DE SUB-ABAS (PÍLULAS) */}
+              <div className="flex items-center gap-2 bg-slate-100/90 p-1 rounded-xl w-fit border border-slate-200/60 shadow-xs">
+                <button
+                  onClick={() => setResultsSubTab("overview")}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    resultsSubTab === "overview"
+                      ? "bg-[#0094eb] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                  }`}
+                >
+                  <BarChart2 className="w-3.5 h-3.5" />
+                  <span>Visão Geral</span>
+                </button>
 
-                {/* Taxa de Conversão */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-2">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-xs font-bold uppercase tracking-wider">Taxa de Conversão</span>
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#0094eb] flex items-center justify-center">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                  </div>
-                  <div className="text-2xl font-black text-[#0094eb]">8.42%</div>
-                  <div className="flex items-center gap-1 text-xs text-slate-400">
-                    <span>Média geral do e-commerce: 1.8%</span>
-                  </div>
-                </div>
+                <button
+                  onClick={() => setResultsSubTab("videos")}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    resultsSubTab === "videos"
+                      ? "bg-[#0094eb] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                  }`}
+                >
+                  <Video className="w-3.5 h-3.5" />
+                  <span>Vídeos</span>
+                </button>
 
-                {/* Cliques em Produtos (CTA) */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-2">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-xs font-bold uppercase tracking-wider">Cliques nos Produtos</span>
-                    <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-                      <MousePointerClick className="w-4 h-4" />
-                    </div>
-                  </div>
-                  <div className="text-2xl font-black text-slate-900">795</div>
-                  <div className="flex items-center gap-1 text-xs text-purple-600 font-bold">
-                    <span>20.6% de engajamento</span>
-                  </div>
-                </div>
+                <button
+                  onClick={() => setResultsSubTab("retention")}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    resultsSubTab === "retention"
+                      ? "bg-[#0094eb] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                  }`}
+                >
+                  <TrendingDown className="w-3.5 h-3.5" />
+                  <span>Retenção</span>
+                </button>
 
-                {/* Pedidos Confirmados */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-2">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-xs font-bold uppercase tracking-wider">Pedidos Concluídos</span>
-                    <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                      <ShoppingBag className="w-4 h-4" />
-                    </div>
-                  </div>
-                  <div className="text-2xl font-black text-slate-900">66</div>
-                  <div className="flex items-center gap-1 text-xs text-slate-400">
-                    <span>Ticket Médio: <strong className="text-slate-700">R$ 214,93</strong></span>
-                  </div>
-                </div>
-
+                <button
+                  onClick={() => setResultsSubTab("insights")}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    resultsSubTab === "insights"
+                      ? "bg-[#0094eb] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>Insights</span>
+                </button>
               </div>
 
-              {/* 2. GRÁFICOS VISUAIS: FATURAMENTO E FUNIL DE CONVERSÃO */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Gráfico Simulado de Vendas Semanais */}
-                <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">Faturamento Diário dos Vídeos</h4>
-                      <p className="text-xs text-slate-400">Evolução de pedidos nos últimos dias</p>
+              {/* ---------------------------------------------------- */}
+              {/* SUB-ABA 1: VISÃO GERAL */}
+              {/* ---------------------------------------------------- */}
+              {resultsSubTab === "overview" && (
+                <div className="space-y-6 animate-in fade-in duration-150">
+                  
+                  {/* Bloco Resultados Financeiros */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Resultados Financeiros
+                      </h3>
+                      <span className="text-[11px] text-slate-400 font-medium">Período: Últimos 30 dias</span>
                     </div>
-                    <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
-                      Mês Corrente
-                    </span>
-                  </div>
 
-                  {/* Barras do Gráfico */}
-                  <div className="h-48 flex items-end gap-3 sm:gap-6 pt-6 px-2 justify-between border-b border-slate-100">
-                    {[
-                      { day: "Seg", val: "R$ 1.820", height: "45%" },
-                      { day: "Ter", val: "R$ 2.450", height: "65%" },
-                      { day: "Qua", val: "R$ 1.300", height: "35%" },
-                      { day: "Qui", val: "R$ 3.890", height: "85%" },
-                      { day: "Sex", val: "R$ 4.200", height: "95%" },
-                      { day: "Sáb", val: "R$ 2.900", height: "70%" },
-                      { day: "Dom", val: "R$ 1.626", height: "40%" },
-                    ].map((bar, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer h-full justify-end">
-                        <div className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-white bg-slate-800 px-2 py-0.5 rounded shadow-sm transition-opacity pointer-events-none whitespace-nowrap">
-                          {bar.val}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Card 1 */}
+                      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase">
+                            <span>Aguardando Pagamento</span>
+                            <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </div>
+                          <div className="text-2xl font-black text-amber-500">R$ 378,39</div>
+                          <p className="text-[11px] text-slate-400">3 pedidos em aberto</p>
                         </div>
-                        <div 
-                          className="w-full bg-blue-100 group-hover:bg-[#0094eb] rounded-t-lg transition-all duration-300 relative overflow-hidden" 
-                          style={{ height: bar.height }}
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center">
+                          <Clock className="w-5 h-5" />
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-400 group-hover:text-slate-700">
-                          {bar.day}
+                      </div>
+
+                      {/* Card 2 */}
+                      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase">
+                            <span>Vendas Pagas</span>
+                            <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </div>
+                          <div className="text-2xl font-black text-emerald-600">R$ 0,00</div>
+                          <p className="text-[11px] text-slate-400">0 pedidos confirmados</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                          <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                      </div>
+
+                      {/* Card 3 */}
+                      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase">
+                            <span>Indicações</span>
+                            <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </div>
+                          <div className="text-2xl font-black text-purple-600">R$ 0,00</div>
+                          <p className="text-[11px] text-slate-400">Comissões disponíveis</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                          <DollarSign className="w-5 h-5" />
+                        </div>
+                      </div>
+
+                      {/* Card 4 */}
+                      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase">
+                            <span>Total Gerado</span>
+                            <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </div>
+                          <div className="text-2xl font-black text-[#0094eb]">R$ 0,00</div>
+                          <p className="text-[11px] text-slate-400">Vendas Pagas + Indicações</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0094eb] flex items-center justify-center">
+                          <ShoppingBag className="w-5 h-5" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gráfico 1: Evolução Financeira Diária */}
+                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <span>📈 Evolução Financeira Diária (R$)</span>
+                          </h4>
+                          <p className="text-xs text-slate-400">Monitore faturamento aprovado, boletos/Pix em aberto e receitas por dia.</p>
+                        </div>
+
+                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[11px] font-semibold text-slate-600 flex-wrap">
+                          <button className="px-2.5 py-1 rounded-lg bg-white text-slate-900 shadow-xs font-bold">Todas Juntas</button>
+                          <button className="px-2.5 py-1 rounded-lg hover:text-slate-900">Aguardando</button>
+                          <button className="px-2.5 py-1 rounded-lg hover:text-slate-900">Vendas Pagas</button>
+                          <button className="px-2.5 py-1 rounded-lg hover:text-slate-900">Indicações</button>
+                          <button className="px-2.5 py-1 rounded-lg hover:text-slate-900">Total Gerado</button>
+                        </div>
+                      </div>
+
+                      {/* Gráfico Visual de Linha com Curvas */}
+                      <div className="relative h-56 w-full pt-4 pb-2 border-b border-slate-100 flex items-center justify-center overflow-hidden">
+                        <svg className="w-full h-full" viewBox="0 0 900 180" preserveAspectRatio="none">
+                          <line x1="0" y1="40" x2="900" y2="40" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4 4" />
+                          <line x1="0" y1="90" x2="900" y2="90" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4 4" />
+                          <line x1="0" y1="140" x2="900" y2="140" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4 4" />
+                          
+                          {/* Linha Amarela com Picos (Aguardando Pagamento conforme print) */}
+                          <path
+                            d="M 0,160 L 350,160 Q 370,160 380,30 Q 390,160 410,160 L 680,160 Q 700,160 710,30 Q 720,160 740,160 L 900,160"
+                            fill="none"
+                            stroke="#fd8539"
+                            strokeWidth="2.5"
+                          />
+                          <circle cx="380" cy="30" r="4.5" fill="#fd8539" stroke="#ffffff" strokeWidth="2" />
+                          <circle cx="710" cy="30" r="4.5" fill="#fd8539" stroke="#ffffff" strokeWidth="2" />
+
+                          {/* Linha Base Azul/Verde no Zero */}
+                          <line x1="0" y1="160" x2="900" y2="160" stroke="#0094eb" strokeWidth="2" />
+                        </svg>
+                      </div>
+
+                      {/* Legenda do Gráfico */}
+                      <div className="flex items-center justify-center gap-4 text-[11px] text-slate-500 flex-wrap pt-2">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#fd8539]" /> Aguardando Pagamento
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Vendas Pagas
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> Indicações
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#0094eb]" /> Total Gerado
                         </span>
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
-                    <span>* Conversões rastreadas através do parâmetro vidlytics_ref e checkout integrado.</span>
-                    <span className="text-[#0094eb] font-bold flex items-center gap-1 cursor-pointer hover:underline">
-                      Exportar Relatório <ArrowUpRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </div>
-
-                {/* Funil Visual de Conversão */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-5 flex flex-col justify-between">
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">Funil de Conversão</h4>
-                    <p className="text-xs text-slate-400">Jornada do espectador até a compra</p>
-                  </div>
-
-                  <div className="space-y-3.5">
-                    {/* Passo 1 */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-slate-600">1. Visualizações</span>
-                        <span className="text-slate-900 font-bold">3.850</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2">
-                        <div className="bg-slate-400 h-2 rounded-full w-full" />
-                      </div>
-                    </div>
-
-                    {/* Passo 2 */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-slate-600">2. Cliques no Produto</span>
-                        <span className="text-slate-900 font-bold">795 (20.6%)</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2">
-                        <div className="bg-[#0094eb] h-2 rounded-full w-[20.6%]" />
-                      </div>
-                    </div>
-
-                    {/* Passo 3 */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-slate-600">3. Vendas Realizadas</span>
-                        <span className="text-emerald-600 font-bold">66 (8.42%)</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2">
-                        <div className="bg-emerald-500 h-2 rounded-full w-[8.42%]" />
-                      </div>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
-                    <p className="text-[11px] text-blue-900 leading-snug">
-                      💡 <strong>Dica do Consultor:</strong> Seus stories com botão de CTA direto nos primeiros 5 segundos converteram <strong>42% a mais</strong>.
-                    </p>
-                  </div>
-                </div>
+                  {/* Bloco Performance dos Vídeos & Interação do Público */}
+                  <div className="space-y-3 pt-2">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Performance dos Vídeos & Interação do Público
+                    </h3>
 
-              </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Card 1 */}
+                      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase">
+                            <span>Visualizações</span>
+                            <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </div>
+                          <div className="text-2xl font-black text-slate-900">0</div>
+                          <p className="text-[11px] text-slate-400">Sessões de stories abertas</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0094eb] flex items-center justify-center">
+                          <Eye className="w-5 h-5" />
+                        </div>
+                      </div>
 
-              {/* 3. RANKING DE VÍDEOS QUE MAIS VENDERAM */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-                <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Ranking: Stories Campeões de Venda</h3>
-                    <p className="text-xs text-slate-400">Vídeos com maior receita e eficiência de conversão gerada.</p>
-                  </div>
-                  <span className="text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200/70 px-3 py-1 rounded-lg">
-                    Ordenado por Faturamento
-                  </span>
-                </div>
+                      {/* Card 2 */}
+                      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase">
+                            <span>Cliques em CTA</span>
+                            <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </div>
+                          <div className="text-2xl font-black text-slate-900">0</div>
+                          <p className="text-[11px] text-slate-400">Cliques no card/botão de compra</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center">
+                          <Zap className="w-5 h-5" />
+                        </div>
+                      </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50/80 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-100">
-                      <tr>
-                        <th className="px-5 py-3.5">Posição & Vídeo</th>
-                        <th className="px-4 py-3.5 text-center">Visualizações</th>
-                        <th className="px-4 py-3.5 text-center">Cliques CTA</th>
-                        <th className="px-4 py-3.5 text-center">Pedidos</th>
-                        <th className="px-4 py-3.5 text-center">Conversão</th>
-                        <th className="px-5 py-3.5 text-right">Faturamento</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium">
-                      {topVideos.map((item, index) => (
-                        <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="px-5 py-3 flex items-center gap-3">
-                            <span className="w-5 text-center font-bold text-slate-400 text-xs">
-                              #{index + 1}
-                            </span>
-                            <div className="relative w-10 h-14 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0 shadow-xs group cursor-pointer">
-                              <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
-                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Play className="w-3.5 h-3.5 text-white fill-current" />
-                              </div>
+                      {/* Card 3 */}
+                      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase">
+                            <span>Engajamento Social</span>
+                            <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </div>
+                          <div className="flex items-center gap-4 pt-1">
+                            <div>
+                              <span className="text-xl font-black text-rose-500">0</span>
+                              <span className="text-[10px] text-slate-400 block font-medium">Curtidas</span>
                             </div>
-                            <div className="min-w-0">
-                              <p className="font-bold text-slate-800 truncate text-xs">{item.title}</p>
-                              <span className="text-[10px] text-slate-400">ID: VID-00{item.id}</span>
+                            <div>
+                              <span className="text-xl font-black text-[#0094eb]">0</span>
+                              <span className="text-[10px] text-slate-400 block font-medium">Comentários</span>
                             </div>
-                          </td>
+                          </div>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
+                          <Heart className="w-5 h-5" />
+                        </div>
+                      </div>
 
-                          <td className="px-4 py-3 text-center text-slate-600 font-semibold">{item.views}</td>
-                          <td className="px-4 py-3 text-center text-slate-600 font-semibold">{item.clicks}</td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-bold text-[11px] border border-emerald-100">
-                              {item.orders} vendas
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center font-bold text-[#0094eb]">{item.conversion}</td>
-                          <td className="px-5 py-3 text-right font-black text-slate-900 text-sm">{item.revenue}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      {/* Card 4 */}
+                      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase">
+                            <span>CTR (Taxa de Cliques)</span>
+                            <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </div>
+                          <div className="text-2xl font-black text-slate-900">0.0%</div>
+                          <div className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded">
+                            <span>📉 -3.9% vs Setor</span>
+                          </div>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                          <Percent className="w-5 h-5" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gráfico 2: Evolução Diária de Engajamento */}
+                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <span>📊 Evolução Diária de Engajamento & Funil de Vídeos</span>
+                          </h4>
+                          <p className="text-xs text-slate-400">Acompanhe o volume de visualizações, cliques nos produtos, reações e a taxa de CTR ao longo do tempo.</p>
+                        </div>
+
+                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[11px] font-semibold text-slate-600 flex-wrap">
+                          <button className="px-2.5 py-1 rounded-lg bg-white text-slate-900 shadow-xs font-bold">Todas Juntas</button>
+                          <button className="px-2.5 py-1 rounded-lg hover:text-slate-900">Visualizações</button>
+                          <button className="px-2.5 py-1 rounded-lg hover:text-slate-900">Cliques CTA</button>
+                          <button className="px-2.5 py-1 rounded-lg hover:text-slate-900">Engajamento</button>
+                          <button className="px-2.5 py-1 rounded-lg hover:text-slate-900">CTR (%)</button>
+                        </div>
+                      </div>
+
+                      {/* Linha Plana no Zero */}
+                      <div className="relative h-44 w-full pt-4 pb-2 border-b border-slate-100 flex items-end">
+                        <div className="w-full h-px bg-[#0094eb]" />
+                      </div>
+
+                      {/* Legenda */}
+                      <div className="flex items-center justify-center gap-4 text-[11px] text-slate-500 flex-wrap pt-2">
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#0094eb]" /> Visualizações</span>
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" /> Cliques em CTA</span>
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" /> Engajamento Social</span>
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Taxa de Cliques (CTR %)</span>
+                      </div>
+                    </div>
+
+                    {/* Banner Benchmark do Setor */}
+                    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0094eb] flex items-center justify-center flex-shrink-0">
+                          <Compass className="w-5 h-5" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <h4 className="text-xs font-bold text-slate-900">Como funciona o benchmark do setor?</h4>
+                          <p className="text-[11px] text-slate-500 leading-snug">
+                            As metas de comparação do setor de <strong>Joias e Semijoias</strong> são baseadas em pesquisas consolidadas de mercado nacional de 2026 (Ebit/Nielsen, Neotrust e Social Commerce global).
+                          </p>
+                        </div>
+                      </div>
+
+                      <button className="whitespace-nowrap px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold rounded-xl transition-colors shadow-xs flex items-center gap-2">
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Ver Estudo de Mercado</span>
+                      </button>
+                    </div>
+
+                  </div>
+
                 </div>
-              </div>
+              )}
+
+              {/* ---------------------------------------------------- */}
+              {/* SUB-ABA 2: VÍDEOS */}
+              {/* ---------------------------------------------------- */}
+              {resultsSubTab === "videos" && (
+                <div className="space-y-5 animate-in fade-in duration-150">
+                  {/* 4 Cards de Métricas de Vídeos */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                          Total de Visualizações <HelpCircle className="w-3 h-3 text-slate-400" />
+                        </span>
+                        <div className="text-2xl font-black text-slate-900">0</div>
+                        <p className="text-[11px] text-slate-400">Média de <strong>0</strong> por vídeo</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0094eb] flex items-center justify-center">
+                        <Eye className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                          CTR Médio Geral <HelpCircle className="w-3 h-3 text-slate-400" />
+                        </span>
+                        <div className="text-2xl font-black text-slate-900">0,0%</div>
+                        <p className="text-[11px] text-slate-400">Em 2 vídeos analisados</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <Percent className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                          Conversões Atribuídas <HelpCircle className="w-3 h-3 text-slate-400" />
+                        </span>
+                        <div className="text-2xl font-black text-slate-900">0</div>
+                        <p className="text-[11px] text-slate-400">Receita: <strong className="text-emerald-600">R$ 0,00</strong></p>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#fd8539] flex items-center justify-center">
+                        <ShoppingBag className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                          Engajamento Total <HelpCircle className="w-3 h-3 text-slate-400" />
+                        </span>
+                        <div className="flex items-center gap-4 pt-1">
+                          <div>
+                            <span className="text-xl font-black text-rose-500">3</span>
+                            <span className="text-[10px] text-slate-400 block font-medium">Curtidas</span>
+                          </div>
+                          <div>
+                            <span className="text-xl font-black text-[#0094eb]">0</span>
+                            <span className="text-[10px] text-slate-400 block font-medium">Comentários</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
+                        <Heart className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Campo de Busca */}
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input 
+                      type="text"
+                      placeholder="Buscar por título do vídeo..."
+                      value={searchVideoQuery}
+                      onChange={(e) => setSearchVideoQuery(e.target.value)}
+                      className="w-full bg-white border border-slate-200/80 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 shadow-xs"
+                    />
+                  </div>
+
+                  {/* Tabela de Vídeos */}
+                  <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50/80 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-100">
+                          <tr>
+                            <th className="px-5 py-3.5">Vídeo</th>
+                            <th className="px-4 py-3.5 text-center">Visualizações ▾</th>
+                            <th className="px-4 py-3.5 text-center">CTR</th>
+                            <th className="px-4 py-3.5 text-center">Conversões</th>
+                            <th className="px-4 py-3.5 text-center">Receita</th>
+                            <th className="px-4 py-3.5 text-center">Engajamento</th>
+                            <th className="px-5 py-3.5 text-right">Duração</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium">
+                          {videoList.map((v) => (
+                            <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="px-5 py-3.5 flex items-center gap-3">
+                                <div className="w-10 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative group">
+                                  <img src={v.thumb} alt={v.title} className="w-full h-full object-cover" />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-slate-800 text-xs">{v.title}</p>
+                                  <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.2 rounded-full border border-emerald-100">
+                                    {v.status}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3.5 text-center font-bold text-slate-800">{v.views}</td>
+                              <td className="px-4 py-3.5 text-center font-bold text-rose-500">{v.ctr}</td>
+                              <td className="px-4 py-3.5 text-center font-bold text-slate-800">{v.conversions}</td>
+                              <td className="px-4 py-3.5 text-center text-slate-400">{v.revenue}</td>
+                              <td className="px-4 py-3.5 text-center text-slate-500">
+                                <span className="inline-flex items-center gap-2 text-[11px]">
+                                  <span className="flex items-center gap-0.5 text-rose-500 font-bold"><Heart className="w-3 h-3" /> {v.likes}</span>
+                                  <span className="flex items-center gap-0.5 text-blue-500 font-bold"><MessageSquare className="w-3 h-3" /> {v.comments}</span>
+                                  <span className="flex items-center gap-0.5 text-amber-500 font-bold"><Share2 className="w-3 h-3" /> {v.shares}</span>
+                                </span>
+                              </td>
+                              <td className="px-5 py-3.5 text-right text-slate-400">{v.duration}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ---------------------------------------------------- */}
+              {/* SUB-ABA 3: RETENÇÃO */}
+              {/* ---------------------------------------------------- */}
+              {resultsSubTab === "retention" && (
+                <div className="space-y-5 animate-in fade-in duration-150">
+                  {/* 4 Cards de Retenção */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase">Taxa de Conclusão</span>
+                        <div className="text-2xl font-black text-slate-900">0%</div>
+                        <p className="text-[11px] text-slate-400">Assistiram até o último segundo</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase">Tempo Médio</span>
+                        <div className="text-2xl font-black text-slate-900">0s <span className="text-xs text-slate-400 font-normal">de 15s</span></div>
+                        <p className="text-[11px] text-slate-400">0% da duração total</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0094eb] flex items-center justify-center">
+                        <Clock className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase">Maior Queda</span>
+                        <div className="text-2xl font-black text-slate-900">12s</div>
+                        <p className="text-[11px] text-slate-400">Momento com maior evasão do público</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center">
+                        <Zap className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase">Taxa de Evasão</span>
+                        <div className="text-2xl font-black text-rose-500">100%</div>
+                        <p className="text-[11px] text-slate-400">Saíram antes do final</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
+                        <LogOut className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dropdown Vídeo Analisado */}
+                  <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 uppercase">Vídeo Analisado</h4>
+                      <p className="text-[11px] text-slate-400">Selecione qual vídeo você quer inspecionar</p>
+                    </div>
+
+                    <select
+                      aria-label="Selecionar vídeo para análise de retenção"
+                      value={selectedVideoRetention}
+                      onChange={(e) => setSelectedVideoRetention(e.target.value)}
+                      className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 shadow-xs focus:ring-2 focus:ring-[#0094eb]/20"
+                    >
+                      <option value="oculos-de-sol.mp4">oculos-de-sol.mp4</option>
+                      <option value="Criação_de_Vídeo_Fashion_...">Criação_de_Vídeo_Fashion_...</option>
+                    </select>
+                  </div>
+
+                  {/* Grid: Gráfico de Retenção + Player */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Gráfico Curva de Retenção */}
+                    <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-bold text-slate-900">Curva de Retenção (Segundo a Segundo)</h4>
+                          <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+                        </div>
+                        <p className="text-xs text-slate-400">Acompanhe onde a audiência perde o interesse ou onde fica engajada</p>
+                      </div>
+
+                      {/* Simulação Gráfica SVG com Área de Retenção */}
+                      <div className="relative h-60 w-full pt-4">
+                        <svg className="w-full h-full" viewBox="0 0 600 200" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="retentionGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#0094eb" stopOpacity="0.4" />
+                              <stop offset="100%" stopColor="#0094eb" stopOpacity="0.02" />
+                            </linearGradient>
+                          </defs>
+
+                          {/* Linha e Área */}
+                          <path
+                            d="M 0,20 L 400,20 Q 450,20 480,50 L 600,75 L 600,200 L 0,200 Z"
+                            fill="url(#retentionGrad)"
+                          />
+                          <path
+                            d="M 0,20 L 400,20 Q 450,20 480,50 L 600,75"
+                            fill="none"
+                            stroke="#0094eb"
+                            strokeWidth="3"
+                          />
+
+                          {/* Linha pontilhada da maior queda (12s) */}
+                          <line x1="480" y1="0" x2="480" y2="200" stroke="#f43f5e" strokeWidth="1.5" strokeDasharray="4 4" />
+                        </svg>
+
+                        {/* Rótulos de tempo */}
+                        <div className="flex justify-between text-[10px] text-slate-400 pt-2 border-t border-slate-100">
+                          <span>0s</span><span>2s</span><span>4s</span><span>6s</span><span>8s</span><span>10s</span><span className="text-rose-500 font-bold">12s</span><span>14s</span><span>15s</span>
+                        </div>
+                      </div>
+
+                      {/* Diagnóstico Inteligente */}
+                      <div className="p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl flex items-start gap-2.5">
+                        <Sparkles className="w-4 h-4 text-[#0094eb] flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-blue-900 leading-relaxed">
+                          <strong>Diagnóstico Inteligente:</strong> Boa retenção inicial. A maior parte da audiência permaneceu além dos primeiros segundos de exibição.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Preview Player Vídeo */}
+                    <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-3 flex flex-col items-center">
+                      <div className="w-full text-left">
+                        <h4 className="text-sm font-bold text-slate-900">Visualização</h4>
+                        <p className="text-xs text-slate-400 truncate">{selectedVideoRetention}</p>
+                      </div>
+
+                      <div className="relative w-52 h-[340px] rounded-2xl overflow-hidden bg-black shadow-lg border-2 border-slate-800">
+                        <img 
+                          src="https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=400&q=80" 
+                          alt="Video Preview" 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-between p-3 text-white">
+                          <div className="text-[10px] font-bold bg-black/40 px-2 py-0.5 rounded w-fit">
+                            0:12 / 0:15
+                          </div>
+                          <div className="space-y-1">
+                            <div className="w-full bg-white/30 h-1 rounded-full overflow-hidden">
+                              <div className="bg-[#0094eb] h-full w-[80%]" />
+                            </div>
+                            <div className="flex items-center justify-between text-xs pt-1">
+                              <Play className="w-4 h-4 fill-current cursor-pointer" />
+                              <span className="text-[10px] uppercase font-bold">Vidlytics Player</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ---------------------------------------------------- */}
+              {/* SUB-ABA 4: INSIGHTS */}
+              {/* ---------------------------------------------------- */}
+              {resultsSubTab === "insights" && (
+                <div className="space-y-6 animate-in fade-in duration-150">
+                  {/* Card Vidlytics AI Insights */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-2xl bg-blue-50 text-[#0094eb] flex items-center justify-center shadow-xs">
+                        <Sparkles className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900">Vidlytics AI Insights</h3>
+                        <p className="text-xs text-slate-400">
+                          Análise inteligente do comportamento dos seus Stories nos últimos <strong>30 dias</strong>.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5">
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-600 transition-colors shadow-xs">
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Atualizar</span>
+                      </button>
+
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-[#0094eb] border border-blue-100 text-xs font-bold shadow-xs">
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>Motor de Regras Ativo</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Empty State Conforme Imagem */}
+                  <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center space-y-4 flex flex-col items-center justify-center min-h-[360px]">
+                    <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300">
+                      <Video className="w-8 h-8 stroke-[1.5]" />
+                    </div>
+
+                    <div className="max-w-md space-y-1.5">
+                      <h4 className="text-base font-bold text-slate-800">Sem insights para este período</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Precisamos de mais dados de visualizações e interações para gerar análises confiáveis. Volte em breve ou clique em "Atualizar".
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </div>
           )}
 
-          {/* Placeholders limpos para as próximas abas */}
+          {/* Placeholders limpos para as outras abas */}
           {["stories", "library", "products", "comments", "appearance"].includes(activeTab) && (
             <div className="bg-white rounded-2xl p-12 border border-slate-200/80 shadow-xs text-center space-y-3 animate-in fade-in">
               <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#0094eb] mx-auto flex items-center justify-center">
