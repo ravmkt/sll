@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useAuth } from './contexts/AuthContext';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/auth/Login';
+import Vidlytics from './pages/modules/Vidlytics';
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -18,17 +19,29 @@ function AppRoutes() {
     <Routes>
       {/* Redireciona a raiz para a dashboard */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      
+
       {/* Rota pública de Login */}
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
-      
-      {/* Rota protegida */}
-      <Route 
-        path="/dashboard" 
-        element={user ? <Dashboard /> : <Navigate to="/auth" replace />} 
+
+      {/* Rotas protegidas */}
+      <Route
+        path="/dashboard"
+        element={user ? <Dashboard /> : <Navigate to="/auth" replace />}
       />
-      
-      {/* Rota de fallback */}
+
+      {/* Rota Vidlytics */}
+      <Route
+        path="/dashboard/modules/vidlytics"
+        element={user ? <Vidlytics /> : <Navigate to="/auth" replace />}
+      />
+
+      {/* Redirecionamento de módulos geral para Vidlytics como padrão */}
+      <Route
+        path="/dashboard/modules"
+        element={<Navigate to="/dashboard/modules/vidlytics" replace />}
+      />
+
+      {/* Fallback */}
       <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   );
@@ -41,5 +54,3 @@ export default function App() {
     </Router>
   );
 }
-
-
