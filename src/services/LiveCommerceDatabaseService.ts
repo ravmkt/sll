@@ -10,8 +10,31 @@ export interface NewLiveInput {
   is_active?: boolean;
 }
 
+export interface LiveItem {
+  id: string;
+  store_id: string;
+  title: string;
+  youtube_video_id?: string | null;
+  youtube_thumbnail_url?: string | null;
+  youtube_url?: string | null;
+  status: 'scheduled' | 'live' | 'finished';
+  is_active: boolean;
+  scheduled_at?: string | null;
+  created_at: string;
+}
+
+export interface LiveSettings {
+  store_id: string;
+  widget_divulgacao?: any;
+  widget_aovivo?: any;
+  player_settings?: any;
+  updated_at?: string;
+}
+
 export const LiveCommerceDatabaseService = {
-  // Obter todas as lives de uma loja
+  // ==========================================
+  // --- LIVES (live_commerce.lives) ---
+  // ==========================================
   async getLives(storeId: string) {
     const { data, error } = await supabaseLiveCommerce
       .from('lives')
@@ -19,10 +42,9 @@ export const LiveCommerceDatabaseService = {
       .eq('store_id', storeId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return data || [];
+    return (data || []) as LiveItem[];
   },
 
-  // Obter uma live específica por ID
   async getLiveById(liveId: string) {
     const { data, error } = await supabaseLiveCommerce
       .from('lives')
@@ -30,14 +52,15 @@ export const LiveCommerceDatabaseService = {
       .eq('id', liveId)
       .single();
     if (error) throw error;
-    return data;
+    return data as LiveItem;
   },
 
-  // Criar nova transmissão / live
   async createLive(live: NewLiveInput) {
     let videoId = live.youtube_video_id;
     if (!videoId && live.youtube_url) {
-      const match = live.youtube_url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|live\/))([a-zA-Z0-9_-]{11})/);
+      const match = live.youtube_url.match(
+        /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|live\/))([a-zA-Z0-9_-]{11})/
+      );
       if (match) videoId = match[1];
     }
 
@@ -52,17 +75,18 @@ export const LiveCommerceDatabaseService = {
           status: live.status || 'scheduled',
           scheduled_at: live.scheduled_at || new Date().toISOString(),
           is_active: live.is_active !== undefined ? live.is_active : true,
-          youtube_thumbnail_url: videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null
+          youtube_thumbnail_url: videoId
+            ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+            : null
         }
       ])
       .select()
       .single();
     if (error) throw error;
-    return data;
+    return data as LiveItem;
   },
 
-  // Atualizar dados da live
-  async updateLive(liveId: string, updates: Record<string, any>) {
+  async updateLive(liveId: string, updates: Partial<LiveItem> & Record<string, any>) {
     const { data, error } = await supabaseLiveCommerce
       .from('lives')
       .update(updates)
@@ -70,26 +94,9 @@ export const LiveCommerceDatabaseService = {
       .select()
       .single();
     if (error) throw error;
-    return data;
+    return data as LiveItem;
   },
 
-  // Atualizar status da live (ex: scheduled -> live -> finished)
-  async updateLiveStatus(liveId: string, status: 'scheduled' | 'live' | 'finished', isActive = true) {
-    const updates: Record<string, unknown> = { status, is_active: isActive };
-    if (status === 'live') updates.started_at = new Date().toISOString();
-    if (status === 'finished') updates.ended_at = new Date().toISOString();
-
-    const { data, error } = await supabaseLiveCommerce
-      .from('lives')
-      .update(updates)
-      .eq('id', liveId)
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
-  },
-
-  // Excluir Live
   async deleteLive(liveId: string) {
     const { error } = await supabaseLiveCommerce
       .from('lives')
@@ -99,57 +106,65 @@ export const LiveCommerceDatabaseService = {
     return true;
   },
 
-  // Configurações Globais do Live Commerce da loja
+  // ==========================================
+  // --- CONFIGURAÇÕES DE APARÊNCIA (live_commerce.live_settings) ---
+  // ==========================================
   async getLiveSettings(storeId: string) {
     const { data, error } = await supabaseLiveCommerce
       .from('live_settings')
-      .select('*')
+      .select('widget_divulgacao, widget_aovivo, player_settings')
       .eq('store_id', storeId)
       .maybeSingle();
     if (error) throw error;
     return data;
   },
 
-  // Salvar/Atualizar Configurações Globais
-  async upsertLiveSettings(storeId: string, settings: Record<string, any>) {
+  async getSettings(storeId: string) {
+    return this.getLiveSettings(storeId);
+  },
+
+  async upsertLiveSettings(storeId: string, settings: {
+    widget_divulgacao?: any;
+    widget_aovivo?: any;
+    player_settings?: any;
+  }) {
     const { data, error } = await supabaseLiveCommerce
       .from('live_settings')
-      .upsert({ store_id: storeId, ...settings, updated_at: new Date().toISOString() })
+      .upsert(
+        {
+          store_id: storeId,
+          ...settings,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'store_id' }
+      )
       .select()
       .single();
     if (error) throw error;
     return data;
   },
 
-  // Chat da Live
-  async getLiveChatMessages(liveId: string) {
-    const { data, error } = await supabaseLiveCommerce
-      .from('live_chat_messages')
-      .select('*')
-      .eq('live_id', liveId)
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    return data || [];
+  async saveSettings(storeId: string, settings: {
+    widget_divulgacao?: any;
+    widget_aovivo?: any;
+    player_settings?: any;
+  }) {
+    return this.upsertLiveSettings(storeId, settings);
   },
 
-  // Inscritos / Leads da Live
-  async getLiveSubscribers(liveId: string) {
-    const { data, error } = await supabaseLiveCommerce
-      .from('live_subscribers')
-      .select('*')
-      .eq('live_id', liveId);
-    if (error) throw error;
-    return data || [];
-  },
-
-  // Obter catálogo de produtos da loja (Core/public)
-  async getStoreProducts(storeId: string) {
+  // ==========================================
+  // --- CATÁLOGO DE PRODUTOS (public.products) ---
+  // ==========================================
+  async getProducts(storeId: string) {
     const { data, error } = await supabasePublic
       .from('products')
       .select('id, name, price, promotional_price, image_url, permalink')
       .eq('store_id', storeId)
-      .order('name');
+      .order('name', { ascending: true });
     if (error) throw error;
-    return data || [];
+    return (data || []).map(p => ({
+      ...p,
+      product_url: p.permalink || ''
+    }));
   }
 };
