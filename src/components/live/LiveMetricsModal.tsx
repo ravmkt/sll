@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseLiveCommerce, supabasePublic } from "@/services/supabaseClients";
 import {
   Dialog, DialogContent, DialogTitle
 } from "@/components/ui/dialog";
@@ -72,23 +72,20 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
         setLoading(true);
 
         // 1. Busca eventos reais da live
-        const { data: events } = await supabase
-          .from("live_events")
+        const { data: events } = await supabaseLiveCommerce.from("live_events")
           .select("event_type, metadata, created_at")
           .eq("live_id", live.id)
           .order("created_at", { ascending: true });
 
         // 2. Busca produtos vinculados à live
-        const { data: liveData } = await supabase
-          .from("lives")
+        const { data: liveData } = await supabaseLiveCommerce.from("lives")
           .select("featured_product_ids")
           .eq("id", live.id)
           .maybeSingle();
 
         let realProducts: any[] = [];
         if (liveData?.featured_product_ids && liveData.featured_product_ids.length > 0) {
-          const { data: prods } = await supabase
-            .from("products")
+          const { data: prods } = await supabasePublic.from("products")
             .select("id, name, price")
             .in("id", liveData.featured_product_ids);
           realProducts = prods || [];
@@ -507,3 +504,4 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
     </Dialog>
   );
 }
+
