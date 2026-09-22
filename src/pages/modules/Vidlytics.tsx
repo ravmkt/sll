@@ -752,3 +752,5 @@ export function Vidlytics() {
   );
 }
 
+
+export default Vidlytics;

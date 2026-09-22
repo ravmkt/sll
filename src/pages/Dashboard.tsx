@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { useStore } from '../contexts/StoreContext';
 import { Video, Radio, ShoppingBag, ArrowRight } from 'lucide-react';
@@ -21,9 +21,10 @@ export default function Dashboard() {
 
         {/* Módulos em Destaque */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Vidlytics */}
           <Link
             to="/dashboard/modules/vidlytics"
-            className="bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:border-[#0094eb] transition-all group block"
+            className="bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:border-[#0094eb] hover:shadow-md transition-all group block cursor-pointer"
           >
             <div className="w-12 h-12 rounded-lg bg-[#0094eb]/10 text-[#0094eb] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <Video size={24} />
@@ -39,31 +40,43 @@ export default function Dashboard() {
             </span>
           </Link>
 
-          <div className="bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:border-[#fd8539] transition-all">
-            <div className="w-12 h-12 rounded-lg bg-[#fd8539]/10 text-[#fd8539] flex items-center justify-center mb-4">
+          {/* Live Commerce */}
+          <Link
+            to="/dashboard/modules/live-commerce"
+            className="bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:border-[#fd8539] hover:shadow-md transition-all group block cursor-pointer"
+          >
+            <div className="w-12 h-12 rounded-lg bg-[#fd8539]/10 text-[#fd8539] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <Radio size={24} />
             </div>
-            <h3 className="font-semibold text-lg mb-1">Live Commerce</h3>
+            <h3 className="font-semibold text-lg mb-1 group-hover:text-[#fd8539] transition-colors">
+              Live Commerce
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
               Transmissões de vendas ao vivo integradas ao seu catálogo e carrinho de compras.
             </p>
             <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#fd8539]">
               Acessar Módulo <ArrowRight size={16} />
             </span>
-          </div>
+          </Link>
 
-          <div className="bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
-            <div className="w-12 h-12 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4">
+          {/* Catálogo de Produtos */}
+          <Link
+            to="/dashboard/products"
+            className="bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:border-emerald-500 hover:shadow-md transition-all group block cursor-pointer"
+          >
+            <div className="w-12 h-12 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <ShoppingBag size={24} />
             </div>
-            <h3 className="font-semibold text-lg mb-1">Catálogo de Produtos</h3>
+            <h3 className="font-semibold text-lg mb-1 group-hover:text-emerald-500 transition-colors">
+              Catálogo de Produtos
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
               Base única de produtos vinculada a todos os seus micro-apps do SLL.
             </p>
             <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600">
               Ver Produtos <ArrowRight size={16} />
             </span>
-          </div>
+          </Link>
         </div>
       </div>
     </DashboardLayout>
