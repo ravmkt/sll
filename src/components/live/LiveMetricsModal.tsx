@@ -186,8 +186,7 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
           });
 
           // Buscar vendas atribuídas à live
-          const { data: liveOrders } = await supabase
-            .from("orders")
+          const { data: liveOrders } = await supabasePublic.from("orders")
             .select("total_amount, items")
             .eq("live_id", live.id);
 
@@ -504,4 +503,5 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
     </Dialog>
   );
 }
+
 

@@ -1,6 +1,5 @@
-﻿import React, { useState, useEffect, useMemo } from "react";
-import { supabase } from '@/lib/supabase';
-import { supabaseLiveCommerce } from '@/services/supabaseClients';
+import React, { useState, useEffect, useMemo } from "react";
+import { LiveCommerceDatabaseService } from '@/services/LiveCommerceDatabaseService';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -165,12 +164,9 @@ export function LiveFormDialog({
     async function loadLive() {
       try {
         setLoadingLive(true);
-        const { data, error } = await supabaseLiveCommerce.from("lives")
-          .select("*")
-          .eq("id", liveId)
-          .maybeSingle();
+        const data = await LiveCommerceDatabaseService.getLiveById(liveId);
 
-        if (error || !data) {
+        if (!data) {
           toast.error("Erro ao carregar dados da live.");
           return;
         }
@@ -390,10 +386,8 @@ export function LiveFormDialog({
       setUploadingThumb(true);
       const fileExt = file.name.split(".").pop();
       const filePath = `store_${storeId}/live_thumbs/${Date.now()}.${fileExt}`;
-      const { error } = await supabase.storage.from("videos").upload(filePath, file, { cacheControl: "3600", upsert: true });
-      if (error) throw error;
-      const { data } = supabase.storage.from("videos").getPublicUrl(filePath);
-      setYoutubeThumbnailUrl(data.publicUrl);
+      const publicUrl = await LiveCommerceDatabaseService.uploadFile("videos", filePath, file);
+      setYoutubeThumbnailUrl(publicUrl);
       toast.success("Thumbnail atualizada!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao enviar imagem.");
@@ -415,10 +409,8 @@ export function LiveFormDialog({
       setUploadingPromo(true);
       const fileExt = file.name.split(".").pop();
       const filePath = `store_${storeId}/live_promo/${Date.now()}.${fileExt}`;
-      const { error } = await supabase.storage.from("videos").upload(filePath, file, { cacheControl: "3600", upsert: true });
-      if (error) throw error;
-      const { data } = supabase.storage.from("videos").getPublicUrl(filePath);
-      setPromoMediaUrl(data.publicUrl);
+      const publicUrl = await LiveCommerceDatabaseService.uploadFile("videos", filePath, file);
+      setPromoMediaUrl(publicUrl);
       setPromoMediaType(isVideo ? "video" : "image");
       toast.success("Mídia de divulgação enviada com sucesso!");
     } catch (err: any) {
@@ -482,13 +474,11 @@ export function LiveFormDialog({
       };
 
       if (liveId) {
-        const { error } = await supabaseLiveCommerce.from("lives").update(payload).eq("id", liveId);
-        if (error) throw error;
+        await LiveCommerceDatabaseService.updateLive(liveId, payload);
         toast.success("Live atualizada com sucesso!");
       } else {
         payload.is_active = true;
-        const { error } = await supabaseLiveCommerce.from("lives").insert(payload);
-        if (error) throw error;
+        await LiveCommerceDatabaseService.createLive(payload);
         toast.success("Live criada com sucesso!");
       }
 
@@ -1328,3 +1318,4 @@ export function LiveFormDialog({
     </>
   );
 }
+

@@ -1,7 +1,6 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import { supabaseLiveCommerce } from '@/services/supabaseClients';
+import { supabaseLiveCommerce, supabasePublic } from '@/services/supabaseClients';
 import { useLiveChat } from '@/hooks/useLiveChat';
 import { useLiveSpotlight } from '@/hooks/useLiveSpotlight';
 import { MODULES } from '@/lib/modules';
@@ -91,8 +90,7 @@ export default function LiveAdmin() {
       setStoreId(live.store_id || null);
 
           if (live.store_id) {
-            const { data: storeData } = await supabase
-              .from('stores')
+            const { data: storeData } = await supabasePublic.from('stores')
               .select('plan:plan_id(modules, allows_live)')
               .eq('id', live.store_id)
               .maybeSingle();
@@ -123,8 +121,7 @@ export default function LiveAdmin() {
       let defaultProductId: string | null = live.spotlight_product_id || null;
 
       if (productIds.length > 0) {
-        const { data: prods } = await supabase
-          .from('products')
+        const { data: prods } = await supabasePublic.from('products')
           .select('id, name, price, image_url')
           .in('id', productIds);
 
@@ -716,6 +713,7 @@ export default function LiveAdmin() {
     </div>
   );
 }
+
 
 
 
