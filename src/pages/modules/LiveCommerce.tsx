@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { LiveCommerceDatabaseService, LiveItem } from "@/services/LiveCommerceDatabaseService";
 import { MODULES } from "@/lib/modules";
-import { useStore } from "@/context/StoreContext";
+import { useStore } from "@/contexts/StoreContext";
 import { useTenant } from "@/context/TenantContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
