@@ -80,7 +80,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
         setLoading(true);
 
         const [storeRes, vidData, referralRes, settingsRes] = await Promise.allSettled([
-          sllDb.getStoreById(storeId),
+          SLLDatabaseService.getStoreById(storeId),
           VidlyticsDatabaseService.getDashboardOverview(storeId),
           supabase.from('referral_rewards').select('amount').eq('referrer_store_id', storeId).eq('status', 'paid'),
           supabase.from('store_settings').select('*').eq('store_id', storeId).maybeSingle(),
