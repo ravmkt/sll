@@ -25,3 +25,5 @@ dist-ssr
 
 .env.local
 .dyad/
+
+vidlytics_legado_backup.sql
