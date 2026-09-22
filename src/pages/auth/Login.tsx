@@ -65,7 +65,7 @@ export default function Auth() {
       <div className="bg-white px-8 pb-8 pt-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-full max-w-md border border-gray-100 relative z-10">
         
         <div className="flex flex-col items-center justify-center mb-2">
-          <img 
+          <img loading="eager" decoding="async" 
             src="/assets/sll-logotipo-b.png" 
             alt="Sistema Loja Lucrativa" 
             className="w-56 h-auto object-contain drop-shadow-sm" 
@@ -101,7 +101,7 @@ export default function Auth() {
         </div>
 
         <button onClick={handleGoogleLogin} type="button" className="w-full flex items-center justify-center gap-3 bg-white text-slate-700 py-3.5 px-4 rounded-xl font-bold border border-slate-200 hover:bg-slate-50 transition-all mb-6 shadow-sm">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+          <img loading="eager" decoding="async" src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
           {isLogin ? 'Entrar com Google' : 'Cadastrar com Google'}
         </button>
 
@@ -130,3 +130,4 @@ export default function Auth() {
     </div>
   );
 }
+

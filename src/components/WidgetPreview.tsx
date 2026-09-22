@@ -311,7 +311,7 @@ const WidgetPreview: React.FC<WidgetPreviewProps> = ({
                         }}
                       >
                         <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-white bg-slate-200">
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={storyThumb}
                             alt={story.title}
                             className="h-full w-full object-cover"
@@ -409,3 +409,4 @@ const WidgetPreview: React.FC<WidgetPreviewProps> = ({
 };
 
 export default WidgetPreview;
+

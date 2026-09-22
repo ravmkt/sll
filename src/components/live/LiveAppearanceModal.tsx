@@ -1267,7 +1267,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                                   <div className="flex flex-col gap-1 mb-1.5 overflow-hidden" style={{ maskImage: 'linear-gradient(to top, black 75%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to top, black 75%, transparent 100%)' }}>
                                     {[1,2,3].map(i => (
                                       <div key={i} className="flex items-center gap-1 drop-shadow">
-                                        <img src={`https://i.pravatar.cc/100?img=${i+14}`} className="w-3.5 h-3.5 rounded-full border border-white/40 shadow-sm shrink-0" alt="Avatar"/>
+                                        <img loading="lazy" decoding="async" src={`https://i.pravatar.cc/100?img=${i+14}`} className="w-3.5 h-3.5 rounded-full border border-white/40 shadow-sm shrink-0" alt="Avatar"/>
                                         <span className="text-white text-[8px] font-medium drop-shadow leading-none">Nononononono</span>
                                       </div>
                                     ))}
@@ -1292,7 +1292,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                                       borderRadius: `${currentPlayer.borderRadius}px`
                                     }}
                                   >
-                                    <img 
+                                    <img loading="lazy" decoding="async" 
                                       src={MOCK_PRODUCTS[4].img} 
                                       className="w-[44px] h-full object-cover shrink-0"
                                       alt="Produto"
@@ -1372,7 +1372,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                                               {String(idx + 1).padStart(2, '0')}
                                             </div>
 
-                                            <img 
+                                            <img loading="lazy" decoding="async" 
                                               src={prod.img} 
                                               className="w-[42px] h-full object-cover shrink-0"
                                               alt={prod.name}
@@ -1470,7 +1470,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                                           {String(idx + 1).padStart(2, '0')}
                                         </div>
 
-                                        <img 
+                                        <img loading="lazy" decoding="async" 
                                           src={prod.img} 
                                           className="w-[56px] h-full object-cover shrink-0" 
                                           alt={prod.name} 
@@ -1594,7 +1594,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                                   <div className="flex-1 overflow-y-auto p-3 space-y-3.5 pb-12 scrollbar-thin">
                                     {[1,2,3,4,5].map(i => (
                                       <div key={i} className="flex gap-2 items-start text-[11px] leading-tight">
-                                        <img src={`https://i.pravatar.cc/100?img=${i+10}`} className="w-5 h-5 rounded-full border border-slate-200 shrink-0" alt="Avatar" />
+                                        <img loading="lazy" decoding="async" src={`https://i.pravatar.cc/100?img=${i+10}`} className="w-5 h-5 rounded-full border border-slate-200 shrink-0" alt="Avatar" />
                                         <div className="text-slate-600 pt-0.5">
                                           <span className="font-bold text-slate-800">@usuario{i}</span> Oi, qual o valor? Vocês entregam para SP?
                                         </div>
@@ -1654,3 +1654,4 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     </Dialog>
   );
 }
+

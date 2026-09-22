@@ -283,7 +283,7 @@ export default function LiveAdmin() {
                 : 'w-full rounded-lg'
             }`}>
 
-              <img
+              <img loading="lazy" decoding="async"
                 src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80"
                 alt="Feed da Live"
                 className="w-full h-full object-cover"
@@ -383,7 +383,7 @@ export default function LiveAdmin() {
                       className="w-full bg-white text-slate-900 rounded-xl p-2 shadow-2xl border-2 flex items-center gap-2 animate-slideUp"
                       style={{ borderColor: accentColor }}
                     >
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={activeProduct.image}
                         alt={activeProduct.name}
                         className="w-11 h-11 object-cover rounded-md border border-slate-200 shrink-0"
@@ -475,7 +475,7 @@ export default function LiveAdmin() {
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <img src={prod.image} alt={prod.name} className="w-10 h-10 object-cover rounded-md border border-slate-800" />
+                          <img loading="lazy" decoding="async" src={prod.image} alt={prod.name} className="w-10 h-10 object-cover rounded-md border border-slate-800" />
                           <div className="min-w-0">
                             <h4 className="text-xs font-medium text-slate-200 truncate">{prod.name}</h4>
                             <span className="text-xs font-bold text-slate-100">R$ {prod.price.toFixed(2).replace('.', ',')}</span>
@@ -713,6 +713,7 @@ export default function LiveAdmin() {
     </div>
   );
 }
+
 
 
 

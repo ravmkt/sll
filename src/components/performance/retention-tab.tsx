@@ -567,7 +567,7 @@ setVideoStats({
                   playsInline
                 />
               ) : selectedVideo?.thumbnail_url ? (
-                <img
+                <img loading="lazy" decoding="async"
                   src={selectedVideo.thumbnail_url}
                   alt={selectedVideo.title}
                   className="h-full w-full object-cover"
@@ -593,3 +593,4 @@ setVideoStats({
     </div>
   );
 }
+

@@ -102,7 +102,7 @@ const LiveCardItem = React.memo(function LiveCardItem({
     <Card className="overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
       <div className="relative aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
         {live.youtube_thumbnail_url ? (
-          <img
+          <img loading="lazy" decoding="async"
             src={live.youtube_thumbnail_url}
             alt={live.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -523,3 +523,4 @@ export function LiveCommerce() {
     </div>
   );
 }
+
