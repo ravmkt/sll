@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+﻿import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import type { FormEvent } from 'react';
 import { toast } from 'sonner';
 import { 
@@ -148,7 +148,7 @@ const StoryCardItem = React.memo(function StoryCardItem({
 // ==========================================
 
 export function Vidlytics() {
-  const { currentStore } = useStore();
+  const { currentStore, loadingStores } = useStore();
   const [activeTab, setActiveTab] = useState<'videos' | 'stories' | 'appearance' | 'integration'>('videos');
 
   // Estados de dados
@@ -210,14 +210,32 @@ export function Vidlytics() {
   }, [currentStore?.id]);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function init() {
-      if (!currentStore?.id) return;
-      setLoading(true);
-      await Promise.all([loadVideos(), loadStories(), loadAppearance()]);
-      setLoading(false);
+      if (loadingStores) return;
+
+      if (!currentStore?.id) {
+        if (isMounted) setLoading(false);
+        return;
+      }
+
+      try {
+        if (isMounted) setLoading(true);
+        await Promise.allSettled([loadVideos(), loadStories(), loadAppearance()]);
+      } catch (err) {
+        console.error('Erro ao inicializar Vidlytics:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     }
+
     init();
-  }, [currentStore?.id, loadVideos, loadStories, loadAppearance]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentStore?.id, loadingStores, loadVideos, loadStories, loadAppearance]);
 
   // --- AÇÕES DE VÍDEOS ---
   const handleCreateVideo = useCallback(async (e: FormEvent) => {
