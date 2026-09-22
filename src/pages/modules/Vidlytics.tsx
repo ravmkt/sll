@@ -80,7 +80,9 @@ export default function VidlyticsPage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('[Vidlytics] Buscando lojas...');
       const stores = await SLLDatabaseService.getStores();
+      console.log('[Vidlytics] Lojas encontradas:', stores);
       const store = stores && stores.length > 0 ? stores[0] : null;
       if (!store) {
         toast.error('Nenhuma loja encontrada.');

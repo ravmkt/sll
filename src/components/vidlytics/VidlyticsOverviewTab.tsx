@@ -72,10 +72,15 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
   ]);
 
   useEffect(() => {
-    if (!storeId) return;
+    if (!storeId) {
+      // Se ainda não tem storeId, aguarda ou desativa loading após timeout
+      const t = setTimeout(() => setLoading(false), 2000);
+      return () => clearTimeout(t);
+    }
     let isMounted = true;
 
     const loadData = async () => {
+      console.log('[VidlyticsOverviewTab] Iniciando loadData para storeId:', storeId);
       try {
         setLoading(true);
 
