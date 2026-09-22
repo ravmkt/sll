@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Play, 
@@ -20,23 +20,8 @@ import {
   Headphones, 
   ChevronDown, 
   Layers, 
-  ArrowLeft,
-  Loader2,
-  AlertCircle,
-  Store as StoreIcon,
-  PlusCircle
+  ArrowLeft 
 } from "lucide-react";
-import { SLLDatabaseService } from "../services/SLLDatabaseService";
-
-interface Store {
-  id: string;
-  name: string;
-  slug?: string;
-  url?: string;
-  platform?: string;
-  plan_id?: string;
-  subscription_status?: string;
-}
 
 export default function Vidlytics() {
   const navigate = useNavigate();
@@ -44,68 +29,8 @@ export default function Vidlytics() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [moduleMenuOpen, setModuleMenuOpen] = useState(false);
 
-  // Estados de Banco e Loja
-  const [stores, setStores] = useState<Store[]>([]);
-  const [activeStore, setActiveStore] = useState<Store | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [storeSelectOpen, setStoreSelectOpen] = useState<boolean>(false);
-
-  // Estados preparados para consumo de API (Mock estruturado pronto para bind)
-  const [salesData, setSalesData] = useState({
-    paidSalesAmount: 0.00,
-    paidOrdersCount: 0,
-    pendingSalesAmount: 378.39,
-    pendingOrdersCount: 3,
-    affiliateAmount: 0.00,
-  });
-
-  const [planUsageData, setPlanUsageData] = useState({
-    planName: "Scale",
-    cycle: "Vitalício",
-    viewsCurrent: 57,
-    viewsLimit: 60000,
-    viewsPercent: 1,
-    storageCurrentMB: 10.3,
-    storageLimitGB: 50,
-    storagePercent: 2,
-    pagesActive: 1,
-    pagesLimit: 9999,
-    pagesPercent: 5,
-    isAppActive: true
-  });
-
-  // Busca inicial das lojas do usuário via SLLDatabaseService
-  useEffect(() => {
-    async function fetchStores() {
-      setIsLoading(true);
-      try {
-        console.log("[Vidlytics] Carregando lojas via SLLDatabaseService...");
-        // Suporta tanto getUserStores() quanto getStores() caso haja variações de interface
-        const service = SLLDatabaseService as any;
-        const result = service.getUserStores 
-          ? await service.getUserStores() 
-          : await service.getStores();
-
-        const storeList: Store[] = Array.isArray(result) ? result : (result?.data || []);
-        console.log("[Vidlytics] Lojas encontradas:", storeList);
-
-        setStores(storeList);
-        if (storeList.length > 0) {
-          setActiveStore(storeList[0]);
-        }
-      } catch (error) {
-        console.error("[Vidlytics] Erro ao carregar lojas do SLL:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchStores();
-  }, []);
-
   const handleCopyLink = () => {
-    const storeSlug = activeStore?.slug || "useanny";
-    navigator.clipboard.writeText(`https://vidlytics.com.br/indique/${storeSlug}`);
+    navigator.clipboard.writeText("https://vidlytics.com.br/indique/useanny");
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
@@ -139,9 +64,9 @@ export default function Vidlytics() {
 
   const activities = [
     { title: "Coleção de stories atualizada: TESTE", date: "16 de set. às 16:29" },
-    { title: `Configurações da loja salvas: ${activeStore?.name || "Use Anny"}`, date: "15 de set. às 13:57" },
-    { title: `Configurações da loja salvas: ${activeStore?.name || "Use Anny"}`, date: "15 de set. às 10:52" },
-    { title: `Configurações da loja salvas: ${activeStore?.name || "Use Anny"}`, date: "10 de set. às 08:30" },
+    { title: "Configurações da loja salvas: Use Anny", date: "15 de set. às 13:57" },
+    { title: "Configurações da loja salvas: Use Anny", date: "15 de set. às 10:52" },
+    { title: "Configurações da loja salvas: Use Anny", date: "10 de set. às 08:30" },
   ];
 
   return (
@@ -268,64 +193,17 @@ export default function Vidlytics() {
             </div>
           </section>
 
-          {/* 4. BARRA DE STATUS DINÂMICA COM DADOS REAIS DA LOJA */}
+          {/* 4. BARRA DE STATUS / NOTIFICAÇÃO COMPACTA */}
           <section className="bg-white rounded-xl px-4 py-2 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
             <div className="flex items-center gap-2.5 flex-wrap">
-              {isLoading ? (
-                <div className="flex items-center gap-2 text-slate-400">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0094eb]" />
-                  <span>Carregando dados da loja...</span>
-                </div>
-              ) : activeStore ? (
-                <div className="flex items-center gap-2.5">
-                  <div className="relative">
-                    <button
-                      onClick={() => stores.length > 1 && setStoreSelectOpen(!storeSelectOpen)}
-                      className={`flex items-center gap-1.5 font-bold text-slate-800 text-xs sm:text-sm hover:text-[#0094eb] transition-colors ${
-                        stores.length > 1 ? "cursor-pointer" : "cursor-default"
-                      }`}
-                    >
-                      <span>Olá, <strong>{activeStore.name}</strong></span>
-                      {stores.length > 1 && <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                    </button>
-
-                    {/* Menu se houver mais de uma loja cadastrada */}
-                    {storeSelectOpen && (
-                      <div className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50">
-                        <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400">Suas Lojas</div>
-                        {stores.map((st) => (
-                          <button
-                            key={st.id}
-                            onClick={() => {
-                              setActiveStore(st);
-                              setStoreSelectOpen(false);
-                            }}
-                            className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-slate-50 ${
-                              activeStore.id === st.id ? "text-[#0094eb] font-bold bg-blue-50/50" : "text-slate-700"
-                            }`}
-                          >
-                            <span>{st.name}</span>
-                            {activeStore.id === st.id && <Check className="w-3.5 h-3.5 text-[#0094eb]" />}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <span className="h-3 w-px bg-slate-200" />
-                  <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-blue-50 text-[#0094eb] border border-blue-100">
-                    Plano {planUsageData.planName}
-                  </span>
-                  <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-purple-50 text-purple-600 border border-purple-100">
-                    Acesso {planUsageData.cycle}
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-amber-600 font-medium">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>Nenhuma loja selecionada</span>
-                </div>
-              )}
+              <span className="font-bold text-slate-800 text-xs sm:text-sm">Olá, <strong>Use Anny</strong></span>
+              <span className="h-3 w-px bg-slate-200" />
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-blue-50 text-[#0094eb] border border-blue-100">
+                Plano Scale
+              </span>
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-purple-50 text-purple-600 border border-purple-100">
+                Acesso Vitalício
+              </span>
             </div>
 
             <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50/70 border border-emerald-200/60 px-2.5 py-0.5 rounded-md text-[11px]">
@@ -335,177 +213,144 @@ export default function Vidlytics() {
             </div>
           </section>
 
-          {/* TRATAMENTO DE EMPTY STATE OU EXIBIÇÃO NORMAL */}
-          {!isLoading && stores.length === 0 ? (
-            /* Card Informativo Amigável quando não há loja cadastrada */
-            <div className="bg-white rounded-2xl p-10 border border-slate-200/90 shadow-xs text-center space-y-4 max-w-2xl mx-auto my-8">
-              <div className="w-14 h-14 rounded-full bg-blue-50 text-[#0094eb] flex items-center justify-center mx-auto">
-                <StoreIcon className="w-7 h-7" />
+          {/* 5. SEÇÃO RESULTADOS DE VENDAS */}
+          <div>
+            <h2 className="text-[11px] font-bold tracking-wider uppercase text-slate-400 mb-2.5">
+              Resultados de Vendas Vindas dos Vídeos
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase text-slate-500">Vendas Pagas</span>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                      0 Pedidos
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900">R$ 0,00</div>
+                  <div className="text-[11px] text-slate-400">Faturamento confirmado via vídeos</div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
               </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-bold text-slate-800">Nenhuma loja cadastrada no seu usuário</h3>
-                <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                  Para utilizar o Vidlytics Stories e acompanhar métricas de faturamento e visualizações, cadastre sua loja ou vincule seu domínio principal no Hub SLL.
-                </p>
+
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase text-slate-500">Aguardando Pagamento</span>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-50 text-amber-600 border border-amber-100">
+                      3 Pedidos
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900">R$ 378,39</div>
+                  <div className="text-[11px] text-slate-400">Pix / Boleto pendente</div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                  <Clock className="w-5 h-5" />
+                </div>
               </div>
-              <div className="pt-2 flex justify-center gap-3">
-                <button
-                  onClick={() => navigate("/")}
-                  className="px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold rounded-xl flex items-center gap-2 shadow-sm transition-colors"
-                >
-                  <PlusCircle className="w-4 h-4" />
-                  <span>Cadastrar Loja no Hub</span>
-                </button>
+
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase text-slate-500">Faturamento Indicações</span>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 text-[#0094eb] border border-blue-100">
+                      Comissões
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900">R$ 0,00</div>
+                  <div className="text-[11px] text-slate-400">Ver detalhes no Indica & Ganha →</div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#0094eb]">
+                  <DollarSign className="w-5 h-5" />
+                </div>
               </div>
             </div>
-          ) : (
-            <>
-              {/* 5. SEÇÃO RESULTADOS DE VENDAS */}
-              <div>
-                <h2 className="text-[11px] font-bold tracking-wider uppercase text-slate-400 mb-2.5">
-                  Resultados de Vendas Vindas dos Vídeos
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold uppercase text-slate-500">Vendas Pagas</span>
-                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                          {salesData.paidOrdersCount} Pedidos
-                        </span>
-                      </div>
-                      <div className="text-2xl font-black text-slate-900">
-                        {salesData.paidSalesAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </div>
-                      <div className="text-[11px] text-slate-400">Faturamento confirmado via vídeos</div>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                      <CheckCircle2 className="w-5 h-5" />
-                    </div>
-                  </div>
+          </div>
 
-                  <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold uppercase text-slate-500">Aguardando Pagamento</span>
-                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-50 text-amber-600 border border-amber-100">
-                          {salesData.pendingOrdersCount} Pedidos
-                        </span>
-                      </div>
-                      <div className="text-2xl font-black text-slate-900">
-                        {salesData.pendingSalesAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </div>
-                      <div className="text-[11px] text-slate-400">Pix / Boleto pendente</div>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                      <Clock className="w-5 h-5" />
-                    </div>
+          {/* 6. CONSUMO DO PLANO */}
+          <div>
+            <h2 className="text-[11px] font-bold tracking-wider uppercase text-slate-400 mb-2.5">
+              Consumo do Plano
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase text-slate-500">Visualizações</span>
+                  <Eye className="w-4 h-4 text-blue-500" />
+                </div>
+                <div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-slate-900">57</span>
+                    <span className="text-xs text-slate-400">de 60.000</span>
                   </div>
-
-                  <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold uppercase text-slate-500">Faturamento Indicações</span>
-                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 text-[#0094eb] border border-blue-100">
-                          Comissões
-                        </span>
-                      </div>
-                      <div className="text-2xl font-black text-slate-900">
-                        {salesData.affiliateAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </div>
-                      <div className="text-[11px] text-slate-400">Ver detalhes no Indica & Ganha →</div>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#0094eb]">
-                      <DollarSign className="w-5 h-5" />
-                    </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+                    <div className="bg-[#0094eb] h-1.5 rounded-full w-[1%]" />
                   </div>
+                </div>
+                <div className="text-[11px] text-slate-400 flex justify-between">
+                  <span>Quota do mês</span>
+                  <span>1%</span>
                 </div>
               </div>
 
-              {/* 6. CONSUMO DO PLANO */}
-              <div>
-                <h2 className="text-[11px] font-bold tracking-wider uppercase text-slate-400 mb-2.5">
-                  Consumo do Plano
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase text-slate-500">Visualizações</span>
-                      <Eye className="w-4 h-4 text-blue-500" />
-                    </div>
-                    <div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-slate-900">{planUsageData.viewsCurrent}</span>
-                        <span className="text-xs text-slate-400">de {planUsageData.viewsLimit.toLocaleString("pt-BR")}</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                        <div className="bg-[#0094eb] h-1.5 rounded-full" style={{ width: `${planUsageData.viewsPercent}%` }} />
-                      </div>
-                    </div>
-                    <div className="text-[11px] text-slate-400 flex justify-between">
-                      <span>Quota do mês</span>
-                      <span>{planUsageData.viewsPercent}%</span>
-                    </div>
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase text-slate-500">Armazenamento</span>
+                  <HardDrive className="w-4 h-4 text-emerald-500" />
+                </div>
+                <div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-slate-900">10.3 MB</span>
+                    <span className="text-xs text-slate-400">de 50 GB</span>
                   </div>
-
-                  <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase text-slate-500">Armazenamento</span>
-                      <HardDrive className="w-4 h-4 text-emerald-500" />
-                    </div>
-                    <div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-slate-900">{planUsageData.storageCurrentMB} MB</span>
-                        <span className="text-xs text-slate-400">de {planUsageData.storageLimitGB} GB</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                        <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${planUsageData.storagePercent}%` }} />
-                      </div>
-                    </div>
-                    <div className="text-[11px] text-slate-400 flex justify-between">
-                      <span>Vídeos na nuvem</span>
-                      <span>{planUsageData.storagePercent}%</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase text-slate-500">Páginas com Vídeos</span>
-                      <FileText className="w-4 h-4 text-amber-500" />
-                    </div>
-                    <div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-slate-900">{planUsageData.pagesActive}</span>
-                        <span className="text-xs text-slate-400">de {planUsageData.pagesLimit} ativas</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                        <div className="bg-[#fd8539] h-1.5 rounded-full" style={{ width: `${planUsageData.pagesPercent}%` }} />
-                      </div>
-                    </div>
-                    <div className="text-[11px] text-slate-400 flex justify-between">
-                      <span>Locais de exibição</span>
-                      <span>{planUsageData.pagesPercent}%</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase text-slate-500">Ciclo da Conta</span>
-                      <Calendar className="w-4 h-4 text-indigo-500" />
-                    </div>
-                    <div>
-                      <div className="text-[10px] uppercase font-bold text-slate-400">Status</div>
-                      <div className="text-xl font-black text-slate-900">{planUsageData.cycle}</div>
-                    </div>
-                    <div className="text-[11px] text-slate-400 flex justify-between">
-                      <span>Renovação:</span>
-                      <span>— (sem vencimento)</span>
-                    </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+                    <div className="bg-emerald-500 h-1.5 rounded-full w-[2%]" />
                   </div>
                 </div>
+                <div className="text-[11px] text-slate-400 flex justify-between">
+                  <span>Vídeos na nuvem</span>
+                  <span>2%</span>
+                </div>
               </div>
-            </>
-          )}
+
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase text-slate-500">Páginas com Vídeos</span>
+                  <FileText className="w-4 h-4 text-amber-500" />
+                </div>
+                <div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-slate-900">1</span>
+                    <span className="text-xs text-slate-400">de ilimitadas</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+                    <div className="bg-[#fd8539] h-1.5 rounded-full w-[5%]" />
+                  </div>
+                </div>
+                <div className="text-[11px] text-slate-400 flex justify-between">
+                  <span>Locais de exibição</span>
+                  <span>Ativo</span>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase text-slate-500">Ciclo da Conta</span>
+                  <Calendar className="w-4 h-4 text-indigo-500" />
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400">Status</div>
+                  <div className="text-xl font-black text-slate-900">Vitalício</div>
+                </div>
+                <div className="text-[11px] text-slate-400 flex justify-between">
+                  <span>Renovação:</span>
+                  <span>— (sem vencimento)</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* 7. CHECKLIST E ATIVIDADE RECENTE */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
