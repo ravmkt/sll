@@ -18,7 +18,8 @@ export const SLLDatabaseService = {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      throw new Error('Usuário não autenticado.');
+      console.warn('Usuário não autenticado.');
+      return [];
     }
 
     const { data, error } = await supabase
@@ -35,10 +36,19 @@ export const SLLDatabaseService = {
   },
 
   /**
-   * Busca a loja principal/ativa do lojista
+   * Alias getStores para compatibilidade com os componentes legados
+   */
+  async getStores(): Promise<Store[]> {
+    return this.getUserStores();
+  },
+
+  /**
+   * Busca a loja ativa ou a primeira loja do usuário
    */
   async getActiveStore(): Promise<Store | null> {
     const stores = await this.getUserStores();
     return stores.length > 0 ? stores[0] : null;
   }
 };
+
+export default SLLDatabaseService;
