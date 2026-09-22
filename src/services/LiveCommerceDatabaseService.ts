@@ -3,11 +3,12 @@ import { supabaseLiveCommerce, supabasePublic } from './supabaseClients';
 export interface NewLiveInput {
   store_id: string;
   title: string;
-  youtube_url: string;
+  youtube_url?: string;
   youtube_video_id?: string;
   status?: 'scheduled' | 'live' | 'finished';
   scheduled_at?: string;
   is_active?: boolean;
+  [key: string]: any;
 }
 
 export interface LiveItem {
@@ -21,14 +22,7 @@ export interface LiveItem {
   is_active: boolean;
   scheduled_at?: string | null;
   created_at: string;
-}
-
-export interface LiveSettings {
-  store_id: string;
-  widget_divulgacao?: any;
-  widget_aovivo?: any;
-  player_settings?: any;
-  updated_at?: string;
+  [key: string]: any;
 }
 
 export const LiveCommerceDatabaseService = {
@@ -50,43 +44,38 @@ export const LiveCommerceDatabaseService = {
       .from('lives')
       .select('*')
       .eq('id', liveId)
-      .single();
+      .maybeSingle();
     if (error) throw error;
-    return data as LiveItem;
+    return data as LiveItem | null;
   },
 
-  async createLive(live: NewLiveInput) {
-    let videoId = live.youtube_video_id;
-    if (!videoId && live.youtube_url) {
-      const match = live.youtube_url.match(
+  async createLive(payload: Record<string, any>) {
+    let videoId = payload.youtube_video_id;
+    if (!videoId && payload.youtube_url) {
+      const match = payload.youtube_url.match(
         /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|live\/))([a-zA-Z0-9_-]{11})/
       );
       if (match) videoId = match[1];
     }
 
+    const insertData = {
+      ...payload,
+      youtube_video_id: videoId || payload.youtube_video_id || null,
+      youtube_thumbnail_url: payload.youtube_thumbnail_url || (videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null),
+      status: payload.status || 'scheduled',
+      is_active: payload.is_active !== undefined ? payload.is_active : true,
+    };
+
     const { data, error } = await supabaseLiveCommerce
       .from('lives')
-      .insert([
-        {
-          store_id: live.store_id,
-          title: live.title,
-          youtube_url: live.youtube_url,
-          youtube_video_id: videoId || null,
-          status: live.status || 'scheduled',
-          scheduled_at: live.scheduled_at || new Date().toISOString(),
-          is_active: live.is_active !== undefined ? live.is_active : true,
-          youtube_thumbnail_url: videoId
-            ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-            : null
-        }
-      ])
+      .insert(insertData)
       .select()
       .single();
     if (error) throw error;
     return data as LiveItem;
   },
 
-  async updateLive(liveId: string, updates: Partial<LiveItem> & Record<string, any>) {
+  async updateLive(liveId: string, updates: Record<string, any>) {
     const { data, error } = await supabaseLiveCommerce
       .from('lives')
       .update(updates)
@@ -104,6 +93,32 @@ export const LiveCommerceDatabaseService = {
       .eq('id', liveId);
     if (error) throw error;
     return true;
+  },
+
+  // ==========================================
+  // --- EVENTOS E MÉTRICAS (live_commerce.live_events) ---
+  // ==========================================
+  async getLiveEvents(liveId: string) {
+    const { data, error } = await supabaseLiveCommerce
+      .from('live_events')
+      .select('*')
+      .eq('live_id', liveId);
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getLiveOrders(liveId: string, storeId: string) {
+    try {
+      const { data, error } = await supabasePublic
+        .from('orders')
+        .select('*')
+        .eq('store_id', storeId)
+        .eq('live_id', liveId);
+      if (error) return [];
+      return data || [];
+    } catch {
+      return [];
+    }
   },
 
   // ==========================================
@@ -153,12 +168,12 @@ export const LiveCommerceDatabaseService = {
   },
 
   // ==========================================
-  // --- CATÁLOGO DE PRODUTOS (public.products) ---
+  // --- PRODUTOS E LOJA (public.products / public.stores) ---
   // ==========================================
   async getProducts(storeId: string) {
     const { data, error } = await supabasePublic
       .from('products')
-      .select('id, name, price, promotional_price, image_url, permalink')
+      .select('id, name, price, promotional_price, image_url, permalink, category')
       .eq('store_id', storeId)
       .order('name', { ascending: true });
     if (error) throw error;
@@ -166,5 +181,28 @@ export const LiveCommerceDatabaseService = {
       ...p,
       product_url: p.permalink || ''
     }));
+  },
+
+  async getStoreData(storeId: string) {
+    const { data, error } = await supabasePublic
+      .from('stores')
+      .select('id, name, logo_url, slug')
+      .eq('id', storeId)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  // ==========================================
+  // --- UPLOAD DE MÍDIA (Storage central) ---
+  // ==========================================
+  async uploadFile(bucket: string, filePath: string, file: File) {
+    const { error } = await supabasePublic.storage
+      .from(bucket)
+      .upload(filePath, file, { cacheControl: '3600', upsert: true });
+    if (error) throw error;
+
+    const { data } = supabasePublic.storage.from(bucket).getPublicUrl(filePath);
+    return data.publicUrl;
   }
 };
