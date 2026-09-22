@@ -1,7 +1,12 @@
-import { supabasePublic } from './supabaseClients';
+﻿import { supabasePublic } from './supabaseClients';
 
 export const SLLDatabaseService = {
   // Lojas / Tenants
+    async getCurrentStore() {
+    const stores = await this.getStores();
+    return stores && stores.length > 0 ? stores[0] : null;
+  },
+
   async getStores() {
     const { data, error } = await supabasePublic
       .from('stores')

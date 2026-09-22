@@ -80,7 +80,8 @@ export default function VidlyticsPage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const store = await SLLDatabaseService.getCurrentStore();
+      const stores = await SLLDatabaseService.getStores();
+      const store = stores && stores.length > 0 ? stores[0] : null;
       if (!store) {
         toast.error('Nenhuma loja encontrada.');
         return;
