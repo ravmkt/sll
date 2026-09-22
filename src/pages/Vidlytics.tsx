@@ -40,12 +40,19 @@ import {
   Save,
   MousePointer,
   Crosshair,
-  Globe
+  Globe,
+  UploadCloud,
+  Link2,
+  Instagram,
+  Music2,
+  Download,
+  Image as ImageIcon,
+  X
 } from "lucide-react";
 
 export default function Vidlytics() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("stories");
+  const [activeTab, setActiveTab] = useState("library");
   const [copiedLink, setCopiedLink] = useState(false);
   const [moduleMenuOpen, setModuleMenuOpen] = useState(false);
   
@@ -58,8 +65,6 @@ export default function Vidlytics() {
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const [storySearchQuery, setStorySearchQuery] = useState("");
   const [storyStatusFilter, setStoryStatusFilter] = useState("all");
-  
-  // Formulário do Novo Story
   const [storyName, setStoryName] = useState("");
   const [storyActive, setStoryActive] = useState(true);
   const [storyLayout, setStoryLayout] = useState<"flutuante" | "carrossel" | "grade" | "dinamico">("carrossel");
@@ -67,6 +72,17 @@ export default function Vidlytics() {
   const [visualStyle, setVisualStyle] = useState("Seguir Padrão do App");
   const [cssSelector, setCssSelector] = useState(".breadcrumbs");
   const [displayPosition, setDisplayPosition] = useState("Acima do elemento");
+
+  // Estados da Aba Biblioteca
+  const [librarySearchQuery, setLibrarySearchQuery] = useState("");
+  const [libraryTypeFilter, setLibraryTypeFilter] = useState<"all" | "videos" | "images">("all");
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
+  
+  // Formulário do Modal de URL Externa
+  const [externalUrl, setExternalUrl] = useState("");
+  const [mediaTitle, setMediaTitle] = useState("");
+  const [linkedProduct, setLinkedProduct] = useState("Sem produto vinculado");
+  const [linkedMeasureModel, setLinkedMeasureModel] = useState("Sem modelo de medidas vinculado");
 
   // Lista Mock de Stories
   const [storiesList, setStoriesList] = useState([
@@ -84,11 +100,84 @@ export default function Vidlytics() {
     }
   ]);
 
+  // Lista Mock de Mídias da Biblioteca
+  const [mediaItems, setMediaItems] = useState([
+    {
+      id: "med-1",
+      name: "oculos-de-sol.mp4",
+      type: "video",
+      formatLabel: "VÍDEO MP4 (HOSPEDADO)",
+      thumb: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=120&q=80",
+      product: null,
+      story: "TESTE",
+      size: "8.3 MB",
+      status: "DISPONÍVEL"
+    },
+    {
+      id: "med-2",
+      name: "Criação_de_Vídeo_Fashion_Edit...",
+      type: "video",
+      formatLabel: "VÍDEO MP4 (HOSPEDADO)",
+      thumb: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=120&q=80",
+      product: {
+        name: "Blusa Confort - Verd...",
+        thumb: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=80&q=80"
+      },
+      story: "TESTE",
+      size: "2 MB",
+      status: "DISPONÍVEL"
+    },
+    {
+      id: "med-3",
+      name: "LOGOTIPO_OFICIAL_LOJA.png",
+      type: "image",
+      formatLabel: "IMAGEM (HOSPEDADA)",
+      thumb: "/assets/sll-logotipo-ico.png",
+      product: null,
+      story: null,
+      size: "132.4 KB",
+      status: "DISPONÍVEL"
+    }
+  ]);
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText("https://vidlytics.com.br/indique/useanny");
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
+
+  const handleAddExternalUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!externalUrl) {
+      alert("Por favor, preencha a URL externa do vídeo.");
+      return;
+    }
+    const newMedia = {
+      id: "med-" + Date.now(),
+      name: mediaTitle || "video-externo.mp4",
+      type: "video",
+      formatLabel: "VÍDEO EXTERNO",
+      thumb: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=120&q=80",
+      product: linkedProduct !== "Sem produto vinculado" ? { name: linkedProduct, thumb: "" } : null,
+      story: null,
+      size: "URL Externa",
+      status: "DISPONÍVEL"
+    };
+    setMediaItems([newMedia, ...mediaItems]);
+    setIsUrlModalOpen(false);
+    setExternalUrl("");
+    setMediaTitle("");
+    alert("Mídia cadastrada com sucesso!");
+  };
+
+  const filteredMedia = mediaItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(librarySearchQuery.toLowerCase());
+    const matchesType = 
+      libraryTypeFilter === "all" ? true :
+      libraryTypeFilter === "videos" ? item.type === "video" :
+      item.type === "image";
+    return matchesSearch && matchesType;
+  });
 
   const modules = [
     { name: "Vidlytics Stories", path: "/vidlytics", current: true },
@@ -628,9 +717,7 @@ export default function Vidlytics() {
                 </button>
               </div>
 
-              {/* ---------------------------------------------------- */}
               {/* SUB-ABA 1: VISÃO GERAL */}
-              {/* ---------------------------------------------------- */}
               {resultsSubTab === "overview" && (
                 <div className="space-y-6 animate-in fade-in duration-150">
                   <div className="space-y-3">
@@ -1108,7 +1195,6 @@ export default function Vidlytics() {
             <div className="space-y-6 animate-in fade-in duration-200">
               
               {!isCreatingStory ? (
-                /* --- LISTAGEM DE STORIES --- */
                 <div className="space-y-5">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
@@ -1127,10 +1213,7 @@ export default function Vidlytics() {
                     </button>
                   </div>
 
-                  {/* Painel Central com Filtros e Tabela */}
                   <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
-                    
-                    {/* Barra de Filtros */}
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                       <div className="relative flex-1 w-full">
                         <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -1155,12 +1238,10 @@ export default function Vidlytics() {
                       </select>
                     </div>
 
-                    {/* Faixa Contadora */}
                     <div className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-wider text-slate-600">
                       {storiesList.length} Story Encontrado
                     </div>
 
-                    {/* Tabela de Stories */}
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead className="bg-slate-50/60 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-100">
@@ -1249,10 +1330,7 @@ export default function Vidlytics() {
                   </div>
                 </div>
               ) : (
-                /* --- FORMULÁRIO: NOVO STORY --- */
                 <div className="space-y-6 animate-in fade-in duration-150">
-                  
-                  {/* Cabeçalho do Formulário */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <button
@@ -1269,7 +1347,6 @@ export default function Vidlytics() {
                     </div>
 
                     <div className="flex items-center gap-3 flex-wrap">
-                      {/* Toggle de Status */}
                       <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-xs">
                         <span className="text-[11px] font-bold text-slate-600 uppercase">Status:</span>
                         <span className={`text-[11px] font-bold ${storyActive ? "text-emerald-600" : "text-slate-400"}`}>
@@ -1290,13 +1367,11 @@ export default function Vidlytics() {
                         </button>
                       </div>
 
-                      {/* Badge Preview */}
                       <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-500 text-[11px] font-bold border border-slate-200">
                         <Eye className="w-3.5 h-3.5" />
                         <span>SALVE PARA HABILITAR O PREVIEW</span>
                       </div>
 
-                      {/* Botão Salvar Superior */}
                       <button
                         onClick={() => {
                           setIsCreatingStory(false);
@@ -1331,13 +1406,11 @@ export default function Vidlytics() {
                         />
                       </div>
 
-                      {/* Layout de Exibição (4 Cards) */}
                       <div>
                         <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
                           Layout de Exibição
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          {/* 1. Flutuante */}
                           <button
                             type="button"
                             onClick={() => setStoryLayout("flutuante")}
@@ -1351,7 +1424,6 @@ export default function Vidlytics() {
                             <span className="text-xs font-bold uppercase">Flutuante</span>
                           </button>
 
-                          {/* 2. Carrossel */}
                           <button
                             type="button"
                             onClick={() => setStoryLayout("carrossel")}
@@ -1365,7 +1437,6 @@ export default function Vidlytics() {
                             <span className="text-xs font-bold uppercase">Carrossel</span>
                           </button>
 
-                          {/* 3. Grade */}
                           <button
                             type="button"
                             onClick={() => setStoryLayout("grade")}
@@ -1379,7 +1450,6 @@ export default function Vidlytics() {
                             <span className="text-xs font-bold uppercase">Grade</span>
                           </button>
 
-                          {/* 4. Carrossel Dinâmico */}
                           <button
                             type="button"
                             onClick={() => setStoryLayout("dinamico")}
@@ -1396,7 +1466,6 @@ export default function Vidlytics() {
                         </div>
                       </div>
 
-                      {/* Direção de Rolagem */}
                       <div>
                         <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                           Direção de Rolagem
@@ -1412,7 +1481,6 @@ export default function Vidlytics() {
                         </select>
                       </div>
 
-                      {/* Estilo Visual / Aparência */}
                       <div>
                         <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                           Estilo Visual / Aparência
@@ -1448,7 +1516,6 @@ export default function Vidlytics() {
                       </button>
                     </div>
 
-                    {/* Empty State Tracejado */}
                     <div className="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center space-y-3 flex flex-col items-center justify-center">
                       <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300">
                         <Video className="w-6 h-6 stroke-[1.5]" />
@@ -1472,7 +1539,6 @@ export default function Vidlytics() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Seletor CSS */}
                       <div className="md:col-span-2">
                         <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                           Seletor CSS
@@ -1494,7 +1560,6 @@ export default function Vidlytics() {
                         </div>
                       </div>
 
-                      {/* Posição */}
                       <div>
                         <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                           Posição
@@ -1528,7 +1593,6 @@ export default function Vidlytics() {
                     </button>
                   </div>
 
-                  {/* Botão Inferior Salvar */}
                   <div className="flex justify-end pt-2">
                     <button
                       onClick={() => {
@@ -1548,11 +1612,257 @@ export default function Vidlytics() {
             </div>
           )}
 
+          {/* ======================================================== */}
+          {/* CONTEÚDO DA ABA 4: BIBLIOTECA */}
+          {/* ======================================================== */}
+          {activeTab === "library" && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              
+              {/* CABEÇALHO DA BIBLIOTECA */}
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-black text-slate-900">Biblioteca</h1>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Gerencie os vídeos e imagens hospedados no seu plano e monitore o consumo de espaço.
+                  </p>
+                </div>
+
+                {/* BOTÕES DE AÇÃO SUPERIORES */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button 
+                    onClick={() => alert("Conexão direta com Instagram em breve.")}
+                    className="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors shadow-xs flex items-center gap-1.5 uppercase"
+                  >
+                    <Instagram className="w-4 h-4 text-pink-600" />
+                    <span>Instagram</span>
+                  </button>
+
+                  <button 
+                    onClick={() => alert("Conexão direta com TikTok em breve.")}
+                    className="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors shadow-xs flex items-center gap-1.5 uppercase"
+                  >
+                    <Music2 className="w-4 h-4 text-slate-800" />
+                    <span>TikTok</span>
+                  </button>
+
+                  <button 
+                    onClick={() => setIsUrlModalOpen(true)}
+                    className="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors shadow-xs flex items-center gap-1.5 uppercase"
+                  >
+                    <Link2 className="w-4 h-4 text-[#0094eb]" />
+                    <span>URL Externa</span>
+                  </button>
+
+                  <button 
+                    onClick={() => alert("Selecione o arquivo de vídeo do seu computador.")}
+                    className="px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-black uppercase rounded-xl transition-all shadow-sm shadow-[#0094eb]/20 flex items-center gap-2"
+                  >
+                    <UploadCloud className="w-4 h-4" />
+                    <span>Fazer Upload</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* CARD DE ARMAZENAMENTO SCALE */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-[#0094eb] text-white flex items-center justify-center shadow-xs flex-shrink-0">
+                      <HardDrive className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-slate-900 uppercase tracking-wide">Scale</span>
+                        <span className="px-2 py-0.5 text-[10px] font-black uppercase rounded-full bg-blue-50 text-[#0094eb] border border-blue-100">
+                          50 GB Limite
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium">Uso atual: <strong>10.3 MB</strong> de 50 GB</p>
+                    </div>
+                  </div>
+
+                  <div className="text-left sm:text-right">
+                    <span className="text-lg font-black text-emerald-600">0.1%</span>
+                    <span className="text-[11px] text-slate-400 block font-medium">Espaço Consumido</span>
+                  </div>
+                </div>
+
+                {/* Barra de Progresso Fina */}
+                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <div className="bg-[#0094eb] h-1.5 rounded-full w-[0.1%]" />
+                </div>
+              </div>
+
+              {/* CONTAINER COM FILTROS E TABELA */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
+                
+                {/* Barra de Busca + Pílulas de Filtro (Todos / Vídeos / Imagens) */}
+                <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                  <div className="relative flex-1 w-full">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Pesquisar pelo nome do arquivo..."
+                      value={librarySearchQuery}
+                      onChange={(e) => setLibrarySearchQuery(e.target.value)}
+                      className="w-full bg-slate-50/70 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+                    <button
+                      onClick={() => setLibraryTypeFilter("all")}
+                      className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+                        libraryTypeFilter === "all"
+                          ? "bg-[#0094eb] text-white shadow-xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      Todos
+                    </button>
+                    <button
+                      onClick={() => setLibraryTypeFilter("videos")}
+                      className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+                        libraryTypeFilter === "videos"
+                          ? "bg-[#0094eb] text-white shadow-xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      <span>Vídeos</span>
+                    </button>
+                    <button
+                      onClick={() => setLibraryTypeFilter("images")}
+                      className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+                        libraryTypeFilter === "images"
+                          ? "bg-[#0094eb] text-white shadow-xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      <span>Imagens</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Faixa Contadora */}
+                <div className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-wider text-slate-600">
+                  {filteredMedia.length} Mídias Listadas
+                </div>
+
+                {/* Tabela da Biblioteca */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50/60 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-100">
+                      <tr>
+                        <th className="px-4 py-3">Mídia</th>
+                        <th className="px-4 py-3">Nome do Arquivo</th>
+                        <th className="px-4 py-3 text-center">Produto</th>
+                        <th className="px-4 py-3 text-center">Story Vinculado</th>
+                        <th className="px-4 py-3 text-center">Tamanho</th>
+                        <th className="px-4 py-3 text-center">Status</th>
+                        <th className="px-4 py-3 text-right">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {filteredMedia.map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                          {/* Miniatura Mídia */}
+                          <td className="px-4 py-3.5">
+                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                              <img 
+                                src={item.thumb} 
+                                alt={item.name} 
+                                className="w-full h-full object-cover" 
+                                onError={(e) => {
+                                  (e.target as HTMLElement).style.display = "none";
+                                }}
+                              />
+                            </div>
+                          </td>
+
+                          {/* Nome e Tipo */}
+                          <td className="px-4 py-3.5">
+                            <p className="font-bold text-slate-800 text-xs">{item.name}</p>
+                            <span className="text-[10px] text-[#0094eb] font-bold uppercase tracking-wider">
+                              {item.formatLabel}
+                            </span>
+                          </td>
+
+                          {/* Produto Vinculado */}
+                          <td className="px-4 py-3.5 text-center">
+                            {item.product ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                {item.product.thumb && (
+                                  <img src={item.product.thumb} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                                )}
+                                <span>{item.product.name}</span>
+                              </span>
+                            ) : (
+                              <span className="inline-block px-3 py-1 rounded-full text-[11px] font-medium bg-slate-100/80 text-slate-400">
+                                Sem produto
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Story Vinculado */}
+                          <td className="px-4 py-3.5 text-center">
+                            {item.story ? (
+                              <span className="inline-block px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-[#0094eb] border border-blue-100">
+                                {item.story}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+
+                          {/* Tamanho */}
+                          <td className="px-4 py-3.5 text-center text-slate-600 font-semibold">
+                            {item.size}
+                          </td>
+
+                          {/* Status */}
+                          <td className="px-4 py-3.5 text-center">
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3 stroke-[2.5]" />
+                              <span>{item.status}</span>
+                            </span>
+                          </td>
+
+                          {/* Ações */}
+                          <td className="px-4 py-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1 text-slate-400">
+                              {item.type === "video" && (
+                                <button title="Editar" className="p-1.5 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors">
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button title="Visualizar" className="p-1.5 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors">
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button title="Download" className="p-1.5 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors">
+                                <Download className="w-4 h-4" />
+                              </button>
+                              <button title="Excluir" className="p-1.5 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+            </div>
+          )}
+
           {/* Placeholders limpos para as próximas abas */}
-          {["library", "products", "comments", "appearance"].includes(activeTab) && (
+          {["products", "comments", "appearance"].includes(activeTab) && (
             <div className="bg-white rounded-2xl p-12 border border-slate-200/80 shadow-xs text-center space-y-3 animate-in fade-in">
               <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#0094eb] mx-auto flex items-center justify-center">
-                <FolderOpen className="w-6 h-6" />
+                <ShoppingBag className="w-6 h-6" />
               </div>
               <h3 className="text-base font-bold text-slate-800">
                 Aba "{tabs.find(t => t.id === activeTab)?.label}"
@@ -1566,7 +1876,122 @@ export default function Vidlytics() {
         </main>
       </div>
 
-      {/* 9. RODAPÉ INSTITUCIONAL */}
+      {/* ======================================================== */}
+      {/* MODAL: ADICIONAR VÍDEO POR URL EXTERNA */}
+      {/* ======================================================== */}
+      {isUrlModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-150">
+            
+            {/* Header do Modal */}
+            <div className="p-6 pb-4 flex items-start justify-between border-b border-slate-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0094eb] flex items-center justify-center flex-shrink-0">
+                  <Link2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 leading-snug">Adicionar Vídeo por URL</h3>
+                  <p className="text-xs text-slate-400 leading-tight">
+                    Insira links do Pinterest, YouTube, Panda Video, Bunny CDN ou link direto.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsUrlModalOpen(false)}
+                className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Formulário do Modal */}
+            <form onSubmit={handleAddExternalUrl} className="p-6 space-y-4">
+              {/* Campo 1: URL Externa */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Link / URL Externa do Vídeo <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="https://pinterest.com/pin/... ou YouTube / Link direto"
+                  value={externalUrl}
+                  onChange={(e) => setExternalUrl(e.target.value)}
+                  className="w-full bg-slate-50/60 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+                />
+              </div>
+
+              {/* Campo 2: Título da Mídia */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Título ou Identificação da Mídia
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: REEL_PROMO_LANCAMENTO.mp4"
+                  value={mediaTitle}
+                  onChange={(e) => setMediaTitle(e.target.value)}
+                  className="w-full bg-slate-50/60 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+                />
+              </div>
+
+              {/* Campo 3: Vincular a Produto */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Vincular a um Produto (Opcional)
+                </label>
+                <select
+                  aria-label="Vincular a um produto opcional"
+                  value={linkedProduct}
+                  onChange={(e) => setLinkedProduct(e.target.value)}
+                  className="w-full bg-slate-50/60 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs focus:ring-2 focus:ring-[#0094eb]/20"
+                >
+                  <option value="Sem produto vinculado">Sem produto vinculado</option>
+                  <option value="Blusa Confort - Verde">Blusa Confort - Verde</option>
+                  <option value="Óculos de Sol Vintage">Óculos de Sol Vintage</option>
+                </select>
+              </div>
+
+              {/* Campo 4: Modelo de Medidas */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Vincular a um Modelo de Medidas (Opcional)
+                </label>
+                <select
+                  aria-label="Vincular a um modelo de medidas opcional"
+                  value={linkedMeasureModel}
+                  onChange={(e) => setLinkedMeasureModel(e.target.value)}
+                  className="w-full bg-slate-50/60 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs focus:ring-2 focus:ring-[#0094eb]/20"
+                >
+                  <option value="Sem modelo de medidas vinculado">Sem modelo de medidas vinculado</option>
+                  <option value="Tabela Geral Vestuário Feminino">Tabela Geral Vestuário Feminino</option>
+                </select>
+              </div>
+
+              {/* Botões do Rodapé do Modal */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsUrlModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-black uppercase rounded-xl transition-all shadow-sm shadow-[#0094eb]/20"
+                >
+                  Cadastrar Mídia
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* RODAPÉ INSTITUCIONAL */}
       <footer className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-10 mt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
         <p>© 2026 Vidlytics Stories. Todos os direitos reservados.</p>
         <div className="flex items-center gap-3">
@@ -1583,7 +2008,7 @@ export default function Vidlytics() {
         </div>
       </footer>
 
-      {/* 10. SUPORTE FLUTUANTE */}
+      {/* SUPORTE FLUTUANTE */}
       <aside aria-label="Suporte" className="fixed bottom-6 right-6 z-40">
         <button
           onClick={() => alert("Canal de Suporte SLL")}
