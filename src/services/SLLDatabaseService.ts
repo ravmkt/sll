@@ -1,57 +1,44 @@
-﻿import { supabasePublic } from './supabaseClients';
+import { supabase } from '../lib/supabase';
+
+export interface Store {
+  id: string;
+  name: string;
+  slug?: string;
+  url?: string;
+  platform?: string;
+  owner_user_id: string;
+  subscription_status?: string;
+}
 
 export const SLLDatabaseService = {
-  // Lojas / Tenants
-    async getCurrentStore() {
-    const stores = await this.getStores();
-    return stores && stores.length > 0 ? stores[0] : null;
-  },
+  /**
+   * Busca todas as lojas do usuário autenticado via owner_user_id
+   */
+  async getUserStores(): Promise<Store[]> {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      throw new Error('Usuário não autenticado.');
+    }
 
-  async getStores() {
-    const { data, error } = await supabasePublic
+    const { data, error } = await supabase
       .from('stores')
-      .select('*');
-    if (error) throw error;
-    return data;
+      .select('id, name, slug, url, platform, owner_user_id, subscription_status')
+      .eq('owner_user_id', user.id);
+
+    if (error) {
+      console.error('Erro ao buscar stores:', error);
+      throw error;
+    }
+
+    return (data as Store[]) || [];
   },
 
-  async getStoreById(storeId: string) {
-    const { data, error } = await supabasePublic
-      .from('stores')
-      .select('*')
-      .eq('id', storeId)
-      .single();
-    if (error) throw error;
-    return data;
-  },
-
-  // Catálogo de Produtos Global
-  async getProducts(storeId: string) {
-    const { data, error } = await supabasePublic
-      .from('products')
-      .select('*')
-      .eq('store_id', storeId);
-    if (error) throw error;
-    return data;
-  },
-
-  // Subscrições e Módulos Ativos do Lojista
-  async getSubscriptions(storeId: string) {
-    const { data, error } = await supabasePublic
-      .from('subscriptions')
-      .select('*, plans(*)')
-      .eq('store_id', storeId);
-    if (error) throw error;
-    return data;
-  },
-
-  // Configurações do Google Tag Manager
-  async getGtmSettings(storeId: string) {
-    const { data, error } = await supabasePublic
-      .from('store_integrations')
-      .select('*')
-      .eq('store_id', storeId);
-    if (error) throw error;
-    return data;
+  /**
+   * Busca a loja principal/ativa do lojista
+   */
+  async getActiveStore(): Promise<Store | null> {
+    const stores = await this.getUserStores();
+    return stores.length > 0 ? stores[0] : null;
   }
 };
