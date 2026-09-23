@@ -58,7 +58,7 @@ export const AparenciaTab: React.FC = () => {
 
   // Controle de accordions abertos
   const [openAccordions, setOpenAccordions] = useState<{ [key: string]: boolean }>({
-    '1': false,
+    '1': true,
     '2': false,
     '3': false,
     '4': false,
@@ -102,7 +102,7 @@ export const AparenciaTab: React.FC = () => {
 
         <button
           onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#0094eb] hover:bg-blue-600 text-white rounded-xl text-xs font-bold tracking-wider uppercase transition-colors shadow-sm self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#0094eb] hover:bg-blue-600 text-white rounded-xl text-xs font-bold tracking-wider uppercase transition-colors shadow-sm self-start sm:self-auto cursor-pointer"
         >
           <Plus size={16} />
           NOVO ESTILO
@@ -184,14 +184,14 @@ export const AparenciaTab: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleOpenEdit(style)}
-                        className="p-1.5 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1.5 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                         title="Editar Estilo"
                       >
                         <Pencil size={16} />
                       </button>
                       <button
                         type="button"
-                        className="p-1.5 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                        className="p-1.5 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Excluir Estilo"
                       >
                         <Trash2 size={16} />
@@ -207,28 +207,29 @@ export const AparenciaTab: React.FC = () => {
 
       {/* 3. MODAL COMPLETO DE ESTILOS (NOVO / EDITAR) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl flex flex-col h-[90vh] overflow-hidden border border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white w-[96vw] max-w-[1550px] rounded-3xl shadow-2xl flex flex-col h-[93vh] overflow-hidden border border-slate-200">
+            
             {/* Topo do Modal */}
-            <div className="flex items-center justify-between px-6 pt-5 pb-3">
-              <h3 className="text-lg font-bold text-slate-800">
+            <div className="flex items-center justify-between px-6 pt-4 pb-2">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800">
                 {modalMode === 'create' ? 'Criar Novo Estilo' : 'Editar Estilo'}
               </h3>
               <button
                 onClick={handleCloseModal}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Menu de Abas Superior do Modal */}
-            <div className="px-6 pb-4">
+            <div className="px-6 pb-3">
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                 <button
                   type="button"
                   onClick={() => setActiveTab('basico')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     activeTab === 'basico'
                       ? 'bg-[#0094eb] text-white shadow-sm'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -241,7 +242,7 @@ export const AparenciaTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('flutuante')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     activeTab === 'flutuante'
                       ? 'bg-[#0094eb] text-white shadow-sm'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -254,7 +255,7 @@ export const AparenciaTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('carrossel')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     activeTab === 'carrossel'
                       ? 'bg-[#0094eb] text-white shadow-sm'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -267,7 +268,7 @@ export const AparenciaTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('carrossel-dinamico')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     activeTab === 'carrossel-dinamico'
                       ? 'bg-[#0094eb] text-white shadow-sm'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -280,7 +281,7 @@ export const AparenciaTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('grade')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     activeTab === 'grade'
                       ? 'bg-[#0094eb] text-white shadow-sm'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -293,7 +294,7 @@ export const AparenciaTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('player')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     activeTab === 'player'
                       ? 'bg-[#0094eb] text-white shadow-sm'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -305,11 +306,11 @@ export const AparenciaTab: React.FC = () => {
               </div>
             </div>
 
-            {/* Conteúdo Central: 2 Colunas (Configurações à Esquerda + Simulador à Direita) */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-12 overflow-hidden border-t border-slate-100">
+            {/* Conteúdo Central: Coluna Esquerda Enxuta (~30%) + Coluna Direita Ampla (~70%) */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden border-t border-slate-100">
               
-              {/* COLUNA ESQUERDA: Formulários e Controles */}
-              <div className="md:col-span-5 p-5 overflow-y-auto border-r border-slate-100 bg-white space-y-4">
+              {/* COLUNA ESQUERDA: Formulários e Controles (Enxuto para dar espaço ao preview) */}
+              <div className="lg:col-span-4 xl:col-span-3 p-4 sm:p-5 overflow-y-auto border-r border-slate-100 bg-white space-y-4">
                 
                 {/* 1. ABA BÁSICO */}
                 {activeTab === 'basico' && (
@@ -362,7 +363,7 @@ export const AparenciaTab: React.FC = () => {
                   </div>
                 )}
 
-                {/* 2. DEMAIS ABAS (Flutuante, Carrossel, Carrossel Dinâmico, Grade, Player) */}
+                {/* 2. DEMAIS ABAS */}
                 {activeTab !== 'basico' && (
                   <div className="space-y-4">
                     <div>
@@ -375,45 +376,13 @@ export const AparenciaTab: React.FC = () => {
                       </h4>
                     </div>
 
-                    {/* Seletor Dispositivo */}
-                    <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                      <span className="text-xs font-bold text-slate-600">Dispositivo</span>
-                      <div className="inline-flex p-1 bg-slate-200/60 rounded-lg text-xs font-bold">
-                        <button
-                          type="button"
-                          onClick={() => setPreviewDevice('desktop')}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all ${
-                            previewDevice === 'desktop'
-                              ? 'bg-white text-slate-800 shadow-xs'
-                              : 'text-slate-500 hover:text-slate-800'
-                          }`}
-                        >
-                          <Monitor size={12} />
-                          Desktop
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewDevice('mobile')}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all ${
-                            previewDevice === 'mobile'
-                              ? 'bg-[#0094eb] text-white shadow-xs'
-                              : 'text-slate-500 hover:text-slate-800'
-                          }`}
-                        >
-                          <Smartphone size={12} />
-                          Mobile
-                        </button>
-                      </div>
-                    </div>
-
                     {/* Acordeões de Customização */}
                     <div className="space-y-2">
-                      {/* Acordeão 1 */}
                       <div className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50">
                         <button
                           type="button"
                           onClick={() => toggleAccordion('1')}
-                          className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100/60 transition-colors"
+                          className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100/60 transition-colors cursor-pointer"
                         >
                           <span>
                             {activeTab === 'flutuante' && '1. Formato & Dimensões'}
@@ -429,12 +398,11 @@ export const AparenciaTab: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Acordeão 2 */}
                       <div className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50">
                         <button
                           type="button"
                           onClick={() => toggleAccordion('2')}
-                          className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100/60 transition-colors"
+                          className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100/60 transition-colors cursor-pointer"
                         >
                           <span>
                             {activeTab === 'flutuante' && '2. Posição & Margens'}
@@ -450,12 +418,11 @@ export const AparenciaTab: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Acordeão 3 */}
                       <div className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50">
                         <button
                           type="button"
                           onClick={() => toggleAccordion('3')}
-                          className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100/60 transition-colors"
+                          className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100/60 transition-colors cursor-pointer"
                         >
                           <span>
                             {activeTab === 'flutuante' && '3. Bordas'}
@@ -470,12 +437,11 @@ export const AparenciaTab: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Acordeão 4 */}
                       <div className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50">
                         <button
                           type="button"
                           onClick={() => toggleAccordion('4')}
-                          className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100/60 transition-colors"
+                          className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100/60 transition-colors cursor-pointer"
                         >
                           <span>
                             {activeTab === 'flutuante' && '4. Elementos Visíveis'}
@@ -491,13 +457,12 @@ export const AparenciaTab: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Acordeão 5 (específico do Carrossel Dinâmico) */}
                       {activeTab === 'carrossel-dinamico' && (
                         <div className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50">
                           <button
                             type="button"
                             onClick={() => toggleAccordion('5')}
-                            className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100/60 transition-colors"
+                            className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100/60 transition-colors cursor-pointer"
                           >
                             <span>5. Card de Produto</span>
                             {openAccordions['5'] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -514,91 +479,192 @@ export const AparenciaTab: React.FC = () => {
                 )}
               </div>
 
-              {/* COLUNA DIREITA: Preview Visual no Smartphone Mockup */}
-              <div className="md:col-span-7 bg-slate-50/60 p-4 sm:p-6 flex flex-col items-center justify-center relative overflow-hidden">
+              {/* COLUNA DIREITA: Área de Preview Ampla e Centralizada */}
+              <div className="lg:col-span-8 xl:col-span-9 bg-slate-100/60 p-4 sm:p-6 flex flex-col items-center justify-center relative overflow-y-auto">
                 
-                {/* Switch de Dispositivo no Canto Superior Direito do Preview */}
-                <div className="absolute top-4 right-4 bg-slate-800 rounded-lg p-1 flex items-center gap-1 shadow-md z-20">
+                {/* Switch de Dispositivo no Azul Padrão SLL */}
+                <div className="absolute top-4 right-5 bg-white border border-slate-200/90 rounded-xl p-1 flex items-center gap-1 shadow-sm z-20">
                   <button
                     type="button"
                     onClick={() => setPreviewDevice('desktop')}
-                    className={`p-1.5 rounded-md transition-colors ${
-                      previewDevice === 'desktop' ? 'bg-[#fd8539] text-white' : 'text-slate-400 hover:text-white'
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      previewDevice === 'desktop' 
+                        ? 'bg-[#0094eb] text-white shadow-xs' 
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                     }`}
                     title="Visualizar Desktop"
                   >
                     <Monitor size={14} />
+                    <span className="hidden sm:inline">Desktop</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setPreviewDevice('mobile')}
-                    className={`p-1.5 rounded-md transition-colors ${
-                      previewDevice === 'mobile' ? 'bg-[#fd8539] text-white' : 'text-slate-400 hover:text-white'
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      previewDevice === 'mobile' 
+                        ? 'bg-[#0094eb] text-white shadow-xs' 
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                     }`}
                     title="Visualizar Mobile"
                   >
                     <Smartphone size={14} />
+                    <span className="hidden sm:inline">Mobile</span>
                   </button>
                 </div>
 
-                {/* VISUALIZAÇÃO DA ABA BÁSICO: Identificação */}
+                {/* 1. VISUALIZAÇÃO: ABA BÁSICO */}
                 {activeTab === 'basico' ? (
-                  <div className="w-full max-w-sm bg-white border border-slate-200/70 rounded-2xl p-8 text-center shadow-sm">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">IDENTIFICAÇÃO</p>
-                    <h3 className="text-xl font-bold text-slate-800 mt-1 mb-8">
+                  <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 text-center shadow-sm my-auto">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">IDENTIFICAÇÃO</p>
+                    <h3 className="text-2xl font-bold text-slate-800 mt-2 mb-8">
                       {styleName || 'Nome do Estilo'}
                     </h3>
 
                     {/* Diagrama Desktop <---> Mobile */}
-                    <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 mb-6">
+                    <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-6">
                       <div className="flex items-center justify-between">
-                        <div className="flex flex-col items-center gap-1.5">
-                          <div className="w-12 h-10 border-2 border-slate-300 rounded-lg flex items-center justify-center bg-white shadow-xs">
-                            <Monitor size={18} className="text-slate-400" />
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-14 h-11 border-2 border-slate-200 rounded-xl flex items-center justify-center bg-white shadow-xs">
+                            <Monitor size={20} className="text-[#0094eb]" />
                           </div>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase">DESKTOP</span>
+                          <span className="text-[11px] font-bold text-slate-600 uppercase">DESKTOP</span>
                         </div>
 
-                        <div className="flex flex-col items-center">
-                          <div className="border-t-2 border-dashed border-slate-300 w-16" />
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">SEPARADOS</span>
+                        <div className="flex flex-col items-center px-4">
+                          <div className="border-t-2 border-dashed border-slate-300 w-20" />
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">SEPARADOS</span>
                         </div>
 
-                        <div className="flex flex-col items-center gap-1.5">
-                          <div className="w-8 h-10 border-2 border-slate-300 rounded-lg flex items-center justify-center bg-white shadow-xs">
-                            <Smartphone size={16} className="text-slate-400" />
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-10 h-11 border-2 border-slate-200 rounded-xl flex items-center justify-center bg-white shadow-xs">
+                            <Smartphone size={18} className="text-[#0094eb]" />
                           </div>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase">MOBILE</span>
+                          <span className="text-[11px] font-bold text-slate-600 uppercase">MOBILE</span>
                         </div>
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                    <p className="text-xs text-slate-400 leading-relaxed">
                       Configuração independente: Personalize aparências diferentes para Desktop e Mobile de forma isolada.
                     </p>
                   </div>
-                ) : (
-                  /* MOCKUP SMARTPHONE REALISTA */
-                  <div className="relative w-[260px] h-[460px] bg-black rounded-[38px] p-2.5 shadow-2xl border-[6px] border-slate-800 flex flex-col justify-between">
-                    {/* Speaker / Câmera Notch */}
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-3.5 bg-slate-900 rounded-full z-30" />
+                ) : previewDevice === 'desktop' ? (
+                  /* 2. VISUALIZAÇÃO DESKTOP: MOLDURA CLEAN DE MONITOR/BROWSER */
+                  <div className="w-full max-w-3xl h-[560px] bg-white rounded-2xl border border-slate-200/90 shadow-xl flex flex-col overflow-hidden my-auto animate-in fade-in duration-200">
+                    {/* Header do Navegador */}
+                    <div className="h-9 bg-slate-100 border-b border-slate-200 flex items-center px-4 gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                      </div>
+                      <div className="mx-auto w-1/2 h-5 bg-white rounded-md border border-slate-200 flex items-center justify-center">
+                        <span className="text-[10px] text-slate-400 font-medium">sualoja.com.br</span>
+                      </div>
+                    </div>
 
-                    {/* TELA INTERNA DO SMARTPHONE */}
-                    <div className="w-full h-full bg-slate-900 rounded-[28px] overflow-hidden relative flex flex-col justify-center">
-
-                      {/* --- PREVIEW: FLUTUANTE --- */}
+                    {/* Conteúdo interno da tela Desktop */}
+                    <div className="flex-1 bg-slate-900 relative flex items-center justify-center p-6">
+                      {/* Flutuante no Desktop */}
                       {activeTab === 'flutuante' && (
-                        <div className="w-full h-full relative p-3">
-                          {/* Mini widget flutuante no canto inferior direito */}
-                          <div className="absolute bottom-4 right-4 w-16 h-24 rounded-xl border-2 border-[#0094eb] overflow-hidden shadow-xl bg-slate-800 flex items-center justify-center group cursor-pointer">
+                        <div className="w-full h-full relative">
+                          <div className="absolute bottom-6 right-6 w-28 h-44 rounded-2xl border-2 border-[#0094eb] overflow-hidden shadow-2xl bg-slate-800 flex items-center justify-center">
                             <img
                               src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&auto=format&fit=crop&q=80"
                               alt="Story"
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                              <div className="w-6 h-6 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-md">
-                                <Play size={10} fill="currentColor" className="ml-0.5" />
+                              <div className="w-8 h-8 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-md">
+                                <Play size={12} fill="currentColor" className="ml-0.5" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Carrossel / Dinâmico no Desktop */}
+                      {(activeTab === 'carrossel' || activeTab === 'carrossel-dinamico') && (
+                        <div className="flex items-center gap-4 overflow-hidden px-4">
+                          {[1, 2, 3, 4].map((item) => (
+                            <div key={item} className="w-36 h-60 rounded-2xl border-2 border-[#0094eb] overflow-hidden bg-slate-800 shrink-0 relative flex flex-col justify-between p-2 shadow-lg">
+                              <img
+                                src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&auto=format&fit=crop&q=80"
+                                alt="Story"
+                                className="absolute inset-0 w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                                <div className="w-8 h-8 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-md">
+                                  <Play size={12} fill="currentColor" className="ml-0.5" />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Grade no Desktop */}
+                      {activeTab === 'grade' && (
+                        <div className="grid grid-cols-4 gap-3 p-4 w-full">
+                          {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="h-44 rounded-xl overflow-hidden relative border border-[#0094eb]/70 bg-slate-800">
+                              <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&auto=format&fit=crop&q=80" alt="Story" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                <div className="w-6 h-6 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-xs">
+                                  <Play size={10} fill="currentColor" className="ml-0.5" />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Player no Desktop */}
+                      {activeTab === 'player' && (
+                        <div className="w-72 h-[480px] rounded-2xl overflow-hidden relative border-2 border-[#0094eb] shadow-2xl flex flex-col justify-between p-4">
+                          <img
+                            src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&auto=format&fit=crop&q=80"
+                            alt="Story Player"
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
+                          <div className="relative z-10 pt-1">
+                            <div className="w-full h-1 bg-white/30 rounded-full overflow-hidden mb-2">
+                              <div className="w-2/3 h-full bg-[#0094eb]" />
+                            </div>
+                            <div className="flex items-center justify-between text-white">
+                              <span className="text-xs font-bold">Calça Confort</span>
+                              <X size={14} className="cursor-pointer" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* 3. VISUALIZAÇÃO MOBILE: MOCKUP SMARTPHONE MODERNO, LEVE E DELICADO */
+                  <div className="relative w-[310px] h-[580px] bg-slate-800/80 rounded-[44px] p-2 shadow-2xl border-[3px] border-slate-300/80 flex flex-col justify-between my-auto transition-all animate-in fade-in duration-200">
+                    
+                    {/* Câmera Frontal / Dynamic Island Sutil */}
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-4 bg-slate-950 rounded-full z-30 flex items-center justify-end px-2">
+                      <div className="w-2 h-2 rounded-full bg-slate-800" />
+                    </div>
+
+                    {/* TELA INTERNA DO SMARTPHONE (BORDAS SUAVES E MAIOR ÁREA ÚTIL) */}
+                    <div className="w-full h-full bg-slate-900 rounded-[38px] overflow-hidden relative flex flex-col justify-center">
+
+                      {/* --- PREVIEW: FLUTUANTE --- */}
+                      {activeTab === 'flutuante' && (
+                        <div className="w-full h-full relative p-4">
+                          <div className="absolute bottom-6 right-5 w-20 h-32 rounded-2xl border-2 border-[#0094eb] overflow-hidden shadow-2xl bg-slate-800 flex items-center justify-center group cursor-pointer">
+                            <img
+                              src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&auto=format&fit=crop&q=80"
+                              alt="Story"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                              <div className="w-7 h-7 rounded-full bg-white/95 text-slate-900 flex items-center justify-center shadow-md">
+                                <Play size={11} fill="currentColor" className="ml-0.5" />
                               </div>
                             </div>
                           </div>
@@ -607,25 +673,24 @@ export const AparenciaTab: React.FC = () => {
 
                       {/* --- PREVIEW: CARROSSEL --- */}
                       {activeTab === 'carrossel' && (
-                        <div className="flex items-center gap-2 overflow-hidden px-3">
-                          {/* Card 1 (Parcial) */}
-                          <div className="w-14 h-48 rounded-xl bg-slate-800 opacity-40 shrink-0 overflow-hidden" />
+                        <div className="flex items-center gap-2.5 overflow-hidden px-2">
+                          <div className="w-16 h-64 rounded-2xl bg-slate-800 opacity-40 shrink-0 overflow-hidden" />
 
                           {/* Card Central Destaque */}
-                          <div className="w-36 h-56 rounded-2xl border-2 border-[#0094eb] overflow-hidden bg-slate-800 shrink-0 relative flex flex-col justify-between p-2 shadow-lg">
+                          <div className="w-48 h-80 rounded-3xl border-2 border-[#0094eb] overflow-hidden bg-slate-800 shrink-0 relative flex flex-col justify-between p-2.5 shadow-2xl">
                             <img
                               src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&auto=format&fit=crop&q=80"
                               alt="Story"
                               className="absolute inset-0 w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                              <div className="w-7 h-7 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-md">
-                                <Play size={12} fill="currentColor" className="ml-0.5" />
+                            <div className="absolute inset-0 bg-black/15 flex items-center justify-center">
+                              <div className="w-9 h-9 rounded-full bg-white/95 text-slate-900 flex items-center justify-center shadow-lg">
+                                <Play size={14} fill="currentColor" className="ml-0.5" />
                               </div>
                             </div>
                             {/* Card de produto na base */}
-                            <div className="relative z-10 mt-auto bg-white rounded-lg p-1.5 shadow-md flex items-center gap-1.5">
-                              <div className="w-6 h-6 rounded bg-slate-100 shrink-0 overflow-hidden">
+                            <div className="relative z-10 mt-auto bg-white/95 backdrop-blur-xs rounded-xl p-2 shadow-md flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 shrink-0 overflow-hidden">
                                 <img
                                   src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=100&auto=format&fit=crop&q=80"
                                   alt="Produto"
@@ -633,21 +698,20 @@ export const AparenciaTab: React.FC = () => {
                                 />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-[8px] font-bold text-slate-800 truncate leading-tight">Calça Confort</p>
-                                <p className="text-[8px] font-bold text-[#0094eb] leading-tight">R$ 149,95</p>
+                                <p className="text-[10px] font-bold text-slate-800 truncate leading-tight">Calça Confort</p>
+                                <p className="text-[10px] font-bold text-[#0094eb] leading-tight">R$ 149,95</p>
                               </div>
                             </div>
                           </div>
 
-                          {/* Card 3 (Parcial) */}
-                          <div className="w-14 h-48 rounded-xl bg-slate-800 opacity-40 shrink-0 overflow-hidden" />
+                          <div className="w-16 h-64 rounded-2xl bg-slate-800 opacity-40 shrink-0 overflow-hidden" />
                         </div>
                       )}
 
                       {/* --- PREVIEW: CARROSSEL DINÂMICO --- */}
                       {activeTab === 'carrossel-dinamico' && (
                         <div className="flex items-center justify-center gap-2 overflow-hidden px-2">
-                          <div className="w-12 h-44 rounded-xl bg-slate-800 opacity-30 shrink-0 overflow-hidden">
+                          <div className="w-14 h-60 rounded-2xl bg-slate-800 opacity-30 shrink-0 overflow-hidden">
                             <img
                               src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=200&auto=format&fit=crop&q=80"
                               alt="Story"
@@ -655,20 +719,19 @@ export const AparenciaTab: React.FC = () => {
                             />
                           </div>
 
-                          {/* Card Maior Destaque Dinâmico */}
-                          <div className="w-36 h-56 rounded-2xl border-2 border-[#0094eb] overflow-hidden bg-slate-800 shrink-0 relative flex flex-col justify-between p-2 shadow-xl">
+                          <div className="w-48 h-80 rounded-3xl border-2 border-[#0094eb] overflow-hidden bg-slate-800 shrink-0 relative flex flex-col justify-between p-2.5 shadow-2xl">
                             <img
                               src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&auto=format&fit=crop&q=80"
                               alt="Story"
                               className="absolute inset-0 w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/15 flex items-center justify-center">
-                              <div className="w-7 h-7 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-md">
-                                <Play size={12} fill="currentColor" className="ml-0.5" />
+                              <div className="w-9 h-9 rounded-full bg-white/95 text-slate-900 flex items-center justify-center shadow-lg">
+                                <Play size={14} fill="currentColor" className="ml-0.5" />
                               </div>
                             </div>
-                            <div className="relative z-10 mt-auto bg-white rounded-lg p-1.5 shadow-md flex items-center gap-1.5">
-                              <div className="w-6 h-6 rounded bg-slate-100 shrink-0 overflow-hidden">
+                            <div className="relative z-10 mt-auto bg-white/95 backdrop-blur-xs rounded-xl p-2 shadow-md flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 shrink-0 overflow-hidden">
                                 <img
                                   src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=100&auto=format&fit=crop&q=80"
                                   alt="Produto"
@@ -676,13 +739,13 @@ export const AparenciaTab: React.FC = () => {
                                 />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-[8px] font-bold text-slate-800 truncate leading-tight">Calça Confort</p>
-                                <p className="text-[8px] font-bold text-[#0094eb] leading-tight">R$ 149,95</p>
+                                <p className="text-[10px] font-bold text-slate-800 truncate leading-tight">Calça Confort</p>
+                                <p className="text-[10px] font-bold text-[#0094eb] leading-tight">R$ 149,95</p>
                               </div>
                             </div>
                           </div>
 
-                          <div className="w-12 h-44 rounded-xl bg-slate-800 opacity-30 shrink-0 overflow-hidden">
+                          <div className="w-14 h-60 rounded-2xl bg-slate-800 opacity-30 shrink-0 overflow-hidden">
                             <img
                               src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&auto=format&fit=crop&q=80"
                               alt="Story"
@@ -694,18 +757,18 @@ export const AparenciaTab: React.FC = () => {
 
                       {/* --- PREVIEW: GRADE --- */}
                       {activeTab === 'grade' && (
-                        <div className="grid grid-cols-2 gap-1.5 p-3">
+                        <div className="grid grid-cols-2 gap-2 p-3">
                           {[
                             'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=200&auto=format&fit=crop&q=80',
                             'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=200&auto=format&fit=crop&q=80',
                             'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&auto=format&fit=crop&q=80',
                             'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=200&auto=format&fit=crop&q=80'
                           ].map((url, i) => (
-                            <div key={i} className="h-24 rounded-xl overflow-hidden relative border border-[#0094eb]/70 bg-slate-800">
+                            <div key={i} className="h-32 rounded-2xl overflow-hidden relative border border-[#0094eb]/70 bg-slate-800 shadow-sm">
                               <img src={url} alt="Story" className="w-full h-full object-cover" />
                               <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                <div className="w-5 h-5 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-xs">
-                                  <Play size={8} fill="currentColor" className="ml-0.5" />
+                                <div className="w-6 h-6 rounded-full bg-white/95 text-slate-900 flex items-center justify-center shadow-xs">
+                                  <Play size={9} fill="currentColor" className="ml-0.5" />
                                 </div>
                               </div>
                             </div>
@@ -715,59 +778,59 @@ export const AparenciaTab: React.FC = () => {
 
                       {/* --- PREVIEW: PLAYER --- */}
                       {activeTab === 'player' && (
-                        <div className="w-full h-full relative flex flex-col justify-between p-3 overflow-hidden">
+                        <div className="w-full h-full relative flex flex-col justify-between p-3.5 overflow-hidden">
                           <img
                             src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&auto=format&fit=crop&q=80"
                             alt="Story Player"
                             className="absolute inset-0 w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
+                          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/75" />
 
-                          {/* Topo do Player: Barra de progresso + Loja + Fechar */}
-                          <div className="relative z-10 pt-3">
+                          {/* Topo do Player */}
+                          <div className="relative z-10 pt-5">
                             <div className="w-full h-1 bg-white/30 rounded-full overflow-hidden mb-2">
                               <div className="w-2/3 h-full bg-[#0094eb]" />
                             </div>
                             <div className="flex items-center justify-between text-white">
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-5 h-5 rounded-full border border-white/60 bg-white/20" />
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full border border-white/60 bg-white/20" />
                                 <div>
-                                  <p className="text-[9px] font-bold leading-tight">Calça Confort</p>
-                                  <p className="text-[7px] text-white/70 leading-tight">Vidlytics Store</p>
+                                  <p className="text-[10px] font-bold leading-tight">Calça Confort</p>
+                                  <p className="text-[8px] text-white/70 leading-tight">Vidlytics Store</p>
                                 </div>
                               </div>
-                              <button className="text-white/80 hover:text-white">
-                                <X size={12} />
+                              <button className="text-white/80 hover:text-white cursor-pointer">
+                                <X size={14} />
                               </button>
                             </div>
                           </div>
 
-                          {/* Lateral Direita: Ações (Like, Comentário, Compartilhar) */}
-                          <div className="relative z-10 self-end flex flex-col items-center gap-2 mb-2 text-white">
+                          {/* Lateral Direita */}
+                          <div className="relative z-10 self-end flex flex-col items-center gap-2.5 mb-2 text-white">
                             <div className="flex flex-col items-center">
-                              <div className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center">
-                                <Heart size={11} fill="white" />
+                              <div className="w-7 h-7 rounded-full bg-black/40 flex items-center justify-center">
+                                <Heart size={13} fill="white" />
                               </div>
-                              <span className="text-[8px] font-bold mt-0.5">1.2k</span>
+                              <span className="text-[9px] font-bold mt-0.5">1.2k</span>
                             </div>
                             <div className="flex flex-col items-center">
-                              <div className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center">
-                                <MessageSquare size={11} />
+                              <div className="w-7 h-7 rounded-full bg-black/40 flex items-center justify-center">
+                                <MessageSquare size={13} />
                               </div>
-                              <span className="text-[8px] font-bold mt-0.5">48</span>
+                              <span className="text-[9px] font-bold mt-0.5">48</span>
                             </div>
                             <div className="flex flex-col items-center">
-                              <div className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center">
-                                <Share2 size={11} />
+                              <div className="w-7 h-7 rounded-full bg-black/40 flex items-center justify-center">
+                                <Share2 size={13} />
                               </div>
-                              <span className="text-[7px] font-bold mt-0.5">Enviar</span>
+                              <span className="text-[8px] font-bold mt-0.5">Enviar</span>
                             </div>
                           </div>
 
                           {/* Base: Card de Produto */}
-                          <div className="relative z-10 bg-white rounded-xl p-2 shadow-lg flex items-center justify-between">
+                          <div className="relative z-10 bg-white/95 backdrop-blur-xs rounded-xl p-2.5 shadow-lg flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                              <div className="w-9 h-9 rounded-lg bg-slate-100 overflow-hidden shrink-0">
                                 <img
                                   src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=100&auto=format&fit=crop&q=80"
                                   alt="Produto"
@@ -775,14 +838,14 @@ export const AparenciaTab: React.FC = () => {
                                 />
                               </div>
                               <div>
-                                <p className="text-[9px] font-bold text-slate-800 leading-tight">Calça Confort ...</p>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-[9px] font-bold text-[#0094eb]">R$ 149,95</span>
-                                  <span className="text-[7px] text-slate-400 line-through">R$ 199,00</span>
+                                <p className="text-[10px] font-bold text-slate-800 leading-tight">Calça Confort</p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className="text-[10px] font-bold text-[#0094eb]">R$ 149,95</span>
+                                  <span className="text-[8px] text-slate-400 line-through">R$ 199,00</span>
                                 </div>
                               </div>
                             </div>
-                            <span className="text-slate-400 text-xs">›</span>
+                            <span className="text-slate-400 text-sm font-bold">›</span>
                           </div>
                         </div>
                       )}
@@ -794,11 +857,11 @@ export const AparenciaTab: React.FC = () => {
             </div>
 
             {/* Rodapé do Modal */}
-            <div className="px-6 py-3.5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white">
+            <div className="px-6 py-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white">
               {/* Botão Resetar */}
               <button
                 type="button"
-                className="text-[11px] font-bold tracking-wider uppercase text-rose-500 hover:bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 transition-colors self-start sm:self-auto"
+                className="text-[11px] font-bold tracking-wider uppercase text-rose-500 hover:bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 transition-colors self-start sm:self-auto cursor-pointer"
               >
                 RESETAR
               </button>
@@ -816,14 +879,14 @@ export const AparenciaTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
                 >
                   ✕ Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-[#0094eb] hover:bg-blue-600 text-white text-xs font-bold rounded-xl shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-[#0094eb] hover:bg-blue-600 text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer"
                 >
                   <Check size={14} />
                   Salvar
