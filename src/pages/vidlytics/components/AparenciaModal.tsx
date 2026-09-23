@@ -12,6 +12,7 @@ interface AparenciaModalProps {
 }
 
 const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleData }) => {
+    const [floatingDevice, setFloatingDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [activeTab, setActiveTab] = useState('basico');
   const [isUnified, setIsUnified] = useState(true);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
