@@ -3,6 +3,7 @@ import { Sparkles, ChevronDown, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import VisaoGeralTab from './vidlytics/tabs/VisaoGeralTab';
 import ResultadosTab from './vidlytics/tabs/ResultadosTab';
+import StoriesTab from './vidlytics/tabs/StoriesTab';
 
 export type VidlyticsTab = 'visao-geral' | 'resultados' | 'stories' | 'biblioteca' | 'produtos' | 'comentarios' | 'aparencia';
 
@@ -12,17 +13,17 @@ export default function Vidlytics() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
-      
+
       {/* 1. TOPBAR DO SLL */}
       <header className="bg-white border-b border-slate-200/80 px-6 py-3 flex items-center justify-between sticky top-0 z-40">
-        <button 
-          onClick={() => navigate('/')} 
+        <button
+          onClick={() => navigate('/')}
           className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
         >
-          <img 
-            src="/assets/sll-logotipo-ico.png" 
-            alt="SLL" 
-            className="h-8 w-auto object-contain" 
+          <img
+            src="/assets/sll-logotipo-ico.png"
+            alt="SLL"
+            className="h-8 w-auto object-contain"
           />
           <span className="text-slate-500 font-normal">←</span>
           <span>Voltar ao Hub Central</span>
@@ -37,7 +38,7 @@ export default function Vidlytics() {
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
-        
+
         {/* BANNER PROMO */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-6 shadow-md border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl z-10">
@@ -68,9 +69,9 @@ export default function Vidlytics() {
         {/* 2. BARRA DE ABAS COM LOGO */}
         <div className="bg-white rounded-xl p-2.5 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center pl-2">
-            <img 
-              src="/assets/vidlytics-logo-wide.png" 
-              alt="Vidlytics" 
+            <img
+              src="/assets/vidlytics-logo-wide.png"
+              alt="Vidlytics"
               className="h-8 w-auto object-contain"
             />
           </div>
@@ -103,9 +104,10 @@ export default function Vidlytics() {
         {/* RENDERIZAÇÃO MODULAR DAS ABAS */}
         {activeTab === 'visao-geral' && <VisaoGeralTab />}
         {activeTab === 'resultados' && <ResultadosTab />}
-        
+        {activeTab === 'stories' && <StoriesTab />}
+
         {/* Próximas abas isoladas */}
-        {activeTab !== 'visao-geral' && activeTab !== 'resultados' && (
+        {!['visao-geral', 'resultados', 'stories'].includes(activeTab) && (
           <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-3">
             <h3 className="text-base font-bold text-slate-700 capitalize">Módulo: {activeTab}</h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
@@ -121,9 +123,9 @@ export default function Vidlytics() {
         <p>© 2026 Vidlytics. Todos os direitos reservados.</p>
         <div className="flex items-center gap-2.5">
           <span className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider">DESENVOLVIDO POR:</span>
-          <img 
-            src="/assets/sll-logotipo.png" 
-            alt="Sistema Loja Lucrativa" 
+          <img
+            src="/assets/sll-logotipo.png"
+            alt="Sistema Loja Lucrativa"
             className="h-8 w-auto object-contain"
           />
         </div>
