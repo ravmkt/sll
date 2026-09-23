@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import NewStoryModal from '../components/NewStoryModal';
 import { Plus, Search, Eye, Pencil, Trash2, Send, TrendingUp, TrendingDown, Info } from 'lucide-react';
 
 interface StoryRow {
@@ -17,8 +16,7 @@ interface StoryRow {
 }
 
 export default function StoriesTab() {
-    const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
-const [busca, setBusca] = useState('');
+  const [busca, setBusca] = useState('');
   const [statusFiltro, setStatusFiltro] = useState<'TODOS' | 'ATIVO' | 'INATIVO'>('TODOS');
 
   // Dados mockados no padrão do layout
@@ -82,7 +80,7 @@ const [busca, setBusca] = useState('');
         </div>
 
         {/* BOTÃO PADRÃO COM APENAS UM ÍCONE DE + */}
-        <button onClick={() => setIsNewStoryOpen(true)} className="bg-[#0094eb] hover:bg-[#0082cf] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer self-start sm:self-auto">
+        <button className="bg-[#0094eb] hover:bg-[#0082cf] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer self-start sm:self-auto">
           <Plus className="w-4 h-4" />
           <span>Novo Story</span>
         </button>
@@ -295,13 +293,6 @@ const [busca, setBusca] = useState('');
           </div>
         </div>
       </div>
-
-      {/* Modal Novo Story */}
-      <NewStoryModal isOpen={isNewStoryOpen} onClose={() => setIsNewStoryOpen(false)} />
     </div>
   );
 }
-
-
-
-
