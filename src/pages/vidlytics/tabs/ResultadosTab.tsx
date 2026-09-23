@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import MarketStudyModal from '../components/MarketStudyModal';
 import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
 
 type SubTab = 'visao-geral' | 'videos' | 'retencao' | 'insights';
@@ -23,6 +24,7 @@ function TrendBadge({ value, isPositive = true }: { value: string; isPositive?: 
 }
 
 export default function ResultadosTab() {
+  const [isMarketStudyOpen, setIsMarketStudyOpen] = useState(false);
   const [subTab, setSubTab] = useState<SubTab>('visao-geral');
   const [periodo, setPeriodo] = useState('30 dias');
   const [searchVideo, setSearchVideo] = useState('');
@@ -443,7 +445,7 @@ export default function ResultadosTab() {
               </div>
             </div>
 
-            <button className="bg-[#0094eb] hover:bg-sky-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex-shrink-0">
+            <button onClick={() => setIsMarketStudyOpen(true)} className="bg-[#0094eb] hover:bg-sky-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex-shrink-0 cursor-pointer">
               Ver Estudo de Mercado
             </button>
           </div>
@@ -940,8 +942,12 @@ export default function ResultadosTab() {
         </div>
       )}
 
+      {/* Modal Estudo de Mercado */}
+      <MarketStudyModal isOpen={isMarketStudyOpen} onClose={() => setIsMarketStudyOpen(false)} />
+
     </div>
   );
 }
+
 
 
