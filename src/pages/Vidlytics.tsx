@@ -16,9 +16,9 @@ import { useNavigate } from 'react-router-dom';
 import VisaoGeralTab from './vidlytics/tabs/VisaoGeralTab';
 import ResultadosTab from './vidlytics/tabs/ResultadosTab';
 import StoriesTab from './vidlytics/tabs/StoriesTab';
-import BibliotecaTab from '../components/vidlytics/BibliotecaTab';
+import BibliotecaTab from './vidlytics/tabs/BibliotecaTab';
 import ComentariosTab from './vidlytics/tabs/ComentariosTab';
-import AparenciaTab from './vidlytics/AparenciaTab';
+import AparenciaTab from './vidlytics/tabs/AparenciaTab';
 
 export type VidlyticsTab = 'visao-geral' | 'resultados' | 'stories' | 'biblioteca' | 'comentarios' | 'aparencia';
 
@@ -153,4 +153,5 @@ export default function Vidlytics() {
     </div>
   );
 }
+
 
