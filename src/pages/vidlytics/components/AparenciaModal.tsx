@@ -70,7 +70,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
         {/* ÁREA CENTRAL (CONTROLES + PREVIEW) */}
         <div className="flex-1 flex overflow-hidden bg-slate-50 dark:bg-slate-900/50">
           
-          {/* ESQUERDA - CONTROLES (Fixo em 400px para sobrar muito espaço pro preview) */}
+          {/* ESQUERDA - CONTROLES */}
           <div className="w-[400px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto p-6 flex flex-col gap-6 shrink-0">
             
             {activeTab === 'basico' ? (
@@ -131,7 +131,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                   Configurações do {activeTab.replace('-', ' ')}
                 </h3>
 
-                {/* CARD DISPOSITIVO (PRINT 1) */}
+                {/* CARD DISPOSITIVO */}
                 <div className="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Dispositivo</span>
                   
@@ -139,7 +139,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                     <button 
                       onClick={() => !isUnified && setPreviewDevice('desktop')}
                       className={`p-1 rounded-md transition-colors ${
-                        previewDevice === 'desktop' ? 'text-[#0094eb]' : 'text-slate-400 hover:text-slate-600'
+                        (isUnified || previewDevice === 'desktop') ? 'text-[#0094eb]' : 'text-slate-400 hover:text-slate-600'
                       } ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <Monitor size={16} strokeWidth={2.5} />
@@ -154,7 +154,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                     <button 
                       onClick={() => !isUnified && setPreviewDevice('mobile')}
                       className={`p-1 rounded-md transition-colors ${
-                        previewDevice === 'mobile' ? 'text-[#0094eb]' : 'text-slate-400 hover:text-slate-600'
+                        (isUnified || previewDevice === 'mobile') ? 'text-[#0094eb]' : 'text-slate-400 hover:text-slate-600'
                       } ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <Smartphone size={16} strokeWidth={2.5} />
@@ -185,8 +185,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
             )}
           </div>
 
-          {/* DIREITA - ÁREA DE PREVIEW GIGANTE */}
-          <div className="flex-1 flex items-center justify-center p-8 relative overflow-hidden">
+          {/* DIREITA - ÁREA DE PREVIEW */}
+          <div className="flex-1 flex items-center justify-center p-8 relative overflow-hidden h-full">
             
             {activeTab === 'basico' ? (
               // PREVIEW BÁSICO IDÊNTICO AO PRINT 2
@@ -242,43 +242,59 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                 </p>
               </div>
             ) : (
-              // PREVIEW OUTROS FORMATOS
+              // PREVIEW OUTROS FORMATOS (SEM ANIMAÇÃO DE TRANSIÇÃO, BLOCOS SEPARADOS)
               <div className="w-full h-full flex items-center justify-center">
-                {/* Aqui você injeta os seus mockups reais, coloquei um placeholder visual */}
-                <div className={`relative bg-white dark:bg-slate-800 shadow-2xl transition-all duration-300 flex items-center justify-center overflow-hidden
-                  ${previewDevice === 'desktop' 
-                    ? 'w-full max-w-5xl aspect-video rounded-xl border border-slate-200 dark:border-slate-700' 
-                    : 'w-[340px] h-[700px] rounded-[3rem] border-[12px] border-[#1a1f36]'}
-                `}>
-                  <div className="absolute inset-0 bg-slate-50 dark:bg-slate-900 opacity-60"></div>
-                  
-                  {activeTab === 'flutuante' && previewDevice === 'mobile' && (
-                    <div className="absolute bottom-8 right-6 w-[110px] h-[190px] bg-slate-900 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-center relative">
-                      <div className="absolute top-2 left-2 right-2 flex justify-between">
-                        <div className="bg-red-600 text-white text-[8px] px-1.5 py-0.5 rounded uppercase font-bold">AO VIVO</div>
-                      </div>
-                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                        <PlaySquare className="text-white w-5 h-5 ml-1" fill="white" />
-                      </div>
-                    </div>
-                  )}
+                
+                {previewDevice === 'desktop' ? (
+                  // MOCKUP BROWSER (DESKTOP) BEM DESENHADO
+                  <div className="w-full max-w-5xl aspect-video bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+                     {/* Top bar navegador */}
+                     <div className="h-10 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 gap-2 shrink-0">
+                        <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                        <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                        <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                     </div>
+                     {/* Conteúdo Desktop */}
+                     <div className="flex-1 relative bg-slate-50 dark:bg-slate-900 flex items-center justify-center overflow-hidden">
+                        <span className="z-10 text-slate-400 font-bold uppercase tracking-widest">
+                           Preview do {activeTab} (Desktop)
+                        </span>
+                     </div>
+                  </div>
+                ) : (
+                  // MOCKUP MOBILE (NÃO CORTA, SE ADAPTA A ALTURA)
+                  <div className="h-full max-h-full aspect-[9/19] rounded-[2.5rem] border-[10px] border-[#1a1f36] bg-slate-50 dark:bg-slate-900 shadow-2xl relative flex items-center justify-center overflow-hidden shrink-0">
+                    
+                    {/* Detalhe da câmera/notch do celular */}
+                    <div className="absolute top-0 inset-x-0 h-5 bg-[#1a1f36] w-[40%] mx-auto rounded-b-xl z-20"></div>
 
-                  {activeTab !== 'flutuante' && (
-                     <span className="z-10 text-slate-400 font-bold uppercase tracking-widest">
-                       Preview do {activeTab}
-                     </span>
-                  )}
-                </div>
+                    {activeTab === 'flutuante' && (
+                      <div className="absolute bottom-6 right-4 w-[28%] aspect-[9/16] bg-slate-800 rounded-xl border border-slate-700 shadow-xl flex items-center justify-center z-30">
+                        <div className="absolute top-1 left-1 right-1 flex justify-between">
+                          <div className="bg-red-600 text-white text-[7px] px-1 py-0.5 rounded uppercase font-bold">AO VIVO</div>
+                        </div>
+                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                          <PlaySquare className="text-white w-4 h-4 ml-0.5" fill="white" />
+                        </div>
+                      </div>
+                    )}
+
+                    <span className="z-10 text-slate-400 text-sm font-bold uppercase tracking-widest text-center px-4">
+                       Preview do {activeTab} (Mobile)
+                    </span>
+                  </div>
+                )}
+
               </div>
             )}
           </div>
         </div>
 
-        {/* FOOTER (RODAPÉ IDÊNTICO AO PRINT 3) */}
+        {/* FOOTER */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
           
-          {/* Botão Resetar (Esquerda) */}
-          <button className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-lg text-sm font-black tracking-wide transition-colors">
+          {/* Botão Resetar Corrigido (Sem Hover, rosa fixo) */}
+          <button className="bg-red-50 text-red-500 font-extrabold px-5 py-2.5 rounded-xl text-sm tracking-wide border border-transparent outline-none">
             RESETAR
           </button>
 
