@@ -26,7 +26,7 @@ export default function Vidlytics() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
       
-      {/* 1. TOPBAR ORIGINAL (Conforme Print 1) */}
+      {/* 1. TOPBAR ORIGINAL */}
       <header className="bg-white border-b border-slate-200/80 px-6 py-3 flex items-center justify-between sticky top-0 z-40">
         <button 
           onClick={() => navigate('/')} 
@@ -78,13 +78,13 @@ export default function Vidlytics() {
           </div>
         </div>
 
-        {/* 2. BARRA DE ABAS COM O LOGOTIPO OFICIAL WIDE (Conforme Print 1) */}
-        <div className="bg-white rounded-xl p-2 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        {/* 2. BARRA DE ABAS COM O LOGOTIPO VIDLYTICS AUMENTADO (h-8) */}
+        <div className="bg-white rounded-xl p-2.5 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center pl-2">
             <img 
               src="/assets/vidlytics-logo-wide.png" 
               alt="Vidlytics" 
-              className="h-6 w-auto object-contain"
+              className="h-8 w-auto object-contain"
             />
           </div>
 
@@ -509,15 +509,15 @@ export default function Vidlytics() {
         </div>
       )}
 
-      {/* 3. RODAPÉ ORIGINAL (Conforme Print 1) */}
-      <footer className="bg-white border-t border-slate-200/80 px-6 py-4 mt-auto text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
-        <p>© 2026 Vidlytics Stories. Todos os direitos reservados.</p>
-        <div className="flex items-center gap-2">
+      {/* 3. RODAPÉ AJUSTADO (Logotipo SLL ampliado para h-8 e copyright ajustado) */}
+      <footer className="bg-white border-t border-slate-200/80 px-6 py-4 mt-auto text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p>© 2026 Vidlytics. Todos os direitos reservados.</p>
+        <div className="flex items-center gap-2.5">
           <span className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider">DESENVOLVIDO POR:</span>
           <img 
             src="/assets/sll-logotipo.png" 
             alt="Sistema Loja Lucrativa" 
-            className="h-6 w-auto object-contain"
+            className="h-8 w-auto object-contain"
           />
         </div>
       </footer>
