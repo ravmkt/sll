@@ -1,3 +1,15 @@
+/**
+ * ============================================================================
+ * [STATUS: LAYOUT GERAL APROVADO - CONGELADO]
+ * ============================================================================
+ * ATENÇÃO: A casca geral deste módulo (Topbar SLL, Banner Promocional,
+ * Barra de Navegação de Abas com Logo Vidlytics e Rodapé SLL) está 100%
+ * APROVADA e não deve sofrer alterações estruturais ou visuais.
+ * 
+ * Manutenções futuras devem ocorrer exclusivamente dentro dos componentes
+ * isolados de cada aba localizados em src/pages/vidlytics/tabs/.
+ * ============================================================================
+ */
 import React, { useState } from 'react';
 import { Sparkles, ChevronDown, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -141,3 +153,4 @@ export default function Vidlytics() {
     </div>
   );
 }
+
