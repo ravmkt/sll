@@ -1,370 +1,274 @@
-import AddVideoUrlModal from '../components/AddVideoUrlModal';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
-  Search, 
-  UploadCloud, 
+  Upload, 
   ExternalLink, 
-  HardDrive, 
-  Video, 
-  Image as ImageIcon, 
-  Pencil, 
+  Search, 
+  Filter, 
+  Trash2, 
+  MoreVertical, 
+  Play, 
+  Clock, 
   Eye, 
-  Download, 
-  Trash2,
-  CheckCircle2
+  CheckCircle2, 
+  AlertCircle,
+  Video,
+  Image as ImageIcon,
+  FolderPlus
 } from 'lucide-react';
+import AddVideoUrlModal from '../components/AddVideoUrlModal';
 
 interface MediaItem {
   id: string;
-  name: string;
+  title: string;
+  url: string;
+  thumbnail?: string;
   type: 'video' | 'image';
-  typeLabel: string;
-  thumbnail: string;
-  product?: {
-    name: string;
-    image: string;
-  };
-  linkedStory?: string;
-  size: string;
-  status: 'DISPONÍVEL' | 'PROCESSANDO' | 'ERRO';
+  duration?: string;
+  views?: number;
+  createdAt: string;
+  source: 'upload' | 'external';
 }
 
 export const BibliotecaTab: React.FC = () => {
+  const [filterType, setFilterType] = useState<'all' | 'video' | 'image'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'TODOS' | 'VIDEOS' | 'IMAGENS'>('TODOS');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Dados mockados fiéis ao exemplo da imagem
-  const [mediaList] = useState<MediaItem[]>([
-    {
-      id: '1',
-      name: 'oculos-de-sol.mp4',
-      type: 'video',
-      typeLabel: 'VÍDEO MP4 (HOSPEDADO)',
-      thumbnail: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=150&auto=format&fit=crop&q=80',
-      linkedStory: 'TESTE',
-      size: '8.3 MB',
-      status: 'DISPONÍVEL',
-    },
-    {
-      id: '2',
-      name: 'Criação_de_Vídeo_Fashion_Edit...',
-      type: 'video',
-      typeLabel: 'VÍDEO MP4 (HOSPEDADO)',
-      thumbnail: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=150&auto=format&fit=crop&q=80',
-      product: {
-        name: 'Blusa Confort - Verd...',
-        image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=100&auto=format&fit=crop&q=80'
-      },
-      linkedStory: 'TESTE',
-      size: '2 MB',
-      status: 'DISPONÍVEL',
-    },
-    {
-      id: '3',
-      name: 'LOGOTIPO_OFICIAL_LOJA.png',
-      type: 'image',
-      typeLabel: 'IMAGEM (HOSPEDADA)',
-      thumbnail: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=150&auto=format&fit=crop&q=80',
-      size: '132.4 KB',
-      status: 'DISPONÍVEL',
+  // Lista mockada/inicial para testes visuais enquanto sincroniza com o banco
+  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const isVideo = file.type.startsWith('video');
+      const newMedia: MediaItem = {
+        id: Date.now().toString(),
+        title: file.name,
+        url: URL.createObjectURL(file),
+        type: isVideo ? 'video' : 'image',
+        createdAt: new Date().toLocaleDateString('pt-BR'),
+        source: 'upload'
+      };
+      setMediaList(prev => [newMedia, ...prev]);
     }
-  ]);
+  };
+
+  const handleVideoAdded = (videoData: any) => {
+    const newMedia: MediaItem = {
+      id: Date.now().toString(),
+      title: videoData.title || 'Vídeo Externo',
+      url: videoData.url,
+      thumbnail: videoData.thumbnail,
+      type: 'video',
+      createdAt: new Date().toLocaleDateString('pt-BR'),
+      source: 'external'
+    };
+    setMediaList(prev => [newMedia, ...prev]);
+    setIsUrlModalOpen(false);
+  };
 
   const filteredMedia = mediaList.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    if (filterType === 'VIDEOS') return matchesSearch && item.type === 'video';
-    if (filterType === 'IMAGENS') return matchesSearch && item.type === 'image';
-    return matchesSearch;
+    const matchesType = filterType === 'all' || item.type === filterType;
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesType && matchesSearch;
   });
 
   return (
     <div className="space-y-6">
-      {/* 1. CABEÇALHO */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* Input de Arquivo Oculto */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        accept="video/*,image/*" 
+        className="hidden" 
+      />
+
+      {/* Header com Ações */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Biblioteca</h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Gerencie os vídeos e imagens hospedados no seu plano e monitore o consumo de espaço.
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white">Biblioteca de Mídias</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Gerencie os vídeos e criativos importados para os seus widgets e stories.
           </p>
         </div>
 
-        {/* Botões de Ação */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button 
-            type="button" 
-            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm"
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          {/* Botão URL EXTERNA */}
+          <button
+            type="button"
+            onClick={() => setIsUrlModalOpen(true)}
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-sm transition-all cursor-pointer shadow-sm active:scale-95"
           >
-            {/* SVG Instagram */}
-            <svg className="w-3.5 h-3.5 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-            </svg>
-            <span>INSTAGRAM</span>
-          </button>
-
-          <button 
-            type="button" 
-            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm"
-          >
-            {/* SVG TikTok */}
-            <svg className="w-3.5 h-3.5 fill-current text-slate-700" viewBox="0 0 24 24">
-              <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
-            </svg>
-            <span>TIKTOK</span>
-          </button>
-
-          <button 
-            type="button" 
-            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm"
-           onClick={() => setIsUrlModalOpen(true)}>
-            <ExternalLink size={14} className="text-slate-600" />
+            <ExternalLink className="w-4 h-4 text-[#0094eb]" />
             <span>URL EXTERNA</span>
           </button>
 
-          <button 
-            type="button" 
-            className="flex items-center gap-2 px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-colors shadow-md shadow-blue-500/20"
+          {/* Botão FAZER UPLOAD */}
+          <button
+            type="button"
+            onClick={handleUploadClick}
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0094eb] hover:bg-[#007cc7] text-white font-medium text-sm transition-all cursor-pointer shadow-md shadow-[#0094eb]/20 active:scale-95"
           >
-            <UploadCloud size={16} />
-            <span>FAZER UPLOAD</span>
+            <Upload className="w-4 h-4" />
+            <span>Fazer Upload</span>
           </button>
         </div>
       </div>
 
-      {/* 2. CARD DE CONSUMO DE ARMAZENAMENTO */}
-      <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#0094eb] flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
-              <HardDrive size={22} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-slate-800 text-sm tracking-wide">SCALE</span>
-                <span className="px-2 py-0.5 bg-blue-50 text-[#0094eb] text-[10px] font-bold rounded-full">
-                  50 GB LIMITE
-                </span>
+      {/* Barra de Filtros e Busca */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Filtros por Tipo */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/60 w-full md:w-auto">
+          <button
+            type="button"
+            onClick={() => setFilterType('all')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer select-none ${
+              filterType === 'all'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
+            }`}
+          >
+            <span>Todos</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300">
+              {mediaList.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilterType('video')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer select-none ${
+              filterType === 'video'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
+            }`}
+          >
+            <Video className="w-4 h-4 text-[#0094eb]" />
+            <span>Vídeos</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilterType('image')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer select-none ${
+              filterType === 'image'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
+            }`}
+          >
+            <ImageIcon className="w-4 h-4 text-[#fd8539]" />
+            <span>Imagens</span>
+          </button>
+        </div>
+
+        {/* Input de Busca */}
+        <div className="relative w-full md:w-72">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar por título..."
+            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0094eb]/30 focus:border-[#0094eb] text-slate-800 dark:text-slate-200"
+          />
+        </div>
+      </div>
+
+      {/* Grid de Cards ou Empty State */}
+      {filteredMedia.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center">
+          <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-4 text-slate-400">
+            <Video className="w-8 h-8" />
+          </div>
+          <h3 className="text-base font-semibold text-slate-800 dark:text-white mb-1">
+            Nenhuma mídia encontrada
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-6">
+            Você ainda não possui vídeos ou imagens na biblioteca. Importe um link externo ou faça o upload direto.
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setIsUrlModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+            >
+              <ExternalLink className="w-4 h-4 text-[#0094eb]" />
+              URL Externa
+            </button>
+            <button
+              type="button"
+              onClick={handleUploadClick}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0094eb] hover:bg-[#007cc7] text-white text-sm font-medium transition-all cursor-pointer"
+            >
+              <Upload className="w-4 h-4" />
+              Upload de Arquivo
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {filteredMedia.map((item) => (
+            <div 
+              key={item.id} 
+              className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden hover:shadow-lg transition-all"
+            >
+              <div className="aspect-[9/16] bg-slate-100 dark:bg-slate-800 relative flex items-center justify-center overflow-hidden">
+                {item.type === 'video' ? (
+                  item.thumbnail ? (
+                    <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <video src={item.url} className="w-full h-full object-cover" />
+                  )
+                ) : (
+                  <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <button 
+                    type="button"
+                    className="p-2 bg-white/90 rounded-full hover:bg-white text-slate-800 cursor-pointer transition-transform hover:scale-110"
+                  >
+                    <Play className="w-4 h-4 fill-current" />
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setMediaList(prev => prev.filter(m => m.id !== item.id))}
+                    className="p-2 bg-red-600/90 rounded-full hover:bg-red-600 text-white cursor-pointer transition-transform hover:scale-110"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Uso atual: <strong className="text-slate-700 font-semibold">10.3 MB</strong> de 50 GB
-              </p>
+              <div className="p-3">
+                <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate" title={item.title}>
+                  {item.title}
+                </p>
+                <div className="flex items-center justify-between mt-1 text-[11px] text-slate-400">
+                  <span>{item.createdAt}</span>
+                  <span className="uppercase text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                    {item.source}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div className="text-right">
-            <span className="text-xl font-bold text-emerald-500">0.1%</span>
-            <p className="text-[11px] text-slate-400 font-medium">Espaço Consumido</p>
-          </div>
+          ))}
         </div>
+      )}
 
-        {/* Barra de Progresso */}
-        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-          <div 
-            className="bg-[#0094eb] h-full rounded-full transition-all duration-500" 
-            style={{ width: '0.1%' }} 
-          />
-        </div>
-      </div>
-
-      {/* 3. BARRA DE PESQUISA E FILTROS */}
-      <div className="bg-white border border-slate-100 rounded-2xl p-2.5 shadow-sm flex flex-col sm:flex-row items-center gap-3">
-        <div className="relative flex-1 w-full">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Pesquisar pelo nome do arquivo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-transparent text-sm text-slate-700 placeholder-slate-400 focus:outline-none"
-          />
-        </div>
-
-        <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
-          <button 
-            type="button"
-            onClick={() => setFilterType('TODOS')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors ${
-              filterType === 'TODOS'
-                ? 'bg-[#0094eb] text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            TODOS
-          </button>
-          
-          <button 
-            type="button"
-            onClick={() => setFilterType('VIDEOS')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors ${
-              filterType === 'VIDEOS'
-                ? 'bg-[#0094eb] text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <Video size={14} />
-            <span>VÍDEOS</span>
-          </button>
-
-          <button 
-            type="button"
-            onClick={() => setFilterType('IMAGENS')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors ${
-              filterType === 'IMAGENS'
-                ? 'bg-[#0094eb] text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <ImageIcon size={14} />
-            <span>IMAGENS</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 4. TABELA DE MÍDIAS COM ALINHAMENTOS REFINADOS */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-        {/* Sub-header do card com contagem */}
-        <div className="px-6 py-3.5 bg-slate-50/60 border-b border-slate-100">
-          <span className="text-xs font-extrabold text-slate-700 tracking-wider">
-            {filteredMedia.length} MÍDIAS LISTADAS
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 tracking-wider uppercase">
-                <th className="py-3.5 px-6 text-center w-20">MÍDIA</th>
-                <th className="py-3.5 px-4 text-left">NOME DO ARQUIVO</th>
-                <th className="py-3.5 px-4 text-center">PRODUTO</th>
-                <th className="py-3.5 px-4 text-center">STORY VINCULADO</th>
-                <th className="py-3.5 px-4 text-center">TAMANHO</th>
-                <th className="py-3.5 px-4 text-center">STATUS</th>
-                <th className="py-3.5 px-6 text-center w-36">AÇÕES</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
-              {filteredMedia.map((media) => (
-                <tr key={media.id} className="hover:bg-slate-50/80 transition-colors">
-                  {/* Mídia Thumbnail (Centralizado) */}
-                  <td className="py-3 px-6 text-center">
-                    <div className="flex justify-center">
-                      <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
-                        <img 
-                          src={media.thumbnail} 
-                          alt={media.name} 
-                          className="w-full h-full object-cover" 
-                        />
-                        {media.type === 'video' && (
-                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                            <div className="w-5 h-5 rounded-full bg-black/40 flex items-center justify-center text-white">
-                              <span className="text-[9px] font-bold">▶</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Nome do Arquivo (Alinhado à Esquerda) */}
-                  <td className="py-3 px-4 text-left">
-                    <p className="font-bold text-slate-800 text-sm truncate max-w-[240px]">
-                      {media.name}
-                    </p>
-                    <p className="text-[11px] font-semibold text-[#0094eb] mt-0.5">
-                      {media.typeLabel}
-                    </p>
-                  </td>
-
-                  {/* Produto (Centralizado) */}
-                  <td className="py-3 px-4 text-center">
-                    <div className="flex justify-center items-center">
-                      {media.product ? (
-                        <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-700">
-                          <img 
-                            src={media.product.image} 
-                            alt={media.product.name} 
-                            className="w-4 h-4 rounded-full object-cover" 
-                          />
-                          <span className="font-medium max-w-[130px] truncate">{media.product.name}</span>
-                        </div>
-                      ) : (
-                        <span className="inline-block px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-400 font-medium">
-                          Sem produto
-                        </span>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* Story Vinculado (Centralizado) */}
-                  <td className="py-3 px-4 text-center">
-                    {media.linkedStory ? (
-                      <span className="inline-block px-3 py-1 bg-blue-50 text-[#0094eb] text-xs font-bold rounded-full">
-                        {media.linkedStory}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 font-bold">—</span>
-                    )}
-                  </td>
-
-                  {/* Tamanho (Centralizado) */}
-                  <td className="py-3 px-4 text-center text-xs font-semibold text-slate-600">
-                    {media.size}
-                  </td>
-
-                  {/* Status (Centralizado) */}
-                  <td className="py-3 px-4 text-center">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full">
-                      <CheckCircle2 size={13} />
-                      <span>{media.status}</span>
-                    </span>
-                  </td>
-
-                  {/* Ações (Centralizado) */}
-                  <td className="py-3 px-6 text-center">
-                    <div className="inline-flex items-center justify-center gap-1.5 text-slate-400">
-                      {media.type === 'video' && (
-                        <button 
-                          type="button"
-                          className="p-1.5 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                          title="Editar"
-                        >
-                          <Pencil size={15} />
-                        </button>
-                      )}
-                      <button 
-                        type="button"
-                        className="p-1.5 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                        title="Visualizar"
-                      >
-                        <Eye size={15} />
-                      </button>
-                      <button 
-                        type="button"
-                        className="p-1.5 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                        title="Baixar"
-                      >
-                        <Download size={15} />
-                      </button>
-                      <button 
-                        type="button"
-                        className="p-1.5 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Excluir"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Modal de Adicionar URL Externa */}
+      <AddVideoUrlModal
+        isOpen={isUrlModalOpen}
+        onClose={() => setIsUrlModalOpen(false)}
+        onSuccess={handleVideoAdded}
+      />
     </div>
   );
 };
 
 export default BibliotecaTab;
-
