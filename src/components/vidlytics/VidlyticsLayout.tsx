@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BibliotecaTab from '../components/vidlytics/BibliotecaTab';
 import { 
   LayoutDashboard, 
   BarChart3, 
@@ -179,3 +180,4 @@ export const VidlyticsLayout: React.FC<VidlyticsLayoutProps> = ({
 };
 
 export default VidlyticsLayout;
+
