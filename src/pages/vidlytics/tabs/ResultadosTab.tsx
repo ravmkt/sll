@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2 } from 'lucide-react';
+import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
 type SubTab = 'visao-geral' | 'videos' | 'retencao' | 'insights';
 
 export default function ResultadosTab() {
+  const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<SubTab>('visao-geral');
   const [periodo, setPeriodo] = useState('30 dias');
   const [searchVideo, setSearchVideo] = useState('');
@@ -526,10 +527,47 @@ export default function ResultadosTab() {
                     <th className="py-3 px-4 text-center">Visualizações ↓</th>
                     <th className="py-3 px-4 text-center">CTR</th>
                     <th className="py-3 px-4 text-center">Conversões</th>
+                      <th className="py-3 px-4 text-center">Ações</th>
                     <th className="py-3 px-4 text-center">Receita</th>
                     <th className="py-3 px-4 text-center">Engajamento</th>
                     <th className="py-3 px-4 text-center">Duração</th>
-                  </tr>
+                  
+                      <td className="py-3.5 px-4 text-center relative">
+                        <div className="relative inline-block text-left">
+                          <button
+                            type="button"
+                            onClick={() => setOpenActionMenu(openActionMenu === 'video1' ? null : 'video1')}
+                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            title="Ações do vídeo"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                          {openActionMenu === 'video1' && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={() => setOpenActionMenu(null)}></div>
+                              <div className="absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 z-20 text-xs text-left animate-in fade-in zoom-in-95 duration-100">
+                                <button
+                                  type="button"
+                                  onClick={() => { setOpenActionMenu(null); alert('Editar vídeo: oculos-de-sol.mp4'); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 transition-colors font-medium"
+                                >
+                                  <Pencil className="w-3.5 h-3.5 text-[#0094eb]" />
+                                  <span>Editar</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => { setOpenActionMenu(null); alert('Excluir vídeo: oculos-de-sol.mp4'); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 transition-colors font-medium"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                  <span>Excluir</span>
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   <tr className="hover:bg-slate-50/60 transition-colors">
@@ -607,7 +645,43 @@ export default function ResultadosTab() {
   </div>
 </td>
                     <td className="py-3.5 px-4 text-center text-slate-400">—</td>
-                  </tr>
+                  
+                      <td className="py-3.5 px-4 text-center relative">
+                        <div className="relative inline-block text-left">
+                          <button
+                            type="button"
+                            onClick={() => setOpenActionMenu(openActionMenu === 'video2' ? null : 'video2')}
+                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            title="Ações do vídeo"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                          {openActionMenu === 'video2' && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={() => setOpenActionMenu(null)}></div>
+                              <div className="absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 z-20 text-xs text-left animate-in fade-in zoom-in-95 duration-100">
+                                <button
+                                  type="button"
+                                  onClick={() => { setOpenActionMenu(null); alert('Editar vídeo: Criação_de_Vídeo_Fashion_...'); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 transition-colors font-medium"
+                                >
+                                  <Pencil className="w-3.5 h-3.5 text-[#0094eb]" />
+                                  <span>Editar</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => { setOpenActionMenu(null); alert('Excluir vídeo: Criação_de_Vídeo_Fashion_...'); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 transition-colors font-medium"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                  <span>Excluir</span>
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                 </tbody>
               </table>
             </div>
