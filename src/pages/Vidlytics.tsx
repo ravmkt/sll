@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  Settings, Sparkles, Copy, Check, DollarSign, Share2, Eye, 
+  Sparkles, Check, DollarSign, Share2, Eye, 
   Clock, HardDrive, FileText, CheckCircle2, Play,
-  Edit3, Palette
+  Edit3, Palette, ChevronDown, Layers
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,25 +26,25 @@ export default function Vidlytics() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
       
-      {/* 1. TOPBAR ORIGINAL (Mantida com engrenagem SLL e módulo à direita) */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center space-x-3">
-          <button 
-            onClick={() => navigate('/')} 
-            className="flex items-center space-x-2 text-sm font-semibold text-slate-700 hover:text-[#0094eb] transition-colors"
-          >
-            <div className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200/70 flex items-center justify-center text-[#fd8539] shadow-xs">
-              <Settings className="w-4 h-4 text-[#fd8539]" />
-            </div>
-            <span>Voltar ao Hub Central</span>
-          </button>
-        </div>
+      {/* 1. TOPBAR ORIGINAL (Conforme Print 1) */}
+      <header className="bg-white border-b border-slate-200/80 px-6 py-3 flex items-center justify-between sticky top-0 z-40">
+        <button 
+          onClick={() => navigate('/')} 
+          className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
+        >
+          <img 
+            src="/sll-logotipo-ico.png" 
+            alt="SLL" 
+            className="h-6 w-auto object-contain" 
+          />
+          <span className="text-slate-500 font-normal">←</span>
+          <span>Voltar ao Hub Central</span>
+        </button>
 
-        <div className="flex items-center space-x-3">
-          <div className="bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 flex items-center text-xs font-semibold text-slate-700">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
-            Módulo: <span className="ml-1 text-[#0094eb]">Vidlytics Stories</span>
-          </div>
+        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/90 rounded-xl px-3 py-1.5 text-xs text-slate-600 font-medium shadow-2xs hover:bg-slate-100/70 transition-colors cursor-pointer">
+          <Layers className="w-3.5 h-3.5 text-[#0094eb]" />
+          <span>Módulo: <strong className="text-slate-800">Vidlytics Stories</strong></span>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
         </div>
       </header>
 
@@ -78,20 +78,13 @@ export default function Vidlytics() {
           </div>
         </div>
 
-        {/* 2. BARRA DE ABAS COM LOGOTIPO ORIGINAL */}
+        {/* 2. BARRA DE ABAS COM O LOGOTIPO OFICIAL WIDE (Conforme Print 1) */}
         <div className="bg-white rounded-xl p-2 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center space-x-2 pl-2">
+          <div className="flex items-center pl-2">
             <img 
-              src="/vidlytics-logo.svg" 
+              src="/vidlytics-logo-wide.png" 
               alt="Vidlytics" 
-              className="h-6 w-auto"
-              onError={(e) => {
-                // Fallback caso a extensão seja png ou svg
-                const target = e.currentTarget;
-                if (!target.src.endsWith('.png')) {
-                  target.src = '/vidlytics-logo.png';
-                }
-              }} 
+              className="h-6 w-auto object-contain"
             />
           </div>
 
@@ -124,7 +117,7 @@ export default function Vidlytics() {
         {activeTab === 'visao-geral' && (
           <div className="space-y-6">
             
-            {/* Bloco de Boas-Vindas + Card de Status Discreto com Toggle */}
+            {/* Bloco de Boas-Vindas + Card de Status com Toggle */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
@@ -138,7 +131,7 @@ export default function Vidlytics() {
                 <h2 className="text-2xl font-bold text-slate-800">Olá, Loja</h2>
               </div>
 
-              {/* Card Estreito de Status do Aplicativo com Toggle */}
+              {/* Card de Status do Aplicativo com Toggle */}
               <div className={`p-3.5 px-4 rounded-2xl border transition-all flex items-center justify-between gap-4 shadow-sm max-w-md w-full ${
                 appActivated ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-100 border-slate-300'
               }`}>
@@ -367,9 +360,9 @@ export default function Vidlytics() {
                 <div className="max-h-[380px] overflow-y-auto space-y-3 pr-2 scrollbar-thin">
                   {[
                     { icon: Edit3, color: 'text-purple-500 bg-purple-50', text: 'Coleção de stories atualizada: TESTE', time: '16 de set. às 16:29' },
-                    { icon: Settings, color: 'text-amber-500 bg-amber-50', text: 'Configurações da loja salvas: Use Anny Moda Feminina', time: '15 de set. às 13:57' },
-                    { icon: Settings, color: 'text-amber-500 bg-amber-50', text: 'Configurações da loja salvas: Use Anny Moda Feminina', time: '15 de set. às 10:52' },
-                    { icon: Settings, color: 'text-amber-500 bg-amber-50', text: 'Configurações da loja salvas: Use Anny Moda Feminina', time: '10 de set. às 08:30' },
+                    { icon: Sparkles, color: 'text-amber-500 bg-amber-50', text: 'Configurações da loja salvas: Use Anny Moda Feminina', time: '15 de set. às 13:57' },
+                    { icon: Sparkles, color: 'text-amber-500 bg-amber-50', text: 'Configurações da loja salvas: Use Anny Moda Feminina', time: '15 de set. às 10:52' },
+                    { icon: Sparkles, color: 'text-amber-500 bg-amber-50', text: 'Configurações da loja salvas: Use Anny Moda Feminina', time: '10 de set. às 08:30' },
                     { icon: Edit3, color: 'text-purple-500 bg-purple-50', text: 'Coleção de stories atualizada: TESTE', time: '09 de set. às 16:50' },
                     { icon: Palette, color: 'text-sky-500 bg-sky-50', text: 'Aparência do player atualizada: USEANNY', time: '09 de set. às 16:23' }
                   ].map((log, idx) => {
@@ -516,21 +509,15 @@ export default function Vidlytics() {
         </div>
       )}
 
-      {/* 3. RODAPÉ ORIGINAL */}
-      <footer className="bg-white border-t border-slate-200 px-6 py-4 mt-auto text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
+      {/* 3. RODAPÉ ORIGINAL (Conforme Print 1) */}
+      <footer className="bg-white border-t border-slate-200/80 px-6 py-4 mt-auto text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
         <p>© 2026 Vidlytics Stories. Todos os direitos reservados.</p>
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Desenvolvido por:</span>
+          <span className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider">DESENVOLVIDO POR:</span>
           <img 
-            src="/sll-logo.svg" 
+            src="/sll-logotipo.png" 
             alt="Sistema Loja Lucrativa" 
-            className="h-5 w-auto"
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (!target.src.endsWith('.png')) {
-                target.src = '/sll-logo.png';
-              }
-            }}
+            className="h-6 w-auto object-contain"
           />
         </div>
       </footer>
