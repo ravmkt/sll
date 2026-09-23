@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   ShieldCheck, 
   Search, 
   CheckCircle2, 
   XCircle, 
-  Trash2, 
-  MessageSquare, 
-  ExternalLink,
-  Filter
+  Trash2
 } from "lucide-react";
 
 interface CommentItem {
@@ -21,7 +18,6 @@ interface CommentItem {
   video_thumbnail?: string;
 }
 
-// Mock inicial para demonstração visual imediata
 const DEMO_COMMENTS: CommentItem[] = [
   {
     id: "c-1",
@@ -57,7 +53,7 @@ const DEMO_COMMENTS: CommentItem[] = [
     id: "c-4",
     author_name: "Usuário Anônimo",
     author_email: "promo123@spam.net",
-    content: "Ganhe seguidores grátis acessando o site tal...",
+    content: "Ganhe seguidores grátis acessando o link...",
     status: "rejected",
     created_at: new Date(Date.now() - 1000 * 60 * 720).toISOString(),
     video_title: "Coleção Verão 2026 - Vestido Floral",
@@ -90,7 +86,7 @@ export default function ComentariosTab() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Título & Descrição */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Comentários</h2>
@@ -100,39 +96,39 @@ export default function ComentariosTab() {
       </div>
 
       {/* Barra de Ações: Card de Moderação Compacto + Filtros */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-        {/* Card de Moderação bem mais estreito e compacto */}
-        <div className="lg:col-span-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3.5 shadow-sm flex items-center justify-between">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+        {/* Card de Moderação bem mais discreto e estreito */}
+        <div className="lg:col-span-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-[#0094eb] rounded-lg">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-[#0094eb] rounded-lg">
+              <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-200">
                 Aprovação Automática
               </h4>
-              <p className="text-xs text-gray-400">
-                {autoApprove ? "Publica sem moderação prévia" : "Exige aprovação prévia"}
+              <p className="text-[11px] text-gray-400">
+                {autoApprove ? "Publicação imediata" : "Requer aprovação prévia"}
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setAutoApprove(!autoApprove)}
-            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+            className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
               autoApprove ? "bg-[#0094eb]" : "bg-gray-300 dark:bg-gray-600"
             }`}
           >
             <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                 autoApprove ? "translate-x-5" : "translate-x-0"
               }`}
             />
           </button>
         </div>
 
-        {/* Filtros e Busca ocupando o restante do espaço */}
-        <div className="lg:col-span-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm flex flex-col sm:flex-row items-center gap-3">
+        {/* Filtros e Busca */}
+        <div className="lg:col-span-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 shadow-sm flex flex-col sm:flex-row items-center gap-2.5">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -140,7 +136,7 @@ export default function ComentariosTab() {
               placeholder="Pesquisar autor ou texto..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0094eb]"
+              className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0094eb]"
             />
           </div>
 
@@ -148,7 +144,7 @@ export default function ComentariosTab() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full sm:w-auto px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0094eb]"
+              className="w-full sm:w-auto px-2.5 py-1.5 text-xs sm:text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0094eb]"
             >
               <option value="all">Todos os Status</option>
               <option value="approved">Aprovados</option>
@@ -169,36 +165,36 @@ export default function ComentariosTab() {
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 dark:bg-gray-900/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th scope="col" className="px-5 py-3.5">Autor</th>
-                <th scope="col" className="px-5 py-3.5">Conteúdo / Vídeo</th>
-                <th scope="col" className="px-5 py-3.5 text-center">Status</th>
-                <th scope="col" className="px-5 py-3.5 text-right">Ações</th>
+                <th scope="col" className="px-5 py-3">Autor</th>
+                <th scope="col" className="px-5 py-3">Conteúdo / Vídeo</th>
+                <th scope="col" className="px-5 py-3 text-center">Status</th>
+                <th scope="col" className="px-5 py-3 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {filteredComments.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-10 text-center text-gray-500">
-                    Nenhum comentário encontrado.
+                  <td colSpan={4} className="px-5 py-8 text-center text-gray-400 text-sm">
+                    Nenhum comentário encontrado com os filtros aplicados.
                   </td>
                 </tr>
               ) : (
                 filteredComments.map((comment) => (
-                  <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                  <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     {/* Autor */}
-                    <td className="px-5 py-4 align-top whitespace-nowrap">
+                    <td className="px-5 py-3.5 align-top whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#0094eb] to-[#fd8539] flex items-center justify-center text-white font-semibold text-xs shadow-sm">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#0094eb] to-[#fd8539] flex items-center justify-center text-white font-semibold text-xs shadow-sm">
                           {comment.author_name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900 dark:text-white">
+                          <div className="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">
                             {comment.author_name}
                           </div>
                           {comment.author_email && (
-                            <div className="text-xs text-gray-400">{comment.author_email}</div>
+                            <div className="text-[11px] text-gray-400">{comment.author_email}</div>
                           )}
-                          <div className="text-[11px] text-gray-400 mt-0.5">
+                          <div className="text-[10px] text-gray-400 mt-0.5">
                             {new Date(comment.created_at).toLocaleDateString("pt-BR", {
                               day: "2-digit",
                               month: "short",
@@ -211,18 +207,18 @@ export default function ComentariosTab() {
                     </td>
 
                     {/* Conteúdo e Vídeo */}
-                    <td className="px-5 py-4 align-top">
-                      <div className="space-y-2 max-w-xl">
-                        <p className="text-gray-800 dark:text-gray-200 text-sm leading-relaxed">
+                    <td className="px-5 py-3.5 align-top">
+                      <div className="space-y-1.5 max-w-xl">
+                        <p className="text-gray-800 dark:text-gray-200 text-xs sm:text-sm leading-relaxed">
                           "{comment.content}"
                         </p>
                         {comment.video_title && (
-                          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700/50 text-xs text-gray-600 dark:text-gray-300">
+                          <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700/50 text-[11px] text-gray-600 dark:text-gray-300">
                             {comment.video_thumbnail && (
                               <img
                                 src={comment.video_thumbnail}
                                 alt=""
-                                className="w-5 h-5 rounded object-cover"
+                                className="w-4 h-4 rounded object-cover"
                               />
                             )}
                             <span className="truncate max-w-xs">{comment.video_title}</span>
@@ -232,32 +228,32 @@ export default function ComentariosTab() {
                     </td>
 
                     {/* Status */}
-                    <td className="px-5 py-4 align-top text-center whitespace-nowrap">
+                    <td className="px-5 py-3.5 align-top text-center whitespace-nowrap">
                       {comment.status === "approved" && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Aprovado
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                          <CheckCircle2 className="w-3 h-3" /> Aprovado
                         </span>
                       )}
                       {comment.status === "pending" && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                           Pendente
                         </span>
                       )}
                       {comment.status === "rejected" && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
-                          <XCircle className="w-3.5 h-3.5" /> Rejeitado
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                          <XCircle className="w-3 h-3" /> Rejeitado
                         </span>
                       )}
                     </td>
 
                     {/* Ações */}
-                    <td className="px-5 py-4 align-top text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="px-5 py-3.5 align-top text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1">
                         {comment.status !== "approved" && (
                           <button
                             title="Aprovar Comentário"
                             onClick={() => handleUpdateStatus(comment.id, "approved")}
-                            className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors"
+                            className="p-1 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors"
                           >
                             <CheckCircle2 className="w-4 h-4" />
                           </button>
@@ -266,7 +262,7 @@ export default function ComentariosTab() {
                           <button
                             title="Rejeitar Comentário"
                             onClick={() => handleUpdateStatus(comment.id, "rejected")}
-                            className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors"
+                            className="p-1 text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors"
                           >
                             <XCircle className="w-4 h-4" />
                           </button>
@@ -274,7 +270,7 @@ export default function ComentariosTab() {
                         <button
                           title="Excluir Comentário"
                           onClick={() => handleDelete(comment.id)}
-                          className="p-1.5 text-gray-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
+                          className="p-1 text-gray-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
