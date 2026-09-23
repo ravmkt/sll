@@ -33,7 +33,7 @@ export default function Vidlytics() {
           className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
         >
           <img 
-            src="/sll-logotipo-ico.png" 
+            src="/assets/sll-logotipo-ico.png" 
             alt="SLL" 
             className="h-6 w-auto object-contain" 
           />
@@ -82,7 +82,7 @@ export default function Vidlytics() {
         <div className="bg-white rounded-xl p-2 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center pl-2">
             <img 
-              src="/vidlytics-logo-wide.png" 
+              src="/assets/vidlytics-logo-wide.png" 
               alt="Vidlytics" 
               className="h-6 w-auto object-contain"
             />
@@ -515,7 +515,7 @@ export default function Vidlytics() {
         <div className="flex items-center gap-2">
           <span className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider">DESENVOLVIDO POR:</span>
           <img 
-            src="/sll-logotipo.png" 
+            src="/assets/sll-logotipo.png" 
             alt="Sistema Loja Lucrativa" 
             className="h-6 w-auto object-contain"
           />
