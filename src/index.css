@@ -16,3 +16,6 @@
     @apply bg-dark-bg text-slate-100;
   }
 }
+
+/* Garante maoziha em botoes e acoes interativas */
+button:not(:disabled), [role='button'], .cursor-pointer { cursor: pointer; }
