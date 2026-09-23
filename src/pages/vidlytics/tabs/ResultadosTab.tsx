@@ -1,7 +1,26 @@
 import React, { useState } from 'react';
-import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2 } from 'lucide-react';
+import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, TrendingDown, Info } from 'lucide-react';
 
 type SubTab = 'visao-geral' | 'videos' | 'retencao' | 'insights';
+
+
+function TrendBadge({ value, isPositive = true }: { value: string; isPositive?: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${
+        isPositive ? 'text-emerald-700 bg-emerald-50' : 'text-rose-700 bg-rose-50'
+      }`}
+      title={`${isPositive ? '+' : '-'}${value} vs últimos 7 dias`}
+    >
+      {isPositive ? (
+        <TrendingUp className="w-2.5 h-2.5 text-emerald-600" />
+      ) : (
+        <TrendingDown className="w-2.5 h-2.5 text-rose-500" />
+      )}
+      <span>{isPositive ? '+' : ''}{value}</span>
+    </span>
+  );
+}
 
 export default function ResultadosTab() {
   const [subTab, setSubTab] = useState<SubTab>('visao-geral');
@@ -610,6 +629,20 @@ export default function ResultadosTab() {
                     </tr>
                 </tbody>
               </table>
+              <div className="px-4 py-2.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                <div className="flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-[#0094eb]" />
+                  <span>As setas e porcentagens representam o comparativo de desempenho em relação aos <strong>últimos 7 dias</strong>.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1 text-emerald-700">
+                    <TrendingUp className="w-3 h-3 text-emerald-600" /> Alta
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-rose-700">
+                    <TrendingDown className="w-3 h-3 text-rose-500" /> Baixa
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
