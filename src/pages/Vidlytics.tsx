@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Sparkles, ChevronDown, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import VisaoGeralTab from './vidlytics/tabs/VisaoGeralTab';
 import ResultadosTab from './vidlytics/tabs/ResultadosTab';
 import StoriesTab from './vidlytics/tabs/StoriesTab';
+import BibliotecaTab from '../components/vidlytics/BibliotecaTab';
 
 export type VidlyticsTab = 'visao-geral' | 'resultados' | 'stories' | 'biblioteca' | 'produtos' | 'comentarios' | 'aparencia';
 
@@ -105,9 +106,10 @@ export default function Vidlytics() {
         {activeTab === 'visao-geral' && <VisaoGeralTab />}
         {activeTab === 'resultados' && <ResultadosTab />}
         {activeTab === 'stories' && <StoriesTab />}
+          {activeTab === 'biblioteca' && <BibliotecaTab />}
 
         {/* Próximas abas isoladas */}
-        {!['visao-geral', 'resultados', 'stories'].includes(activeTab) && (
+        {!['visao-geral', 'resultados', 'stories', 'biblioteca'].includes(activeTab) && (
           <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-3">
             <h3 className="text-base font-bold text-slate-700 capitalize">Módulo: {activeTab}</h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
