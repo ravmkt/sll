@@ -85,13 +85,13 @@ export default function Vidlytics() {
           </div>
         </div>
 
-        {/* NAVEGAÇÃO DE ABAS COM O LOGOTIPO VIDLYTICS WIDE */}
+        {/* NAVEGAÇÃO DE ABAS COM O LOGOTIPO VIDLYTICS AUMENTADO */}
         <div className="bg-white px-6 py-3.5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center">
             <img
               src="/assets/vidlytics-logo-wide.png"
               alt="Vidlytics"
-              className="h-6 w-auto object-contain"
+              className="h-8 w-auto object-contain"
             />
           </div>
 
@@ -121,16 +121,16 @@ export default function Vidlytics() {
         {activeTab === 'aparencia' && <AparenciaTab />}
       </main>
 
-      {/* RODAPÉ FIEL AO PRINT */}
+      {/* RODAPÉ COM LOGOTIPO SLL AUMENTADO */}
       <footer className="mt-auto border-t border-slate-200 bg-white py-4 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>© 2026 Vidlytics. Todos os direitos reservados.</p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <span className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">DESENVOLVIDO POR:</span>
             <img
               src="/assets/sll-logotipo.png"
               alt="Sistema Loja Lucrativa"
-              className="h-6 w-auto object-contain"
+              className="h-9 w-auto object-contain"
               onError={(e) => {
                 (e.currentTarget as HTMLElement).style.display = 'none';
               }}
