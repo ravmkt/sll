@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import BibliotecaTab from '../../pages/vidlytics/tabs/BibliotecaTab';
+import BibliotecaTab from '../components/vidlytics/BibliotecaTab';
 import { 
   LayoutDashboard, 
   BarChart3, 
