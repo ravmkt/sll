@@ -98,6 +98,19 @@ export default function Vidlytics() {
           </div>
         )}
       </main>
+
+      {/* Rodapé SLL Padrão */}
+      <footer className="mt-auto border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© 2026 Sistema Loja Lucrativa. Todos os direitos reservados.</p>
+          <div className="flex items-center gap-6">
+            <span className="hover:text-slate-600 transition-colors cursor-pointer">Termos de Uso</span>
+            <span className="hover:text-slate-600 transition-colors cursor-pointer">Privacidade</span>
+            <span className="hover:text-slate-600 transition-colors cursor-pointer">Suporte</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
+
