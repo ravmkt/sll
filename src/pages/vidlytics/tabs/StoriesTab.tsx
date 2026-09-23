@@ -82,7 +82,7 @@ const [busca, setBusca] = useState('');
         </div>
 
         {/* BOTÃO PADRÃO COM APENAS UM ÍCONE DE + */}
-        <button className="bg-[#0094eb] hover:bg-[#0082cf] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer self-start sm:self-auto">
+        <button onClick={() => setIsNewStoryOpen(true)} className="bg-[#0094eb] hover:bg-[#0082cf] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer self-start sm:self-auto">
           <Plus className="w-4 h-4" />
           <span>Novo Story</span>
         </button>
@@ -301,4 +301,6 @@ const [busca, setBusca] = useState('');
     </div>
   );
 }
+
+
 
