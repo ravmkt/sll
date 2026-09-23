@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  BarChart3, Film, CheckSquare, Sparkles, HelpCircle, 
-  Hourglass, CheckCircle2, DollarSign, Wallet, Eye, 
-  MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight,
-  TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown,
-  Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2
-} from 'lucide-react';
+import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2 } from 'lucide-react';
 
 type SubTab = 'visao-geral' | 'videos' | 'retencao' | 'insights';
 
@@ -540,9 +534,9 @@ export default function ResultadosTab() {
                 <tbody className="divide-y divide-slate-100">
                   <tr className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-3.5 px-4 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
-                        <Eye className="w-4 h-4" />
-                      </div>
+                      <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200/80 overflow-hidden flex-shrink-0 flex items-center justify-center">
+  <Eye className="w-4 h-4 text-slate-400" />
+</div>
                       <div>
                         <p className="font-bold text-slate-800">oculos-de-sol.mp4</p>
                         <span className="text-[10px] text-emerald-600 font-medium">Ativo</span>
@@ -554,19 +548,37 @@ export default function ResultadosTab() {
                     </td>
                     <td className="py-3.5 px-4 text-center font-bold text-slate-700">0</td>
                     <td className="py-3.5 px-4 text-center text-slate-400">—</td>
-                    <td className="py-3.5 px-4 text-center text-slate-500 font-medium space-x-2">
-                      <span>♡ 1</span>
-                      <span>💬 0</span>
-                      <span>↗ 0</span>
-                    </td>
+                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+  <div className="inline-flex items-center justify-center gap-3 text-xs font-semibold">
+    <span className="inline-flex items-center gap-1 text-rose-400" title="Curtidas">
+      <Heart className="w-3.5 h-3.5 stroke-rose-400 fill-rose-50" />
+      <span className="text-slate-600">1</span>
+    </span>
+    <span className="inline-flex items-center gap-1 text-emerald-500" title="Comentários">
+      <MessageCircle className="w-3.5 h-3.5 stroke-emerald-500 fill-emerald-50" />
+      <span className="text-slate-600">0</span>
+    </span>
+    <span className="inline-flex items-center gap-1 text-[#fd8539]" title="Compartilhamentos">
+      <Share2 className="w-3.5 h-3.5 stroke-[#fd8539]" />
+      <span className="text-slate-600">0</span>
+    </span>
+  </div>
+</td>
                     <td className="py-3.5 px-4 text-center text-slate-400">—</td>
                   </tr>
 
                   <tr className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-3.5 px-4 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-orange-100 border border-orange-200 overflow-hidden flex items-center justify-center text-orange-400">
-                        <Film className="w-4 h-4" />
-                      </div>
+                      <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200/80 overflow-hidden flex-shrink-0 flex items-center justify-center">
+  <img 
+    src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=150&auto=format&fit=crop&q=80" 
+    alt="Criação_de_Vídeo_Fashion_..." 
+    className="w-full h-full object-cover"
+    onError={(e) => {
+      (e.target as HTMLElement).style.display = 'none';
+    }}
+  />
+</div>
                       <div>
                         <p className="font-bold text-slate-800">Criação_de_Vídeo_Fashion_...</p>
                         <span className="text-[10px] text-emerald-600 font-medium">Ativo</span>
@@ -578,11 +590,22 @@ export default function ResultadosTab() {
                     </td>
                     <td className="py-3.5 px-4 text-center font-bold text-slate-700">0</td>
                     <td className="py-3.5 px-4 text-center text-slate-400">—</td>
-                    <td className="py-3.5 px-4 text-center text-slate-500 font-medium space-x-2">
-                      <span>♡ 2</span>
-                      <span>💬 0</span>
-                      <span>↗ 0</span>
-                    </td>
+                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+  <div className="inline-flex items-center justify-center gap-3 text-xs font-semibold">
+    <span className="inline-flex items-center gap-1 text-rose-400" title="Curtidas">
+      <Heart className="w-3.5 h-3.5 stroke-rose-400 fill-rose-50" />
+      <span className="text-slate-600">2</span>
+    </span>
+    <span className="inline-flex items-center gap-1 text-emerald-500" title="Comentários">
+      <MessageCircle className="w-3.5 h-3.5 stroke-emerald-500 fill-emerald-50" />
+      <span className="text-slate-600">0</span>
+    </span>
+    <span className="inline-flex items-center gap-1 text-[#fd8539]" title="Compartilhamentos">
+      <Share2 className="w-3.5 h-3.5 stroke-[#fd8539]" />
+      <span className="text-slate-600">0</span>
+    </span>
+  </div>
+</td>
                     <td className="py-3.5 px-4 text-center text-slate-400">—</td>
                   </tr>
                 </tbody>
@@ -818,4 +841,5 @@ export default function ResultadosTab() {
     </div>
   );
 }
+
 
