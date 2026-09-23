@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  ArrowLeft, Play, BarChart3, Video, Layers, Sparkles, 
-  HelpCircle, Copy, Check, DollarSign, Share2, Eye, 
-  Clock, MousePointerClick, MessageSquare, Palette, 
-  ShoppingBag, ExternalLink, ChevronRight, HardDrive,
-  FileText, CheckCircle2, AlertCircle, Edit3, Settings
+  Settings, Sparkles, Copy, Check, DollarSign, Share2, Eye, 
+  Clock, HardDrive, FileText, CheckCircle2, Play,
+  Edit3, Palette
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,21 +25,24 @@ export default function Vidlytics() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
-      {/* Topbar Hub */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center space-x-4">
+      
+      {/* 1. TOPBAR ORIGINAL (Mantida com engrenagem SLL e módulo à direita) */}
+      <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center space-x-3">
           <button 
             onClick={() => navigate('/')} 
-            className="flex items-center text-sm font-medium text-slate-600 hover:text-[#0094eb] transition-colors"
+            className="flex items-center space-x-2 text-sm font-semibold text-slate-700 hover:text-[#0094eb] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 mr-1.5" />
-            Voltar ao Hub Central
+            <div className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200/70 flex items-center justify-center text-[#fd8539] shadow-xs">
+              <Settings className="w-4 h-4 text-[#fd8539]" />
+            </div>
+            <span>Voltar ao Hub Central</span>
           </button>
         </div>
 
         <div className="flex items-center space-x-3">
           <div className="bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 flex items-center text-xs font-semibold text-slate-700">
-            <Video className="w-3.5 h-3.5 text-[#0094eb] mr-1.5" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
             Módulo: <span className="ml-1 text-[#0094eb]">Vidlytics Stories</span>
           </div>
         </div>
@@ -77,13 +78,21 @@ export default function Vidlytics() {
           </div>
         </div>
 
-        {/* Abas de Navegação */}
+        {/* 2. BARRA DE ABAS COM LOGOTIPO ORIGINAL */}
         <div className="bg-white rounded-xl p-2 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center space-x-2 pl-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#0094eb] to-sky-400 flex items-center justify-center shadow-sm">
-              <Play className="w-4 h-4 text-white fill-white ml-0.5" />
-            </div>
-            <span className="text-base font-bold text-slate-800 tracking-tight">Vidlytics</span>
+            <img 
+              src="/vidlytics-logo.svg" 
+              alt="Vidlytics" 
+              className="h-6 w-auto"
+              onError={(e) => {
+                // Fallback caso a extensão seja png ou svg
+                const target = e.currentTarget;
+                if (!target.src.endsWith('.png')) {
+                  target.src = '/vidlytics-logo.png';
+                }
+              }} 
+            />
           </div>
 
           <div className="flex items-center gap-1 overflow-x-auto py-1">
@@ -115,7 +124,7 @@ export default function Vidlytics() {
         {activeTab === 'visao-geral' && (
           <div className="space-y-6">
             
-            {/* Bloco de Boas-Vindas + Card de Status com Toggle */}
+            {/* Bloco de Boas-Vindas + Card de Status Discreto com Toggle */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
@@ -126,10 +135,10 @@ export default function Vidlytics() {
                     Acesso Vitalício
                   </span>
                 </div>
-                <h2 className="text-2xl font-bold text-slate-800">Olá, Use Anny</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Olá, Loja</h2>
               </div>
 
-              {/* Card Estreito de Status do Aplicativo com Seletor/Toggle */}
+              {/* Card Estreito de Status do Aplicativo com Toggle */}
               <div className={`p-3.5 px-4 rounded-2xl border transition-all flex items-center justify-between gap-4 shadow-sm max-w-md w-full ${
                 appActivated ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-100 border-slate-300'
               }`}>
@@ -143,7 +152,7 @@ export default function Vidlytics() {
                   <p className="text-[11px] text-slate-500 leading-tight">
                     {appActivated 
                       ? 'Seus vídeos estão online e sendo transmitidos publicamente no seu e-commerce.' 
-                      : 'Seus vídeos estão temporariamente ocultos para os visitantes.'}
+                      : 'Seus vídeos estão temporariamente pausados na loja.'}
                   </p>
                 </div>
 
@@ -457,7 +466,7 @@ export default function Vidlytics() {
                   <div className="text-center">
                     <a
                       href="#indica-ganha"
-                      onClick={(e) => { e.preventDefault(); alert("Abrindo painel completo de afiliados..."); }}
+                      onClick={(e) => { e.preventDefault(); alert("Abrindo painel completo de indicações..."); }}
                       className="text-xs font-medium text-slate-500 hover:text-[#0094eb] transition-colors inline-flex items-center gap-1"
                     >
                       Acessar painel de indicações <span>&rarr;</span>
@@ -507,12 +516,23 @@ export default function Vidlytics() {
         </div>
       )}
 
-      {/* Rodapé Padrão SLL */}
+      {/* 3. RODAPÉ ORIGINAL */}
       <footer className="bg-white border-t border-slate-200 px-6 py-4 mt-auto text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
         <p>© 2026 Vidlytics Stories. Todos os direitos reservados.</p>
-        <p className="flex items-center gap-1.5 font-semibold text-slate-600">
-          DESENVOLVIDO POR: <span className="text-[#0094eb]">Sistema Loja Lucrativa</span>
-        </p>
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Desenvolvido por:</span>
+          <img 
+            src="/sll-logo.svg" 
+            alt="Sistema Loja Lucrativa" 
+            className="h-5 w-auto"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.src.endsWith('.png')) {
+                target.src = '/sll-logo.png';
+              }
+            }}
+          />
+        </div>
       </footer>
     </div>
   );
