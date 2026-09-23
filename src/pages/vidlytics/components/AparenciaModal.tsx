@@ -331,8 +331,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                           </button>
                           <button 
                             onClick={() => setCarouselDevice('mobile')} 
-                            disabled={formData.useGlobalAppearance} 
-                            className={`px-4 py-1.5 text-xs font-medium rounded-md flex items-center gap-2 ${formData.useGlobalAppearance ? 'opacity-50 cursor-not-allowed text-slate-400' : carouselDevice === 'mobile' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                             
+                            className={`px-4 py-1.5 text-xs font-medium rounded-md flex items-center gap-2 ${carouselDevice === 'mobile' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                           >
                             <Smartphone size={14} /> Mobile
                           </button>
@@ -418,8 +418,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                           </button>
                           <button 
                             onClick={() => setFloatingDevice('mobile')} 
-                            disabled={formData.useGlobalAppearance} 
-                            className={`px-4 py-1.5 text-xs font-medium rounded-md flex items-center gap-2 ${formData.useGlobalAppearance ? 'opacity-50 cursor-not-allowed text-slate-400' : floatingDevice === 'mobile' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                             
+                            className={`px-4 py-1.5 text-xs font-medium rounded-md flex items-center gap-2 ${floatingDevice === 'mobile' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                           >
                             <Smartphone size={14} /> Mobile
                           </button>
