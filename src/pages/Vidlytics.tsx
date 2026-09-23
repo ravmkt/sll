@@ -6,6 +6,7 @@ import ResultadosTab from './vidlytics/tabs/ResultadosTab';
 import StoriesTab from './vidlytics/tabs/StoriesTab';
 import BibliotecaTab from '../components/vidlytics/BibliotecaTab';
 import ComentariosTab from './vidlytics/tabs/ComentariosTab';
+import AparenciaTab from './vidlytics/AparenciaTab';
 
 export type VidlyticsTab = 'visao-geral' | 'resultados' | 'stories' | 'biblioteca' | 'produtos' | 'comentarios' | 'aparencia';
 
@@ -87,9 +88,10 @@ export default function Vidlytics() {
         {activeTab === 'stories' && <StoriesTab />}
         {activeTab === 'biblioteca' && <BibliotecaTab />}
         {activeTab === 'comentarios' && <ComentariosTab />}
+        {activeTab === 'aparencia' && <AparenciaTab />}
 
-        {/* Placeholder para abas pendentes (Produtos e Aparência) */}
-        {!['visao-geral', 'resultados', 'stories', 'biblioteca', 'comentarios'].includes(activeTab) && (
+        {/* Placeholder para abas pendentes (ex: Produtos) */}
+        {!['visao-geral', 'resultados', 'stories', 'biblioteca', 'comentarios', 'aparencia'].includes(activeTab) && (
           <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-3">
             <h3 className="text-base font-bold text-slate-700 capitalize">Módulo: {activeTab}</h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
@@ -113,4 +115,3 @@ export default function Vidlytics() {
     </div>
   );
 }
-
