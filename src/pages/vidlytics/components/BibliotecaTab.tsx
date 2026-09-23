@@ -12,7 +12,7 @@ import {
   Trash2,
   CheckCircle2
 } from 'lucide-react';
-import { AddVideoUrlModal } from '../components/AddVideoUrlModal';
+import { AddVideoUrlModal } from './AddVideoUrlModal';
 
 interface MediaItem {
   id: string;
