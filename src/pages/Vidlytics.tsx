@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, ChevronDown, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import VisaoGeralTab from './vidlytics/tabs/VisaoGeralTab';
+import ResultadosTab from './vidlytics/tabs/ResultadosTab';
 
 export type VidlyticsTab = 'visao-geral' | 'resultados' | 'stories' | 'biblioteca' | 'produtos' | 'comentarios' | 'aparencia';
 
@@ -12,7 +13,7 @@ export default function Vidlytics() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
       
-      {/* 1. TOPBAR */}
+      {/* 1. TOPBAR DO SLL */}
       <header className="bg-white border-b border-slate-200/80 px-6 py-3 flex items-center justify-between sticky top-0 z-40">
         <button 
           onClick={() => navigate('/')} 
@@ -21,7 +22,7 @@ export default function Vidlytics() {
           <img 
             src="/assets/sll-logotipo-ico.png" 
             alt="SLL" 
-            className="h-6 w-auto object-contain" 
+            className="h-8 w-auto object-contain" 
           />
           <span className="text-slate-500 font-normal">←</span>
           <span>Voltar ao Hub Central</span>
@@ -34,10 +35,10 @@ export default function Vidlytics() {
         </div>
       </header>
 
-      {/* Conteúdo Principal */}
+      {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
         
-        {/* Banner Global (Cross-sell / Promo) */}
+        {/* BANNER PROMO */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-6 shadow-md border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl z-10">
             <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#fd8539] to-orange-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
@@ -99,11 +100,12 @@ export default function Vidlytics() {
           </div>
         </div>
 
-        {/* RENDERIZAÇÃO ISOLADA DAS ABAS */}
+        {/* RENDERIZAÇÃO MODULAR DAS ABAS */}
         {activeTab === 'visao-geral' && <VisaoGeralTab />}
+        {activeTab === 'resultados' && <ResultadosTab />}
         
-        {/* Próximas abas serão adicionadas aqui de forma 100% isolada */}
-        {activeTab !== 'visao-geral' && (
+        {/* Próximas abas isoladas */}
+        {activeTab !== 'visao-geral' && activeTab !== 'resultados' && (
           <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-3">
             <h3 className="text-base font-bold text-slate-700 capitalize">Módulo: {activeTab}</h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
