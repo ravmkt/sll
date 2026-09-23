@@ -1,124 +1,211 @@
 import React, { useState } from 'react';
-import { Plus, Eye, Film, Search, MoreVertical, Play, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, Send } from 'lucide-react';
+
+interface StoryRow {
+  id: string;
+  name: string;
+  type: string;
+  videosCount: number;
+  location: string;
+  views: number;
+  ctr: number;
+  clicks: number;
+  status: 'ATIVO' | 'INATIVO';
+}
 
 export default function StoriesTab() {
   const [busca, setBusca] = useState('');
+  const [statusFiltro, setStatusFiltro] = useState<'TODOS' | 'ATIVO' | 'INATIVO'>('TODOS');
+
+  // Dados mockados no padrão do layout
+  const stories: StoryRow[] = [
+    {
+      id: '1',
+      name: 'Teste',
+      type: 'Flutuante',
+      videosCount: 2,
+      location: 'Contém: /azul',
+      views: 0,
+      ctr: 0.0,
+      clicks: 0,
+      status: 'ATIVO',
+    },
+    {
+      id: '2',
+      name: 'Coleção Verão 2026',
+      type: 'Carrossel',
+      videosCount: 1,
+      location: 'Todas as páginas',
+      views: 1240,
+      ctr: 4.8,
+      clicks: 60,
+      status: 'ATIVO',
+    }
+  ];
+
+  const storiesFiltrados = stories.filter((story) => {
+    const matchBusca = story.name.toLowerCase().includes(busca.toLowerCase());
+    const matchStatus = statusFiltro === 'TODOS' || story.status === statusFiltro;
+    return matchBusca && matchStatus;
+  });
 
   return (
     <div className="space-y-6">
-      {/* CABEÇALHO PADRÃO RESULTADOS */}
+      {/* CABEÇALHO */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Stories Ativos</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Gerencie os grupos de stories, produtos tagueados e posições de exibição na loja.
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Stories</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Gerencie as configurações de exibição e agrupamento de vídeos na sua loja.
           </p>
         </div>
 
-        <button className="bg-[#0094eb] hover:bg-sky-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center gap-2 flex-shrink-0 self-start sm:self-auto cursor-pointer">
+        <button className="bg-[#0094eb] hover:bg-[#0082cf] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer self-start sm:self-auto">
           <Plus className="w-4 h-4" />
-          <span>Criar Grupo de Stories</span>
+          <span>+ Novo Story</span>
         </button>
       </div>
 
-      {/* CARDS DE RESUMO */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Grupos de Stories</span>
-            <p className="text-2xl font-bold text-slate-800">2</p>
-            <p className="text-xs text-slate-400">Coleções configuradas</p>
+      {/* CONTAINER PRINCIPAL */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+        {/* BARRA DE FILTROS */}
+        <div className="p-4 sm:p-5 flex flex-col sm:flex-row gap-3 items-center justify-between border-b border-slate-100">
+          <div className="relative w-full sm:flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Buscar por nome do story..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="w-full bg-slate-50/70 border border-slate-200/80 text-xs text-slate-700 py-2.5 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+            />
           </div>
-          <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0094eb] flex items-center justify-center border border-sky-100 flex-shrink-0">
-            <Film className="w-4 h-4" />
+
+          <div className="w-full sm:w-auto">
+            <select
+              value={statusFiltro}
+              onChange={(e) => setStatusFiltro(e.target.value as 'TODOS' | 'ATIVO' | 'INATIVO')}
+              className="w-full sm:w-44 bg-slate-50/70 border border-slate-200/80 text-xs font-semibold text-slate-600 py-2.5 px-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 cursor-pointer"
+            >
+              <option value="TODOS">TODOS STATUS</option>
+              <option value="ATIVO">ATIVO</option>
+              <option value="INATIVO">INATIVO</option>
+            </select>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Produtos Vinculados</span>
-            <p className="text-2xl font-bold text-emerald-500">4</p>
-            <p className="text-xs text-slate-400">Com botão direto de compra</p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100 flex-shrink-0">
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
+        {/* CONTADOR */}
+        <div className="px-5 py-2.5 bg-slate-50/50 border-b border-slate-100">
+          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            {storiesFiltrados.length} {storiesFiltrados.length === 1 ? 'STORY ENCONTRADO' : 'STORIES ENCONTRADOS'}
+          </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Status do Widget</span>
-            <p className="text-2xl font-bold text-slate-800">Publicado</p>
-            <p className="text-xs text-slate-400">Exibindo em todas as páginas</p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#fd8539] flex items-center justify-center border border-orange-100 flex-shrink-0">
-            <Eye className="w-4 h-4" />
-          </div>
-        </div>
-      </div>
+        {/* TABELA */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 bg-white text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                <th className="py-3 px-5">Story / Nome</th>
+                <th className="py-3 px-4 text-center">Tipo</th>
+                <th className="py-3 px-4 text-center">Vídeos</th>
+                <th className="py-3 px-4 text-center">Localização</th>
+                <th className="py-3 px-4 text-center">Visualizações</th>
+                <th className="py-3 px-4 text-center">CTR / Cliques</th>
+                <th className="py-3 px-4 text-center">Status</th>
+                <th className="py-3 px-5 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {storiesFiltrados.map((story) => (
+                <tr key={story.id} className="hover:bg-slate-50/60 transition-colors">
+                  {/* Story / Nome */}
+                  <td className="py-3 px-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-[#0094eb] flex-shrink-0">
+                        <Send className="w-4 h-4 transform rotate-12" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-800 block text-xs">{story.name}</span>
+                        <span className={`text-[10px] font-medium ${story.status === 'ATIVO' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                          {story.status}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
 
-      {/* BUSCA */}
-      <div className="relative">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        <input
-          type="text"
-          placeholder="Buscar por grupo de stories..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          className="w-full bg-white border border-slate-200 text-xs text-slate-700 py-3 pl-10 pr-4 rounded-xl shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
-        />
-      </div>
+                  {/* Tipo */}
+                  <td className="py-3 px-4 text-center">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-sky-50/80 text-[#0094eb] border border-sky-100">
+                      <Send className="w-3 h-3 rotate-45" />
+                      {story.type}
+                    </span>
+                  </td>
 
-      {/* LISTA DE GRUPOS DE STORIES */}
-      <div className="space-y-3">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full ring-2 ring-[#0094eb] p-0.5 overflow-hidden flex-shrink-0">
-              <img
-                src="https://images.unsplash.com/photo-1508296695146-257a814070b4?w=200&auto=format&fit=crop&q=80"
-                alt="Óculos de Sol"
-                className="w-full h-full object-cover rounded-full"
-              />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-slate-800">Coleção Verão 2026</h4>
-                <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full">Ativo</span>
-              </div>
-              <p className="text-xs text-slate-400 mt-0.5">1 vídeo • 2 produtos marcados</p>
-            </div>
-          </div>
+                  {/* Vídeos */}
+                  <td className="py-3 px-4 text-center font-semibold text-slate-700">
+                    {story.videosCount}
+                  </td>
 
-          <div className="flex items-center gap-2 self-end sm:self-center">
-            <button className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
-              Editar
-            </button>
-          </div>
-        </div>
+                  {/* Localização */}
+                  <td className="py-3 px-4 text-center">
+                    <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[11px] font-medium">
+                      {story.location}
+                    </span>
+                  </td>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full ring-2 ring-[#0094eb] p-0.5 overflow-hidden flex-shrink-0">
-              <img
-                src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=200&auto=format&fit=crop&q=80"
-                alt="Fashion"
-                className="w-full h-full object-cover rounded-full"
-              />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-slate-800">Novidades Joias & Acessórios</h4>
-                <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full">Ativo</span>
-              </div>
-              <p className="text-xs text-slate-400 mt-0.5">1 vídeo • 2 produtos marcados</p>
-            </div>
-          </div>
+                  {/* Visualizações */}
+                  <td className="py-3 px-4 text-center font-bold text-slate-800">
+                    {story.views.toLocaleString('pt-BR')}
+                  </td>
 
-          <div className="flex items-center gap-2 self-end sm:self-center">
-            <button className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
-              Editar
-            </button>
-          </div>
+                  {/* CTR / Cliques */}
+                  <td className="py-3 px-4 text-center">
+                    <div>
+                      <span className="font-bold text-rose-500 block text-xs">{story.ctr.toFixed(1)}%</span>
+                      <span className="text-[10px] text-slate-400">{story.clicks} cliques</span>
+                    </div>
+                  </td>
+
+                  {/* Status */}
+                  <td className="py-3 px-4 text-center">
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase ${
+                        story.status === 'ATIVO'
+                          ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                          : 'bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}
+                    >
+                      {story.status}
+                    </span>
+                  </td>
+
+                  {/* Ações */}
+                  <td className="py-3 px-5 text-right">
+                    <div className="flex items-center justify-end gap-1.5 text-slate-400">
+                      <button title="Visualizar" className="p-1.5 hover:text-[#0094eb] hover:bg-sky-50 rounded-lg transition-colors cursor-pointer">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button title="Editar" className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button title="Excluir" className="p-1.5 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {storiesFiltrados.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-xs text-slate-400">
+                    Nenhum story encontrado com os filtros selecionados.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
