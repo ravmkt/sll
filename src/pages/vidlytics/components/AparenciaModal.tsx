@@ -12,7 +12,8 @@ interface AparenciaModalProps {
 }
 
 const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleData }) => {
-    const [floatingDevice, setFloatingDevice] = useState<'desktop' | 'mobile'>('desktop');
+    const [carouselDevice, setCarouselDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [floatingDevice, setFloatingDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [activeTab, setActiveTab] = useState('basico');
   const [isUnified, setIsUnified] = useState(true);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
@@ -314,6 +315,94 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                     
                     {/* Detalhe da câmera/notch do celular */}
                     <div className="absolute top-0 inset-x-0 h-5 bg-[#1a1f36] w-[40%] mx-auto rounded-b-xl z-20"></div>
+
+                  {/* CARROSSEL */}
+                  {activeTab === 'carrossel' && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-medium text-slate-900">Dispositivo</h3>
+                        <div className="flex bg-slate-100 p-1 rounded-lg">
+                          <button 
+                            onClick={() => setCarouselDevice('desktop')} 
+                            className={`px-4 py-1.5 text-xs font-medium rounded-md flex items-center gap-2 ${carouselDevice === 'desktop' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                          >
+                            <Monitor size={14} /> Desktop
+                          </button>
+                          <button 
+                            onClick={() => setCarouselDevice('mobile')} 
+                            disabled={formData.useGlobalAppearance} 
+                            className={`px-4 py-1.5 text-xs font-medium rounded-md flex items-center gap-2 ${formData.useGlobalAppearance ? 'opacity-50 cursor-not-allowed text-slate-400' : carouselDevice === 'mobile' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                          >
+                            <Smartphone size={14} /> Mobile
+                          </button>
+                        </div>
+                      </div>
+
+                      <SectionCard title="Aparência do Carrossel" description="Estilo visual dos vídeos exibidos em formato de carrossel.">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField label="Estilo dos Itens">
+                            <select 
+                              value={getConfig(carouselDevice, 'carousel_style') || 'stories'} 
+                              onChange={e => setConfig(carouselDevice, 'carousel_style', e.target.value)} 
+                              className={selectClass}
+                            >
+                              <option value="stories">Stories (Redondos)</option>
+                              <option value="cards">Cards (Retangulares)</option>
+                            </select>
+                          </FormField>
+                          <FormField label="Tamanho dos Itens (px)">
+                            <input 
+                              type="number" min="40" max="200" 
+                              value={getConfig(carouselDevice, 'carousel_item_size') || 80} 
+                              onChange={e => setConfig(carouselDevice, 'carousel_item_size', parseInt(e.target.value) || 80)} 
+                              className={inputClass} 
+                            />
+                          </FormField>
+                          <FormField label="Espaçamento (Gap em px)">
+                            <input 
+                              type="number" min="0" max="50" 
+                              value={getConfig(carouselDevice, 'carousel_gap') || 12} 
+                              onChange={e => setConfig(carouselDevice, 'carousel_gap', parseInt(e.target.value) || 12)} 
+                              className={inputClass} 
+                            />
+                          </FormField>
+                          <FormField label="Cor da Borda">
+                             <ColorInput 
+                               label="Borda" 
+                               value={getConfig(carouselDevice, 'carousel_border_color') || '#0094EB'} 
+                               onChange={e => setConfig(carouselDevice, 'carousel_border_color', e.target.value)} 
+                             />
+                          </FormField>
+                        </div>
+                      </SectionCard>
+
+                      <SectionCard title="Posicionamento na Página" description="Onde o carrossel será injetado no site da loja.">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField label="Posição Padrão">
+                            <select 
+                              value={getConfig(carouselDevice, 'carousel_position') || 'top'} 
+                              onChange={e => setConfig(carouselDevice, 'carousel_position', e.target.value)} 
+                              className={selectClass}
+                            >
+                              <option value="top">Início da Página (Topo)</option>
+                              <option value="bottom">Fim da Página (Rodapé)</option>
+                              <option value="custom">Elemento Específico (Customizado)</option>
+                            </select>
+                          </FormField>
+                          <FormField label="Seletor HTML (Se customizado)">
+                            <input 
+                              type="text" 
+                              placeholder="ex: #meu-carrossel"
+                              value={getConfig(carouselDevice, 'carousel_custom_selector') || ''} 
+                              onChange={e => setConfig(carouselDevice, 'carousel_custom_selector', e.target.value)} 
+                              className={inputClass} 
+                            />
+                          </FormField>
+                        </div>
+                      </SectionCard>
+                    </div>
+                  )}
 
                     {activeTab === 'flutuante' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
