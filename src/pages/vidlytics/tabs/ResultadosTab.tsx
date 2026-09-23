@@ -551,82 +551,151 @@ export default function ResultadosTab() {
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
+                  {/* Linha 1: oculos-de-sol.mp4 */}
                   <tr className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-3.5 px-4 flex items-center gap-3">
                       <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200/80 overflow-hidden flex-shrink-0 flex items-center justify-center">
-  <Eye className="w-4 h-4 text-slate-400" />
-</div>
+                        <Eye className="w-4 h-4 text-slate-400" />
+                      </div>
                       <div>
                         <p className="font-bold text-slate-800">oculos-de-sol.mp4</p>
                         <span className="text-[10px] text-emerald-600 font-medium">Ativo</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-center font-bold text-slate-700">0</td>
+
+                    {/* Visualizações */}
                     <td className="py-3.5 px-4 text-center">
-                      <span className="bg-rose-50 text-rose-600 text-[10px] font-bold px-2 py-0.5 rounded-full">0,0%</span>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="font-semibold text-slate-800">1.420</span>
+                        <TrendBadge value="15.4%" isPositive={true} />
+                      </div>
                     </td>
-                    <td className="py-3.5 px-4 text-center font-bold text-slate-700">0</td>
-                    <td className="py-3.5 px-4 text-center text-slate-400">—</td>
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
-  <div className="inline-flex items-center justify-center gap-3 text-xs font-semibold">
-    <span className="inline-flex items-center gap-1 text-rose-400" title="Curtidas">
-      <Heart className="w-3.5 h-3.5 stroke-rose-400 fill-rose-50" />
-      <span className="text-slate-600">1</span>
-    </span>
-    <span className="inline-flex items-center gap-1 text-emerald-500" title="Comentários">
-      <MessageCircle className="w-3.5 h-3.5 stroke-emerald-500 fill-emerald-50" />
-      <span className="text-slate-600">0</span>
-    </span>
-    <span className="inline-flex items-center gap-1 text-[#fd8539]" title="Compartilhamentos">
-      <Share2 className="w-3.5 h-3.5 stroke-[#fd8539]" />
-      <span className="text-slate-600">0</span>
-    </span>
-  </div>
-</td>
-                    <td className="py-3.5 px-4 text-center text-slate-400">—</td>
+
+                    {/* CTR */}
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="font-semibold text-slate-800">14,8%</span>
+                        <TrendBadge value="2.2%" isPositive={true} />
+                      </div>
+                    </td>
+
+                    {/* Conversões */}
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="font-semibold text-slate-800">38</span>
+                        <TrendBadge value="8.5%" isPositive={true} />
+                      </div>
+                    </td>
+
+                    {/* Receita */}
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="font-semibold text-emerald-600">R$ 4.890,00</span>
+                        <TrendBadge value="18.2%" isPositive={true} />
+                      </div>
+                    </td>
+
+                    {/* Engajamento */}
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="flex items-center gap-1 text-slate-600" title="Curtidas: 84 (+12% vs 7d)">
+                          <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+                          <span>84</span>
+                          <TrendBadge value="12%" isPositive={true} />
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-600" title="Comentários: 18 (+6% vs 7d)">
+                          <MessageCircle className="w-3.5 h-3.5 text-[#0094eb]" />
+                          <span>18</span>
+                          <TrendBadge value="6%" isPositive={true} />
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-600" title="Compartilhamentos: 9 (+3% vs 7d)">
+                          <Share2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>9</span>
+                          <TrendBadge value="3%" isPositive={true} />
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Duração */}
+                    <td className="py-3.5 px-4 text-center text-slate-600 font-medium">
+                      0:45s
+                    </td>
                   </tr>
 
+                  {/* Linha 2: Criação_de_Vídeo_Fashion */}
                   <tr className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-3.5 px-4 flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200/80 overflow-hidden flex-shrink-0 flex items-center justify-center">
-  <img 
-    src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=150&auto=format&fit=crop&q=80" 
-    alt="Criação_de_Vídeo_Fashion_..." 
-    className="w-full h-full object-cover"
-    onError={(e) => {
-      (e.target as HTMLElement).style.display = 'none';
-    }}
-  />
-</div>
+                      <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        <img
+                          src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=120&auto=format&fit=crop&q=80"
+                          alt="Criação_de_Vídeo_Fashion"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       <div>
                         <p className="font-bold text-slate-800">Criação_de_Vídeo_Fashion_...</p>
                         <span className="text-[10px] text-emerald-600 font-medium">Ativo</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-center font-bold text-slate-700">0</td>
+
+                    {/* Visualizações */}
                     <td className="py-3.5 px-4 text-center">
-                      <span className="bg-rose-50 text-rose-600 text-[10px] font-bold px-2 py-0.5 rounded-full">0,0%</span>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="font-semibold text-slate-800">890</span>
+                        <TrendBadge value="-3.8%" isPositive={false} />
+                      </div>
                     </td>
-                    <td className="py-3.5 px-4 text-center font-bold text-slate-700">0</td>
-                    <td className="py-3.5 px-4 text-center text-slate-400">—</td>
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
-  <div className="inline-flex items-center justify-center gap-3 text-xs font-semibold">
-    <span className="inline-flex items-center gap-1 text-rose-400" title="Curtidas">
-      <Heart className="w-3.5 h-3.5 stroke-rose-400 fill-rose-50" />
-      <span className="text-slate-600">2</span>
-    </span>
-    <span className="inline-flex items-center gap-1 text-emerald-500" title="Comentários">
-      <MessageCircle className="w-3.5 h-3.5 stroke-emerald-500 fill-emerald-50" />
-      <span className="text-slate-600">0</span>
-    </span>
-    <span className="inline-flex items-center gap-1 text-[#fd8539]" title="Compartilhamentos">
-      <Share2 className="w-3.5 h-3.5 stroke-[#fd8539]" />
-      <span className="text-slate-600">0</span>
-    </span>
-  </div>
-</td>
-                    <td className="py-3.5 px-4 text-center text-slate-400">—</td>
-                    </tr>
+
+                    {/* CTR */}
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="font-semibold text-slate-800">9,4%</span>
+                        <TrendBadge value="-1.1%" isPositive={false} />
+                      </div>
+                    </td>
+
+                    {/* Conversões */}
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="font-semibold text-slate-800">19</span>
+                        <TrendBadge value="-4.0%" isPositive={false} />
+                      </div>
+                    </td>
+
+                    {/* Receita */}
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="font-semibold text-emerald-600">R$ 1.950,00</span>
+                        <TrendBadge value="-2.5%" isPositive={false} />
+                      </div>
+                    </td>
+
+                    {/* Engajamento */}
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="flex items-center gap-1 text-slate-600" title="Curtidas: 42 (-5% vs 7d)">
+                          <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+                          <span>42</span>
+                          <TrendBadge value="-5%" isPositive={false} />
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-600" title="Comentários: 7 (-2% vs 7d)">
+                          <MessageCircle className="w-3.5 h-3.5 text-[#0094eb]" />
+                          <span>7</span>
+                          <TrendBadge value="-2%" isPositive={false} />
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-600" title="Compartilhamentos: 4 (+1% vs 7d)">
+                          <Share2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>4</span>
+                          <TrendBadge value="1%" isPositive={true} />
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Duração */}
+                    <td className="py-3.5 px-4 text-center text-slate-600 font-medium">
+                      0:32s
+                    </td>
+                  </tr>
                 </tbody>
               </table>
               <div className="px-4 py-2.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
