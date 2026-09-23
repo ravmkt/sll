@@ -6,7 +6,11 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, TrendingUp, MessageSquare, ShoppingBag, MousePointerClick, RefreshCw, DollarSign, ShoppingCart, ArrowUpRight, CheckCircle2, Sparkles, Heart, MessageCircle, Share2, Play } from 'lucide-react';
+import {
+  Eye, TrendingUp, MessageSquare, ShoppingBag,
+  MousePointerClick, RefreshCw, DollarSign,
+  ShoppingCart, ArrowUpRight, CheckCircle2, Sparkles
+} from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer
@@ -499,6 +503,5 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
     </Dialog>
   );
 }
-
 
 
