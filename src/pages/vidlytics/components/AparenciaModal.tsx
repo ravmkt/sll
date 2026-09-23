@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   X, Monitor, Smartphone, Link, Link2Off, 
   Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
@@ -315,15 +315,107 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                     <div className="absolute top-0 inset-x-0 h-5 bg-[#1a1f36] w-[40%] mx-auto rounded-b-xl z-20"></div>
 
                     {activeTab === 'flutuante' && (
-                      <div className="absolute bottom-6 right-4 w-[28%] aspect-[9/16] bg-slate-800 rounded-xl border border-slate-700 shadow-xl flex items-center justify-center z-30">
-                        <div className="absolute top-1 left-1 right-1 flex justify-between">
-                          <div className="bg-red-600 text-white text-[7px] px-1 py-0.5 rounded uppercase font-bold">AO VIVO</div>
-                        </div>
-                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                          <PlaySquare className="text-white w-4 h-4 ml-0.5" fill="white" />
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-medium text-slate-900">Dispositivo</h3>
+                        <div className="flex bg-slate-100 p-1 rounded-lg">
+                          <button 
+                            onClick={() => setFloatingDevice('desktop')} 
+                            className={`px-4 py-1.5 text-xs font-medium rounded-md flex items-center gap-2 ${floatingDevice === 'desktop' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                          >
+                            <Monitor size={14} /> Desktop
+                          </button>
+                          <button 
+                            onClick={() => setFloatingDevice('mobile')} 
+                            disabled={formData.useGlobalAppearance} 
+                            className={`px-4 py-1.5 text-xs font-medium rounded-md flex items-center gap-2 ${formData.useGlobalAppearance ? 'opacity-50 cursor-not-allowed text-slate-400' : floatingDevice === 'mobile' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                          >
+                            <Smartphone size={14} /> Mobile
+                          </button>
                         </div>
                       </div>
-                    )}
+
+                      <SectionCard title="Aparência do Widget" description="Como a bolinha flutuante será exibida no site.">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField label="Posição na Tela">
+                            <select 
+                              value={getConfig(floatingDevice, 'floating_position') || 'bottom-right'} 
+                              onChange={e => setConfig(floatingDevice, 'floating_position', e.target.value)} 
+                              className={selectClass}
+                            >
+                              <option value="bottom-left">Inferior Esquerda</option>
+                              <option value="bottom-right">Inferior Direita</option>
+                            </select>
+                          </FormField>
+                          <FormField label="Tamanho da Bolinha (px)">
+                            <input 
+                              type="number" min="40" max="120" 
+                              value={getConfig(floatingDevice, 'floating_size') || 80} 
+                              onChange={e => setConfig(floatingDevice, 'floating_size', parseInt(e.target.value) || 80)} 
+                              className={inputClass} 
+                            />
+                          </FormField>
+                          <FormField label="Arredondamento da Borda (px)">
+                            <input 
+                              type="number" min="0" max="100" 
+                              value={getConfig(floatingDevice, 'floating_border_radius') || 100} 
+                              onChange={e => setConfig(floatingDevice, 'floating_border_radius', parseInt(e.target.value) || 0)} 
+                              className={inputClass} 
+                            />
+                          </FormField>
+                          <FormField label="Espessura da Borda (px)">
+                            <input 
+                              type="number" min="0" max="10" 
+                              value={getConfig(floatingDevice, 'floating_border_width') || 2} 
+                              onChange={e => setConfig(floatingDevice, 'floating_border_width', parseInt(e.target.value) || 0)} 
+                              className={inputClass} 
+                            />
+                          </FormField>
+                          <FormField label="Sombra Externa">
+                            <select 
+                              value={getConfig(floatingDevice, 'floating_shadow') || 'md'} 
+                              onChange={e => setConfig(floatingDevice, 'floating_shadow', e.target.value)} 
+                              className={selectClass}
+                            >
+                              <option value="none">Sem sombra</option>
+                              <option value="sm">Leve</option>
+                              <option value="md">Média</option>
+                              <option value="lg">Forte</option>
+                            </select>
+                          </FormField>
+                          <FormField label="Cor da Borda Personalizada">
+                             <ColorInput 
+                               label="Borda" 
+                               value={getConfig(floatingDevice, 'floating_border_color') || '#0094EB'} 
+                               onChange={e => setConfig(floatingDevice, 'floating_border_color', e.target.value)} 
+                             />
+                          </FormField>
+                        </div>
+                      </SectionCard>
+
+                      <SectionCard title="Espaçamento" description="Distância da bolinha em relação aos cantos da tela.">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField label="Margem Inferior (px)">
+                            <input 
+                              type="number" min="0" max="200" 
+                              value={getConfig(floatingDevice, 'floating_margin_bottom') || 20} 
+                              onChange={e => setConfig(floatingDevice, 'floating_margin_bottom', parseInt(e.target.value) || 0)} 
+                              className={inputClass} 
+                            />
+                          </FormField>
+                          <FormField label="Margem Lateral (px)">
+                            <input 
+                              type="number" min="0" max="200" 
+                              value={getConfig(floatingDevice, 'floating_margin_side') || 20} 
+                              onChange={e => setConfig(floatingDevice, 'floating_margin_side', parseInt(e.target.value) || 0)} 
+                              className={inputClass} 
+                            />
+                          </FormField>
+                        </div>
+                      </SectionCard>
+                    </div>
+                  )}
 
                     <span className="z-10 text-slate-400 text-sm font-bold uppercase tracking-widest text-center px-4">
                        Preview do {activeTab} (Mobile)
