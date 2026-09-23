@@ -1,3 +1,4 @@
+import AddVideoUrlModal from '../components/AddVideoUrlModal';
 import React, { useState } from 'react';
 import { 
   Search, 
@@ -29,6 +30,7 @@ interface MediaItem {
 }
 
 export const BibliotecaTab: React.FC = () => {
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'TODOS' | 'VIDEOS' | 'IMAGENS'>('TODOS');
 
@@ -116,7 +118,7 @@ export const BibliotecaTab: React.FC = () => {
           <button 
             type="button" 
             className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm"
-          >
+           onClick={() => setIsUrlModalOpen(true)}>
             <ExternalLink size={14} className="text-slate-600" />
             <span>URL EXTERNA</span>
           </button>
@@ -365,3 +367,4 @@ export const BibliotecaTab: React.FC = () => {
 };
 
 export default BibliotecaTab;
+
