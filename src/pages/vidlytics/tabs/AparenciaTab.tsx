@@ -5,7 +5,6 @@ import {
   Pencil, 
   Trash2, 
   Loader2, 
-  CheckCircle2, 
   Star 
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -225,7 +224,7 @@ export const AparenciaTab: React.FC = () => {
         )}
       </div>
 
-      {/* POP-UP / MODAL DESACOPLADO */}
+      {/* MODAL DESACOPLADO */}
       <AparenciaModal
         isOpen={isModalOpen}
         mode={modalMode}
@@ -237,3 +236,5 @@ export const AparenciaTab: React.FC = () => {
     </div>
   );
 };
+
+export default AparenciaTab;
