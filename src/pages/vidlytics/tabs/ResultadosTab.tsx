@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
 
 type SubTab = 'visao-geral' | 'videos' | 'retencao' | 'insights';
 
