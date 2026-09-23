@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import NewStoryModal from '../components/NewStoryModal';
 import { Plus, Search, Eye, Pencil, Trash2, Send, TrendingUp, TrendingDown, Info } from 'lucide-react';
 
 interface StoryRow {
@@ -16,7 +17,8 @@ interface StoryRow {
 }
 
 export default function StoriesTab() {
-  const [busca, setBusca] = useState('');
+    const [isNewStoryOpen, setIsNewStoryOpen] = useState(false);
+const [busca, setBusca] = useState('');
   const [statusFiltro, setStatusFiltro] = useState<'TODOS' | 'ATIVO' | 'INATIVO'>('TODOS');
 
   // Dados mockados no padrão do layout
@@ -293,6 +295,10 @@ export default function StoriesTab() {
           </div>
         </div>
       </div>
+
+      {/* Modal Novo Story */}
+      <NewStoryModal isOpen={isNewStoryOpen} onClose={() => setIsNewStoryOpen(false)} />
     </div>
   );
 }
+
