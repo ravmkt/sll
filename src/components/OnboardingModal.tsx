@@ -152,7 +152,7 @@ export const OnboardingModal: React.FC = () => {
               {/* Logotipo SLL */}
               <div className="flex items-center justify-center max-w-[200px] h-12">
                 <img 
-                  src="/assets/SLL-logotipo-b.png" 
+                  src="public/assets/SLL-logotipo-b.png" 
                   alt="Sistema Loja Lucrativa" 
                   className="max-h-full w-auto object-contain"
                 />
