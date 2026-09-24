@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { VidlyticsDatabaseService } from '@/services/VidlyticsDatabaseService';
+import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 import { LiveCommerceDatabaseService } from '@/services/LiveCommerceDatabaseService';
 import { SLLDatabaseService } from '@/services/SLLDatabaseService';
 import * as clients from '@/services/supabaseClients';
