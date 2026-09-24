@@ -1,54 +1,82 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
-export interface Store {
-  id: string;
+export interface StorePayload {
   name: string;
-  slug?: string;
-  url?: string;
-  platform?: string;
-  owner_user_id: string;
-  subscription_status?: string;
+  url: string;
+  platform: string;
+  contact_email: string;
 }
 
 export const SLLDatabaseService = {
-  /**
-   * Busca todas as lojas do usuário autenticado via owner_user_id
-   */
-  async getUserStores(): Promise<Store[]> {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      console.warn('Usuário não autenticado.');
-      return [];
-    }
-
+  // Retorna a loja ativa do usuário logado
+  async getUserStore(userId: string) {
     const { data, error } = await supabase
       .from('stores')
-      .select('id, name, slug, url, platform, owner_user_id, subscription_status')
-      .eq('owner_user_id', user.id);
+      .select('*')
+      .eq('owner_user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (error) {
-      console.error('Erro ao buscar stores:', error);
+      console.error('Erro ao consultar loja do usuário:', error);
       throw error;
     }
-
-    return (data as Store[]) || [];
+    return data;
   },
 
-  /**
-   * Alias getStores para compatibilidade com os componentes legados
-   */
-  async getStores(): Promise<Store[]> {
-    return this.getUserStores();
-  },
+  // Cria a loja e o registro de configurações no schema public
+  async createInitialStore(userId: string, payload: StorePayload) {
+    const slug = payload.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
 
-  /**
-   * Busca a loja ativa ou a primeira loja do usuário
-   */
-  async getActiveStore(): Promise<Store | null> {
-    const stores = await this.getUserStores();
-    return stores.length > 0 ? stores[0] : null;
-  }
+    // 1. Inserir em public.stores
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .insert({
+        owner_user_id: userId,
+        name: payload.name.trim(),
+        url: payload.url.trim(),
+        platform: payload.platform,
+        contact_email: payload.contact_email.trim(),
+        slug: `${slug}-${Math.floor(1000 + Math.random() * 9000)}`,
+        active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (storeError || !store) {
+      console.error('Erro ao criar loja em public.stores:', storeError);
+      throw storeError || new Error('Falha ao inserir loja');
+    }
+
+    // 2. Inserir em public.store_settings
+    const { error: settingsError } = await supabase
+      .from('store_settings')
+      .insert({
+        store_id: store.id,
+        store_name: store.name,
+        store_url: store.url,
+        contact_email: store.contact_email,
+        app_enabled: true,
+        stories_enabled: true,
+        carousel_enabled: true,
+        floating_widget_enabled: true,
+        widget_enabled: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+    if (settingsError) {
+      console.warn('Alerta: Erro ao provisionar store_settings:', settingsError);
+    }
+
+    return store;
+  },
 };
-
-export default SLLDatabaseService;
