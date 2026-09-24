@@ -1,7 +1,6 @@
-import { useStore } from '../../../contexts/StoreContext';
-import React, { useState, useEffect } from 'react';
-import { 
-  X, Monitor, Smartphone, Link, Link2Off, 
+import React, { useState } from 'react';
+import {
+  X, Monitor, Smartphone, Link, Link2Off,
   Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
   Save, CornerUpLeft, Star, ChevronDown
 } from 'lucide-react';
@@ -9,10 +8,21 @@ import {
 interface AparenciaModalProps {
   isOpen: boolean;
   onClose: () => void;
-  styleData?: any;
+  styleName: string;
+  setStyleName: (v: string) => void;
+  isDefault: boolean;
+  setIsDefault: (v: boolean) => void;
+  isUnified: boolean;
+  toggleUnified: (v: boolean) => void;
+  formData: any;
+  getConfig: (device: 'desktop' | 'mobile', key: string) => any;
+  setConfig: (device: 'desktop' | 'mobile', key: string, value: any) => void;
+  resetTab: (tabId: string, device: 'desktop' | 'mobile') => void;
+  saveStyle: () => Promise<any>;
+  isLoadingStyle: boolean;
+  isSaving: boolean;
 }
 
-// Estilos baseados nos prints do legado
 const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
 const inputClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
 
@@ -26,20 +36,20 @@ const FormField = ({ label, children }: any) => (
 const ColorInput = ({ value, onChange }: any) => (
   <div className="flex items-center gap-2">
     <div className="relative w-10 h-10 shrink-0">
-      <input 
-        type="color" 
-        value={value || '#0094eb'} 
+      <input
+        type="color"
+        value={value || '#0094eb'}
         onChange={(e) => onChange(e.target.value)}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
       />
-      <div 
-        className="w-full h-full rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm pointer-events-none" 
+      <div
+        className="w-full h-full rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm pointer-events-none"
         style={{ backgroundColor: value || '#0094eb' }}
       />
     </div>
-    <input 
-      type="text" 
-      value={value || ''} 
+    <input
+      type="text"
+      value={value || ''}
       onChange={(e) => onChange(e.target.value)}
       className={`${inputClass} uppercase`}
       placeholder="#000000"
@@ -76,83 +86,44 @@ const Accordion = ({ title, isOpen, onClick, children }: any) => (
   </div>
 );
 
-const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleData }) => {
+const AparenciaModal: React.FC<AparenciaModalProps> = ({
+  isOpen, onClose,
+  styleName, setStyleName,
+  isDefault, setIsDefault,
+  isUnified, toggleUnified,
+  getConfig, setConfig,
+  resetTab, saveStyle,
+  isLoadingStyle, isSaving,
+}) => {
   const [activeTab, setActiveTab] = useState('basico');
-  const [isUnified, setIsUnified] = useState(true);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
-  
-  // Controle de Abas Sanfonas (Accordions)
   const [openAccordion, setOpenAccordion] = useState<string>('1. Formato & Dimensões');
 
-  const [styleName, setStyleName] = useState('USEANNY');
-  const [isDefault, setIsDefault] = useState(true);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState<any>({ desktop: {}, mobile: {} });
-
-  const { currentStore } = useStore();
-  const storeId = currentStore?.id; 
-
-  useEffect(() => {
-    if (!isOpen || !storeId) return;
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const { VidlyticsDatabaseService } = await import('../../../services/vidlytics/VidlyticsDatabaseService');
-        const style = await VidlyticsDatabaseService.getAppearanceByStoreId(storeId);
-        if (style) setFormData(style);
-      } catch (error) {
-        console.error("Erro ao carregar aparência:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, [isOpen, storeId]);
-
-  const getConfig = (device: 'desktop' | 'mobile', key: string) => formData[device]?.[key] || '';
-  const setConfig = (device: 'desktop' | 'mobile', key: string, value: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [device]: { ...prev[device] || {}, [key]: value }
-    }));
-  };
-
-  // Helper para facilitar os bindings e considerar o preview ativo como referência pro formulário
   const getC = (key: string) => getConfig(previewDevice, key);
   const setC = (key: string, value: any) => setConfig(previewDevice, key, value);
 
   const handleSave = async () => {
-    setIsSaving(true);
     try {
-      const { VidlyticsDatabaseService } = await import('../../../services/vidlytics/VidlyticsDatabaseService');
-      await VidlyticsDatabaseService.saveAppearance(storeId, formData);
-      alert("Aparência salva com sucesso no banco SLL!"); 
-      onClose();
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-      alert("Erro ao salvar configurações.");
-    } finally {
-      setIsSaving(false);
+      await saveStyle();
+    } catch (error: any) {
+      console.error('Erro ao salvar:', error);
+      alert(error?.message || 'Erro ao salvar configurações.');
     }
   };
-
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab('basico');
-      setOpenAccordion('1. Formato & Dimensões');
-    }
-  }, [isOpen]);
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     if (tabId !== 'basico') setPreviewDevice('mobile');
-    setOpenAccordion('1. Formato & Dimensões'); // Reseta accordion ao trocar de aba
+    setOpenAccordion('1. Formato & Dimensões');
   };
 
   const toggleAccordion = (title: string) => {
     setOpenAccordion(openAccordion === title ? '' : title);
+  };
+
+  const handleReset = () => {
+    if (activeTab === 'basico') return;
+    resetTab(activeTab, previewDevice);
   };
 
   if (!isOpen) return null;
@@ -169,7 +140,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-slate-900 w-[95vw] max-w-[1500px] h-[95vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        
+
         {/* HEADER MODAL */}
         <div className="flex items-center justify-between px-6 py-4">
           <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Editar Estilo</h2>
@@ -207,12 +178,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
 
         {/* ÁREA CENTRAL */}
         <div className="flex-1 flex overflow-hidden bg-slate-50 dark:bg-slate-900/50">
-          
+
           {/* ESQUERDA - CONTROLES */}
           <div className="w-[450px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto p-6 flex flex-col gap-4 shrink-0 custom-scrollbar">
-            
-            {activeTab === 'basico' ? (
-              // ABA BÁSICO
+
+            {isLoadingStyle ? (
+              <div className="flex items-center justify-center h-full text-slate-400 font-bold">Carregando...</div>
+            ) : activeTab === 'basico' ? (
               <div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Configurações Básicas</h3>
                 <div className="space-y-6">
@@ -231,7 +203,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                   </div>
                   <div className={`p-4 border rounded-xl transition-colors ${isUnified ? 'border-[#0094eb]/40 bg-[#0094eb]/5' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
-                      <div className="mt-1"><input type="checkbox" checked={isUnified} onChange={(e) => setIsUnified(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb]" /></div>
+                      <div className="mt-1"><input type="checkbox" checked={isUnified} onChange={(e) => toggleUnified(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb]" /></div>
                       <div>
                         <p className="font-bold text-slate-800 dark:text-white">Unificar dispositivos</p>
                         <p className="text-xs text-slate-500 mt-1">As alterações que você fizer em Desktop serão aplicadas automaticamente ao Mobile.</p>
@@ -241,24 +213,22 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                 </div>
               </div>
             ) : (
-              // OUTRAS ABAS (Flutuante, Carrossel, etc)
               <>
                 <h3 className="text-lg font-extrabold text-slate-800 dark:text-white mb-2 capitalize">
                   Configurações do {activeTab.replace('-', ' ')}
                 </h3>
 
-                {/* CONTROLE DE EDIÇÃO IDÊNTICO AO PRINT */}
                 <div className="flex items-center justify-between p-4 mb-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 shadow-sm">
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Dispositivo</span>
                   <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1">
-                    <button 
+                    <button
                       onClick={() => !isUnified && setPreviewDevice('desktop')}
                       className={`p-1.5 rounded-md transition-colors ${(isUnified || previewDevice === 'desktop') ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <Monitor size={16} strokeWidth={2.5} />
                     </button>
                     {isUnified ? <Link size={14} className="text-[#0094eb] mx-1" strokeWidth={2.5} /> : <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>}
-                    <button 
+                    <button
                       onClick={() => !isUnified && setPreviewDevice('mobile')}
                       className={`p-1.5 rounded-md transition-colors ${(isUnified || previewDevice === 'mobile') ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
                     >
@@ -267,10 +237,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                   </div>
                 </div>
 
-                {/* FORMULÁRIO DO FLUTUANTE */}
                 {activeTab === 'flutuante' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    
+
                     <Accordion title="1. Formato & Dimensões" isOpen={openAccordion === '1. Formato & Dimensões'} onClick={() => toggleAccordion('1. Formato & Dimensões')}>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Formato">
@@ -345,7 +314,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                   </div>
                 )}
 
-                {/* FORMULÁRIO DO CARROSSEL (Também atualizado para Accordions) */}
                 {activeTab === 'carrossel' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <Accordion title="1. Formato & Estilo" isOpen={openAccordion === '1. Formato & Estilo'} onClick={() => toggleAccordion('1. Formato & Estilo')}>
@@ -387,7 +355,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                   </div>
                 )}
 
-                {/* FALLBACK PARA ABAS EM DESENVOLVIMENTO */}
                 {['carrossel-dinamico', 'grade', 'player'].includes(activeTab) && (
                    <div className="p-8 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/30 flex flex-col items-center justify-center text-center mt-4">
                       <Settings2 size={40} strokeWidth={1.5} className="text-slate-400 mb-4" />
@@ -401,9 +368,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
 
           {/* DIREITA - ÁREA DE PREVIEW */}
           <div className="flex-1 flex items-center justify-center p-8 relative overflow-hidden h-full">
-            
+
             {activeTab === 'basico' ? (
-              // PREVIEW BÁSICO
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-600 p-10 w-full max-w-3xl flex flex-col items-center justify-center shadow-sm">
                 {isDefault && (
                   <div className="inline-flex items-center gap-1.5 bg-[#e6f7ef] text-[#1a8c54] px-4 py-1.5 rounded-full text-[11px] font-black tracking-wide mb-8 uppercase">
@@ -435,7 +401,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
                 </p>
               </div>
             ) : (
-              // ÁREA DE PREVIEW (MOCKUPS)
               <div className="w-full h-full flex items-center justify-center">
                 {previewDevice === 'desktop' ? (
                   <div className="w-full max-w-5xl aspect-video bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
@@ -459,7 +424,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
 
         {/* FOOTER */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
-          <button className="bg-red-50 text-red-500 font-extrabold px-5 py-2.5 rounded-xl text-sm tracking-wide border border-transparent outline-none">
+          <button onClick={handleReset} className="bg-red-50 text-red-500 font-extrabold px-5 py-2.5 rounded-xl text-sm tracking-wide border border-transparent outline-none">
             RESETAR
           </button>
           <div className="hidden lg:flex items-center gap-2 text-slate-500 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-full text-sm border border-slate-100 dark:border-slate-700 shadow-sm">

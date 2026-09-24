@@ -83,7 +83,7 @@ export type CarouselConfig = {
   object_fit: string;
   show_title: boolean;
   autoplay_videos: boolean;
-  auto_highlight: boolean; // true = destaque automático no centro a cada 5s
+  auto_highlight: boolean;
   product_card_bg: string;
   product_card_border_color: string;
   product_card_border_width: string;
@@ -96,11 +96,6 @@ export type CarouselConfig = {
 };
 
 // ──────────────────── Dynamic Carousel ────────────────────
-// ⚠️ CORRIGIDO em relação ao legado: o type original previa
-// highlight_mode / highlight_enlarge_active / highlight_dim_inactive /
-// highlight_desaturate_inactive / highlight_border_color, mas os
-// defaults reais em produção usam highlight_shadow, highlight_scale_up
-// e highlight_scale_down_others. Fonte de verdade = defaults reais.
 export type DynamicCarouselConfig = Omit<
   CarouselConfig,
   | 'product_card_border_width'
@@ -141,7 +136,7 @@ export type GridConfig = {
   object_fit: string;
   show_title: boolean;
   autoplay_videos: boolean;
-  sequential_playback: boolean; // true = modo sequencial 5s por vídeo
+  sequential_playback: boolean;
 };
 
 // ──────────────────── Modal ────────────────────
@@ -159,7 +154,6 @@ export type ModalConfig = {
   border_color: string;
   border_width: string;
   border_radius: string;
-  // campos extras usados no legado (Record<string, any>)
   product_card_bg?: string;
   product_card_border_color?: string;
   product_card_border_width?: string;
@@ -181,7 +175,6 @@ export type PreviewColors = {
 
 // =====================================================================
 // AppearanceBase: campos "flat" legados (identidade visual + legado)
-// Mantidos para compatibilidade com os componentes de Preview existentes.
 // =====================================================================
 export type AppearanceBase = {
   id: string;
@@ -189,12 +182,10 @@ export type AppearanceBase = {
   created_at?: string;
   updated_at?: string;
 
-  // Básico
   name?: string;
   is_default?: boolean;
   use_global_appearance?: boolean;
 
-  // Identidade Visual
   primary_color?: string;
   secondary_color?: string;
   text_color?: string;
@@ -205,12 +196,10 @@ export type AppearanceBase = {
   border_radius?: number;
   shadow_enabled?: boolean;
 
-  // Flutuante (legado flat)
   widget_shape?: string;
   widget_size?: string;
   widget_animation?: string;
 
-  // Carrossel (legado flat)
   carousel_shape?: string;
   carousel_size?: string | number;
   carousel_card_shape?: string;
@@ -229,7 +218,6 @@ export type AppearanceBase = {
   carousel_auto_center?: boolean;
   carousel_view_mode?: string;
 
-  // Grade (legado flat)
   grid_shape?: string;
   grid_columns?: string;
   grid_rows?: string;
@@ -243,7 +231,6 @@ export type AppearanceBase = {
   grid_margin_top?: string | number;
   grid_margin_bottom?: string | number;
 
-  // Modal (legado flat)
   modal_show_title?: boolean;
   modal_show_play_button?: boolean;
   modal_show_product?: boolean;
@@ -258,7 +245,6 @@ export type AppearanceBase = {
   modal_border_width?: string | number;
   modal_border_radius?: string | number;
 
-  // Visibilidade dos botões (legado)
   show_title?: boolean;
   show_play_button?: boolean;
   show_product?: boolean;
@@ -268,10 +254,8 @@ export type AppearanceBase = {
   show_whatsapp_button?: boolean;
   show_product_button?: boolean;
 
-  // Outros
   url?: string | null;
 
-  // Aliases legados (normalizados em runtime, não salvos)
   isDefault?: boolean;
   useGlobalAppearance?: boolean;
 };
@@ -337,6 +321,8 @@ export type ExtendedAppearance = AppearanceBase & {
 export type VidAppearanceRow = {
   id: string;
   store_id: string;
+  name: string;
+  is_default: boolean;
   widget_style: ExtendedAppearance;
   created_at?: string;
   updated_at?: string;
