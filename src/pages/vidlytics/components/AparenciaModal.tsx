@@ -3,8 +3,10 @@ import {
   X, Monitor, Smartphone, Link, Link2Off,
   Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
   Save, CornerUpLeft, Star, ChevronDown, Play,
-  Heart, MessageCircle, Share2, ChevronRight
+  Heart, MessageCircle, Share2, ChevronRight, Loader2
 } from 'lucide-react';
+import { useLoja } from '@/context/LojaContext';
+import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 
 interface AparenciaModalProps {
   isOpen: boolean;
@@ -24,7 +26,7 @@ interface AparenciaModalProps {
   isSaving: boolean;
 }
 
-const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
+const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white cursor-pointer";
 const inputClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
 
 const DEMO_PREVIEW_VIDEOS = [
@@ -915,7 +917,7 @@ const GridPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW PLAYER (MODAL - EXTRAÍDO DO LEGADO) ────────────────────
+// ──────────────────── PREVIEW PLAYER (MODAL) ────────────────────
 const ModalPlayerPreview = ({
   playerConfig,
   primaryColor,
@@ -1268,9 +1270,11 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   resetTab, saveStyle,
   isLoadingStyle, isSaving,
 }) => {
+  const { storeId: activeStoreId, store } = useLoja();
   const [activeTab, setActiveTab] = useState('basico');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
+  const [localSaving, setLocalSaving] = useState(false);
 
   const getC = (key: string) => getConfig(previewDevice, key);
   const setC = (key: string, value: any) => setConfig(previewDevice, key, value);
@@ -1428,11 +1432,53 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   };
 
   const handleSave = async () => {
+    setLocalSaving(true);
     try {
-      await saveStyle();
+      // 1. Resolve o store_id ativo com garantia total
+      const targetStoreId =
+        formData?.store_id ||
+        activeStoreId ||
+        store?.id ||
+        localStorage.getItem('sll_store_id') ||
+        localStorage.getItem('store_id');
+
+      if (!targetStoreId) {
+        throw new Error('Nenhuma loja ativa identificada. Por favor, acesse o Dashboard e selecione uma loja.');
+      }
+
+      // 2. Executa a persistência com o service dedicado do vidlytics
+      await VidlyticsDatabaseService.saveAppearance({
+        id: formData?.id === 'default' ? undefined : formData?.id,
+        store_id: targetStoreId,
+        name: (styleName || 'PADRAO').trim(),
+        is_default: isDefault,
+        widget_style: {
+          name: (styleName || 'PADRAO').trim(),
+          is_default: isDefault,
+          is_unified: isUnified,
+          desktop: formData?.desktop || {},
+          mobile: formData?.mobile || {},
+          floating: floatingPreviewData,
+          carousel: carouselPreviewData,
+          dynamic_carousel: dynCarouselPreviewData,
+          grid: gridPreviewData,
+          player: playerPreviewData,
+        },
+      });
+
+      // 3. Fallback do saveStyle original recebido por props (se existir)
+      if (typeof saveStyle === 'function') {
+        try { await saveStyle(); } catch (e) { /* silencioso */ }
+      }
+
+      // 4. Dispara evento para atualizar a listagem na tela do Vidlytics
+      window.dispatchEvent(new CustomEvent('vidlytics:appearance_saved'));
+      onClose();
     } catch (error: any) {
       console.error('Erro ao salvar:', error);
       alert(error?.message || 'Erro ao salvar configurações.');
+    } finally {
+      setLocalSaving(false);
     }
   };
 
@@ -1657,7 +1703,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           </div>
                         )}
                         <CheckboxField label="Reproduzir vídeos" checked={getC('floating_auto_play') !== false} onChange={(v: boolean) => setC('floating_auto_play', v)} />
-                        <CheckboxField label="Exibir ícone de Play" checked={getC('floating_show_play_icon') !== false} onChange={(v: boolean) => setC('floating_show_play_icon', v)} />
+                        <CheckboxField label="Exibir ícone de Play" checked={getC('floating_show_play_icon') ?? true} onChange={(v: boolean) => setC('floating_show_play_icon', v)} />
                         <CheckboxField label="Exibir botão de fechar (X)" checked={getC('floating_show_close_button') || false} onChange={(v: boolean) => setC('floating_show_close_button', v)} />
                       </div>
                     </Accordion>
@@ -2275,7 +2321,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
         {/* FOOTER */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
-          <button onClick={handleReset} className="bg-red-50 text-red-500 font-extrabold px-5 py-2.5 rounded-xl text-sm tracking-wide border border-transparent outline-none">
+          <button onClick={handleReset} className="bg-red-50 text-red-500 font-extrabold px-5 py-2.5 rounded-xl text-sm tracking-wide border border-transparent outline-none cursor-pointer hover:bg-red-100 transition-colors">
             RESETAR
           </button>
           <div className="hidden lg:flex items-center gap-2 text-slate-500 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-full text-sm border border-slate-100 dark:border-slate-700 shadow-sm">
@@ -2283,11 +2329,16 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
             <span>Este painel é um <strong>preview meramente visual</strong>. Para testar cliques e interações, use o simulador na edição dos stories.</span>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={onClose} className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            <button onClick={onClose} className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
               <X size={18} strokeWidth={2.5} /> Cancelar
             </button>
-            <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 px-6 py-2.5 bg-[#0094eb] text-white rounded-xl text-sm font-bold shadow-md transition-none disabled:opacity-50">
-              <Save size={18} strokeWidth={2.5} /> {isSaving ? 'Salvando...' : 'Salvar'}
+            <button 
+              onClick={handleSave} 
+              disabled={isSaving || localSaving} 
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
+            >
+              {isSaving || localSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} strokeWidth={2.5} />} 
+              {isSaving || localSaving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
         </div>
