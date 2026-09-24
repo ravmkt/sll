@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus, Palette, Star, Pencil, Trash2 } from 'lucide-react';
 import AparenciaModal from '../components/AparenciaModal';
-import { useAppearanceLogic } from '../../hooks/vidlytics/useAppearanceLogic';
+import { useAppearanceLogic } from "../../../hooks/vidlytics/useAppearanceLogic";
 
 const AparenciaTab: React.FC = () => {
   const {
