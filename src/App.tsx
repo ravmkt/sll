@@ -1,6 +1,8 @@
 ﻿import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
+import { LojaProvider } from './context/LojaContext';
+import { OnboardingModal } from './components/OnboardingModal';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -30,20 +32,17 @@ function AppRoutes() {
 
   return (
     <Suspense fallback={<PageLoader />}>
+      {/* Modal de Onboarding: só aparece se needsOnboarding for true */}
+      {user && <OnboardingModal />}
+
       <Routes>
-        {/* Redireciona a raiz para a dashboard */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-        {/* Rota pública de Login */}
         <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
-
-        {/* Rotas protegidas */}
+        
         <Route
           path="/dashboard"
           element={user ? <Dashboard /> : <Navigate to="/auth" replace />}
         />
-
-        {/* Rotas dos Módulos */}
         <Route
           path="/dashboard/modules/vidlytics"
           element={user ? <Vidlytics /> : <Navigate to="/auth" replace />}
@@ -60,14 +59,10 @@ function AppRoutes() {
           path="/dashboard/products"
           element={user ? <Products /> : <Navigate to="/auth" replace />}
         />
-
-        {/* Redirecionamento de módulos geral para Vidlytics como padrão */}
         <Route
           path="/dashboard/modules"
           element={<Navigate to="/dashboard/modules/vidlytics" replace />}
         />
-
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     </Suspense>
@@ -77,7 +72,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <Router>
-      <AppRoutes />
+      <LojaProvider>
+        <AppRoutes />
+      </LojaProvider>
     </Router>
   );
 }
