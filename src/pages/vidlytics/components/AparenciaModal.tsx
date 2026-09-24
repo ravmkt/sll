@@ -44,6 +44,18 @@ const normalizeWidgetShape = (value: unknown, fallback: WidgetShape = 'portrait'
   return fallback;
 };
 
+const safeNumber = (value: unknown, fallback: number, min?: number): number => {
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) return fallback;
+  if (typeof min === 'number' && parsed < min) return min;
+  return parsed;
+};
+
+const limitNumber = (value: unknown, fallback: number, min: number, max: number) => {
+  const parsed = safeNumber(value, fallback, min);
+  return Math.min(max, Math.max(min, parsed));
+};
+
 // ──────────────────── SCALE TO FIT (CANVAS DESKTOP) ────────────────────
 const ScaleToFit = ({ children }: { children: React.ReactNode }) => {
   const outerRef = useRef<HTMLDivElement>(null);
@@ -237,7 +249,7 @@ const FloatingPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW CARROSSEL (EXTRAÍDO DO LEGADO) ────────────────────
+// ──────────────────── PREVIEW CARROSSEL ────────────────────
 const CarouselPreview = ({
   carousel,
   colors,
@@ -270,7 +282,6 @@ const CarouselPreview = ({
   const [dragStartX, setDragStartX] = useState<number | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
 
-  // Loop infinito na navegação
   useEffect(() => {
     if (trackIndex - baseIndex >= len || trackIndex - baseIndex <= -len) {
       const t = setTimeout(() => {
@@ -437,6 +448,474 @@ const CarouselPreview = ({
   );
 };
 
+// ──────────────────── PREVIEW CARROSSEL DINÂMICO (EXTRAÍDO DO LEGADO) ────────────────────
+const DynamicCarouselPreview = ({
+  carousel,
+  colors,
+  isMobile = false,
+}: {
+  carousel: any;
+  colors: any;
+  isMobile?: boolean;
+}) => {
+  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(isMobile ? 320 : 850);
+
+  useEffect(() => {
+    const obs = new ResizeObserver(entries => {
+      if (entries[0]) setContainerWidth(entries[0].contentRect.width);
+    });
+    if (containerRef.current) obs.observe(containerRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  const videoSources = DEMO_PREVIEW_VIDEOS;
+  const len = videoSources.length;
+  const REPEAT_TILES = 16;
+  const baseIndex = Math.floor(REPEAT_TILES / 2) * len;
+  const trackVideos = Array.from({ length: REPEAT_TILES }, () => videoSources).flat();
+
+  const [trackIndex, setTrackIndex] = useState(baseIndex);
+  const [noTransition, setNoTransition] = useState(false);
+  const [dragStartX, setDragStartX] = useState<number | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
+
+  useEffect(() => {
+    const delay = Number(carousel?.autoplay_delay) || 5000;
+    if (delay <= 0 || dragStartX !== null) return;
+    const interval = setInterval(() => setTrackIndex((prev) => prev + 1), delay);
+    return () => clearInterval(interval);
+  }, [carousel?.autoplay_delay, dragStartX]);
+
+  useEffect(() => {
+    if (trackIndex - baseIndex >= len || trackIndex - baseIndex <= -len) {
+      const t = setTimeout(() => {
+        setNoTransition(true);
+        setTrackIndex(baseIndex + ((trackIndex - baseIndex) % len));
+        requestAnimationFrame(() => requestAnimationFrame(() => setNoTransition(false)));
+      }, 600);
+      return () => clearTimeout(t);
+    }
+  }, [trackIndex, baseIndex, len]);
+
+  const shape = normalizeWidgetShape(carousel?.shape, 'portrait');
+  const isCircle = shape === 'circle';
+  const spacingNum = Number(carousel?.spacing ?? 8) || 0;
+  const visibleItems = Math.max(1, Number(carousel?.visible_items ?? 4));
+
+  const ml = Number(carousel?.margin_left ?? 0);
+  const mr = Number(carousel?.margin_right ?? 0);
+  const mt = Number(carousel?.margin_top ?? 0);
+  const mb = Number(carousel?.margin_bottom ?? 0);
+
+  const cw = containerWidth || (isMobile ? 320 : 850);
+  const availableWidth = Math.max(1, cw - ml - mr);
+
+  const baseItemWidth = isMobile 
+    ? cw * 0.6 
+    : Math.max(80, (availableWidth - (spacingNum * (visibleItems - 1))) / visibleItems);
+
+  const step = baseItemWidth + spacingNum;
+
+  const rawBorderWidth = carousel?.border_width ?? carousel?.border_style;
+  const borderWidth = rawBorderWidth !== undefined && rawBorderWidth !== '' ? Number(rawBorderWidth) : 0;
+  const borderColor = carousel?.border_color || colors?.primary || '#0094EB';
+  const borderRadiusNum = Number(carousel?.border_radius ?? 12) || 0;
+  const borderRadius = isCircle ? '50%' : `${borderRadiusNum}px`;
+
+  const titleAlign = carousel?.title_align ?? 'center';
+  const titleJustifyClass = titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center';
+
+  useEffect(() => {
+    videoRefs.current.forEach((video, i) => {
+      if (!video) return;
+      if (i === trackIndex || (carousel?.autoplay_videos ?? true)) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  }, [carousel?.autoplay_videos, trackIndex]);
+
+  const handleDragStart = (clientX: number) => { setNoTransition(true); setDragStartX(clientX); };
+  const handleDragMove = (clientX: number) => { if (dragStartX !== null) setDragOffset(clientX - dragStartX); };
+  const handleDragEnd = () => {
+    if (dragStartX === null) return;
+    if (dragOffset > 50) setTrackIndex(prev => prev - 1);
+    else if (dragOffset < -50) setTrackIndex(prev => prev + 1);
+    setDragStartX(null); setDragOffset(0); setNoTransition(false);
+  };
+
+  return (
+    <div 
+      className="w-full overflow-hidden select-none box-border" 
+      ref={containerRef}
+      style={{
+        paddingTop: `${mt}px`,
+        paddingBottom: `${mb}px`,
+        paddingLeft: `${ml}px`,
+        paddingRight: `${mr}px`,
+      }}
+    >
+      {carousel?.show_title && (
+        <div className={`w-full px-4 mb-2 ${titleJustifyClass}`}>
+          <h4 
+            style={{ fontSize: `${Number(carousel?.title_font_size ?? 14)}px`, fontWeight: carousel?.title_bold ?? true ? 'bold' : 'normal' }} 
+            className={isMobile ? 'text-slate-800 dark:text-white' : 'text-slate-800 dark:text-slate-100 uppercase tracking-wider'}
+          >
+            {carousel?.title_text ?? 'Destaques'}
+          </h4>
+        </div>
+      )}
+
+      <div 
+        className="relative w-full py-4 cursor-grab active:cursor-grabbing touch-pan-y"
+        onMouseDown={e => handleDragStart(e.clientX)}
+        onMouseMove={e => handleDragMove(e.clientX)}
+        onMouseUp={handleDragEnd}
+        onMouseLeave={handleDragEnd}
+        onTouchStart={e => handleDragStart(e.touches[0].clientX)}
+        onTouchMove={e => handleDragMove(e.touches[0].clientX)}
+        onTouchEnd={handleDragEnd}
+      >
+        <div
+          className="flex items-center"
+          style={{
+            gap: `${spacingNum}px`,
+            transform: `translateX(calc(50% - ${trackIndex * step + baseItemWidth / 2}px + ${dragOffset}px))`,
+            transition: noTransition || dragStartX !== null ? 'none' : 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)',
+          }}
+        >
+          {trackVideos.map((videoSrc, i) => {
+            const isAct = i === trackIndex;
+            const isInactive = !isAct;
+
+            let cardHeightStr = isCircle || shape === 'square' 
+              ? `${baseItemWidth}px` 
+              : shape === 'landscape' 
+                ? `${Math.round(baseItemWidth * (9 / 16))}px` 
+                : `${Math.round(baseItemWidth * (16 / 9))}px`;
+
+            let scaleVal = 1;
+            if (carousel?.highlight_enlarge_active) {
+              scaleVal = isAct ? 1.05 : 0.95;
+            } else if (!isAct) {
+              scaleVal = 0.95;
+            }
+
+            return (
+              <div
+                key={i}
+                className="shrink-0 flex flex-col items-center transition-all duration-500"
+                style={{ width: `${baseItemWidth}px`, transform: `scale(${scaleVal})`, zIndex: isAct ? 10 : 1, gap: '12px' }}
+              >
+                <div
+                  style={{
+                    width: '100%',
+                    height: cardHeightStr,
+                    borderRadius,
+                    border: isInactive ? `${borderWidth}px solid transparent` : `${borderWidth}px solid ${borderColor}`,
+                    boxShadow: isAct && carousel?.highlight_shadow ? '0 12px 28px -5px rgba(0,0,0,0.45)' : 'none',
+                    opacity: isInactive && carousel?.highlight_desaturate_inactive ? 0.7 : 1,
+                    filter: isInactive && carousel?.highlight_desaturate_inactive ? 'grayscale(80%)' : 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  className="relative overflow-hidden bg-slate-950 transition-all duration-500 box-border pointer-events-none"
+                >
+                  <video
+                    ref={el => { if (el) videoRefs.current.set(i, el); else videoRefs.current.delete(i); }}
+                    src={videoSrc}
+                    loop
+                    muted
+                    playsInline
+                    style={{ objectFit: carousel?.object_fit || 'cover' }}
+                    className="w-full h-full"
+                  />
+                  {isInactive && <div className="absolute inset-0 bg-black/60 z-10" />}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40" />
+                  
+                  {isAct && carousel?.show_play_icon !== false && (
+                    <div className="absolute inset-0 flex items-center justify-center z-20">
+                      <div className="w-10 h-10 rounded-full bg-white/95 shadow-md flex items-center justify-center">
+                        <Play size={14} className="text-slate-900 fill-slate-900 ml-1" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {carousel?.show_product && !isCircle && (
+                  <div
+                    className="w-full flex items-center gap-2 transition-all duration-300 overflow-hidden box-border pointer-events-none"
+                    style={{
+                      backgroundColor: carousel?.product_card_bg || '#FFFFFF',
+                      border: `${Number(carousel?.product_card_border_width ?? 1)}px solid ${carousel?.product_card_border_color || '#E2E8F0'}`,
+                      borderRadius: `${Number(carousel?.product_card_border_radius ?? 12)}px`,
+                      padding: '8px',
+                      filter: isInactive ? 'grayscale(80%)' : 'none'
+                    }}
+                  >
+                    <div className="w-8 h-8 rounded bg-slate-100 shrink-0 overflow-hidden border border-slate-100">
+                      <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=80&q=80" alt="Produto" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p style={{ fontSize: `${Number(carousel?.product_card_name_size ?? 9)}px`, color: carousel?.product_card_name_color || '#0F172A' }} className="font-bold truncate">Calça Confort</p>
+                      <p style={{ fontSize: `${Number(carousel?.product_card_price_size ?? 8)}px`, color: carousel?.product_card_price_color || colors?.primary || '#0094EB' }} className="font-black">R$ 149,95</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ──────────────────── PREVIEW GRADE (EXTRAÍDO DO LEGADO) ────────────────────
+const GridPreview = ({
+  grid,
+  colors,
+  isMobile = false,
+}: {
+  grid: any;
+  colors: any;
+  isMobile?: boolean;
+}) => {
+  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const [activeSeqIndex, setActiveSeqIndex] = useState(0);
+  
+  const shape = normalizeWidgetShape(grid?.shape, 'portrait');
+  const isCircle = shape === 'circle';
+  const objectFit = grid?.object_fit || 'cover';
+  const spacing = safeNumber(grid?.spacing, 12, 0);
+  const showPlayIcon = grid?.show_play_icon ?? true;
+  const showProduct = grid?.show_product ?? false;
+  const isSequential = grid?.sequential_playback ?? false;
+
+  const totalPreviewItems = isMobile ? 4 : limitNumber(grid?.visible_items, 4, 1, 10) * 2;
+
+  useEffect(() => {
+    if (!isSequential) return;
+    const interval = setInterval(() => {
+      setActiveSeqIndex(prev => (prev + 1) % totalPreviewItems);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isSequential, totalPreviewItems]);
+
+  useEffect(() => {
+    videoRefs.current.forEach((vid, idx) => {
+      if (!vid) return;
+      const shouldPlay = isSequential
+        ? idx === activeSeqIndex
+        : (grid?.autoplay_videos ?? true);
+      if (shouldPlay) {
+        vid.play().catch(() => {});
+      } else {
+        vid.pause();
+      }
+    });
+  }, [grid?.autoplay_videos, isSequential, activeSeqIndex]);
+
+  const rawBorderRadius = grid?.border_radius;
+  const borderRadiusNum = rawBorderRadius !== undefined && rawBorderRadius !== '' ? Number(rawBorderRadius) : 12;
+  const borderRadius = isCircle ? '50%' : `${borderRadiusNum}px`;
+  
+  const rawBorder = grid?.border_width ?? grid?.border_style;
+  const parsedBorderWidth = rawBorder !== undefined && rawBorder !== null && rawBorder !== '' && !isNaN(Number(rawBorder)) ? Number(rawBorder) : 0;
+  
+  const rawCardBorder = grid?.product_card_border_width;
+  const parsedCardBorderWidth = rawCardBorder !== undefined && rawCardBorder !== null && rawCardBorder !== '' && !isNaN(Number(rawCardBorder)) ? Number(rawCardBorder) : 0;
+
+  const desktopCanvasWidth = 850;
+  const desktopScale = isMobile ? 1 : Math.min(1, desktopCanvasWidth / Math.max(1, limitNumber(grid?.visible_items, 4, 1, 10) * 160));
+
+  const titleAlignClass = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right',
+  }[grid?.title_align ?? 'center'] || 'text-center';
+
+  const titleStyle: React.CSSProperties = {
+    fontSize: `${safeNumber(grid?.title_font_size, 14, 8)}px`,
+    fontWeight: (grid?.title_bold ?? true) ? 900 : 500,
+  };
+
+  const renderProductCard = (compact = false) => (
+    <div
+      style={{
+        backgroundColor: grid?.product_card_bg || '#FFFFFF',
+        borderColor: grid?.product_card_border_color || '#E2E8F0',
+        borderWidth: `${parsedCardBorderWidth}px`,
+        borderRadius: `${safeNumber(grid?.product_card_border_radius, 8, 0)}px`,
+        boxSizing: 'border-box'
+      }}
+      className={`border flex items-center gap-1 shadow-sm overflow-hidden ${compact ? 'p-1' : 'p-2'}`}
+    >
+      <div className={`rounded shrink-0 overflow-hidden ${compact ? 'w-5 h-5' : 'w-8 h-8'} bg-slate-200 border border-slate-100`}>
+        <img
+          src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=80&q=80"
+          alt="Produto"
+          className="w-full h-full object-cover"
+        />
+      </div>
+      <div className="flex-1 min-w-0 text-left">
+        <p
+          className="truncate"
+          style={{
+            fontSize: `${safeNumber(grid?.product_card_name_size, compact ? 7 : 9, 6)}px`,
+            color: grid?.product_card_name_color || '#0F172A',
+            fontWeight: 700,
+          }}
+        >
+          Calça Confort
+        </p>
+        <p
+          style={{
+            fontSize: `${safeNumber(grid?.product_card_price_size, compact ? 6.5 : 8, 6)}px`,
+            color: grid?.product_card_price_color || colors?.primary || '#0094EB',
+            fontWeight: 900,
+          }}
+        >
+          R$ 149,95
+        </p>
+      </div>
+    </div>
+  );
+
+  // MOBILE: 2 colunas
+  if (isMobile) {
+    const items = Array.from({ length: 4 });
+
+    let aspectClass = "aspect-[9/15]";
+    if (isCircle) aspectClass = "aspect-square";
+    else if (shape === 'landscape') aspectClass = "aspect-[16/9]";
+    else if (shape === 'square') aspectClass = "aspect-square";
+
+    return (
+      <div className="w-full py-2 flex flex-col space-y-3 box-border">
+        {grid?.show_title && (
+          <h4 className={`uppercase tracking-wider text-slate-800 dark:text-white ${titleAlignClass}`} style={titleStyle}>
+            {grid?.title_text || 'Grade de Vídeos'}
+          </h4>
+        )}
+
+        <div
+          style={{
+            marginLeft: `${Number(grid?.margin_left ?? 0)}px`,
+            marginRight: `${Number(grid?.margin_right ?? 0)}px`,
+            marginTop: `${Number(grid?.margin_top ?? 0)}px`,
+            marginBottom: `${Number(grid?.margin_bottom ?? 0)}px`,
+            gap: `${spacing}px`,
+          }}
+          className="grid grid-cols-2 w-full px-2"
+        >
+          {items.map((_, i) => (
+            <div key={i} className="flex flex-col" style={{ gap: '6px' }}>
+              <div
+                className={`relative bg-slate-950 overflow-hidden shadow-sm flex items-center justify-center transition-all duration-300 ${aspectClass}`}
+                style={{
+                  borderRadius: borderRadius,
+                  border: `${parsedBorderWidth}px solid ${grid?.border_color || colors?.primary || '#0094EB'}`,
+                  boxSizing: 'border-box' 
+                }}
+              >
+                <video
+                  ref={el => { if (el) videoRefs.current.set(i, el); }}
+                  src={DEMO_PREVIEW_VIDEOS[i % DEMO_PREVIEW_VIDEOS.length]}
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full pointer-events-none"
+                  style={{ objectFit: objectFit as any }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 pointer-events-none" />
+                {showPlayIcon && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-6 h-6 rounded-full bg-white/95 flex items-center justify-center shadow-sm">
+                      <Play size={8} className="text-slate-900 fill-slate-900 ml-0.5" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {showProduct && !isCircle && renderProductCard(true)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // DESKTOP: Grade completa com escala
+  const cols = limitNumber(grid?.visible_items, 4, 1, 10);
+  const totalItems = cols * 2;
+  const items = Array.from({ length: totalItems });
+  const shapeRatio = shape === 'landscape' ? (9 / 16) : (16 / 9);
+
+  return (
+    <div 
+      className="w-full py-3 space-y-3 box-border"
+      style={{
+        paddingLeft: `${Number(grid?.margin_left ?? 0)}px`,
+        paddingRight: `${Number(grid?.margin_right ?? 0)}px`,
+        paddingTop: `${Number(grid?.margin_top ?? 0)}px`,
+        paddingBottom: `${Number(grid?.margin_bottom ?? 0)}px`,
+      }}
+    >
+      {grid?.show_title && (
+        <h4 className={`tracking-wider text-slate-800 dark:text-slate-100 ${titleAlignClass}`} style={titleStyle}>
+          {grid?.title_text || 'Grade de Vídeos'}
+        </h4>
+      )}
+      <div
+        className="grid w-full"
+        style={{ 
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, 
+          gap: `${spacing * desktopScale}px`, 
+          transform: `scale(${desktopScale})`, 
+          transformOrigin: 'center center' 
+        }}
+      >
+        {items.map((_, i) => (
+          <div key={i} className="w-full flex flex-col space-y-2">
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: isCircle ? '1 / 1' : `${1} / ${shapeRatio}`,
+                borderRadius,
+                border: `${parsedBorderWidth}px solid ${grid?.border_color || colors?.primary || '#0094EB'}`,
+                boxSizing: 'border-box'
+              }}
+              className="relative overflow-hidden bg-slate-950 shadow-sm flex items-center justify-center shrink-0"
+            >
+              <video
+                ref={el => { if (el) videoRefs.current.set(i, el); }}
+                src={DEMO_PREVIEW_VIDEOS[i % DEMO_PREVIEW_VIDEOS.length]}
+                loop
+                muted
+                playsInline
+                className="w-full h-full pointer-events-none"
+                style={{ objectFit: objectFit as any }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 pointer-events-none" />
+              {showPlayIcon && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-sm">
+                    <Play size={10} className="text-slate-900 fill-slate-900 ml-0.5" />
+                  </div>
+                </div>
+              )}
+            </div>
+            {showProduct && !isCircle && renderProductCard(false)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const FormField = ({ label, children }: any) => (
   <div className="flex flex-col gap-1.5">
     {label && <label className="text-xs font-bold text-slate-700 dark:text-slate-300">{label}</label>}
@@ -575,6 +1054,75 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_name_color: getC('carousel_product_card_name_color') || '#0F172A',
     product_card_price_size: getC('carousel_product_card_price_size') ?? 12,
     product_card_price_color: getC('carousel_product_card_price_color') || formData?.primary_color || '#0094EB',
+  };
+
+  // Mapeamentos para Carrossel Dinâmico
+  const dynCarouselPreviewData = {
+    shape: normalizeWidgetShape(getC('dyn_carousel_shape') || 'portrait'),
+    object_fit: getC('dyn_carousel_object_fit') || 'cover',
+    width: getC('dyn_carousel_width') || (previewDevice === 'mobile' ? 64 : 80),
+    visible_items: getC('dyn_carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4),
+    spacing: getC('dyn_carousel_spacing') ?? 8,
+    margin_left: getC('dyn_carousel_margin_left') ?? 0,
+    margin_right: getC('dyn_carousel_margin_right') ?? 0,
+    margin_top: getC('dyn_carousel_margin_top') ?? 0,
+    margin_bottom: getC('dyn_carousel_margin_bottom') ?? 0,
+    border_color: getC('dyn_carousel_border_color') || formData?.primary_color || '#0094EB',
+    border_style: getC('dyn_carousel_border_width') ?? 2,
+    border_radius: getC('dyn_carousel_border_radius') ?? (previewDevice === 'mobile' ? 10 : 12),
+    show_title: getC('dyn_carousel_show_title') ?? false,
+    title_text: getC('dyn_carousel_title_text') || 'Destaques',
+    title_font_size: getC('dyn_carousel_title_font_size') ?? 14,
+    title_align: getC('dyn_carousel_title_align') || 'center',
+    title_bold: getC('dyn_carousel_title_bold') ?? true,
+    autoplay_videos: getC('dyn_carousel_autoplay_videos') ?? true,
+    autoplay_delay: getC('dyn_carousel_autoplay_delay') ?? 5000,
+    show_play_icon: getC('dyn_carousel_show_play_icon') !== false,
+    highlight_shadow: getC('dyn_carousel_highlight_shadow') ?? false,
+    highlight_enlarge_active: getC('dyn_carousel_highlight_enlarge_active') ?? false,
+    highlight_desaturate_inactive: getC('dyn_carousel_highlight_desaturate_inactive') ?? false,
+    show_product: getC('dyn_carousel_show_product') ?? false,
+    product_card_bg: getC('dyn_carousel_product_card_bg') || '#FFFFFF',
+    product_card_border_color: getC('dyn_carousel_product_card_border_color') || '#E2E8F0',
+    product_card_border_width: getC('dyn_carousel_product_card_border_width') ?? 1,
+    product_card_border_radius: getC('dyn_carousel_product_card_border_radius') ?? (previewDevice === 'mobile' ? 10 : 12),
+    product_card_name_size: getC('dyn_carousel_product_card_name_size') ?? 9,
+    product_card_name_color: getC('dyn_carousel_product_card_name_color') || '#0F172A',
+    product_card_price_size: getC('dyn_carousel_product_card_price_size') ?? 8,
+    product_card_price_color: getC('dyn_carousel_product_card_price_color') || formData?.primary_color || '#0094EB',
+  };
+
+  // Mapeamentos para Grade
+  const gridPreviewData = {
+    shape: normalizeWidgetShape(getC('grid_shape') || 'portrait'),
+    object_fit: getC('grid_object_fit') || 'cover',
+    width: getC('grid_width') || (previewDevice === 'mobile' ? 64 : 80),
+    visible_items: getC('grid_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4),
+    spacing: getC('grid_spacing') ?? (previewDevice === 'mobile' ? 12 : 16),
+    margin_left: getC('grid_margin_left') ?? 0,
+    margin_right: getC('grid_margin_right') ?? 0,
+    margin_top: getC('grid_margin_top') ?? 0,
+    margin_bottom: getC('grid_margin_bottom') ?? 0,
+    border_color: getC('grid_border_color') || formData?.primary_color || '#0094EB',
+    border_width: getC('grid_border_width') ?? 2,
+    border_radius: getC('grid_border_radius') ?? (previewDevice === 'mobile' ? 10 : 12),
+    show_title: getC('grid_show_title') ?? false,
+    title_text: getC('grid_title_text') || 'Grade de Vídeos',
+    title_font_size: getC('grid_title_font_size') ?? 14,
+    title_align: getC('grid_title_align') || 'center',
+    title_bold: getC('grid_title_bold') ?? true,
+    autoplay_videos: getC('grid_autoplay_videos') ?? true,
+    sequential_playback: getC('grid_sequential_playback') ?? false,
+    show_play_icon: getC('grid_show_play_icon') !== false,
+    show_product: getC('grid_show_product') ?? false,
+    product_card_bg: getC('grid_product_card_bg') || '#FFFFFF',
+    product_card_border_color: getC('grid_product_card_border_color') || '#E2E8F0',
+    product_card_border_width: getC('grid_product_card_border_width') ?? 1,
+    product_card_border_radius: getC('grid_product_card_border_radius') ?? (previewDevice === 'mobile' ? 8 : 10),
+    product_card_name_size: getC('grid_product_card_name_size') ?? 9,
+    product_card_name_color: getC('grid_product_card_name_color') || '#0F172A',
+    product_card_price_size: getC('grid_product_card_price_size') ?? 8,
+    product_card_price_color: getC('grid_product_card_price_color') || formData?.primary_color || '#0094EB',
   };
 
   const handleSave = async () => {
@@ -814,10 +1362,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                 )}
 
-                {/* ABA CARROSSEL (LEGADO COMPLETO) */}
+                {/* ABA CARROSSEL */}
                 {activeTab === 'carrossel' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    {/* 1. LAYOUT & DIMENSÕES */}
                     <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões' || openAccordion === '1. Formato & Dimensões'} onClick={() => toggleAccordion('1. Layout & Dimensões')}>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Formato">
@@ -858,7 +1405,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                       </div>
                     </Accordion>
 
-                    {/* 2. BORDAS */}
                     <Accordion title="2. Bordas" isOpen={openAccordion === '2. Bordas'} onClick={() => toggleAccordion('2. Bordas')}>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Cor da Borda">
@@ -873,7 +1419,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                       </div>
                     </Accordion>
 
-                    {/* 3. ELEMENTOS VISÍVEIS */}
                     <Accordion title="3. Elementos Visíveis" isOpen={openAccordion === '3. Elementos Visíveis'} onClick={() => toggleAccordion('3. Elementos Visíveis')}>
                       <div className="flex flex-col">
                         <CheckboxField label="Exibir título da vitrine" checked={getC('carousel_show_title') || false} onChange={(v: boolean) => setC('carousel_show_title', v)} />
@@ -904,7 +1449,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                       </div>
                     </Accordion>
 
-                    {/* 4. CARD DE PRODUTO */}
                     <Accordion title="4. Card de Produto" isOpen={openAccordion === '4. Card de Produto'} onClick={() => toggleAccordion('4. Card de Produto')}>
                       <div className="flex flex-col">
                         <CheckboxField label="Exibir card de produto abaixo de cada vídeo" checked={getC('carousel_show_product') ?? true} onChange={(v: boolean) => setC('carousel_show_product', v)} />
@@ -941,11 +1485,273 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                 )}
 
-                {['carrossel-dinamico', 'grade', 'player'].includes(activeTab) && (
+                {/* ABA CARROSSEL DINÂMICO (LEGADO COMPLETO) */}
+                {activeTab === 'carrossel-dinamico' && (
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Layout & Dimensões')}>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField label="Formato">
+                          <select value={getC('dyn_carousel_shape') || 'portrait'} onChange={e => setC('dyn_carousel_shape', e.target.value)} className={selectClass}>
+                            <option value="portrait">Retrato 9:16</option>
+                            <option value="square">Quadrado 1:1</option>
+                            <option value="landscape">Paisagem 16:9</option>
+                            <option value="circle">Circular</option>
+                          </select>
+                        </FormField>
+                        <FormField label="Ajuste Imagem">
+                          <select value={getC('dyn_carousel_object_fit') || 'cover'} onChange={e => setC('dyn_carousel_object_fit', e.target.value)} className={selectClass}>
+                            <option value="cover">Cover (Preencher)</option>
+                            <option value="contain">Contain (Ajustar)</option>
+                            <option value="fill">Fill (Esticar)</option>
+                          </select>
+                        </FormField>
+                        <FormField label="Largura (px)">
+                          <input type="number" min="20" value={getC('dyn_carousel_width') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('dyn_carousel_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Espaçamento (px)">
+                          <input type="number" min="0" value={getC('dyn_carousel_spacing') ?? 8} onChange={e => setC('dyn_carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Esquerda (px)">
+                          <input type="number" min="0" value={getC('dyn_carousel_margin_left') || 0} onChange={e => setC('dyn_carousel_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Direita (px)">
+                          <input type="number" min="0" value={getC('dyn_carousel_margin_right') || 0} onChange={e => setC('dyn_carousel_margin_right', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Superior (px)">
+                          <input type="number" min="0" value={getC('dyn_carousel_margin_top') || 0} onChange={e => setC('dyn_carousel_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Inferior (px)">
+                          <input type="number" min="0" value={getC('dyn_carousel_margin_bottom') || 0} onChange={e => setC('dyn_carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                      </div>
+                    </Accordion>
+
+                    <Accordion title="2. Bordas" isOpen={openAccordion === '2. Bordas'} onClick={() => toggleAccordion('2. Bordas')}>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField label="Cor da Borda">
+                          <ColorInput value={getC('dyn_carousel_border_color') || '#0094EB'} onChange={(v: string) => setC('dyn_carousel_border_color', v)} />
+                        </FormField>
+                        <FormField label="Largura Borda (px)">
+                          <input type="number" min="0" max="10" value={getC('dyn_carousel_border_width') ?? 2} onChange={e => setC('dyn_carousel_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Raio da Borda (px)">
+                          <input type="number" min="0" max="100" value={getC('dyn_carousel_border_radius') ?? (previewDevice === 'mobile' ? 10 : 12)} onChange={e => setC('dyn_carousel_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                      </div>
+                    </Accordion>
+
+                    <Accordion title="3. Elementos Visíveis" isOpen={openAccordion === '3. Elementos Visíveis'} onClick={() => toggleAccordion('3. Elementos Visíveis')}>
+                      <div className="flex flex-col">
+                        <CheckboxField label="Exibir título da vitrine" checked={getC('dyn_carousel_show_title') || false} onChange={(v: boolean) => setC('dyn_carousel_show_title', v)} />
+                        {getC('dyn_carousel_show_title') && (
+                          <div className="p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 space-y-3">
+                            <FormField label="Texto do título">
+                              <input type="text" value={getC('dyn_carousel_title_text') || 'Destaques'} onChange={e => setC('dyn_carousel_title_text', e.target.value)} className={inputClass} />
+                            </FormField>
+                            <div className="grid grid-cols-2 gap-3">
+                              <FormField label="Tamanho da fonte">
+                                <input type="number" min="8" max="48" value={getC('dyn_carousel_title_font_size') || 14} onChange={e => setC('dyn_carousel_title_font_size', parseInt(e.target.value) || 14)} className={inputClass} />
+                              </FormField>
+                              <FormField label="Alinhamento">
+                                <select value={getC('dyn_carousel_title_align') || 'center'} onChange={e => setC('dyn_carousel_title_align', e.target.value)} className={selectClass}>
+                                  <option value="left">Esquerda</option>
+                                  <option value="center">Centro</option>
+                                  <option value="right">Direita</option>
+                                </select>
+                              </FormField>
+                            </div>
+                            <div className="pt-1">
+                              <CheckboxField label="Título em negrito" checked={getC('dyn_carousel_title_bold') ?? true} onChange={(v: boolean) => setC('dyn_carousel_title_bold', v)} />
+                            </div>
+                          </div>
+                        )}
+                        <CheckboxField label="Reproduzir vídeos inativos" checked={getC('dyn_carousel_autoplay_videos') !== false} onChange={(v: boolean) => setC('dyn_carousel_autoplay_videos', v)} />
+                        <CheckboxField label="Exibir ícone de Play" checked={getC('dyn_carousel_show_play_icon') !== false} onChange={(v: boolean) => setC('dyn_carousel_show_play_icon', v)} />
+                      </div>
+                    </Accordion>
+
+                    <Accordion title="4. Destaque de Vídeo" isOpen={openAccordion === '4. Destaque de Vídeo'} onClick={() => toggleAccordion('4. Destaque de Vídeo')}>
+                      <div className="flex flex-col gap-3">
+                        <FormField label="Intervalo automático (seg)">
+                          <input type="number" min="1" step="1" value={getC('dyn_carousel_autoplay_delay') ? getC('dyn_carousel_autoplay_delay') / 1000 : 5} onChange={e => setC('dyn_carousel_autoplay_delay', (parseInt(e.target.value) || 5) * 1000)} className={inputClass} />
+                        </FormField>
+                        <CheckboxField label="Aplicar sombra no vídeo em destaque" checked={getC('dyn_carousel_highlight_shadow') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_shadow', v)} />
+                        <CheckboxField label="Ampliar vídeo em destaque" checked={getC('dyn_carousel_highlight_enlarge_active') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_enlarge_active', v)} />
+                        <CheckboxField label="Dessaturar vídeos inativos (50%)" checked={getC('dyn_carousel_highlight_desaturate_inactive') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_desaturate_inactive', v)} />
+                      </div>
+                    </Accordion>
+
+                    <Accordion title="5. Card de Produto" isOpen={openAccordion === '5. Card de Produto'} onClick={() => toggleAccordion('5. Card de Produto')}>
+                      <div className="flex flex-col">
+                        <CheckboxField label="Exibir card de produto abaixo de cada vídeo" checked={getC('dyn_carousel_show_product') || false} onChange={(v: boolean) => setC('dyn_carousel_show_product', v)} />
+                        {getC('dyn_carousel_show_product') && (
+                          <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 grid grid-cols-2 gap-3">
+                            <FormField label="Cor do Fundo">
+                              <ColorInput value={getC('dyn_carousel_product_card_bg') || '#FFFFFF'} onChange={(v: string) => setC('dyn_carousel_product_card_bg', v)} />
+                            </FormField>
+                            <FormField label="Cor da Borda">
+                              <ColorInput value={getC('dyn_carousel_product_card_border_color') || '#E2E8F0'} onChange={(v: string) => setC('dyn_carousel_product_card_border_color', v)} />
+                            </FormField>
+                            <FormField label="Largura Borda (px)">
+                              <input type="number" min="0" value={getC('dyn_carousel_product_card_border_width') ?? 1} onChange={e => setC('dyn_carousel_product_card_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Raio Borda (px)">
+                              <input type="number" min="0" value={getC('dyn_carousel_product_card_border_radius') ?? (previewDevice === 'mobile' ? 10 : 12)} onChange={e => setC('dyn_carousel_product_card_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Tamanho Título (px)">
+                              <input type="number" min="8" value={getC('dyn_carousel_product_card_name_size') ?? 9} onChange={e => setC('dyn_carousel_product_card_name_size', parseInt(e.target.value) || 9)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Cor Título">
+                              <ColorInput value={getC('dyn_carousel_product_card_name_color') || '#0F172A'} onChange={(v: string) => setC('dyn_carousel_product_card_name_color', v)} />
+                            </FormField>
+                            <FormField label="Tamanho Preço (px)">
+                              <input type="number" min="8" value={getC('dyn_carousel_product_card_price_size') ?? 8} onChange={e => setC('dyn_carousel_product_card_price_size', parseInt(e.target.value) || 8)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Cor Preço">
+                              <ColorInput value={getC('dyn_carousel_product_card_price_color') || '#0094EB'} onChange={(v: string) => setC('dyn_carousel_product_card_price_color', v)} />
+                            </FormField>
+                          </div>
+                        )}
+                      </div>
+                    </Accordion>
+                  </div>
+                )}
+
+                {/* ABA GRADE (LEGADO COMPLETO) */}
+                {activeTab === 'grade' && (
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Layout & Dimensões')}>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField label="Formato">
+                          <select value={getC('grid_shape') || 'portrait'} onChange={e => setC('grid_shape', e.target.value)} className={selectClass}>
+                            <option value="portrait">Retrato 9:16</option>
+                            <option value="square">Quadrado 1:1</option>
+                            <option value="landscape">Paisagem 16:9</option>
+                            <option value="circle">Circular</option>
+                          </select>
+                        </FormField>
+                        <FormField label="Ajuste Imagem">
+                          <select value={getC('grid_object_fit') || 'cover'} onChange={e => setC('grid_object_fit', e.target.value)} className={selectClass}>
+                            <option value="cover">Cover (Preencher)</option>
+                            <option value="contain">Contain (Ajustar)</option>
+                            <option value="fill">Fill (Esticar)</option>
+                          </select>
+                        </FormField>
+                        <FormField label="Largura (px)">
+                          <input type="number" min="20" value={getC('grid_width') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('grid_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Colunas">
+                          <input type="number" min="1" max="10" value={getC('grid_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4)} onChange={e => setC('grid_visible_items', parseInt(e.target.value) || 1)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Espaçamento (px)" className="col-span-2">
+                          <input type="number" min="0" value={getC('grid_spacing') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('grid_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Esquerda (px)">
+                          <input type="number" min="0" value={getC('grid_margin_left') || 0} onChange={e => setC('grid_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Direita (px)">
+                          <input type="number" min="0" value={getC('grid_margin_right') || 0} onChange={e => setC('grid_margin_right', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Superior (px)">
+                          <input type="number" min="0" value={getC('grid_margin_top') || 0} onChange={e => setC('grid_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Inferior (px)">
+                          <input type="number" min="0" value={getC('grid_margin_bottom') || 0} onChange={e => setC('grid_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                      </div>
+                      <div className="mt-3 p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                        <p className="text-xs text-blue-600 dark:text-blue-400 font-medium leading-snug">
+                          💡 No mobile, a grade é otimizada para exibir no máximo 2 colunas.
+                        </p>
+                      </div>
+                    </Accordion>
+
+                    <Accordion title="2. Bordas" isOpen={openAccordion === '2. Bordas'} onClick={() => toggleAccordion('2. Bordas')}>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField label="Cor da Borda">
+                          <ColorInput value={getC('grid_border_color') || '#0094EB'} onChange={(v: string) => setC('grid_border_color', v)} />
+                        </FormField>
+                        <FormField label="Largura Borda (px)">
+                          <input type="number" min="0" max="10" value={getC('grid_border_width') ?? 2} onChange={e => setC('grid_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Raio da Borda (px)">
+                          <input type="number" min="0" max="100" value={getC('grid_border_radius') ?? (previewDevice === 'mobile' ? 10 : 12)} onChange={e => setC('grid_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                      </div>
+                    </Accordion>
+
+                    <Accordion title="3. Elementos Visíveis" isOpen={openAccordion === '3. Elementos Visíveis'} onClick={() => toggleAccordion('3. Elementos Visíveis')}>
+                      <div className="flex flex-col">
+                        <CheckboxField label="Exibir título da vitrine" checked={getC('grid_show_title') || false} onChange={(v: boolean) => setC('grid_show_title', v)} />
+                        {getC('grid_show_title') && (
+                          <div className="p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 space-y-3">
+                            <FormField label="Texto do título">
+                              <input type="text" value={getC('grid_title_text') || 'Grade de Vídeos'} onChange={e => setC('grid_title_text', e.target.value)} className={inputClass} />
+                            </FormField>
+                            <div className="grid grid-cols-2 gap-3">
+                              <FormField label="Tamanho da fonte">
+                                <input type="number" min="8" max="48" value={getC('grid_title_font_size') || 14} onChange={e => setC('grid_title_font_size', parseInt(e.target.value) || 14)} className={inputClass} />
+                              </FormField>
+                              <FormField label="Alinhamento">
+                                <select value={getC('grid_title_align') || 'center'} onChange={e => setC('grid_title_align', e.target.value)} className={selectClass}>
+                                  <option value="left">Esquerda</option>
+                                  <option value="center">Centro</option>
+                                  <option value="right">Direita</option>
+                                </select>
+                              </FormField>
+                            </div>
+                            <div className="pt-1">
+                              <CheckboxField label="Título em negrito" checked={getC('grid_title_bold') ?? true} onChange={(v: boolean) => setC('grid_title_bold', v)} />
+                            </div>
+                          </div>
+                        )}
+                        <CheckboxField label="Reproduzir vídeos automaticamente" checked={getC('grid_autoplay_videos') !== false} onChange={(v: boolean) => setC('grid_autoplay_videos', v)} />
+                        <CheckboxField label="Reprodução sequencial (1 vídeo por vez, 5s cada)" checked={getC('grid_sequential_playback') || false} onChange={(v: boolean) => setC('grid_sequential_playback', v)} />
+                        <CheckboxField label="Exibir ícone de Play" checked={getC('grid_show_play_icon') !== false} onChange={(v: boolean) => setC('grid_show_play_icon', v)} />
+                      </div>
+                    </Accordion>
+
+                    <Accordion title="4. Card de Produto" isOpen={openAccordion === '4. Card de Produto'} onClick={() => toggleAccordion('4. Card de Produto')}>
+                      <div className="flex flex-col">
+                        <CheckboxField label="Exibir card de produto abaixo de cada vídeo" checked={getC('grid_show_product') || false} onChange={(v: boolean) => setC('grid_show_product', v)} />
+                        {getC('grid_show_product') && (
+                          <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 grid grid-cols-2 gap-3">
+                            <FormField label="Cor do Fundo">
+                              <ColorInput value={getC('grid_product_card_bg') || '#FFFFFF'} onChange={(v: string) => setC('grid_product_card_bg', v)} />
+                            </FormField>
+                            <FormField label="Cor da Borda">
+                              <ColorInput value={getC('grid_product_card_border_color') || '#E2E8F0'} onChange={(v: string) => setC('grid_product_card_border_color', v)} />
+                            </FormField>
+                            <FormField label="Largura Borda (px)">
+                              <input type="number" min="0" value={getC('grid_product_card_border_width') ?? 1} onChange={e => setC('grid_product_card_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Raio Borda (px)">
+                              <input type="number" min="0" value={getC('grid_product_card_border_radius') ?? (previewDevice === 'mobile' ? 8 : 10)} onChange={e => setC('grid_product_card_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Tamanho Título (px)">
+                              <input type="number" min="8" value={getC('grid_product_card_name_size') ?? 9} onChange={e => setC('grid_product_card_name_size', parseInt(e.target.value) || 9)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Cor Título">
+                              <ColorInput value={getC('grid_product_card_name_color') || '#0F172A'} onChange={(v: string) => setC('grid_product_card_name_color', v)} />
+                            </FormField>
+                            <FormField label="Tamanho Preço (px)">
+                              <input type="number" min="8" value={getC('grid_product_card_price_size') ?? 8} onChange={e => setC('grid_product_card_price_size', parseInt(e.target.value) || 8)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Cor Preço">
+                              <ColorInput value={getC('grid_product_card_price_color') || '#0094EB'} onChange={(v: string) => setC('grid_product_card_price_color', v)} />
+                            </FormField>
+                          </div>
+                        )}
+                      </div>
+                    </Accordion>
+                  </div>
+                )}
+
+                {activeTab === 'player' && (
                    <div className="p-8 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/30 flex flex-col items-center justify-center text-center mt-4">
                       <Settings2 size={40} strokeWidth={1.5} className="text-slate-400 mb-4" />
                       <p className="font-extrabold text-lg text-slate-700 dark:text-slate-300 mb-1">Controles em Desenvolvimento</p>
-                      <p className="text-sm text-slate-500 max-w-xs">As opções de 1 a 4 para {activeTab.replace('-', ' ')} serão adicionadas nesta coluna.</p>
+                      <p className="text-sm text-slate-500 max-w-xs">As opções de 1 a 4 para player serão adicionadas nesta coluna.</p>
                    </div>
                 )}
               </>
@@ -996,11 +1802,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
                      </div>
                      <div className="flex-1 relative bg-slate-50 dark:bg-slate-900 flex items-center justify-center overflow-hidden p-6">
-                        {activeTab === 'flutuante' ? (
+                        {activeTab === 'flutuante' && (
                           <div className="relative w-full h-full">
                             <FloatingPreview floating={floatingPreviewData} colors={{ primary: formData?.primary_color || '#0094EB' }} device="desktop" />
                           </div>
-                        ) : activeTab === 'carrossel' ? (
+                        )}
+
+                        {activeTab === 'carrossel' && (
                           <div className="w-full h-full flex items-center justify-center">
                             <ScaleToFit>
                               <div className="w-[850px] max-w-full flex justify-center">
@@ -1012,19 +1820,52 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                               </div>
                             </ScaleToFit>
                           </div>
-                        ) : (
-                          <span className="z-10 text-slate-400 font-bold uppercase tracking-widest text-center px-4">Preview do {activeTab.replace('-', ' ')} (Desktop)</span>
+                        )}
+
+                        {activeTab === 'carrossel-dinamico' && (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ScaleToFit>
+                              <div className="w-[850px] max-w-full flex justify-center">
+                                <DynamicCarouselPreview 
+                                  carousel={dynCarouselPreviewData} 
+                                  colors={{ primary: formData?.primary_color || '#0094EB' }} 
+                                  isMobile={false} 
+                                />
+                              </div>
+                            </ScaleToFit>
+                          </div>
+                        )}
+
+                        {activeTab === 'grade' && (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ScaleToFit>
+                              <div className="w-[850px] max-w-full flex justify-center">
+                                <GridPreview 
+                                  grid={gridPreviewData} 
+                                  colors={{ primary: formData?.primary_color || '#0094EB' }} 
+                                  isMobile={false} 
+                                />
+                              </div>
+                            </ScaleToFit>
+                          </div>
+                        )}
+
+                        {activeTab === 'player' && (
+                          <span className="z-10 text-slate-400 font-bold uppercase tracking-widest text-center px-4">Preview do Player (Desktop)</span>
                         )}
                      </div>
                   </div>
                 ) : (
                   <div className="h-full max-h-[800px] aspect-[9/19] rounded-[2.5rem] border-[10px] border-[#1a1f36] bg-slate-50 dark:bg-slate-900 shadow-2xl relative flex items-center justify-center overflow-hidden shrink-0">
                     <div className="absolute top-0 inset-x-0 h-5 bg-[#1a1f36] w-[40%] mx-auto rounded-b-xl z-20"></div>
-                    {activeTab === 'flutuante' ? (
+                    
+                    {activeTab === 'flutuante' && (
                       <div className="relative w-full h-full p-2">
                         <FloatingPreview floating={floatingPreviewData} colors={{ primary: formData?.primary_color || '#0094EB' }} device="mobile" />
                       </div>
-                    ) : activeTab === 'carrossel' ? (
+                    )}
+
+                    {activeTab === 'carrossel' && (
                       <div className="flex-1 w-full h-full overflow-hidden flex flex-col justify-center px-0 py-3">
                         <CarouselPreview 
                           carousel={carouselPreviewData} 
@@ -1032,8 +1873,30 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           isMobile={true} 
                         />
                       </div>
-                    ) : (
-                      <span className="z-10 text-slate-400 text-sm font-bold uppercase tracking-widest text-center px-4">Preview do {activeTab.replace('-', ' ')} (Mobile)</span>
+                    )}
+
+                    {activeTab === 'carrossel-dinamico' && (
+                      <div className="flex-1 w-full h-full overflow-hidden flex flex-col justify-center px-0 py-3">
+                        <DynamicCarouselPreview 
+                          carousel={dynCarouselPreviewData} 
+                          colors={{ primary: formData?.primary_color || '#0094EB' }} 
+                          isMobile={true} 
+                        />
+                      </div>
+                    )}
+
+                    {activeTab === 'grade' && (
+                      <div className="flex-1 w-full h-full overflow-y-auto flex flex-col justify-start px-2 py-4 custom-scrollbar">
+                        <GridPreview 
+                          grid={gridPreviewData} 
+                          colors={{ primary: formData?.primary_color || '#0094EB' }} 
+                          isMobile={true} 
+                        />
+                      </div>
+                    )}
+
+                    {activeTab === 'player' && (
+                      <span className="z-10 text-slate-400 text-sm font-bold uppercase tracking-widest text-center px-4">Preview do Player (Mobile)</span>
                     )}
                   </div>
                 )}
