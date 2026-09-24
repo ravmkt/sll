@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import { useStore } from '../../../contexts/StoreContext';
+import React, { useState, useEffect } from 'react';
 import { 
   X, Monitor, Smartphone, Link, Link2Off, 
   Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
@@ -11,6 +12,16 @@ interface AparenciaModalProps {
   styleData?: any;
 }
 
+// Fallback UI para evitar o erro "SectionCard is not defined"
+const SectionCard = ({ title, children, description }: any) => (
+  <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6">
+    <div className="mb-4">
+      {title && <h3 className="text-lg font-medium text-gray-900">{title}</h3>}
+      {description && <p className="text-sm text-gray-500 mt-1">{description}</p>}
+    </div>
+    {children}
+  </div>
+);
 const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleData }) => {
     const [carouselDevice, setCarouselDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [floatingDevice, setFloatingDevice] = useState<'desktop' | 'mobile'>('desktop');
@@ -32,11 +43,12 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
   });
 
   // TODO: Pegar o storeId real do contexto de Autenticação do SLL Hub
-  const storeId = "USER_STORE_ID_AQUI"; 
+    const { currentStore } = useStore();
+  const storeId = currentStore?.id; 
 
   // Carrega do Banco ao abrir o modal
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !storeId) return;
     
     const loadData = async () => {
       setIsLoading(true);
