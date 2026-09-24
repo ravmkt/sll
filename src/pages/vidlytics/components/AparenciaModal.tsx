@@ -14,6 +14,9 @@ interface AparenciaModalProps {
 
 // Fallback UI para evitar o erro "SectionCard is not defined"
 // Fallback UI para evitar o erro "FormField is not defined"
+// Fallback de classes CSS do Tailwind herdadas do legado
+const selectClass = "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#0094eb] focus:border-[#0094eb] sm:text-sm rounded-md";
+const inputClass = "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#0094eb] focus:border-[#0094eb] sm:text-sm";
 const FormField = ({ label, children, helperText }: any) => (
   <div className="mb-4">
     {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
