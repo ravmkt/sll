@@ -32,18 +32,20 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Busca as lojas do usuário
+      // 1. Busca todas as lojas vinculadas ao usuário
       const userStores = await SLLDatabaseService.getStores(user.id);
       setStores(userStores || []);
 
       if (userStores && userStores.length > 0) {
-        const activeStore = userStores[0];
+        // Prioriza a loja que já estava salva no localStorage, se existir
+        const savedId = localStorage.getItem('sll_store_id') || localStorage.getItem('store_id');
+        const activeStore = userStores.find((s: any) => s.id === savedId) || userStores[0];
+
         setStore(activeStore);
         setNeedsOnboarding(false);
         localStorage.setItem('sll_store_id', activeStore.id);
         localStorage.setItem('store_id', activeStore.id);
       } else {
-        // Nenhuma loja cadastrada -> obriga o Onboarding
         setStore(null);
         setNeedsOnboarding(true);
         localStorage.removeItem('sll_store_id');
@@ -51,7 +53,6 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.error('Falha ao obter lojas no LojaContext:', err);
-      setNeedsOnboarding(true);
     } finally {
       setLoading(false);
     }
@@ -60,25 +61,35 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     fetchStore();
 
+    // Ouve alterações de autenticação
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         fetchStore();
       }
     });
 
+    // Ouve evento disparado após criar loja no Onboarding
+    const handleStoreCreated = () => {
+      fetchStore();
+    };
+    window.addEventListener('sll:store_created', handleStoreCreated);
+
     return () => {
       authListener?.subscription.unsubscribe();
+      window.removeEventListener('sll:store_created', handleStoreCreated);
     };
   }, []);
 
   const setStoreManually = (newStore: any) => {
     setStore(newStore);
-    setStores((prev) => [newStore, ...prev]);
+    setStores((prev) => [newStore, ...prev.filter((s: any) => s.id !== newStore.id)]);
     setNeedsOnboarding(false);
     if (newStore?.id) {
       localStorage.setItem('sll_store_id', newStore.id);
       localStorage.setItem('store_id', newStore.id);
     }
+    // Dispara evento para toda a interface atualizar a barra de loja ativa
+    window.dispatchEvent(new CustomEvent('sll:store_created', { detail: newStore }));
   };
 
   return (
