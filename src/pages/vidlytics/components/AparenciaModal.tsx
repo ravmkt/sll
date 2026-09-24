@@ -24,6 +24,24 @@ const FormField = ({ label, children, helperText }: any) => (
     {helperText && <p className="mt-1 text-sm text-gray-500">{helperText}</p>}
   </div>
 );
+// Fallback UI para evitar o erro "ColorInput is not defined"
+const ColorInput = ({ value, onChange }: any) => (
+  <div className="flex items-center gap-2">
+    <input 
+      type="color" 
+      value={value || '#0094eb'} 
+      onChange={(e) => onChange(e.target.value)}
+      className="h-10 w-10 cursor-pointer rounded border border-gray-300 p-1"
+    />
+    <input 
+      type="text" 
+      value={value || ''} 
+      onChange={(e) => onChange(e.target.value)}
+      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#0094eb] focus:border-[#0094eb] sm:text-sm"
+      placeholder="#000000"
+    />
+  </div>
+);
 const SectionCard = ({ title, children, description }: any) => (
   <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6">
     <div className="mb-4">
