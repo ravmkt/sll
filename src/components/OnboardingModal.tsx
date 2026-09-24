@@ -183,7 +183,7 @@ export const OnboardingModal: React.FC = () => {
                 </span>
               </div>
             </div>
-          )}s
+          )}
 
           {/* PASSO 2: FORMULÁRIO DE DADOS */}
           {step === 2 && (
