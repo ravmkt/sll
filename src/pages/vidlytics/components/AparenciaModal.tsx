@@ -190,7 +190,7 @@ const FloatingPreview = ({
 
   return (
     <div
-      style={positionStyle}
+      style={{ ...positionStyle, borderRadius }}
       className={`absolute shadow-xl transition-all duration-300 flex items-center justify-center cursor-pointer z-10 ${
         isCircle ? "aspect-square" : ""
       } overflow-visible`}
