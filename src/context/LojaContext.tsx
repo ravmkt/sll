@@ -32,6 +32,7 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+      // Busca as lojas do usuário
       const userStores = await SLLDatabaseService.getStores(user.id);
       setStores(userStores || []);
 
@@ -42,6 +43,7 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('sll_store_id', activeStore.id);
         localStorage.setItem('store_id', activeStore.id);
       } else {
+        // Nenhuma loja cadastrada -> obriga o Onboarding
         setStore(null);
         setNeedsOnboarding(true);
         localStorage.removeItem('sll_store_id');
@@ -49,7 +51,6 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.error('Falha ao obter lojas no LojaContext:', err);
-      // Se deu erro ao buscar loja, verifica se não há nenhuma e dispara o onboarding
       setNeedsOnboarding(true);
     } finally {
       setLoading(false);
