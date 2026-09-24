@@ -28,9 +28,9 @@ const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:borde
 const inputClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
 
 const DEMO_PREVIEW_VIDEOS = [
-  '/demo-videos/demo1.mp4',
-  '/demo-videos/demo2.mp4',
-  '/demo-videos/demo3.mp4',
+  '/assets/demo-videos/demo1.mp4',
+  '/assets/demo-videos/demo2.mp4',
+  '/assets/demo-videos/demo3.mp4',
 ];
 
 type WidgetShape = 'circle' | 'square' | 'portrait' | 'landscape';
