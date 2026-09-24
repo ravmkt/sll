@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   X, Monitor, Smartphone, Link, Link2Off,
   Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
-  Save, CornerUpLeft, Star, ChevronDown, Play
+  Save, CornerUpLeft, Star, ChevronDown, Play,
+  Heart, MessageCircle, Share2, ChevronRight
 } from 'lucide-react';
 
 interface AparenciaModalProps {
@@ -448,7 +449,7 @@ const CarouselPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW CARROSSEL DINÂMICO (EXTRAÍDO DO LEGADO) ────────────────────
+// ──────────────────── PREVIEW CARROSSEL DINÂMICO ────────────────────
 const DynamicCarouselPreview = ({
   carousel,
   colors,
@@ -673,7 +674,7 @@ const DynamicCarouselPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW GRADE (EXTRAÍDO DO LEGADO) ────────────────────
+// ──────────────────── PREVIEW GRADE ────────────────────
 const GridPreview = ({
   grid,
   colors,
@@ -784,7 +785,6 @@ const GridPreview = ({
     </div>
   );
 
-  // MOBILE: 2 colunas
   if (isMobile) {
     const items = Array.from({ length: 4 });
 
@@ -848,7 +848,6 @@ const GridPreview = ({
     );
   }
 
-  // DESKTOP: Grade completa com escala
   const cols = limitNumber(grid?.visible_items, 4, 1, 10);
   const totalItems = cols * 2;
   const items = Array.from({ length: totalItems });
@@ -911,6 +910,289 @@ const GridPreview = ({
             {showProduct && !isCircle && renderProductCard(false)}
           </div>
         ))}
+      </div>
+    </div>
+  );
+};
+
+// ──────────────────── PREVIEW PLAYER (MODAL - EXTRAÍDO DO LEGADO) ────────────────────
+const ModalPlayerPreview = ({
+  playerConfig,
+  primaryColor,
+  isMobile = false,
+}: {
+  playerConfig: any;
+  primaryColor: string;
+  isMobile?: boolean;
+}) => {
+  const parsedBorderWidth = playerConfig.border_width !== undefined && playerConfig.border_width !== null && playerConfig.border_width !== '' 
+    ? Number(playerConfig.border_width) 
+    : 0;
+
+  const rawCardBorder = playerConfig.product_card_border_width;
+  const parsedCardBorderWidth = rawCardBorder !== undefined && rawCardBorder !== null && rawCardBorder !== '' && !isNaN(Number(rawCardBorder)) ? Number(rawCardBorder) : 0;
+  
+  const getCardStyle = () => ({
+    backgroundColor: playerConfig.product_card_bg || 'rgba(255,255,255,0.95)',
+    borderColor: playerConfig.product_card_border_color || 'rgba(255,255,255,0.2)',
+    borderWidth: `${parsedCardBorderWidth}px`,
+    borderStyle: parsedCardBorderWidth > 0 ? 'solid' : 'none',
+    borderRadius: playerConfig.product_card_border_radius !== undefined ? `${playerConfig.product_card_border_radius}px` : '1rem',
+  });
+
+  const getFontSize = (sizeVal: any, defaultSize: number, mobileScale = 1) => {
+    const size = sizeVal !== undefined && sizeVal !== null && sizeVal !== '' ? Number(sizeVal) : defaultSize;
+    return `${size * mobileScale}px`;
+  };
+
+  const showLike = playerConfig.show_like_button !== false;
+  const showComments = playerConfig.show_comment_button !== false;
+  const showShare = playerConfig.show_share_button !== false;
+  const showProduct = playerConfig.show_product !== false;
+
+  if (isMobile) {
+    return (
+      <div className="relative w-full h-full overflow-hidden bg-slate-950/90 flex items-center justify-center p-4">
+        <div 
+          className="relative w-full h-[85%] max-h-[700px] overflow-hidden flex flex-col justify-between shadow-2xl bg-black"
+          style={{
+            color: '#FFFFFF',
+            borderColor: playerConfig.border_color || primaryColor,
+            borderWidth: `${parsedBorderWidth}px`,
+            borderStyle: parsedBorderWidth > 0 ? 'solid' : 'none',
+            borderRadius: playerConfig.border_radius ? `${playerConfig.border_radius}px` : '1rem',
+          }}
+        >
+          <video
+            src={DEMO_PREVIEW_VIDEOS[0]}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 h-full w-full object-cover pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 pointer-events-none z-10" />
+
+          {/* Header do Player */}
+          <div className="relative z-20 flex items-center justify-between p-3 pt-3">
+            {playerConfig.show_title && (
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full border border-white/25 bg-white/10 backdrop-blur-sm" />
+                <div>
+                  <h4 className="text-xs font-bold text-white drop-shadow leading-tight">Calça Confort</h4>
+                  <p className="text-[9px] text-white/70">Vidlytics Store</p>
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md border border-white/10 transition-colors hover:bg-black/60"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          {/* Botões de engajamento Lateral */}
+          <div className="absolute right-3 bottom-[110px] z-20 flex flex-col items-center gap-3.5">
+            {showLike && (
+              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+                <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <Heart size={16} className="text-white fill-white" />
+                </div>
+                <span className="text-[8px] font-semibold mt-0.5 drop-shadow">1.2k</span>
+              </button>
+            )}
+            {showComments && (
+              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+                <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <MessageCircle size={16} className="text-white" />
+                </div>
+                <span className="text-[8px] font-semibold mt-0.5 drop-shadow">48</span>
+              </button>
+            )}
+            {showShare && (
+              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+                <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <Share2 size={16} className="text-white" />
+                </div>
+                <span className="text-[8px] font-semibold mt-0.5 drop-shadow">Enviar</span>
+              </button>
+            )}
+          </div>
+
+          {/* Rodapé com Card e Linha de Progresso */}
+          <div className="relative z-20 w-full p-3 space-y-2.5">
+            {showProduct && (
+              <div 
+                className="backdrop-blur-md p-2.5 flex items-center gap-2.5 shadow-2xl transition hover:scale-[1.01]"
+                style={getCardStyle()}
+              >
+                <div className="h-11 w-11 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100">
+                  <img
+                    src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=150&q=80"
+                    alt="Product"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h5 
+                    className="font-bold truncate" 
+                    style={{ 
+                      color: playerConfig.product_card_name_color || '#0F172A',
+                      fontSize: getFontSize(playerConfig.product_card_name_size, 11)
+                    }}
+                  >
+                    Calça Confort Premium
+                  </h5>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span 
+                      className="font-black" 
+                      style={{ 
+                        color: playerConfig.product_card_price_color || primaryColor,
+                        fontSize: getFontSize(playerConfig.product_card_price_size, 11)
+                      }}
+                    >
+                      R$ 149,95
+                    </span>
+                    <span className="text-[9px] text-slate-400 line-through">R$ 199,90</span>
+                  </div>
+                </div>
+                <ChevronRight
+                  size={20}
+                  className="shrink-0"
+                  style={{ color: playerConfig.product_card_price_color || primaryColor }}
+                />
+              </div>
+            )}
+
+            <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+              <div className="h-full rounded-full w-2/3" style={{ backgroundColor: primaryColor }} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // DESKTOP: Player pop-up simulado
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-[#0f111a] border border-slate-800/80 rounded-2xl flex items-center justify-center p-4">
+      <div
+        className="relative h-full max-h-[410px] w-full max-w-[230px] overflow-hidden shadow-2xl shrink-0 bg-slate-900 flex flex-col justify-between"
+        style={{
+          color: '#FFFFFF',
+          borderColor: playerConfig.border_color || primaryColor,
+          borderWidth: `${parsedBorderWidth}px`,
+          borderStyle: parsedBorderWidth > 0 ? 'solid' : 'none',
+          borderRadius: playerConfig.border_radius ? `${playerConfig.border_radius}px` : '1.25rem',
+        }}
+      >
+        <video
+          src={DEMO_PREVIEW_VIDEOS[0]}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 h-full w-full object-cover pointer-events-none"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 pointer-events-none z-10" />
+
+        {/* Header */}
+        <div className="relative z-20 flex items-center justify-between p-3">
+          {playerConfig.show_title && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded-full border border-white/25 bg-white/10 backdrop-blur-sm" />
+              <div className="min-w-0">
+                <h4 className="text-[10px] font-bold text-white drop-shadow truncate w-24 leading-tight">Calça Confort</h4>
+                <p className="text-[8px] text-white/70 truncate w-24">Vidlytics Store</p>
+              </div>
+            </div>
+          )}
+          <button
+            type="button"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-black/60"
+          >
+            <X size={12} />
+          </button>
+        </div>
+
+        {/* Botões Desktop */}
+        <div className="absolute right-2.5 bottom-[88px] z-20 flex flex-col items-center gap-2.5">
+          {showLike && (
+            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+              <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                <Heart size={13} className="text-white fill-white" />
+              </div>
+              <span className="text-[7px] font-semibold mt-0.5 drop-shadow">1.2k</span>
+            </button>
+          )}
+          {showComments && (
+            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+              <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                <MessageCircle size={13} className="text-white" />
+              </div>
+              <span className="text-[7px] font-semibold mt-0.5 drop-shadow">48</span>
+            </button>
+          )}
+          {showShare && (
+            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+              <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                <Share2 size={13} className="text-white" />
+              </div>
+              <span className="text-[7px] font-semibold mt-0.5 drop-shadow">Enviar</span>
+            </button>
+          )}
+        </div>
+
+        {/* Card Produto Desktop */}
+        <div className="relative z-20 w-full p-2.5 space-y-2">
+          {showProduct && (
+            <div 
+              className="backdrop-blur-md p-2 flex items-center gap-2 shadow-2xl transition hover:scale-[1.01]"
+              style={getCardStyle()}
+            >
+              <div className="h-8 w-8 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-100">
+                <img
+                  src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=150&q=80"
+                  alt="Product"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h5 
+                  className="font-bold truncate"
+                  style={{ 
+                    color: playerConfig.product_card_name_color || '#0F172A',
+                    fontSize: getFontSize(playerConfig.product_card_name_size, 9, 0.8) 
+                  }}
+                >
+                  Calça Confort Premium
+                </h5>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span 
+                    className="font-black"
+                    style={{ 
+                      color: playerConfig.product_card_price_color || primaryColor,
+                      fontSize: getFontSize(playerConfig.product_card_price_size, 9, 0.8)
+                    }}
+                  >
+                    R$ 149,95
+                  </span>
+                  <span className="text-[7px] text-slate-400 line-through">R$ 199,90</span>
+                </div>
+              </div>
+              <ChevronRight
+                size={16}
+                className="shrink-0"
+                style={{ color: playerConfig.product_card_price_color || primaryColor }}
+              />
+            </div>
+          )}
+
+          <div className="w-full h-0.5 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-full rounded-full w-2/3" style={{ backgroundColor: primaryColor }} />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1123,6 +1405,26 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_name_color: getC('grid_product_card_name_color') || '#0F172A',
     product_card_price_size: getC('grid_product_card_price_size') ?? 8,
     product_card_price_color: getC('grid_product_card_price_color') || formData?.primary_color || '#0094EB',
+  };
+
+  // Mapeamentos para Player (Modal)
+  const playerPreviewData = {
+    border_color: getC('modal_border_color') || formData?.primary_color || '#0094EB',
+    border_width: getC('modal_border_width') ?? 2,
+    border_radius: getC('modal_border_radius') ?? 16,
+    show_title: getC('modal_show_title') !== false,
+    show_like_button: getC('modal_show_like_button') !== false,
+    show_comment_button: getC('modal_show_comment_button') !== false,
+    show_share_button: getC('modal_show_share_button') !== false,
+    show_product: getC('modal_show_product') !== false,
+    product_card_bg: getC('modal_product_card_bg') || '#FFFFFF',
+    product_card_border_color: getC('modal_product_card_border_color') || '#E2E8F0',
+    product_card_border_width: getC('modal_product_card_border_width') ?? 1,
+    product_card_border_radius: getC('modal_product_card_border_radius') ?? 12,
+    product_card_name_size: getC('modal_product_card_name_size') ?? 11,
+    product_card_name_color: getC('modal_product_card_name_color') || '#0F172A',
+    product_card_price_size: getC('modal_product_card_price_size') ?? 12,
+    product_card_price_color: getC('modal_product_card_price_color') || formData?.primary_color || '#0094EB',
   };
 
   const handleSave = async () => {
@@ -1485,7 +1787,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                 )}
 
-                {/* ABA CARROSSEL DINÂMICO (LEGADO COMPLETO) */}
+                {/* ABA CARROSSEL DINÂMICO */}
                 {activeTab === 'carrossel-dinamico' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Layout & Dimensões')}>
@@ -1617,7 +1919,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                 )}
 
-                {/* ABA GRADE (LEGADO COMPLETO) */}
+                {/* ABA GRADE */}
                 {activeTab === 'grade' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Layout & Dimensões')}>
@@ -1747,12 +2049,66 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                 )}
 
+                {/* ABA PLAYER (MODAL) */}
                 {activeTab === 'player' && (
-                   <div className="p-8 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/30 flex flex-col items-center justify-center text-center mt-4">
-                      <Settings2 size={40} strokeWidth={1.5} className="text-slate-400 mb-4" />
-                      <p className="font-extrabold text-lg text-slate-700 dark:text-slate-300 mb-1">Controles em Desenvolvimento</p>
-                      <p className="text-sm text-slate-500 max-w-xs">As opções de 1 a 4 para player serão adicionadas nesta coluna.</p>
-                   </div>
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <Accordion title="1. Borda" isOpen={openAccordion === '1. Borda' || openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Borda')}>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField label="Cor da Borda" className="col-span-2">
+                          <ColorInput value={getC('modal_border_color') || '#0094EB'} onChange={(v: string) => setC('modal_border_color', v)} />
+                        </FormField>
+                        <FormField label="Largura Borda (px)">
+                          <input type="number" min="0" max="10" value={getC('modal_border_width') ?? 2} onChange={e => setC('modal_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Raio da Borda (px)">
+                          <input type="number" min="0" max="40" value={getC('modal_border_radius') ?? 16} onChange={e => setC('modal_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                      </div>
+                    </Accordion>
+
+                    <Accordion title="2. Elementos Visíveis" isOpen={openAccordion === '2. Elementos Visíveis'} onClick={() => toggleAccordion('2. Elementos Visíveis')}>
+                      <div className="flex flex-col">
+                        <CheckboxField label="Exibir título do vídeo" checked={getC('modal_show_title') !== false} onChange={(v: boolean) => setC('modal_show_title', v)} />
+                        <CheckboxField label="Exibir botão Like (Curtir)" checked={getC('modal_show_like_button') !== false} onChange={(v: boolean) => setC('modal_show_like_button', v)} />
+                        <CheckboxField label="Exibir botão de Comentários" checked={getC('modal_show_comment_button') !== false} onChange={(v: boolean) => setC('modal_show_comment_button', v)} />
+                        <CheckboxField label="Exibir botão de Compartilhar" checked={getC('modal_show_share_button') !== false} onChange={(v: boolean) => setC('modal_show_share_button', v)} />
+                      </div>
+                    </Accordion>
+
+                    <Accordion title="3. Card de Produto" isOpen={openAccordion === '3. Card de Produto'} onClick={() => toggleAccordion('3. Card de Produto')}>
+                      <div className="flex flex-col">
+                        <CheckboxField label="Exibir card de produto" checked={getC('modal_show_product') !== false} onChange={(v: boolean) => setC('modal_show_product', v)} />
+                        {getC('modal_show_product') !== false && (
+                          <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 grid grid-cols-2 gap-3">
+                            <FormField label="Cor do Fundo">
+                              <ColorInput value={getC('modal_product_card_bg') || '#FFFFFF'} onChange={(v: string) => setC('modal_product_card_bg', v)} />
+                            </FormField>
+                            <FormField label="Cor da Borda">
+                              <ColorInput value={getC('modal_product_card_border_color') || '#E2E8F0'} onChange={(v: string) => setC('modal_product_card_border_color', v)} />
+                            </FormField>
+                            <FormField label="Largura Borda (px)">
+                              <input type="number" min="0" value={getC('modal_product_card_border_width') ?? 1} onChange={e => setC('modal_product_card_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Raio Borda (px)">
+                              <input type="number" min="0" value={getC('modal_product_card_border_radius') ?? 12} onChange={e => setC('modal_product_card_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Tamanho Título (px)">
+                              <input type="number" min="8" value={getC('modal_product_card_name_size') ?? 11} onChange={e => setC('modal_product_card_name_size', parseInt(e.target.value) || 11)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Cor Título">
+                              <ColorInput value={getC('modal_product_card_name_color') || '#0F172A'} onChange={(v: string) => setC('modal_product_card_name_color', v)} />
+                            </FormField>
+                            <FormField label="Tamanho Preço (px)">
+                              <input type="number" min="8" value={getC('modal_product_card_price_size') ?? 12} onChange={e => setC('modal_product_card_price_size', parseInt(e.target.value) || 12)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Cor Preço">
+                              <ColorInput value={getC('modal_product_card_price_color') || '#0094EB'} onChange={(v: string) => setC('modal_product_card_price_color', v)} />
+                            </FormField>
+                          </div>
+                        )}
+                      </div>
+                    </Accordion>
+                  </div>
                 )}
               </>
             )}
@@ -1851,7 +2207,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         )}
 
                         {activeTab === 'player' && (
-                          <span className="z-10 text-slate-400 font-bold uppercase tracking-widest text-center px-4">Preview do Player (Desktop)</span>
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ModalPlayerPreview 
+                              playerConfig={playerPreviewData} 
+                              primaryColor={formData?.primary_color || '#0094EB'} 
+                              isMobile={false} 
+                            />
+                          </div>
                         )}
                      </div>
                   </div>
@@ -1896,7 +2258,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     )}
 
                     {activeTab === 'player' && (
-                      <span className="z-10 text-slate-400 text-sm font-bold uppercase tracking-widest text-center px-4">Preview do Player (Mobile)</span>
+                      <div className="w-full h-full">
+                        <ModalPlayerPreview 
+                          playerConfig={playerPreviewData} 
+                          primaryColor={formData?.primary_color || '#0094EB'} 
+                          isMobile={true} 
+                        />
+                      </div>
                     )}
                   </div>
                 )}
