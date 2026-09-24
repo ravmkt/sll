@@ -8,6 +8,25 @@ export interface StorePayload {
 }
 
 export const SLLDatabaseService = {
+  // Chamado pelo Dashboard/Header para carregar as lojas do usuário
+  async getStores(userId?: string) {
+    let query = supabase
+      .from('stores')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (userId) {
+      query = query.eq('owner_user_id', userId);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error('Erro ao buscar lojas:', error);
+      throw error;
+    }
+    return data || [];
+  },
+
   // Retorna a loja ativa do usuário logado
   async getUserStore(userId: string) {
     const { data, error } = await supabase
@@ -25,7 +44,7 @@ export const SLLDatabaseService = {
     return data;
   },
 
-  // Cria a loja e o registro de configurações no schema public
+  // Criação inicial da loja e provisionamento de store_settings
   async createInitialStore(userId: string, payload: StorePayload) {
     const slug = payload.name
       .toLowerCase()

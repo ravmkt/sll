@@ -5,6 +5,7 @@ import { SLLDatabaseService } from '@/services/SLLDatabaseService';
 interface LojaContextData {
   store: any | null;
   storeId: string | null;
+  stores: any[];
   loading: boolean;
   needsOnboarding: boolean;
   refreshStore: () => Promise<void>;
@@ -15,6 +16,7 @@ const LojaContext = createContext<LojaContextData>({} as LojaContextData);
 
 export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [store, setStore] = useState<any | null>(null);
+  const [stores, setStores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
@@ -25,17 +27,20 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!user) {
         setStore(null);
+        setStores([]);
         setNeedsOnboarding(false);
         return;
       }
 
-      const userStore = await SLLDatabaseService.getUserStore(user.id);
+      const userStores = await SLLDatabaseService.getStores(user.id);
+      setStores(userStores || []);
 
-      if (userStore) {
-        setStore(userStore);
+      if (userStores && userStores.length > 0) {
+        const activeStore = userStores[0];
+        setStore(activeStore);
         setNeedsOnboarding(false);
-        localStorage.setItem('sll_store_id', userStore.id);
-        localStorage.setItem('store_id', userStore.id);
+        localStorage.setItem('sll_store_id', activeStore.id);
+        localStorage.setItem('store_id', activeStore.id);
       } else {
         setStore(null);
         setNeedsOnboarding(true);
@@ -43,7 +48,9 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('store_id');
       }
     } catch (err) {
-      console.error('Falha ao obter loja do usuário no LojaContext:', err);
+      console.error('Falha ao obter lojas no LojaContext:', err);
+      // Se deu erro ao buscar loja, verifica se não há nenhuma e dispara o onboarding
+      setNeedsOnboarding(true);
     } finally {
       setLoading(false);
     }
@@ -52,8 +59,10 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     fetchStore();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
-      fetchStore();
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        fetchStore();
+      }
     });
 
     return () => {
@@ -63,6 +72,7 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const setStoreManually = (newStore: any) => {
     setStore(newStore);
+    setStores((prev) => [newStore, ...prev]);
     setNeedsOnboarding(false);
     if (newStore?.id) {
       localStorage.setItem('sll_store_id', newStore.id);
@@ -75,6 +85,7 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         store,
         storeId: store?.id || null,
+        stores,
         loading,
         needsOnboarding,
         refreshStore: fetchStore,
