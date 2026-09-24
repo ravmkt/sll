@@ -3,7 +3,7 @@ import {
   X, Monitor, Smartphone, Link, Link2Off,
   Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
   Save, CornerUpLeft, Star, ChevronDown, Play,
-  Heart, MessageCircle, Share2, ChevronRight, Copy, Loader2
+  Heart, MessageCircle, Share2, ChevronRight, Copy, Loader2, Plus
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -1273,14 +1273,39 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
   const [localSaving, setLocalSaving] = useState(false);
 
+  // Pop-up modal para nomear estilo
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [modalInputName, setModalInputName] = useState('');
+  const [availableStyles, setAvailableStyles] = useState<any[]>([]);
+
   const isDefaultSystemStyle = (styleName || '').trim().toUpperCase() === 'PADRAO' || formData?.id === 'default' || (formData?.is_default && (styleName || '').trim().toUpperCase() === 'PADRAO');
+
+  // Carrega a lista de estilos para o seletor da aba Básico
+  const loadStylesList = async () => {
+    try {
+      if (!supabase) return;
+      const targetStoreId = formData?.store_id || localStorage.getItem('sll_store_id');
+      const query = supabase.schema ? supabase.schema('vidlytics') : supabase;
+      let req = query.from('vid_appearances').select('id, name, is_default, widget_style');
+      if (targetStoreId) {
+        req = req.eq('store_id', targetStoreId);
+      }
+      const { data } = await req;
+      if (data) {
+        setAvailableStyles(data);
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar lista de estilos:', e);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab('basico');
       setPreviewDevice('mobile');
       setOpenAccordion('1. Layout & Dimensões');
-      // Força formato inicial como Retrato caso venha vazio
+      loadStylesList();
+
       if (!getConfig('desktop', 'carousel_shape') && !getConfig('mobile', 'carousel_shape')) {
         setConfig('desktop', 'carousel_shape', 'portrait');
         setConfig('mobile', 'carousel_shape', 'portrait');
@@ -1443,78 +1468,92 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_price_color: getC('modal_product_card_price_color') || formData?.primary_color || '#0094EB',
   };
 
-  // ──────────────────── SALVAR DIRETAMENTE NO SUPABASE (SCHEMA VIDLYTICS) ────────────────────
-  const handleSave = async () => {
-    let targetName = styleName?.trim();
-
-    if (isDefaultSystemStyle) {
-      const newName = window.prompt(
-        'O estilo "PADRAO" é o modelo nativo da plataforma e não pode ser sobrescrito.\n\nInforme o nome para salvar sua versão customizada:'
-      );
-      if (!newName || !newName.trim()) return;
-      if (newName.trim().toUpperCase() === 'PADRAO') {
-        alert('Você não pode utilizar o nome reservado "PADRAO".');
-        return;
-      }
-      targetName = newName.trim();
-      setStyleName(targetName);
-      setIsDefault(false);
-    }
-
-    if (!targetName) {
-      alert('Por favor, defina um nome para o estilo.');
-      setActiveTab('basico');
+  // ──────────────────── DISPARADOR DO SALVAR COM POP-UP ────────────────────
+  const handleInitiateSave = () => {
+    if (isDefaultSystemStyle || !styleName?.trim() || styleName.trim().toUpperCase() === 'PADRAO') {
+      setModalInputName('');
+      setShowNameModal(true);
       return;
     }
+    executeSave(styleName.trim());
+  };
 
+  const executeSave = async (finalName: string) => {
     setLocalSaving(true);
     try {
-      // 1. Tenta salvar pelo serviço padrão passado por prop
+      setStyleName(finalName);
+
+      // 1. Tenta salvar usando o saveStyle da página
       if (typeof saveStyle === 'function') {
-        await saveStyle();
-      }
-
-      // 2. Persistência direta no schema vidlytics.vid_appearances do Supabase SLL
-      if (supabase && formData?.store_id) {
-        const payload = {
-          name: targetName,
-          is_default: isDefault,
-          is_unified: isUnified,
-          widget_style: {
-            desktop: formData?.desktop || {},
-            mobile: formData?.mobile || {},
-            floating: floatingPreviewData,
-            carousel: carouselPreviewData,
-            dynamic_carousel: dynCarouselPreviewData,
-            grid: gridPreviewData,
-            player: playerPreviewData,
-          },
-          updated_at: new Date().toISOString(),
-        };
-
-        const query = supabase.schema ? supabase.schema('vidlytics') : supabase;
-
-        if (isDefaultSystemStyle || !formData?.id || formData?.id === 'default') {
-          await query.from('vid_appearances').insert({
-            store_id: formData.store_id,
-            ...payload,
-            created_at: new Date().toISOString(),
-          });
-        } else {
-          await query.from('vid_appearances').upsert({
-            id: formData.id,
-            store_id: formData.store_id,
-            ...payload,
-          });
+        try {
+          await saveStyle();
+        } catch (e) {
+          console.warn('saveStyle via prop falhou, gravando diretamente no Supabase:', e);
         }
       }
 
+      // 2. Persistência direta no schema vidlytics.vid_appearances do Supabase SLL
+      if (supabase) {
+        const targetStoreId = formData?.store_id || localStorage.getItem('sll_store_id') || localStorage.getItem('store_id');
+        
+        if (targetStoreId) {
+          const payload = {
+            store_id: targetStoreId,
+            widget_style: {
+              name: finalName,
+              is_default: isDefault,
+              is_unified: isUnified,
+              desktop: formData?.desktop || {},
+              mobile: formData?.mobile || {},
+              floating: floatingPreviewData,
+              carousel: carouselPreviewData,
+              dynamic_carousel: dynCarouselPreviewData,
+              grid: gridPreviewData,
+              player: playerPreviewData,
+            },
+            updated_at: new Date().toISOString(),
+          };
+
+          const query = supabase.schema ? supabase.schema('vidlytics') : supabase;
+
+          if (isDefaultSystemStyle || !formData?.id || formData?.id === 'default') {
+            await query.from('vid_appearances').insert({
+              ...payload,
+              created_at: new Date().toISOString(),
+            });
+          } else {
+            await query.from('vid_appearances').upsert({
+              id: formData.id,
+              ...payload,
+            });
+          }
+
+          // Dispara evento para atualizar a lista na tela principal
+          window.dispatchEvent(new CustomEvent('vidlytics:appearance_saved'));
+        }
+      }
+
+      setShowNameModal(false);
       onClose();
     } catch (error: any) {
-      console.error('Erro ao salvar estilo:', error);
-      alert(error?.message || 'Erro ao persistir alterações no Supabase.');
+      console.error('Erro ao persistir estilo no Supabase:', error);
+      alert(error?.message || 'Erro ao persistir configurações.');
     } finally {
       setLocalSaving(false);
+    }
+  };
+
+  const handleSelectStyle = (selectedId: string) => {
+    if (selectedId === 'default' || selectedId === 'PADRAO') {
+      setStyleName('PADRAO');
+      setIsDefault(true);
+      resetTab('basico', previewDevice);
+      return;
+    }
+    const found = availableStyles.find(s => s.id === selectedId);
+    if (found) {
+      setStyleName(found.name || found.widget_style?.name || 'Estilo');
+      setIsDefault(found.is_default || false);
     }
   };
 
@@ -1528,7 +1567,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     setOpenAccordion(openAccordion === title ? '' : title);
   };
 
-  // ──────────────────── RESETAR TAB PARA VALORES PADRÃO ────────────────────
   const handleReset = () => {
     if (activeTab === 'flutuante') {
       setC('floating_format', 'portrait');
@@ -1615,7 +1653,53 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-900 w-[95vw] max-w-[1500px] h-[95vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 w-[95vw] max-w-[1500px] h-[95vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden relative">
+
+        {/* POPUP SOBREPOSTO PARA NOMEAR ESTILO */}
+        {showNameModal && (
+          <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md border border-slate-200 dark:border-slate-700 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h4 className="text-base font-extrabold text-slate-800 dark:text-white">Salvar Novo Estilo</h4>
+                <button type="button" onClick={() => setShowNameModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Digite um nome para o seu novo modelo de aparência para identificá-lo na lista de estilos.
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Nome do Estilo</label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={modalInputName}
+                  onChange={(e) => setModalInputName(e.target.value)}
+                  placeholder="Ex: Campanha de Natal"
+                  className={inputClass}
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNameModal(false)}
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={!modalInputName.trim() || localSaving}
+                  onClick={() => executeSave(modalInputName.trim())}
+                  className="flex items-center gap-1.5 px-5 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold shadow-md disabled:opacity-50 cursor-pointer"
+                >
+                  {localSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* HEADER MODAL */}
         <div className="flex items-center justify-between px-6 py-4">
@@ -1665,9 +1749,27 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
               <div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Configurações Básicas</h3>
                 <div className="space-y-6">
+                  
+                  {/* SELETOR DE ESTILOS DA LOJA */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Selecionar Estilo Ativo</label>
+                    <select 
+                      value={formData?.id || (isDefaultSystemStyle ? 'PADRAO' : '')} 
+                      onChange={(e) => handleSelectStyle(e.target.value)}
+                      className={selectClass}
+                    >
+                      <option value="PADRAO">PADRAO (Oficial da Loja)</option>
+                      {availableStyles.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name || s.widget_style?.name || 'Estilo sem nome'} {s.is_default ? '★' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Nome do Estilo</label>
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Nome do Estilo Atual</label>
                       {isDefaultSystemStyle && (
                         <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
                           Padrão Oficial Protegido
@@ -1684,7 +1786,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     />
                     {isDefaultSystemStyle && (
                       <p className="text-[11px] text-slate-400 mt-1.5 leading-snug">
-                        💡 Este é o modelo base da loja. Ao alterar opções e clicar em <strong>Salvar</strong>, o sistema criará uma nova cópia personalizada automaticamente.
+                        💡 Este é o modelo base da loja. Ao clicar em <strong>Salvar</strong>, abrirá uma janela para criar sua cópia independente.
                       </p>
                     )}
                   </div>
@@ -1852,7 +1954,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                 )}
 
-                {/* ABA CARROSSEL (PADRÃO RETRATO) */}
+                {/* ABA CARROSSEL */}
                 {activeTab === 'carrossel' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões' || openAccordion === '1. Formato & Dimensões'} onClick={() => toggleAccordion('1. Layout & Dimensões')}>
@@ -1887,11 +1989,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         <FormField label="Margem Inferior (px)">
                           <input type="number" min="0" value={getC('carousel_margin_bottom') || 0} onChange={e => setC('carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
-                      </div>
-                      <div className="mt-3 p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
-                        <p className="text-xs text-blue-600 dark:text-blue-400 font-medium leading-snug">
-                          💡 No mobile, o carrossel exibe no máximo 3 itens (1 completo + 2 parciais nas laterais), independente do número configurado.
-                        </p>
                       </div>
                     </Accordion>
 
@@ -2475,7 +2572,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
               <X size={18} strokeWidth={2.5} /> Cancelar
             </button>
             <button 
-              onClick={handleSave} 
+              onClick={handleInitiateSave} 
               type="button"
               disabled={isSaving || localSaving} 
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer ${
