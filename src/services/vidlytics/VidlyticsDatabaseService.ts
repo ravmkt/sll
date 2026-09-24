@@ -1,130 +1,139 @@
-import { supabase } from '../../lib/supabase';
+// =====================================================================
+// VIDLYTICS - Service de persistência da Aparência
+// Schema: vidlytics | Tabela: vid_appearances | Coluna: widget_style (JSONB)
+// =====================================================================
 
-export interface VidAppearanceRow {
-  id: string;
-  store_id: string;
-  name: string;
-  is_default: boolean;
-  widget_style: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-}
+import { supabaseVidlytics } from '@/services/supabaseClients';
+import type {
+  ExtendedAppearance,
+  VidAppearanceRow,
+} from '@/types/vidlytics-appearance';
+import { createDefaultFormData } from '@/services/vidlytics/appearanceDefaults';
+
+const TABLE = 'vid_appearances';
+
+/**
+ * Busca a aparência de uma loja. Se não existir registro ainda,
+ * retorna um ExtendedAppearance com os defaults (sem persistir).
+ */
+export const getAppearanceByStoreId = async (
+  storeId: string,
+): Promise<ExtendedAppearance> => {
+  if (!storeId) {
+    console.warn('[VidlyticsService] getAppearanceByStoreId chamado sem storeId.');
+    return createDefaultFormData();
+  }
+
+  const { data, error } = await supabaseVidlytics
+    .from(TABLE)
+    .select('id, store_id, widget_style, created_at, updated_at')
+    .eq('store_id', storeId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[VidlyticsService] Erro ao buscar aparência:', error);
+    throw error;
+  }
+
+  if (!data) {
+    // Loja ainda não tem registro de aparência -> defaults em memória
+    return createDefaultFormData(storeId);
+  }
+
+  const row = data as VidAppearanceRow;
+  const defaults = createDefaultFormData(storeId);
+
+  // Merge defensivo: garante que campos novos adicionados no schema
+  // de tipos sempre existam, mesmo que o JSONB salvo seja antigo/incompleto.
+  const merged: ExtendedAppearance = {
+    ...defaults,
+    ...row.widget_style,
+    id: row.id,
+    store_id: row.store_id,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+
+  return merged;
+};
+
+/**
+ * Salva (upsert) a aparência completa de uma loja.
+ * Sempre grava o objeto ExtendedAppearance inteiro dentro de widget_style.
+ */
+export const saveAppearance = async (
+  storeId: string,
+  appearance: ExtendedAppearance,
+): Promise<ExtendedAppearance> => {
+  if (!storeId) {
+    throw new Error('[VidlyticsService] saveAppearance requer storeId.');
+  }
+
+  // Remove campos de controle que não devem duplicar dentro do JSONB
+  const { id, created_at, updated_at, ...widgetStylePayload } = appearance;
+
+  const { data, error } = await supabaseVidlytics
+    .from(TABLE)
+    .upsert(
+      {
+        store_id: storeId,
+        widget_style: widgetStylePayload,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'store_id' },
+    )
+    .select('id, store_id, widget_style, created_at, updated_at')
+    .single();
+
+  if (error) {
+    console.error('[VidlyticsService] Erro ao salvar aparência:', error);
+    throw error;
+  }
+
+  const row = data as VidAppearanceRow;
+
+  return {
+    ...row.widget_style,
+    id: row.id,
+    store_id: row.store_id,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+};
+
+/**
+ * Atualiza parcialmente a aparência (merge shallow no nível raiz),
+ * útil para toggles rápidos (ex: useGlobalAppearance) sem reenviar tudo.
+ */
+export const updateAppearancePartial = async (
+  storeId: string,
+  partial: Partial<ExtendedAppearance>,
+): Promise<ExtendedAppearance> => {
+  const current = await getAppearanceByStoreId(storeId);
+  const updated: ExtendedAppearance = { ...current, ...partial };
+  return saveAppearance(storeId, updated);
+};
+
+/**
+ * Remove o registro de aparência de uma loja (reset total para defaults).
+ */
+export const deleteAppearance = async (storeId: string): Promise<void> => {
+  const { error } = await supabaseVidlytics
+    .from(TABLE)
+    .delete()
+    .eq('store_id', storeId);
+
+  if (error) {
+    console.error('[VidlyticsService] Erro ao deletar aparência:', error);
+    throw error;
+  }
+};
 
 export const VidlyticsDatabaseService = {
-  // Lista todos os estilos de uma loja (para a tabela do AparenciaTab)
-  async getAppearances(storeId: string): Promise<VidAppearanceRow[]> {
-    const { data, error } = await supabase
-      .schema('vidlytics')
-      .from('vid_appearances')
-      .select('*')
-      .eq('store_id', storeId)
-      .order('created_at', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  // Busca um estilo específico por id (para abrir o modal em edição)
-  async getAppearanceById(id: string): Promise<VidAppearanceRow | null> {
-    const { data, error } = await supabase
-      .schema('vidlytics')
-      .from('vid_appearances')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Busca a aparência padrão de uma loja (compatibilidade/fallback)
-  async getAppearanceByStoreId(storeId: string) {
-    try {
-      const { data, error } = await supabase
-        .schema('vidlytics')
-        .from('vid_appearances')
-        .select('widget_style')
-        .eq('store_id', storeId)
-        .order('is_default', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data?.widget_style || null;
-    } catch (err) {
-      console.error('Erro no getAppearanceByStoreId:', err);
-      return null;
-    }
-  },
-
-  // Salva ou atualiza estilo (criar novo ou editar existente)
-  async saveAppearance(payload: {
-    id?: string;
-    store_id: string;
-    name: string;
-    is_default: boolean;
-    widget_style: Record<string, any>;
-  }): Promise<VidAppearanceRow> {
-    const now = new Date().toISOString();
-    const row = {
-      ...(payload.id ? { id: payload.id } : {}),
-      store_id: payload.store_id,
-      name: payload.name,
-      is_default: payload.is_default,
-      widget_style: payload.widget_style,
-      updated_at: now,
-    };
-
-    // Se marcado como padrão, desmarca os outros estilos da loja
-    if (payload.is_default) {
-      await supabase
-        .schema('vidlytics')
-        .from('vid_appearances')
-        .update({ is_default: false, updated_at: now })
-        .eq('store_id', payload.store_id)
-        .neq('id', payload.id || '00000000-0000-0000-0000-000000000000');
-    }
-
-    const { data, error } = await supabase
-      .schema('vidlytics')
-      .from('vid_appearances')
-      .upsert(row, { onConflict: 'id' })
-      .select('*')
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Exclui um estilo
-  async deleteAppearance(id: string, storeId: string): Promise<void> {
-    const { error } = await supabase
-      .schema('vidlytics')
-      .from('vid_appearances')
-      .delete()
-      .eq('id', id)
-      .eq('store_id', storeId);
-
-    if (error) throw error;
-  },
-
-  // Define um estilo existente como padrão
-  async setDefaultAppearance(id: string, storeId: string): Promise<void> {
-    const now = new Date().toISOString();
-
-    await supabase
-      .schema('vidlytics')
-      .from('vid_appearances')
-      .update({ is_default: false, updated_at: now })
-      .eq('store_id', storeId);
-
-    const { error } = await supabase
-      .schema('vidlytics')
-      .from('vid_appearances')
-      .update({ is_default: true, updated_at: now })
-      .eq('id', id)
-      .eq('store_id', storeId);
-
-    if (error) throw error;
-  },
+  getAppearanceByStoreId,
+  saveAppearance,
+  updateAppearancePartial,
+  deleteAppearance,
 };
+
+export default VidlyticsDatabaseService;
