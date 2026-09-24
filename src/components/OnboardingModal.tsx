@@ -150,13 +150,13 @@ export const OnboardingModal: React.FC = () => {
 
 {/* PASSO 1: BOAS-VINDAS & LOGOTIPO OFICIAL */}
           {step === 1 && (
-            <div className="flex flex-col items-center text-center space-y-4">
-              {/* Logotipo SLL com tamanho ampliado e nítido */}
-              <div className="flex items-center justify-center w-full h-24 py-1">
+            <div className="flex flex-col items-center text-center space-y-5">
+              {/* Logotipo SLL com tamanho ampliado e largura destacada */}
+              <div className="flex items-center justify-center w-full py-2">
                 <img 
                   src={LOGO_SRC} 
                   alt="Sistema Loja Lucrativa" 
-                  className="h-full w-auto max-w-[280px] object-contain drop-shadow-sm"
+                  className="w-48 sm:w-56 h-auto max-h-36 object-contain drop-shadow-sm"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/sll-logotipo-b.png';
                   }}
