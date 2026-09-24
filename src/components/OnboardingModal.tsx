@@ -148,17 +148,16 @@ export const OnboardingModal: React.FC = () => {
             </div>
           )}
 
-          {/* PASSO 1: BOAS-VINDAS & LOGOTIPO OFICIAL */}
+{/* PASSO 1: BOAS-VINDAS & LOGOTIPO OFICIAL */}
           {step === 1 && (
-            <div className="flex flex-col items-center text-center space-y-5">
-              {/* Logotipo SLL com caminho exato em minúsculas */}
-              <div className="flex items-center justify-center max-w-[240px] h-14">
+            <div className="flex flex-col items-center text-center space-y-4">
+              {/* Logotipo SLL com tamanho ampliado e nítido */}
+              <div className="flex items-center justify-center w-full h-24 py-1">
                 <img 
                   src={LOGO_SRC} 
                   alt="Sistema Loja Lucrativa" 
-                  className="max-h-full w-auto object-contain"
+                  className="h-full w-auto max-w-[280px] object-contain drop-shadow-sm"
                   onError={(e) => {
-                    // Fallback para caso o arquivo esteja na raiz de assets
                     (e.target as HTMLImageElement).src = '/sll-logotipo-b.png';
                   }}
                 />
