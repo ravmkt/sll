@@ -1,4 +1,4 @@
-﻿import { useStore } from '../../../contexts/StoreContext';
+import { useStore } from '../../../contexts/StoreContext';
 import React, { useState, useEffect } from 'react';
 import { 
   X, Monitor, Smartphone, Link, Link2Off, 
@@ -99,7 +99,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const { VidlyticsDatabaseService } = await import('../../../services/VidlyticsDatabaseService');
+        const { VidlyticsDatabaseService } = await import('../../../services/vidlytics/VidlyticsDatabaseService');
         const style = await VidlyticsDatabaseService.getAppearanceByStoreId(storeId);
         if (style) setFormData(style);
       } catch (error) {
@@ -126,7 +126,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { VidlyticsDatabaseService } = await import('../../../services/VidlyticsDatabaseService');
+      const { VidlyticsDatabaseService } = await import('../../../services/vidlytics/VidlyticsDatabaseService');
       await VidlyticsDatabaseService.saveAppearance(storeId, formData);
       alert("Aparência salva com sucesso no banco SLL!"); 
       onClose();
