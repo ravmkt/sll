@@ -19,53 +19,76 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [styleName, setStyleName] = useState('USEANNY');
   const [isDefault, setIsDefault] = useState(true);
-  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+    const [openAccordion, setOpenAccordion] = useState<string | null>(null);
 
-  // --- LÓGICA DE DADOS (INJETADA) ---
+  // --- INTEGRAÇÃO COM BANCO DE DADOS E ESTADO GERAL ---
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // ESTADO PRINCIPAL (Acaba com o erro "formData is not defined")
   const [formData, setFormData] = useState<any>({
-    useGlobalAppearance: true,
-    desktop: {
-      carousel_style: 'stories',
-      carousel_item_size: 80,
-      carousel_gap: 12,
-      carousel_position: 'top',
-      carousel_border_color: '#0094EB',
-      floating_position: 'bottom-right',
-      floating_size: 60,
-    },
-    mobile: {
-      carousel_style: 'stories',
-      carousel_item_size: 60,
-      carousel_gap: 8,
-      carousel_position: 'top',
-      carousel_border_color: '#0094EB',
-      floating_position: 'bottom-right',
-      floating_size: 50,
-    }
+    desktop: {},
+    mobile: {}
   });
 
-  // Função para ler o valor atual de uma configuração
+  // TODO: Pegar o storeId real do contexto de Autenticação do SLL Hub
+  const storeId = "USER_STORE_ID_AQUI"; 
+
+  // Carrega do Banco ao abrir o modal
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Import dinâmico para evitar erro caso o arquivo ainda não esteja linkado
+        const { VidlyticsDatabaseService } = await import('../../../services/VidlyticsDatabaseService');
+        const style = await VidlyticsDatabaseService.getAppearanceByStoreId(storeId);
+        
+        if (style) {
+          setFormData(style);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar aparência:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [isOpen]);
+
   const getConfig = (device: 'desktop' | 'mobile', key: string) => {
     return formData[device]?.[key] || '';
   };
 
-  // Função para atualizar uma configuração em tempo real
   const setConfig = (device: 'desktop' | 'mobile', key: string, value: any) => {
     setFormData((prev: any) => ({
       ...prev,
       [device]: {
-        ...prev[device],
+        ...prev[device] || {},
         [key]: value
       }
     }));
   };
 
-  // Função de salvar (Onde conectaremos o Banco SLL depois)
   const handleSave = async () => {
-    console.log("Salvando configurações de aparência...", formData);
-    // TODO: Conectar com VidlyticsDatabaseService
+    setIsSaving(true);
+    try {
+      const { VidlyticsDatabaseService } = await import('../../../services/VidlyticsDatabaseService');
+      await VidlyticsDatabaseService.saveAppearance(storeId, formData);
+      alert("Aparência salva com sucesso no banco SLL!"); // Feedback visual simples
+      onClose();
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      alert("Erro ao salvar configurações.");
+    } finally {
+      setIsSaving(false);
+    }
   };
-  // ----------------------------------
+  // ---------------------------------------------------
+
+  
 
   // 1. Garante que sempre abre na aba 'basico'
   useEffect(() => {

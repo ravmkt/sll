@@ -1,60 +1,69 @@
-import { supabase } from '../lib/supabase';
-
-export interface OverviewMetrics {
-  totalViews: number;
-  totalCtaClicks: number;
-  totalProductClicks: number;
-  estimatedRevenue: number;
-}
-
-export interface VideoItem {
-  id: string;
-  title: string;
-  thumbnail_url: string | null;
-  status?: string;
-}
+﻿import { supabase } from '../lib/supabase'; // Ajuste o caminho se seu client Supabase ficar em outro lugar
 
 export const VidlyticsDatabaseService = {
-  /**
-   * Busca métricas acumuladas da loja
-   */
-  async getStoreMetrics(storeId: string): Promise<OverviewMetrics> {
-    const { data, error } = await supabase
-      .from('daily_store_metrics')
-      .select('views_count, cta_clicks_count, product_clicks_count, estimated_revenue')
-      .eq('store_id', storeId);
+  
+  // Busca as configurações de aparência
+  async getAppearanceByStoreId(storeId: string) {
+    try {
+      const { data, error } = await supabase
+        .schema('vidlytics')
+        .from('vid_appearances')
+        .select('widget_style')
+        .eq('store_id', storeId)
+        .single();
 
-    if (error) {
-      console.error('Erro ao buscar métricas diárias:', error);
-      return { totalViews: 0, totalCtaClicks: 0, totalProductClicks: 0, estimatedRevenue: 0 };
+      if (error && error.code !== 'PGRST116') { // PGRST116 = Nenhum registro encontrado (novo lojista)
+        console.error('Erro ao buscar aparência:', error);
+        throw error;
+      }
+
+      return data?.widget_style || null;
+    } catch (err) {
+      console.error('Erro no getAppearanceByStoreId:', err);
+      return null;
     }
-
-    return (data || []).reduce(
-      (acc, row) => ({
-        totalViews: acc.totalViews + (row.views_count || 0),
-        totalCtaClicks: acc.totalCtaClicks + (row.cta_clicks_count || 0),
-        totalProductClicks: acc.totalProductClicks + (row.product_clicks_count || 0),
-        estimatedRevenue: acc.estimatedRevenue + Number(row.estimated_revenue || 0),
-      }),
-      { totalViews: 0, totalCtaClicks: 0, totalProductClicks: 0, estimatedRevenue: 0 }
-    );
   },
 
-  /**
-   * Busca os vídeos da loja
-   */
-  async getVideos(storeId: string, limit = 5): Promise<VideoItem[]> {
-    const { data, error } = await supabase
-      .from('videos')
-      .select('id, title, thumbnail_url')
-      .eq('store_id', storeId)
-      .limit(limit);
+  // Salva ou atualiza (Upsert) as configurações no JSONB
+  async saveAppearance(storeId: string, widgetStyle: any) {
+    try {
+      // Verifica se já existe
+      const { data: existing } = await supabase
+        .schema('vidlytics')
+        .from('vid_appearances')
+        .select('id')
+        .eq('store_id', storeId)
+        .single();
 
-    if (error) {
-      console.error('Erro ao buscar vídeos:', error);
-      return [];
+      if (existing) {
+        // Atualiza
+        const { error } = await supabase
+          .schema('vidlytics')
+          .from('vid_appearances')
+          .update({ 
+            widget_style: widgetStyle, 
+            updated_at: new Date().toISOString() 
+          })
+          .eq('store_id', storeId);
+          
+        if (error) throw error;
+      } else {
+        // Cria novo
+        const { error } = await supabase
+          .schema('vidlytics')
+          .from('vid_appearances')
+          .insert([{ 
+            store_id: storeId, 
+            widget_style: widgetStyle 
+          }]);
+          
+        if (error) throw error;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Erro no saveAppearance:', err);
+      throw err;
     }
-
-    return (data as VideoItem[]) || [];
   }
 };
