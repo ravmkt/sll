@@ -630,6 +630,8 @@ const DynamicCarouselPreview = ({
                     loop
                     muted
                     playsInline
+                    autoPlay
+                    preload="auto"
                     style={{ objectFit: carousel?.object_fit || 'cover' }}
                     className="w-full h-full"
                   />
@@ -986,7 +988,7 @@ const ModalPlayerPreview = ({
             )}
             <button
               type="button"
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md border border-white/10 transition-colors hover:bg-black/60"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md border border-white/10 transition-colors hover:bg-black/60 cursor-pointer"
             >
               <X size={14} />
             </button>
@@ -995,7 +997,7 @@ const ModalPlayerPreview = ({
           {/* Botões de engajamento Lateral */}
           <div className="absolute right-3 bottom-[110px] z-20 flex flex-col items-center gap-3.5">
             {showLike && (
-              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
                 <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
                   <Heart size={16} className="text-white fill-white" />
                 </div>
@@ -1003,7 +1005,7 @@ const ModalPlayerPreview = ({
               </button>
             )}
             {showComments && (
-              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
                 <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
                   <MessageCircle size={16} className="text-white" />
                 </div>
@@ -1011,7 +1013,7 @@ const ModalPlayerPreview = ({
               </button>
             )}
             {showShare && (
-              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
                 <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
                   <Share2 size={16} className="text-white" />
                 </div>
@@ -1110,7 +1112,7 @@ const ModalPlayerPreview = ({
           )}
           <button
             type="button"
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-black/60"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-black/60 cursor-pointer"
           >
             <X size={12} />
           </button>
@@ -1119,7 +1121,7 @@ const ModalPlayerPreview = ({
         {/* Botões Desktop */}
         <div className="absolute right-2.5 bottom-[88px] z-20 flex flex-col items-center gap-2.5">
           {showLike && (
-            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
               <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
                 <Heart size={13} className="text-white fill-white" />
               </div>
@@ -1127,7 +1129,7 @@ const ModalPlayerPreview = ({
             </button>
           )}
           {showComments && (
-            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
               <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
                 <MessageCircle size={13} className="text-white" />
               </div>
@@ -1135,7 +1137,7 @@ const ModalPlayerPreview = ({
             </button>
           )}
           {showShare && (
-            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150">
+            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
               <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
                 <Share2 size={13} className="text-white" />
               </div>
@@ -1271,6 +1273,14 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const [activeTab, setActiveTab] = useState('basico');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab('basico');
+      setPreviewDevice('mobile');
+      setOpenAccordion('1. Layout & Dimensões');
+    }
+  }, [isOpen]);
 
   const getC = (key: string) => getConfig(previewDevice, key);
   const setC = (key: string, value: any) => setConfig(previewDevice, key, value);
@@ -1670,7 +1680,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões' || openAccordion === '1. Formato & Dimensões'} onClick={() => toggleAccordion('1. Layout & Dimensões')}>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Formato">
-                          <select value={getC('carousel_shape') || getC('carousel_style') || 'portrait'} onChange={e => setC('carousel_shape', e.target.value)} className={selectClass}>
+                          <select value={carouselPreviewData.shape} onChange={e => setC('carousel_shape', e.target.value)} className={selectClass}>
                             <option value="portrait">Retrato 9:16</option>
                             <option value="circle">Circular (Stories)</option>
                             <option value="square">Quadrado 1:1</option>
@@ -1754,7 +1764,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     <Accordion title="4. Card de Produto" isOpen={openAccordion === '4. Card de Produto'} onClick={() => toggleAccordion('4. Card de Produto')}>
                       <div className="flex flex-col">
                         <CheckboxField label="Exibir card de produto abaixo de cada vídeo" checked={getC('carousel_show_product') ?? true} onChange={(v: boolean) => setC('carousel_show_product', v)} />
-                        {getC('carousel_show_product') && (
+                        {(getC('carousel_show_product') ?? true) && (
                           <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 grid grid-cols-2 gap-3">
                             <FormField label="Cor do Fundo">
                               <ColorInput value={getC('carousel_product_card_bg') || '#FFFFFF'} onChange={(v: string) => setC('carousel_product_card_bg', v)} />
