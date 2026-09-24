@@ -158,10 +158,10 @@ const FloatingPreview = ({
   const borderColor = floating?.border_color || colors?.primary || '#0094EB';
 
   const pos = floating?.position || 'fixed_bottom_right';
-  const gapBottom = isMobile ? '12px' : (floating?.bottom_spacing !== undefined ? `${floating.bottom_spacing}px` : '20px');
-  const gapTop = isMobile ? '12px' : (floating?.top_spacing !== undefined ? `${floating.top_spacing}px` : '20px');
-  const gapLeft = isMobile ? '12px' : (floating?.left_spacing !== undefined ? `${floating.left_spacing}px` : '20px');
-  const gapRight = isMobile ? '12px' : (floating?.right_spacing !== undefined ? `${floating.right_spacing}px` : '20px');
+  const gapBottom = floating?.bottom_spacing !== undefined ? `${floating.bottom_spacing}px` : (isMobile ? '12px' : '20px');
+  const gapTop = floating?.top_spacing !== undefined ? `${floating.top_spacing}px` : (isMobile ? '12px' : '20px');
+  const gapLeft = floating?.left_spacing !== undefined ? `${floating.left_spacing}px` : (isMobile ? '12px' : '20px');
+  const gapRight = floating?.right_spacing !== undefined ? `${floating.right_spacing}px` : (isMobile ? '12px' : '20px');
 
   const positionStyle: React.CSSProperties = {
     width: `${baseWidth}px`,
