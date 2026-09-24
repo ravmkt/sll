@@ -3,7 +3,7 @@ import {
   X, Monitor, Smartphone, Link, Link2Off,
   Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
   Save, CornerUpLeft, Star, ChevronDown, Play,
-  Heart, MessageCircle, Share2, ChevronRight
+  Heart, MessageCircle, Share2, ChevronRight, Copy
 } from 'lucide-react';
 
 interface AparenciaModalProps {
@@ -24,7 +24,7 @@ interface AparenciaModalProps {
   isSaving: boolean;
 }
 
-const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
+const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white cursor-pointer";
 const inputClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
 
 const DEMO_PREVIEW_VIDEOS = [
@@ -57,7 +57,7 @@ const limitNumber = (value: unknown, fallback: number, min: number, max: number)
   return Math.min(max, Math.max(min, parsed));
 };
 
-// ──────────────────── SCALE TO FIT (CANVAS DESKTOP) ────────────────────
+// ──────────────────── SCALE TO FIT ────────────────────
 const ScaleToFit = ({ children }: { children: React.ReactNode }) => {
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -83,7 +83,6 @@ const ScaleToFit = ({ children }: { children: React.ReactNode }) => {
     };
 
     calculate();
-
     const resizeObserver = new ResizeObserver(calculate);
     if (outerRef.current) resizeObserver.observe(outerRef.current);
     if (innerRef.current) resizeObserver.observe(innerRef.current);
@@ -209,11 +208,12 @@ const FloatingPreview = ({
           loop
           muted
           playsInline
+          autoPlay
           className="w-full h-full pointer-events-none"
           style={{ objectFit: floating?.object_fit || 'cover' }}
         />
         {showPlay && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-all">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-all pointer-events-none">
             <div className="w-8 h-8 rounded-full bg-white/95 shadow-md flex items-center justify-center">
               <Play size={10} className="text-slate-900 fill-slate-900 ml-0.5" />
             </div>
@@ -250,7 +250,7 @@ const FloatingPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW CARROSSEL ────────────────────
+// ──────────────────── PREVIEW CARROSSEL (OTIMIZADO) ────────────────────
 const CarouselPreview = ({
   carousel,
   colors,
@@ -274,7 +274,7 @@ const CarouselPreview = ({
 
   const videoSources = DEMO_PREVIEW_VIDEOS;
   const len = videoSources.length;
-  const REPEAT_TILES = 16;
+  const REPEAT_TILES = 6; 
   const baseIndex = Math.floor(REPEAT_TILES / 2) * len;
   const trackVideos = Array.from({ length: REPEAT_TILES }, () => videoSources).flat();
 
@@ -402,7 +402,7 @@ const CarouselPreview = ({
                   border: `${borderWidth}px solid ${borderColor}`,
                   boxSizing: 'border-box'
                 }}
-                className="relative overflow-hidden bg-slate-950 flex items-center justify-center shadow-sm"
+                className="relative overflow-hidden bg-slate-900 flex items-center justify-center shadow-sm"
               >
                 <video
                   ref={el => { if (el) videoRefs.current.set(i, el); else videoRefs.current.delete(i); }}
@@ -410,6 +410,8 @@ const CarouselPreview = ({
                   loop
                   muted
                   playsInline
+                  autoPlay
+                  preload="metadata"
                   style={{ objectFit: carousel?.object_fit || 'cover' }}
                   className="w-full h-full pointer-events-none"
                 />
@@ -449,7 +451,7 @@ const CarouselPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW CARROSSEL DINÂMICO ────────────────────
+// ──────────────────── PREVIEW CARROSSEL DINÂMICO (OTIMIZADO) ────────────────────
 const DynamicCarouselPreview = ({
   carousel,
   colors,
@@ -473,7 +475,7 @@ const DynamicCarouselPreview = ({
 
   const videoSources = DEMO_PREVIEW_VIDEOS;
   const len = videoSources.length;
-  const REPEAT_TILES = 16;
+  const REPEAT_TILES = 6; 
   const baseIndex = Math.floor(REPEAT_TILES / 2) * len;
   const trackVideos = Array.from({ length: REPEAT_TILES }, () => videoSources).flat();
 
@@ -622,7 +624,7 @@ const DynamicCarouselPreview = ({
                     filter: isInactive && carousel?.highlight_desaturate_inactive ? 'grayscale(80%)' : 'none',
                     boxSizing: 'border-box'
                   }}
-                  className="relative overflow-hidden bg-slate-950 transition-all duration-500 box-border pointer-events-none"
+                  className="relative overflow-hidden bg-slate-900 transition-all duration-500 box-border pointer-events-none"
                 >
                   <video
                     ref={el => { if (el) videoRefs.current.set(i, el); else videoRefs.current.delete(i); }}
@@ -631,7 +633,7 @@ const DynamicCarouselPreview = ({
                     muted
                     playsInline
                     autoPlay
-                    preload="auto"
+                    preload="metadata"
                     style={{ objectFit: carousel?.object_fit || 'cover' }}
                     className="w-full h-full"
                   />
@@ -676,530 +678,6 @@ const DynamicCarouselPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW GRADE ────────────────────
-const GridPreview = ({
-  grid,
-  colors,
-  isMobile = false,
-}: {
-  grid: any;
-  colors: any;
-  isMobile?: boolean;
-}) => {
-  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
-  const [activeSeqIndex, setActiveSeqIndex] = useState(0);
-  
-  const shape = normalizeWidgetShape(grid?.shape, 'portrait');
-  const isCircle = shape === 'circle';
-  const objectFit = grid?.object_fit || 'cover';
-  const spacing = safeNumber(grid?.spacing, 12, 0);
-  const showPlayIcon = grid?.show_play_icon ?? true;
-  const showProduct = grid?.show_product ?? false;
-  const isSequential = grid?.sequential_playback ?? false;
-
-  const totalPreviewItems = isMobile ? 4 : limitNumber(grid?.visible_items, 4, 1, 10) * 2;
-
-  useEffect(() => {
-    if (!isSequential) return;
-    const interval = setInterval(() => {
-      setActiveSeqIndex(prev => (prev + 1) % totalPreviewItems);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isSequential, totalPreviewItems]);
-
-  useEffect(() => {
-    videoRefs.current.forEach((vid, idx) => {
-      if (!vid) return;
-      const shouldPlay = isSequential
-        ? idx === activeSeqIndex
-        : (grid?.autoplay_videos ?? true);
-      if (shouldPlay) {
-        vid.play().catch(() => {});
-      } else {
-        vid.pause();
-      }
-    });
-  }, [grid?.autoplay_videos, isSequential, activeSeqIndex]);
-
-  const rawBorderRadius = grid?.border_radius;
-  const borderRadiusNum = rawBorderRadius !== undefined && rawBorderRadius !== '' ? Number(rawBorderRadius) : 12;
-  const borderRadius = isCircle ? '50%' : `${borderRadiusNum}px`;
-  
-  const rawBorder = grid?.border_width ?? grid?.border_style;
-  const parsedBorderWidth = rawBorder !== undefined && rawBorder !== null && rawBorder !== '' && !isNaN(Number(rawBorder)) ? Number(rawBorder) : 0;
-  
-  const rawCardBorder = grid?.product_card_border_width;
-  const parsedCardBorderWidth = rawCardBorder !== undefined && rawCardBorder !== null && rawCardBorder !== '' && !isNaN(Number(rawCardBorder)) ? Number(rawCardBorder) : 0;
-
-  const desktopCanvasWidth = 850;
-  const desktopScale = isMobile ? 1 : Math.min(1, desktopCanvasWidth / Math.max(1, limitNumber(grid?.visible_items, 4, 1, 10) * 160));
-
-  const titleAlignClass = {
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right',
-  }[grid?.title_align ?? 'center'] || 'text-center';
-
-  const titleStyle: React.CSSProperties = {
-    fontSize: `${safeNumber(grid?.title_font_size, 14, 8)}px`,
-    fontWeight: (grid?.title_bold ?? true) ? 900 : 500,
-  };
-
-  const renderProductCard = (compact = false) => (
-    <div
-      style={{
-        backgroundColor: grid?.product_card_bg || '#FFFFFF',
-        borderColor: grid?.product_card_border_color || '#E2E8F0',
-        borderWidth: `${parsedCardBorderWidth}px`,
-        borderRadius: `${safeNumber(grid?.product_card_border_radius, 8, 0)}px`,
-        boxSizing: 'border-box'
-      }}
-      className={`border flex items-center gap-1 shadow-sm overflow-hidden ${compact ? 'p-1' : 'p-2'}`}
-    >
-      <div className={`rounded shrink-0 overflow-hidden ${compact ? 'w-5 h-5' : 'w-8 h-8'} bg-slate-200 border border-slate-100`}>
-        <img
-          src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=80&q=80"
-          alt="Produto"
-          className="w-full h-full object-cover"
-        />
-      </div>
-      <div className="flex-1 min-w-0 text-left">
-        <p
-          className="truncate"
-          style={{
-            fontSize: `${safeNumber(grid?.product_card_name_size, compact ? 7 : 9, 6)}px`,
-            color: grid?.product_card_name_color || '#0F172A',
-            fontWeight: 700,
-          }}
-        >
-          Calça Confort
-        </p>
-        <p
-          style={{
-            fontSize: `${safeNumber(grid?.product_card_price_size, compact ? 6.5 : 8, 6)}px`,
-            color: grid?.product_card_price_color || colors?.primary || '#0094EB',
-            fontWeight: 900,
-          }}
-        >
-          R$ 149,95
-        </p>
-      </div>
-    </div>
-  );
-
-  if (isMobile) {
-    const items = Array.from({ length: 4 });
-
-    let aspectClass = "aspect-[9/15]";
-    if (isCircle) aspectClass = "aspect-square";
-    else if (shape === 'landscape') aspectClass = "aspect-[16/9]";
-    else if (shape === 'square') aspectClass = "aspect-square";
-
-    return (
-      <div className="w-full py-2 flex flex-col space-y-3 box-border">
-        {grid?.show_title && (
-          <h4 className={`uppercase tracking-wider text-slate-800 dark:text-white ${titleAlignClass}`} style={titleStyle}>
-            {grid?.title_text || 'Grade de Vídeos'}
-          </h4>
-        )}
-
-        <div
-          style={{
-            marginLeft: `${Number(grid?.margin_left ?? 0)}px`,
-            marginRight: `${Number(grid?.margin_right ?? 0)}px`,
-            marginTop: `${Number(grid?.margin_top ?? 0)}px`,
-            marginBottom: `${Number(grid?.margin_bottom ?? 0)}px`,
-            gap: `${spacing}px`,
-          }}
-          className="grid grid-cols-2 w-full px-2"
-        >
-          {items.map((_, i) => (
-            <div key={i} className="flex flex-col" style={{ gap: '6px' }}>
-              <div
-                className={`relative bg-slate-950 overflow-hidden shadow-sm flex items-center justify-center transition-all duration-300 ${aspectClass}`}
-                style={{
-                  borderRadius: borderRadius,
-                  border: `${parsedBorderWidth}px solid ${grid?.border_color || colors?.primary || '#0094EB'}`,
-                  boxSizing: 'border-box' 
-                }}
-              >
-                <video
-                  ref={el => { if (el) videoRefs.current.set(i, el); }}
-                  src={DEMO_PREVIEW_VIDEOS[i % DEMO_PREVIEW_VIDEOS.length]}
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full pointer-events-none"
-                  style={{ objectFit: objectFit as any }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 pointer-events-none" />
-                {showPlayIcon && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-6 h-6 rounded-full bg-white/95 flex items-center justify-center shadow-sm">
-                      <Play size={8} className="text-slate-900 fill-slate-900 ml-0.5" />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {showProduct && !isCircle && renderProductCard(true)}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const cols = limitNumber(grid?.visible_items, 4, 1, 10);
-  const totalItems = cols * 2;
-  const items = Array.from({ length: totalItems });
-  const shapeRatio = shape === 'landscape' ? (9 / 16) : (16 / 9);
-
-  return (
-    <div 
-      className="w-full py-3 space-y-3 box-border"
-      style={{
-        paddingLeft: `${Number(grid?.margin_left ?? 0)}px`,
-        paddingRight: `${Number(grid?.margin_right ?? 0)}px`,
-        paddingTop: `${Number(grid?.margin_top ?? 0)}px`,
-        paddingBottom: `${Number(grid?.margin_bottom ?? 0)}px`,
-      }}
-    >
-      {grid?.show_title && (
-        <h4 className={`tracking-wider text-slate-800 dark:text-slate-100 ${titleAlignClass}`} style={titleStyle}>
-          {grid?.title_text || 'Grade de Vídeos'}
-        </h4>
-      )}
-      <div
-        className="grid w-full"
-        style={{ 
-          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, 
-          gap: `${spacing * desktopScale}px`, 
-          transform: `scale(${desktopScale})`, 
-          transformOrigin: 'center center' 
-        }}
-      >
-        {items.map((_, i) => (
-          <div key={i} className="w-full flex flex-col space-y-2">
-            <div
-              style={{
-                width: '100%',
-                aspectRatio: isCircle ? '1 / 1' : `${1} / ${shapeRatio}`,
-                borderRadius,
-                border: `${parsedBorderWidth}px solid ${grid?.border_color || colors?.primary || '#0094EB'}`,
-                boxSizing: 'border-box'
-              }}
-              className="relative overflow-hidden bg-slate-950 shadow-sm flex items-center justify-center shrink-0"
-            >
-              <video
-                ref={el => { if (el) videoRefs.current.set(i, el); }}
-                src={DEMO_PREVIEW_VIDEOS[i % DEMO_PREVIEW_VIDEOS.length]}
-                loop
-                muted
-                playsInline
-                className="w-full h-full pointer-events-none"
-                style={{ objectFit: objectFit as any }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 pointer-events-none" />
-              {showPlayIcon && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-sm">
-                    <Play size={10} className="text-slate-900 fill-slate-900 ml-0.5" />
-                  </div>
-                </div>
-              )}
-            </div>
-            {showProduct && !isCircle && renderProductCard(false)}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// ──────────────────── PREVIEW PLAYER (MODAL - EXTRAÍDO DO LEGADO) ────────────────────
-const ModalPlayerPreview = ({
-  playerConfig,
-  primaryColor,
-  isMobile = false,
-}: {
-  playerConfig: any;
-  primaryColor: string;
-  isMobile?: boolean;
-}) => {
-  const parsedBorderWidth = playerConfig.border_width !== undefined && playerConfig.border_width !== null && playerConfig.border_width !== '' 
-    ? Number(playerConfig.border_width) 
-    : 0;
-
-  const rawCardBorder = playerConfig.product_card_border_width;
-  const parsedCardBorderWidth = rawCardBorder !== undefined && rawCardBorder !== null && rawCardBorder !== '' && !isNaN(Number(rawCardBorder)) ? Number(rawCardBorder) : 0;
-  
-  const getCardStyle = () => ({
-    backgroundColor: playerConfig.product_card_bg || 'rgba(255,255,255,0.95)',
-    borderColor: playerConfig.product_card_border_color || 'rgba(255,255,255,0.2)',
-    borderWidth: `${parsedCardBorderWidth}px`,
-    borderStyle: parsedCardBorderWidth > 0 ? 'solid' : 'none',
-    borderRadius: playerConfig.product_card_border_radius !== undefined ? `${playerConfig.product_card_border_radius}px` : '1rem',
-  });
-
-  const getFontSize = (sizeVal: any, defaultSize: number, mobileScale = 1) => {
-    const size = sizeVal !== undefined && sizeVal !== null && sizeVal !== '' ? Number(sizeVal) : defaultSize;
-    return `${size * mobileScale}px`;
-  };
-
-  const showLike = playerConfig.show_like_button !== false;
-  const showComments = playerConfig.show_comment_button !== false;
-  const showShare = playerConfig.show_share_button !== false;
-  const showProduct = playerConfig.show_product !== false;
-
-  if (isMobile) {
-    return (
-      <div className="relative w-full h-full overflow-hidden bg-slate-950/90 flex items-center justify-center p-4">
-        <div 
-          className="relative w-full h-[85%] max-h-[700px] overflow-hidden flex flex-col justify-between shadow-2xl bg-black"
-          style={{
-            color: '#FFFFFF',
-            borderColor: playerConfig.border_color || primaryColor,
-            borderWidth: `${parsedBorderWidth}px`,
-            borderStyle: parsedBorderWidth > 0 ? 'solid' : 'none',
-            borderRadius: playerConfig.border_radius ? `${playerConfig.border_radius}px` : '1rem',
-          }}
-        >
-          <video
-            src={DEMO_PREVIEW_VIDEOS[0]}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 h-full w-full object-cover pointer-events-none"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 pointer-events-none z-10" />
-
-          {/* Header do Player */}
-          <div className="relative z-20 flex items-center justify-between p-3 pt-3">
-            {playerConfig.show_title && (
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full border border-white/25 bg-white/10 backdrop-blur-sm" />
-                <div>
-                  <h4 className="text-xs font-bold text-white drop-shadow leading-tight">Calça Confort</h4>
-                  <p className="text-[9px] text-white/70">Vidlytics Store</p>
-                </div>
-              </div>
-            )}
-            <button
-              type="button"
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md border border-white/10 transition-colors hover:bg-black/60 cursor-pointer"
-            >
-              <X size={14} />
-            </button>
-          </div>
-
-          {/* Botões de engajamento Lateral */}
-          <div className="absolute right-3 bottom-[110px] z-20 flex flex-col items-center gap-3.5">
-            {showLike && (
-              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
-                <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                  <Heart size={16} className="text-white fill-white" />
-                </div>
-                <span className="text-[8px] font-semibold mt-0.5 drop-shadow">1.2k</span>
-              </button>
-            )}
-            {showComments && (
-              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
-                <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                  <MessageCircle size={16} className="text-white" />
-                </div>
-                <span className="text-[8px] font-semibold mt-0.5 drop-shadow">48</span>
-              </button>
-            )}
-            {showShare && (
-              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
-                <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                  <Share2 size={16} className="text-white" />
-                </div>
-                <span className="text-[8px] font-semibold mt-0.5 drop-shadow">Enviar</span>
-              </button>
-            )}
-          </div>
-
-          {/* Rodapé com Card e Linha de Progresso */}
-          <div className="relative z-20 w-full p-3 space-y-2.5">
-            {showProduct && (
-              <div 
-                className="backdrop-blur-md p-2.5 flex items-center gap-2.5 shadow-2xl transition hover:scale-[1.01]"
-                style={getCardStyle()}
-              >
-                <div className="h-11 w-11 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100">
-                  <img
-                    src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=150&q=80"
-                    alt="Product"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h5 
-                    className="font-bold truncate" 
-                    style={{ 
-                      color: playerConfig.product_card_name_color || '#0F172A',
-                      fontSize: getFontSize(playerConfig.product_card_name_size, 11)
-                    }}
-                  >
-                    Calça Confort Premium
-                  </h5>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <span 
-                      className="font-black" 
-                      style={{ 
-                        color: playerConfig.product_card_price_color || primaryColor,
-                        fontSize: getFontSize(playerConfig.product_card_price_size, 11)
-                      }}
-                    >
-                      R$ 149,95
-                    </span>
-                    <span className="text-[9px] text-slate-400 line-through">R$ 199,90</span>
-                  </div>
-                </div>
-                <ChevronRight
-                  size={20}
-                  className="shrink-0"
-                  style={{ color: playerConfig.product_card_price_color || primaryColor }}
-                />
-              </div>
-            )}
-
-            <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-              <div className="h-full rounded-full w-2/3" style={{ backgroundColor: primaryColor }} />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // DESKTOP: Player pop-up simulado
-  return (
-    <div className="relative h-full w-full overflow-hidden bg-[#0f111a] border border-slate-800/80 rounded-2xl flex items-center justify-center p-4">
-      <div
-        className="relative h-full max-h-[410px] w-full max-w-[230px] overflow-hidden shadow-2xl shrink-0 bg-slate-900 flex flex-col justify-between"
-        style={{
-          color: '#FFFFFF',
-          borderColor: playerConfig.border_color || primaryColor,
-          borderWidth: `${parsedBorderWidth}px`,
-          borderStyle: parsedBorderWidth > 0 ? 'solid' : 'none',
-          borderRadius: playerConfig.border_radius ? `${playerConfig.border_radius}px` : '1.25rem',
-        }}
-      >
-        <video
-          src={DEMO_PREVIEW_VIDEOS[0]}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 h-full w-full object-cover pointer-events-none"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 pointer-events-none z-10" />
-
-        {/* Header */}
-        <div className="relative z-20 flex items-center justify-between p-3">
-          {playerConfig.show_title && (
-            <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full border border-white/25 bg-white/10 backdrop-blur-sm" />
-              <div className="min-w-0">
-                <h4 className="text-[10px] font-bold text-white drop-shadow truncate w-24 leading-tight">Calça Confort</h4>
-                <p className="text-[8px] text-white/70 truncate w-24">Vidlytics Store</p>
-              </div>
-            </div>
-          )}
-          <button
-            type="button"
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-black/60 cursor-pointer"
-          >
-            <X size={12} />
-          </button>
-        </div>
-
-        {/* Botões Desktop */}
-        <div className="absolute right-2.5 bottom-[88px] z-20 flex flex-col items-center gap-2.5">
-          {showLike && (
-            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
-              <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                <Heart size={13} className="text-white fill-white" />
-              </div>
-              <span className="text-[7px] font-semibold mt-0.5 drop-shadow">1.2k</span>
-            </button>
-          )}
-          {showComments && (
-            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
-              <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                <MessageCircle size={13} className="text-white" />
-              </div>
-              <span className="text-[7px] font-semibold mt-0.5 drop-shadow">48</span>
-            </button>
-          )}
-          {showShare && (
-            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
-              <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                <Share2 size={13} className="text-white" />
-              </div>
-              <span className="text-[7px] font-semibold mt-0.5 drop-shadow">Enviar</span>
-            </button>
-          )}
-        </div>
-
-        {/* Card Produto Desktop */}
-        <div className="relative z-20 w-full p-2.5 space-y-2">
-          {showProduct && (
-            <div 
-              className="backdrop-blur-md p-2 flex items-center gap-2 shadow-2xl transition hover:scale-[1.01]"
-              style={getCardStyle()}
-            >
-              <div className="h-8 w-8 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-100">
-                <img
-                  src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=150&q=80"
-                  alt="Product"
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h5 
-                  className="font-bold truncate"
-                  style={{ 
-                    color: playerConfig.product_card_name_color || '#0F172A',
-                    fontSize: getFontSize(playerConfig.product_card_name_size, 9, 0.8) 
-                  }}
-                >
-                  Calça Confort Premium
-                </h5>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span 
-                    className="font-black"
-                    style={{ 
-                      color: playerConfig.product_card_price_color || primaryColor,
-                      fontSize: getFontSize(playerConfig.product_card_price_size, 9, 0.8)
-                    }}
-                  >
-                    R$ 149,95
-                  </span>
-                  <span className="text-[7px] text-slate-400 line-through">R$ 199,90</span>
-                </div>
-              </div>
-              <ChevronRight
-                size={16}
-                className="shrink-0"
-                style={{ color: playerConfig.product_card_price_color || primaryColor }}
-              />
-            </div>
-          )}
-
-          <div className="w-full h-0.5 bg-white/20 rounded-full overflow-hidden">
-            <div className="h-full rounded-full w-2/3" style={{ backgroundColor: primaryColor }} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const FormField = ({ label, children }: any) => (
   <div className="flex flex-col gap-1.5">
     {label && <label className="text-xs font-bold text-slate-700 dark:text-slate-300">{label}</label>}
@@ -1209,7 +687,7 @@ const FormField = ({ label, children }: any) => (
 
 const ColorInput = ({ value, onChange }: any) => (
   <div className="flex items-center gap-2">
-    <div className="relative w-10 h-10 shrink-0">
+    <div className="relative w-10 h-10 shrink-0 cursor-pointer">
       <input
         type="color"
         value={value || '#0094eb'}
@@ -1231,13 +709,14 @@ const ColorInput = ({ value, onChange }: any) => (
   </div>
 );
 
-const CheckboxField = ({ label, checked, onChange }: any) => (
-  <label className="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl mb-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+const CheckboxField = ({ label, checked, onChange, disabled = false }: any) => (
+  <label className={`flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl mb-2 transition-colors ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
     <input
       type="checkbox"
       checked={checked}
+      disabled={disabled}
       onChange={(e) => onChange(e.target.checked)}
-      className="w-4 h-4 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb]"
+      className="w-4 h-4 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer"
     />
     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
   </label>
@@ -1247,7 +726,8 @@ const Accordion = ({ title, isOpen, onClick, children }: any) => (
   <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 mb-3 shadow-sm">
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+      type="button"
+      className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
     >
       <span className="font-bold text-sm text-slate-800 dark:text-white">{title}</span>
       <ChevronDown size={18} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -1274,6 +754,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
 
+  // Identificação do padrão inviolável da loja
+  const isDefaultSystemStyle = (styleName || '').trim().toUpperCase() === 'PADRAO' || formData?.id === 'default' || (formData?.is_default && (styleName || '').trim().toUpperCase() === 'PADRAO');
+
   useEffect(() => {
     if (isOpen) {
       setActiveTab('basico');
@@ -1285,7 +768,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const getC = (key: string) => getConfig(previewDevice, key);
   const setC = (key: string, value: any) => setConfig(previewDevice, key, value);
 
-  // Mapeamentos para Flutuante
+  // Mapeamentos Flutuante
   const currentFloatingShape = normalizeWidgetShape(getC('floating_format') || 'portrait');
   const currentFloatingWidth = Number(getC('floating_width') || (previewDevice === 'mobile' ? 64 : 80));
   const currentFloatingHeight = (currentFloatingShape === 'circle' || currentFloatingShape === 'square')
@@ -1318,7 +801,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     allow_close: getC('floating_show_close_button') ?? false,
   };
 
-  // Mapeamentos para Carrossel
+  // Mapeamentos Carrossel
   const carouselPreviewData = {
     shape: normalizeWidgetShape(getC('carousel_shape') || getC('carousel_style') || 'portrait'),
     object_fit: getC('carousel_object_fit') || 'cover',
@@ -1348,7 +831,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_price_color: getC('carousel_product_card_price_color') || formData?.primary_color || '#0094EB',
   };
 
-  // Mapeamentos para Carrossel Dinâmico
+  // Mapeamentos Carrossel Dinâmico
   const dynCarouselPreviewData = {
     shape: normalizeWidgetShape(getC('dyn_carousel_shape') || 'portrait'),
     object_fit: getC('dyn_carousel_object_fit') || 'cover',
@@ -1384,7 +867,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_price_color: getC('dyn_carousel_product_card_price_color') || formData?.primary_color || '#0094EB',
   };
 
-  // Mapeamentos para Grade
+  // Mapeamentos Grade
   const gridPreviewData = {
     shape: normalizeWidgetShape(getC('grid_shape') || 'portrait'),
     object_fit: getC('grid_object_fit') || 'cover',
@@ -1417,7 +900,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_price_color: getC('grid_product_card_price_color') || formData?.primary_color || '#0094EB',
   };
 
-  // Mapeamentos para Player (Modal)
+  // Mapeamentos Player
   const playerPreviewData = {
     border_color: getC('modal_border_color') || formData?.primary_color || '#0094EB',
     border_width: getC('modal_border_width') ?? 2,
@@ -1437,7 +920,21 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_price_color: getC('modal_product_card_price_color') || formData?.primary_color || '#0094EB',
   };
 
+  // Ação de Salvar: Bloqueia substituição do PADRAO da loja
   const handleSave = async () => {
+    if (isDefaultSystemStyle) {
+      const newName = window.prompt('O estilo "PADRAO" é o modelo oficial da loja e não pode ser sobrescrito.\n\nDigite o nome para salvar suas modificações como um NOVO estilo:');
+      if (!newName || !newName.trim()) {
+        return;
+      }
+      if (newName.trim().toUpperCase() === 'PADRAO') {
+        alert('Você não pode usar o nome reservado "PADRAO". Escolha outro nome.');
+        return;
+      }
+      setStyleName(newName.trim());
+      setIsDefault(false);
+    }
+
     try {
       await saveStyle();
     } catch (error: any) {
@@ -1456,8 +953,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     setOpenAccordion(openAccordion === title ? '' : title);
   };
 
+  // Resetar restaura as configurações originais do padrão
   const handleReset = () => {
-    if (activeTab === 'basico') return;
     resetTab(activeTab, previewDevice);
   };
 
@@ -1479,7 +976,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
         {/* HEADER MODAL */}
         <div className="flex items-center justify-between px-6 py-4">
           <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Editar Estilo</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+          <button onClick={onClose} type="button" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer">
             <X size={24} />
           </button>
         </div>
@@ -1493,8 +990,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => handleTabChange(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors whitespace-nowrap
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors whitespace-nowrap cursor-pointer
                     ${isActive ? 'bg-[#0094eb] text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
                 >
                   <Icon size={16} /> {tab.label}
@@ -1505,8 +1003,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
           {activeTab !== 'basico' && (
             <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shrink-0 border border-slate-200 dark:border-slate-700">
-              <button onClick={() => setPreviewDevice('desktop')} className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${previewDevice === 'desktop' ? 'bg-white dark:bg-slate-700 text-[#0094eb] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}><Monitor size={16} /> Desktop</button>
-              <button onClick={() => setPreviewDevice('mobile')} className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${previewDevice === 'mobile' ? 'bg-white dark:bg-slate-700 text-[#0094eb] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}><Smartphone size={16} /> Mobile</button>
+              <button type="button" onClick={() => setPreviewDevice('desktop')} className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${previewDevice === 'desktop' ? 'bg-white dark:bg-slate-700 text-[#0094eb] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}><Monitor size={16} /> Desktop</button>
+              <button type="button" onClick={() => setPreviewDevice('mobile')} className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${previewDevice === 'mobile' ? 'bg-white dark:bg-slate-700 text-[#0094eb] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}><Smartphone size={16} /> Mobile</button>
             </div>
           )}
         </div>
@@ -1524,12 +1022,39 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Configurações Básicas</h3>
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Nome do Estilo</label>
-                    <input type="text" value={styleName} onChange={(e) => setStyleName(e.target.value)} placeholder="Ex: Minha Loja" className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-[#0094eb] outline-none dark:bg-slate-800 dark:text-white font-medium" />
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Nome do Estilo</label>
+                      {isDefaultSystemStyle && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
+                          Padrão Oficial Protegido
+                        </span>
+                      )}
+                    </div>
+                    <input 
+                      type="text" 
+                      value={styleName} 
+                      onChange={(e) => setStyleName(e.target.value)} 
+                      disabled={isDefaultSystemStyle}
+                      placeholder="Ex: Minha Loja" 
+                      className={`${inputClass} ${isDefaultSystemStyle ? 'bg-slate-100 text-slate-500 cursor-not-allowed border-dashed' : ''}`} 
+                    />
+                    {isDefaultSystemStyle && (
+                      <p className="text-[11px] text-slate-400 mt-1.5 leading-snug">
+                        💡 Este é o modelo base da loja. Ao alterar opções e clicar em <strong>Salvar</strong>, o sistema criará uma nova cópia personalizada automaticamente.
+                      </p>
+                    )}
                   </div>
                   <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <div className="mt-1"><input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb]" /></div>
+                    <label className={`flex items-start gap-3 ${isDefaultSystemStyle ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}>
+                      <div className="mt-1">
+                        <input 
+                          type="checkbox" 
+                          checked={isDefault} 
+                          disabled={isDefaultSystemStyle}
+                          onChange={(e) => setIsDefault(e.target.checked)} 
+                          className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer" 
+                        />
+                      </div>
                       <div>
                         <p className="font-bold text-slate-800 dark:text-white">Definir como padrão</p>
                         <p className="text-xs text-slate-500 mt-1">Vídeos sem estilo definido usarão este modelo automaticamente.</p>
@@ -1538,7 +1063,14 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                   <div className={`p-4 border rounded-xl transition-colors ${isUnified ? 'border-[#0094eb]/40 bg-[#0094eb]/5' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
-                      <div className="mt-1"><input type="checkbox" checked={isUnified} onChange={(e) => toggleUnified(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb]" /></div>
+                      <div className="mt-1">
+                        <input 
+                          type="checkbox" 
+                          checked={isUnified} 
+                          onChange={(e) => toggleUnified(e.target.checked)} 
+                          className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer" 
+                        />
+                      </div>
                       <div>
                         <p className="font-bold text-slate-800 dark:text-white">Unificar dispositivos</p>
                         <p className="text-xs text-slate-500 mt-1">As alterações que você fizer em Desktop serão aplicadas automaticamente ao Mobile.</p>
@@ -1557,15 +1089,17 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Dispositivo</span>
                   <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1">
                     <button
+                      type="button"
                       onClick={() => !isUnified && setPreviewDevice('desktop')}
-                      className={`p-1.5 rounded-md transition-colors ${(isUnified || previewDevice === 'desktop') ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
+                      className={`p-1.5 rounded-md transition-colors cursor-pointer ${(isUnified || previewDevice === 'desktop') ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : ''}`}
                     >
                       <Monitor size={16} strokeWidth={2.5} />
                     </button>
                     {isUnified ? <Link size={14} className="text-[#0094eb] mx-1" strokeWidth={2.5} /> : <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>}
                     <button
+                      type="button"
                       onClick={() => !isUnified && setPreviewDevice('mobile')}
-                      className={`p-1.5 rounded-md transition-colors ${(isUnified || previewDevice === 'mobile') ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
+                      className={`p-1.5 rounded-md transition-colors cursor-pointer ${(isUnified || previewDevice === 'mobile') ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : ''}`}
                     >
                       <Smartphone size={16} strokeWidth={2.5} />
                     </button>
@@ -1653,7 +1187,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                               </FormField>
                               <div className="flex items-center pt-5">
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                  <input type="checkbox" checked={getC('floating_cta_is_bold') ?? true} onChange={e => setC('floating_cta_is_bold', e.target.checked)} className="w-4 h-4 rounded text-[#0094eb]" />
+                                  <input type="checkbox" checked={getC('floating_cta_is_bold') ?? true} onChange={e => setC('floating_cta_is_bold', e.target.checked)} className="w-4 h-4 rounded text-[#0094eb] cursor-pointer" />
                                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Negrito</span>
                                 </label>
                               </div>
@@ -2285,7 +1819,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
         {/* FOOTER */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
-          <button onClick={handleReset} className="bg-red-50 text-red-500 font-extrabold px-5 py-2.5 rounded-xl text-sm tracking-wide border border-transparent outline-none">
+          <button onClick={handleReset} type="button" className="bg-red-50 text-red-500 font-extrabold px-5 py-2.5 rounded-xl text-sm tracking-wide border border-transparent outline-none cursor-pointer hover:bg-red-100 transition-colors">
             RESETAR
           </button>
           <div className="hidden lg:flex items-center gap-2 text-slate-500 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-full text-sm border border-slate-100 dark:border-slate-700 shadow-sm">
@@ -2293,11 +1827,21 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
             <span>Este painel é um <strong>preview meramente visual</strong>. Para testar cliques e interações, use o simulador na edição dos stories.</span>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={onClose} className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            <button onClick={onClose} type="button" className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
               <X size={18} strokeWidth={2.5} /> Cancelar
             </button>
-            <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 px-6 py-2.5 bg-[#0094eb] text-white rounded-xl text-sm font-bold shadow-md transition-none disabled:opacity-50">
-              <Save size={18} strokeWidth={2.5} /> {isSaving ? 'Salvando...' : 'Salvar'}
+            <button 
+              onClick={handleSave} 
+              type="button"
+              disabled={isSaving} 
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer ${
+                isDefaultSystemStyle 
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white' 
+                  : 'bg-[#0094eb] hover:bg-[#0082cf] text-white'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {isDefaultSystemStyle ? <Copy size={18} strokeWidth={2.5} /> : <Save size={18} strokeWidth={2.5} />} 
+              {isSaving ? 'Salvando...' : isDefaultSystemStyle ? 'Salvar Como Novo Estilo' : 'Salvar'}
             </button>
           </div>
         </div>
