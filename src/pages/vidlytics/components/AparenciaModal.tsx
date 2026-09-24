@@ -21,6 +21,52 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({ isOpen, onClose, styleD
   const [isDefault, setIsDefault] = useState(true);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
 
+  // --- LÓGICA DE DADOS (INJETADA) ---
+  const [formData, setFormData] = useState<any>({
+    useGlobalAppearance: true,
+    desktop: {
+      carousel_style: 'stories',
+      carousel_item_size: 80,
+      carousel_gap: 12,
+      carousel_position: 'top',
+      carousel_border_color: '#0094EB',
+      floating_position: 'bottom-right',
+      floating_size: 60,
+    },
+    mobile: {
+      carousel_style: 'stories',
+      carousel_item_size: 60,
+      carousel_gap: 8,
+      carousel_position: 'top',
+      carousel_border_color: '#0094EB',
+      floating_position: 'bottom-right',
+      floating_size: 50,
+    }
+  });
+
+  // Função para ler o valor atual de uma configuração
+  const getConfig = (device: 'desktop' | 'mobile', key: string) => {
+    return formData[device]?.[key] || '';
+  };
+
+  // Função para atualizar uma configuração em tempo real
+  const setConfig = (device: 'desktop' | 'mobile', key: string, value: any) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      [device]: {
+        ...prev[device],
+        [key]: value
+      }
+    }));
+  };
+
+  // Função de salvar (Onde conectaremos o Banco SLL depois)
+  const handleSave = async () => {
+    console.log("Salvando configurações de aparência...", formData);
+    // TODO: Conectar com VidlyticsDatabaseService
+  };
+  // ----------------------------------
+
   // 1. Garante que sempre abre na aba 'basico'
   useEffect(() => {
     if (isOpen) {
