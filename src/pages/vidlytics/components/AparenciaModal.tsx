@@ -13,6 +13,14 @@ interface AparenciaModalProps {
 }
 
 // Fallback UI para evitar o erro "SectionCard is not defined"
+// Fallback UI para evitar o erro "FormField is not defined"
+const FormField = ({ label, children, helperText }: any) => (
+  <div className="mb-4">
+    {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+    {children}
+    {helperText && <p className="mt-1 text-sm text-gray-500">{helperText}</p>}
+  </div>
+);
 const SectionCard = ({ title, children, description }: any) => (
   <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6">
     <div className="mb-4">
