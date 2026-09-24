@@ -250,7 +250,7 @@ const FloatingPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW CARROSSEL (OTIMIZADO) ────────────────────
+// ──────────────────── PREVIEW CARROSSEL ────────────────────
 const CarouselPreview = ({
   carousel,
   colors,
@@ -451,7 +451,7 @@ const CarouselPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW CARROSSEL DINÂMICO (OTIMIZADO) ────────────────────
+// ──────────────────── PREVIEW CARROSSEL DINÂMICO ────────────────────
 const DynamicCarouselPreview = ({
   carousel,
   colors,
@@ -678,6 +678,523 @@ const DynamicCarouselPreview = ({
   );
 };
 
+// ──────────────────── PREVIEW GRADE (ESTRUTURA COMPLETA) ────────────────────
+const GridPreview = ({
+  grid,
+  colors,
+  isMobile = false,
+}: {
+  grid: any;
+  colors: any;
+  isMobile?: boolean;
+}) => {
+  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const [activeSeqIndex, setActiveSeqIndex] = useState(0);
+  
+  const shape = normalizeWidgetShape(grid?.shape, 'portrait');
+  const isCircle = shape === 'circle';
+  const objectFit = grid?.object_fit || 'cover';
+  const spacing = safeNumber(grid?.spacing, 12, 0);
+  const showPlayIcon = grid?.show_play_icon ?? true;
+  const showProduct = grid?.show_product ?? false;
+  const isSequential = grid?.sequential_playback ?? false;
+
+  const totalPreviewItems = isMobile ? 4 : limitNumber(grid?.visible_items, 4, 1, 10) * 2;
+
+  useEffect(() => {
+    if (!isSequential) return;
+    const interval = setInterval(() => {
+      setActiveSeqIndex(prev => (prev + 1) % totalPreviewItems);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isSequential, totalPreviewItems]);
+
+  useEffect(() => {
+    videoRefs.current.forEach((vid, idx) => {
+      if (!vid) return;
+      const shouldPlay = isSequential
+        ? idx === activeSeqIndex
+        : (grid?.autoplay_videos ?? true);
+      if (shouldPlay) {
+        vid.play().catch(() => {});
+      } else {
+        vid.pause();
+      }
+    });
+  }, [grid?.autoplay_videos, isSequential, activeSeqIndex]);
+
+  const rawBorderRadius = grid?.border_radius;
+  const borderRadiusNum = rawBorderRadius !== undefined && rawBorderRadius !== '' ? Number(rawBorderRadius) : 12;
+  const borderRadius = isCircle ? '50%' : `${borderRadiusNum}px`;
+  
+  const rawBorder = grid?.border_width ?? grid?.border_style;
+  const parsedBorderWidth = rawBorder !== undefined && rawBorder !== null && rawBorder !== '' && !isNaN(Number(rawBorder)) ? Number(rawBorder) : 0;
+  
+  const rawCardBorder = grid?.product_card_border_width;
+  const parsedCardBorderWidth = rawCardBorder !== undefined && rawCardBorder !== null && rawCardBorder !== '' && !isNaN(Number(rawCardBorder)) ? Number(rawCardBorder) : 0;
+
+  const desktopCanvasWidth = 850;
+  const desktopScale = isMobile ? 1 : Math.min(1, desktopCanvasWidth / Math.max(1, limitNumber(grid?.visible_items, 4, 1, 10) * 160));
+
+  const titleAlignClass = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right',
+  }[grid?.title_align ?? 'center'] || 'text-center';
+
+  const titleStyle: React.CSSProperties = {
+    fontSize: `${safeNumber(grid?.title_font_size, 14, 8)}px`,
+    fontWeight: (grid?.title_bold ?? true) ? 900 : 500,
+  };
+
+  const renderProductCard = (compact = false) => (
+    <div
+      style={{
+        backgroundColor: grid?.product_card_bg || '#FFFFFF',
+        borderColor: grid?.product_card_border_color || '#E2E8F0',
+        borderWidth: `${parsedCardBorderWidth}px`,
+        borderRadius: `${safeNumber(grid?.product_card_border_radius, 8, 0)}px`,
+        boxSizing: 'border-box'
+      }}
+      className={`border flex items-center gap-1 shadow-sm overflow-hidden ${compact ? 'p-1' : 'p-2'}`}
+    >
+      <div className={`rounded shrink-0 overflow-hidden ${compact ? 'w-5 h-5' : 'w-8 h-8'} bg-slate-200 border border-slate-100`}>
+        <img
+          src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=80&q=80"
+          alt="Produto"
+          className="w-full h-full object-cover"
+        />
+      </div>
+      <div className="flex-1 min-w-0 text-left">
+        <p
+          className="truncate"
+          style={{
+            fontSize: `${safeNumber(grid?.product_card_name_size, compact ? 7 : 9, 6)}px`,
+            color: grid?.product_card_name_color || '#0F172A',
+            fontWeight: 700,
+          }}
+        >
+          Calça Confort
+        </p>
+        <p
+          style={{
+            fontSize: `${safeNumber(grid?.product_card_price_size, compact ? 6.5 : 8, 6)}px`,
+            color: grid?.product_card_price_color || colors?.primary || '#0094EB',
+            fontWeight: 900,
+          }}
+        >
+          R$ 149,95
+        </p>
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    const items = Array.from({ length: 4 });
+
+    let aspectClass = "aspect-[9/15]";
+    if (isCircle) aspectClass = "aspect-square";
+    else if (shape === 'landscape') aspectClass = "aspect-[16/9]";
+    else if (shape === 'square') aspectClass = "aspect-square";
+
+    return (
+      <div className="w-full py-2 flex flex-col space-y-3 box-border">
+        {grid?.show_title && (
+          <h4 className={`uppercase tracking-wider text-slate-800 dark:text-white ${titleAlignClass}`} style={titleStyle}>
+            {grid?.title_text || 'Grade de Vídeos'}
+          </h4>
+        )}
+
+        <div
+          style={{
+            marginLeft: `${Number(grid?.margin_left ?? 0)}px`,
+            marginRight: `${Number(grid?.margin_right ?? 0)}px`,
+            marginTop: `${Number(grid?.margin_top ?? 0)}px`,
+            marginBottom: `${Number(grid?.margin_bottom ?? 0)}px`,
+            gap: `${spacing}px`,
+          }}
+          className="grid grid-cols-2 w-full px-2"
+        >
+          {items.map((_, i) => (
+            <div key={i} className="flex flex-col" style={{ gap: '6px' }}>
+              <div
+                className={`relative bg-slate-950 overflow-hidden shadow-sm flex items-center justify-center transition-all duration-300 ${aspectClass}`}
+                style={{
+                  borderRadius: borderRadius,
+                  border: `${parsedBorderWidth}px solid ${grid?.border_color || colors?.primary || '#0094EB'}`,
+                  boxSizing: 'border-box' 
+                }}
+              >
+                <video
+                  ref={el => { if (el) videoRefs.current.set(i, el); }}
+                  src={DEMO_PREVIEW_VIDEOS[i % DEMO_PREVIEW_VIDEOS.length]}
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full pointer-events-none"
+                  style={{ objectFit: objectFit as any }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 pointer-events-none" />
+                {showPlayIcon && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-6 h-6 rounded-full bg-white/95 flex items-center justify-center shadow-sm">
+                      <Play size={8} className="text-slate-900 fill-slate-900 ml-0.5" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {showProduct && !isCircle && renderProductCard(true)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const cols = limitNumber(grid?.visible_items, 4, 1, 10);
+  const totalItems = cols * 2;
+  const items = Array.from({ length: totalItems });
+  const shapeRatio = shape === 'landscape' ? (9 / 16) : (16 / 9);
+
+  return (
+    <div 
+      className="w-full py-3 space-y-3 box-border"
+      style={{
+        paddingLeft: `${Number(grid?.margin_left ?? 0)}px`,
+        paddingRight: `${Number(grid?.margin_right ?? 0)}px`,
+        paddingTop: `${Number(grid?.margin_top ?? 0)}px`,
+        paddingBottom: `${Number(grid?.margin_bottom ?? 0)}px`,
+      }}
+    >
+      {grid?.show_title && (
+        <h4 className={`tracking-wider text-slate-800 dark:text-slate-100 ${titleAlignClass}`} style={titleStyle}>
+          {grid?.title_text || 'Grade de Vídeos'}
+        </h4>
+      )}
+      <div
+        className="grid w-full"
+        style={{ 
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, 
+          gap: `${spacing * desktopScale}px`, 
+          transform: `scale(${desktopScale})`, 
+          transformOrigin: 'center center' 
+        }}
+      >
+        {items.map((_, i) => (
+          <div key={i} className="w-full flex flex-col space-y-2">
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: isCircle ? '1 / 1' : `${1} / ${shapeRatio}`,
+                borderRadius,
+                border: `${parsedBorderWidth}px solid ${grid?.border_color || colors?.primary || '#0094EB'}`,
+                boxSizing: 'border-box'
+              }}
+              className="relative overflow-hidden bg-slate-950 shadow-sm flex items-center justify-center shrink-0"
+            >
+              <video
+                ref={el => { if (el) videoRefs.current.set(i, el); }}
+                src={DEMO_PREVIEW_VIDEOS[i % DEMO_PREVIEW_VIDEOS.length]}
+                loop
+                muted
+                playsInline
+                className="w-full h-full pointer-events-none"
+                style={{ objectFit: objectFit as any }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 pointer-events-none" />
+              {showPlayIcon && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-sm">
+                    <Play size={10} className="text-slate-900 fill-slate-900 ml-0.5" />
+                  </div>
+                </div>
+              )}
+            </div>
+            {showProduct && !isCircle && renderProductCard(false)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ──────────────────── PREVIEW PLAYER (MODAL) ────────────────────
+const ModalPlayerPreview = ({
+  playerConfig,
+  primaryColor,
+  isMobile = false,
+}: {
+  playerConfig: any;
+  primaryColor: string;
+  isMobile?: boolean;
+}) => {
+  const parsedBorderWidth = playerConfig?.border_width !== undefined && playerConfig?.border_width !== null && playerConfig?.border_width !== '' 
+    ? Number(playerConfig.border_width) 
+    : 0;
+
+  const rawCardBorder = playerConfig?.product_card_border_width;
+  const parsedCardBorderWidth = rawCardBorder !== undefined && rawCardBorder !== null && rawCardBorder !== '' && !isNaN(Number(rawCardBorder)) ? Number(rawCardBorder) : 0;
+  
+  const getCardStyle = () => ({
+    backgroundColor: playerConfig?.product_card_bg || 'rgba(255,255,255,0.95)',
+    borderColor: playerConfig?.product_card_border_color || 'rgba(255,255,255,0.2)',
+    borderWidth: `${parsedCardBorderWidth}px`,
+    borderStyle: parsedCardBorderWidth > 0 ? 'solid' : 'none',
+    borderRadius: playerConfig?.product_card_border_radius !== undefined ? `${playerConfig.product_card_border_radius}px` : '1rem',
+  });
+
+  const getFontSize = (sizeVal: any, defaultSize: number, mobileScale = 1) => {
+    const size = sizeVal !== undefined && sizeVal !== null && sizeVal !== '' ? Number(sizeVal) : defaultSize;
+    return `${size * mobileScale}px`;
+  };
+
+  const showLike = playerConfig?.show_like_button !== false;
+  const showComments = playerConfig?.show_comment_button !== false;
+  const showShare = playerConfig?.show_share_button !== false;
+  const showProduct = playerConfig?.show_product !== false;
+
+  if (isMobile) {
+    return (
+      <div className="relative w-full h-full overflow-hidden bg-slate-950/90 flex items-center justify-center p-4">
+        <div 
+          className="relative w-full h-[85%] max-h-[700px] overflow-hidden flex flex-col justify-between shadow-2xl bg-black"
+          style={{
+            color: '#FFFFFF',
+            borderColor: playerConfig?.border_color || primaryColor,
+            borderWidth: `${parsedBorderWidth}px`,
+            borderStyle: parsedBorderWidth > 0 ? 'solid' : 'none',
+            borderRadius: playerConfig?.border_radius ? `${playerConfig.border_radius}px` : '1rem',
+          }}
+        >
+          <video
+            src={DEMO_PREVIEW_VIDEOS[0]}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 h-full w-full object-cover pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 pointer-events-none z-10" />
+
+          <div className="relative z-20 flex items-center justify-between p-3 pt-3">
+            {playerConfig?.show_title && (
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full border border-white/25 bg-white/10 backdrop-blur-sm" />
+                <div>
+                  <h4 className="text-xs font-bold text-white drop-shadow leading-tight">Calça Confort</h4>
+                  <p className="text-[9px] text-white/70">Vidlytics Store</p>
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md border border-white/10 transition-colors hover:bg-black/60 cursor-pointer"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          <div className="absolute right-3 bottom-[110px] z-20 flex flex-col items-center gap-3.5">
+            {showLike && (
+              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
+                <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <Heart size={16} className="text-white fill-white" />
+                </div>
+                <span className="text-[8px] font-semibold mt-0.5 drop-shadow">1.2k</span>
+              </button>
+            )}
+            {showComments && (
+              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
+                <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <MessageCircle size={16} className="text-white" />
+                </div>
+                <span className="text-[8px] font-semibold mt-0.5 drop-shadow">48</span>
+              </button>
+            )}
+            {showShare && (
+              <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
+                <div className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <Share2 size={16} className="text-white" />
+                </div>
+                <span className="text-[8px] font-semibold mt-0.5 drop-shadow">Enviar</span>
+              </button>
+            )}
+          </div>
+
+          <div className="relative z-20 w-full p-3 space-y-2.5">
+            {showProduct && (
+              <div 
+                className="backdrop-blur-md p-2.5 flex items-center gap-2.5 shadow-2xl transition hover:scale-[1.01]"
+                style={getCardStyle()}
+              >
+                <div className="h-11 w-11 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100">
+                  <img
+                    src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=150&q=80"
+                    alt="Product"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h5 
+                    className="font-bold truncate" 
+                    style={{ 
+                      color: playerConfig?.product_card_name_color || '#0F172A',
+                      fontSize: getFontSize(playerConfig?.product_card_name_size, 11)
+                    }}
+                  >
+                    Calça Confort Premium
+                  </h5>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span 
+                      className="font-black" 
+                      style={{ 
+                        color: playerConfig?.product_card_price_color || primaryColor,
+                        fontSize: getFontSize(playerConfig?.product_card_price_size, 11)
+                      }}
+                    >
+                      R$ 149,95
+                    </span>
+                    <span className="text-[9px] text-slate-400 line-through">R$ 199,90</span>
+                  </div>
+                </div>
+                <ChevronRight
+                  size={20}
+                  className="shrink-0"
+                  style={{ color: playerConfig?.product_card_price_color || primaryColor }}
+                />
+              </div>
+            )}
+
+            <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+              <div className="h-full rounded-full w-2/3" style={{ backgroundColor: primaryColor }} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-[#0f111a] border border-slate-800/80 rounded-2xl flex items-center justify-center p-4">
+      <div
+        className="relative h-full max-h-[410px] w-full max-w-[230px] overflow-hidden shadow-2xl shrink-0 bg-slate-900 flex flex-col justify-between"
+        style={{
+          color: '#FFFFFF',
+          borderColor: playerConfig?.border_color || primaryColor,
+          borderWidth: `${parsedBorderWidth}px`,
+          borderStyle: parsedBorderWidth > 0 ? 'solid' : 'none',
+          borderRadius: playerConfig?.border_radius ? `${playerConfig.border_radius}px` : '1.25rem',
+        }}
+      >
+        <video
+          src={DEMO_PREVIEW_VIDEOS[0]}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 h-full w-full object-cover pointer-events-none"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 pointer-events-none z-10" />
+
+        <div className="relative z-20 flex items-center justify-between p-3">
+          {playerConfig?.show_title && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded-full border border-white/25 bg-white/10 backdrop-blur-sm" />
+              <div className="min-w-0">
+                <h4 className="text-[10px] font-bold text-white drop-shadow truncate w-24 leading-tight">Calça Confort</h4>
+                <p className="text-[8px] text-white/70 truncate w-24">Vidlytics Store</p>
+              </div>
+            </div>
+          )}
+          <button
+            type="button"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-black/60 cursor-pointer"
+          >
+            <X size={12} />
+          </button>
+        </div>
+
+        <div className="absolute right-2.5 bottom-[88px] z-20 flex flex-col items-center gap-2.5">
+          {showLike && (
+            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
+              <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                <Heart size={13} className="text-white fill-white" />
+              </div>
+              <span className="text-[7px] font-semibold mt-0.5 drop-shadow">1.2k</span>
+            </button>
+          )}
+          {showComments && (
+            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
+              <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                <MessageCircle size={13} className="text-white" />
+              </div>
+              <span className="text-[7px] font-semibold mt-0.5 drop-shadow">48</span>
+            </button>
+          )}
+          {showShare && (
+            <button className="flex flex-col items-center text-white hover:scale-105 transition duration-150 cursor-pointer">
+              <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                <Share2 size={13} className="text-white" />
+              </div>
+              <span className="text-[7px] font-semibold mt-0.5 drop-shadow">Enviar</span>
+            </button>
+          )}
+        </div>
+
+        <div className="relative z-20 w-full p-2.5 space-y-2">
+          {showProduct && (
+            <div 
+              className="backdrop-blur-md p-2 flex items-center gap-2 shadow-2xl transition hover:scale-[1.01]"
+              style={getCardStyle()}
+            >
+              <div className="h-8 w-8 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-100">
+                <img
+                  src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=150&q=80"
+                  alt="Product"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h5 
+                  className="font-bold truncate"
+                  style={{ 
+                    color: playerConfig?.product_card_name_color || '#0F172A',
+                    fontSize: getFontSize(playerConfig?.product_card_name_size, 9, 0.8) 
+                  }}
+                >
+                  Calça Confort Premium
+                </h5>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span 
+                    className="font-black"
+                    style={{ 
+                      color: playerConfig?.product_card_price_color || primaryColor,
+                      fontSize: getFontSize(playerConfig?.product_card_price_size, 9, 0.8) 
+                    }}
+                  >
+                    R$ 149,95
+                  </span>
+                  <span className="text-[7px] text-slate-400 line-through">R$ 199,90</span>
+                </div>
+              </div>
+              <ChevronRight
+                size={16}
+                className="shrink-0"
+                style={{ color: playerConfig?.product_card_price_color || primaryColor }}
+              />
+            </div>
+          )}
+
+          <div className="w-full h-0.5 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-full rounded-full w-2/3" style={{ backgroundColor: primaryColor }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const FormField = ({ label, children }: any) => (
   <div className="flex flex-col gap-1.5">
     {label && <label className="text-xs font-bold text-slate-700 dark:text-slate-300">{label}</label>}
@@ -754,7 +1271,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
 
-  // Identificação do padrão inviolável da loja
   const isDefaultSystemStyle = (styleName || '').trim().toUpperCase() === 'PADRAO' || formData?.id === 'default' || (formData?.is_default && (styleName || '').trim().toUpperCase() === 'PADRAO');
 
   useEffect(() => {
@@ -801,9 +1317,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     allow_close: getC('floating_show_close_button') ?? false,
   };
 
-  // Mapeamentos Carrossel
+  // Mapeamentos Carrossel (Garante Retrato 9:16 como Padrão)
   const carouselPreviewData = {
-    shape: normalizeWidgetShape(getC('carousel_shape') || getC('carousel_style') || 'portrait'),
+    shape: normalizeWidgetShape(getC('carousel_shape') || getC('carousel_style') || 'portrait', 'portrait'),
     object_fit: getC('carousel_object_fit') || 'cover',
     width: getC('carousel_width') || getC('carousel_item_size') || (previewDevice === 'mobile' ? 64 : 80),
     visible_items: getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4),
@@ -833,7 +1349,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
   // Mapeamentos Carrossel Dinâmico
   const dynCarouselPreviewData = {
-    shape: normalizeWidgetShape(getC('dyn_carousel_shape') || 'portrait'),
+    shape: normalizeWidgetShape(getC('dyn_carousel_shape') || 'portrait', 'portrait'),
     object_fit: getC('dyn_carousel_object_fit') || 'cover',
     width: getC('dyn_carousel_width') || (previewDevice === 'mobile' ? 64 : 80),
     visible_items: getC('dyn_carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4),
@@ -869,7 +1385,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
   // Mapeamentos Grade
   const gridPreviewData = {
-    shape: normalizeWidgetShape(getC('grid_shape') || 'portrait'),
+    shape: normalizeWidgetShape(getC('grid_shape') || 'portrait', 'portrait'),
     object_fit: getC('grid_object_fit') || 'cover',
     width: getC('grid_width') || (previewDevice === 'mobile' ? 64 : 80),
     visible_items: getC('grid_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4),
@@ -920,25 +1436,22 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_price_color: getC('modal_product_card_price_color') || formData?.primary_color || '#0094EB',
   };
 
-  // Ação de Salvar: Bloqueia substituição do PADRAO da loja
+  // Salvar executando a lógica e garantindo a duplicata quando for PADRAO
   const handleSave = async () => {
-    if (isDefaultSystemStyle) {
-      const newName = window.prompt('O estilo "PADRAO" é o modelo oficial da loja e não pode ser sobrescrito.\n\nDigite o nome para salvar suas modificações como um NOVO estilo:');
-      if (!newName || !newName.trim()) {
-        return;
-      }
-      if (newName.trim().toUpperCase() === 'PADRAO') {
-        alert('Você não pode usar o nome reservado "PADRAO". Escolha outro nome.');
-        return;
-      }
-      setStyleName(newName.trim());
-      setIsDefault(false);
-    }
-
     try {
+      if (isDefaultSystemStyle) {
+        const newName = window.prompt('O estilo "PADRAO" é o modelo oficial da loja e não pode ser sobrescrito.\n\nDigite o nome para salvar suas alterações como um NOVO estilo:');
+        if (!newName || !newName.trim()) return;
+        if (newName.trim().toUpperCase() === 'PADRAO') {
+          alert('Você não pode usar o nome reservado "PADRAO". Escolha outro nome.');
+          return;
+        }
+        setStyleName(newName.trim());
+        setIsDefault(false);
+      }
       await saveStyle();
     } catch (error: any) {
-      console.error('Erro ao salvar:', error);
+      console.error('Erro ao salvar estilo:', error);
       alert(error?.message || 'Erro ao salvar configurações.');
     }
   };
@@ -953,9 +1466,82 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     setOpenAccordion(openAccordion === title ? '' : title);
   };
 
-  // Resetar restaura as configurações originais do padrão
+  // Resetar funcional: restaura os valores da aba para o padrão
   const handleReset = () => {
-    resetTab(activeTab, previewDevice);
+    try {
+      if (activeTab === 'flutuante') {
+        setC('floating_format', 'portrait');
+        setC('floating_width', previewDevice === 'mobile' ? 64 : 80);
+        setC('floating_margin_bottom', previewDevice === 'mobile' ? 16 : 20);
+        setC('floating_margin_top', previewDevice === 'mobile' ? 16 : 20);
+        setC('floating_margin_side', previewDevice === 'mobile' ? 16 : 20);
+        setC('floating_border_width', 2);
+        setC('floating_border_radius', 12);
+        setC('floating_show_cta', false);
+        setC('floating_auto_play', true);
+        setC('floating_show_play_icon', true);
+        setC('floating_show_close_button', false);
+      } else if (activeTab === 'carrossel') {
+        setC('carousel_shape', 'portrait');
+        setC('carousel_width', previewDevice === 'mobile' ? 64 : 80);
+        setC('carousel_visible_items', previewDevice === 'mobile' ? 2 : 4);
+        setC('carousel_spacing', previewDevice === 'mobile' ? 12 : 16);
+        setC('carousel_margin_top', 0);
+        setC('carousel_margin_bottom', 0);
+        setC('carousel_border_width', 2);
+        setC('carousel_border_radius', previewDevice === 'mobile' ? 10 : 12);
+        setC('carousel_show_title', false);
+        setC('carousel_autoplay_videos', true);
+        setC('carousel_show_play_icon', true);
+        setC('carousel_show_product', true);
+      } else if (activeTab === 'carrossel-dinamico') {
+        setC('dyn_carousel_shape', 'portrait');
+        setC('dyn_carousel_width', previewDevice === 'mobile' ? 64 : 80);
+        setC('dyn_carousel_visible_items', previewDevice === 'mobile' ? 2 : 4);
+        setC('dyn_carousel_spacing', 8);
+        setC('dyn_carousel_margin_left', 0);
+        setC('dyn_carousel_margin_right', 0);
+        setC('dyn_carousel_margin_top', 0);
+        setC('dyn_carousel_margin_bottom', 0);
+        setC('dyn_carousel_border_width', 2);
+        setC('dyn_carousel_border_radius', previewDevice === 'mobile' ? 10 : 12);
+        setC('dyn_carousel_show_title', false);
+        setC('dyn_carousel_autoplay_videos', true);
+        setC('dyn_carousel_autoplay_delay', 5000);
+        setC('dyn_carousel_show_play_icon', true);
+        setC('dyn_carousel_highlight_shadow', false);
+        setC('dyn_carousel_highlight_enlarge_active', false);
+        setC('dyn_carousel_highlight_desaturate_inactive', false);
+        setC('dyn_carousel_show_product', false);
+      } else if (activeTab === 'grade') {
+        setC('grid_shape', 'portrait');
+        setC('grid_width', previewDevice === 'mobile' ? 64 : 80);
+        setC('grid_visible_items', previewDevice === 'mobile' ? 2 : 4);
+        setC('grid_spacing', previewDevice === 'mobile' ? 12 : 16);
+        setC('grid_margin_left', 0);
+        setC('grid_margin_right', 0);
+        setC('grid_margin_top', 0);
+        setC('grid_margin_bottom', 0);
+        setC('grid_border_width', 2);
+        setC('grid_border_radius', previewDevice === 'mobile' ? 10 : 12);
+        setC('grid_show_title', false);
+        setC('grid_autoplay_videos', true);
+        setC('grid_sequential_playback', false);
+        setC('grid_show_play_icon', true);
+        setC('grid_show_product', false);
+      } else if (activeTab === 'player') {
+        setC('modal_border_width', 2);
+        setC('modal_border_radius', 16);
+        setC('modal_show_title', true);
+        setC('modal_show_like_button', true);
+        setC('modal_show_comment_button', true);
+        setC('modal_show_share_button', true);
+        setC('modal_show_product', true);
+      }
+      resetTab(activeTab, previewDevice);
+    } catch (e) {
+      console.warn('Reset interno executado.', e);
+    }
   };
 
   if (!isOpen) return null;
@@ -1215,7 +1801,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Formato">
                           <select value={carouselPreviewData.shape} onChange={e => setC('carousel_shape', e.target.value)} className={selectClass}>
-                            <option value="portrait">Retrato 9:16</option>
+                            <option value="portrait">Retrato 9:16 (Padrão)</option>
                             <option value="circle">Circular (Stories)</option>
                             <option value="square">Quadrado 1:1</option>
                             <option value="landscape">Paisagem 16:9</option>
@@ -1243,11 +1829,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         <FormField label="Margem Inferior (px)">
                           <input type="number" min="0" value={getC('carousel_margin_bottom') || 0} onChange={e => setC('carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
-                      </div>
-                      <div className="mt-3 p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
-                        <p className="text-xs text-blue-600 dark:text-blue-400 font-medium leading-snug">
-                          💡 No mobile, o carrossel exibe no máximo 3 itens (1 completo + 2 parciais nas laterais), independente do número configurado.
-                        </p>
                       </div>
                     </Accordion>
 
@@ -1338,7 +1919,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Formato">
                           <select value={getC('dyn_carousel_shape') || 'portrait'} onChange={e => setC('dyn_carousel_shape', e.target.value)} className={selectClass}>
-                            <option value="portrait">Retrato 9:16</option>
+                            <option value="portrait">Retrato 9:16 (Padrão)</option>
                             <option value="square">Quadrado 1:1</option>
                             <option value="landscape">Paisagem 16:9</option>
                             <option value="circle">Circular</option>
@@ -1469,8 +2050,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Layout & Dimensões')}>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Formato">
-                          <select value={getC('grid_shape') || 'portrait'} onChange={e => setC('grid_shape', e.target.value)} className={selectClass}>
-                            <option value="portrait">Retrato 9:16</option>
+                          <select value={gridPreviewData.shape} onChange={e => setC('grid_shape', e.target.value)} className={selectClass}>
+                            <option value="portrait">Retrato 9:16 (Padrão)</option>
                             <option value="square">Quadrado 1:1</option>
                             <option value="landscape">Paisagem 16:9</option>
                             <option value="circle">Circular</option>
