@@ -38,41 +38,6 @@ export const getAppearanceById = async (id: string): Promise<any | null> => {
   return data || null;
 };
 
-/**
- * Garante a existência do store_id na tabela "sll_stores"
- * sem enviar campos inexistentes como 'url'.
- */
-async function ensureStoreInSllStores(storeId: string): Promise<void> {
-  const { data: existingSll } = await supabase
-    .from('sll_stores')
-    .select('id')
-    .eq('id', storeId)
-    .maybeSingle();
-
-  if (existingSll?.id) return;
-
-  // Busca o nome da loja em stores
-  const { data: storeData } = await supabase
-    .from('stores')
-    .select('id, name')
-    .eq('id', storeId)
-    .maybeSingle();
-
-  const storeName = storeData?.name || 'Minha Loja';
-
-  // Inserção estritamente com as colunas id e name
-  const { error: insertErr } = await supabase
-    .from('sll_stores')
-    .upsert({
-      id: storeId,
-      name: storeName,
-    }, { onConflict: 'id' });
-
-  if (insertErr) {
-    console.warn('[VidlyticsDatabaseService] Inserção simplificada em sll_stores:', insertErr);
-  }
-}
-
 export const saveAppearance = async (params: {
   id?: string;
   store_id: string;
@@ -82,7 +47,7 @@ export const saveAppearance = async (params: {
 }): Promise<any> => {
   let { id, store_id, name, is_default, widget_style } = params;
 
-  // 1. Identifica loja ativa do usuário logado
+  // 1. Garante que o store_id seja o da loja real do usuário em public.stores
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
@@ -104,16 +69,13 @@ export const saveAppearance = async (params: {
   }
 
   if (!store_id) {
-    throw new Error('Nenhuma loja ativa encontrada para vincular o estilo.');
+    throw new Error('Nenhuma loja ativa encontrada no sistema.');
   }
-
-  // 2. Garante o store_id em sll_stores para satisfazer a foreign key
-  await ensureStoreInSllStores(store_id);
 
   const client = getVidClient();
   const now = new Date().toISOString();
 
-  // 3. Se for marcado como default, remove o default de outros da mesma loja
+  // 2. Se for marcado como default, remove o default dos outros estilos da loja
   if (is_default) {
     await client
       .from(TABLE)
@@ -122,44 +84,50 @@ export const saveAppearance = async (params: {
   }
 
   const isExistingUuid = id && id !== 'default' && id.length > 20;
-  const targetId = isExistingUuid ? id : (crypto?.randomUUID ? crypto.randomUUID() : undefined);
 
-  const payload: any = {
-    id: targetId,
-    store_id,
-    name: name.trim(),
-    is_default: Boolean(is_default),
-    widget_style,
-    updated_at: now,
-  };
-
-  let res;
   if (isExistingUuid) {
-    res = await client
+    const { data, error } = await client
       .from(TABLE)
       .update({
-        name: payload.name,
-        is_default: payload.is_default,
-        widget_style: payload.widget_style,
+        name: name.trim(),
+        is_default: Boolean(is_default),
+        widget_style,
         updated_at: now,
       })
       .eq('id', id)
       .select('id, store_id, name, is_default, widget_style, created_at, updated_at')
       .single();
+
+    if (error) {
+      console.error('[VidlyticsDatabaseService] Erro ao atualizar estilo:', error);
+      throw error;
+    }
+    return data;
   } else {
-    res = await client
+    // Estilo novo customizado criado via pop-up
+    const newId = crypto?.randomUUID ? crypto.randomUUID() : undefined;
+    const insertPayload: any = {
+      store_id,
+      name: name.trim(),
+      is_default: Boolean(is_default),
+      widget_style,
+      created_at: now,
+      updated_at: now,
+    };
+    if (newId) insertPayload.id = newId;
+
+    const { data, error } = await client
       .from(TABLE)
-      .insert({ ...payload, created_at: now })
+      .insert(insertPayload)
       .select('id, store_id, name, is_default, widget_style, created_at, updated_at')
       .single();
-  }
 
-  if (res.error) {
-    console.error('[VidlyticsDatabaseService] Erro ao salvar estilo:', res.error);
-    throw res.error;
+    if (error) {
+      console.error('[VidlyticsDatabaseService] Erro ao inserir estilo:', error);
+      throw error;
+    }
+    return data;
   }
-
-  return res.data;
 };
 
 export const VidlyticsDatabaseService = {
