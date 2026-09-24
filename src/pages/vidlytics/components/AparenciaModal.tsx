@@ -5,9 +5,10 @@ import {
   Save, CornerUpLeft, Star, ChevronDown, Play,
   Heart, MessageCircle, Share2, ChevronRight, Copy, Loader2
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { useLoja } from '@/context/LojaContext';
+import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 
-interface AparenciaModalProps {
+export interface AparenciaModalProps {
   isOpen: boolean;
   onClose: () => void;
   styleName: string;
@@ -107,7 +108,7 @@ const ScaleToFit = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// ──────────────────── PREVIEWS (FLUTUANTE, CARROSSEL, GRADE, PLAYER) ────────────────────
+// ──────────────────── PREVIEW FLUTUANTE ────────────────────
 const FloatingPreview = ({ floating, colors, device }: { floating: any; colors: any; device: 'desktop' | 'mobile' }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -193,6 +194,7 @@ const FloatingPreview = ({ floating, colors, device }: { floating: any; colors: 
   );
 };
 
+// ──────────────────── PREVIEW CARROSSEL ────────────────────
 const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any; colors: any; isMobile?: boolean }) => {
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -455,7 +457,7 @@ const Accordion = ({ title, isOpen, onClick, children }: any) => (
 );
 
 // ──────────────────── COMPONENTE PRINCIPAL ────────────────────
-const AparenciaModal: React.FC<AparenciaModalProps> = ({
+export const AparenciaModal: React.FC<AparenciaModalProps> = ({
   isOpen, onClose,
   styleName, setStyleName,
   isDefault, setIsDefault,
@@ -465,6 +467,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   resetTab, saveStyle,
   isLoadingStyle, isSaving,
 }) => {
+  const { storeId: activeStoreId, store } = useLoja();
   const [activeTab, setActiveTab] = useState('basico');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
@@ -475,19 +478,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
   const isDefaultSystemStyle = (styleName || '').trim().toUpperCase() === 'PADRAO' || formData?.id === 'default' || (formData?.is_default && (styleName || '').trim().toUpperCase() === 'PADRAO');
 
+  const resolvedStoreId = formData?.store_id || activeStoreId || store?.id || localStorage.getItem('sll_store_id') || localStorage.getItem('store_id');
+
   const loadStylesList = async () => {
     try {
-      if (!supabase) return;
-      let targetStoreId = formData?.store_id || localStorage.getItem('sll_store_id') || localStorage.getItem('store_id');
-      if (!targetStoreId) {
-        const { data: storeData } = await supabase.from('stores').select('id').limit(1).maybeSingle();
-        targetStoreId = storeData?.id;
-      }
-      const query = supabase.schema ? supabase.schema('vidlytics') : supabase;
-      let req = query.from('vid_appearances').select('id, name, is_default, widget_style');
-      if (targetStoreId) req = req.eq('store_id', targetStoreId);
-      const { data } = await req;
-      if (data) setAvailableStyles(data);
+      if (!resolvedStoreId) return;
+      const data = await VidlyticsDatabaseService.getAppearances(resolvedStoreId);
+      setAvailableStyles(data || []);
     } catch (e) {
       console.warn('Erro ao carregar lista de estilos:', e);
     }
@@ -504,7 +501,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
         setConfig('mobile', 'carousel_shape', 'portrait');
       }
     }
-  }, [isOpen]);
+  }, [isOpen, resolvedStoreId]);
 
   const getC = (key: string) => getConfig(previewDevice, key);
   const setC = (key: string, value: any) => setConfig(previewDevice, key, value);
@@ -561,71 +558,44 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const gridPreviewData = { ...carouselPreviewData, shape: normalizeWidgetShape(getC('grid_shape') || 'portrait', 'portrait') };
   const playerPreviewData = { border_color: getC('modal_border_color') || '#0094EB', border_width: getC('modal_border_width') ?? 2, border_radius: getC('modal_border_radius') ?? 16 };
 
-  // ──────────────────── GRAVAÇÃO DIRETA NO SUPABASE (SCHEMA VIDLYTICS) ────────────────────
+  // ──────────────────── GRAVAÇÃO ATRAVÉS DO SERVIÇO VIDLYTICS ────────────────────
   const executeSave = async (finalName: string) => {
     setLocalSaving(true);
     try {
+      if (!resolvedStoreId) {
+        throw new Error('Nenhuma loja ativa identificada. Por favor, acesse o Dashboard e selecione uma loja.');
+      }
+
       setStyleName(finalName);
 
-      if (typeof saveStyle === 'function') {
-        try { await saveStyle(); } catch (e) { console.warn('saveStyle prop fallback:', e); }
-      }
-
-      if (supabase) {
-        // 1. Resolve um store_id VÁLIDO no banco para não tomar erro de Foreign Key
-        let targetStoreId = formData?.store_id || localStorage.getItem('sll_store_id') || localStorage.getItem('store_id');
-        
-        if (!targetStoreId) {
-          const { data: storeData } = await supabase.from('stores').select('id').limit(1).maybeSingle();
-          targetStoreId = storeData?.id;
-        }
-
-        if (!targetStoreId) {
-          throw new Error('Nenhuma loja identificada no sistema. Crie ao menos uma loja no Hub SLL antes de salvar estilos.');
-        }
-
-        const payload = {
-          store_id: targetStoreId,
+      // Salva diretamente na tabela vidlytics.vid_appearances
+      await VidlyticsDatabaseService.saveAppearance({
+        id: isDefaultSystemStyle ? undefined : formData?.id,
+        store_id: resolvedStoreId,
+        name: finalName,
+        is_default: isDefault,
+        widget_style: {
           name: finalName,
           is_default: isDefault,
-          widget_style: {
-            name: finalName,
-            is_default: isDefault,
-            is_unified: isUnified,
-            desktop: formData?.desktop || {},
-            mobile: formData?.mobile || {},
-            floating: floatingPreviewData,
-            carousel: carouselPreviewData,
-            dynamic_carousel: dynCarouselPreviewData,
-            grid: gridPreviewData,
-            player: playerPreviewData,
-          },
-          updated_at: new Date().toISOString(),
-        };
+          is_unified: isUnified,
+          desktop: formData?.desktop || {},
+          mobile: formData?.mobile || {},
+          floating: floatingPreviewData,
+          carousel: carouselPreviewData,
+          dynamic_carousel: dynCarouselPreviewData,
+          grid: gridPreviewData,
+          player: playerPreviewData,
+        },
+      });
 
-        const query = supabase.schema ? supabase.schema('vidlytics') : supabase;
-
-        if (isDefaultSystemStyle || !formData?.id || formData?.id === 'default') {
-          await query.from('vid_appearances').insert({
-            ...payload,
-            created_at: new Date().toISOString(),
-          });
-        } else {
-          await query.from('vid_appearances').upsert({
-            id: formData.id,
-            ...payload,
-          });
-        }
-
-        // Emite recarregamento para atualizar a listagem principal
-        window.dispatchEvent(new CustomEvent('vidlytics:appearance_saved'));
-      }
+      // Emite evento global para que Vidlytics.tsx atualize a tabela visual
+      window.dispatchEvent(new CustomEvent('vidlytics:appearance_saved'));
 
       setShowNameModal(false);
       onClose();
     } catch (error: any) {
-      console.error('Erro ao salvar no Supabase:', error);
-      alert(error?.message || 'Erro ao persistir alterações.');
+      console.error('Erro ao salvar no Vidlytics:', error);
+      alert(error?.message || 'Erro ao persistir alterações no banco de dados.');
     } finally {
       setLocalSaving(false);
     }
@@ -801,6 +771,44 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         </select>
                       </FormField>
                       <FormField label="Itens Visíveis"><input type="number" min="1" max="10" value={getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4)} onChange={e => setC('carousel_visible_items', parseInt(e.target.value) || 1)} className={inputClass} /></FormField>
+                    </div>
+                  </Accordion>
+                )}
+                {activeTab === 'carrossel-dinamico' && (
+                  <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões'} onClick={() => setOpenAccordion(openAccordion === '1. Layout & Dimensões' ? '' : '1. Layout & Dimensões')}>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField label="Formato">
+                        <select value={dynCarouselPreviewData.shape} onChange={e => setC('dyn_carousel_shape', e.target.value)} className={selectClass}>
+                          <option value="portrait">Retrato 9:16 (Padrão)</option>
+                          <option value="square">Quadrado 1:1</option>
+                          <option value="landscape">Paisagem 16:9</option>
+                          <option value="circle">Circular</option>
+                        </select>
+                      </FormField>
+                      <FormField label="Largura (px)"><input type="number" min="20" value={getC('dyn_carousel_width') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('dyn_carousel_width', parseInt(e.target.value) || 0)} className={inputClass} /></FormField>
+                    </div>
+                  </Accordion>
+                )}
+                {activeTab === 'grade' && (
+                  <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões'} onClick={() => setOpenAccordion(openAccordion === '1. Layout & Dimensões' ? '' : '1. Layout & Dimensões')}>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField label="Formato">
+                        <select value={gridPreviewData.shape} onChange={e => setC('grid_shape', e.target.value)} className={selectClass}>
+                          <option value="portrait">Retrato 9:16 (Padrão)</option>
+                          <option value="square">Quadrado 1:1</option>
+                          <option value="landscape">Paisagem 16:9</option>
+                          <option value="circle">Circular</option>
+                        </select>
+                      </FormField>
+                      <FormField label="Colunas"><input type="number" min="1" max="10" value={getC('grid_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4)} onChange={e => setC('grid_visible_items', parseInt(e.target.value) || 1)} className={inputClass} /></FormField>
+                    </div>
+                  </Accordion>
+                )}
+                {activeTab === 'player' && (
+                  <Accordion title="1. Bordas" isOpen={openAccordion === '1. Bordas'} onClick={() => setOpenAccordion(openAccordion === '1. Bordas' ? '' : '1. Bordas')}>
+                    <div className="space-y-3">
+                      <FormField label="Cor da Borda"><ColorInput value={getC('modal_border_color') || '#0094EB'} onChange={(v: string) => setC('modal_border_color', v)} /></FormField>
+                      <FormField label="Largura Borda (px)"><input type="number" min="0" max="10" value={getC('modal_border_width') ?? 2} onChange={e => setC('modal_border_width', parseInt(e.target.value) || 0)} className={inputClass} /></FormField>
                     </div>
                   </Accordion>
                 )}

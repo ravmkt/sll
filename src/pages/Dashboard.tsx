@@ -1,20 +1,23 @@
-﻿import { Link } from 'react-router-dom';
+﻿import React from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { useStore } from '../contexts/StoreContext';
+import { useLoja } from '../context/LojaContext';
 import { Video, Radio, ShoppingBag, ArrowRight } from 'lucide-react';
 
 export default function Dashboard() {
-  const { currentStore } = useStore();
+  const { store } = useLoja();
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Visão Geral</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Visão Geral
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             Loja Selecionada:{' '}
             <span className="font-semibold text-[#0094eb]">
-              {currentStore?.name || 'Nenhuma loja ativa'}
+              {store?.name || 'Nenhuma loja ativa'}
             </span>
           </p>
         </div>
@@ -29,7 +32,7 @@ export default function Dashboard() {
             <div className="w-12 h-12 rounded-lg bg-[#0094eb]/10 text-[#0094eb] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <Video size={24} />
             </div>
-            <h3 className="font-semibold text-lg mb-1 group-hover:text-[#0094eb] transition-colors">
+            <h3 className="font-semibold text-lg mb-1 group-hover:text-[#0094eb] transition-colors text-slate-900 dark:text-white">
               Vidlytics
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
@@ -48,7 +51,7 @@ export default function Dashboard() {
             <div className="w-12 h-12 rounded-lg bg-[#fd8539]/10 text-[#fd8539] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <Radio size={24} />
             </div>
-            <h3 className="font-semibold text-lg mb-1 group-hover:text-[#fd8539] transition-colors">
+            <h3 className="font-semibold text-lg mb-1 group-hover:text-[#fd8539] transition-colors text-slate-900 dark:text-white">
               Live Commerce
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
@@ -67,7 +70,7 @@ export default function Dashboard() {
             <div className="w-12 h-12 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
               <ShoppingBag size={24} />
             </div>
-            <h3 className="font-semibold text-lg mb-1 group-hover:text-emerald-500 transition-colors">
+            <h3 className="font-semibold text-lg mb-1 group-hover:text-emerald-500 transition-colors text-slate-900 dark:text-white">
               Catálogo de Produtos
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
