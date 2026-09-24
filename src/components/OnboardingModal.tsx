@@ -15,16 +15,38 @@ import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService, StorePayload } from '@/services/SLLDatabaseService';
 import { useLoja } from '@/context/LojaContext';
 
+// Plataformas ordenadas alfabeticamente com inclusão de Bagy e Ideris
 const PLATAFORMAS = [
-  'Shopify',
-  'Nuvemshop',
-  'WooCommerce',
-  'Loja Integrada',
-  'Tray',
-  'Yampi',
+  'Bagy',
   'Cartpanda',
+  'Irroba',
+  'Loja Integrada',
+  'Nuvemshop',
+  'Shopify',
+  'Tray',
+  'WooCommerce',
+  'Yampi',
   'Outra',
 ];
+
+// Helper para sanitizar e padronizar qualquer formato de URL
+const formatAndSanitizeUrl = (inputUrl: string): string => {
+  let cleaned = inputUrl.trim().toLowerCase();
+  
+  // Remove barras no início ou espaços acidentais
+  cleaned = cleaned.replace(/^\/+/, '');
+
+  // Se o usuário digitou sem protocolo (ex: "useanny.com" ou "www.useanny.com")
+  if (!/^https?:\/\//i.test(cleaned)) {
+    cleaned = `https://${cleaned}`;
+  } else if (cleaned.startsWith('http://')) {
+    // Migra http inseguro para https
+    cleaned = cleaned.replace('http://', 'https://');
+  }
+
+  // Remove barras residuais no final da URL
+  return cleaned.replace(/\/+$/, '');
+};
 
 export const OnboardingModal: React.FC = () => {
   const { needsOnboarding, setStoreManually } = useLoja();
@@ -35,7 +57,7 @@ export const OnboardingModal: React.FC = () => {
   const [formData, setFormData] = useState<StorePayload>({
     name: '',
     url: '',
-    platform: 'Shopify',
+    platform: 'Bagy', // Primeira opção da lista alfabética
     contact_email: '',
   });
 
@@ -53,9 +75,13 @@ export const OnboardingModal: React.FC = () => {
         return;
       }
       if (!formData.contact_email.trim() || !formData.contact_email.includes('@')) {
-        setErrorMsg('Informe um e-mail de contato válido.');
+        setErrorMsg('Informe um e-mail de contato comercial válido.');
         return;
       }
+
+      // Normaliza a URL de forma inteligente antes de avançar para a confirmação
+      const sanitizedUrl = formatAndSanitizeUrl(formData.url);
+      setFormData(prev => ({ ...prev, url: sanitizedUrl }));
     }
     setStep((prev) => Math.min(prev + 1, 3));
   };
@@ -73,7 +99,12 @@ export const OnboardingModal: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Sessão expirada. Faça login novamente.');
 
-      const newStore = await SLLDatabaseService.createInitialStore(user.id, formData);
+      const finalPayload: StorePayload = {
+        ...formData,
+        url: formatAndSanitizeUrl(formData.url),
+      };
+
+      const newStore = await SLLDatabaseService.createInitialStore(user.id, finalPayload);
       setStoreManually(newStore);
     } catch (err: any) {
       console.error('Falha ao concluir setup inicial:', err);
@@ -182,7 +213,7 @@ export const OnboardingModal: React.FC = () => {
                     <Globe size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="text"
-                      placeholder="https://sualoja.com.br"
+                      placeholder="ex: minhaloja.com.br ou https://minhaloja.com.br"
                       value={formData.url}
                       onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                       className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
@@ -196,7 +227,7 @@ export const OnboardingModal: React.FC = () => {
                       Plataforma de E-commerce
                     </label>
                     <div className="relative">
-                      <Layers size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <Layers size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                       <select
                         value={formData.platform}
                         onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
@@ -249,8 +280,8 @@ export const OnboardingModal: React.FC = () => {
                   <span className="text-sm font-black text-slate-900 dark:text-white">{formData.name}</span>
                 </div>
                 <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
-                  <span className="text-xs font-bold text-slate-500">Domínio:</span>
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{formData.url}</span>
+                  <span className="text-xs font-bold text-slate-500">Domínio / URL:</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono">{formData.url}</span>
                 </div>
                 <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
                   <span className="text-xs font-bold text-slate-500">Plataforma:</span>
