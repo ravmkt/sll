@@ -16,3 +16,27 @@
     @apply bg-dark-bg text-slate-100;
   }
 }
+
+/* ========================================================
+   REGRA GLOBAL SLL: Cursor Pointer Unificado
+   ======================================================== */
+button:not(:disabled),
+a,
+summary,
+select,
+label,
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+input[type="color"],
+input[type="submit"],
+input[type="button"],
+[role="button"],
+[role="tab"],
+[role="switch"] {
+    cursor: pointer !important;
+}
+button:disabled,
+input:disabled,
+select:disabled {
+    cursor: not-allowed !important;
+}
