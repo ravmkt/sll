@@ -3,8 +3,9 @@ import {
   X, Monitor, Smartphone, Link, Link2Off,
   Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
   Save, CornerUpLeft, Star, ChevronDown, Play,
-  Heart, MessageCircle, Share2, ChevronRight, Copy
+  Heart, MessageCircle, Share2, ChevronRight, Copy, Loader2
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface AparenciaModalProps {
   isOpen: boolean;
@@ -250,7 +251,7 @@ const FloatingPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW CARROSSEL ────────────────────
+// ──────────────────── PREVIEW CARROSSEL (OTIMIZADO) ────────────────────
 const CarouselPreview = ({
   carousel,
   colors,
@@ -274,7 +275,7 @@ const CarouselPreview = ({
 
   const videoSources = DEMO_PREVIEW_VIDEOS;
   const len = videoSources.length;
-  const REPEAT_TILES = 6; 
+  const REPEAT_TILES = 6;
   const baseIndex = Math.floor(REPEAT_TILES / 2) * len;
   const trackVideos = Array.from({ length: REPEAT_TILES }, () => videoSources).flat();
 
@@ -475,7 +476,7 @@ const DynamicCarouselPreview = ({
 
   const videoSources = DEMO_PREVIEW_VIDEOS;
   const len = videoSources.length;
-  const REPEAT_TILES = 6; 
+  const REPEAT_TILES = 6;
   const baseIndex = Math.floor(REPEAT_TILES / 2) * len;
   const trackVideos = Array.from({ length: REPEAT_TILES }, () => videoSources).flat();
 
@@ -678,7 +679,7 @@ const DynamicCarouselPreview = ({
   );
 };
 
-// ──────────────────── PREVIEW GRADE (ESTRUTURA COMPLETA) ────────────────────
+// ──────────────────── PREVIEW GRADE ────────────────────
 const GridPreview = ({
   grid,
   colors,
@@ -1270,6 +1271,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const [activeTab, setActiveTab] = useState('basico');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
+  const [localSaving, setLocalSaving] = useState(false);
 
   const isDefaultSystemStyle = (styleName || '').trim().toUpperCase() === 'PADRAO' || formData?.id === 'default' || (formData?.is_default && (styleName || '').trim().toUpperCase() === 'PADRAO');
 
@@ -1278,6 +1280,11 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
       setActiveTab('basico');
       setPreviewDevice('mobile');
       setOpenAccordion('1. Layout & Dimensões');
+      // Força formato inicial como Retrato caso venha vazio
+      if (!getConfig('desktop', 'carousel_shape') && !getConfig('mobile', 'carousel_shape')) {
+        setConfig('desktop', 'carousel_shape', 'portrait');
+        setConfig('mobile', 'carousel_shape', 'portrait');
+      }
     }
   }, [isOpen]);
 
@@ -1317,7 +1324,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     allow_close: getC('floating_show_close_button') ?? false,
   };
 
-  // Mapeamentos Carrossel (Garante Retrato 9:16 como Padrão)
+  // Mapeamentos Carrossel (Padrão Retrato 9:16)
   const carouselPreviewData = {
     shape: normalizeWidgetShape(getC('carousel_shape') || getC('carousel_style') || 'portrait', 'portrait'),
     object_fit: getC('carousel_object_fit') || 'cover',
@@ -1436,23 +1443,78 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_price_color: getC('modal_product_card_price_color') || formData?.primary_color || '#0094EB',
   };
 
-  // Salvar executando a lógica e garantindo a duplicata quando for PADRAO
+  // ──────────────────── SALVAR DIRETAMENTE NO SUPABASE (SCHEMA VIDLYTICS) ────────────────────
   const handleSave = async () => {
-    try {
-      if (isDefaultSystemStyle) {
-        const newName = window.prompt('O estilo "PADRAO" é o modelo oficial da loja e não pode ser sobrescrito.\n\nDigite o nome para salvar suas alterações como um NOVO estilo:');
-        if (!newName || !newName.trim()) return;
-        if (newName.trim().toUpperCase() === 'PADRAO') {
-          alert('Você não pode usar o nome reservado "PADRAO". Escolha outro nome.');
-          return;
-        }
-        setStyleName(newName.trim());
-        setIsDefault(false);
+    let targetName = styleName?.trim();
+
+    if (isDefaultSystemStyle) {
+      const newName = window.prompt(
+        'O estilo "PADRAO" é o modelo nativo da plataforma e não pode ser sobrescrito.\n\nInforme o nome para salvar sua versão customizada:'
+      );
+      if (!newName || !newName.trim()) return;
+      if (newName.trim().toUpperCase() === 'PADRAO') {
+        alert('Você não pode utilizar o nome reservado "PADRAO".');
+        return;
       }
-      await saveStyle();
+      targetName = newName.trim();
+      setStyleName(targetName);
+      setIsDefault(false);
+    }
+
+    if (!targetName) {
+      alert('Por favor, defina um nome para o estilo.');
+      setActiveTab('basico');
+      return;
+    }
+
+    setLocalSaving(true);
+    try {
+      // 1. Tenta salvar pelo serviço padrão passado por prop
+      if (typeof saveStyle === 'function') {
+        await saveStyle();
+      }
+
+      // 2. Persistência direta no schema vidlytics.vid_appearances do Supabase SLL
+      if (supabase && formData?.store_id) {
+        const payload = {
+          name: targetName,
+          is_default: isDefault,
+          is_unified: isUnified,
+          widget_style: {
+            desktop: formData?.desktop || {},
+            mobile: formData?.mobile || {},
+            floating: floatingPreviewData,
+            carousel: carouselPreviewData,
+            dynamic_carousel: dynCarouselPreviewData,
+            grid: gridPreviewData,
+            player: playerPreviewData,
+          },
+          updated_at: new Date().toISOString(),
+        };
+
+        const query = supabase.schema ? supabase.schema('vidlytics') : supabase;
+
+        if (isDefaultSystemStyle || !formData?.id || formData?.id === 'default') {
+          await query.from('vid_appearances').insert({
+            store_id: formData.store_id,
+            ...payload,
+            created_at: new Date().toISOString(),
+          });
+        } else {
+          await query.from('vid_appearances').upsert({
+            id: formData.id,
+            store_id: formData.store_id,
+            ...payload,
+          });
+        }
+      }
+
+      onClose();
     } catch (error: any) {
       console.error('Erro ao salvar estilo:', error);
-      alert(error?.message || 'Erro ao salvar configurações.');
+      alert(error?.message || 'Erro ao persistir alterações no Supabase.');
+    } finally {
+      setLocalSaving(false);
     }
   };
 
@@ -1466,82 +1528,78 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     setOpenAccordion(openAccordion === title ? '' : title);
   };
 
-  // Resetar funcional: restaura os valores da aba para o padrão
+  // ──────────────────── RESETAR TAB PARA VALORES PADRÃO ────────────────────
   const handleReset = () => {
-    try {
-      if (activeTab === 'flutuante') {
-        setC('floating_format', 'portrait');
-        setC('floating_width', previewDevice === 'mobile' ? 64 : 80);
-        setC('floating_margin_bottom', previewDevice === 'mobile' ? 16 : 20);
-        setC('floating_margin_top', previewDevice === 'mobile' ? 16 : 20);
-        setC('floating_margin_side', previewDevice === 'mobile' ? 16 : 20);
-        setC('floating_border_width', 2);
-        setC('floating_border_radius', 12);
-        setC('floating_show_cta', false);
-        setC('floating_auto_play', true);
-        setC('floating_show_play_icon', true);
-        setC('floating_show_close_button', false);
-      } else if (activeTab === 'carrossel') {
-        setC('carousel_shape', 'portrait');
-        setC('carousel_width', previewDevice === 'mobile' ? 64 : 80);
-        setC('carousel_visible_items', previewDevice === 'mobile' ? 2 : 4);
-        setC('carousel_spacing', previewDevice === 'mobile' ? 12 : 16);
-        setC('carousel_margin_top', 0);
-        setC('carousel_margin_bottom', 0);
-        setC('carousel_border_width', 2);
-        setC('carousel_border_radius', previewDevice === 'mobile' ? 10 : 12);
-        setC('carousel_show_title', false);
-        setC('carousel_autoplay_videos', true);
-        setC('carousel_show_play_icon', true);
-        setC('carousel_show_product', true);
-      } else if (activeTab === 'carrossel-dinamico') {
-        setC('dyn_carousel_shape', 'portrait');
-        setC('dyn_carousel_width', previewDevice === 'mobile' ? 64 : 80);
-        setC('dyn_carousel_visible_items', previewDevice === 'mobile' ? 2 : 4);
-        setC('dyn_carousel_spacing', 8);
-        setC('dyn_carousel_margin_left', 0);
-        setC('dyn_carousel_margin_right', 0);
-        setC('dyn_carousel_margin_top', 0);
-        setC('dyn_carousel_margin_bottom', 0);
-        setC('dyn_carousel_border_width', 2);
-        setC('dyn_carousel_border_radius', previewDevice === 'mobile' ? 10 : 12);
-        setC('dyn_carousel_show_title', false);
-        setC('dyn_carousel_autoplay_videos', true);
-        setC('dyn_carousel_autoplay_delay', 5000);
-        setC('dyn_carousel_show_play_icon', true);
-        setC('dyn_carousel_highlight_shadow', false);
-        setC('dyn_carousel_highlight_enlarge_active', false);
-        setC('dyn_carousel_highlight_desaturate_inactive', false);
-        setC('dyn_carousel_show_product', false);
-      } else if (activeTab === 'grade') {
-        setC('grid_shape', 'portrait');
-        setC('grid_width', previewDevice === 'mobile' ? 64 : 80);
-        setC('grid_visible_items', previewDevice === 'mobile' ? 2 : 4);
-        setC('grid_spacing', previewDevice === 'mobile' ? 12 : 16);
-        setC('grid_margin_left', 0);
-        setC('grid_margin_right', 0);
-        setC('grid_margin_top', 0);
-        setC('grid_margin_bottom', 0);
-        setC('grid_border_width', 2);
-        setC('grid_border_radius', previewDevice === 'mobile' ? 10 : 12);
-        setC('grid_show_title', false);
-        setC('grid_autoplay_videos', true);
-        setC('grid_sequential_playback', false);
-        setC('grid_show_play_icon', true);
-        setC('grid_show_product', false);
-      } else if (activeTab === 'player') {
-        setC('modal_border_width', 2);
-        setC('modal_border_radius', 16);
-        setC('modal_show_title', true);
-        setC('modal_show_like_button', true);
-        setC('modal_show_comment_button', true);
-        setC('modal_show_share_button', true);
-        setC('modal_show_product', true);
-      }
-      resetTab(activeTab, previewDevice);
-    } catch (e) {
-      console.warn('Reset interno executado.', e);
+    if (activeTab === 'flutuante') {
+      setC('floating_format', 'portrait');
+      setC('floating_width', previewDevice === 'mobile' ? 64 : 80);
+      setC('floating_margin_bottom', previewDevice === 'mobile' ? 16 : 20);
+      setC('floating_margin_top', previewDevice === 'mobile' ? 16 : 20);
+      setC('floating_margin_side', previewDevice === 'mobile' ? 16 : 20);
+      setC('floating_border_width', 2);
+      setC('floating_border_radius', 12);
+      setC('floating_show_cta', false);
+      setC('floating_auto_play', true);
+      setC('floating_show_play_icon', true);
+      setC('floating_show_close_button', false);
+    } else if (activeTab === 'carrossel') {
+      setC('carousel_shape', 'portrait');
+      setC('carousel_width', previewDevice === 'mobile' ? 64 : 80);
+      setC('carousel_visible_items', previewDevice === 'mobile' ? 2 : 4);
+      setC('carousel_spacing', previewDevice === 'mobile' ? 12 : 16);
+      setC('carousel_margin_top', 0);
+      setC('carousel_margin_bottom', 0);
+      setC('carousel_border_width', 2);
+      setC('carousel_border_radius', previewDevice === 'mobile' ? 10 : 12);
+      setC('carousel_show_title', false);
+      setC('carousel_autoplay_videos', true);
+      setC('carousel_show_play_icon', true);
+      setC('carousel_show_product', true);
+    } else if (activeTab === 'carrossel-dinamico') {
+      setC('dyn_carousel_shape', 'portrait');
+      setC('dyn_carousel_width', previewDevice === 'mobile' ? 64 : 80);
+      setC('dyn_carousel_visible_items', previewDevice === 'mobile' ? 2 : 4);
+      setC('dyn_carousel_spacing', 8);
+      setC('dyn_carousel_margin_left', 0);
+      setC('dyn_carousel_margin_right', 0);
+      setC('dyn_carousel_margin_top', 0);
+      setC('dyn_carousel_margin_bottom', 0);
+      setC('dyn_carousel_border_width', 2);
+      setC('dyn_carousel_border_radius', previewDevice === 'mobile' ? 10 : 12);
+      setC('dyn_carousel_show_title', false);
+      setC('dyn_carousel_autoplay_videos', true);
+      setC('dyn_carousel_autoplay_delay', 5000);
+      setC('dyn_carousel_show_play_icon', true);
+      setC('dyn_carousel_highlight_shadow', false);
+      setC('dyn_carousel_highlight_enlarge_active', false);
+      setC('dyn_carousel_highlight_desaturate_inactive', false);
+      setC('dyn_carousel_show_product', false);
+    } else if (activeTab === 'grade') {
+      setC('grid_shape', 'portrait');
+      setC('grid_width', previewDevice === 'mobile' ? 64 : 80);
+      setC('grid_visible_items', previewDevice === 'mobile' ? 2 : 4);
+      setC('grid_spacing', previewDevice === 'mobile' ? 12 : 16);
+      setC('grid_margin_left', 0);
+      setC('grid_margin_right', 0);
+      setC('grid_margin_top', 0);
+      setC('grid_margin_bottom', 0);
+      setC('grid_border_width', 2);
+      setC('grid_border_radius', previewDevice === 'mobile' ? 10 : 12);
+      setC('grid_show_title', false);
+      setC('grid_autoplay_videos', true);
+      setC('grid_sequential_playback', false);
+      setC('grid_show_play_icon', true);
+      setC('grid_show_product', false);
+    } else if (activeTab === 'player') {
+      setC('modal_border_width', 2);
+      setC('modal_border_radius', 16);
+      setC('modal_show_title', true);
+      setC('modal_show_like_button', true);
+      setC('modal_show_comment_button', true);
+      setC('modal_show_share_button', true);
+      setC('modal_show_product', true);
     }
+    resetTab(activeTab, previewDevice);
   };
 
   if (!isOpen) return null;
@@ -1794,7 +1852,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                 )}
 
-                {/* ABA CARROSSEL */}
+                {/* ABA CARROSSEL (PADRÃO RETRATO) */}
                 {activeTab === 'carrossel' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões' || openAccordion === '1. Formato & Dimensões'} onClick={() => toggleAccordion('1. Layout & Dimensões')}>
@@ -1829,6 +1887,11 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         <FormField label="Margem Inferior (px)">
                           <input type="number" min="0" value={getC('carousel_margin_bottom') || 0} onChange={e => setC('carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
+                      </div>
+                      <div className="mt-3 p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                        <p className="text-xs text-blue-600 dark:text-blue-400 font-medium leading-snug">
+                          💡 No mobile, o carrossel exibe no máximo 3 itens (1 completo + 2 parciais nas laterais), independente do número configurado.
+                        </p>
                       </div>
                     </Accordion>
 
@@ -2414,15 +2477,21 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
             <button 
               onClick={handleSave} 
               type="button"
-              disabled={isSaving} 
+              disabled={isSaving || localSaving} 
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer ${
                 isDefaultSystemStyle 
                   ? 'bg-amber-500 hover:bg-amber-600 text-white' 
                   : 'bg-[#0094eb] hover:bg-[#0082cf] text-white'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {isDefaultSystemStyle ? <Copy size={18} strokeWidth={2.5} /> : <Save size={18} strokeWidth={2.5} />} 
-              {isSaving ? 'Salvando...' : isDefaultSystemStyle ? 'Salvar Como Novo Estilo' : 'Salvar'}
+              {isSaving || localSaving ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : isDefaultSystemStyle ? (
+                <Copy size={18} strokeWidth={2.5} />
+              ) : (
+                <Save size={18} strokeWidth={2.5} />
+              )} 
+              {isSaving || localSaving ? 'Salvando...' : isDefaultSystemStyle ? 'Salvar Como Novo Estilo' : 'Salvar'}
             </button>
           </div>
         </div>
