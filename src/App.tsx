@@ -1,8 +1,6 @@
 ﻿import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
-import { LojaProvider } from './context/LojaContext';
-import { OnboardingModal } from './components/OnboardingModal';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -32,9 +30,6 @@ function AppRoutes() {
 
   return (
     <Suspense fallback={<PageLoader />}>
-      {/* Modal de Onboarding / Setup Inicial exibido caso o usuário logado não possua loja */}
-      <OnboardingModal />
-
       <Routes>
         {/* Redireciona a raiz para a dashboard */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -82,9 +77,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <Router>
-      <LojaProvider>
-        <AppRoutes />
-      </LojaProvider>
+      <AppRoutes />
     </Router>
   );
 }
