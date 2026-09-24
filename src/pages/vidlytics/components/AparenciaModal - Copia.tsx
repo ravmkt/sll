@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   X, Monitor, Smartphone, Link, Link2Off,
   Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
-  Save, CornerUpLeft, Star, ChevronDown, Play
+  Save, CornerUpLeft, Star, ChevronDown
 } from 'lucide-react';
 
 interface AparenciaModalProps {
@@ -25,157 +25,6 @@ interface AparenciaModalProps {
 
 const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
 const inputClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
-
-const DEMO_PREVIEW_VIDEOS = [
-  '/demo-videos/demo1.mp4',
-  '/demo-videos/demo2.mp4',
-  '/demo-videos/demo3.mp4',
-];
-
-// ──────────────────── PREVIEW FLUTUANTE (EXTRAÍDO DO LEGADO) ────────────────────
-const FloatingPreview = ({
-  floating,
-  colors,
-  device,
-}: {
-  floating: any;
-  colors: any;
-  device: 'desktop' | 'mobile';
-}) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const vid = videoRef.current;
-    if (!vid) return;
-    if (floating?.autoplay_videos ?? true) {
-      vid.play().catch(() => {});
-    } else {
-      vid.pause();
-    }
-  }, [floating?.autoplay_videos]);
-
-  const shape = floating?.shape || 'portrait';
-  const isCircle = shape === 'circle';
-  const isSquare = shape === 'square';
-  const isMobile = device === 'mobile';
-
-  const scale = isMobile ? 0.85 : 1;
-  const baseWidth = (Number(floating?.width || 80)) * scale;
-
-  const baseHeight = (isCircle || isSquare)
-    ? baseWidth
-    : shape === 'landscape'
-      ? Math.round(baseWidth * 9 / 16)
-      : Math.round(baseWidth * 16 / 9);
-
-  const rawRadius = floating?.border_radius;
-  const radiusNum = (rawRadius !== undefined && rawRadius !== null && rawRadius !== '' && !isNaN(Number(rawRadius)))
-    ? Math.max(0, Number(rawRadius))
-    : 12;
-
-  const borderRadius = isCircle ? '50%' : `${radiusNum}px`;
-
-  const rawBorderWidth = floating?.border_style;
-  const parsedBorderWidth = (rawBorderWidth !== undefined && rawBorderWidth !== null && rawBorderWidth !== '' && !isNaN(Number(rawBorderWidth)))
-    ? Math.max(0, Number(rawBorderWidth))
-    : 0;
-
-  const borderColor = floating?.border_color || colors?.primary || '#0094EB';
-
-  const pos = floating?.position || 'fixed_bottom_right';
-  const gapBottom = isMobile ? '12px' : (floating?.bottom_spacing !== undefined ? `${floating.bottom_spacing}px` : '20px');
-  const gapTop = isMobile ? '12px' : (floating?.top_spacing !== undefined ? `${floating.top_spacing}px` : '20px');
-  const gapLeft = isMobile ? '12px' : (floating?.left_spacing !== undefined ? `${floating.left_spacing}px` : '20px');
-  const gapRight = isMobile ? '12px' : (floating?.right_spacing !== undefined ? `${floating.right_spacing}px` : '20px');
-
-  const positionStyle: React.CSSProperties = {
-    width: `${baseWidth}px`,
-    height: `${baseHeight}px`,
-  };
-
-  if (pos.includes('bottom')) positionStyle.bottom = gapBottom;
-  if (pos.includes('top')) positionStyle.top = gapTop;
-  if (pos.includes('left')) positionStyle.left = gapLeft;
-  if (pos.includes('right')) positionStyle.right = gapRight;
-
-  const resolveBool = (val: any, fallback: boolean) => {
-    if (val === undefined || val === null || val === '') return fallback;
-    return String(val) === 'true' || val === true || val === 1 || val === '1';
-  };
-
-  const showPlay = resolveBool(floating?.show_play_icon, true);
-  const showClose = resolveBool(floating?.allow_close, false);
-  const showTooltip = resolveBool(floating?.show_tooltip ?? floating?.show_cta ?? floating?.cta_active ?? floating?.cta_enabled, false);
-
-  const ctaText = floating?.cta_text ?? 'VER VÍDEO';
-  const ctaBgColor = floating?.cta_bg_color ?? colors?.primary ?? '#0094EB';
-  const ctaTextColor = floating?.cta_text_color ?? '#FFFFFF';
-  const ctaFontSize = floating?.cta_font_size ?? 14;
-  const ctaBold = resolveBool(floating?.cta_is_bold ?? true, true);
-
-  return (
-    <div
-      style={positionStyle}
-      className={`absolute shadow-xl transition-all duration-300 flex items-center justify-center cursor-pointer z-10 ${
-        isCircle ? "aspect-square" : ""
-      } overflow-visible`}
-    >
-      {/* CONTAINER DO VÍDEO */}
-      <div 
-        className="w-full h-full relative overflow-hidden bg-slate-950 shadow-sm transition-all duration-300"
-        style={{ 
-          borderRadius: borderRadius,
-          border: `${parsedBorderWidth}px solid ${borderColor}`,
-          boxSizing: 'border-box'
-        }}
-      >
-        <video
-          ref={videoRef}
-          src={DEMO_PREVIEW_VIDEOS[0]}
-          loop
-          muted
-          playsInline
-          className="w-full h-full pointer-events-none"
-          style={{ objectFit: floating?.object_fit || 'cover' }}
-        />
-        {showPlay && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-all">
-            <div className="w-8 h-8 rounded-full bg-white/95 shadow-md flex items-center justify-center">
-              <Play size={10} className="text-slate-900 fill-slate-900 ml-0.5" />
-            </div>
-          </div>
-        )}
-
-        {showClose && (
-          <div className="absolute top-2 right-2 w-6 h-6 bg-white text-slate-500 rounded-full flex items-center justify-center z-20 shadow-md transition-opacity">
-            <X size={14} />
-          </div>
-        )}
-      </div>
-
-      {/* CTA - Pílula Vazando (Tooltip) */}
-      {showTooltip && (
-        <div 
-          className="absolute z-20 shadow-md flex items-center justify-center whitespace-nowrap transition-all duration-300 pointer-events-none"
-          style={{
-            backgroundColor: ctaBgColor,
-            color: ctaTextColor,
-            padding: '8px 16px',
-            borderRadius: '24px',
-            fontSize: `${ctaFontSize}px`,
-            fontWeight: ctaBold ? 'bold' : 'normal',
-            bottom: '12px',
-            ...(pos.includes('left') 
-                ? { left: 'calc(100% - 15px)' } 
-                : { right: 'calc(100% - 15px)' })
-          }}
-        >
-          {ctaText}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const FormField = ({ label, children }: any) => (
   <div className="flex flex-col gap-1.5">
@@ -242,7 +91,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   styleName, setStyleName,
   isDefault, setIsDefault,
   isUnified, toggleUnified,
-  formData,
   getConfig, setConfig,
   resetTab, saveStyle,
   isLoadingStyle, isSaving,
@@ -253,49 +101,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
   const getC = (key: string) => getConfig(previewDevice, key);
   const setC = (key: string, value: any) => setConfig(previewDevice, key, value);
-
-  // Mapeamento normalizado de formato para o FloatingPreview
-  const getNormalizedShape = (fmt: string) => {
-    if (fmt === 'circle') return 'circle';
-    if (fmt === 'square_1_1' || fmt === 'square') return 'square';
-    if (fmt === 'landscape_16_9' || fmt === 'landscape') return 'landscape';
-    return 'portrait';
-  };
-
-  const getCalculatedHeight = (width: number, shape: string) => {
-    if (shape === 'circle' || shape === 'square') return width;
-    if (shape === 'landscape') return Math.round((width * 9) / 16);
-    return Math.round((width * 16) / 9);
-  };
-
-  const currentShape = getNormalizedShape(getC('floating_format') || 'portrait_9_16');
-  const currentWidth = Number(getC('floating_width') || (previewDevice === 'mobile' ? 64 : 80));
-  const currentCalculatedHeight = getCalculatedHeight(currentWidth, currentShape);
-
-  // Objeto de dados normalizado e reativo para alimentar o componente FloatingPreview
-  const floatingPreviewData = {
-    shape: currentShape,
-    object_fit: getC('floating_object_fit') || 'cover',
-    width: currentWidth,
-    height: currentCalculatedHeight,
-    position: getC('floating_position') || 'fixed_bottom_right',
-    bottom_spacing: getC('floating_margin_bottom') ?? (previewDevice === 'mobile' ? 16 : 20),
-    top_spacing: getC('floating_margin_top') ?? (previewDevice === 'mobile' ? 16 : 20),
-    left_spacing: getC('floating_margin_side') ?? (previewDevice === 'mobile' ? 16 : 20),
-    right_spacing: getC('floating_margin_side') ?? (previewDevice === 'mobile' ? 16 : 20),
-    border_color: getC('floating_border_color') || formData?.primary_color || '#0094EB',
-    border_style: getC('floating_border_width') ?? 2,
-    border_radius: getC('floating_border_radius') ?? 12,
-    show_cta: getC('floating_show_cta') ?? false,
-    cta_text: getC('floating_cta_text') || 'VER VÍDEO',
-    cta_font_size: getC('floating_cta_font_size') ?? (previewDevice === 'mobile' ? 12 : 14),
-    cta_is_bold: getC('floating_cta_is_bold') ?? true,
-    cta_bg_color: getC('floating_cta_bg_color') || formData?.primary_color || '#0094EB',
-    cta_text_color: getC('floating_cta_text_color') || '#FFFFFF',
-    autoplay_videos: getC('floating_auto_play') ?? true,
-    show_play_icon: getC('floating_show_play_icon') ?? true,
-    allow_close: getC('floating_show_close_button') ?? false,
-  };
 
   const handleSave = async () => {
     try {
@@ -452,10 +257,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           </select>
                         </FormField>
                         <FormField label="Largura (px)">
-                          <input type="number" min="40" max="200" value={getC('floating_width') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('floating_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="number" min="40" max="200" value={getC('floating_width') || 80} onChange={e => setC('floating_width', parseInt(e.target.value) || 80)} className={inputClass} />
                         </FormField>
                         <FormField label="Altura Calculada">
-                          <input type="text" readOnly value={`${currentCalculatedHeight}px`} className={`${inputClass} bg-slate-50 text-slate-500 cursor-not-allowed`} />
+                          <input type="text" readOnly value={`${Math.round((getC('floating_width') || 80) * 1.77)}px`} className={`${inputClass} bg-slate-50 text-slate-500 cursor-not-allowed`} />
                         </FormField>
                       </div>
                     </Accordion>
@@ -463,23 +268,23 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     <Accordion title="2. Posição & Margens" isOpen={openAccordion === '2. Posição & Margens'} onClick={() => toggleAccordion('2. Posição & Margens')}>
                       <div className="mb-4">
                         <FormField label="Posição na Tela">
-                          <select value={getC('floating_position') || 'fixed_bottom_right'} onChange={e => setC('floating_position', e.target.value)} className={selectClass}>
-                            <option value="fixed_bottom_right">Inferior Direita</option>
-                            <option value="fixed_bottom_left">Inferior Esquerda</option>
-                            <option value="fixed_top_right">Superior Direita</option>
-                            <option value="fixed_top_left">Superior Esquerda</option>
+                          <select value={getC('floating_position') || 'bottom-right'} onChange={e => setC('floating_position', e.target.value)} className={selectClass}>
+                            <option value="bottom-left">Inferior Esquerda</option>
+                            <option value="bottom-right">Inferior Direita</option>
+                            <option value="top-left">Superior Esquerda</option>
+                            <option value="top-right">Superior Direita</option>
                           </select>
                         </FormField>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Margem Inferior (px)">
-                          <input type="number" min="0" max="200" value={getC('floating_margin_bottom') ?? (previewDevice === 'mobile' ? 16 : 20)} onChange={e => setC('floating_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="number" min="0" max="200" value={getC('floating_margin_bottom') || 20} onChange={e => setC('floating_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Superior (px)">
-                          <input type="number" min="0" max="200" value={getC('floating_margin_top') ?? (previewDevice === 'mobile' ? 16 : 20)} onChange={e => setC('floating_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="number" min="0" max="200" value={getC('floating_margin_top') || 20} onChange={e => setC('floating_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Lateral (px)">
-                          <input type="number" min="0" max="200" value={getC('floating_margin_side') ?? (previewDevice === 'mobile' ? 16 : 20)} onChange={e => setC('floating_margin_side', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="number" min="0" max="200" value={getC('floating_margin_side') || 20} onChange={e => setC('floating_margin_side', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                       </div>
                     </Accordion>
@@ -490,10 +295,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <ColorInput value={getC('floating_border_color') || '#0094EB'} onChange={(v: string) => setC('floating_border_color', v)} />
                         </FormField>
                         <FormField label="Largura Borda (px)">
-                          <input type="number" min="0" max="10" value={getC('floating_border_width') ?? 2} onChange={e => setC('floating_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="number" min="0" max="10" value={getC('floating_border_width') || 2} onChange={e => setC('floating_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Raio da Borda (px)">
-                          <input type="number" min="0" max="100" value={getC('floating_border_radius') ?? 12} onChange={e => setC('floating_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="number" min="0" max="100" value={getC('floating_border_radius') || 12} onChange={e => setC('floating_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                       </div>
                     </Accordion>
@@ -501,30 +306,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     <Accordion title="4. Elementos Visíveis" isOpen={openAccordion === '4. Elementos Visíveis'} onClick={() => toggleAccordion('4. Elementos Visíveis')}>
                       <div className="flex flex-col">
                         <CheckboxField label="Exibir CTA (Pílula)" checked={getC('floating_show_cta') || false} onChange={(v: boolean) => setC('floating_show_cta', v)} />
-                        {getC('floating_show_cta') && (
-                          <div className="p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 space-y-3">
-                            <FormField label="Texto do CTA (máx 12 caract.)">
-                              <input type="text" maxLength={12} value={getC('floating_cta_text') || 'VER VÍDEO'} onChange={e => setC('floating_cta_text', e.target.value)} className={inputClass} />
-                            </FormField>
-                            <div className="grid grid-cols-2 gap-3">
-                              <FormField label="Tamanho da fonte (px)">
-                                <input type="number" min="10" max="24" value={getC('floating_cta_font_size') ?? (previewDevice === 'mobile' ? 12 : 14)} onChange={e => setC('floating_cta_font_size', parseInt(e.target.value) || 14)} className={inputClass} />
-                              </FormField>
-                              <div className="flex items-center pt-5">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input type="checkbox" checked={getC('floating_cta_is_bold') ?? true} onChange={e => setC('floating_cta_is_bold', e.target.checked)} className="w-4 h-4 rounded text-[#0094eb]" />
-                                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Negrito</span>
-                                </label>
-                              </div>
-                              <FormField label="Cor de Fundo">
-                                <ColorInput value={getC('floating_cta_bg_color') || '#0094EB'} onChange={(v: string) => setC('floating_cta_bg_color', v)} />
-                              </FormField>
-                              <FormField label="Cor do Texto">
-                                <ColorInput value={getC('floating_cta_text_color') || '#FFFFFF'} onChange={(v: string) => setC('floating_cta_text_color', v)} />
-                              </FormField>
-                            </div>
-                          </div>
-                        )}
                         <CheckboxField label="Reproduzir vídeos" checked={getC('floating_auto_play') !== false} onChange={(v: boolean) => setC('floating_auto_play', v)} />
                         <CheckboxField label="Exibir ícone de Play" checked={getC('floating_show_play_icon') !== false} onChange={(v: boolean) => setC('floating_show_play_icon', v)} />
                         <CheckboxField label="Exibir botão de fechar (X)" checked={getC('floating_show_close_button') || false} onChange={(v: boolean) => setC('floating_show_close_button', v)} />
@@ -627,25 +408,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div><div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div><div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
                      </div>
                      <div className="flex-1 relative bg-slate-50 dark:bg-slate-900 flex items-center justify-center overflow-hidden">
-                        {activeTab === 'flutuante' ? (
-                          <div className="relative w-full h-full">
-                            <FloatingPreview floating={floatingPreviewData} colors={{ primary: formData?.primary_color || '#0094EB' }} device="desktop" />
-                          </div>
-                        ) : (
-                          <span className="z-10 text-slate-400 font-bold uppercase tracking-widest text-center px-4">Preview do {activeTab.replace('-', ' ')} (Desktop)</span>
-                        )}
+                        <span className="z-10 text-slate-400 font-bold uppercase tracking-widest text-center px-4">Preview do {activeTab.replace('-', ' ')} (Desktop)</span>
                      </div>
                   </div>
                 ) : (
                   <div className="h-full max-h-[800px] aspect-[9/19] rounded-[2.5rem] border-[10px] border-[#1a1f36] bg-slate-50 dark:bg-slate-900 shadow-2xl relative flex items-center justify-center overflow-hidden shrink-0">
                     <div className="absolute top-0 inset-x-0 h-5 bg-[#1a1f36] w-[40%] mx-auto rounded-b-xl z-20"></div>
-                    {activeTab === 'flutuante' ? (
-                      <div className="relative w-full h-full p-2">
-                        <FloatingPreview floating={floatingPreviewData} colors={{ primary: formData?.primary_color || '#0094EB' }} device="mobile" />
-                      </div>
-                    ) : (
-                      <span className="z-10 text-slate-400 text-sm font-bold uppercase tracking-widest text-center px-4">Preview do {activeTab.replace('-', ' ')} (Mobile)</span>
-                    )}
+                    <span className="z-10 text-slate-400 text-sm font-bold uppercase tracking-widest text-center px-4">Preview do {activeTab.replace('-', ' ')} (Mobile)</span>
                   </div>
                 )}
               </div>
