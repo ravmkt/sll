@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useStore } from '../../../contexts/StoreContext';
+import { useStore } from "../../contexts/StoreContext";
 import { VidlyticsDatabaseService, VidAppearanceRow } from '../../services/vidlytics/VidlyticsDatabaseService';
 
 // ─────────────── Defaults (equivalentes ao legado, em chaves flat por device) ───────────────
