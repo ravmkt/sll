@@ -438,9 +438,9 @@ const ColorInput = ({ value, onChange }: any) => (
   </div>
 );
 
-const CheckboxField = ({ label, checked, onChange }: any) => (
-  <label className="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl mb-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb]" />
+const CheckboxField = ({ label, checked, onChange, disabled = false }: any) => (
+  <label className={`flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl mb-2 transition-colors ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+    <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer" />
     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
   </label>
 );
@@ -484,7 +484,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     localStorage.getItem('sll_store_id') ||
     localStorage.getItem('store_id');
 
+  // Verifica se está editando o estilo oficial fixo do sistema
   const isDefaultSystemStyle =
+    (styleName || '').trim().toUpperCase() === 'VIDLYTICS' ||
     (styleName || '').trim().toUpperCase() === 'PADRAO' ||
     formData?.id === 'default' ||
     !formData?.id;
@@ -700,6 +702,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
         try { await saveStyle(); } catch (e) { /* fallback seguro */ }
       }
 
+      // Notifica a tela de listagem de aparências para atualizar imediatamente
       window.dispatchEvent(new CustomEvent('vidlytics:appearance_saved'));
       setShowNameModal(false);
       onClose();
@@ -713,13 +716,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
   // DECISÃO DE SALVAR OU ABRIR POP-UP
   const handleInitiateSave = () => {
-    // Se for o estilo PADRAO ou não tiver nome preenchido, abre pop-up para dar nome
-    if (isDefaultSystemStyle || !styleName?.trim() || styleName.trim().toUpperCase() === 'PADRAO') {
+    // Se for o estilo VIDLYTICS oficial ou sem nome, solicita um nome novo
+    if (isDefaultSystemStyle || !styleName?.trim() || styleName.trim().toUpperCase() === 'PADRAO' || styleName.trim().toUpperCase() === 'VIDLYTICS') {
       setModalInputName('');
       setShowNameModal(true);
       return;
     }
-    // Se já é um estilo personalizado com nome próprio, salva direto
+    // Se já é um estilo personalizado com nome e ID próprios, salva diretamente
     executeSave(styleName.trim());
   };
 
@@ -764,7 +767,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 </button>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                O modelo "PADRAO" é o nativo protegido. Digite um nome para salvar sua versão customizada:
+                O modelo "Vidlytics" é o nativo do sistema. Digite um nome para salvar sua versão customizada:
               </p>
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Nome do Estilo</label>
@@ -841,25 +844,40 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Selecionar Estilo Ativo</label>
                     <select
-                      value={formData?.id || (isDefaultSystemStyle ? 'PADRAO' : '')}
+                      value={formData?.id || (isDefaultSystemStyle ? 'VIDLYTICS_DEFAULT' : '')}
                       onChange={(e) => {
                         const sel = e.target.value;
-                        if (sel === 'PADRAO') {
-                          setStyleName('PADRAO');
-                          setIsDefault(true);
+                        if (sel === 'VIDLYTICS_DEFAULT') {
+                          setStyleName('Vidlytics');
+                          setIsDefault(false);
+                          if (formData) {
+                            formData.id = 'default';
+                            formData.name = 'Vidlytics';
+                          }
                         } else {
                           const s = availableStyles.find(item => item.id === sel);
                           if (s) {
                             setStyleName(s.name || 'Estilo');
-                            setIsDefault(s.is_default || false);
+                            setIsDefault(Boolean(s.is_default));
+                            if (formData) {
+                              formData.id = s.id;
+                              formData.name = s.name;
+                              formData.is_default = s.is_default;
+                              if (s.widget_style) {
+                                if (s.widget_style.desktop) formData.desktop = s.widget_style.desktop;
+                                if (s.widget_style.mobile) formData.mobile = s.widget_style.mobile;
+                              }
+                            }
                           }
                         }
                       }}
                       className={selectClass}
                     >
-                      <option value="PADRAO">PADRAO (Oficial da Loja)</option>
+                      <option value="VIDLYTICS_DEFAULT">Vidlytics (Padrão do Sistema)</option>
                       {availableStyles.map(s => (
-                        <option key={s.id} value={s.id}>{s.name || 'Estilo sem nome'} {s.is_default ? '★' : ''}</option>
+                        <option key={s.id} value={s.id}>
+                          {s.name || 'Estilo sem nome'} {s.is_default ? '★ (Padrão da Loja)' : ''}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -870,7 +888,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                       <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Nome do Estilo Atual</label>
                       {isDefaultSystemStyle && (
                         <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
-                          Padrão Oficial Protegido
+                          Padrão Oficial Vidlytics
                         </span>
                       )}
                     </div>
@@ -884,13 +902,21 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     />
                   </div>
 
-                  {/* CHECKBOX DEFINIR COMO PADRÃO */}
+                  {/* CHECKBOX DEFINIR COMO PADRÃO DA LOJA */}
                   <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                    <label className={`flex items-start gap-3 ${isDefaultSystemStyle ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}>
-                      <div className="mt-1"><input type="checkbox" checked={isDefault} disabled={isDefaultSystemStyle} onChange={(e) => setIsDefault(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer" /></div>
+                    <label className={`flex items-start gap-3 ${isDefaultSystemStyle ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`}>
+                      <div className="mt-1">
+                        <input
+                          type="checkbox"
+                          checked={isDefault}
+                          disabled={isDefaultSystemStyle}
+                          onChange={(e) => setIsDefault(e.target.checked)}
+                          className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer"
+                        />
+                      </div>
                       <div>
-                        <p className="font-bold text-slate-800 dark:text-white">Definir como padrão</p>
-                        <p className="text-xs text-slate-500 mt-1">Vídeos sem estilo definido usarão este modelo automaticamente.</p>
+                        <p className="font-bold text-slate-800 dark:text-white">Definir como padrão da loja</p>
+                        <p className="text-xs text-slate-500 mt-1">Os vídeos exibidos na sua loja que não tiverem estilo específico usarão este modelo.</p>
                       </div>
                     </label>
                   </div>
