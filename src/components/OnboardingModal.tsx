@@ -150,13 +150,13 @@ export const OnboardingModal: React.FC = () => {
 
 {/* PASSO 1: BOAS-VINDAS & LOGOTIPO OFICIAL */}
           {step === 1 && (
-            <div className="flex flex-col items-center text-center space-y-5">
-              {/* Logotipo SLL com tamanho ampliado e largura destacada */}
-              <div className="flex items-center justify-center w-full py-2">
+            <div className="flex flex-col items-center text-center space-y-2">
+              {/* Logotipo SLL ampliado com margens verticais mínimas */}
+              <div className="flex items-center justify-center w-full py-0 -mt-2">
                 <img 
                   src={LOGO_SRC} 
                   alt="Sistema Loja Lucrativa" 
-                  className="w-48 sm:w-56 h-auto max-h-36 object-contain drop-shadow-sm"
+                  className="w-64 sm:w-72 h-auto max-h-40 object-contain drop-shadow-sm"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/sll-logotipo-b.png';
                   }}
@@ -173,7 +173,7 @@ export const OnboardingModal: React.FC = () => {
               </div>
 
               {/* CONTAINER DE VÍDEO INTRODUTÓRIO (16:9) */}
-              <div className="w-full aspect-video rounded-2xl bg-slate-900 border border-slate-200 dark:border-slate-800 relative overflow-hidden flex items-center justify-center group shadow-inner">
+              <div className="w-full aspect-video rounded-2xl bg-slate-900 border border-slate-200 dark:border-slate-800 relative overflow-hidden flex items-center justify-center group shadow-inner mt-2">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
                 <div className="w-14 h-14 rounded-full bg-white/95 text-slate-950 flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 cursor-pointer">
                   <Play size={20} className="fill-slate-950 ml-1" />
