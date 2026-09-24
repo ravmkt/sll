@@ -8,12 +8,14 @@ import {
   CheckCircle2, 
   ArrowRight, 
   ArrowLeft, 
-  Loader2, 
-  Sparkles 
+  Loader2 
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService, StorePayload } from '@/services/SLLDatabaseService';
 import { useLoja } from '@/context/LojaContext';
+
+// Importação com caminho estritamente em minúsculas compatível com Linux/Vercel
+const LOGO_SRC = '/assets/sll-logotipo-b.png';
 
 // Plataformas ordenadas alfabeticamente com inclusão de Bagy e Ideris
 const PLATAFORMAS = [
@@ -146,15 +148,19 @@ export const OnboardingModal: React.FC = () => {
             </div>
           )}
 
-          {/* PASSO 1: BOAS-VINDAS & LOGOTIPO */}
+          {/* PASSO 1: BOAS-VINDAS & LOGOTIPO OFICIAL */}
           {step === 1 && (
             <div className="flex flex-col items-center text-center space-y-5">
-              {/* Logotipo SLL */}
-              <div className="flex items-center justify-center max-w-[200px] h-12">
+              {/* Logotipo SLL com caminho exato em minúsculas */}
+              <div className="flex items-center justify-center max-w-[240px] h-14">
                 <img 
-                  src="public/assets/SLL-logotipo-b.png" 
+                  src={LOGO_SRC} 
                   alt="Sistema Loja Lucrativa" 
                   className="max-h-full w-auto object-contain"
+                  onError={(e) => {
+                    // Fallback para caso o arquivo esteja na raiz de assets
+                    (e.target as HTMLImageElement).src = '/sll-logotipo-b.png';
+                  }}
                 />
               </div>
 
@@ -341,7 +347,7 @@ export const OnboardingModal: React.FC = () => {
                 onClick={handleFinishSetup}
                 className="flex items-center gap-2 px-6 py-2.5 bg-[#fd8539] hover:bg-[#e07128] text-white rounded-xl text-xs font-black shadow-md shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-50"
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                {loading ? <Loader2 size={16} className="animate-spin" /> : null}
                 {loading ? 'Criando Loja...' : 'Criar Minha Loja e Acessar Hub'}
               </button>
             )}
