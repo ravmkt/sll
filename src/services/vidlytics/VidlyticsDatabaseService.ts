@@ -39,47 +39,38 @@ export const getAppearanceById = async (id: string): Promise<any | null> => {
 };
 
 /**
- * Garante que a loja exista na tabela referenciada pela Foreign Key ("sll_stores")
+ * Garante a existência do store_id na tabela "sll_stores"
+ * sem enviar campos inexistentes como 'url'.
  */
-async function ensureStoreInSllStores(storeId: string): Promise<string> {
-  const now = new Date().toISOString();
-
-  // 1. Tenta buscar em sll_stores no schema public
-  const { data: sllStore } = await supabase
+async function ensureStoreInSllStores(storeId: string): Promise<void> {
+  const { data: existingSll } = await supabase
     .from('sll_stores')
     .select('id')
     .eq('id', storeId)
     .maybeSingle();
 
-  if (sllStore?.id) {
-    return sllStore.id;
-  }
+  if (existingSll?.id) return;
 
-  // 2. Se não achou em sll_stores, busca os dados da loja em stores
+  // Busca o nome da loja em stores
   const { data: storeData } = await supabase
     .from('stores')
-    .select('*')
+    .select('id, name')
     .eq('id', storeId)
     .maybeSingle();
 
-  if (storeData) {
-    // Insere na sll_stores para satisfazer a constraint foreign key
-    const { error: insertSllErr } = await supabase
-      .from('sll_stores')
-      .upsert({
-        id: storeData.id,
-        name: storeData.name || 'Loja',
-        url: storeData.url || '',
-        created_at: storeData.created_at || now,
-        updated_at: now,
-      }, { onConflict: 'id' });
+  const storeName = storeData?.name || 'Minha Loja';
 
-    if (insertSllErr) {
-      console.warn('[VidlyticsDatabaseService] Tentativa de inserção em sll_stores:', insertSllErr);
-    }
+  // Inserção estritamente com as colunas id e name
+  const { error: insertErr } = await supabase
+    .from('sll_stores')
+    .upsert({
+      id: storeId,
+      name: storeName,
+    }, { onConflict: 'id' });
+
+  if (insertErr) {
+    console.warn('[VidlyticsDatabaseService] Inserção simplificada em sll_stores:', insertErr);
   }
-
-  return storeId;
 }
 
 export const saveAppearance = async (params: {
@@ -91,7 +82,7 @@ export const saveAppearance = async (params: {
 }): Promise<any> => {
   let { id, store_id, name, is_default, widget_style } = params;
 
-  // 1. Resolução prioritária da loja real
+  // 1. Identifica loja ativa do usuário logado
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
@@ -116,13 +107,13 @@ export const saveAppearance = async (params: {
     throw new Error('Nenhuma loja ativa encontrada para vincular o estilo.');
   }
 
-  // 2. SINCRONIZAÇÃO MANDATÓRIA: Garante que o store_id exista em sll_stores
+  // 2. Garante o store_id em sll_stores para satisfazer a foreign key
   await ensureStoreInSllStores(store_id);
 
   const client = getVidClient();
   const now = new Date().toISOString();
 
-  // 3. Se for marcado como default, remove o default de outros estilos da mesma loja
+  // 3. Se for marcado como default, remove o default de outros da mesma loja
   if (is_default) {
     await client
       .from(TABLE)
@@ -130,7 +121,11 @@ export const saveAppearance = async (params: {
       .eq('store_id', store_id);
   }
 
+  const isExistingUuid = id && id !== 'default' && id.length > 20;
+  const targetId = isExistingUuid ? id : (crypto?.randomUUID ? crypto.randomUUID() : undefined);
+
   const payload: any = {
+    id: targetId,
     store_id,
     name: name.trim(),
     is_default: Boolean(is_default),
@@ -139,17 +134,19 @@ export const saveAppearance = async (params: {
   };
 
   let res;
-  const isExistingUuid = id && id !== 'default' && id.length > 20;
-
   if (isExistingUuid) {
     res = await client
       .from(TABLE)
-      .update(payload)
+      .update({
+        name: payload.name,
+        is_default: payload.is_default,
+        widget_style: payload.widget_style,
+        updated_at: now,
+      })
       .eq('id', id)
       .select('id, store_id, name, is_default, widget_style, created_at, updated_at')
       .single();
   } else {
-    // Para novos estilos (como "Rodrigo Estilo2"), faz o insert direto sem id prévio
     res = await client
       .from(TABLE)
       .insert({ ...payload, created_at: now })
