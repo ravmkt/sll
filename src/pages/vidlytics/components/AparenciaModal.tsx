@@ -32,7 +32,69 @@ const DEMO_PREVIEW_VIDEOS = [
   '/demo-videos/demo3.mp4',
 ];
 
-// ──────────────────── PREVIEW FLUTUANTE (EXTRAÍDO DO LEGADO) ────────────────────
+type WidgetShape = 'circle' | 'square' | 'portrait' | 'landscape';
+
+const normalizeWidgetShape = (value: unknown, fallback: WidgetShape = 'portrait'): WidgetShape => {
+  const text = String(value || '').trim();
+  if (text === 'circle' || text === 'square' || text === 'portrait' || text === 'landscape') return text;
+  if (text === 'square_1_1') return 'square';
+  if (text === 'landscape_16_9') return 'landscape';
+  if (text === 'stories') return 'circle';
+  if (text === 'cards' || text === 'portrait_9_16') return 'portrait';
+  return fallback;
+};
+
+// ──────────────────── SCALE TO FIT (CANVAS DESKTOP) ────────────────────
+const ScaleToFit = ({ children }: { children: React.ReactNode }) => {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const calculate = () => {
+      const outer = outerRef.current;
+      const inner = innerRef.current;
+      if (!outer || !inner) return;
+
+      const outerRect = outer.getBoundingClientRect();
+      const innerHeight = inner.scrollHeight;
+      const innerWidth = inner.scrollWidth;
+
+      if (innerHeight === 0 || innerWidth === 0) return;
+
+      const scaleY = outerRect.height / innerHeight;
+      const scaleX = outerRect.width / innerWidth;
+      const nextScale = Math.min(scaleX, scaleY, 1);
+
+      setScale(nextScale > 0 ? nextScale : 1);
+    };
+
+    calculate();
+
+    const resizeObserver = new ResizeObserver(calculate);
+    if (outerRef.current) resizeObserver.observe(outerRef.current);
+    if (innerRef.current) resizeObserver.observe(innerRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, [children]);
+
+  return (
+    <div ref={outerRef} className="w-full h-full flex items-center justify-center overflow-hidden">
+      <div
+        ref={innerRef}
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: 'center center',
+          width: '100%',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// ──────────────────── PREVIEW FLUTUANTE ────────────────────
 const FloatingPreview = ({
   floating,
   colors,
@@ -120,7 +182,6 @@ const FloatingPreview = ({
         isCircle ? "aspect-square" : ""
       } overflow-visible`}
     >
-      {/* CONTAINER DO VÍDEO */}
       <div 
         className="w-full h-full relative overflow-hidden bg-slate-950 shadow-sm transition-all duration-300"
         style={{ 
@@ -153,7 +214,6 @@ const FloatingPreview = ({
         )}
       </div>
 
-      {/* CTA - Pílula Vazando (Tooltip) */}
       {showTooltip && (
         <div 
           className="absolute z-20 shadow-md flex items-center justify-center whitespace-nowrap transition-all duration-300 pointer-events-none"
@@ -173,6 +233,206 @@ const FloatingPreview = ({
           {ctaText}
         </div>
       )}
+    </div>
+  );
+};
+
+// ──────────────────── PREVIEW CARROSSEL (EXTRAÍDO DO LEGADO) ────────────────────
+const CarouselPreview = ({
+  carousel,
+  colors,
+  isMobile = false,
+}: {
+  carousel: any;
+  colors: any;
+  isMobile?: boolean;
+}) => {
+  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(isMobile ? 320 : 850);
+
+  useEffect(() => {
+    const obs = new ResizeObserver(entries => {
+      if (entries[0]) setContainerWidth(entries[0].contentRect.width);
+    });
+    if (containerRef.current) obs.observe(containerRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  const videoSources = DEMO_PREVIEW_VIDEOS;
+  const len = videoSources.length;
+  const REPEAT_TILES = 16;
+  const baseIndex = Math.floor(REPEAT_TILES / 2) * len;
+  const trackVideos = Array.from({ length: REPEAT_TILES }, () => videoSources).flat();
+
+  const [trackIndex, setTrackIndex] = useState(baseIndex);
+  const [noTransition, setNoTransition] = useState(false);
+  const [dragStartX, setDragStartX] = useState<number | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
+
+  // Loop infinito na navegação
+  useEffect(() => {
+    if (trackIndex - baseIndex >= len || trackIndex - baseIndex <= -len) {
+      const t = setTimeout(() => {
+        setNoTransition(true);
+        setTrackIndex(baseIndex + ((trackIndex - baseIndex) % len));
+        requestAnimationFrame(() => requestAnimationFrame(() => setNoTransition(false)));
+      }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [trackIndex, baseIndex, len]);
+
+  const cw = containerWidth || (isMobile ? 320 : 850);
+  const isMobileView = isMobile || cw <= 480;
+
+  const shape = normalizeWidgetShape(carousel?.shape, 'portrait');
+  const isCircle = shape === 'circle';
+  const showTitle = carousel?.show_title ?? false;
+  const spacingNum = Number(carousel?.spacing ?? carousel?.gap ?? 12) || 0;
+
+  const visibleItemsDesktop = Math.max(1, Number(carousel?.visible_items ?? carousel?.visibleItems ?? 4));
+
+  const rawBorderWidth = carousel?.border_width ?? carousel?.border_style;
+  const borderWidth = rawBorderWidth !== undefined && rawBorderWidth !== '' ? Number(rawBorderWidth) : 0;
+  const borderColor = carousel?.border_color || colors?.primary || '#0094EB';
+  
+  const rawBorderRadius = carousel?.border_radius ?? carousel?.borderRadius;
+  const borderRadiusNum = rawBorderRadius !== undefined && rawBorderRadius !== '' ? Number(rawBorderRadius) : 12;
+  const borderRadius = isCircle ? '50%' : `${borderRadiusNum}px`;
+
+  const titleAlign = carousel?.title_align ?? carousel?.title_alignment ?? (isMobileView ? 'left' : 'center');
+
+  const baseItemWidth = isMobileView
+    ? cw * 0.60
+    : Math.max(40, (cw - (spacingNum * (visibleItemsDesktop - 1))) / visibleItemsDesktop);
+  const step = baseItemWidth + spacingNum;
+
+  useEffect(() => {
+    videoRefs.current.forEach((video, i) => {
+      if (!video) return;
+      const isVisible = isMobileView
+        ? (i >= trackIndex - 1 && i <= trackIndex + 1)
+        : (i >= trackIndex && i < trackIndex + visibleItemsDesktop);
+      if (isVisible && (carousel?.autoplay_videos ?? true)) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  }, [carousel?.autoplay_videos, trackIndex, isMobileView, visibleItemsDesktop]);
+
+  const handleDragStart = (x: number) => { setNoTransition(true); setDragStartX(x); };
+  const handleDragMove = (x: number) => { if (dragStartX !== null) setDragOffset(x - dragStartX); };
+  const handleDragEnd = () => {
+    if (dragStartX === null) return;
+    if (dragOffset > 40) setTrackIndex(prev => prev - 1);
+    else if (dragOffset < -40) setTrackIndex(prev => prev + 1);
+    setDragStartX(null);
+    setDragOffset(0);
+    setNoTransition(false);
+  };
+
+  const transformStyle = isMobileView
+    ? `translateX(${(cw / 2) - ((trackIndex * step) + (baseItemWidth / 2)) + dragOffset}px)`
+    : `translateX(${-trackIndex * step + dragOffset}px)`;
+
+  return (
+    <div className="w-full py-2 flex flex-col space-y-3 select-none overflow-hidden" ref={containerRef}>
+      {showTitle && (
+        <h4
+          style={{ 
+            fontSize: `${carousel?.title_font_size || 14}px`, 
+            fontWeight: carousel?.title_bold ? 'bold' : 'normal',
+            textAlign: titleAlign as any
+          }}
+          className={`tracking-wider w-full px-1 ${isMobile ? 'text-slate-800 dark:text-white' : 'text-slate-800 dark:text-slate-100'}`}
+        >
+          {carousel?.title_text || 'Stories'}
+        </h4>
+      )}
+
+      <div
+        className="relative w-full cursor-grab active:cursor-grabbing"
+        onMouseDown={e => handleDragStart(e.clientX)}
+        onMouseMove={e => handleDragMove(e.clientX)}
+        onMouseUp={handleDragEnd}
+        onMouseLeave={handleDragEnd}
+        onTouchStart={e => handleDragStart(e.touches[0].clientX)}
+        onTouchMove={e => handleDragMove(e.touches[0].clientX)}
+        onTouchEnd={handleDragEnd}
+      >
+        <div
+          className="flex items-start"
+          style={{
+            gap: `${spacingNum}px`,
+            transform: transformStyle,
+            transition: noTransition || dragStartX !== null ? 'none' : 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)',
+          }}
+        >
+          {trackVideos.map((videoSrc, i) => (
+            <div
+              key={i}
+              className="shrink-0 flex flex-col transition-all duration-300"
+              style={{
+                width: `${baseItemWidth}px`,
+                gap: '8px'
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  height: isCircle || shape === 'square'
+                    ? `${baseItemWidth}px`
+                    : shape === 'landscape'
+                      ? `${Math.round(baseItemWidth * (9 / 16))}px`
+                      : `${Math.round(baseItemWidth * (16 / 9))}px`,
+                  borderRadius,
+                  border: `${borderWidth}px solid ${borderColor}`,
+                  boxSizing: 'border-box'
+                }}
+                className="relative overflow-hidden bg-slate-950 flex items-center justify-center shadow-sm"
+              >
+                <video
+                  ref={el => { if (el) videoRefs.current.set(i, el); else videoRefs.current.delete(i); }}
+                  src={videoSrc}
+                  loop
+                  muted
+                  playsInline
+                  style={{ objectFit: carousel?.object_fit || 'cover' }}
+                  className="w-full h-full pointer-events-none"
+                />
+                {carousel?.show_play_icon !== false && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                    <div className="w-8 h-8 rounded-full bg-white/95 shadow-md flex items-center justify-center">
+                      <Play size={10} className="text-slate-900 fill-slate-900 ml-0.5" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {carousel?.show_product && !isCircle && (
+                <div
+                  className="w-full flex items-center gap-2 transition-all duration-300 overflow-hidden box-border pointer-events-none"
+                  style={{
+                    backgroundColor: carousel?.product_card_bg || '#FFFFFF',
+                    border: `${Number(carousel?.product_card_border_width ?? 1)}px solid ${carousel?.product_card_border_color || '#E2E8F0'}`,
+                    borderRadius: `${Number(carousel?.product_card_border_radius ?? 12)}px`,
+                    padding: '8px',
+                  }}
+                >
+                  <div className="w-8 h-8 rounded bg-slate-100 shrink-0 overflow-hidden border border-slate-100">
+                    <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=80&q=80" alt="Produto" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p style={{ fontSize: `${Number(carousel?.product_card_name_size ?? 9)}px`, color: carousel?.product_card_name_color || '#0F172A' }} className="font-bold truncate">Calça Confort</p>
+                    <p style={{ fontSize: `${Number(carousel?.product_card_price_size ?? 8)}px`, color: carousel?.product_card_price_color || colors?.primary || '#0094EB' }} className="font-black">R$ 149,95</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
@@ -249,35 +509,25 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('basico');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
-  const [openAccordion, setOpenAccordion] = useState<string>('1. Formato & Dimensões');
+  const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
 
   const getC = (key: string) => getConfig(previewDevice, key);
   const setC = (key: string, value: any) => setConfig(previewDevice, key, value);
 
-  // Mapeamento normalizado de formato para o FloatingPreview
-  const getNormalizedShape = (fmt: string) => {
-    if (fmt === 'circle') return 'circle';
-    if (fmt === 'square_1_1' || fmt === 'square') return 'square';
-    if (fmt === 'landscape_16_9' || fmt === 'landscape') return 'landscape';
-    return 'portrait';
-  };
+  // Mapeamentos para Flutuante
+  const currentFloatingShape = normalizeWidgetShape(getC('floating_format') || 'portrait');
+  const currentFloatingWidth = Number(getC('floating_width') || (previewDevice === 'mobile' ? 64 : 80));
+  const currentFloatingHeight = (currentFloatingShape === 'circle' || currentFloatingShape === 'square')
+    ? currentFloatingWidth
+    : currentFloatingShape === 'landscape'
+      ? Math.round((currentFloatingWidth * 9) / 16)
+      : Math.round((currentFloatingWidth * 16) / 9);
 
-  const getCalculatedHeight = (width: number, shape: string) => {
-    if (shape === 'circle' || shape === 'square') return width;
-    if (shape === 'landscape') return Math.round((width * 9) / 16);
-    return Math.round((width * 16) / 9);
-  };
-
-  const currentShape = getNormalizedShape(getC('floating_format') || 'portrait_9_16');
-  const currentWidth = Number(getC('floating_width') || (previewDevice === 'mobile' ? 64 : 80));
-  const currentCalculatedHeight = getCalculatedHeight(currentWidth, currentShape);
-
-  // Objeto de dados normalizado e reativo para alimentar o componente FloatingPreview
   const floatingPreviewData = {
-    shape: currentShape,
+    shape: currentFloatingShape,
     object_fit: getC('floating_object_fit') || 'cover',
-    width: currentWidth,
-    height: currentCalculatedHeight,
+    width: currentFloatingWidth,
+    height: currentFloatingHeight,
     position: getC('floating_position') || 'fixed_bottom_right',
     bottom_spacing: getC('floating_margin_bottom') ?? (previewDevice === 'mobile' ? 16 : 20),
     top_spacing: getC('floating_margin_top') ?? (previewDevice === 'mobile' ? 16 : 20),
@@ -297,6 +547,36 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     allow_close: getC('floating_show_close_button') ?? false,
   };
 
+  // Mapeamentos para Carrossel
+  const carouselPreviewData = {
+    shape: normalizeWidgetShape(getC('carousel_shape') || getC('carousel_style') || 'portrait'),
+    object_fit: getC('carousel_object_fit') || 'cover',
+    width: getC('carousel_width') || getC('carousel_item_size') || (previewDevice === 'mobile' ? 64 : 80),
+    visible_items: getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4),
+    spacing: getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16),
+    margin_top: getC('carousel_margin_top') ?? 0,
+    margin_bottom: getC('carousel_margin_bottom') ?? 0,
+    border_color: getC('carousel_border_color') || formData?.primary_color || '#0094EB',
+    border_style: getC('carousel_border_width') ?? 2,
+    border_radius: getC('carousel_border_radius') ?? (previewDevice === 'mobile' ? 10 : 12),
+    show_title: getC('carousel_show_title') ?? false,
+    title_text: getC('carousel_title_text') || 'Stories',
+    title_font_size: getC('carousel_title_font_size') ?? 14,
+    title_align: getC('carousel_title_align') || (previewDevice === 'mobile' ? 'left' : 'center'),
+    title_bold: getC('carousel_title_bold') ?? true,
+    autoplay_videos: getC('carousel_autoplay_videos') ?? true,
+    show_play_icon: getC('carousel_show_play_icon') !== false,
+    show_product: getC('carousel_show_product') ?? true,
+    product_card_bg: getC('carousel_product_card_bg') || '#FFFFFF',
+    product_card_border_color: getC('carousel_product_card_border_color') || '#E2E8F0',
+    product_card_border_width: getC('carousel_product_card_border_width') ?? 1,
+    product_card_border_radius: getC('carousel_product_card_border_radius') ?? (previewDevice === 'mobile' ? 10 : 12),
+    product_card_name_size: getC('carousel_product_card_name_size') ?? 11,
+    product_card_name_color: getC('carousel_product_card_name_color') || '#0F172A',
+    product_card_price_size: getC('carousel_product_card_price_size') ?? 12,
+    product_card_price_color: getC('carousel_product_card_price_color') || formData?.primary_color || '#0094EB',
+  };
+
   const handleSave = async () => {
     try {
       await saveStyle();
@@ -309,7 +589,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     if (tabId !== 'basico') setPreviewDevice('mobile');
-    setOpenAccordion('1. Formato & Dimensões');
+    setOpenAccordion('1. Layout & Dimensões');
   };
 
   const toggleAccordion = (title: string) => {
@@ -432,30 +712,31 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                 </div>
 
+                {/* ABA FLUTUANTE */}
                 {activeTab === 'flutuante' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-
-                    <Accordion title="1. Formato & Dimensões" isOpen={openAccordion === '1. Formato & Dimensões'} onClick={() => toggleAccordion('1. Formato & Dimensões')}>
+                    <Accordion title="1. Formato & Dimensões" isOpen={openAccordion === '1. Formato & Dimensões' || openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Formato & Dimensões')}>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Formato">
-                          <select value={getC('floating_format') || 'portrait_9_16'} onChange={e => setC('floating_format', e.target.value)} className={selectClass}>
-                            <option value="portrait_9_16">Retrato 9:16</option>
-                            <option value="square_1_1">Quadrado 1:1</option>
-                            <option value="landscape_16_9">Paisagem 16:9</option>
-                            <option value="circle">Redondo (Stories)</option>
+                          <select value={getC('floating_format') || 'portrait'} onChange={e => setC('floating_format', e.target.value)} className={selectClass}>
+                            <option value="portrait">Retrato 9:16</option>
+                            <option value="square">Quadrado 1:1</option>
+                            <option value="landscape">Paisagem 16:9</option>
+                            <option value="circle">Circular</option>
                           </select>
                         </FormField>
                         <FormField label="Ajuste Imagem">
                           <select value={getC('floating_object_fit') || 'cover'} onChange={e => setC('floating_object_fit', e.target.value)} className={selectClass}>
                             <option value="cover">Cover (Preencher)</option>
                             <option value="contain">Contain (Ajustar)</option>
+                            <option value="fill">Fill (Esticar)</option>
                           </select>
                         </FormField>
                         <FormField label="Largura (px)">
                           <input type="number" min="40" max="200" value={getC('floating_width') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('floating_width', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Altura Calculada">
-                          <input type="text" readOnly value={`${currentCalculatedHeight}px`} className={`${inputClass} bg-slate-50 text-slate-500 cursor-not-allowed`} />
+                          <input type="text" readOnly value={`${currentFloatingHeight}px`} className={`${inputClass} bg-slate-50 text-slate-500 cursor-not-allowed`} />
                         </FormField>
                       </div>
                     </Accordion>
@@ -533,41 +814,127 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                 )}
 
+                {/* ABA CARROSSEL (LEGADO COMPLETO) */}
                 {activeTab === 'carrossel' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <Accordion title="1. Formato & Estilo" isOpen={openAccordion === '1. Formato & Estilo'} onClick={() => toggleAccordion('1. Formato & Estilo')}>
+                    {/* 1. LAYOUT & DIMENSÕES */}
+                    <Accordion title="1. Layout & Dimensões" isOpen={openAccordion === '1. Layout & Dimensões' || openAccordion === '1. Formato & Dimensões'} onClick={() => toggleAccordion('1. Layout & Dimensões')}>
                       <div className="grid grid-cols-2 gap-4">
-                        <FormField label="Estilo dos Itens">
-                          <select value={getC('carousel_style') || 'stories'} onChange={e => setC('carousel_style', e.target.value)} className={selectClass}>
-                            <option value="stories">Stories (Redondos)</option>
-                            <option value="cards">Cards (Retangulares)</option>
+                        <FormField label="Formato">
+                          <select value={getC('carousel_shape') || getC('carousel_style') || 'portrait'} onChange={e => setC('carousel_shape', e.target.value)} className={selectClass}>
+                            <option value="portrait">Retrato 9:16</option>
+                            <option value="circle">Circular (Stories)</option>
+                            <option value="square">Quadrado 1:1</option>
+                            <option value="landscape">Paisagem 16:9</option>
                           </select>
                         </FormField>
-                        <FormField label="Tamanho (px)">
-                          <input type="number" min="40" max="200" value={getC('carousel_item_size') || 80} onChange={e => setC('carousel_item_size', parseInt(e.target.value) || 80)} className={inputClass} />
+                        <FormField label="Ajuste Imagem">
+                          <select value={getC('carousel_object_fit') || 'cover'} onChange={e => setC('carousel_object_fit', e.target.value)} className={selectClass}>
+                            <option value="cover">Cover (Preencher)</option>
+                            <option value="contain">Contain (Ajustar)</option>
+                            <option value="fill">Fill (Esticar)</option>
+                          </select>
                         </FormField>
-                        <FormField label="Espaçamento (Gap)">
-                          <input type="number" min="0" max="50" value={getC('carousel_gap') || 12} onChange={e => setC('carousel_gap', parseInt(e.target.value) || 12)} className={inputClass} />
+                        <FormField label="Largura (px)">
+                          <input type="number" min="20" value={getC('carousel_width') || getC('carousel_item_size') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('carousel_width', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
+                        <FormField label="Itens Visíveis">
+                          <input type="number" min="1" max="10" value={getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4)} onChange={e => setC('carousel_visible_items', parseInt(e.target.value) || 1)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Espaçamento (px)" className="col-span-2">
+                          <input type="number" min="0" value={getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Superior (px)">
+                          <input type="number" min="0" value={getC('carousel_margin_top') || 0} onChange={e => setC('carousel_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Inferior (px)">
+                          <input type="number" min="0" value={getC('carousel_margin_bottom') || 0} onChange={e => setC('carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                      </div>
+                      <div className="mt-3 p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                        <p className="text-xs text-blue-600 dark:text-blue-400 font-medium leading-snug">
+                          💡 No mobile, o carrossel exibe no máximo 3 itens (1 completo + 2 parciais nas laterais), independente do número configurado.
+                        </p>
+                      </div>
+                    </Accordion>
+
+                    {/* 2. BORDAS */}
+                    <Accordion title="2. Bordas" isOpen={openAccordion === '2. Bordas'} onClick={() => toggleAccordion('2. Bordas')}>
+                      <div className="grid grid-cols-2 gap-4">
                         <FormField label="Cor da Borda">
-                            <ColorInput value={getC('carousel_border_color') || '#0094EB'} onChange={(v: string) => setC('carousel_border_color', v)} />
+                          <ColorInput value={getC('carousel_border_color') || '#0094EB'} onChange={(v: string) => setC('carousel_border_color', v)} />
+                        </FormField>
+                        <FormField label="Largura Borda (px)">
+                          <input type="number" min="0" max="10" value={getC('carousel_border_width') ?? 2} onChange={e => setC('carousel_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Raio da Borda (px)">
+                          <input type="number" min="0" max="100" value={getC('carousel_border_radius') ?? (previewDevice === 'mobile' ? 10 : 12)} onChange={e => setC('carousel_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                       </div>
                     </Accordion>
 
-                    <Accordion title="2. Posição na Página" isOpen={openAccordion === '2. Posição na Página'} onClick={() => toggleAccordion('2. Posição na Página')}>
-                      <div className="flex flex-col gap-4">
-                        <FormField label="Posição Padrão">
-                          <select value={getC('carousel_position') || 'top'} onChange={e => setC('carousel_position', e.target.value)} className={selectClass}>
-                            <option value="top">Início da Página (Topo)</option>
-                            <option value="bottom">Fim da Página (Rodapé)</option>
-                            <option value="custom">Elemento Específico (Customizado)</option>
-                          </select>
-                        </FormField>
-                        {getC('carousel_position') === 'custom' && (
-                          <FormField label="Seletor HTML (Onde injetar?)">
-                            <input type="text" placeholder="ex: #meu-carrossel" value={getC('carousel_custom_selector') || ''} onChange={e => setC('carousel_custom_selector', e.target.value)} className={inputClass} />
-                          </FormField>
+                    {/* 3. ELEMENTOS VISÍVEIS */}
+                    <Accordion title="3. Elementos Visíveis" isOpen={openAccordion === '3. Elementos Visíveis'} onClick={() => toggleAccordion('3. Elementos Visíveis')}>
+                      <div className="flex flex-col">
+                        <CheckboxField label="Exibir título da vitrine" checked={getC('carousel_show_title') || false} onChange={(v: boolean) => setC('carousel_show_title', v)} />
+                        {getC('carousel_show_title') && (
+                          <div className="p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 space-y-3">
+                            <FormField label="Texto do título">
+                              <input type="text" value={getC('carousel_title_text') || 'Stories'} onChange={e => setC('carousel_title_text', e.target.value)} className={inputClass} />
+                            </FormField>
+                            <div className="grid grid-cols-2 gap-3">
+                              <FormField label="Tamanho da fonte">
+                                <input type="number" min="8" max="48" value={getC('carousel_title_font_size') || 14} onChange={e => setC('carousel_title_font_size', parseInt(e.target.value) || 14)} className={inputClass} />
+                              </FormField>
+                              <FormField label="Alinhamento">
+                                <select value={getC('carousel_title_align') || (previewDevice === 'mobile' ? 'left' : 'center')} onChange={e => setC('carousel_title_align', e.target.value)} className={selectClass}>
+                                  <option value="left">Esquerda</option>
+                                  <option value="center">Centro</option>
+                                  <option value="right">Direita</option>
+                                </select>
+                              </FormField>
+                            </div>
+                            <div className="pt-1">
+                              <CheckboxField label="Título em negrito" checked={getC('carousel_title_bold') ?? true} onChange={(v: boolean) => setC('carousel_title_bold', v)} />
+                            </div>
+                          </div>
+                        )}
+                        <CheckboxField label="Reproduzir vídeos automaticamente" checked={getC('carousel_autoplay_videos') !== false} onChange={(v: boolean) => setC('carousel_autoplay_videos', v)} />
+                        <CheckboxField label="Exibir ícone de Play" checked={getC('carousel_show_play_icon') !== false} onChange={(v: boolean) => setC('carousel_show_play_icon', v)} />
+                      </div>
+                    </Accordion>
+
+                    {/* 4. CARD DE PRODUTO */}
+                    <Accordion title="4. Card de Produto" isOpen={openAccordion === '4. Card de Produto'} onClick={() => toggleAccordion('4. Card de Produto')}>
+                      <div className="flex flex-col">
+                        <CheckboxField label="Exibir card de produto abaixo de cada vídeo" checked={getC('carousel_show_product') ?? true} onChange={(v: boolean) => setC('carousel_show_product', v)} />
+                        {getC('carousel_show_product') && (
+                          <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 grid grid-cols-2 gap-3">
+                            <FormField label="Cor do Fundo">
+                              <ColorInput value={getC('carousel_product_card_bg') || '#FFFFFF'} onChange={(v: string) => setC('carousel_product_card_bg', v)} />
+                            </FormField>
+                            <FormField label="Cor da Borda">
+                              <ColorInput value={getC('carousel_product_card_border_color') || '#E2E8F0'} onChange={(v: string) => setC('carousel_product_card_border_color', v)} />
+                            </FormField>
+                            <FormField label="Largura Borda (px)">
+                              <input type="number" min="0" value={getC('carousel_product_card_border_width') ?? 1} onChange={e => setC('carousel_product_card_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Raio Borda (px)">
+                              <input type="number" min="0" value={getC('carousel_product_card_border_radius') ?? (previewDevice === 'mobile' ? 10 : 12)} onChange={e => setC('carousel_product_card_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Tamanho Título (px)">
+                              <input type="number" min="8" value={getC('carousel_product_card_name_size') ?? 11} onChange={e => setC('carousel_product_card_name_size', parseInt(e.target.value) || 11)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Cor Título">
+                              <ColorInput value={getC('carousel_product_card_name_color') || '#0F172A'} onChange={(v: string) => setC('carousel_product_card_name_color', v)} />
+                            </FormField>
+                            <FormField label="Tamanho Preço (px)">
+                              <input type="number" min="8" value={getC('carousel_product_card_price_size') ?? 12} onChange={e => setC('carousel_product_card_price_size', parseInt(e.target.value) || 12)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Cor Preço">
+                              <ColorInput value={getC('carousel_product_card_price_color') || '#0094EB'} onChange={(v: string) => setC('carousel_product_card_price_color', v)} />
+                            </FormField>
+                          </div>
                         )}
                       </div>
                     </Accordion>
@@ -624,12 +991,26 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 {previewDevice === 'desktop' ? (
                   <div className="w-full max-w-5xl aspect-video bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
                      <div className="h-10 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 gap-2 shrink-0">
-                        <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div><div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div><div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                        <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                        <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                        <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
                      </div>
-                     <div className="flex-1 relative bg-slate-50 dark:bg-slate-900 flex items-center justify-center overflow-hidden">
+                     <div className="flex-1 relative bg-slate-50 dark:bg-slate-900 flex items-center justify-center overflow-hidden p-6">
                         {activeTab === 'flutuante' ? (
                           <div className="relative w-full h-full">
                             <FloatingPreview floating={floatingPreviewData} colors={{ primary: formData?.primary_color || '#0094EB' }} device="desktop" />
+                          </div>
+                        ) : activeTab === 'carrossel' ? (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ScaleToFit>
+                              <div className="w-[850px] max-w-full flex justify-center">
+                                <CarouselPreview 
+                                  carousel={carouselPreviewData} 
+                                  colors={{ primary: formData?.primary_color || '#0094EB' }} 
+                                  isMobile={false} 
+                                />
+                              </div>
+                            </ScaleToFit>
                           </div>
                         ) : (
                           <span className="z-10 text-slate-400 font-bold uppercase tracking-widest text-center px-4">Preview do {activeTab.replace('-', ' ')} (Desktop)</span>
@@ -642,6 +1023,14 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     {activeTab === 'flutuante' ? (
                       <div className="relative w-full h-full p-2">
                         <FloatingPreview floating={floatingPreviewData} colors={{ primary: formData?.primary_color || '#0094EB' }} device="mobile" />
+                      </div>
+                    ) : activeTab === 'carrossel' ? (
+                      <div className="flex-1 w-full h-full overflow-hidden flex flex-col justify-center px-0 py-3">
+                        <CarouselPreview 
+                          carousel={carouselPreviewData} 
+                          colors={{ primary: formData?.primary_color || '#0094EB' }} 
+                          isMobile={true} 
+                        />
                       </div>
                     ) : (
                       <span className="z-10 text-slate-400 text-sm font-bold uppercase tracking-widest text-center px-4">Preview do {activeTab.replace('-', ' ')} (Mobile)</span>
