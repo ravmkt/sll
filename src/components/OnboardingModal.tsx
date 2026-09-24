@@ -19,7 +19,7 @@ import { useLoja } from '@/context/LojaContext';
 const PLATAFORMAS = [
   'Bagy',
   'Cartpanda',
-  'Irroba',
+  'Ideris',
   'Loja Integrada',
   'Nuvemshop',
   'Shopify',
@@ -40,7 +40,6 @@ const formatAndSanitizeUrl = (inputUrl: string): string => {
   if (!/^https?:\/\//i.test(cleaned)) {
     cleaned = `https://${cleaned}`;
   } else if (cleaned.startsWith('http://')) {
-    // Migra http inseguro para https
     cleaned = cleaned.replace('http://', 'https://');
   }
 
@@ -57,7 +56,7 @@ export const OnboardingModal: React.FC = () => {
   const [formData, setFormData] = useState<StorePayload>({
     name: '',
     url: '',
-    platform: 'Bagy', // Primeira opção da lista alfabética
+    platform: 'Bagy',
     contact_email: '',
   });
 
@@ -79,7 +78,6 @@ export const OnboardingModal: React.FC = () => {
         return;
       }
 
-      // Normaliza a URL de forma inteligente antes de avançar para a confirmação
       const sanitizedUrl = formatAndSanitizeUrl(formData.url);
       setFormData(prev => ({ ...prev, url: sanitizedUrl }));
     }
@@ -148,18 +146,24 @@ export const OnboardingModal: React.FC = () => {
             </div>
           )}
 
-          {/* PASSO 1: BOAS-VINDAS & VÍDEO */}
+          {/* PASSO 1: BOAS-VINDAS & LOGOTIPO */}
           {step === 1 && (
             <div className="flex flex-col items-center text-center space-y-5">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-[#0094eb]/10 border border-blue-100 dark:border-[#0094eb]/20 flex items-center justify-center text-[#0094eb]">
-                <Sparkles size={24} />
+              {/* Logotipo SLL */}
+              <div className="flex items-center justify-center max-w-[200px] h-12">
+                <img 
+                  src="/assets/SLL-logotipo-b.png" 
+                  alt="Sistema Loja Lucrativa" 
+                  className="max-h-full w-auto object-contain"
+                />
               </div>
+
               <div>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">
                   Boas-vindas ao ecossistema SLL
                 </h3>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                  Vamos configurar a sua loja para liberar todos os seus módulos contratados como o Vidlytics e Live Commerce.
+                  Vamos configurar a sua loja para liberar os recursos e aplicativos contratados na plataforma.
                 </p>
               </div>
 
@@ -184,7 +188,7 @@ export const OnboardingModal: React.FC = () => {
                   Identificação da sua Loja
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Esses dados vincularão as métricas, os produtos e as vitrines de vídeos.
+                  Esses dados vincularão as métricas, catálogo e recursos da sua conta.
                 </p>
               </div>
 
@@ -270,7 +274,7 @@ export const OnboardingModal: React.FC = () => {
                   Confirmar dados da Loja
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Tudo pronto para conectar seu ecossistema. Revise as informações abaixo:
+                  Tudo pronto para conectar sua loja. Revise as informações abaixo:
                 </p>
               </div>
 
@@ -298,7 +302,7 @@ export const OnboardingModal: React.FC = () => {
               <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 flex items-center gap-3">
                 <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
                 <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                  O módulo Vidlytics e o banco de dados serão integrados automaticamente.
+                  Sua loja será configurada e conectada ao banco de dados com sucesso.
                 </p>
               </div>
             </div>
