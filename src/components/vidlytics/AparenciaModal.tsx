@@ -5,8 +5,10 @@ import {
 } from 'lucide-react';
 import { useLoja } from '../../context/LojaContext';
 
-import * as VidlyticsModule from '../../services/vidlytics/VidlyticsDatabaseService';
-const VidlyticsDatabaseService = (VidlyticsModule as any).VidlyticsDatabaseService || (VidlyticsModule as any).default || {};
+import {
+  createAppearance,
+  updateAppearance
+} from '../../services/vidlytics/VidlyticsDatabaseService';
 
 interface AparenciaModalProps {
   isOpen: boolean;
@@ -61,24 +63,18 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
 
       if (initialStyle?.id) {
         payload.id = initialStyle.id;
-      }
-
-      if (initialStyle?.id && typeof VidlyticsDatabaseService.updateAppearance === 'function') {
-        await VidlyticsDatabaseService.updateAppearance(payload);
-      } else if (typeof VidlyticsDatabaseService.createAppearance === 'function') {
-        await VidlyticsDatabaseService.createAppearance(payload);
-      } else if (typeof VidlyticsDatabaseService.saveAppearance === 'function') {
-        await VidlyticsDatabaseService.saveAppearance(payload);
+        await updateAppearance(payload);
+      } else {
+        await createAppearance(payload);
       }
 
       window.dispatchEvent(new CustomEvent('vidlytics:appearance_saved'));
       
-      // Exibe a janela de sucesso configurada
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
         onClose();
-      }, 1500);
+      }, 1400);
 
     } catch (e) {
       console.error('Erro ao salvar estilo:', e);
@@ -94,7 +90,6 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
       <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] relative">
         
-        {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -107,7 +102,6 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
           </button>
         </div>
 
-        {/* Abas */}
         <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 gap-2 overflow-x-auto">
           {[
             { id: 'basico', label: 'Básico', icon: Settings2 },
@@ -135,7 +129,6 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
           })}
         </div>
 
-        {/* Conteudo */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           {activeTab === 'basico' && (
             <div className="space-y-4 max-w-md">
@@ -181,7 +174,6 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
           <div className="flex gap-2">
             <button
@@ -217,7 +209,6 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
           </div>
         </div>
 
-        {/* Modal de Sucesso Padrão (Print do usuário) */}
         {showSuccessModal && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-xs w-full text-center shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-center gap-4 animate-in fade-in zoom-in-95 duration-200">
