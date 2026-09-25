@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Settings, Video, LogOut } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Settings, Video, LogOut, Gift } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function Sidebar() {
@@ -10,6 +10,7 @@ export function Sidebar() {
     { name: 'Visão Geral', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Módulos', icon: Video, path: '/dashboard/modules' },
     { name: 'Assinatura', icon: ShoppingCart, path: '/dashboard/subscription' },
+    { name: 'Indica & Ganha', icon: Gift, path: '/dashboard/afiliados' },
     { name: 'Configurações', icon: Settings, path: '/dashboard/settings' },
   ];
 
@@ -63,4 +64,5 @@ export function Sidebar() {
     </aside>
   );
 }
+
 

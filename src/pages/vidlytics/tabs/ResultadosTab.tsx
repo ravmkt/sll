@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
 import { useLoja } from '../../../context/LojaContext';
 import { VidlyticsDatabaseService, VidlyticsOverviewMetrics, VidlyticsVideoRow } from '../../../services/vidlytics/VidlyticsDatabaseService';
+import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
+import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 type SubTab = 'visao-geral' | 'videos' | 'retencao' | 'insights';
 type PeriodoKey = 'hoje' | '7' | '15' | '30' | 'custom';
@@ -65,6 +68,16 @@ const emptyMetrics: VidlyticsOverviewMetrics = {
 
 export default function ResultadosTab() {
   const { storeId } = useLoja();
+  const navigate = useNavigate();
+  const [affiliateSummary, setAffiliateSummary] = useState<AffiliateSummary | null>(null);
+
+  useEffect(() => {
+    if (!storeId) return;
+    AffiliateDatabaseService.getSummary(storeId).then(setAffiliateSummary);
+  }, [storeId]);
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
   const [subTab, setSubTab] = useState<SubTab>('visao-geral');
   const [periodo, setPeriodo] = useState<PeriodoKey>('30');
   const [customStart, setCustomStart] = useState('');
@@ -298,13 +311,13 @@ const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div onClick={() => navigate('/dashboard/afiliados')} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between cursor-pointer hover:border-purple-300 transition-colors">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Indicações</span>
                     <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
-                  <p className="text-2xl font-bold text-purple-600">R$ 0,00</p>
+                  <p className="text-2xl font-bold text-purple-600">{formatCurrency(affiliateSummary?.available_balance || 0)}</p>
                   <p className="text-xs text-slate-400">Comissões disponíveis</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100 flex-shrink-0">
@@ -588,5 +601,7 @@ const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
     </div>
   );
 }
+
+
 
 

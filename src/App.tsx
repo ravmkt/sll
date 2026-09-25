@@ -1,4 +1,4 @@
-﻿import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { LojaProvider } from './context/LojaContext';
@@ -11,6 +11,7 @@ const Vidlytics = lazy(() => import('./pages/modules/Vidlytics'));
 const LiveCommerce = lazy(() => import('./pages/modules/LiveCommerce'));
 const LiveAdminPage = lazy(() => import('./pages/modules/LiveAdminPage'));
 const Products = lazy(() => import('./pages/Products'));
+const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
 
 function PageLoader() {
   return (
@@ -59,6 +60,10 @@ function AppRoutes() {
           path="/dashboard/products"
           element={user ? <Products /> : <Navigate to="/auth" replace />}
         />
+            <Route
+              path="/dashboard/afiliados"
+              element={user ? <IndicaEGanha /> : <Navigate to="/auth" replace />}
+            />
         <Route
           path="/dashboard/modules"
           element={<Navigate to="/dashboard/modules/vidlytics" replace />}
