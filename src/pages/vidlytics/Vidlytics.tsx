@@ -5,8 +5,10 @@ import {
 import { useLoja } from '../../context/LojaContext';
 import AparenciaModal from '../../components/vidlytics/AparenciaModal';
 
-import * as VidlyticsModule from '../../services/vidlytics/VidlyticsDatabaseService';
-const VidlyticsDatabaseService = (VidlyticsModule as any).VidlyticsDatabaseService || (VidlyticsModule as any).default || {};
+import {
+  getAppearances,
+  deleteAppearance
+} from '../../services/vidlytics/VidlyticsDatabaseService';
 
 export default function Vidlytics() {
   const { storeId: activeStoreId, store } = useLoja();
@@ -17,15 +19,14 @@ export default function Vidlytics() {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingStyle, setEditingStyle] = useState<any | null>(null);
 
-  // Estados para o Modal de Exclusão Customizado
   const [deleteModalItem, setDeleteModalItem] = useState<any | null>(null);
   const [deletingLoading, setDeletingLoading] = useState<boolean>(false);
 
   const fetchAppearances = async () => {
     try {
       setLoading(true);
-      if (resolvedStoreId && typeof VidlyticsDatabaseService.getAppearances === 'function') {
-        const data = await VidlyticsDatabaseService.getAppearances(resolvedStoreId);
+      if (resolvedStoreId) {
+        const data = await getAppearances(resolvedStoreId);
         setAppearances(data || []);
       }
     } catch (err) {
@@ -53,21 +54,12 @@ export default function Vidlytics() {
     setIsModalOpen(true);
   };
 
-  // Executa a exclusão confirmada
   const handleConfirmDelete = async () => {
     if (!deleteModalItem?.id) return;
 
     try {
       setDeletingLoading(true);
-
-      if (typeof VidlyticsDatabaseService.deleteAppearance === 'function') {
-        await VidlyticsDatabaseService.deleteAppearance(deleteModalItem.id);
-      } else if (typeof VidlyticsDatabaseService.deleteStyle === 'function') {
-        await VidlyticsDatabaseService.deleteStyle(deleteModalItem.id);
-      } else if (typeof VidlyticsDatabaseService.removeAppearance === 'function') {
-        await VidlyticsDatabaseService.removeAppearance(deleteModalItem.id);
-      }
-
+      await deleteAppearance(deleteModalItem.id);
       setDeleteModalItem(null);
       await fetchAppearances();
     } catch (err) {
@@ -178,7 +170,6 @@ export default function Vidlytics() {
         )}
       </div>
 
-      {/* Modal Principal de Edição / Criação */}
       <AparenciaModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -188,12 +179,10 @@ export default function Vidlytics() {
         initialStyle={editingStyle}
       />
 
-      {/* Modal de Confirmação de Exclusão (Design exato do Print 1) */}
       {deleteModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150">
             
-            {/* Header */}
             <div className="p-6 pb-2 flex items-center justify-between">
               <h3 className="text-base font-black tracking-wide text-slate-900 dark:text-white uppercase">
                 EXCLUIR ARQUIVO
@@ -206,7 +195,6 @@ export default function Vidlytics() {
               </button>
             </div>
 
-            {/* Conteúdo Central */}
             <div className="px-6 py-4 flex flex-col items-center text-center space-y-4">
               <div className="w-20 h-20 rounded-full bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-500">
                 <AlertTriangle size={42} strokeWidth={1.8} />
@@ -220,7 +208,6 @@ export default function Vidlytics() {
               </div>
             </div>
 
-            {/* Botões de Ação */}
             <div className="px-6 pb-6 pt-2 grid grid-cols-2 gap-3">
               <button
                 onClick={() => setDeleteModalItem(null)}
