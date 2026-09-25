@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
+import { useLoja } from '../../../context/LojaContext';
+import { VidlyticsDatabaseService, VidlyticsOverviewMetrics } from '../../../services/vidlytics/VidlyticsDatabaseService';
 
 type SubTab = 'visao-geral' | 'videos' | 'retencao' | 'insights';
-
+type PeriodoKey = 'hoje' | '7' | '15' | '30' | 'custom';
 
 function TrendBadge({ value, isPositive = true }: { value: string; isPositive?: boolean }) {
   return (
@@ -22,17 +24,108 @@ function TrendBadge({ value, isPositive = true }: { value: string; isPositive?: 
   );
 }
 
+function getDateRange(periodo: PeriodoKey, customStart?: string, customEnd?: string): { start: string; end: string } {
+  const today = new Date();
+  const end = today.toISOString().slice(0, 10);
+
+  if (periodo === 'custom' && customStart && customEnd) {
+    return { start: customStart, end: customEnd };
+  }
+
+  let days = 30;
+  if (periodo === 'hoje') days = 0;
+  if (periodo === '7') days = 7;
+  if (periodo === '15') days = 15;
+  if (periodo === '30') days = 30;
+
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - days);
+  const start = startDate.toISOString().slice(0, 10);
+
+  return { start, end };
+}
+
+const emptyMetrics: VidlyticsOverviewMetrics = {
+  totalViews: 0,
+  totalClicks: 0,
+  totalConversions: 0,
+  totalRevenue: 0,
+  totalLikes: 0,
+  totalComments: 0,
+  ctr: 0,
+  dailySeries: [],
+};
+
 export default function ResultadosTab() {
+  const { storeId } = useLoja();
   const [subTab, setSubTab] = useState<SubTab>('visao-geral');
-  const [periodo, setPeriodo] = useState('30 dias');
+  const [periodo, setPeriodo] = useState<PeriodoKey>('30');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   const [searchVideo, setSearchVideo] = useState('');
   const [selectedVideo, setSelectedVideo] = useState('oculos-de-sol.mp4');
   const [filtroFinanceiro, setFiltroFinanceiro] = useState('Todas Juntas');
   const [filtroEngajamento, setFiltroEngajamento] = useState('Todas Juntas');
 
+  const [metrics, setMetrics] = useState<VidlyticsOverviewMetrics>(emptyMetrics);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const { start, end } = useMemo(
+    () => getDateRange(periodo, customStart, customEnd),
+    [periodo, customStart, customEnd]
+  );
+
+  useEffect(() => {
+    if (!storeId) return;
+    if (periodo === 'custom' && (!customStart || !customEnd)) return;
+
+    let active = true;
+    setLoading(true);
+    setErrorMsg(null);
+
+    VidlyticsDatabaseService.getOverviewMetrics(storeId, start, end)
+      .then((data) => {
+        if (active) setMetrics(data);
+      })
+      .catch((err) => {
+        console.error('Erro ao buscar métricas do Vidlytics:', err);
+        if (active) setErrorMsg('Não foi possível carregar as métricas.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [storeId, start, end, periodo]);
+
+  const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
+  const revenueFormatted = metrics.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const maxViews = Math.max(1, ...metrics.dailySeries.map((d) => d.views));
+  const maxClicks = Math.max(1, ...metrics.dailySeries.map((d) => d.clicks));
+  const maxLikes = Math.max(1, ...metrics.dailySeries.map((d) => d.likes));
+
+  const buildPath = (values: number[], max: number, width = 900, height = 140, top = 20, bottom = 135) => {
+    if (values.length === 0) return `M 50 ${bottom} L 870 ${bottom}`;
+    const step = (870 - 50) / Math.max(1, values.length - 1);
+    const points = values.map((v, i) => {
+      const x = 50 + i * step;
+      const y = bottom - (v / max) * (bottom - top);
+      return `${x} ${y}`;
+    });
+    return `M ${points.join(' L ')}`;
+  };
+
+  const viewsPath = buildPath(metrics.dailySeries.map((d) => d.views), maxViews);
+  const clicksPath = buildPath(metrics.dailySeries.map((d) => d.clicks), maxClicks);
+  const likesPath = buildPath(metrics.dailySeries.map((d) => d.likes), maxLikes);
+
   return (
     <div className="space-y-6">
-      
+
       {/* CABEÇALHO DA PÁGINA DE RESULTADOS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -43,18 +136,39 @@ export default function ResultadosTab() {
         </div>
 
         {/* Seletor de Período */}
-        <div className="relative inline-block self-start sm:self-auto">
-          <select
-            value={periodo}
-            onChange={(e) => setPeriodo(e.target.value)}
-            className="appearance-none bg-white border border-slate-200 text-xs font-semibold text-slate-700 py-2 pl-3.5 pr-8 rounded-xl shadow-xs hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 cursor-pointer"
-          >
-            <option value="7 dias">7 dias</option>
-            <option value="15 dias">15 dias</option>
-            <option value="30 dias">30 dias</option>
-            <option value="90 dias">90 dias</option>
-          </select>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="relative inline-block">
+            <select
+              value={periodo}
+              onChange={(e) => setPeriodo(e.target.value as PeriodoKey)}
+              className="appearance-none bg-white border border-slate-200 text-xs font-semibold text-slate-700 py-2 pl-3.5 pr-8 rounded-xl shadow-xs hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 cursor-pointer"
+            >
+              <option value="hoje">Hoje</option>
+              <option value="7">7 dias</option>
+              <option value="15">15 dias</option>
+              <option value="30">30 dias</option>
+              <option value="custom">Personalizado</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {periodo === 'custom' && (
+            <div className="flex items-center gap-1.5">
+              <input
+                type="date"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+              />
+              <span className="text-xs text-slate-400">até</span>
+              <input
+                type="date"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -63,9 +177,7 @@ export default function ResultadosTab() {
         <button
           onClick={() => setSubTab('visao-geral')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            subTab === 'visao-geral' 
-              ? 'bg-[#0094eb] text-white shadow-xs' 
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            subTab === 'visao-geral' ? 'bg-[#0094eb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           <BarChart3 className="w-3.5 h-3.5" />
@@ -75,9 +187,7 @@ export default function ResultadosTab() {
         <button
           onClick={() => setSubTab('videos')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            subTab === 'videos' 
-              ? 'bg-[#0094eb] text-white shadow-xs' 
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            subTab === 'videos' ? 'bg-[#0094eb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           <Film className="w-3.5 h-3.5" />
@@ -87,9 +197,7 @@ export default function ResultadosTab() {
         <button
           onClick={() => setSubTab('retencao')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            subTab === 'retencao' 
-              ? 'bg-[#0094eb] text-white shadow-xs' 
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            subTab === 'retencao' ? 'bg-[#0094eb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           <CheckSquare className="w-3.5 h-3.5" />
@@ -99,9 +207,7 @@ export default function ResultadosTab() {
         <button
           onClick={() => setSubTab('insights')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            subTab === 'insights' 
-              ? 'bg-[#0094eb] text-white shadow-xs' 
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            subTab === 'insights' ? 'bg-[#0094eb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-pink-400" />
@@ -109,23 +215,28 @@ export default function ResultadosTab() {
         </button>
       </div>
 
+      {errorMsg && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium px-4 py-3 rounded-xl">
+          {errorMsg}
+        </div>
+      )}
+
       {/* ========================================================= */}
       {/* 1. SUB-ABA: VISÃO GERAL */}
       {/* ========================================================= */}
       {subTab === 'visao-geral' && (
         <div className="space-y-6">
-          
-          {/* SEÇÃO RESULTADOS FINANCEIROS */}
+
+          {/* SEÇÃO RESULTADOS FINANCEIROS (mock, aguardando conexão com pedidos) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
                 Resultados Financeiros
               </h3>
-              <span className="text-[11px] text-slate-400 font-medium">Período: Últimos 30 dias</span>
+              <span className="text-[11px] text-slate-400 font-medium">Período: {start} a {end}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Aguardando Pagamento */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
@@ -140,7 +251,6 @@ export default function ResultadosTab() {
                 </div>
               </div>
 
-              {/* Vendas Pagas */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
@@ -155,7 +265,6 @@ export default function ResultadosTab() {
                 </div>
               </div>
 
-              {/* Indicações */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
@@ -170,7 +279,6 @@ export default function ResultadosTab() {
                 </div>
               </div>
 
-              {/* Total Gerado */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
@@ -187,97 +295,14 @@ export default function ResultadosTab() {
             </div>
           </div>
 
-          {/* GRÁFICO EVOLUÇÃO FINANCEIRA */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <CheckSquare className="w-4 h-4 text-slate-700" />
-                  <h4 className="text-sm font-bold text-slate-800">Evolução Financeira Diária (R$)</h4>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">Monitore faturamento aprovado, boletos/Pix em aberto e receitas por dia.</p>
-              </div>
-
-              <div className="flex items-center gap-1 overflow-x-auto text-xs font-semibold">
-                {['Todas Juntas', 'Aguardando', 'Vendas Pagas', 'Indicações', 'Total Gerado'].map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => setFiltroFinanceiro(item)}
-                    className={`px-2.5 py-1 rounded-lg transition-colors ${
-                      filtroFinanceiro === item ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600'
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Canvas Mock do Gráfico Financeiro */}
-            <div className="w-full h-56 relative pt-4">
-              <svg className="w-full h-full overflow-visible" viewBox="0 0 900 180" preserveAspectRatio="none">
-                {/* Linhas de Grade e Valores */}
-                <line x1="40" y1="20" x2="880" y2="20" stroke="#f1f5f9" strokeWidth="1" />
-                <text x="5" y="24" fill="#94a3b8" fontSize="10">R$ 200</text>
-
-                <line x1="40" y1="60" x2="880" y2="60" stroke="#f1f5f9" strokeWidth="1" />
-                <text x="5" y="64" fill="#94a3b8" fontSize="10">R$ 150</text>
-
-                <line x1="40" y1="100" x2="880" y2="100" stroke="#f1f5f9" strokeWidth="1" />
-                <text x="5" y="104" fill="#94a3b8" fontSize="10">R$ 100</text>
-
-                <line x1="40" y1="140" x2="880" y2="140" stroke="#f1f5f9" strokeWidth="1" />
-                <text x="5" y="144" fill="#94a3b8" fontSize="10">R$ 50</text>
-
-                <line x1="40" y1="170" x2="880" y2="170" stroke="#e2e8f0" strokeWidth="1" />
-                <text x="5" y="174" fill="#94a3b8" fontSize="10">R$ 0</text>
-
-                {/* Curva de Aguardando (Picos Amarelos) */}
-                <path
-                  d="M 50 170 L 520 170 Q 540 170 545 40 Q 550 170 570 170 L 730 170 Q 750 170 755 45 Q 760 170 780 170 L 870 170"
-                  fill="none"
-                  stroke="#eab308"
-                  strokeWidth="2"
-                />
-
-                {/* Linhas Zeradas (Azul / Verde / Roxo) na base */}
-                <path d="M 50 170 L 870 170" fill="none" stroke="#0094eb" strokeWidth="1.5" />
-              </svg>
-
-              {/* Datas no eixo X */}
-              <div className="flex justify-between text-[9px] text-slate-400 font-mono mt-2 px-10">
-                <span>23/08</span><span>25/08</span><span>27/08</span><span>29/08</span><span>31/08</span>
-                <span>02/09</span><span>04/09</span><span>06/09</span><span>08/09</span><span>10/09</span>
-                <span>12/09</span><span>14/09</span><span>16/09</span><span>18/09</span><span>20/09</span><span>22/09</span>
-              </div>
-            </div>
-
-            {/* Legenda */}
-            <div className="flex flex-wrap items-center justify-center gap-6 pt-3 text-[11px] text-slate-500 font-medium">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                <span>Aguardando Pagamento</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                <span>Vendas Pagas</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-                <span>Indicações</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#0094eb]"></span>
-                <span>Total Gerado</span>
-              </div>
-            </div>
-          </div>
-
-          {/* SEÇÃO PERFORMANCE DOS VÍDEOS & INTERAÇÃO DO PÚBLICO */}
+          {/* SEÇÃO PERFORMANCE DOS VÍDEOS & INTERAÇÃO DO PÚBLICO (DADOS REAIS) */}
           <div className="space-y-3">
-            <h3 className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-              Performance dos Vídeos & Interação do Público
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+                Performance dos Vídeos & Interação do Público
+              </h3>
+              {loading && <span className="text-[11px] text-slate-400 font-medium">Carregando...</span>}
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Visualizações */}
@@ -287,7 +312,7 @@ export default function ResultadosTab() {
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Visualizações</span>
                     <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
-                  <p className="text-2xl font-bold text-slate-800">0</p>
+                  <p className="text-2xl font-bold text-slate-800">{metrics.totalViews.toLocaleString('pt-BR')}</p>
                   <p className="text-xs text-slate-400">Sessões de stories abertas</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0094eb] flex items-center justify-center border border-sky-100 flex-shrink-0">
@@ -302,7 +327,7 @@ export default function ResultadosTab() {
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Cliques em CTA</span>
                     <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
-                  <p className="text-2xl font-bold text-slate-800">0</p>
+                  <p className="text-2xl font-bold text-slate-800">{metrics.totalClicks.toLocaleString('pt-BR')}</p>
                   <p className="text-xs text-slate-400">Cliques no card/botão de compra</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#fd8539] flex items-center justify-center border border-orange-100 flex-shrink-0">
@@ -319,11 +344,11 @@ export default function ResultadosTab() {
                   </div>
                   <div className="flex items-center gap-4 pt-0.5">
                     <div>
-                      <p className="text-xl font-bold text-rose-500">0</p>
+                      <p className="text-xl font-bold text-rose-500">{metrics.totalLikes}</p>
                       <p className="text-[10px] text-slate-400 font-medium">Curtidas</p>
                     </div>
                     <div>
-                      <p className="text-xl font-bold text-[#0094eb]">0</p>
+                      <p className="text-xl font-bold text-[#0094eb]">{metrics.totalComments}</p>
                       <p className="text-[10px] text-slate-400 font-medium">Comentários</p>
                     </div>
                   </div>
@@ -340,11 +365,8 @@ export default function ResultadosTab() {
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">CTR (Taxa de Cliques)</span>
                     <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
-                  <p className="text-2xl font-bold text-slate-800">0.0%</p>
+                  <p className="text-2xl font-bold text-slate-800">{ctrFormatted}%</p>
                   <p className="text-xs text-slate-400">Cliques sobre visualizações</p>
-                  <div className="inline-flex items-center gap-1 bg-rose-50 text-rose-600 text-[10px] font-semibold px-1.5 py-0.5 rounded">
-                    <span>↘ -3.9% vs Setor</span>
-                  </div>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100 flex-shrink-0">
                   <Percent className="w-4 h-4" />
@@ -353,7 +375,7 @@ export default function ResultadosTab() {
             </div>
           </div>
 
-          {/* GRÁFICO EVOLUÇÃO DIÁRIA DE ENGAJAMENTO & FUNIL */}
+          {/* GRÁFICO EVOLUÇÃO DIÁRIA DE ENGAJAMENTO & FUNIL (DADOS REAIS) */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
@@ -361,11 +383,11 @@ export default function ResultadosTab() {
                   <BarChart3 className="w-4 h-4 text-slate-700" />
                   <h4 className="text-sm font-bold text-slate-800">Evolução Diária de Engajamento & Funil de Vídeos</h4>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">Acompanhe o volume de visualizações, cliques nos produtos, reações e a taxa de CTR ao longo do tempo.</p>
+                <p className="text-xs text-slate-400 mt-0.5">Acompanhe o volume de visualizações, cliques e curtidas ao longo do tempo.</p>
               </div>
 
               <div className="flex items-center gap-1 overflow-x-auto text-xs font-semibold">
-                {['Todas Juntas', 'Visualizações', 'Cliques CTA', 'Engajamento', 'CTR (%)'].map((item) => (
+                {['Todas Juntas', 'Visualizações', 'Cliques CTA', 'Curtidas'].map((item) => (
                   <button
                     key={item}
                     onClick={() => setFiltroEngajamento(item)}
@@ -379,52 +401,50 @@ export default function ResultadosTab() {
               </div>
             </div>
 
-            {/* Canvas Mock do Gráfico de Funil */}
-            <div className="w-full h-44 relative pt-4">
-              <svg className="w-full h-full overflow-visible" viewBox="0 0 900 140" preserveAspectRatio="none">
-                <line x1="40" y1="20" x2="880" y2="20" stroke="#f1f5f9" strokeWidth="1" />
-                <text x="15" y="24" fill="#94a3b8" fontSize="10">4</text>
-
-                <line x1="40" y1="55" x2="880" y2="55" stroke="#f1f5f9" strokeWidth="1" />
-                <text x="15" y="59" fill="#94a3b8" fontSize="10">3</text>
-
-                <line x1="40" y1="90" x2="880" y2="90" stroke="#f1f5f9" strokeWidth="1" />
-                <text x="15" y="94" fill="#94a3b8" fontSize="10">2</text>
-
-                <line x1="40" y1="125" x2="880" y2="125" stroke="#f1f5f9" strokeWidth="1" />
-                <text x="15" y="129" fill="#94a3b8" fontSize="10">1</text>
-
-                <line x1="40" y1="135" x2="880" y2="135" stroke="#e2e8f0" strokeWidth="1" />
-                <text x="15" y="139" fill="#94a3b8" fontSize="10">0</text>
-
-                {/* Linha zerada no eixo X com pontos */}
-                <path d="M 50 135 L 870 135" fill="none" stroke="#0094eb" strokeWidth="1.5" />
-              </svg>
-
-              <div className="flex justify-between text-[9px] text-slate-400 font-mono mt-2 px-10">
-                <span>23/08</span><span>25/08</span><span>27/08</span><span>29/08</span><span>31/08</span>
-                <span>02/09</span><span>04/09</span><span>06/09</span><span>08/09</span><span>10/09</span>
-                <span>12/09</span><span>14/09</span><span>16/09</span><span>18/09</span><span>20/09</span><span>22/09</span>
+            {metrics.dailySeries.length === 0 && !loading ? (
+              <div className="w-full h-44 flex items-center justify-center text-xs text-slate-400">
+                Sem dados suficientes para este período.
               </div>
-            </div>
+            ) : (
+              <div className="w-full h-44 relative pt-4">
+                <svg className="w-full h-full overflow-visible" viewBox="0 0 900 140" preserveAspectRatio="none">
+                  <line x1="40" y1="20" x2="880" y2="20" stroke="#f1f5f9" strokeWidth="1" />
+                  <line x1="40" y1="55" x2="880" y2="55" stroke="#f1f5f9" strokeWidth="1" />
+                  <line x1="40" y1="90" x2="880" y2="90" stroke="#f1f5f9" strokeWidth="1" />
+                  <line x1="40" y1="125" x2="880" y2="125" stroke="#f1f5f9" strokeWidth="1" />
+                  <line x1="40" y1="135" x2="880" y2="135" stroke="#e2e8f0" strokeWidth="1" />
 
-            {/* Legenda */}
+                  {(filtroEngajamento === 'Todas Juntas' || filtroEngajamento === 'Visualizações') && (
+                    <path d={viewsPath} fill="none" stroke="#0094eb" strokeWidth="2" />
+                  )}
+                  {(filtroEngajamento === 'Todas Juntas' || filtroEngajamento === 'Cliques CTA') && (
+                    <path d={clicksPath} fill="none" stroke="#fd8539" strokeWidth="2" />
+                  )}
+                  {(filtroEngajamento === 'Todas Juntas' || filtroEngajamento === 'Curtidas') && (
+                    <path d={likesPath} fill="none" stroke="#f43f5e" strokeWidth="2" />
+                  )}
+                </svg>
+
+                <div className="flex justify-between text-[9px] text-slate-400 font-mono mt-2 px-10">
+                  {metrics.dailySeries.map((d) => (
+                    <span key={d.date}>{d.date.slice(5).split('-').reverse().join('/')}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center justify-center gap-6 pt-3 text-[11px] text-slate-500 font-medium">
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#0094eb]"></span>
                 <span>Visualizações</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#fd8539]"></span>
                 <span>Cliques em CTA</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                <span>Engajamento Social</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                <span>Taxa de Cliques (CTR %)</span>
+                <span>Curtidas</span>
               </div>
             </div>
           </div>
@@ -452,496 +472,38 @@ export default function ResultadosTab() {
       )}
 
       {/* ========================================================= */}
-      {/* 2. SUB-ABA: VÍDEOS */}
+      {/* 2. SUB-ABA: VÍDEOS (mock, próxima etapa) */}
       {/* ========================================================= */}
       {subTab === 'videos' && (
-        <div className="space-y-6">
-          {/* CARDS MÉTRICAS DE VÍDEOS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Total de Visualizações</span>
-                  <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
-                </div>
-                <p className="text-2xl font-bold text-slate-800">0</p>
-                <p className="text-xs text-slate-400">Média de <strong>0</strong> por vídeo</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0094eb] flex items-center justify-center border border-sky-100">
-                <Eye className="w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">CTR Médio Geral</span>
-                  <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
-                </div>
-                <p className="text-2xl font-bold text-slate-800">0,0%</p>
-                <p className="text-xs text-slate-400">Em 2 vídeos analisados</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100">
-                <Percent className="w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Conversões Atribuídas</span>
-                  <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
-                </div>
-                <p className="text-2xl font-bold text-slate-800">0</p>
-                <p className="text-xs text-emerald-600 font-medium">Receita: R$ 0,00</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#fd8539] flex items-center justify-center border border-orange-100">
-                <Wallet className="w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Engajamento Total</span>
-                  <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
-                </div>
-                <div className="flex items-center gap-4 pt-0.5">
-                  <div>
-                    <p className="text-xl font-bold text-rose-500">3</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Curtidas</p>
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-[#0094eb]">0</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Comentários</p>
-                  </div>
-                </div>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center border border-rose-100">
-                <Heart className="w-4 h-4" />
-              </div>
-            </div>
-          </div>
-
-          {/* BUSCA */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Buscar por título do vídeo..."
-              value={searchVideo}
-              onChange={(e) => setSearchVideo(e.target.value)}
-              className="w-full bg-white border border-slate-200 text-xs text-slate-700 py-3 pl-10 pr-4 rounded-xl shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
-            />
-          </div>
-
-          {/* TABELA DE VÍDEOS */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    <th className="py-3 px-4">Vídeo</th>
-                    <th className="py-3 px-4 text-center">Visualizações ↓</th>
-                    <th className="py-3 px-4 text-center">CTR</th>
-                    <th className="py-3 px-4 text-center">Conversões</th>
-                    <th className="py-3 px-4 text-center">Receita</th>
-                    <th className="py-3 px-4 text-center">Engajamento</th>
-                    <th className="py-3 px-4 text-center">Duração</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {/* Linha 1: oculos-de-sol.mp4 */}
-                  <tr className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-4 flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200/80 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        <Eye className="w-4 h-4 text-slate-400" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800">oculos-de-sol.mp4</p>
-                        <span className="text-[10px] text-emerald-600 font-medium">Ativo</span>
-                      </div>
-                    </td>
-
-                    {/* Visualizações */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="font-semibold text-slate-800">1.420</span>
-                        <TrendBadge value="15.4%" isPositive={true} />
-                      </div>
-                    </td>
-
-                    {/* CTR */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="font-semibold text-slate-800">14,8%</span>
-                        <TrendBadge value="2.2%" isPositive={true} />
-                      </div>
-                    </td>
-
-                    {/* Conversões */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="font-semibold text-slate-800">38</span>
-                        <TrendBadge value="8.5%" isPositive={true} />
-                      </div>
-                    </td>
-
-                    {/* Receita */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="font-semibold text-emerald-600">R$ 4.890,00</span>
-                        <TrendBadge value="18.2%" isPositive={true} />
-                      </div>
-                    </td>
-
-                    {/* Engajamento */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="flex items-center gap-1 text-slate-600" title="Curtidas: 84 (+12% vs 7d)">
-                          <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-                          <span>84</span>
-                          <TrendBadge value="12%" isPositive={true} />
-                        </div>
-                        <div className="flex items-center gap-1 text-slate-600" title="Comentários: 18 (+6% vs 7d)">
-                          <MessageCircle className="w-3.5 h-3.5 text-[#0094eb]" />
-                          <span>18</span>
-                          <TrendBadge value="6%" isPositive={true} />
-                        </div>
-                        <div className="flex items-center gap-1 text-slate-600" title="Compartilhamentos: 9 (+3% vs 7d)">
-                          <Share2 className="w-3.5 h-3.5 text-emerald-500" />
-                          <span>9</span>
-                          <TrendBadge value="3%" isPositive={true} />
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Duração */}
-                    <td className="py-3.5 px-4 text-center text-slate-600 font-medium">
-                      0:45s
-                    </td>
-                  </tr>
-
-                  {/* Linha 2: Criação_de_Vídeo_Fashion */}
-                  <tr className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-4 flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        <img
-                          src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=120&auto=format&fit=crop&q=80"
-                          alt="Criação_de_Vídeo_Fashion"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800">Criação_de_Vídeo_Fashion_...</p>
-                        <span className="text-[10px] text-emerald-600 font-medium">Ativo</span>
-                      </div>
-                    </td>
-
-                    {/* Visualizações */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="font-semibold text-slate-800">890</span>
-                        <TrendBadge value="-3.8%" isPositive={false} />
-                      </div>
-                    </td>
-
-                    {/* CTR */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="font-semibold text-slate-800">9,4%</span>
-                        <TrendBadge value="-1.1%" isPositive={false} />
-                      </div>
-                    </td>
-
-                    {/* Conversões */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="font-semibold text-slate-800">19</span>
-                        <TrendBadge value="-4.0%" isPositive={false} />
-                      </div>
-                    </td>
-
-                    {/* Receita */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className="font-semibold text-emerald-600">R$ 1.950,00</span>
-                        <TrendBadge value="-2.5%" isPositive={false} />
-                      </div>
-                    </td>
-
-                    {/* Engajamento */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="flex items-center gap-1 text-slate-600" title="Curtidas: 42 (-5% vs 7d)">
-                          <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-                          <span>42</span>
-                          <TrendBadge value="-5%" isPositive={false} />
-                        </div>
-                        <div className="flex items-center gap-1 text-slate-600" title="Comentários: 7 (-2% vs 7d)">
-                          <MessageCircle className="w-3.5 h-3.5 text-[#0094eb]" />
-                          <span>7</span>
-                          <TrendBadge value="-2%" isPositive={false} />
-                        </div>
-                        <div className="flex items-center gap-1 text-slate-600" title="Compartilhamentos: 4 (+1% vs 7d)">
-                          <Share2 className="w-3.5 h-3.5 text-emerald-500" />
-                          <span>4</span>
-                          <TrendBadge value="1%" isPositive={true} />
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Duração */}
-                    <td className="py-3.5 px-4 text-center text-slate-600 font-medium">
-                      0:32s
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div className="px-4 py-2.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                <div className="flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5 text-[#0094eb]" />
-                  <span>As setas e porcentagens representam o comparativo de desempenho em relação aos <strong>últimos 7 dias</strong>.</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center gap-1 text-emerald-700">
-                    <TrendingUp className="w-3 h-3 text-emerald-600" /> Alta
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-rose-700">
-                    <TrendingDown className="w-3 h-3 text-rose-500" /> Baixa
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center space-y-3">
+          <Film className="w-8 h-8 text-slate-300 mx-auto" />
+          <h4 className="text-sm font-bold text-slate-700">Tabela de vídeos em breve</h4>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">Vamos conectar esta aba na próxima etapa.</p>
         </div>
       )}
 
       {/* ========================================================= */}
-      {/* 3. SUB-ABA: RETENÇÃO */}
+      {/* 3. SUB-ABA: RETENÇÃO (mock, próxima etapa) */}
       {/* ========================================================= */}
       {subTab === 'retencao' && (
-        <div className="space-y-6">
-          {/* CARDS SUPERIORES DE RETENÇÃO */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Taxa de Conclusão</span>
-                <p className="text-2xl font-bold text-slate-800">0%</p>
-                <p className="text-xs text-slate-400">Assistiram até o último segundo</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Tempo Médio</span>
-                <p className="text-2xl font-bold text-slate-800">0s <span className="text-xs font-normal text-slate-400">de 15s</span></p>
-                <p className="text-xs text-slate-400">0% da duração total</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0094eb] flex items-center justify-center border border-sky-100">
-                <Clock className="w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Maior Queda</span>
-                <p className="text-2xl font-bold text-slate-800">12s</p>
-                <p className="text-xs text-slate-400">Momento com maior evasão do público</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100">
-                <TrendingDown className="w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Taxa de Evasão</span>
-                <p className="text-2xl font-bold text-slate-800">100%</p>
-                <p className="text-xs text-slate-400">Saíram antes do final</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center border border-rose-100">
-                <LogOut className="w-4 h-4" />
-              </div>
-            </div>
-          </div>
-
-          {/* VÍDEO ANALISADO DROPDOWN */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Vídeo Analisado</h4>
-              <p className="text-xs text-slate-400">Selecione qual vídeo você quer inspecionar</p>
-            </div>
-
-            <div className="relative inline-block w-full sm:w-72">
-              <select
-                value={selectedVideo}
-                onChange={(e) => setSelectedVideo(e.target.value)}
-                className="w-full appearance-none bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 py-2.5 pl-3.5 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 cursor-pointer"
-              >
-                <option value="oculos-de-sol.mp4">oculos-de-sol.mp4</option>
-                <option value="criacao-video-fashion.mp4">Criação_de_Vídeo_Fashion_...</option>
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* GRID: CURVA DE RETENÇÃO (ESQ) & PLAYER PREVIEW (DIR) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            {/* Curva de Retenção */}
-            <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">Curva de Retenção (Segundo a Segundo)</h4>
-                  <p className="text-xs text-slate-400 mt-0.5">Acompanhe onde a audiência perde o interesse ou onde fica engajada</p>
-                </div>
-                <HelpCircle className="w-4 h-4 text-slate-300 cursor-help" />
-              </div>
-
-              {/* Área do Gráfico */}
-              <div className="w-full h-64 relative pt-4">
-                <svg className="w-full h-full overflow-visible" viewBox="0 0 600 200" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="retentionGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#0094eb" stopOpacity="0.35" />
-                      <stop offset="100%" stopColor="#0094eb" stopOpacity="0.02" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Linhas de Grade */}
-                  <line x1="40" y1="20" x2="580" y2="20" stroke="#f1f5f9" strokeWidth="1" />
-                  <text x="5" y="24" fill="#94a3b8" fontSize="10">100%</text>
-
-                  <line x1="40" y1="70" x2="580" y2="70" stroke="#f1f5f9" strokeWidth="1" />
-                  <text x="5" y="74" fill="#94a3b8" fontSize="10">75%</text>
-
-                  <line x1="40" y1="120" x2="580" y2="120" stroke="#f1f5f9" strokeWidth="1" />
-                  <text x="5" y="124" fill="#94a3b8" fontSize="10">50%</text>
-
-                  <line x1="40" y1="170" x2="580" y2="170" stroke="#f1f5f9" strokeWidth="1" />
-                  <text x="5" y="174" fill="#94a3b8" fontSize="10">25%</text>
-
-                  <line x1="40" y1="195" x2="580" y2="195" stroke="#e2e8f0" strokeWidth="1" />
-                  <text x="5" y="198" fill="#94a3b8" fontSize="10">0%</text>
-
-                  {/* Linha Tracejada Vermelha Maior Queda (12s aprox X=470) */}
-                  <line x1="470" y1="15" x2="470" y2="195" stroke="#f43f5e" strokeWidth="1" strokeDasharray="3 3" />
-
-                  {/* Área e Linha de Retenção */}
-                  <path
-                    d="M 40 20 L 470 20 Q 520 30 580 80 L 580 195 L 40 195 Z"
-                    fill="url(#retentionGradient)"
-                  />
-                  <path
-                    d="M 40 20 L 470 20 Q 520 30 580 80"
-                    fill="none"
-                    stroke="#0094eb"
-                    strokeWidth="2.5"
-                  />
-                </svg>
-
-                {/* Eixo de segundos */}
-                <div className="flex justify-between text-[9px] text-slate-400 font-mono mt-2 px-6">
-                  <span>0s</span><span>1s</span><span>2s</span><span>3s</span><span>4s</span>
-                  <span>5s</span><span>6s</span><span>7s</span><span>8s</span><span>9s</span>
-                  <span>10s</span><span>11s</span><span className="text-rose-500 font-bold">12s</span><span>13s</span><span>14s</span><span>15s</span>
-                </div>
-              </div>
-
-              {/* Card Diagnóstico Inteligente */}
-              <div className="p-3.5 rounded-xl bg-sky-50/70 border border-sky-100 flex items-center gap-2.5 text-xs text-sky-900">
-                <Sparkles className="w-4 h-4 text-[#0094eb] flex-shrink-0" />
-                <p>
-                  <strong>Diagnóstico Inteligente:</strong> Boa retenção inicial. A maior parte da audiência permaneceu além dos primeiros segundos de exibição.
-                </p>
-              </div>
-            </div>
-
-            {/* Visualização do Vídeo (Mock Player) */}
-            <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-              <div>
-                <h4 className="text-sm font-bold text-slate-800">Visualização</h4>
-                <p className="text-xs text-slate-400 truncate">{selectedVideo}</p>
-              </div>
-
-              <div className="relative aspect-[9/16] max-h-[460px] mx-auto rounded-2xl overflow-hidden bg-slate-900 shadow-md group">
-                <img
-                  src="https://images.unsplash.com/photo-1508296695146-257a814070b4?w=600&auto=format&fit=crop&q=80"
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none"></div>
-
-                {/* Controles Mock do Player */}
-                <div className="absolute bottom-0 inset-x-0 p-4 space-y-2">
-                  <div className="w-full bg-white/30 h-1 rounded-full overflow-hidden">
-                    <div className="bg-[#0094eb] h-full w-3/4 rounded-full"></div>
-                  </div>
-                  <div className="flex items-center justify-between text-white text-xs">
-                    <div className="flex items-center gap-3">
-                      <Play className="w-3.5 h-3.5 fill-white cursor-pointer" />
-                      <Volume2 className="w-3.5 h-3.5 cursor-pointer" />
-                    </div>
-                    <Maximize2 className="w-3.5 h-3.5 cursor-pointer" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center space-y-3">
+          <Clock className="w-8 h-8 text-slate-300 mx-auto" />
+          <h4 className="text-sm font-bold text-slate-700">Curva de retenção em breve</h4>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">Vamos conectar esta aba na próxima etapa.</p>
         </div>
       )}
 
       {/* ========================================================= */}
-      {/* 4. SUB-ABA: INSIGHTS */}
+      {/* 4. SUB-ABA: INSIGHTS (mock, próxima etapa) */}
       {/* ========================================================= */}
       {subTab === 'insights' && (
-        <div className="space-y-6">
-          {/* TOPO: VIDLYTICS AI INSIGHTS */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0094eb] flex items-center justify-center border border-sky-100 flex-shrink-0">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-slate-800">Vidlytics AI Insights</h4>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Análise inteligente do comportamento dos seus Stories nos últimos <strong>30 dias</strong>.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs">
-                <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
-                <span>Atualizar</span>
-              </button>
-              <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-50 text-[#0094eb] border border-sky-100 text-xs font-bold">
-                <Zap className="w-3.5 h-3.5 fill-[#0094eb]" />
-                <span>Motor de Regras Ativo</span>
-              </div>
-            </div>
-          </div>
-
-          {/* EMPTY STATE ELEGANTE */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center space-y-3">
-            <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 mx-auto">
-              <Film className="w-8 h-8" />
-            </div>
-            <h4 className="text-sm font-bold text-slate-700">Sem insights para este período</h4>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
-              Precisamos de mais dados de visualizações e interações para gerar análises confiáveis. Volte em breve ou clique em "Atualizar".
-            </p>
-          </div>
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center space-y-3">
+          <Sparkles className="w-8 h-8 text-slate-300 mx-auto" />
+          <h4 className="text-sm font-bold text-slate-700">Insights de IA em breve</h4>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">Vamos conectar esta aba na próxima etapa.</p>
         </div>
       )}
 
     </div>
   );
 }
-
-
