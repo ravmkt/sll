@@ -10,7 +10,6 @@ export interface VidlyticsAppearance {
   updated_at?: string;
 }
 
-
 export interface VidlyticsOverviewMetrics {
   totalViews: number;
   totalClicks: number;
@@ -21,7 +20,6 @@ export interface VidlyticsOverviewMetrics {
   ctr: number;
   dailySeries: { date: string; views: number; clicks: number; likes: number; ctr: number }[];
 }
-
 
 export interface VidlyticsVideoRow {
   id: string;
@@ -37,37 +35,48 @@ export interface VidlyticsVideoRow {
   revenue: number;
 }
 
+export interface VidlyticsRetentionRow {
+  id: string;
+  title: string;
+  thumbnailUrl: string | null;
+  views: number;
+  clicks: number;
+  conversions: number;
+  clickDropRate: number;
+  conversionDropRate: number;
+}
+
+export interface VidlyticsInsightRow {
+  id: string;
+  videoId: string | null;
+  videoTitle: string | null;
+  insightText: string;
+  metadata: Record<string, any> | null;
+  createdAt: string;
+}
+
 export class VidlyticsDatabaseService {
   private static SCHEMA = 'vidlytics';
-  private static TABLE_APPEARANCES = 'vid_appearances'; // Tabela oficial do schema vidlytics
+  private static TABLE_APPEARANCES = 'vid_appearances';
 
-  /**
-   * Busca todos os estilos/aparências cadastrados para a loja ativa.
-   */
   static async getAppearances(storeId: string): Promise<VidlyticsAppearance[]> {
     if (!storeId) {
       console.warn('[VidlyticsDatabaseService] Não foi possível buscar aparências: storeId ausente.');
       return [];
     }
-
     const { data, error } = await supabase
       .schema(this.SCHEMA)
       .from(this.TABLE_APPEARANCES)
       .select('*')
       .eq('store_id', storeId)
       .order('created_at', { ascending: false });
-
     if (error) {
       console.error('[VidlyticsDatabaseService] Erro ao buscar aparências:', error);
       throw error;
     }
-
     return data || [];
   }
 
-  /**
-   * Salva ou atualiza um estilo de aparência para a loja ativa.
-   */
   static async saveAppearance(
     storeId: string,
     appearance: Omit<VidlyticsAppearance, 'store_id'>
@@ -75,73 +84,55 @@ export class VidlyticsDatabaseService {
     if (!storeId) {
       throw new Error('Loja não identificada. O storeId é obrigatório para salvar o estilo.');
     }
-
     const payload = {
       ...appearance,
       store_id: storeId,
       updated_at: new Date().toISOString(),
     };
-
     const { data, error } = await supabase
       .schema(this.SCHEMA)
       .from(this.TABLE_APPEARANCES)
       .upsert(payload)
       .select()
       .single();
-
     if (error) {
       console.error('[VidlyticsDatabaseService] Erro ao salvar aparência:', error);
       throw error;
     }
-
     return data;
   }
 
-  /**
-   * Define um estilo como o padrão oficial da loja e desmarca os demais.
-   */
   static async setDefaultAppearance(storeId: string, appearanceId: string): Promise<void> {
     if (!storeId || !appearanceId) return;
-
-    // 1. Desmarca a flag de padrão de todas as aparências da loja
     const { error: resetError } = await supabase
       .schema(this.SCHEMA)
       .from(this.TABLE_APPEARANCES)
       .update({ is_default: false })
       .eq('store_id', storeId);
-
     if (resetError) {
       console.error('[VidlyticsDatabaseService] Erro ao resetar estilo padrão:', resetError);
       throw resetError;
     }
-
-    // 2. Marca a nova aparência selecionada como padrão
     const { error: setError } = await supabase
       .schema(this.SCHEMA)
       .from(this.TABLE_APPEARANCES)
       .update({ is_default: true, updated_at: new Date().toISOString() })
       .eq('id', appearanceId)
       .eq('store_id', storeId);
-
     if (setError) {
       console.error('[VidlyticsDatabaseService] Erro ao definir estilo padrão:', setError);
       throw setError;
     }
   }
 
-  /**
-   * Exclui um estilo da loja.
-   */
   static async deleteAppearance(storeId: string, appearanceId: string): Promise<void> {
     if (!storeId || !appearanceId) return;
-
     const { error } = await supabase
       .schema(this.SCHEMA)
       .from(this.TABLE_APPEARANCES)
       .delete()
       .eq('id', appearanceId)
       .eq('store_id', storeId);
-
     if (error) {
       console.error('[VidlyticsDatabaseService] Erro ao deletar aparência:', error);
       throw error;
@@ -309,8 +300,91 @@ export class VidlyticsDatabaseService {
       };
     });
   }
+
+  /**
+   * Funil de Retenção por vídeo: Views -> Cliques -> Conversões.
+   * Obs: o schema atual não possui eventos de progresso segundo a segundo,
+   * então mostramos a taxa de queda entre as 3 etapas do funil (dado 100% real).
+   */
+  static async getRetentionData(storeId: string, startDate: string, endDate: string): Promise<VidlyticsRetentionRow[]> {
+    const { data: videos, error: videosError } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_videos')
+      .select('id, title, thumbnail_url')
+      .eq('store_id', storeId);
+    if (videosError) throw videosError;
+    if (!videos || videos.length === 0) return [];
+
+    const videoIds = videos.map((v: any) => v.id);
+
+    const { data: dailyMetrics, error: metricsError } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_daily_video_metrics')
+      .select('video_id, views, clicks, conversions')
+      .in('video_id', videoIds)
+      .gte('metric_date', startDate)
+      .lte('metric_date', endDate);
+    if (metricsError) throw metricsError;
+
+    return videos
+      .map((v: any) => {
+        const rows = (dailyMetrics || []).filter((m: any) => m.video_id === v.id);
+        const views = rows.reduce((s: number, m: any) => s + (m.views || 0), 0);
+        const clicks = rows.reduce((s: number, m: any) => s + (m.clicks || 0), 0);
+        const conversions = rows.reduce((s: number, m: any) => s + (m.conversions || 0), 0);
+
+        const clickDropRate = views > 0 ? 100 - (clicks / views) * 100 : 0;
+        const conversionDropRate = clicks > 0 ? 100 - (conversions / clicks) * 100 : 0;
+
+        return {
+          id: v.id,
+          title: v.title,
+          thumbnailUrl: v.thumbnail_url,
+          views,
+          clicks,
+          conversions,
+          clickDropRate,
+          conversionDropRate,
+        };
+      })
+      .sort((a, b) => b.views - a.views);
+  }
+
+  /**
+   * Busca insights de IA gerados para a loja no período selecionado.
+   */
+  static async getAiInsights(storeId: string, startDate: string, endDate: string): Promise<VidlyticsInsightRow[]> {
+    const { data: insights, error: insightsError } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_ai_insights')
+      .select('id, video_id, insight_text, metadata, created_at')
+      .eq('store_id', storeId)
+      .gte('created_at', startDate)
+      .lte('created_at', endDate)
+      .order('created_at', { ascending: false });
+    if (insightsError) throw insightsError;
+    if (!insights || insights.length === 0) return [];
+
+    const videoIds = [...new Set(insights.map((i: any) => i.video_id).filter(Boolean))];
+    let videosMap = new Map<string, string>();
+
+    if (videoIds.length > 0) {
+      const { data: videos, error: videosError } = await supabase
+        .schema(this.SCHEMA)
+        .from('vid_videos')
+        .select('id, title')
+        .in('id', videoIds);
+      if (videosError) throw videosError;
+      (videos || []).forEach((v: any) => videosMap.set(v.id, v.title));
+    }
+
+    return insights.map((i: any) => ({
+      id: i.id,
+      videoId: i.video_id,
+      videoTitle: i.video_id ? videosMap.get(i.video_id) || null : null,
+      insightText: i.insight_text,
+      metadata: i.metadata,
+      createdAt: i.created_at,
+    }));
+  }
 }
-
-
-
-
