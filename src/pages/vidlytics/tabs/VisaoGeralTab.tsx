@@ -36,7 +36,7 @@ export default function VisaoGeralTab() {
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(store?.referral_code ? ` ${window.location.origin}/?ref=${store.referral_code}` ` : 'https://vidlytics.com.br/indica/useanny');
+    navigator.clipboard.writeText(store?.referral_code ? (window.location.origin + '/?ref=' + store.referral_code) : 'https://vidlytics.com.br/indica/useanny');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -459,4 +459,5 @@ export default function VisaoGeralTab() {
     </div>
   );
 }
+
 
