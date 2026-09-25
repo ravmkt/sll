@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLoja } from '../../context/LojaContext';
+import { useStore } from '@/contexts/StoreContext';
 import { VidlyticsDatabaseService, VidAppearanceRow } from '../../services/vidlytics/VidlyticsDatabaseService';
 
 // ─────────────── Defaults (equivalentes ao legado, em chaves flat por device) ───────────────
@@ -63,9 +63,9 @@ const createDefaultWidgetStyle = () => ({
 // ─────────────── Hook principal ───────────────
 
 export function useAppearanceLogic() {
-  const { currentStore } = useStore();
-  const storeId = currentStore?.id;
-
+  const storeContext = useStore();
+  const currentStore = storeContext?.currentStore;
+  const storeId = currentStore?.id || localStorage.getItem('sll_store_id') || undefined;
   // Estado da LISTA (para AparenciaTab.tsx)
   const [appearances, setAppearances] = useState<VidAppearanceRow[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -276,4 +276,6 @@ export function useAppearanceLogic() {
     isSaving,
   };
 }
+
+
 
