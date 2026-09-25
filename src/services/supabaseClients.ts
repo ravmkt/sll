@@ -1,34 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Reexporta o client único (mesma instância) — não criar novo createClient aqui.
+// Mantido para compatibilidade com LiveCommerceDatabaseService.ts
+export const supabasePublic = supabase;
+export const supabaseLiveCommerce = supabase.schema('live_commerce');
 
-// Cliente Core (schema public) - Gerenciador oficial de Auth e Sessão
-export const supabasePublic = createClient(supabaseUrl, supabaseAnonKey, {
-  db: { schema: 'public' },
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+// Helpers adicionais por schema
+export const publicSchema = () => supabase.schema('public');
+export const vidlyticsSchema = () => supabase.schema('vidlytics');
+export const liveCommerceSchema = () => supabase.schema('live_commerce');
 
-// Cliente Vidlytics (schema vidlytics) - Apenas dados
-export const supabaseVidlytics = createClient(supabaseUrl, supabaseAnonKey, {
-  db: { schema: 'vidlytics' },
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
-
-// Cliente Live Commerce (schema live_commerce) - Apenas dados
-export const supabaseLiveCommerce = createClient(supabaseUrl, supabaseAnonKey, {
-  db: { schema: 'live_commerce' },
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
-
-export const supabase = supabasePublic;
+export { supabase };
