@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
 import { useLoja } from '../../../context/LojaContext';
-import { VidlyticsDatabaseService, VidlyticsOverviewMetrics } from '../../../services/vidlytics/VidlyticsDatabaseService';
+import { VidlyticsDatabaseService, VidlyticsOverviewMetrics, VidlyticsVideoRow } from '../../../services/vidlytics/VidlyticsDatabaseService';
 
 type SubTab = 'visao-geral' | 'videos' | 'retencao' | 'insights';
 type PeriodoKey = 'hoje' | '7' | '15' | '30' | 'custom';
@@ -77,6 +77,8 @@ export default function ResultadosTab() {
   const [metrics, setMetrics] = useState<VidlyticsOverviewMetrics>(emptyMetrics);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [videosList, setVideosList] = useState<VidlyticsVideoRow[]>([]);
+  const [videosLoading, setVideosLoading] = useState(false);
 
   const { start, end } = useMemo(
     () => getDateRange(periodo, customStart, customEnd),
@@ -108,7 +110,31 @@ export default function ResultadosTab() {
     };
   }, [storeId, start, end, periodo]);
 
-  const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
+  
+  useEffect(() => {
+    if (!storeId || subTab !== 'videos') return;
+    if (periodo === 'custom' && (!customStart || !customEnd)) return;
+
+    let active = true;
+    setVideosLoading(true);
+
+    VidlyticsDatabaseService.getVideosPerformance(storeId, start, end)
+      .then((data) => {
+        if (active) setVideosList(data);
+      })
+      .catch((err) => {
+        console.error('Erro ao buscar vídeos:', err);
+      })
+      .finally(() => {
+        if (active) setVideosLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [storeId, start, end, subTab]);
+
+const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
   const revenueFormatted = metrics.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const maxViews = Math.max(1, ...metrics.dailySeries.map((d) => d.views));
@@ -482,10 +508,58 @@ export default function ResultadosTab() {
       {/* 2. SUB-ABA: VÍDEOS (mock, próxima etapa) */}
       {/* ========================================================= */}
       {subTab === 'videos' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center space-y-3">
-          <Film className="w-8 h-8 text-slate-300 mx-auto" />
-          <h4 className="text-sm font-bold text-slate-700">Tabela de vídeos em breve</h4>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">Vamos conectar esta aba na próxima etapa.</p>
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          {videosLoading ? (
+            <div className="p-16 text-center text-xs text-slate-400">Carregando vídeos...</div>
+          ) : videosList.length === 0 ? (
+            <div className="p-16 text-center space-y-3">
+              <Film className="w-8 h-8 text-slate-300 mx-auto" />
+              <h4 className="text-sm font-bold text-slate-700">Nenhum vídeo encontrado</h4>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">Não há vídeos cadastrados para este período.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold">
+                    <th className="text-left px-4 py-3">Vídeo</th>
+                    <th className="text-right px-4 py-3">Views</th>
+                    <th className="text-right px-4 py-3">Cliques</th>
+                    <th className="text-right px-4 py-3">CTR</th>
+                    <th className="text-right px-4 py-3">Curtidas</th>
+                    <th className="text-right px-4 py-3">Comentários</th>
+                    <th className="text-right px-4 py-3">Conversões</th>
+                    <th className="text-right px-4 py-3">Receita</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {videosList.map((v) => (
+                    <tr key={v.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 flex items-center gap-2">
+                        {v.thumbnailUrl ? (
+                          <img src={v.thumbnailUrl} alt={v.title} className="w-8 h-12 object-cover rounded-md" />
+                        ) : (
+                          <div className="w-8 h-12 bg-slate-100 rounded-md flex items-center justify-center">
+                            <Play className="w-3 h-3 text-slate-400" />
+                          </div>
+                        )}
+                        <span className="font-semibold text-slate-700 truncate max-w-[160px]">{v.title}</span>
+                      </td>
+                      <td className="text-right px-4 py-3 text-slate-600">{v.views.toLocaleString('pt-BR')}</td>
+                      <td className="text-right px-4 py-3 text-slate-600">{v.clicks.toLocaleString('pt-BR')}</td>
+                      <td className="text-right px-4 py-3 text-slate-600">{v.ctr.toFixed(1)}%</td>
+                      <td className="text-right px-4 py-3 text-rose-500 font-semibold">{v.likes}</td>
+                      <td className="text-right px-4 py-3 text-[#0094eb] font-semibold">{v.comments}</td>
+                      <td className="text-right px-4 py-3 text-emerald-600 font-semibold">{v.conversions}</td>
+                      <td className="text-right px-4 py-3 text-slate-700 font-bold">
+                        {v.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -514,4 +588,5 @@ export default function ResultadosTab() {
     </div>
   );
 }
+
 

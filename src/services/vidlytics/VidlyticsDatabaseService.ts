@@ -22,6 +22,21 @@ export interface VidlyticsOverviewMetrics {
   dailySeries: { date: string; views: number; clicks: number; likes: number; ctr: number }[];
 }
 
+
+export interface VidlyticsVideoRow {
+  id: string;
+  title: string;
+  thumbnailUrl: string | null;
+  status: string;
+  views: number;
+  clicks: number;
+  ctr: number;
+  likes: number;
+  comments: number;
+  conversions: number;
+  revenue: number;
+}
+
 export class VidlyticsDatabaseService {
   private static SCHEMA = 'vidlytics';
   private static TABLE_APPEARANCES = 'vid_appearances'; // Tabela oficial do schema vidlytics
@@ -220,7 +235,82 @@ export class VidlyticsDatabaseService {
 
     return { totalViews, totalClicks, totalConversions, totalRevenue, totalLikes, totalComments, ctr, dailySeries };
   }
+
+  static async getVideosPerformance(storeId: string, startDate: string, endDate: string): Promise<VidlyticsVideoRow[]> {
+    const { data: videos, error: videosError } = await supabase
+      .schema('vidlytics')
+      .from('vid_videos')
+      .select('id, title, thumbnail_url, status')
+      .eq('store_id', storeId);
+    if (videosError) throw videosError;
+    if (!videos || videos.length === 0) return [];
+
+    const videoIds = videos.map((v: any) => v.id);
+
+    const { data: dailyMetrics, error: metricsError } = await supabase
+      .schema('vidlytics')
+      .from('vid_daily_video_metrics')
+      .select('video_id, views, clicks')
+      .in('video_id', videoIds)
+      .gte('metric_date', startDate)
+      .lte('metric_date', endDate);
+    if (metricsError) throw metricsError;
+
+    const { data: likes, error: likesError } = await supabase
+      .schema('vidlytics')
+      .from('vid_video_likes')
+      .select('video_id')
+      .in('video_id', videoIds)
+      .gte('created_at', startDate)
+      .lte('created_at', endDate);
+    if (likesError) throw likesError;
+
+    const { data: comments, error: commentsError } = await supabase
+      .schema('vidlytics')
+      .from('vid_comments')
+      .select('video_id')
+      .in('video_id', videoIds)
+      .gte('created_at', startDate)
+      .lte('created_at', endDate);
+    if (commentsError) throw commentsError;
+
+    const { data: conversions, error: convError } = await supabase
+      .schema('vidlytics')
+      .from('vid_conversions')
+      .select('video_id, order_value')
+      .in('video_id', videoIds)
+      .gte('converted_at', startDate)
+      .lte('converted_at', endDate);
+    if (convError) throw convError;
+
+    return videos.map((v: any) => {
+      const metricsForVideo = (dailyMetrics || []).filter((m: any) => m.video_id === v.id);
+      const views = metricsForVideo.reduce((s: number, m: any) => s + (m.views || 0), 0);
+      const clicks = metricsForVideo.reduce((s: number, m: any) => s + (m.clicks || 0), 0);
+      const likesCount = (likes || []).filter((l: any) => l.video_id === v.id).length;
+      const commentsCount = (comments || []).filter((c: any) => c.video_id === v.id).length;
+      const convForVideo = (conversions || []).filter((c: any) => c.video_id === v.id);
+      const conversionsCount = convForVideo.length;
+      const revenue = convForVideo.reduce((s: number, c: any) => s + Number(c.order_value || 0), 0);
+      const ctr = views > 0 ? (clicks / views) * 100 : 0;
+
+      return {
+        id: v.id,
+        title: v.title,
+        thumbnailUrl: v.thumbnail_url,
+        status: v.status,
+        views,
+        clicks,
+        ctr,
+        likes: likesCount,
+        comments: commentsCount,
+        conversions: conversionsCount,
+        revenue,
+      };
+    });
+  }
 }
+
 
 
 
