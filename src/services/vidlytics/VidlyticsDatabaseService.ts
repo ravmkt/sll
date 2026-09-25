@@ -387,4 +387,198 @@ export class VidlyticsDatabaseService {
       createdAt: i.created_at,
     }));
   }
+
+  // ==================== STORIES ====================
+
+  static async getStories(storeId: string): Promise<any[]> {
+    const { data: stories, error } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_stories')
+      .select('*')
+      .eq('store_id', storeId)
+      .order('position', { ascending: true });
+    if (error) throw error;
+    if (!stories || stories.length === 0) return [];
+
+    const storyIds = stories.map((s: any) => s.id);
+
+    const { data: storyVideos, error: svError } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_story_videos')
+      .select('story_id, video_url')
+      .in('story_id', storyIds);
+    if (svError) throw svError;
+
+    const { data: dailyMetrics, error: metricsError } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_daily_video_metrics')
+      .select('video_id, views, clicks')
+      .eq('store_id', storeId);
+    if (metricsError) throw metricsError;
+
+    return stories.map((s: any) => {
+      const videos = (storyVideos || []).filter((v: any) => v.story_id === s.id);
+      const config = s.config || {};
+      return {
+        id: s.id,
+        name: s.title,
+        coverUrl: s.cover_url,
+        status: s.status,
+        position: s.position,
+        videosCount: videos.length,
+        layout: config.layout || 'carrossel',
+        scrollDirection: config.scrollDirection || 'Horizontal',
+        visualStyle: config.visualStyle || 'Seguir Padrão do App',
+        cssSelector: config.cssSelector || '',
+        displayPosition: config.displayPosition || 'Acima do elemento',
+        pages: config.pages || [],
+        views: 0,
+        clicks: 0,
+        ctr: 0,
+      };
+    });
+  }
+
+  static async getStoryById(storeId: string, storyId: string): Promise<any | null> {
+    const { data: story, error } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_stories')
+      .select('*')
+      .eq('id', storyId)
+      .eq('store_id', storeId)
+      .single();
+    if (error) throw error;
+    if (!story) return null;
+
+    const { data: videos, error: vError } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_story_videos')
+      .select('*')
+      .eq('story_id', storyId)
+      .order('position', { ascending: true });
+    if (vError) throw vError;
+
+    const config = story.config || {};
+    return {
+      id: story.id,
+      name: story.title,
+      coverUrl: story.cover_url,
+      status: story.status,
+      videos: videos || [],
+      layout: config.layout || 'carrossel',
+      scrollDirection: config.scrollDirection || 'Horizontal',
+      visualStyle: config.visualStyle || 'Seguir Padrão do App',
+      cssSelector: config.cssSelector || '',
+      displayPosition: config.displayPosition || 'Acima do elemento',
+      pages: config.pages || [],
+    };
+  }
+
+  static async saveStory(storeId: string, story: {
+    id?: string;
+    name: string;
+    status: 'ATIVO' | 'INATIVO';
+    coverUrl?: string | null;
+    layout: string;
+    scrollDirection: string;
+    visualStyle: string;
+    cssSelector: string;
+    displayPosition: string;
+    pages: string[];
+    videoUrls: string[];
+  }): Promise<string> {
+    const config = {
+      layout: story.layout,
+      scrollDirection: story.scrollDirection,
+      visualStyle: story.visualStyle,
+      cssSelector: story.cssSelector,
+      displayPosition: story.displayPosition,
+      pages: story.pages,
+    };
+
+    const payload: any = {
+      store_id: storeId,
+      title: story.name,
+      cover_url: story.coverUrl || null,
+      status: story.status === 'ATIVO' ? 'active' : 'inactive',
+      config,
+    };
+
+    let storyId = story.id;
+
+    if (storyId) {
+      const { error } = await supabase
+        .schema(this.SCHEMA)
+        .from('vid_stories')
+        .update(payload)
+        .eq('id', storyId)
+        .eq('store_id', storeId);
+      if (error) throw error;
+
+      const { error: delError } = await supabase
+        .schema(this.SCHEMA)
+        .from('vid_story_videos')
+        .delete()
+        .eq('story_id', storyId);
+      if (delError) throw delError;
+    } else {
+      const { data, error } = await supabase
+        .schema(this.SCHEMA)
+        .from('vid_stories')
+        .insert(payload)
+        .select('id')
+        .single();
+      if (error) throw error;
+      storyId = data.id;
+    }
+
+    if (story.videoUrls.length > 0) {
+      const rows = story.videoUrls.map((url, idx) => ({
+        story_id: storyId,
+        video_url: url,
+        position: idx,
+      }));
+      const { error: insError } = await supabase
+        .schema(this.SCHEMA)
+        .from('vid_story_videos')
+        .insert(rows);
+      if (insError) throw insError;
+    }
+
+    return storyId!;
+  }
+
+  static async deleteStory(storeId: string, storyId: string): Promise<void> {
+    const { error: delVideosError } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_story_videos')
+      .delete()
+      .eq('story_id', storyId);
+    if (delVideosError) throw delVideosError;
+
+    const { error } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_stories')
+      .delete()
+      .eq('id', storyId)
+      .eq('store_id', storeId);
+    if (error) throw error;
+  }
+
+  static async getVideosForPicker(storeId: string): Promise<{ id: string; title: string; videoUrl: string; thumbnailUrl: string | null }[]> {
+    const { data, error } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_videos')
+      .select('id, title, video_url, thumbnail_url')
+      .eq('store_id', storeId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((v: any) => ({
+      id: v.id,
+      title: v.title,
+      videoUrl: v.video_url,
+      thumbnailUrl: v.thumbnail_url,
+    }));
+  }
 }
+

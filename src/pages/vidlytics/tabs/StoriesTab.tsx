@@ -1,66 +1,98 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Eye, Pencil, Trash2, Send, TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { useLoja } from '../../../context/LojaContext';
+import { VidlyticsDatabaseService } from '../../../services/vidlytics/VidlyticsDatabaseService';
+import NewStoryModal from '../components/NewStoryModal';
 
 interface StoryRow {
   id: string;
   name: string;
-  type: string;
+  layout: string;
   videosCount: number;
-  location: string;
+  cssSelector: string;
+  pages: string[];
   views: number;
-  viewsChange: number; // Porcentagem
   ctr: number;
-  ctrChange: number;   // Porcentagem
   clicks: number;
   status: 'ATIVO' | 'INATIVO';
 }
 
+const layoutLabel: Record<string, string> = {
+  flutuante: 'Flutuante',
+  carrossel: 'Carrossel',
+  grade: 'Grade',
+  dinamico: 'Carrossel Dinâmico',
+};
+
 export default function StoriesTab() {
+  const { storeId } = useLoja();
   const [busca, setBusca] = useState('');
   const [statusFiltro, setStatusFiltro] = useState<'TODOS' | 'ATIVO' | 'INATIVO'>('TODOS');
+  const [stories, setStories] = useState<StoryRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
 
-  // Dados mockados no padrão do layout
-  const stories: StoryRow[] = [
-    {
-      id: '1',
-      name: 'Teste',
-      type: 'Flutuante',
-      videosCount: 2,
-      location: 'Contém: /azul',
-      views: 0,
-      viewsChange: 0.0,
-      ctr: 0.0,
-      ctrChange: 0.0,
-      clicks: 0,
-      status: 'ATIVO',
-    },
-    {
-      id: '2',
-      name: 'Coleção Verão 2026',
-      type: 'Carrossel',
-      videosCount: 1,
-      location: 'Todas as páginas',
-      views: 1420,
-      viewsChange: 15.4,
-      ctr: 14.8,
-      ctrChange: 2.2,
-      clicks: 60,
-      status: 'ATIVO',
-    },
-    {
-      id: '3',
-      name: 'Novidades Acessórios',
-      type: 'Carrossel',
-      videosCount: 3,
-      location: 'Home',
-      views: 890,
-      viewsChange: -3.8,
-      ctr: 9.4,
-      ctrChange: -1.1,
-      clicks: 34,
-      status: 'ATIVO',
+  const loadStories = useCallback(async () => {
+    if (!storeId) return;
+    setLoading(true);
+    try {
+      const data = await VidlyticsDatabaseService.getStories(storeId);
+      const mapped: StoryRow[] = data.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        layout: layoutLabel[s.layout] || s.layout,
+        videosCount: s.videosCount,
+        cssSelector: s.cssSelector || '—',
+        pages: s.pages || [],
+        views: s.views || 0,
+        ctr: s.ctr || 0,
+        clicks: s.clicks || 0,
+        status: s.status === 'active' ? 'ATIVO' : 'INATIVO',
+      }));
+      setStories(mapped);
+    } catch (err) {
+      console.error('Erro ao buscar stories:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  }, [storeId]);
+
+  useEffect(() => {
+    loadStories();
+  }, [loadStories]);
+
+  const handleDelete = async (storyId: string) => {
+    if (!storeId) return;
+    if (!window.confirm('Tem certeza que deseja excluir este story?')) return;
+    try {
+      await VidlyticsDatabaseService.deleteStory(storeId, storyId);
+      await loadStories();
+    } catch (err) {
+      console.error('Erro ao excluir story:', err);
+    }
+  };
+
+  const handleEdit = (storyId: string) => {
+    setEditingStoryId(storyId);
+    setIsModalOpen(true);
+  };
+
+  const handleNewStory = () => {
+    setEditingStoryId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setEditingStoryId(null);
+  };
+
+  const handleModalSaved = async () => {
+    setIsModalOpen(false);
+    setEditingStoryId(null);
+    await loadStories();
+  };
 
   const storiesFiltrados = stories.filter((story) => {
     const matchBusca = story.name.toLowerCase().includes(busca.toLowerCase());
@@ -79,8 +111,10 @@ export default function StoriesTab() {
           </p>
         </div>
 
-        {/* BOTÃO PADRÃO COM APENAS UM ÍCONE DE + */}
-        <button className="bg-[#0094eb] hover:bg-[#0082cf] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer self-start sm:self-auto">
+        <button
+          onClick={handleNewStory}
+          className="bg-[#0094eb] hover:bg-[#0082cf] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer self-start sm:self-auto"
+        >
           <Plus className="w-4 h-4" />
           <span>Novo Story</span>
         </button>
@@ -117,7 +151,7 @@ export default function StoriesTab() {
         {/* CONTADOR */}
         <div className="px-5 py-2.5 bg-slate-50/50 border-b border-slate-100">
           <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            {storiesFiltrados.length} {storiesFiltrados.length === 1 ? 'STORY ENCONTRADO' : 'STORIES ENCONTRADOS'}
+            {loading ? 'Carregando...' : `${storiesFiltrados.length} ${storiesFiltrados.length === 1 ? 'STORY ENCONTRADO' : 'STORIES ENCONTRADOS'}`}
           </span>
         </div>
 
@@ -139,7 +173,6 @@ export default function StoriesTab() {
             <tbody className="divide-y divide-slate-100 text-xs">
               {storiesFiltrados.map((story) => (
                 <tr key={story.id} className="hover:bg-slate-50/60 transition-colors">
-                  {/* Story / Nome */}
                   <td className="py-3.5 px-5">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-[#0094eb] flex-shrink-0">
@@ -154,80 +187,38 @@ export default function StoriesTab() {
                     </div>
                   </td>
 
-                  {/* Tipo */}
                   <td className="py-3.5 px-4 text-center">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-sky-50/80 text-[#0094eb] border border-sky-100">
                       <Send className="w-3 h-3 rotate-45" />
-                      {story.type}
+                      {story.layout}
                     </span>
                   </td>
 
-                  {/* Vídeos */}
                   <td className="py-3.5 px-4 text-center font-semibold text-slate-700">
                     {story.videosCount}
                   </td>
 
-                  {/* Localização */}
                   <td className="py-3.5 px-4 text-center">
                     <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[11px] font-medium">
-                      {story.location}
+                      {story.pages.length > 0 ? story.pages.join(', ') : 'Todas as páginas'}
                     </span>
                   </td>
 
-                  {/* Visualizações com Badge Comparativo */}
                   <td className="py-3.5 px-4 text-center">
-                    <div className="inline-flex items-center justify-center gap-2">
-                      <span className="font-bold text-slate-800 text-xs">
-                        {story.views.toLocaleString('pt-BR')}
-                      </span>
-                      {story.viewsChange !== 0 && (
-                        <span
-                          className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                            story.viewsChange > 0
-                              ? 'bg-emerald-50 text-emerald-600'
-                              : 'bg-rose-50 text-rose-500'
-                          }`}
-                        >
-                          {story.viewsChange > 0 ? (
-                            <TrendingUp className="w-3 h-3" />
-                          ) : (
-                            <TrendingDown className="w-3 h-3" />
-                          )}
-                          {story.viewsChange > 0 ? `+${story.viewsChange}%` : `${story.viewsChange}%`}
-                        </span>
-                      )}
-                    </div>
+                    <span className="font-bold text-slate-800 text-xs">
+                      {story.views.toLocaleString('pt-BR')}
+                    </span>
                   </td>
 
-                  {/* CTR / Cliques com Badge Comparativo */}
                   <td className="py-3.5 px-4 text-center">
                     <div className="flex flex-col items-center">
-                      <div className="inline-flex items-center justify-center gap-1.5">
-                        <span className="font-bold text-slate-800 text-xs">
-                          {story.ctr.toFixed(1)}%
-                        </span>
-                        {story.ctrChange !== 0 && (
-                          <span
-                            className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                              story.ctrChange > 0
-                                ? 'bg-emerald-50 text-emerald-600'
-                                : 'bg-rose-50 text-rose-500'
-                            }`}
-                          >
-                            {story.ctrChange > 0 ? (
-                              <TrendingUp className="w-3 h-3" />
-                            ) : (
-                              <TrendingDown className="w-3 h-3" />
-                            )}
-                            {story.ctrChange > 0 ? `+${story.ctrChange}%` : `${story.ctrChange}%`}
-                          </span>
-                        )}
-                      </div>
+                      <span className="font-bold text-slate-800 text-xs">
+                        {story.ctr.toFixed(1)}%
+                      </span>
                       <span className="text-[10px] text-slate-400 mt-0.5">{story.clicks} cliques</span>
                     </div>
                   </td>
 
-                  {/* Status */}
                   <td className="py-3.5 px-4 text-center">
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase ${
@@ -240,23 +231,25 @@ export default function StoriesTab() {
                     </span>
                   </td>
 
-                  {/* Ações (Centralizadas em relação à coluna) */}
                   <td className="py-3.5 px-5 text-center">
                     <div className="flex items-center justify-center gap-1.5 text-slate-400">
                       <button
                         title="Visualizar"
+                        onClick={() => handleEdit(story.id)}
                         className="p-1.5 hover:text-[#0094eb] hover:bg-sky-50 rounded-lg transition-colors cursor-pointer"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
                         title="Editar"
+                        onClick={() => handleEdit(story.id)}
                         className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         title="Excluir"
+                        onClick={() => handleDelete(story.id)}
                         className="p-1.5 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -266,7 +259,7 @@ export default function StoriesTab() {
                 </tr>
               ))}
 
-              {storiesFiltrados.length === 0 && (
+              {!loading && storiesFiltrados.length === 0 && (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-xs text-slate-400">
                     Nenhum story encontrado com os filtros selecionados.
@@ -277,22 +270,20 @@ export default function StoriesTab() {
           </table>
         </div>
 
-        {/* NOTA DE RODAPÉ COMPARATIVO DE 7 DIAS */}
         <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
           <div className="flex items-center gap-1.5">
             <Info className="w-4 h-4 text-[#0094eb]" />
-            <span>As setas e porcentagens representam o comparativo de desempenho em relação aos <strong>últimos 7 dias</strong>.</span>
-          </div>
-          <div className="flex items-center gap-4 text-[11px] font-semibold">
-            <span className="flex items-center gap-1 text-emerald-600">
-              <TrendingUp className="w-3.5 h-3.5" /> Alta
-            </span>
-            <span className="flex items-center gap-1 text-rose-500">
-              <TrendingDown className="w-3.5 h-3.5" /> Baixa
-            </span>
+            <span>As métricas de visualizações e CTR são calculadas com base nos vídeos vinculados a cada story.</span>
           </div>
         </div>
       </div>
+
+      <NewStoryModal
+        isOpen={isModalOpen}
+        storyId={editingStoryId}
+        onClose={handleModalClose}
+        onSaved={handleModalSaved}
+      />
     </div>
   );
 }
