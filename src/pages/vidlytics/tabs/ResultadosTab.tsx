@@ -45,6 +45,13 @@ function getDateRange(periodo: PeriodoKey, customStart?: string, customEnd?: str
   return { start, end };
 }
 
+
+function formatDateBR(dateStr: string): string {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  return `${day}/${month}/${year}`;
+}
+
 const emptyMetrics: VidlyticsOverviewMetrics = {
   totalViews: 0,
   totalClicks: 0,
@@ -233,7 +240,7 @@ export default function ResultadosTab() {
               <h3 className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
                 Resultados Financeiros
               </h3>
-              <span className="text-[11px] text-slate-400 font-medium">Período: {start} a {end}</span>
+              <span className="text-[11px] text-slate-400 font-medium">Período: {formatDateBR(start)} a {formatDateBR(end)}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -507,3 +514,4 @@ export default function ResultadosTab() {
     </div>
   );
 }
+
