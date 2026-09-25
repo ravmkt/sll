@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Plus, Edit2, Trash2, CheckCircle2, Star, Loader2, Sparkles 
+  Plus, Edit2, Trash2, Star, Loader2, Sparkles, AlertTriangle, X 
 } from 'lucide-react';
 import { useLoja } from '../../context/LojaContext';
 import AparenciaModal from '../../components/vidlytics/AparenciaModal';
@@ -16,7 +16,10 @@ export default function Vidlytics() {
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingStyle, setEditingStyle] = useState<any | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Estados para o Modal de Exclusão Customizado
+  const [deleteModalItem, setDeleteModalItem] = useState<any | null>(null);
+  const [deletingLoading, setDeletingLoading] = useState<boolean>(false);
 
   const fetchAppearances = async () => {
     try {
@@ -50,22 +53,28 @@ export default function Vidlytics() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteStyle = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este estilo?')) return;
+  // Executa a exclusão confirmada
+  const handleConfirmDelete = async () => {
+    if (!deleteModalItem?.id) return;
 
     try {
-      setDeletingId(id);
+      setDeletingLoading(true);
+
       if (typeof VidlyticsDatabaseService.deleteAppearance === 'function') {
-        await VidlyticsDatabaseService.deleteAppearance(id);
+        await VidlyticsDatabaseService.deleteAppearance(deleteModalItem.id);
       } else if (typeof VidlyticsDatabaseService.deleteStyle === 'function') {
-        await VidlyticsDatabaseService.deleteStyle(id);
+        await VidlyticsDatabaseService.deleteStyle(deleteModalItem.id);
+      } else if (typeof VidlyticsDatabaseService.removeAppearance === 'function') {
+        await VidlyticsDatabaseService.removeAppearance(deleteModalItem.id);
       }
+
+      setDeleteModalItem(null);
       await fetchAppearances();
     } catch (err) {
       console.error('Erro ao excluir estilo:', err);
       alert('Não foi possível excluir este estilo.');
     } finally {
-      setDeletingId(null);
+      setDeletingLoading(false);
     }
   };
 
@@ -152,12 +161,11 @@ export default function Vidlytics() {
                             <Edit2 size={16} />
                           </button>
                           <button
-                            onClick={() => handleDeleteStyle(item.id)}
-                            disabled={deletingId === item.id}
+                            onClick={() => setDeleteModalItem(item)}
                             title="Excluir estilo"
-                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors disabled:opacity-50"
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
                           >
-                            {deletingId === item.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -170,6 +178,7 @@ export default function Vidlytics() {
         )}
       </div>
 
+      {/* Modal Principal de Edição / Criação */}
       <AparenciaModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -178,6 +187,60 @@ export default function Vidlytics() {
         }}
         initialStyle={editingStyle}
       />
+
+      {/* Modal de Confirmação de Exclusão (Design exato do Print 1) */}
+      {deleteModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150">
+            
+            {/* Header */}
+            <div className="p-6 pb-2 flex items-center justify-between">
+              <h3 className="text-base font-black tracking-wide text-slate-900 dark:text-white uppercase">
+                EXCLUIR ARQUIVO
+              </h3>
+              <button
+                onClick={() => setDeleteModalItem(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Conteúdo Central */}
+            <div className="px-6 py-4 flex flex-col items-center text-center space-y-4">
+              <div className="w-20 h-20 rounded-full bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-500">
+                <AlertTriangle size={42} strokeWidth={1.8} />
+              </div>
+
+              <div className="w-full bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/50 rounded-2xl p-4 text-left flex items-start gap-3">
+                <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 leading-relaxed">
+                  Esta ação é irreversível. O item <span className="font-bold text-[#0094eb]">"{deleteModalItem.widget_style?.name || 'Estilo'}"</span> será removido permanentemente.
+                </p>
+              </div>
+            </div>
+
+            {/* Botões de Ação */}
+            <div className="px-6 pb-6 pt-2 grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setDeleteModalItem(null)}
+                disabled={deletingLoading}
+                className="py-3 px-4 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={deletingLoading}
+                className="py-3 px-4 rounded-full bg-[#0094eb] hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 disabled:opacity-50"
+              >
+                {deletingLoading ? <Loader2 size={16} className="animate-spin" /> : 'Excluir'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
