@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useLoja } from '../../../context/LojaContext';
+import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
 import { 
   CheckCircle2, 
   Hourglass, 
@@ -20,9 +23,20 @@ import {
 
 export default function VisaoGeralTab() {
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
+  const { storeId, store } = useLoja();
+  const [affiliateSummary, setAffiliateSummary] = useState<AffiliateSummary | null>(null);
+
+  useEffect(() => {
+    if (!storeId) return;
+    AffiliateDatabaseService.getSummary(storeId).then(setAffiliateSummary);
+  }, [storeId]);
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText('https://vidlytics.com.br/indica/useanny');
+    navigator.clipboard.writeText(store?.referral_code ? ` ${window.location.origin}/?ref=${store.referral_code}` ` : 'https://vidlytics.com.br/indica/useanny');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -114,7 +128,7 @@ export default function VisaoGeralTab() {
                   Comissões
                 </span>
               </div>
-              <p className="text-2xl font-black text-slate-800">R$ 0,00</p>
+              <p className="text-2xl font-black text-slate-800">{formatCurrency(affiliateSummary?.available_balance || 0)}</p>
               <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
                 Ver detalhes no Indica & Ganha →
               </span>
@@ -430,8 +444,8 @@ export default function VisaoGeralTab() {
 
             <div className="text-center">
               <a 
-                href="#indica-ganha" 
-                onClick={(e) => { e.preventDefault(); alert('Em breve painel completo de indicações!'); }}
+                href="/dashboard/afiliados"
+                onClick={(e) => { e.preventDefault(); navigate('/dashboard/afiliados'); }}
                 className="text-[11px] font-semibold text-slate-500 hover:text-[#0094eb] transition-colors inline-flex items-center gap-1"
               >
                 Acessar painel de indicações →
@@ -445,3 +459,4 @@ export default function VisaoGeralTab() {
     </div>
   );
 }
+
