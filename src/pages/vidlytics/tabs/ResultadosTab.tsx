@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
 import { useLoja } from '../../../context/LojaContext';
-import { VidlyticsDatabaseService, VidlyticsOverviewMetrics, VidlyticsVideoRow } from '../../../services/vidlytics/VidlyticsDatabaseService';
+import { VidlyticsDatabaseService, VidlyticsOverviewMetrics, VidlyticsVideoRow, VidlyticsRetentionRow, VidlyticsInsightRow } from '../../../services/vidlytics/VidlyticsDatabaseService';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
 import { useNavigate } from 'react-router-dom';
 
@@ -47,7 +47,6 @@ function getDateRange(periodo: PeriodoKey, customStart?: string, customEnd?: str
   return { start, end };
 }
 
-
 function formatDateBR(dateStr: string): string {
   if (!dateStr) return '';
   const [year, month, day] = dateStr.split('-');
@@ -92,6 +91,11 @@ export default function ResultadosTab() {
   const [videosList, setVideosList] = useState<VidlyticsVideoRow[]>([]);
   const [videosLoading, setVideosLoading] = useState(false);
 
+  const [retentionList, setRetentionList] = useState<VidlyticsRetentionRow[]>([]);
+  const [retentionLoading, setRetentionLoading] = useState(false);
+  const [insightsList, setInsightsList] = useState<VidlyticsInsightRow[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+
   const { start, end } = useMemo(
     () => getDateRange(periodo, customStart, customEnd),
     [periodo, customStart, customEnd]
@@ -122,7 +126,6 @@ export default function ResultadosTab() {
     };
   }, [storeId, start, end, periodo]);
 
-  
   useEffect(() => {
     if (!storeId || subTab !== 'videos') return;
     if (periodo === 'custom' && (!customStart || !customEnd)) return;
@@ -146,7 +149,53 @@ export default function ResultadosTab() {
     };
   }, [storeId, start, end, subTab]);
 
-const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
+  useEffect(() => {
+    if (!storeId || subTab !== 'retencao') return;
+    if (periodo === 'custom' && (!customStart || !customEnd)) return;
+
+    let active = true;
+    setRetentionLoading(true);
+
+    VidlyticsDatabaseService.getRetentionData(storeId, start, end)
+      .then((data) => {
+        if (active) setRetentionList(data);
+      })
+      .catch((err) => {
+        console.error('Erro ao buscar retenção:', err);
+      })
+      .finally(() => {
+        if (active) setRetentionLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [storeId, start, end, subTab]);
+
+  useEffect(() => {
+    if (!storeId || subTab !== 'insights') return;
+    if (periodo === 'custom' && (!customStart || !customEnd)) return;
+
+    let active = true;
+    setInsightsLoading(true);
+
+    VidlyticsDatabaseService.getAiInsights(storeId, start, end)
+      .then((data) => {
+        if (active) setInsightsList(data);
+      })
+      .catch((err) => {
+        console.error('Erro ao buscar insights:', err);
+      })
+      .finally(() => {
+        if (active) setInsightsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [storeId, start, end, subTab]);
+
+  const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
   const revenueFormatted = metrics.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const maxViews = Math.max(1, ...metrics.dailySeries.map((d) => d.views));
@@ -168,6 +217,43 @@ const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
   const clicksPath = buildPath(metrics.dailySeries.map((d) => d.clicks), maxClicks);
   const likesPath = buildPath(metrics.dailySeries.map((d) => d.likes), maxLikes);
 
+  const PeriodoSelector = () => (
+    <div className="flex items-center gap-2 self-start sm:self-auto">
+      <div className="relative inline-block">
+        <select
+          value={periodo}
+          onChange={(e) => setPeriodo(e.target.value as PeriodoKey)}
+          className="appearance-none bg-white border border-slate-200 text-xs font-semibold text-slate-700 py-2 pl-3.5 pr-8 rounded-xl shadow-xs hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 cursor-pointer"
+        >
+          <option value="hoje">Hoje</option>
+          <option value="7">7 dias</option>
+          <option value="15">15 dias</option>
+          <option value="30">30 dias</option>
+          <option value="custom">Personalizado</option>
+        </select>
+        <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+      </div>
+
+      {periodo === 'custom' && (
+        <div className="flex items-center gap-1.5">
+          <input
+            type="date"
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+          />
+          <span className="text-xs text-slate-400">até</span>
+          <input
+            type="date"
+            value={customEnd}
+            onChange={(e) => setCustomEnd(e.target.value)}
+            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+          />
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
 
@@ -180,41 +266,7 @@ const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
           </p>
         </div>
 
-        {/* Seletor de Período */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <div className="relative inline-block">
-            <select
-              value={periodo}
-              onChange={(e) => setPeriodo(e.target.value as PeriodoKey)}
-              className="appearance-none bg-white border border-slate-200 text-xs font-semibold text-slate-700 py-2 pl-3.5 pr-8 rounded-xl shadow-xs hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 cursor-pointer"
-            >
-              <option value="hoje">Hoje</option>
-              <option value="7">7 dias</option>
-              <option value="15">15 dias</option>
-              <option value="30">30 dias</option>
-              <option value="custom">Personalizado</option>
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-
-          {periodo === 'custom' && (
-            <div className="flex items-center gap-1.5">
-              <input
-                type="date"
-                value={customStart}
-                onChange={(e) => setCustomStart(e.target.value)}
-                className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
-              />
-              <span className="text-xs text-slate-400">até</span>
-              <input
-                type="date"
-                value={customEnd}
-                onChange={(e) => setCustomEnd(e.target.value)}
-                className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
-              />
-            </div>
-          )}
-        </div>
+        <PeriodoSelector />
       </div>
 
       {/* PÍLULAS DE SUB-ABAS INTERNAS */}
@@ -517,90 +569,178 @@ const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
       )}
 
       {/* ========================================================= */}
-      {/* 2. SUB-ABA: VÍDEOS (mock, próxima etapa) */}
+      {/* 2. SUB-ABA: VÍDEOS */}
       {/* ========================================================= */}
       {subTab === 'videos' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-          {videosLoading ? (
-            <div className="p-16 text-center text-xs text-slate-400">Carregando vídeos...</div>
-          ) : videosList.length === 0 ? (
-            <div className="p-16 text-center space-y-3">
-              <Film className="w-8 h-8 text-slate-300 mx-auto" />
-              <h4 className="text-sm font-bold text-slate-700">Nenhum vídeo encontrado</h4>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">Não há vídeos cadastrados para este período.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold">
-                    <th className="text-left px-4 py-3">Vídeo</th>
-                    <th className="text-right px-4 py-3">Views</th>
-                    <th className="text-right px-4 py-3">Cliques</th>
-                    <th className="text-right px-4 py-3">CTR</th>
-                    <th className="text-right px-4 py-3">Curtidas</th>
-                    <th className="text-right px-4 py-3">Comentários</th>
-                    <th className="text-right px-4 py-3">Conversões</th>
-                    <th className="text-right px-4 py-3">Receita</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {videosList.map((v) => (
-                    <tr key={v.id} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="px-4 py-3 flex items-center gap-2">
-                        {v.thumbnailUrl ? (
-                          <img src={v.thumbnailUrl} alt={v.title} className="w-8 h-12 object-cover rounded-md" />
-                        ) : (
-                          <div className="w-8 h-12 bg-slate-100 rounded-md flex items-center justify-center">
-                            <Play className="w-3 h-3 text-slate-400" />
-                          </div>
-                        )}
-                        <span className="font-semibold text-slate-700 truncate max-w-[160px]">{v.title}</span>
-                      </td>
-                      <td className="text-right px-4 py-3 text-slate-600">{v.views.toLocaleString('pt-BR')}</td>
-                      <td className="text-right px-4 py-3 text-slate-600">{v.clicks.toLocaleString('pt-BR')}</td>
-                      <td className="text-right px-4 py-3 text-slate-600">{v.ctr.toFixed(1)}%</td>
-                      <td className="text-right px-4 py-3 text-rose-500 font-semibold">{v.likes}</td>
-                      <td className="text-right px-4 py-3 text-[#0094eb] font-semibold">{v.comments}</td>
-                      <td className="text-right px-4 py-3 text-emerald-600 font-semibold">{v.conversions}</td>
-                      <td className="text-right px-4 py-3 text-slate-700 font-bold">
-                        {v.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </td>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+              Performance por Vídeo
+            </h3>
+            <span className="text-[11px] text-slate-400 font-medium">Período: {formatDateBR(start)} a {formatDateBR(end)}</span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+            {videosLoading ? (
+              <div className="p-16 text-center text-xs text-slate-400">Carregando vídeos...</div>
+            ) : videosList.length === 0 ? (
+              <div className="p-16 text-center space-y-3">
+                <Film className="w-8 h-8 text-slate-300 mx-auto" />
+                <h4 className="text-sm font-bold text-slate-700">Nenhum vídeo encontrado</h4>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto">Não há vídeos cadastrados para este período.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold">
+                      <th className="text-left px-4 py-3">Vídeo</th>
+                      <th className="text-right px-4 py-3">Views</th>
+                      <th className="text-right px-4 py-3">Cliques</th>
+                      <th className="text-right px-4 py-3">CTR</th>
+                      <th className="text-right px-4 py-3">Curtidas</th>
+                      <th className="text-right px-4 py-3">Comentários</th>
+                      <th className="text-right px-4 py-3">Conversões</th>
+                      <th className="text-right px-4 py-3">Receita</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {videosList.map((v) => (
+                      <tr key={v.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-3 flex items-center gap-2">
+                          {v.thumbnailUrl ? (
+                            <img src={v.thumbnailUrl} alt={v.title} className="w-8 h-12 object-cover rounded-md" />
+                          ) : (
+                            <div className="w-8 h-12 bg-slate-100 rounded-md flex items-center justify-center">
+                              <Play className="w-3 h-3 text-slate-400" />
+                            </div>
+                          )}
+                          <span className="font-semibold text-slate-700 truncate max-w-[160px]">{v.title}</span>
+                        </td>
+                        <td className="text-right px-4 py-3 text-slate-600">{v.views.toLocaleString('pt-BR')}</td>
+                        <td className="text-right px-4 py-3 text-slate-600">{v.clicks.toLocaleString('pt-BR')}</td>
+                        <td className="text-right px-4 py-3 text-slate-600">{v.ctr.toFixed(1)}%</td>
+                        <td className="text-right px-4 py-3 text-rose-500 font-semibold">{v.likes}</td>
+                        <td className="text-right px-4 py-3 text-[#0094eb] font-semibold">{v.comments}</td>
+                        <td className="text-right px-4 py-3 text-emerald-600 font-semibold">{v.conversions}</td>
+                        <td className="text-right px-4 py-3 text-slate-700 font-bold">
+                          {v.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* ========================================================= */}
-      {/* 3. SUB-ABA: RETENÇÃO (mock, próxima etapa) */}
+      {/* 3. SUB-ABA: RETENÇÃO */}
       {/* ========================================================= */}
       {subTab === 'retencao' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center space-y-3">
-          <Clock className="w-8 h-8 text-slate-300 mx-auto" />
-          <h4 className="text-sm font-bold text-slate-700">Curva de retenção em breve</h4>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">Vamos conectar esta aba na próxima etapa.</p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+              Funil de Retenção por Vídeo
+            </h3>
+            <span className="text-[11px] text-slate-400 font-medium">Período: {formatDateBR(start)} a {formatDateBR(end)}</span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+            {retentionLoading ? (
+              <div className="p-16 text-center text-xs text-slate-400">Carregando dados de retenção...</div>
+            ) : retentionList.length === 0 ? (
+              <div className="p-16 text-center space-y-3">
+                <Clock className="w-8 h-8 text-slate-300 mx-auto" />
+                <h4 className="text-sm font-bold text-slate-700">Sem dados de retenção</h4>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto">Não há métricas suficientes para este período.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold">
+                      <th className="text-left px-4 py-3">Vídeo</th>
+                      <th className="text-right px-4 py-3">Views</th>
+                      <th className="text-right px-4 py-3">Cliques</th>
+                      <th className="text-right px-4 py-3">Queda até o Clique</th>
+                      <th className="text-right px-4 py-3">Conversões</th>
+                      <th className="text-right px-4 py-3">Queda até a Conversão</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {retentionList.map((r) => (
+                      <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-3 flex items-center gap-2">
+                          {r.thumbnailUrl ? (
+                            <img src={r.thumbnailUrl} alt={r.title} className="w-8 h-12 object-cover rounded-md" />
+                          ) : (
+                            <div className="w-8 h-12 bg-slate-100 rounded-md flex items-center justify-center">
+                              <Play className="w-3 h-3 text-slate-400" />
+                            </div>
+                          )}
+                          <span className="font-semibold text-slate-700 truncate max-w-[160px]">{r.title}</span>
+                        </td>
+                        <td className="text-right px-4 py-3 text-slate-600">{r.views.toLocaleString('pt-BR')}</td>
+                        <td className="text-right px-4 py-3 text-slate-600">{r.clicks.toLocaleString('pt-BR')}</td>
+                        <td className="text-right px-4 py-3 text-rose-500 font-semibold">{r.clickDropRate.toFixed(1)}%</td>
+                        <td className="text-right px-4 py-3 text-emerald-600 font-semibold">{r.conversions.toLocaleString('pt-BR')}</td>
+                        <td className="text-right px-4 py-3 text-rose-500 font-semibold">{r.conversionDropRate.toFixed(1)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* ========================================================= */}
-      {/* 4. SUB-ABA: INSIGHTS (mock, próxima etapa) */}
+      {/* 4. SUB-ABA: INSIGHTS */}
       {/* ========================================================= */}
       {subTab === 'insights' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center space-y-3">
-          <Sparkles className="w-8 h-8 text-slate-300 mx-auto" />
-          <h4 className="text-sm font-bold text-slate-700">Insights de IA em breve</h4>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">Vamos conectar esta aba na próxima etapa.</p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+              Insights de IA
+            </h3>
+            <span className="text-[11px] text-slate-400 font-medium">Período: {formatDateBR(start)} a {formatDateBR(end)}</span>
+          </div>
+
+          {insightsLoading ? (
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center text-xs text-slate-400">
+              Carregando insights...
+            </div>
+          ) : insightsList.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center space-y-3">
+              <Sparkles className="w-8 h-8 text-slate-300 mx-auto" />
+              <h4 className="text-sm font-bold text-slate-700">Nenhum insight gerado</h4>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">Ainda não há insights de IA para este período.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {insightsList.map((insight) => (
+                <div key={insight.id} className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-pink-400 shrink-0" />
+                    {insight.videoTitle && (
+                      <span className="text-[10px] font-bold text-slate-400 uppercase truncate">{insight.videoTitle}</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-700 leading-relaxed">{insight.insightText}</p>
+                  <p className="text-[10px] text-slate-400">
+                    {new Date(insight.createdAt).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
     </div>
   );
 }
-
-
-
-
