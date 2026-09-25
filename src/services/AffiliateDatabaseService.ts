@@ -69,7 +69,7 @@ export class AffiliateDatabaseService {
         period_reference,
         plan_price_cents,
         created_at,
-        referred_store:referred_store_id ( name )
+        referred_store:referral_rewards_referred_store_id_fkey ( name )
       `)
       .eq("referrer_store_id", storeId)
       .order("created_at", { ascending: false });
@@ -107,3 +107,4 @@ export class AffiliateDatabaseService {
     }
   }
 }
+

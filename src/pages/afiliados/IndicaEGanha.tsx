@@ -180,8 +180,14 @@ const IndicaEGanha: React.FC = () => {
                     <td className="px-4 py-3 text-slate-500">{r.period_reference}</td>
                     <td className="px-4 py-3 font-bold text-green-600">{formatCurrency(r.commission_amount)}</td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-1 rounded-full text-[11px] font-bold bg-green-50 text-green-600">
-                        {r.status === "paid" ? "Pago" : r.status}
+                      <span className={`px-2 py-1 rounded-full text-[11px] font-bold ${
+                        r.status === "paid"
+                          ? "bg-green-50 text-green-600"
+                          : r.status === "pending"
+                          ? "bg-amber-50 text-amber-600"
+                          : "bg-slate-100 text-slate-500"
+                      }`}>
+                        {r.status === "paid" ? "Pago" : r.status === "pending" ? "Pendente" : r.status}
                       </span>
                     </td>
                   </tr>
@@ -261,5 +267,6 @@ const IndicaEGanha: React.FC = () => {
 };
 
 export default IndicaEGanha;
+
 
 
