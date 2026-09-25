@@ -1,61 +1,172 @@
-import React, { useState } from 'react';
-import { 
-  ArrowLeft, 
-  Save, 
-  Layout, 
-  Send, 
-  Columns3, 
-  Grid3X3, 
-  Layers, 
-  Film, 
-  MapPin, 
-  Globe, 
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  ArrowLeft,
+  Save,
+  Layout,
+  Send,
+  Columns3,
+  Grid3X3,
+  Layers,
+  Film,
+  MapPin,
+  Globe,
   Plus,
-  X
+  X,
+  Play,
+  Trash2
 } from 'lucide-react';
+import { useLoja } from '../../../context/LojaContext';
+import { VidlyticsDatabaseService } from '../../../services/vidlytics/VidlyticsDatabaseService';
 
 interface NewStoryModalProps {
   isOpen: boolean;
+  storyId?: string | null;
   onClose: () => void;
-  onSave?: (storyData: any) => void;
+  onSaved?: () => void;
 }
 
-export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModalProps) {
+interface PickerVideo {
+  id: string;
+  title: string;
+  videoUrl: string;
+  thumbnailUrl: string | null;
+}
+
+export default function NewStoryModal({ isOpen, storyId, onClose, onSaved }: NewStoryModalProps) {
+  const { storeId } = useLoja();
+
   const [isActive, setIsActive] = useState(true);
   const [storyName, setStoryName] = useState('');
   const [selectedLayout, setSelectedLayout] = useState<'flutuante' | 'carrossel' | 'grade' | 'dinamico'>('carrossel');
   const [scrollDirection, setScrollDirection] = useState('Horizontal');
   const [visualStyle, setVisualStyle] = useState('Seguir Padrão do App');
-  const [cssSelector, setCssSelector] = useState('.breadcrumbs');
+  const [cssSelector, setCssSelector] = useState('');
   const [position, setPosition] = useState('Acima do elemento');
+  const [pages, setPages] = useState<string[]>([]);
+  const [newPage, setNewPage] = useState('');
+
+  const [availableVideos, setAvailableVideos] = useState<PickerVideo[]>([]);
+  const [selectedVideoUrls, setSelectedVideoUrls] = useState<string[]>([]);
+  const [showPicker, setShowPicker] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadingStory, setLoadingStory] = useState(false);
+
+  const resetForm = () => {
+    setIsActive(true);
+    setStoryName('');
+    setSelectedLayout('carrossel');
+    setScrollDirection('Horizontal');
+    setVisualStyle('Seguir Padrão do App');
+    setCssSelector('');
+    setPosition('Acima do elemento');
+    setPages([]);
+    setSelectedVideoUrls([]);
+  };
+
+  const loadVideos = useCallback(async () => {
+    if (!storeId) return;
+    try {
+      const videos = await VidlyticsDatabaseService.getVideosForPicker(storeId);
+      setAvailableVideos(videos);
+    } catch (err) {
+      console.error('Erro ao buscar vídeos:', err);
+    }
+  }, [storeId]);
+
+  const loadStory = useCallback(async () => {
+    if (!storeId || !storyId) return;
+    setLoadingStory(true);
+    try {
+      const story = await VidlyticsDatabaseService.getStoryById(storeId, storyId);
+      if (story) {
+        setStoryName(story.name);
+        setIsActive(story.status === 'active');
+        setSelectedLayout(story.layout);
+        setScrollDirection(story.scrollDirection);
+        setVisualStyle(story.visualStyle);
+        setCssSelector(story.cssSelector);
+        setPosition(story.displayPosition);
+        setPages(story.pages || []);
+        setSelectedVideoUrls((story.videos || []).map((v: any) => v.video_url));
+      }
+    } catch (err) {
+      console.error('Erro ao carregar story:', err);
+    } finally {
+      setLoadingStory(false);
+    }
+  }, [storeId, storyId]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    loadVideos();
+    if (storyId) {
+      loadStory();
+    } else {
+      resetForm();
+    }
+  }, [isOpen, storyId, loadVideos, loadStory]);
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
-    if (onSave) {
-      onSave({
-        name: storyName,
-        active: isActive,
+  const handleAddPage = () => {
+    if (newPage.trim() && !pages.includes(newPage.trim())) {
+      setPages([...pages, newPage.trim()]);
+      setNewPage('');
+    }
+  };
+
+  const handleRemovePage = (page: string) => {
+    setPages(pages.filter((p) => p !== page));
+  };
+
+  const toggleVideoSelection = (url: string) => {
+    setSelectedVideoUrls((prev) =>
+      prev.includes(url) ? prev.filter((v) => v !== url) : [...prev, url]
+    );
+  };
+
+  const handleSave = async () => {
+    if (!storeId) return;
+    if (!storyName.trim()) {
+      alert('Informe um nome para o Story.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await VidlyticsDatabaseService.saveStory(storeId, {
+        id: storyId || undefined,
+        name: storyName.trim(),
+        status: isActive ? 'ATIVO' : 'INATIVO',
         layout: selectedLayout,
         scrollDirection,
         visualStyle,
         cssSelector,
-        position
+        displayPosition: position,
+        pages,
+        videoUrls: selectedVideoUrls,
       });
+      if (onSaved) onSaved();
+    } catch (err) {
+      console.error('Erro ao salvar story:', err);
+      alert('Não foi possível salvar o Story. Tente novamente.');
+    } finally {
+      setSaving(false);
     }
-    onClose();
   };
+
+  const selectedVideosDetails = availableVideos.filter((v) => selectedVideoUrls.includes(v.videoUrl));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
-      <div 
+      <div
         className="bg-[#f8fafc] dark:bg-slate-900 w-full max-w-5xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 my-auto overflow-hidden flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
         <div className="bg-white dark:bg-slate-900 px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={onClose}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-600 dark:text-slate-300 cursor-pointer"
               title="Voltar"
@@ -63,14 +174,16 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-white leading-tight">Novo Story</h2>
-              <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">CRIAR NOVO STORY</p>
+              <h2 className="text-lg font-bold text-slate-800 dark:text-white leading-tight">
+                {storyId ? 'Editar Story' : 'Novo Story'}
+              </h2>
+              <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                {storyId ? 'EDITAR STORY' : 'CRIAR NOVO STORY'}
+              </p>
             </div>
           </div>
 
-          {/* Lado direito: Status colado ao Salvar + Fechar */}
           <div className="flex items-center gap-3">
-            {/* Status Switch */}
             <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-200/80 dark:border-slate-700">
               <span className="text-xs font-bold text-slate-600 dark:text-slate-300 tracking-tight">
                 STATUS: <span className={isActive ? "text-emerald-500 font-extrabold" : "text-slate-400"}>{isActive ? 'ATIVO' : 'INATIVO'}</span>
@@ -86,17 +199,16 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
               </button>
             </div>
 
-            {/* Save CTA */}
-            <button 
+            <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
+              disabled={saving}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] disabled:opacity-60 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
             >
               <Save className="w-4 h-4" />
-              <span>Salvar Alterações</span>
+              <span>{saving ? 'Salvando...' : 'Salvar Alterações'}</span>
             </button>
 
-            {/* Fechar Modal */}
-            <button 
+            <button
               onClick={onClose}
               className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"
               title="Fechar"
@@ -108,7 +220,10 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
 
         {/* Modal Scrollable Body */}
         <div className="p-6 overflow-y-auto space-y-6">
-          
+          {loadingStory && (
+            <div className="text-center text-xs text-slate-400 py-4">Carregando dados do story...</div>
+          )}
+
           {/* CARD 1: DESIGN E FORMATO */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs">
             <div className="flex items-center gap-2 pb-5 border-b border-slate-100 dark:border-slate-800 text-[#0094eb]">
@@ -117,12 +232,11 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
             </div>
 
             <div className="pt-5 space-y-6">
-              {/* Nome do Story */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
                   Nome do Story
                 </label>
-                <input 
+                <input
                   type="text"
                   value={storyName}
                   onChange={(e) => setStoryName(e.target.value)}
@@ -131,19 +245,17 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
                 />
               </div>
 
-              {/* Layout de Exibição */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">
                   Layout de Exibição
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {/* Flutuante */}
                   <button
                     type="button"
                     onClick={() => setSelectedLayout('flutuante')}
                     className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all cursor-pointer ${
-                      selectedLayout === 'flutuante' 
-                        ? 'border-[#0094eb] bg-sky-50/50 dark:bg-sky-950/20 text-[#0094eb]' 
+                      selectedLayout === 'flutuante'
+                        ? 'border-[#0094eb] bg-sky-50/50 dark:bg-sky-950/20 text-[#0094eb]'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800'
                     }`}
                   >
@@ -151,13 +263,12 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
                     <span className="text-[11px] font-bold tracking-wider uppercase">Flutuante</span>
                   </button>
 
-                  {/* Carrossel */}
                   <button
                     type="button"
                     onClick={() => setSelectedLayout('carrossel')}
                     className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all cursor-pointer ${
-                      selectedLayout === 'carrossel' 
-                        ? 'border-[#0094eb] bg-sky-50/50 dark:bg-sky-950/20 text-[#0094eb]' 
+                      selectedLayout === 'carrossel'
+                        ? 'border-[#0094eb] bg-sky-50/50 dark:bg-sky-950/20 text-[#0094eb]'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800'
                     }`}
                   >
@@ -165,13 +276,12 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
                     <span className="text-[11px] font-bold tracking-wider uppercase">Carrossel</span>
                   </button>
 
-                  {/* Grade */}
                   <button
                     type="button"
                     onClick={() => setSelectedLayout('grade')}
                     className={`flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all cursor-pointer ${
-                      selectedLayout === 'grade' 
-                        ? 'border-[#0094eb] bg-sky-50/50 dark:bg-sky-950/20 text-[#0094eb]' 
+                      selectedLayout === 'grade'
+                        ? 'border-[#0094eb] bg-sky-50/50 dark:bg-sky-950/20 text-[#0094eb]'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800'
                     }`}
                   >
@@ -179,7 +289,6 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
                     <span className="text-[11px] font-bold tracking-wider uppercase">Grade</span>
                   </button>
 
-                  {/* Carrossel Dinâmico */}
                   <button
                     type="button"
                     disabled
@@ -192,7 +301,6 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
                 </div>
               </div>
 
-              {/* Direção de Rolagem */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
                   Direção de Rolagem
@@ -207,7 +315,6 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
                 </select>
               </div>
 
-              {/* Estilo Visual / Aparência */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
                   Estilo Visual / Aparência
@@ -231,29 +338,98 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
                 <Film className="w-5 h-5" />
                 <h3 className="text-sm font-bold tracking-wide uppercase text-slate-800 dark:text-slate-100">Conteúdo Selecionado</h3>
               </div>
-              <button 
+              <button
                 type="button"
+                onClick={() => setShowPicker(!showPicker)}
                 className="flex items-center gap-1.5 px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>ADICIONAR VÍDEOS</span>
+                <span>{showPicker ? 'FECHAR' : 'ADICIONAR VÍDEOS'}</span>
               </button>
             </div>
 
-            <div className="pt-6">
-              <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-10 flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-slate-800/20">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
-                  <Film className="w-6 h-6" />
+            <div className="pt-6 space-y-4">
+              {selectedVideosDetails.length === 0 ? (
+                <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-10 flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-slate-800/20">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
+                    <Film className="w-6 h-6" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Nenhum vídeo selecionado</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowPicker(true)}
+                    className="flex items-center gap-1.5 px-5 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>ADICIONAR VÍDEOS</span>
+                  </button>
                 </div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Nenhum vídeo selecionado</p>
-                <button 
-                  type="button"
-                  className="flex items-center gap-1.5 px-5 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>ADICIONAR VÍDEOS</span>
-                </button>
-              </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                  {selectedVideosDetails.map((v) => (
+                    <div key={v.id} className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                      <div className="aspect-[9/16] bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                        {v.thumbnailUrl ? (
+                          <img src={v.thumbnailUrl} alt={v.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <Play className="w-6 h-6 text-slate-400" />
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleVideoSelection(v.videoUrl)}
+                        className="absolute top-1 right-1 p-1 bg-rose-500 hover:bg-rose-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        title="Remover"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                      <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 px-1.5 py-1 truncate">
+                        {v.title}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {showPicker && (
+                <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-4 max-h-64 overflow-y-auto space-y-2">
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    Selecione os vídeos da sua Biblioteca
+                  </p>
+                  {availableVideos.length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-4">Nenhum vídeo cadastrado na Biblioteca.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {availableVideos.map((v) => {
+                        const checked = selectedVideoUrls.includes(v.videoUrl);
+                        return (
+                          <button
+                            key={v.id}
+                            type="button"
+                            onClick={() => toggleVideoSelection(v.videoUrl)}
+                            className={`flex items-center gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                              checked
+                                ? 'border-[#0094eb] bg-sky-50 dark:bg-sky-950/20'
+                                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="w-8 h-12 rounded-md bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center flex-shrink-0">
+                              {v.thumbnailUrl ? (
+                                <img src={v.thumbnailUrl} alt={v.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <Play className="w-3 h-3 text-slate-400" />
+                              )}
+                            </div>
+                            <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">
+                              {v.title}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -265,31 +441,19 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
             </div>
 
             <div className="pt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Seletor CSS */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
                   Seletor CSS
                 </label>
-                <div className="relative flex items-center">
-                  <input 
-                    type="text"
-                    value={cssSelector}
-                    onChange={(e) => setCssSelector(e.target.value)}
-                    placeholder=".breadcrumbs"
-                    className="w-full pl-4 pr-32 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0094eb]"
-                  />
-                  {/* Botão Selecionar com o ícone de alvo avermelhado idêntico ao print */}
-                  <button 
-                    type="button"
-                    className="absolute right-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200/70 dark:border-slate-700 text-[#0094eb] text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                  >
-                    <span className="text-sm leading-none select-none">🎯</span>
-                    <span>Selecionar</span>
-                  </button>
-                </div>
+                <input
+                  type="text"
+                  value={cssSelector}
+                  onChange={(e) => setCssSelector(e.target.value)}
+                  placeholder=".breadcrumbs"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0094eb]"
+                />
               </div>
 
-              {/* Posição */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
                   Posição
@@ -315,31 +479,63 @@ export default function NewStoryModal({ isOpen, onClose, onSave }: NewStoryModal
               <h3 className="text-sm font-bold tracking-wide uppercase text-slate-800 dark:text-slate-100">Qual página irá aparecer?</h3>
             </div>
 
-            <div className="pt-5">
-              <button 
-                type="button"
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>ADICIONAR PÁGINA</span>
-              </button>
+            <div className="pt-5 space-y-3">
+              {pages.length === 0 && (
+                <p className="text-xs text-slate-400">Nenhuma página definida (o Story aparecerá em todas as páginas).</p>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {pages.map((page) => (
+                  <span
+                    key={page}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 text-[#0094eb] border border-sky-100 rounded-lg text-xs font-semibold"
+                  >
+                    {page}
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePage(page)}
+                      className="text-[#0094eb] hover:text-rose-500 cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newPage}
+                  onChange={(e) => setNewPage(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddPage()}
+                  placeholder="Ex: /produto ou /home"
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0094eb]"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddPage}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>ADICIONAR PÁGINA</span>
+                </button>
+              </div>
             </div>
           </div>
-
         </div>
 
         {/* Footer */}
         <div className="bg-white dark:bg-slate-900 px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-          <button 
+          <button
             type="button"
             onClick={handleSave}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
+            disabled={saving}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] disabled:opacity-60 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
           >
             <Save className="w-4 h-4" />
-            <span>Salvar Alterações</span>
+            <span>{saving ? 'Salvando...' : 'Salvar Alterações'}</span>
           </button>
         </div>
-
       </div>
     </div>
   );
