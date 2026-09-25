@@ -24,7 +24,7 @@ export type VidlyticsTab = 'visao-geral' | 'resultados' | 'stories' | 'bibliotec
 
 export default function Vidlytics() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<VidlyticsTab>('stories');
+  const [activeTab, setActiveTab] = useState('visao-geral');
 
   const tabs: { id: VidlyticsTab; label: string }[] = [
     { id: 'visao-geral', label: 'Visão Geral' },
@@ -153,5 +153,6 @@ export default function Vidlytics() {
     </div>
   );
 }
+
 
 
