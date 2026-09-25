@@ -6,11 +6,10 @@ import {
   AffiliateReferredDetail,
 } from "@/services/AffiliateDatabaseService";
 import { DollarSign, Users, Wallet, Copy, Share2 } from "lucide-react";
-import { useToast } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 
 const IndicaEGanha: React.FC = () => {
   const { storeId, store } = useLoja();
-  const { toast } = useToast();
 
   const [summary, setSummary] = useState<AffiliateSummary | null>(null);
   const [referred, setReferred] = useState<AffiliateReferredDetail[]>([]);
@@ -45,7 +44,7 @@ const IndicaEGanha: React.FC = () => {
   const handleCopyLink = () => {
     if (!referralLink) return;
     navigator.clipboard.writeText(referralLink);
-    toast({ title: "Link copiado!", description: "Compartilhe com seus amigos." });
+    showSuccess("Link copiado! Compartilhe com seus amigos.");
   };
 
   const handleRequestWithdrawal = async () => {
@@ -53,7 +52,7 @@ const IndicaEGanha: React.FC = () => {
     const numericAmount = parseFloat(amount.replace(",", "."));
 
     if (!summary || numericAmount > summary.available_balance) {
-      toast({ title: "Saldo insuficiente", variant: "destructive" });
+      showError("Saldo insuficiente");
       return;
     }
 
@@ -65,14 +64,14 @@ const IndicaEGanha: React.FC = () => {
         pixKey,
         pixKeyType,
       });
-      toast({ title: "Solicitação enviada!", description: "Seu saque será processado em breve." });
+      showSuccess("Solicitação enviada! Seu saque será processado em breve.");
       setShowWithdrawModal(false);
       setAmount("");
       setPixKey("");
       loadData();
     } catch (err) {
       console.error(err);
-      toast({ title: "Erro ao solicitar saque", variant: "destructive" });
+      showError("Erro ao solicitar saque");
     } finally {
       setSubmitting(false);
     }
@@ -262,4 +261,5 @@ const IndicaEGanha: React.FC = () => {
 };
 
 export default IndicaEGanha;
+
 

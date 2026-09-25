@@ -4,7 +4,6 @@ import { useLoja } from '../../../context/LojaContext';
 import { VidlyticsDatabaseService, VidlyticsOverviewMetrics, VidlyticsVideoRow } from '../../../services/vidlytics/VidlyticsDatabaseService';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
 import { useNavigate } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
 
 type SubTab = 'visao-geral' | 'videos' | 'retencao' | 'insights';
 type PeriodoKey = 'hoje' | '7' | '15' | '30' | 'custom';
