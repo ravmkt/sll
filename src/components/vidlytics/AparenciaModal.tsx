@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   X, Monitor, Smartphone, Settings2, PlaySquare, Layout,
-  LayoutGrid, MonitorPlay, Save, Loader2
+  LayoutGrid, MonitorPlay, Save, Loader2, CheckCircle2
 } from 'lucide-react';
 import { useLoja } from '../../context/LojaContext';
 
@@ -11,108 +11,78 @@ const VidlyticsDatabaseService = (VidlyticsModule as any).VidlyticsDatabaseServi
 interface AparenciaModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialStyle?: any | null;
 }
 
-const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white cursor-pointer";
 const inputClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
 
-export default function AparenciaModal({ isOpen, onClose }: AparenciaModalProps) {
+export default function AparenciaModal({ isOpen, onClose, initialStyle }: AparenciaModalProps) {
   const { storeId: activeStoreId, store } = useLoja();
+  const resolvedStoreId = activeStoreId || store?.id || localStorage.getItem('sll_store_id');
+
   const [activeTab, setActiveTab] = useState('basico');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [localSaving, setLocalSaving] = useState(false);
-  
-  const [selectedStyleId, setSelectedStyleId] = useState<string>('VIDLYTICS_DEFAULT');
-  const [availableStyles, setAvailableStyles] = useState<any[]>([]);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const [showNameModal, setShowNameModal] = useState(false);
-  const [modalInputName, setModalInputName] = useState('');
-
-  const resolvedStoreId = activeStoreId || store?.id || localStorage.getItem('sll_store_id');
-
-  const loadStylesList = async () => {
-    try {
-      if (!resolvedStoreId || typeof VidlyticsDatabaseService.getAppearances !== 'function') return;
-      const data = await VidlyticsDatabaseService.getAppearances(resolvedStoreId);
-      setAvailableStyles(data || []);
-    } catch (e) {
-      console.warn('Erro ao carregar lista de estilos:', e);
-    }
-  };
+  const [styleName, setStyleName] = useState('');
+  const [primaryColor, setPrimaryColor] = useState('#0094EB');
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab('basico');
       setPreviewDevice('mobile');
-      loadStylesList();
-    }
-  }, [isOpen, resolvedStoreId]);
+      setShowSuccessModal(false);
 
-  const handleSelectStyle = (id: string) => {
-    setSelectedStyleId(id);
-  };
+      if (initialStyle) {
+        setStyleName(initialStyle.widget_style?.name || 'Estilo Editado');
+        setPrimaryColor(initialStyle.widget_style?.primary_color || '#0094EB');
+      } else {
+        setStyleName('');
+        setPrimaryColor('#0094EB');
+      }
+    }
+  }, [isOpen, initialStyle]);
 
   const handleSave = async () => {
     try {
       setLocalSaving(true);
+      const targetName = styleName.trim() || (initialStyle ? 'Estilo Editado' : 'Novo Estilo Customizado');
 
-      const isSystemDefault = !selectedStyleId || selectedStyleId === 'VIDLYTICS_DEFAULT' || selectedStyleId === 'default';
-
-      if (isSystemDefault) {
-        // Se for o estilo padrão, pede o nome para criar um NOVO
-        setShowNameModal(true);
-        setLocalSaving(false);
-        return;
-      }
-
-      // Se for um estilo customizado selecionado, ATUALIZA (UPDATE)
-      if (typeof VidlyticsDatabaseService.updateAppearance === 'function') {
-        const currentStyleObj = availableStyles.find(s => s.id === selectedStyleId);
-        await VidlyticsDatabaseService.updateAppearance({
-          id: selectedStyleId,
-          store_id: resolvedStoreId || '',
-          widget_style: {
-            ...(currentStyleObj?.widget_style || {}),
-            updated_at: new Date().toISOString()
-          }
-        });
-      }
-
-      window.dispatchEvent(new CustomEvent('vidlytics:appearance_saved'));
-      onClose();
-    } catch (e) {
-      console.error('Erro ao atualizar estilo:', e);
-    } finally {
-      setLocalSaving(false);
-    }
-  };
-
-  const handleConfirmCreateNew = async () => {
-    if (!modalInputName.trim()) return;
-
-    try {
-      setLocalSaving(true);
-
-      if (typeof VidlyticsDatabaseService.createAppearance === 'function') {
-        const created = await VidlyticsDatabaseService.createAppearance({
-          store_id: resolvedStoreId || '',
-          widget_style: {
-            name: modalInputName,
-            created_at: new Date().toISOString()
-          }
-        });
-
-        if (created?.id) {
-          setSelectedStyleId(created.id);
+      const payload: any = {
+        store_id: resolvedStoreId || '',
+        widget_style: {
+          ...(initialStyle?.widget_style || {}),
+          name: targetName,
+          primary_color: primaryColor,
+          updated_at: new Date().toISOString()
         }
+      };
+
+      if (initialStyle?.id) {
+        payload.id = initialStyle.id;
+      }
+
+      if (initialStyle?.id && typeof VidlyticsDatabaseService.updateAppearance === 'function') {
+        await VidlyticsDatabaseService.updateAppearance(payload);
+      } else if (typeof VidlyticsDatabaseService.createAppearance === 'function') {
+        await VidlyticsDatabaseService.createAppearance(payload);
+      } else if (typeof VidlyticsDatabaseService.saveAppearance === 'function') {
+        await VidlyticsDatabaseService.saveAppearance(payload);
       }
 
       window.dispatchEvent(new CustomEvent('vidlytics:appearance_saved'));
-      setShowNameModal(false);
-      setModalInputName('');
-      onClose();
+      
+      // Exibe a janela de sucesso configurada
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        onClose();
+      }, 1500);
+
     } catch (e) {
-      console.error('Erro ao criar estilo:', e);
+      console.error('Erro ao salvar estilo:', e);
+      alert('Erro ao salvar as alterações.');
     } finally {
       setLocalSaving(false);
     }
@@ -122,18 +92,22 @@ export default function AparenciaModal({ isOpen, onClose }: AparenciaModalProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-5xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] relative">
         
+        {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Aparência do Widget Vidlytics</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Configure o visual dos vídeos e stories exibidos na sua loja</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              {initialStyle ? `Editar: ${initialStyle.widget_style?.name || 'Estilo'}` : 'Criar Novo Estilo Visual'}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Ajuste os parâmetros visuais do seu widget</p>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
 
+        {/* Abas */}
         <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 gap-2 overflow-x-auto">
           {[
             { id: 'basico', label: 'Básico', icon: Settings2 },
@@ -161,39 +135,53 @@ export default function AparenciaModal({ isOpen, onClose }: AparenciaModalProps)
           })}
         </div>
 
+        {/* Conteudo */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           {activeTab === 'basico' && (
-            <div className="space-y-4">
-              <label className="block text-sm font-bold text-slate-800 dark:text-slate-200">
-                Selecione o Estilo Ativo:
-              </label>
-              <select
-                value={selectedStyleId}
-                onChange={(e) => handleSelectStyle(e.target.value)}
-                className={selectClass}
-              >
-                <option value="VIDLYTICS_DEFAULT">Vidlytics (Padrão do Sistema)</option>
-                {availableStyles.map((style) => (
-                  <option key={style.id} value={style.id}>
-                    {style.widget_style?.name || `Estilo Customizado (${style.id.slice(0, 8)})`}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-slate-500">
-                {selectedStyleId === 'VIDLYTICS_DEFAULT'
-                  ? 'Ao salvar o padrão do sistema, um novo estilo customizado será criado.'
-                  : 'As alterações atualizarão o estilo selecionado (UPDATE).'}
-              </p>
+            <div className="space-y-4 max-w-md">
+              <div>
+                <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
+                  Nome do Estilo:
+                </label>
+                <input
+                  type="text"
+                  value={styleName}
+                  onChange={(e) => setStyleName(e.target.value)}
+                  placeholder="Ex: Estilo Black Friday"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
+                  Cor Principal:
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={primaryColor}
+                    onChange={(e) => setPrimaryColor(e.target.value)}
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-700 bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={primaryColor}
+                    onChange={(e) => setPrimaryColor(e.target.value)}
+                    className={`${inputClass} font-mono uppercase`}
+                  />
+                </div>
+              </div>
             </div>
           )}
 
           {activeTab !== 'basico' && (
             <div className="p-8 text-center text-slate-500 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
-              <p className="text-sm">Configurações visuais de {activeTab} ativas.</p>
+              <p className="text-sm">Configurações de {activeTab} prontas para personalização.</p>
             </div>
           )}
         </div>
 
+        {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
           <div className="flex gap-2">
             <button
@@ -224,43 +212,30 @@ export default function AparenciaModal({ isOpen, onClose }: AparenciaModalProps)
               className="px-5 py-2 bg-[#0094eb] hover:bg-blue-600 text-white text-sm font-bold rounded-xl transition-colors flex items-center gap-2 shadow-md shadow-blue-500/20 disabled:opacity-50"
             >
               {localSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              Salvar Alterações
+              {initialStyle ? 'Salvar Alterações' : 'Criar Estilo'}
             </button>
           </div>
         </div>
-      </div>
 
-      {showNameModal && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 p-4">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl w-full max-w-md space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl">
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white">Nome do Novo Estilo</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Insira um nome para identificar este estilo customizado no sistema.</p>
-            <input
-              type="text"
-              value={modalInputName}
-              onChange={(e) => setModalInputName(e.target.value)}
-              placeholder="Ex: Estilo Promoções"
-              className={inputClass}
-              autoFocus
-            />
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setShowNameModal(false)}
-                className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmCreateNew}
-                disabled={!modalInputName.trim() || localSaving}
-                className="px-4 py-2 bg-[#0094eb] text-white text-xs font-bold rounded-lg disabled:opacity-50"
-              >
-                Criar Estilo
-              </button>
+        {/* Modal de Sucesso Padrão (Print do usuário) */}
+        {showSuccessModal && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-xs w-full text-center shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-center gap-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-500">
+                <CheckCircle2 size={36} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h4 className="text-xl font-black text-slate-900 dark:text-white">Salvo com sucesso!</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Estilo atualizado com sucesso.</p>
+              </div>
+              <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
+                <div className="bg-emerald-500 h-full w-full animate-pulse"></div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
     </div>
   );
 }
