@@ -32,3 +32,7 @@ vidlytics_legado_backup.sql
 *.bak
 prod-widget-check.js
 
+.vercel
+.env*
+
+supabase/.temp/
