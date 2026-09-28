@@ -91,7 +91,7 @@ export default function NewStoryModal({
     setLocations((prev) => prev.filter((loc) => loc.id !== id));
   }
 
-  function updateLocation(id: string, patch: Partial<DisplayLocation>) {
+  function updateLocation(id: string, patch: Partial<DisplayLocation> | { [key: string]: any }) {
     setLocations((prev) =>
       prev.map((loc) => (loc.id === id ? { ...loc, ...patch } : loc))
     );
@@ -135,19 +135,29 @@ export default function NewStoryModal({
           }
         );
         const result = await response.json();
+        
+        // Formatos de retorno: { success: true, data: { selector: '...' } } ou { data: [ { selector: '...' } ] }
         const data = result?.data;
         const selectorCss =
           (data && typeof data === 'object' && !Array.isArray(data)) ? data.selector
           : (Array.isArray(data) && data[0]) ? data[0].selector
-          : null;
+          : result?.selector || null;
 
-        if (result?.success && selectorCss) {
+        if ((result?.success || selectorCss) && selectorCss) {
+          console.log('[Vidlytics] Seletor capturado com sucesso:', selectorCss);
           if (activePollingRef.current) clearInterval(activePollingRef.current);
           setPickingLocationId(null);
-          updateLocation(locationId, { cssSelector: selectorCss });
+          
+          setLocations((prev) =>
+            prev.map((loc) =>
+              loc.id === locationId
+                ? { ...loc, cssSelector: selectorCss, selector: selectorCss } as any
+                : loc
+            )
+          );
         }
       } catch (err) {
-        // Ignora erros momentâneos de rede durante o polling
+        console.warn('[Vidlytics] Polling selector error:', err);
       }
 
       if (tentativas > 120) {
@@ -220,7 +230,7 @@ export default function NewStoryModal({
           id: loc.id,
           page: loc.page,
           pageValue: loc.pageValue,
-          cssSelector: loc.cssSelector.trim(),
+          cssSelector: ((loc as any).selector || loc.cssSelector || '').trim(),
           position: loc.position,
         })),
         videoUrls: [],
@@ -324,6 +334,7 @@ export default function NewStoryModal({
           <div className="space-y-3">
             {locations.map((loc, index) => {
               const isPicking = pickingLocationId === loc.id;
+              const currentValue = ((loc as any).selector || loc.cssSelector || '');
 
               return (
                 <div
@@ -409,9 +420,12 @@ export default function NewStoryModal({
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        value={loc.cssSelector}
+                        value={currentValue}
                         onChange={(e) =>
-                          updateLocation(loc.id, { cssSelector: e.target.value })
+                          updateLocation(loc.id, {
+                            cssSelector: e.target.value,
+                            selector: e.target.value,
+                          })
                         }
                         placeholder=".breadcrumbs, header, #main-content"
                         className="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm font-mono"
@@ -447,7 +461,7 @@ export default function NewStoryModal({
                       </p>
                     )}
 
-                    {!loc.cssSelector && !isPicking && (
+                    {!currentValue && !isPicking && (
                       <p className="mt-1 text-xs text-amber-600">
                         Seletor ainda não definido. Use o botão "Selecionar" ou digite manualmente.
                       </p>
