@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, X, MousePointerClick, Eye, Loader2 } from 'lucide-react';
@@ -123,15 +123,11 @@ export default function NewStoryModal({
 
     const requests = [
       {
-        url: `${nextSupabaseUrl}/functions/v1/widget-selector?token=${encodeURIComponent(token)}`,
+        url: `${nextSupabaseUrl}/rest/v1/widget_selectors?token=eq.${encodeURIComponent(token)}&select=*`,
         headers: {
           'apikey': anonKey,
           'Authorization': `Bearer ${anonKey}`,
         },
-      },
-      {
-        url: `https://wznvecurmisgoaijykbt.supabase.co/functions/v1/widget-selector?token=${encodeURIComponent(token)}`,
-        headers: {},
       },
     ];
 

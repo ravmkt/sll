@@ -6994,51 +6994,48 @@ ctaElement.addEventListener('click', function(e) {
 function sendSelector(selector, storyId) {
   var payload = { selector: selector, token: widgetSelectToken };
   if (storyId) { payload.story_id = storyId; }
-  if (storeId) { payload.store_id = storeId; }
 
-  var endpoint = 'https://api.vidlytics.com/widget-selector';
-  if (supabaseUrl) {
-    endpoint = supabaseUrl.replace(/\/rest\/v1.*/, '') + '/functions/v1/widget-selector';
-  }
-
+  var baseSupabase = (supabaseUrl || 'https://flivmllysdhaydhogmhg.supabase.co').replace(/\/rest\/v1.*/, '').replace(/\/+$/, '');
+  var endpoint = baseSupabase + '/rest/v1/widget_selectors';
 
   var effectiveAnonKey = supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsaXZtbGx5c2RoYXlkaG9nbWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODY1MTYsImV4cCI6MjA5ODY2MjUxNn0.ye92mnf-5ws78H8A9fSGkf2xGo5q0FoB2oq91v7HFG0';
   var postHeaders = {
     'Content-Type': 'application/json',
     'apikey': effectiveAnonKey,
-    'Authorization': 'Bearer ' + effectiveAnonKey
+    'Authorization': 'Bearer ' + effectiveAnonKey,
+    'Prefer': 'return=representation'
   };
+
   fetch(endpoint, {
     method: 'POST',
     headers: postHeaders,
     body: JSON.stringify(payload)
   })
     .then(function (res) {
-      return res.json().then(function (data) {
-
-        if (data.success) {
-          alert('✅ Seletor vinculado com sucesso!\n\nVolte para o painel do Vidlytics para continuar.');
-
-          if (window.opener) {
-            window.close();
-          } else {
-            document.body.innerHTML =
-              '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#f8fafc;">' +
-              '<div style="text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:420px;">' +
-              '<div style="font-size:48px;margin-bottom:16px;">✅</div>' +
-              '<h2 style="margin:0 0 8px;color:#0f172a;">Seletor vinculado!</h2>' +
-              '<p style="color:#64748b;margin:0;">Volte para o painel do <strong>Vidlytics</strong> para continuar.</p>' +
-              '</div></div>';
-          }
+      if (res.ok) {
+        alert('✅ Seletor vinculado com sucesso!\n\nVolte para o painel do Vidlytics para continuar.');
+        if (window.opener) {
+          window.close();
         } else {
-          alert('❌ Erro: ' + (data.message || data.error || 'Falha ao salvar.'));
+          document.body.innerHTML =
+            '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#f8fafc;">' +
+            '<div style="text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:420px;">' +
+            '<div style="font-size:48px;margin-bottom:16px;">✅</div>' +
+            '<h2 style="margin:0 0 8px;color:#0f172a;">Seletor vinculado!</h2>' +
+            '<p style="color:#64748b;margin:0;">Volte para o painel do <strong>Vidlytics</strong> para continuar.</p>' +
+            '</div></div>';
         }
-      });
+      } else {
+        return res.json().then(function (data) {
+          alert('❌ Erro: ' + (data.message || data.error || 'Falha ao salvar.'));
+        });
+      }
     })
     .catch(function (err) {
       console.error('[Vidlytics] Erro de rede:', err);
       alert('❌ Erro de conexão. Tente novamente.');
     });
+}
 }
 
 function cleanupPicker(overlayEl, bannerEl, highlightEl) {
