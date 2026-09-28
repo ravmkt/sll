@@ -61,21 +61,41 @@ export default function NewStoryModal({
   }
 
   function handlePickSelector(locationId: string) {
-    // Abre o element picker do widget instalado na loja do cliente.
-    // Envia um postMessage esperando resposta com o seletor escolhido.
-    const pickerWindowFeatures = 'width=1200,height=800';
-    const target = window.open('', '_blank', pickerWindowFeatures);
-    if (!target) return;
+    const url = window.prompt('Informe a URL completa da sua loja (ex: https://minhaloja.com.br):');
+    if (!url) return;
 
-    // O picker deve devolver o seletor via window.postMessage
-    // { type: 'SLL_SELECTOR_PICKED', selector: '.hero-banner' }
-    function handleMessage(event: MessageEvent) {
-      if (event.data?.type === 'SLL_SELECTOR_PICKED' && event.data.selector) {
-        updateLocation(locationId, { cssSelector: event.data.selector });
-        window.removeEventListener('message', handleMessage);
+    const token = 'sel_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const separator = url.includes('?') ? '&' : '?';
+    const finalUrl = url + separator + 'widgetSelectToken=' + token + '&widgetSelectStoryId=' + (storyId || 'new');
+
+    window.open(finalUrl, '_blank');
+
+    let tentativas = 0;
+    const polling = setInterval(async () => {
+      tentativas++;
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL.replace(/\/rest\/v1.*/, '')}/functions/v1/widget-selector?token=${encodeURIComponent(token)}`
+        );
+        const result = await response.json();
+        const data = result.data;
+        const selectorCss =
+          (data && typeof data === 'object' && !Array.isArray(data)) ? data.selector
+          : (Array.isArray(data) && data[0]) ? data[0].selector
+          : null;
+
+        if (result.success && selectorCss) {
+          clearInterval(polling);
+          updateLocation(locationId, { cssSelector: selectorCss });
+        }
+      } catch (err) {
+        // ignora falhas de rede no polling
       }
-    }
-    window.addEventListener('message', handleMessage);
+
+      if (tentativas > 150) {
+        clearInterval(polling);
+      }
+    }, 2000);
   }
 
   async function handleSave() {
@@ -354,3 +374,4 @@ export default function NewStoryModal({
     </div>
   );
 }
+

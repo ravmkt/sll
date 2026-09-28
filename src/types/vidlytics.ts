@@ -1,4 +1,4 @@
-﻿export interface Video {
+export interface Video {
   id: string;
   store_id?: string;
   title?: string;
@@ -32,7 +32,7 @@ export interface Story {
   cta_text?: string;
   cta_url?: string;
   appearance_id?: string;
-  display_locations?: DisplayLocation[]; // múltiplas localizações por Story
+  display_locations?: DisplayLocation[];
   created_at?: string;
   updated_at?: string;
   story_videos?: StoryVideo[];
@@ -73,22 +73,17 @@ export interface GeneralSettings {
   custom_css?: string;
 }
 
-// ── Regras de página / posição de exibição (tabela vid_display_locations) ──
+// -- Regras de pagina / posicao de exibicao (tabela vid_display_locations) --
 
 export type PageRuleType =
-  | 'all'
   | 'home'
-  | 'product'
-  | 'category'
-  | 'cart'
-  | 'checkout'
+  | 'all_pages'
   | 'url_contains'
-  | 'url_not_contains';
+  | 'url_not_contains'
+  | 'url_not_equals';
 
 export type DisplayPosition =
   | 'beforebegin'
-  | 'afterbegin'
-  | 'beforeend'
   | 'afterend';
 
 export interface DisplayLocation {
@@ -102,19 +97,20 @@ export interface DisplayLocation {
 }
 
 export const PAGE_RULE_LABELS: Record<PageRuleType, string> = {
-  all: 'Todas as páginas',
-  home: 'Página inicial',
-  product: 'Página de produto',
-  category: 'Página de categoria',
-  cart: 'Carrinho',
-  checkout: 'Checkout',
-  url_contains: 'URL contém',
-  url_not_contains: 'URL não contém',
+  home: 'Somente na Home',
+  all_pages: 'Todas as paginas',
+  url_contains: 'URL contem',
+  url_not_contains: 'URL nao contem',
+  url_not_equals: 'URL diferente',
 };
 
 export const DISPLAY_POSITION_LABELS: Record<DisplayPosition, string> = {
-  beforebegin: 'Antes do elemento',
-  afterbegin: 'No início do elemento',
-  beforeend: 'No final do elemento',
-  afterend: 'Depois do elemento',
+  beforebegin: 'Acima do elemento',
+  afterend: 'Abaixo do elemento',
 };
+
+export const CONDITION_TYPES_WITH_VALUE: PageRuleType[] = [
+  'url_contains',
+  'url_not_contains',
+  'url_not_equals',
+];
