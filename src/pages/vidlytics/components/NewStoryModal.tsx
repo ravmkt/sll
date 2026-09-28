@@ -36,6 +36,7 @@ export default function NewStoryModal({
   storeId,
 }: NewStoryModalProps) {
   const { currentStore } = useStore();
+  const [stableStoryId] = useState(() => crypto.randomUUID());
   const [title, setTitle] = useState('');
   const [layout, setLayout] = useState('circle');
   const [scrollDirection, setScrollDirection] = useState('horizontal');
@@ -108,7 +109,7 @@ export default function NewStoryModal({
     const formattedUrl = formatUrl(userUrl);
     const token = 'sel_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
     const separator = formattedUrl.includes('?') ? '&' : '?';
-    const finalUrl = formattedUrl + separator + 'widgetSelectToken=' + token + '&widgetSelectStoryId=new';
+    const finalUrl = formattedUrl + separator + 'widgetSelectToken=' + token + '&widgetSelectStoryId=' + stableStoryId;
 
     window.open(finalUrl, '_blank');
     setPickingLocationId(locationId);
@@ -134,7 +135,7 @@ export default function NewStoryModal({
       },
     ];
 
-    console.log('[Vidlytics] Iniciando polling com token:', token);
+    console.log('[Vidlytics] Polling ativo com token:', token, 'e storyId:', stableStoryId);
     let tentativas = 0;
 
     activePollingRef.current = setInterval(async () => {
@@ -156,7 +157,7 @@ export default function NewStoryModal({
             : result?.selector || null;
 
           if (selectorCss) {
-            console.log('[Vidlytics] ✅ Seletor capturado com sucesso:', selectorCss);
+            console.log('[Vidlytics] ✅ Seletor recebido com sucesso:', selectorCss);
             if (activePollingRef.current) {
               clearInterval(activePollingRef.current);
             }
@@ -172,7 +173,7 @@ export default function NewStoryModal({
             return;
           }
         } catch {
-          // Continua polling silencioso
+          // segue polling silencioso
         }
       }
 
@@ -203,11 +204,11 @@ export default function NewStoryModal({
 
     try {
       const parsedUrl = new URL(targetPath, formatUrl(defaultUrl));
-      parsedUrl.searchParams.set('vidlytics_preview_story_id', 'new');
+      parsedUrl.searchParams.set('vidlytics_preview_story_id', stableStoryId);
       window.open(parsedUrl.toString(), '_blank');
     } catch {
       const glue = defaultUrl.includes('?') ? '&' : '?';
-      window.open(defaultUrl + glue + 'vidlytics_preview_story_id=new', '_blank');
+      window.open(defaultUrl + glue + 'vidlytics_preview_story_id=' + stableStoryId, '_blank');
     }
   }
 
@@ -237,6 +238,7 @@ export default function NewStoryModal({
     setIsSaving(true);
     try {
       await VidlyticsDatabaseService.saveStory(storeId, {
+        id: stableStoryId,
         name: title.trim(),
         status: 'ATIVO',
         coverUrl: null,
