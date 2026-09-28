@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Trash2, X, MousePointerClick, Eye } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, X, MousePointerClick, Eye, Loader2, Check } from 'lucide-react';
 import {
   DisplayLocation,
   PageRuleType,
@@ -10,6 +10,7 @@ import {
   DISPLAY_POSITION_LABELS,
 } from '@/types/vidlytics';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
+import { useStore } from '@/contexts/StoreContext';
 
 interface NewStoryModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export default function NewStoryModal({
   onSaved,
   storeId,
 }: NewStoryModalProps) {
+  const { currentStore } = useStore();
   const [title, setTitle] = useState('');
   const [layout, setLayout] = useState('circle');
   const [scrollDirection, setScrollDirection] = useState('horizontal');
@@ -43,8 +45,28 @@ export default function NewStoryModal({
   ]);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pickingLocationId, setPickingLocationId] = useState<string | null>(null);
+
+  const activePollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (activePollingRef.current) {
+        clearInterval(activePollingRef.current);
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
+
+  function formatStoreUrl(rawUrl?: string): string {
+    if (!rawUrl) return '';
+    let trimmed = rawUrl.trim();
+    if (!/^https?:\/\//i.test(trimmed)) {
+      trimmed = 'https://' + trimmed;
+    }
+    return trimmed.replace(/\/+$/, '');
+  }
 
   function addLocation() {
     setLocations((prev) => [...prev, createEmptyLocation()]);
@@ -61,47 +83,62 @@ export default function NewStoryModal({
   }
 
   function handlePickSelector(locationId: string) {
-    const url = window.prompt('Informe a URL completa da sua loja (ex: https://minhaloja.com.br):');
-    if (!url) return;
+    const defaultUrl = formatStoreUrl(currentStore?.domain) || (typeof window !== 'undefined' ? window.location.origin : '');
+    const userUrl = window.prompt(
+      'Informe a URL completa da página da sua loja para selecionar o elemento:',
+      defaultUrl
+    );
+    if (!userUrl) return;
 
-    const token = 'sel_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    const separator = url.includes('?') ? '&' : '?';
-    const finalUrl = url + separator + 'widgetSelectToken=' + token + '&widgetSelectStoryId=' + 'new';
+    const formattedUrl = formatStoreUrl(userUrl);
+    const token = 'sel_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+    const separator = formattedUrl.includes('?') ? '&' : '?';
+    const finalUrl = formattedUrl + separator + 'widgetSelectToken=' + token + '&widgetSelectStoryId=new';
 
     window.open(finalUrl, '_blank');
+    setPickingLocationId(locationId);
 
+    if (activePollingRef.current) {
+      clearInterval(activePollingRef.current);
+    }
+
+    const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/rest\/v1.*/, '').replace(/\/+$/, '');
     let tentativas = 0;
-    const polling = setInterval(async () => {
+
+    activePollingRef.current = setInterval(async () => {
       tentativas++;
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL.replace(/\/rest\/v1.*/, '')}/functions/v1/widget-selector?token=${encodeURIComponent(token)}`
+          `${supabaseUrl}/functions/v1/widget-selector?token=${encodeURIComponent(token)}`
         );
         const result = await response.json();
-        const data = result.data;
+        const data = result?.data;
         const selectorCss =
           (data && typeof data === 'object' && !Array.isArray(data)) ? data.selector
           : (Array.isArray(data) && data[0]) ? data[0].selector
           : null;
 
-        if (result.success && selectorCss) {
-          clearInterval(polling);
+        if (result?.success && selectorCss) {
+          if (activePollingRef.current) clearInterval(activePollingRef.current);
+          setPickingLocationId(null);
           updateLocation(locationId, { cssSelector: selectorCss });
         }
       } catch (err) {
-        // ignora falhas de rede no polling
+        // Ignora erros momentâneos de rede durante o polling
       }
 
-      if (tentativas > 150) {
-        clearInterval(polling);
+      if (tentativas > 120) {
+        if (activePollingRef.current) clearInterval(activePollingRef.current);
+        setPickingLocationId(null);
       }
     }, 2000);
   }
 
   function handlePreviewLocation(loc: DisplayLocation) {
+    const storeBase = formatStoreUrl(currentStore?.domain) || (typeof window !== 'undefined' ? window.location.origin : '');
     const defaultUrl = window.prompt(
       'Informe a URL base da sua loja para visualizar (ex: https://minhaloja.com.br):',
-      window.location.origin
+      storeBase
     );
     if (!defaultUrl) return;
 
@@ -115,7 +152,7 @@ export default function NewStoryModal({
     }
 
     try {
-      const parsedUrl = new URL(targetPath, defaultUrl.trim());
+      const parsedUrl = new URL(targetPath, formatStoreUrl(defaultUrl));
       parsedUrl.searchParams.set('vidlytics_preview_story_id', 'new');
       window.open(parsedUrl.toString(), '_blank');
     } catch {
@@ -175,12 +212,20 @@ export default function NewStoryModal({
     }
   }
 
+  const handleClose = () => {
+    if (activePollingRef.current) {
+      clearInterval(activePollingRef.current);
+    }
+    setPickingLocationId(null);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Novo Story</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -254,137 +299,162 @@ export default function NewStoryModal({
           </div>
 
           <div className="space-y-3">
-            {locations.map((loc, index) => (
-              <div
-                key={loc.id}
-                className="rounded-md border border-gray-200 bg-gray-50 p-3"
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-500">
-                    Localização {index + 1}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handlePreviewLocation(loc)}
-                      title="Visualizar widget nesta página da loja"
-                      className="flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
-                    >
-                      <Eye className="h-3.5 w-3.5 text-blue-600" />
-                      Visualizar
-                    </button>
-                    {locations.length > 1 && (
+            {locations.map((loc, index) => {
+              const isPicking = pickingLocationId === loc.id;
+
+              return (
+                <div
+                  key={loc.id}
+                  className="rounded-md border border-gray-200 bg-gray-50 p-3"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-500">
+                      Localização {index + 1}
+                    </span>
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => removeLocation(loc.id)}
-                        className="text-gray-400 hover:text-red-500"
+                        onClick={() => handlePreviewLocation(loc)}
+                        title="Visualizar widget nesta página da loja"
+                        className="flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5 text-blue-600" />
+                        Visualizar
                       </button>
-                    )}
+                      {locations.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeLocation(loc.id)}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Página */}
-                <div className="mb-2">
-                  <label className="mb-1 block text-xs font-medium text-gray-600">
-                    Página
-                  </label>
-                  <select
-                    value={loc.page}
-                    onChange={(e) =>
-                      updateLocation(loc.id, {
-                        page: e.target.value as PageRuleType,
-                        pageValue:
-                          e.target.value === 'url_contains' ||
-                          e.target.value === 'url_not_contains'
-                            ? loc.pageValue
-                            : null,
-                      })
-                    }
-                    className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
-                  >
-                    {Object.entries(PAGE_RULE_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Valor da URL (condicional) */}
-                {(loc.page === 'url_contains' || loc.page === 'url_not_contains') && (
+                  {/* Página */}
                   <div className="mb-2">
                     <label className="mb-1 block text-xs font-medium text-gray-600">
-                      Trecho da URL
+                      Página
                     </label>
-                    <input
-                      type="text"
-                      value={loc.pageValue ?? ''}
+                    <select
+                      value={loc.page}
                       onChange={(e) =>
-                        updateLocation(loc.id, { pageValue: e.target.value })
+                        updateLocation(loc.id, {
+                          page: e.target.value as PageRuleType,
+                          pageValue:
+                            e.target.value === 'url_contains' ||
+                            e.target.value === 'url_not_contains'
+                              ? loc.pageValue
+                              : null,
+                        })
                       }
-                      placeholder="Ex: /promocao"
                       className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
-                    />
-                  </div>
-                )}
-
-                {/* Seletor CSS */}
-                <div className="mb-2">
-                  <label className="mb-1 block text-xs font-medium text-gray-600">
-                    Seletor CSS
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={loc.cssSelector}
-                      onChange={(e) =>
-                        updateLocation(loc.id, { cssSelector: e.target.value })
-                      }
-                      placeholder=".breadcrumbs"
-                      className="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handlePickSelector(loc.id)}
-                      title="Selecionar elemento visualmente na loja"
-                      className="flex items-center gap-1 rounded-md border border-blue-300 bg-blue-50 px-2 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
                     >
-                      <MousePointerClick className="h-3.5 w-3.5" />
-                      Selecionar
-                    </button>
+                      {Object.entries(PAGE_RULE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  {!loc.cssSelector && (
-                    <p className="mt-1 text-xs text-amber-600">
-                      Seletor ainda não definido. Use o botão "Selecionar" ou digite manualmente.
-                    </p>
-                  )}
-                </div>
 
-                {/* Posição */}
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-600">
-                    Posição
-                  </label>
-                  <select
-                    value={loc.position}
-                    onChange={(e) =>
-                      updateLocation(loc.id, {
-                        position: e.target.value as DisplayPosition,
-                      })
-                    }
-                    className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
-                  >
-                    {Object.entries(DISPLAY_POSITION_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
+                  {/* Valor da URL (condicional) */}
+                  {(loc.page === 'url_contains' || loc.page === 'url_not_contains') && (
+                    <div className="mb-2">
+                      <label className="mb-1 block text-xs font-medium text-gray-600">
+                        Trecho da URL
+                      </label>
+                      <input
+                        type="text"
+                        value={loc.pageValue ?? ''}
+                        onChange={(e) =>
+                          updateLocation(loc.id, { pageValue: e.target.value })
+                        }
+                        placeholder="Ex: /promocao"
+                        className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+                      />
+                    </div>
+                  )}
+
+                  {/* Seletor CSS */}
+                  <div className="mb-2">
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Seletor CSS
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={loc.cssSelector}
+                        onChange={(e) =>
+                          updateLocation(loc.id, { cssSelector: e.target.value })
+                        }
+                        placeholder=".breadcrumbs, header, #main-content"
+                        className="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handlePickSelector(loc.id)}
+                        disabled={isPicking}
+                        title="Selecionar elemento visualmente na loja"
+                        className={`flex items-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
+                          isPicking
+                            ? 'border-blue-400 bg-blue-100 text-blue-800'
+                            : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                        }`}
+                      >
+                        {isPicking ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+                            Aguardando clique...
+                          </>
+                        ) : (
+                          <>
+                            <MousePointerClick className="h-3.5 w-3.5" />
+                            Selecionar
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {isPicking && (
+                      <p className="mt-1 text-xs text-blue-600 font-medium animate-pulse">
+                        💡 Clique no elemento desejado na aba aberta da sua loja. O seletor será capturado automaticamente.
+                      </p>
+                    )}
+
+                    {!loc.cssSelector && !isPicking && (
+                      <p className="mt-1 text-xs text-amber-600">
+                        Seletor ainda não definido. Use o botão "Selecionar" ou digite manualmente.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Posição */}
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Posição
+                    </label>
+                    <select
+                      value={loc.position}
+                      onChange={(e) =>
+                        updateLocation(loc.id, {
+                          position: e.target.value as DisplayPosition,
+                        })
+                      }
+                      className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+                    >
+                      {Object.entries(DISPLAY_POSITION_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -394,7 +464,7 @@ export default function NewStoryModal({
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Cancelar
