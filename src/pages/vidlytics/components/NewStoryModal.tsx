@@ -118,9 +118,20 @@ export default function NewStoryModal({
     }
 
     const nextSupabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://flivmllysdhaydhogmhg.supabase.co').replace(/\/+$/, '');
-    const endpointsToTry = [
-      `${nextSupabaseUrl}/functions/v1/widget-selector?token=${encodeURIComponent(token)}`,
-      `https://wznvecurmisgoaijykbt.supabase.co/functions/v1/widget-selector?token=${encodeURIComponent(token)}`
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsaXZtbGx5c2RoYXlkaG9nbWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODY1MTYsImV4cCI6MjA5ODY2MjUxNn0.ye92mnf-5ws78H8A9fSGkf2xGo5q0FoB2oq91v7HFG0';
+
+    const requests = [
+      {
+        url: `${nextSupabaseUrl}/functions/v1/widget-selector?token=${encodeURIComponent(token)}`,
+        headers: {
+          'apikey': anonKey,
+          'Authorization': `Bearer ${anonKey}`,
+        },
+      },
+      {
+        url: `https://wznvecurmisgoaijykbt.supabase.co/functions/v1/widget-selector?token=${encodeURIComponent(token)}`,
+        headers: {},
+      },
     ];
 
     console.log('[Vidlytics] Iniciando polling com token:', token);
@@ -129,9 +140,12 @@ export default function NewStoryModal({
     activePollingRef.current = setInterval(async () => {
       tentativas++;
 
-      for (const endpoint of endpointsToTry) {
+      for (const req of requests) {
         try {
-          const response = await fetch(endpoint);
+          const response = await fetch(req.url, {
+            headers: req.headers,
+          });
+
           if (!response.ok) continue;
 
           const result = await response.json();
@@ -142,7 +156,7 @@ export default function NewStoryModal({
             : result?.selector || null;
 
           if (selectorCss) {
-            console.log('[Vidlytics] ✅ Seletor recebido:', selectorCss);
+            console.log('[Vidlytics] ✅ Seletor capturado com sucesso:', selectorCss);
             if (activePollingRef.current) {
               clearInterval(activePollingRef.current);
             }
@@ -158,12 +172,12 @@ export default function NewStoryModal({
             return;
           }
         } catch {
-          // segue polling
+          // Continua polling silencioso
         }
       }
 
       if (tentativas > 120) {
-        console.log('[Vidlytics] Polling finalizado por tempo limite');
+        console.log('[Vidlytics] Polling finalizado por tempo limite (4 minutos).');
         if (activePollingRef.current) clearInterval(activePollingRef.current);
         setPickingLocationId(null);
       }
@@ -181,7 +195,7 @@ export default function NewStoryModal({
     let targetPath = '/';
     if (loc.page === 'product' || loc.page === 'produto') {
       targetPath = '/produtos';
-    } if (loc.page === 'cart' || loc.page === 'carrinho') {
+    } else if (loc.page === 'cart' || loc.page === 'carrinho') {
       targetPath = '/carrinho';
     } else if (loc.page === 'url_contains' && loc.pageValue) {
       targetPath = loc.pageValue.startsWith('/') ? loc.pageValue : '/' + loc.pageValue;
