@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, X, MousePointerClick, Eye, Loader2, Check } from 'lucide-react';
+import { Plus, Trash2, X, MousePointerClick, Eye, Loader2 } from 'lucide-react';
 import {
   DisplayLocation,
   PageRuleType,
@@ -59,7 +59,22 @@ export default function NewStoryModal({
 
   if (!isOpen) return null;
 
-  function formatStoreUrl(rawUrl?: string): string {
+  function getStoreUrl(): string {
+    const rawUrl =
+      currentStore?.url ||
+      (currentStore as any)?.store_url ||
+      (currentStore as any)?.domain ||
+      '';
+
+    if (!rawUrl) return '';
+    let trimmed = rawUrl.trim();
+    if (!/^https?:\/\//i.test(trimmed)) {
+      trimmed = 'https://' + trimmed;
+    }
+    return trimmed.replace(/\/+$/, '');
+  }
+
+  function formatUrl(rawUrl?: string): string {
     if (!rawUrl) return '';
     let trimmed = rawUrl.trim();
     if (!/^https?:\/\//i.test(trimmed)) {
@@ -83,14 +98,14 @@ export default function NewStoryModal({
   }
 
   function handlePickSelector(locationId: string) {
-    const defaultUrl = formatStoreUrl(currentStore?.domain) || (typeof window !== 'undefined' ? window.location.origin : '');
+    const storeUrl = getStoreUrl();
     const userUrl = window.prompt(
       'Informe a URL completa da página da sua loja para selecionar o elemento:',
-      defaultUrl
+      storeUrl
     );
     if (!userUrl) return;
 
-    const formattedUrl = formatStoreUrl(userUrl);
+    const formattedUrl = formatUrl(userUrl);
     const token = 'sel_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
     const separator = formattedUrl.includes('?') ? '&' : '?';
     const finalUrl = formattedUrl + separator + 'widgetSelectToken=' + token + '&widgetSelectStoryId=new';
@@ -103,13 +118,21 @@ export default function NewStoryModal({
     }
 
     const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/rest\/v1.*/, '').replace(/\/+$/, '');
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
     let tentativas = 0;
 
     activePollingRef.current = setInterval(async () => {
       tentativas++;
       try {
         const response = await fetch(
-          `${supabaseUrl}/functions/v1/widget-selector?token=${encodeURIComponent(token)}`
+          `${supabaseUrl}/functions/v1/widget-selector?token=${encodeURIComponent(token)}`,
+          {
+            method: 'GET',
+            headers: {
+              'apikey': supabaseAnonKey,
+              'Authorization': `Bearer ${supabaseAnonKey}`,
+            },
+          }
         );
         const result = await response.json();
         const data = result?.data;
@@ -135,7 +158,7 @@ export default function NewStoryModal({
   }
 
   function handlePreviewLocation(loc: DisplayLocation) {
-    const storeBase = formatStoreUrl(currentStore?.domain) || (typeof window !== 'undefined' ? window.location.origin : '');
+    const storeBase = getStoreUrl();
     const defaultUrl = window.prompt(
       'Informe a URL base da sua loja para visualizar (ex: https://minhaloja.com.br):',
       storeBase
@@ -152,7 +175,7 @@ export default function NewStoryModal({
     }
 
     try {
-      const parsedUrl = new URL(targetPath, formatStoreUrl(defaultUrl));
+      const parsedUrl = new URL(targetPath, formatUrl(defaultUrl));
       parsedUrl.searchParams.set('vidlytics_preview_story_id', 'new');
       window.open(parsedUrl.toString(), '_blank');
     } catch {
