@@ -7157,25 +7157,6 @@ return supabaseFetch(
      INICIALIZAÇÃO DO WIDGET (COM story_id DA URL)
      ================================================================ */
 
-function readDisplayLocationsWithRules() {
-  if (!supabaseUrl || !supabaseAnonKey) return Promise.resolve([]);
-  var url = supabaseUrl.replace(/\/$/, '') +
-    '/rest/v1/vid_display_locations?select=*&order=sort_order.asc.nullslast';
-
-  return fetch(url, {
-    method: 'GET',
-    headers: {
-      'apikey': supabaseAnonKey,
-      'Authorization': 'Bearer ' + supabaseAnonKey,
-      'Accept-Profile': 'vidlytics',
-      'Content-Type': 'application/json'
-    }
-  }).then(function (res) {
-    if (!res.ok) return [];
-    return res.json();
-  }).catch(function () { return []; });
-}
-
 function initWidget() {
   var _urlParams = new URLSearchParams(window.location.search);
   var _selectorToken = _urlParams.get('widgetSelectToken') || null;
@@ -7278,136 +7259,12 @@ if (!storeId || !hasSupabase) {
   return Promise.resolve();
 }
 
-           return readDisplayLocationsWithRules().then(function (locations) {
+      return readDisplayLocations().then(function (locations) {
+        return readPageRules().then(function (rules) {
 
-        var activeLocations = (locations || []).filter(function (loc) {
-          return loc.active !== false && loc.active !== 'false' && loc.active !== 0 && loc.active !== '0';
-        });
-
-        // Agrupa localizações por story_id (uma story pode ter várias)
-        var locationsByStory = {};
-        activeLocations.forEach(function (loc) {
-          if (!loc.story_id) return;
-          if (!locationsByStory[loc.story_id]) locationsByStory[loc.story_id] = [];
-          locationsByStory[loc.story_id].push(loc);
-        });
-
-        function getStoryFormat(story) {
-          var fmt = String(story.format || story.display_format || story.displayFormat || story.visual_style || story.visualStyle || '').trim().toLowerCase();
-          if (fmt === 'carrossel' || fmt === 'carousel') return 'carousel';
-          if (fmt === 'grade' || fmt === 'grid') return 'grid';
-          if (fmt === 'carrossel_dinamico' || fmt === 'dynamic_carousel') return 'dynamic_carousel';
-          return 'floating_widget';
-        }
-
-        var floatingStories = currentStories.filter(function (s) { return getStoryFormat(s) === 'floating_widget'; });
-        var inlineStories = currentStories.filter(function (s) { return getStoryFormat(s) !== 'floating_widget'; });
-
-        // Regra de página: agora cada LOCATION tem page_rule/page_value próprios
-        function locationMatchesPage(loc) {
-          if (!loc.page_rule || loc.page_rule === 'all' || loc.page_rule === 'todas') return true;
-          return matchesRule(loc); // matchesRule já lê rule.page_rule / rule.page_value
-        }
-
-        function storyHasAnyMatchingLocation(storyId) {
-          var locs = locationsByStory[storyId] || [];
-          if (locs.length === 0) return true; // sem location cadastrada = sem restrição
-          return locs.some(locationMatchesPage);
-        }
-
-        // ────────────────────────────────────────────
-        // 🎈 FLUTUANTE — ignora seletor, respeita page_rule das locations da story (se houver)
-        // ────────────────────────────────────────────
-        if (floatingStories.length > 0) {
-          var visibleFloatingStories = _previewStoryId
-            ? floatingStories
-            : floatingStories.filter(function (s) { return storyHasAnyMatchingLocation(s.id); });
-          if (visibleFloatingStories.length > 0) {
-            renderFloatingWidget(visibleFloatingStories);
-          }
-        }
-
-        // ────────────────────────────────────────────
-        // 📍 INLINE (carrossel/grade/carrossel dinâmico) — cada location vira uma injeção própria
-        // ────────────────────────────────────────────
-        var injectedStoryIds = {};
-
-        inlineStories.forEach(function (story) {
-          var locs = locationsByStory[story.id] || [];
-          if (locs.length === 0) return; // sem location = tratado no fallback abaixo
-
-          var storyFormat = getStoryFormat(story);
-
-          locs.forEach(function (location) {
-            if (!_previewStoryId && !locationMatchesPage(location)) return;
-
-            var selector = location.css_selector || location.selector;
-            var position = location.position || 'beforeend';
-            if (!selector) return;
-
-            try {
-              var widgetInjected = initInlineWidget({
-                target: selector,
-                placement: position,
-                stories: [story],
-                products: readProductsData,
-                sizing_models: readSizingModelsData,
-                comments: readCommentsData,
-                appearance: currentAppearance,
-                storyFormat: storyFormat
-              });
-              if (widgetInjected) {
-                injectedStoryIds[story.id] = true;
-              }
-            } catch (err) {
-              console.error('[Vidlytics] ❌ Erro ao injetar location:', err);
-            }
+          var activeLocations = locations.filter(function (loc) {
+            return loc.active !== false && loc.active !== 'false' && loc.active !== 0 && loc.active !== '0';
           });
-        });
-
-        // ────────────────────────────────────────────
-        // 🔧 FALLBACK — stories inline sem nenhuma location válida/injetada
-        // ────────────────────────────────────────────
-        function injectFallbackStories(fallbackList) {
-          if (!fallbackList || fallbackList.length === 0) return;
-          var fb = document.querySelector('#vidlytics-stories');
-          if (!fb) {
-            fb = document.createElement('div');
-            fb.id = 'vidlytics-stories';
-            document.body.appendChild(fb);
-          }
-          try {
-            initInlineWidget({
-              target: '#vidlytics-stories',
-              placement: 'beforeend',
-              stories: fallbackList,
-              products: readProductsData,
-              sizing_models: readSizingModelsData,
-              comments: readCommentsData,
-              appearance: currentAppearance,
-              storyFormat: getStoryFormat(fallbackList[0])
-            });
-          } catch (err) {
-            console.error('[Vidlytics] ❌ Erro no fallback:', err);
-          }
-        }
-
-        var pendingInlineStories = inlineStories.filter(function (s) { return !injectedStoryIds[s.id]; });
-
-        var eligibleForFallback = pendingInlineStories.filter(function (s) {
-          return storyHasAnyMatchingLocation(s.id);
-        });
-
-        if (_previewStoryId) {
-          var previewPendingStories = pendingInlineStories.filter(function (s) { return idsEqual(s.id, _previewStoryId); });
-          injectFallbackStories(previewPendingStories);
-        } else if (floatingStories.length === 0) {
-          injectFallbackStories(eligibleForFallback);
-        } else {
-          injectFallbackStories([]);
-        }
-      });
-
 
           // ────────────────────────────────────────────
           // 📋 CLASSIFICAR STORIES POR FORMATO

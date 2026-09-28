@@ -32,6 +32,7 @@ export interface Story {
   cta_text?: string;
   cta_url?: string;
   appearance_id?: string;
+  display_locations?: DisplayLocation[]; // múltiplas localizações por Story
   created_at?: string;
   updated_at?: string;
   story_videos?: StoryVideo[];
@@ -71,3 +72,49 @@ export interface GeneralSettings {
   conversion_tag_enabled?: boolean;
   custom_css?: string;
 }
+
+// ── Regras de página / posição de exibição (tabela vid_display_locations) ──
+
+export type PageRuleType =
+  | 'all'
+  | 'home'
+  | 'product'
+  | 'category'
+  | 'cart'
+  | 'checkout'
+  | 'url_contains'
+  | 'url_not_contains';
+
+export type DisplayPosition =
+  | 'beforebegin'
+  | 'afterbegin'
+  | 'beforeend'
+  | 'afterend';
+
+export interface DisplayLocation {
+  id: string;
+  storyId?: string;
+  page: PageRuleType;
+  pageValue: string | null;
+  cssSelector: string;
+  position: DisplayPosition;
+  active?: boolean;
+}
+
+export const PAGE_RULE_LABELS: Record<PageRuleType, string> = {
+  all: 'Todas as páginas',
+  home: 'Página inicial',
+  product: 'Página de produto',
+  category: 'Página de categoria',
+  cart: 'Carrinho',
+  checkout: 'Checkout',
+  url_contains: 'URL contém',
+  url_not_contains: 'URL não contém',
+};
+
+export const DISPLAY_POSITION_LABELS: Record<DisplayPosition, string> = {
+  beforebegin: 'Antes do elemento',
+  afterbegin: 'No início do elemento',
+  beforeend: 'No final do elemento',
+  afterend: 'Depois do elemento',
+};
