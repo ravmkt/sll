@@ -146,11 +146,10 @@ export default function NewStoryModal({
           if (!response.ok) continue;
 
           const result = await response.json();
-          const data = result?.data;
           const selectorCss =
-            (data && typeof data === 'object' && !Array.isArray(data)) ? data.selector
-            : (Array.isArray(data) && data[0]) ? data[0].selector
-            : result?.selector || null;
+            (Array.isArray(result) && result[0]) ? result[0].selector
+            : (result && typeof result === 'object') ? result.selector
+            : null;
 
           if (selectorCss) {
             console.log('[Vidlytics] ✅ Seletor recebido com sucesso:', selectorCss);
