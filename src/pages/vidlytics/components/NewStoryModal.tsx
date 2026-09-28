@@ -117,50 +117,53 @@ export default function NewStoryModal({
       clearInterval(activePollingRef.current);
     }
 
-    const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/rest\/v1.*/, '').replace(/\/+$/, '');
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    const nextSupabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://flivmllysdhaydhogmhg.supabase.co').replace(/\/+$/, '');
+    const endpointsToTry = [
+      `${nextSupabaseUrl}/functions/v1/widget-selector?token=${encodeURIComponent(token)}`,
+      `https://wznvecurmisgoaijykbt.supabase.co/functions/v1/widget-selector?token=${encodeURIComponent(token)}`
+    ];
+
+    console.log('[Vidlytics] Iniciando polling com token:', token);
     let tentativas = 0;
 
     activePollingRef.current = setInterval(async () => {
       tentativas++;
-      try {
-        const response = await fetch(
-          `${supabaseUrl}/functions/v1/widget-selector?token=${encodeURIComponent(token)}`,
-          {
-            method: 'GET',
-            headers: {
-              'apikey': supabaseAnonKey,
-              'Authorization': `Bearer ${supabaseAnonKey}`,
-            },
-          }
-        );
-        const result = await response.json();
-        
-        // Formatos de retorno: { success: true, data: { selector: '...' } } ou { data: [ { selector: '...' } ] }
-        const data = result?.data;
-        const selectorCss =
-          (data && typeof data === 'object' && !Array.isArray(data)) ? data.selector
-          : (Array.isArray(data) && data[0]) ? data[0].selector
-          : result?.selector || null;
 
-        if ((result?.success || selectorCss) && selectorCss) {
-          console.log('[Vidlytics] Seletor capturado com sucesso:', selectorCss);
-          if (activePollingRef.current) clearInterval(activePollingRef.current);
-          setPickingLocationId(null);
-          
-          setLocations((prev) =>
-            prev.map((loc) =>
-              loc.id === locationId
-                ? { ...loc, cssSelector: selectorCss, selector: selectorCss } as any
-                : loc
-            )
-          );
+      for (const endpoint of endpointsToTry) {
+        try {
+          const response = await fetch(endpoint);
+          if (!response.ok) continue;
+
+          const result = await response.json();
+          const data = result?.data;
+          const selectorCss =
+            (data && typeof data === 'object' && !Array.isArray(data)) ? data.selector
+            : (Array.isArray(data) && data[0]) ? data[0].selector
+            : result?.selector || null;
+
+          if (selectorCss) {
+            console.log('[Vidlytics] ✅ Seletor recebido:', selectorCss);
+            if (activePollingRef.current) {
+              clearInterval(activePollingRef.current);
+            }
+            setPickingLocationId(null);
+
+            setLocations((prev) =>
+              prev.map((loc) =>
+                loc.id === locationId
+                  ? { ...loc, cssSelector: selectorCss, selector: selectorCss } as any
+                  : loc
+              )
+            );
+            return;
+          }
+        } catch {
+          // segue polling
         }
-      } catch (err) {
-        console.warn('[Vidlytics] Polling selector error:', err);
       }
 
       if (tentativas > 120) {
+        console.log('[Vidlytics] Polling finalizado por tempo limite');
         if (activePollingRef.current) clearInterval(activePollingRef.current);
         setPickingLocationId(null);
       }
@@ -178,7 +181,7 @@ export default function NewStoryModal({
     let targetPath = '/';
     if (loc.page === 'product' || loc.page === 'produto') {
       targetPath = '/produtos';
-    } else if (loc.page === 'cart' || loc.page === 'carrinho') {
+    } if (loc.page === 'cart' || loc.page === 'carrinho') {
       targetPath = '/carrinho';
     } else if (loc.page === 'url_contains' && loc.pageValue) {
       targetPath = loc.pageValue.startsWith('/') ? loc.pageValue : '/' + loc.pageValue;
