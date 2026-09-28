@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, X, MousePointerClick } from 'lucide-react';
+import { Plus, Trash2, X, MousePointerClick, Eye } from 'lucide-react';
 import {
   DisplayLocation,
   PageRuleType,
@@ -66,7 +66,7 @@ export default function NewStoryModal({
 
     const token = 'sel_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     const separator = url.includes('?') ? '&' : '?';
-    const finalUrl = url + separator + 'widgetSelectToken=' + token + '&widgetSelectStoryId=' + (storyId || 'new');
+    const finalUrl = url + separator + 'widgetSelectToken=' + token + '&widgetSelectStoryId=' + 'new';
 
     window.open(finalUrl, '_blank');
 
@@ -98,6 +98,32 @@ export default function NewStoryModal({
     }, 2000);
   }
 
+  function handlePreviewLocation(loc: DisplayLocation) {
+    const defaultUrl = window.prompt(
+      'Informe a URL base da sua loja para visualizar (ex: https://minhaloja.com.br):',
+      window.location.origin
+    );
+    if (!defaultUrl) return;
+
+    let targetPath = '/';
+    if (loc.page === 'product' || loc.page === 'produto') {
+      targetPath = '/produtos';
+    } else if (loc.page === 'cart' || loc.page === 'carrinho') {
+      targetPath = '/carrinho';
+    } else if (loc.page === 'url_contains' && loc.pageValue) {
+      targetPath = loc.pageValue.startsWith('/') ? loc.pageValue : '/' + loc.pageValue;
+    }
+
+    try {
+      const parsedUrl = new URL(targetPath, defaultUrl.trim());
+      parsedUrl.searchParams.set('vidlytics_preview_story_id', 'new');
+      window.open(parsedUrl.toString(), '_blank');
+    } catch {
+      const glue = defaultUrl.includes('?') ? '&' : '?';
+      window.open(defaultUrl + glue + 'vidlytics_preview_story_id=new', '_blank');
+    }
+  }
+
   async function handleSave() {
     setError(null);
 
@@ -124,21 +150,21 @@ export default function NewStoryModal({
     setIsSaving(true);
     try {
       await VidlyticsDatabaseService.saveStory(storeId, {
-  name: title.trim(),
-  status: 'ATIVO',
-  coverUrl: null,
-  layout,
-  scrollDirection,
-  visualStyle,
-  displayLocations: locations.map((loc) => ({
-    id: loc.id,
-    page: loc.page,
-    pageValue: loc.pageValue,
-    cssSelector: loc.cssSelector.trim(),
-    position: loc.position,
-  })),
-  videoUrls: [],
-});
+        name: title.trim(),
+        status: 'ATIVO',
+        coverUrl: null,
+        layout,
+        scrollDirection,
+        visualStyle,
+        displayLocations: locations.map((loc) => ({
+          id: loc.id,
+          page: loc.page,
+          pageValue: loc.pageValue,
+          cssSelector: loc.cssSelector.trim(),
+          position: loc.position,
+        })),
+        videoUrls: [],
+      });
       onSaved();
       onClose();
     } catch (err) {
@@ -237,15 +263,26 @@ export default function NewStoryModal({
                   <span className="text-xs font-semibold text-gray-500">
                     Localização {index + 1}
                   </span>
-                  {locations.length > 1 && (
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => removeLocation(loc.id)}
-                      className="text-gray-400 hover:text-red-500"
+                      onClick={() => handlePreviewLocation(loc)}
+                      title="Visualizar widget nesta página da loja"
+                      className="flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Eye className="h-3.5 w-3.5 text-blue-600" />
+                      Visualizar
                     </button>
-                  )}
+                    {locations.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeLocation(loc.id)}
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Página */}
@@ -374,4 +411,3 @@ export default function NewStoryModal({
     </div>
   );
 }
-
