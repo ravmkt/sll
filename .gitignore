@@ -36,3 +36,5 @@ prod-widget-check.js
 .env*
 
 supabase/.temp/
+
+.env
