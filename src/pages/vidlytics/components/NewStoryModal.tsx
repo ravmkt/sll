@@ -103,19 +103,22 @@ export default function NewStoryModal({
 
     setIsSaving(true);
     try {
-      await VidlyticsDatabaseService.saveStory({
-        storeId,
-        title: title.trim(),
-        layout,
-        scrollDirection,
-        visualStyle,
-        displayLocations: locations.map((loc) => ({
-          page: loc.page,
-          pageValue: loc.pageValue,
-          cssSelector: loc.cssSelector.trim(),
-          position: loc.position,
-        })),
-      });
+      await VidlyticsDatabaseService.saveStory(storeId, {
+  name: title.trim(),
+  status: 'ATIVO',
+  coverUrl: null,
+  layout,
+  scrollDirection,
+  visualStyle,
+  displayLocations: locations.map((loc) => ({
+    id: loc.id,
+    page: loc.page,
+    pageValue: loc.pageValue,
+    cssSelector: loc.cssSelector.trim(),
+    position: loc.position,
+  })),
+  videoUrls: [],
+});
       onSaved();
       onClose();
     } catch (err) {
