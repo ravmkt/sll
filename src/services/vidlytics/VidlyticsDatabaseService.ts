@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { DisplayLocation, PageRuleType, DisplayPosition } from '@/types/vidlytics';
 
 export interface VidlyticsAppearance {
   id?: string;
@@ -301,11 +302,6 @@ export class VidlyticsDatabaseService {
     });
   }
 
-  /**
-   * Funil de Retenção por vídeo: Views -> Cliques -> Conversões.
-   * Obs: o schema atual não possui eventos de progresso segundo a segundo,
-   * então mostramos a taxa de queda entre as 3 etapas do funil (dado 100% real).
-   */
   static async getRetentionData(storeId: string, startDate: string, endDate: string): Promise<VidlyticsRetentionRow[]> {
     const { data: videos, error: videosError } = await supabase
       .schema(this.SCHEMA)
@@ -350,9 +346,6 @@ export class VidlyticsDatabaseService {
       .sort((a, b) => b.views - a.views);
   }
 
-  /**
-   * Busca insights de IA gerados para a loja no período selecionado.
-   */
   static async getAiInsights(storeId: string, startDate: string, endDate: string): Promise<VidlyticsInsightRow[]> {
     const { data: insights, error: insightsError } = await supabase
       .schema(this.SCHEMA)
@@ -390,6 +383,34 @@ export class VidlyticsDatabaseService {
 
   // ==================== STORIES ====================
 
+  /** Busca as localizações de exibição de uma ou mais Stories. */
+  private static async fetchDisplayLocations(storyIds: string[]): Promise<Map<string, DisplayLocation[]>> {
+    const map = new Map<string, DisplayLocation[]>();
+    if (storyIds.length === 0) return map;
+
+    const { data, error } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_display_locations')
+      .select('id, story_id, page_rule, page_value, css_selector, position, sort_order')
+      .in('story_id', storyIds)
+      .order('sort_order', { ascending: true });
+    if (error) throw error;
+
+    (data || []).forEach((row: any) => {
+      const list = map.get(row.story_id) || [];
+      list.push({
+        id: row.id,
+        page: row.page_rule as PageRuleType,
+        pageValue: row.page_value,
+        cssSelector: row.css_selector,
+        position: row.position as DisplayPosition,
+      });
+      map.set(row.story_id, list);
+    });
+
+    return map;
+  }
+
   static async getStories(storeId: string): Promise<any[]> {
     const { data: stories, error } = await supabase
       .schema(this.SCHEMA)
@@ -409,13 +430,10 @@ export class VidlyticsDatabaseService {
       .in('story_id', storyIds);
     if (svError) throw svError;
 
-    const { data: dailyMetrics, error: metricsError } = await supabase
-      .schema(this.SCHEMA)
-      .from('vid_daily_video_metrics')
-      .select('video_id, views, clicks')
-      .eq('store_id', storeId);
-    if (metricsError) throw metricsError;
+    const locationsMap = await this.fetchDisplayLocations(storyIds);
 
+    // TODO: substituir por agregação real (vid_daily_video_metrics vinculado ao story)
+    // quando houver métricas por Story disponíveis. Hoje fixado em 0.
     return stories.map((s: any) => {
       const videos = (storyVideos || []).filter((v: any) => v.story_id === s.id);
       const config = s.config || {};
@@ -429,9 +447,7 @@ export class VidlyticsDatabaseService {
         layout: config.layout || 'carrossel',
         scrollDirection: config.scrollDirection || 'Horizontal',
         visualStyle: config.visualStyle || 'Seguir Padrão do App',
-        cssSelector: config.cssSelector || '',
-        displayPosition: config.displayPosition || 'Acima do elemento',
-        pages: config.pages || [],
+        displayLocations: locationsMap.get(s.id) || [],
         views: 0,
         clicks: 0,
         ctr: 0,
@@ -458,7 +474,9 @@ export class VidlyticsDatabaseService {
       .order('position', { ascending: true });
     if (vError) throw vError;
 
+    const locationsMap = await this.fetchDisplayLocations([storyId]);
     const config = story.config || {};
+
     return {
       id: story.id,
       name: story.title,
@@ -468,9 +486,7 @@ export class VidlyticsDatabaseService {
       layout: config.layout || 'carrossel',
       scrollDirection: config.scrollDirection || 'Horizontal',
       visualStyle: config.visualStyle || 'Seguir Padrão do App',
-      cssSelector: config.cssSelector || '',
-      displayPosition: config.displayPosition || 'Acima do elemento',
-      pages: config.pages || [],
+      displayLocations: locationsMap.get(storyId) || [],
     };
   }
 
@@ -482,18 +498,13 @@ export class VidlyticsDatabaseService {
     layout: string;
     scrollDirection: string;
     visualStyle: string;
-    cssSelector: string;
-    displayPosition: string;
-    pages: string[];
+    displayLocations: DisplayLocation[];
     videoUrls: string[];
   }): Promise<string> {
     const config = {
       layout: story.layout,
       scrollDirection: story.scrollDirection,
       visualStyle: story.visualStyle,
-      cssSelector: story.cssSelector,
-      displayPosition: story.displayPosition,
-      pages: story.pages,
     };
 
     const payload: any = {
@@ -515,12 +526,19 @@ export class VidlyticsDatabaseService {
         .eq('store_id', storeId);
       if (error) throw error;
 
-      const { error: delError } = await supabase
+      const { error: delVideosError } = await supabase
         .schema(this.SCHEMA)
         .from('vid_story_videos')
         .delete()
         .eq('story_id', storyId);
-      if (delError) throw delError;
+      if (delVideosError) throw delVideosError;
+
+      const { error: delLocationsError } = await supabase
+        .schema(this.SCHEMA)
+        .from('vid_display_locations')
+        .delete()
+        .eq('story_id', storyId);
+      if (delLocationsError) throw delLocationsError;
     } else {
       const { data, error } = await supabase
         .schema(this.SCHEMA)
@@ -545,6 +563,22 @@ export class VidlyticsDatabaseService {
       if (insError) throw insError;
     }
 
+    if (story.displayLocations.length > 0) {
+      const locationRows = story.displayLocations.map((loc, idx) => ({
+        story_id: storyId,
+        page_rule: loc.page,
+        page_value: loc.pageValue ?? null,
+        css_selector: loc.cssSelector,
+        position: loc.position,
+        sort_order: idx,
+      }));
+      const { error: locError } = await supabase
+        .schema(this.SCHEMA)
+        .from('vid_display_locations')
+        .insert(locationRows);
+      if (locError) throw locError;
+    }
+
     return storyId!;
   }
 
@@ -555,6 +589,15 @@ export class VidlyticsDatabaseService {
       .delete()
       .eq('story_id', storyId);
     if (delVideosError) throw delVideosError;
+
+    // vid_display_locations é removido automaticamente via ON DELETE CASCADE
+    // ao deletar a Story, mas removemos explicitamente por segurança/clareza.
+    const { error: delLocationsError } = await supabase
+      .schema(this.SCHEMA)
+      .from('vid_display_locations')
+      .delete()
+      .eq('story_id', storyId);
+    if (delLocationsError) throw delLocationsError;
 
     const { error } = await supabase
       .schema(this.SCHEMA)
@@ -581,4 +624,3 @@ export class VidlyticsDatabaseService {
     }));
   }
 }
-
