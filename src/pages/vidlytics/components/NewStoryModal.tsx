@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, X, MousePointerClick, Eye, Loader2 } from 'lucide-react';
@@ -533,3 +533,4 @@ export default function NewStoryModal({
     </div>
   );
 }
+
