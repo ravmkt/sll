@@ -27,3 +27,8 @@ dist-ssr
 .dyad/
 
 vidlytics_legado_backup.sql
+
+# Backups e arquivos de check
+*.bak
+prod-widget-check.js
+
