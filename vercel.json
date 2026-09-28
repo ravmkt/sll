@@ -1,13 +1,4 @@
 {
-  "headers": [
-    {
-      "source": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|json))$",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
-      ]
-    }
-  ],
   "rewrites": [
     { "source": "/vidlytics-widget.js", "destination": "/vidlytics-widget.js" },
     { "source": "/sll-loader.js", "destination": "/sll-loader.js" },
