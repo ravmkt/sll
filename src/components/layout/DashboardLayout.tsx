@@ -6,6 +6,7 @@ import { useStore } from '../../contexts/StoreContext';
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isDark, setIsDark] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const { stores, currentStore, setCurrentStore, loadingStores } = useStore();
 
   useEffect(() => {
@@ -18,10 +19,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 transition-colors duration-300 flex">
-      <Sidebar />
+      <Sidebar isCollapsed={isCollapsed} onToggle={() => setIsCollapsed((v) => !v)} />
 
       {/* Main Content Area */}
-      <main className="flex-1 ml-64 flex flex-col min-w-0">
+      <main
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${
+          isCollapsed ? 'ml-20' : 'ml-64'
+        }`}
+      >
         {/* Topbar com seletor de Loja e Toggle de Tema */}
         <header className="h-16 flex items-center justify-between px-8 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-[#1a1f2c]/70 backdrop-blur sticky top-0 z-10">
           {/* Seletor de Loja Ativa */}

@@ -7,6 +7,7 @@ import {
 } from "@/services/AffiliateDatabaseService";
 import { DollarSign, Users, Wallet, Copy, Share2 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 const IndicaEGanha: React.FC = () => {
   const { storeId, store } = useLoja();
@@ -81,10 +82,15 @@ const IndicaEGanha: React.FC = () => {
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value || 0);
 
   if (loading) {
-    return <div className="p-8 text-slate-400 text-sm">Carregando dados de indicações...</div>;
+    return (
+      <DashboardLayout>
+        <div className="p-8 text-slate-400 text-sm">Carregando dados de indicações...</div>
+      </DashboardLayout>
+    );
   }
 
   return (
+    <DashboardLayout>
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -263,10 +269,12 @@ const IndicaEGanha: React.FC = () => {
         </div>
       )}
     </div>
+    </DashboardLayout>
   );
 };
 
 export default IndicaEGanha;
+
 
 
 

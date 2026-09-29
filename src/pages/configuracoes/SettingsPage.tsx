@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService } from '@/services/SLLDatabaseService';
 import { useLoja } from '@/context/LojaContext';
@@ -82,6 +83,7 @@ const formatWhatsapp = (raw: string): string => {
 
 const SettingsPage: React.FC = () => {
   const { store, storeId, loading: lojaLoading, refreshStore } = useLoja();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [loading, setLoading] = useState(true);
@@ -235,6 +237,7 @@ const SettingsPage: React.FC = () => {
       await refreshStore();
 
       toast.success('Configurações salvas com sucesso!');
+        navigate('/dashboard');
     } catch (err) {
       console.error('Erro ao salvar configurações:', err);
       toast.error('Falha ao salvar configurações.');
@@ -541,6 +544,8 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
+
+
 
 
 
