@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Copy, Store } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useStore } from "@/contexts/StoreContext";
+import { useLoja } from "@/contexts/LojaContext";
 import { supabase } from "@/lib/supabase";
 import { getActiveSubscriptions } from "@/services/subscriptions/getStoreSubscriptions";
 
@@ -13,8 +13,7 @@ const KNOWN_MODULES = ["vidlytics", "live_commerce", "gamification", "reviews"] 
 type ModuleKey = (typeof KNOWN_MODULES)[number];
 
 export const IntegrationPage = () => {
-  const { currentStore } = useStore();
-  const storeId = currentStore?.id;
+  const { storeId } = useLoja();
 
   const [copied, setCopied] = useState(false);
   const [copiedTracking, setCopiedTracking] = useState(false);
@@ -404,6 +403,7 @@ function ScriptBlock({
 }
 
 export default IntegrationPage;
+
 
 
 

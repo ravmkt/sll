@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService } from '@/services/SLLDatabaseService';
-import { useLoja } from '@/context/LojaContext';
+import { useLoja } from '@/contexts/LojaContext';
 import {
   Loader2, Save, Image as ImageIcon, X, CheckCircle2,
 } from 'lucide-react';
@@ -544,6 +544,7 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
+
 
 
 

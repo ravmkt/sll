@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService, StorePayload } from '@/services/SLLDatabaseService';
-import { useLoja } from '@/context/LojaContext';
+import { useLoja } from '@/contexts/LojaContext';
 
 const LOGO_SRC = '/assets/sll-logotipo-b.png';
 const LOGO_BUCKET = 'store-assets';
@@ -534,3 +534,4 @@ export const OnboardingModal: React.FC = () => {
     </div>
   );
 };
+

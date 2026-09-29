@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit2, Trash2, Star, Loader2, Sparkles, AlertTriangle, X 
 } from 'lucide-react';
-import { useLoja } from '../../context/LojaContext';
+import { useLoja } from '../../contexts/LojaContext';
 import AparenciaModal from '../../components/vidlytics/AparenciaModal';
 
 import {
@@ -231,4 +231,5 @@ export default function Vidlytics() {
     </div>
   );
 }
+
 

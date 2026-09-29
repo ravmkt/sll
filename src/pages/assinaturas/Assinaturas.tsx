@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLoja } from "@/context/LojaContext";
+import { useLoja } from "@/contexts/LojaContext";
 import {
   getActiveSubscriptions,
   type StoreSubscription,
@@ -107,3 +107,4 @@ export default function Assinaturas() {
     </DashboardLayout>
   );
 }
+

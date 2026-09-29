@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLoja } from "@/context/LojaContext";
+import { useLoja } from "@/contexts/LojaContext";
 import {
   AffiliateDatabaseService,
   AffiliateSummary,
@@ -274,6 +274,7 @@ const IndicaEGanha: React.FC = () => {
 };
 
 export default IndicaEGanha;
+
 
 
 

@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useAuth } from './contexts/AuthContext';
-import { LojaProvider } from './context/LojaContext';
+import { LojaProvider } from './contexts/LojaContext';
 import { OnboardingModal } from './components/OnboardingModal';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
@@ -106,4 +106,5 @@ export default function App() {
     </Router>
   );
 }
+
 

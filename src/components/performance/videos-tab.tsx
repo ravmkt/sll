@@ -21,7 +21,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useTenant } from '@/context/TenantContext';
+import { useLoja } from '@/contexts/LojaContext';
 import { db } from '@/lib/db';
 import {
   getVideoMetricsRows,
@@ -64,7 +64,7 @@ const formatDuration = (seconds?: number): string => {
 const ITEMS_PER_PAGE = 10;
 
 export function VideosTab({ timeRange, customFrom, customTo }: Props) {
-  const { storeId } = useTenant();
+  const { storeId } = useLoja();
   const [loading, setLoading] = useState(true);
   const [videos, setVideos] = useState<VideoMetricsRow[]>([]);
   const [search, setSearch] = useState('');
@@ -626,4 +626,5 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
     </TooltipProvider>
   );
 }
+
 

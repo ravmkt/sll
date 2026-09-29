@@ -10,7 +10,7 @@ import {
   DISPLAY_POSITION_LABELS,
 } from '@/types/vidlytics';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
-import { useStore } from '@/contexts/StoreContext';
+import { useLoja } from '@/contexts/LojaContext';
 
 interface NewStoryModalProps {
   isOpen: boolean;
@@ -35,7 +35,7 @@ export default function NewStoryModal({
   onSaved,
   storeId,
 }: NewStoryModalProps) {
-  const { currentStore } = useStore();
+  const { currentStore } = useLoja();
   const [stableStoryId] = useState(() => crypto.randomUUID());
   const [title, setTitle] = useState('');
   const [layout, setLayout] = useState('circle');
@@ -532,4 +532,5 @@ export default function NewStoryModal({
     </div>
   );
 }
+
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
-import { useTenant } from '@/context/TenantContext'
+import { useLoja } from '@/contexts/LojaContext'
 import {
   FileText,
   X,
@@ -110,7 +110,7 @@ export function OverviewTab({
 
   const playbook = getSectorStrategicPlaybook(benchmark?.sector_key || 'default')
 
-  const { storeId, currentStore: tenant, loading: tenantLoading } = useTenant()
+  const { storeId, store: tenant, loading: tenantLoading } = useLoja()
   const resolvedStoreId = storeId || tenant?.id
 
   const [loading, setLoading] = useState(true)
@@ -1041,3 +1041,4 @@ export function OverviewTab({
     </TooltipProvider>
   )
 }
+

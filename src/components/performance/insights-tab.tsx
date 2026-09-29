@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { db, resolveStoreId } from '@/lib/db';
-import { useTenant } from '@/context/TenantContext';
+import { useLoja } from '@/contexts/LojaContext';
 
 interface InsightsTabProps {
   timeRange: string;
@@ -39,7 +39,7 @@ const ICONS_BY_TYPE = {
 } as const;
 
 export function InsightsTab({ timeRange }: InsightsTabProps) {
-  const { storeId: tenantStoreId } = useTenant();
+  const { storeId: tenantStoreId } = useLoja();
 
   const [insights, setInsights] = useState<AiInsight[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -240,3 +240,4 @@ export function InsightsTab({ timeRange }: InsightsTabProps) {
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Eye, Pencil, Trash2, Send, TrendingUp, TrendingDown, Info } from 'lucide-react';
-import { useLoja } from '../../../context/LojaContext';
+import { useLoja } from '../../../contexts/LojaContext';
 import { VidlyticsDatabaseService } from '../../../services/vidlytics/VidlyticsDatabaseService';
 import NewStoryModal from '../components/NewStoryModal';
 
@@ -287,3 +287,4 @@ export default function StoriesTab() {
     </div>
   );
 }
+

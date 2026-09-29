@@ -1,8 +1,7 @@
-﻿import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { LiveCommerceDatabaseService, LiveItem } from "@/services/LiveCommerceDatabaseService";
 import { MODULES } from "@/lib/modules";
-import { useStore } from "@/contexts/StoreContext";
-import { useTenant } from "@/context/TenantContext";
+import { useLoja } from "@/contexts/LojaContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -184,8 +183,7 @@ const LiveCardItem = React.memo(function LiveCardItem({
 });
 
 export function LiveCommerce() {
-  const { currentStore } = useStore?.() || { currentStore: null };
-  const { storeId: tenantStoreId } = useTenant?.() || { storeId: null };
+  const { store: currentStore, storeId: tenantStoreId } = useLoja();
   const activeStoreId = currentStore?.id || tenantStoreId;
   const navigate = useNavigate();
 
@@ -526,3 +524,4 @@ export function LiveCommerce() {
 
 
 export default LiveCommerce;
+

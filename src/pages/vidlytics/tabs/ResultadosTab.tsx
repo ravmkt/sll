@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
-import { useLoja } from '../../../context/LojaContext';
+import { useLoja } from '../../../contexts/LojaContext';
 import { VidlyticsDatabaseService, VidlyticsOverviewMetrics, VidlyticsVideoRow, VidlyticsRetentionRow, VidlyticsInsightRow } from '../../../services/vidlytics/VidlyticsDatabaseService';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
 import { useNavigate } from 'react-router-dom';
@@ -744,3 +744,4 @@ export default function ResultadosTab() {
     </div>
   );
 }
+

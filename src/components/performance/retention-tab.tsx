@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
 import { db, resolveStoreId } from '@/lib/db';
-import { useTenant } from '@/context/TenantContext';
+import { useLoja } from '@/contexts/LojaContext';
 
 type Props = {
   timeRange: string;
@@ -65,7 +65,7 @@ function seededFactor(seed: string): number {
 }
 
 export function RetentionTab({ timeRange, customFrom, customTo }: Props) {
-  const { storeId: tenantStoreId } = useTenant();
+  const { storeId: tenantStoreId } = useLoja();
 
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string>('');
@@ -593,4 +593,5 @@ setVideoStats({
     </div>
   );
 }
+
 

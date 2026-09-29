@@ -1,7 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { useLoja } from '../context/LojaContext';
+import { useLoja } from '../contexts/LojaContext';
 import { Video, Radio, ShoppingBag, ArrowRight } from 'lucide-react';
 
 export default function Dashboard() {

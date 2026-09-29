@@ -3,7 +3,7 @@ import {
   X, Monitor, Smartphone, Settings2, PlaySquare, Layout,
   LayoutGrid, MonitorPlay, Save, Loader2, CheckCircle2
 } from 'lucide-react';
-import { useLoja } from '../../context/LojaContext';
+import { useLoja } from '../../contexts/LojaContext';
 
 import {
   createAppearance,
@@ -230,3 +230,4 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
     </div>
   );
 }
+

@@ -5,7 +5,7 @@ import {
   Save, CornerUpLeft, Star, ChevronDown, Play,
   Heart, MessageCircle, Share2, ChevronRight, Copy, Loader2
 } from 'lucide-react';
-import { useLoja } from '@/context/LojaContext';
+import { useLoja } from '@/contexts/LojaContext';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 
 interface AparenciaModalProps {

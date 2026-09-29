@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLoja } from '../../../context/LojaContext';
+import { useLoja } from '../../../contexts/LojaContext';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
 import { 
   CheckCircle2, 
@@ -459,5 +459,6 @@ export default function VisaoGeralTab() {
     </div>
   );
 }
+
 
 

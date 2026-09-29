@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useLoja } from "@/context/LojaContext";
+import { useLoja } from "@/contexts/LojaContext";
 import { toast } from "sonner";
 import {
   getPlansShowcase,
@@ -201,3 +201,4 @@ export default function Planos() {
     </DashboardLayout>
   );
 }
+
