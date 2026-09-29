@@ -89,6 +89,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
         const ownedStore =
           stores.find((store) => {
             const storeAny = store as unknown as {
+              owner_user_id?: unknown;
               user_id?: unknown;
               owner_id?: unknown;
               ownerId?: unknown;
@@ -96,6 +97,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
             };
 
             return (
+              getId(storeAny.owner_user_id) === userId ||
               getId(storeAny.user_id) === userId ||
               getId(storeAny.owner_id) === userId ||
               getId(storeAny.ownerId) === userId ||
