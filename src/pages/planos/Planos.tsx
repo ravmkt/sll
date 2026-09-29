@@ -14,6 +14,7 @@ import {
   type PlanPrice,
 } from "@/services/plans/getPlansShowcase";
 import { PlanCard } from "@/components/planos/PlanCard";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 type BillingCycle = "monthly" | "semiannual" | "yearly";
 type TabKey = "individual" | "objective" | "total";
@@ -69,130 +70,134 @@ export default function Planos() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#0091ff]" />
-      </div>
+      <DashboardLayout>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#0091ff]" />
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-6 pb-20">
-      <button
-        type="button"
-        onClick={() => navigate("/dashboard/assinaturas")}
-        className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-[#0091ff] transition-colors mb-2"
-      >
-        <ArrowLeft size={16} />
-        Voltar para Minhas Assinaturas
-      </button>
+    <DashboardLayout>
+      <div className="mx-auto max-w-6xl space-y-8 pb-20">
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard/assinaturas")}
+          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-[#0091ff] transition-colors mb-2"
+        >
+          <ArrowLeft size={16} />
+          Voltar para Minhas Assinaturas
+        </button>
 
-      <div className="text-center max-w-2xl mx-auto space-y-4">
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-          Escolha os módulos ideais para sua loja
-        </h1>
-        <p className="text-sm font-medium text-slate-500">
-          Assine módulos individualmente ou aproveite os pacotes com desconto.
-        </p>
+        <div className="text-center max-w-2xl mx-auto space-y-4">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Escolha os módulos ideais para sua loja
+          </h1>
+          <p className="text-sm font-medium text-slate-500">
+            Assine módulos individualmente ou aproveite os pacotes com desconto.
+          </p>
 
-        <div className="flex justify-center pt-2">
-          <div className="inline-flex items-center gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/50">
-            {([
-              ["monthly", "Mensal"],
-              ["semiannual", "Semestral"],
-              ["yearly", "Anual"],
-            ] as [BillingCycle, string][]).map(([key, label]) => (
+          <div className="flex justify-center pt-2">
+            <div className="inline-flex items-center gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/50">
+              {([
+                ["monthly", "Mensal"],
+                ["semiannual", "Semestral"],
+                ["yearly", "Anual"],
+              ] as [BillingCycle, string][]).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setCycle(key)}
+                  className={cn(
+                    "px-4 py-2 text-xs font-black rounded-xl transition-all",
+                    cycle === key ? "bg-white text-[#0091ff] shadow-sm" : "text-slate-400 hover:text-slate-600"
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-center gap-2 pt-3 flex-wrap">
+            {TABS.map((t) => (
               <button
-                key={key}
+                key={t.key}
                 type="button"
-                onClick={() => setCycle(key)}
+                onClick={() => setTab(t.key)}
                 className={cn(
-                  "px-4 py-2 text-xs font-black rounded-xl transition-all",
-                  cycle === key ? "bg-white text-[#0091ff] shadow-sm" : "text-slate-400 hover:text-slate-600"
+                  "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border",
+                  tab === t.key
+                    ? "bg-[#0091ff] text-white border-[#0091ff]"
+                    : "bg-white text-slate-500 border-slate-200 hover:border-[#0091ff]/50"
                 )}
               >
-                {label}
+                {t.label}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="flex justify-center gap-2 pt-3 flex-wrap">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setTab(t.key)}
-              className={cn(
-                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border",
-                tab === t.key
-                  ? "bg-[#0091ff] text-white border-[#0091ff]"
-                  : "bg-white text-slate-500 border-slate-200 hover:border-[#0091ff]/50"
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        {tab === "individual" && (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-4 max-w-5xl mx-auto">
+            {individualPlans.map((p) => {
+              const priceCents = getPriceForCycle(p.id, cycle, prices, p.price_cents);
+              const moduleKey = p.modules?.[0] ?? null;
+              return (
+                <PlanCard
+                  key={p.id}
+                  title={p.name}
+                  description={p.description}
+                  priceCents={priceCents}
+                  cycle={cycle}
+                  modules={p.modules ?? []}
+                  isPopular={p.is_popular}
+                  isLoading={subscribingId === p.id}
+                  onSelect={() => handleSelect(p, moduleKey)}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {tab === "objective" && (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-4 max-w-5xl mx-auto">
+            {objectives.map((o) => {
+              const plan = plans.find((p) => p.id === o.plan_id);
+              if (!plan) return null;
+              const priceCents = getPriceForCycle(plan.id, cycle, prices, plan.price_cents);
+              return (
+                <PlanCard
+                  key={o.id}
+                  title={o.name}
+                  description={o.description}
+                  priceCents={priceCents}
+                  cycle={cycle}
+                  modules={o.modules}
+                  isLoading={subscribingId === plan.id}
+                  onSelect={() => handleSelect(plan, null)}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {tab === "total" && totalPlan && (
+          <div className="grid gap-6 sm:grid-cols-1 max-w-md mx-auto pt-4">
+            <PlanCard
+              title={totalPlan.name}
+              description={totalPlan.description}
+              priceCents={getPriceForCycle(totalPlan.id, cycle, prices, totalPlan.price_cents)}
+              cycle={cycle}
+              modules={totalPlan.modules ?? []}
+              isPopular
+              isLoading={subscribingId === totalPlan.id}
+              onSelect={() => handleSelect(totalPlan, null)}
+            />
+          </div>
+        )}
       </div>
-
-      {tab === "individual" && (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-4 max-w-5xl mx-auto">
-          {individualPlans.map((p) => {
-            const priceCents = getPriceForCycle(p.id, cycle, prices, p.price_cents);
-            const moduleKey = p.modules?.[0] ?? null;
-            return (
-              <PlanCard
-                key={p.id}
-                title={p.name}
-                description={p.description}
-                priceCents={priceCents}
-                cycle={cycle}
-                modules={p.modules ?? []}
-                isPopular={p.is_popular}
-                isLoading={subscribingId === p.id}
-                onSelect={() => handleSelect(p, moduleKey)}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {tab === "objective" && (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-4 max-w-5xl mx-auto">
-          {objectives.map((o) => {
-            const plan = plans.find((p) => p.id === o.plan_id);
-            if (!plan) return null;
-            const priceCents = getPriceForCycle(plan.id, cycle, prices, plan.price_cents);
-            return (
-              <PlanCard
-                key={o.id}
-                title={o.name}
-                description={o.description}
-                priceCents={priceCents}
-                cycle={cycle}
-                modules={o.modules}
-                isLoading={subscribingId === plan.id}
-                onSelect={() => handleSelect(plan, null)}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {tab === "total" && totalPlan && (
-        <div className="grid gap-6 sm:grid-cols-1 max-w-md mx-auto pt-4">
-          <PlanCard
-            title={totalPlan.name}
-            description={totalPlan.description}
-            priceCents={getPriceForCycle(totalPlan.id, cycle, prices, totalPlan.price_cents)}
-            cycle={cycle}
-            modules={totalPlan.modules ?? []}
-            isPopular
-            isLoading={subscribingId === totalPlan.id}
-            onSelect={() => handleSelect(totalPlan, null)}
-          />
-        </div>
-      )}
-    </div>
+    </DashboardLayout>
   );
 }
