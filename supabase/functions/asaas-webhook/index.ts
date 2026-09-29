@@ -3,6 +3,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const WEBHOOK_TOKEN = Deno.env.get("ASAAS_WEBHOOK_TOKEN")!;
+const WEBHOOK_TOKEN_SANDBOX = Deno.env.get("ASAAS_WEBHOOK_TOKEN_SANDBOX")!;
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
@@ -30,7 +31,10 @@ Deno.serve(async (req: Request) => {
   }
 
   const receivedToken = req.headers.get("asaas-access-token");
-  if (receivedToken !== WEBHOOK_TOKEN) {
+  const isValidToken =
+    receivedToken === WEBHOOK_TOKEN || receivedToken === WEBHOOK_TOKEN_SANDBOX;
+
+  if (!isValidToken) {
     console.error("Token inválido recebido no webhook Asaas.");
     return new Response("Unauthorized", { status: 401 });
   }
@@ -51,7 +55,6 @@ Deno.serve(async (req: Request) => {
     return new Response("Missing event type", { status: 400 });
   }
 
-  // Idempotência
   if (eventId) {
     const { data: existing } = await supabase
       .from("admin_audit_logs")
@@ -74,7 +77,6 @@ Deno.serve(async (req: Request) => {
     body?.payment?.customer || body?.subscription?.customer;
   const asaasPaymentId: string | undefined = body?.payment?.id;
 
-  // 1) Atualiza subscriptions por asaas_subscription_id
   let subscriptionUpdated = false;
   if (newSubStatus && asaasSubscriptionId) {
     const { data: sub, error: findError } = await supabase
@@ -101,14 +103,12 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // Sincroniza status na loja também
       if (sub.store_id) {
         await updateStoreStatus(sub.store_id, newSubStatus);
       }
     }
   }
 
-  // 2) Fallback: sem subscription vinculada, tenta por asaas_customer_id direto na store
   if (!subscriptionUpdated && newSubStatus && asaasCustomerId) {
     const { data: store, error: storeErr } = await supabase
       .from("stores")
@@ -125,7 +125,6 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  // 3) Atualiza invoice correspondente, se existir
   if (newInvoiceStatus && asaasPaymentId) {
     const { data: invoice, error: invErr } = await supabase
       .from("invoices")
@@ -149,7 +148,6 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  // Log de auditoria
   try {
     await supabase.from("admin_audit_logs").insert({
       action: `asaas_webhook:${eventId ?? "no-id"}`,
