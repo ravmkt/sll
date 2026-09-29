@@ -16,6 +16,7 @@ const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
 const SettingsPage = lazy(() => import('./pages/configuracoes/SettingsPage'));
 const Assinaturas = lazy(() => import('./pages/assinaturas/Assinaturas'));
 const Planos = lazy(() => import('./pages/planos/Planos'));
+const IntegrationPage = lazy(() => import('./pages/integracao/IntegrationPage'));
 
 function PageLoader() {
   return (
@@ -84,6 +85,11 @@ function AppRoutes() {
           path="/dashboard/modules"
           element={<Navigate to="/dashboard/modules/vidlytics" replace />}
         />
+<Route
+  path="/dashboard/integracao"
+  element={user ? <IntegrationPage /> : <Navigate to="/auth" replace />}
+/>
+
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     </Suspense>
