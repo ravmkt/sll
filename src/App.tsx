@@ -12,6 +12,7 @@ const LiveCommerce = lazy(() => import('./pages/modules/LiveCommerce'));
 const LiveAdminPage = lazy(() => import('./pages/modules/LiveAdminPage'));
 const Products = lazy(() => import('./pages/Products'));
 const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
+const SettingsPage = lazy(() => import('./pages/configuracoes/SettingsPage'));
 
 function PageLoader() {
   return (
@@ -64,6 +65,10 @@ function AppRoutes() {
               path="/dashboard/afiliados"
               element={user ? <IndicaEGanha /> : <Navigate to="/auth" replace />}
             />
+        <Route
+          path="/dashboard/settings"
+          element={user ? <SettingsPage /> : <Navigate to="/auth" replace />}
+        />
         <Route
           path="/dashboard/modules"
           element={<Navigate to="/dashboard/modules/vidlytics" replace />}

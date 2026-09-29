@@ -1,23 +1,26 @@
-import React, { useState } from 'react';
-import { 
-  Play, 
-  Store, 
-  Globe, 
-  Mail, 
-  Layers, 
-  CheckCircle2, 
-  ArrowRight, 
-  ArrowLeft, 
-  Loader2 
+import React, { useEffect, useState } from 'react';
+import {
+  Play,
+  Store,
+  Globe,
+  Mail,
+  Layers,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  User,
+  MessageCircle,
+  Image as ImageIcon,
+  Tag,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService, StorePayload } from '@/services/SLLDatabaseService';
 import { useLoja } from '@/context/LojaContext';
 
-// Importação com caminho estritamente em minúsculas compatível com Linux/Vercel
 const LOGO_SRC = '/assets/sll-logotipo-b.png';
+const LOGO_BUCKET = 'store-assets';
 
-// Plataformas ordenadas alfabeticamente com inclusão de Bagy e Ideris
 const PLATAFORMAS = [
   'Bagy',
   'Cartpanda',
@@ -31,21 +34,14 @@ const PLATAFORMAS = [
   'Outra',
 ];
 
-// Helper para sanitizar e padronizar qualquer formato de URL
 const formatAndSanitizeUrl = (inputUrl: string): string => {
   let cleaned = inputUrl.trim().toLowerCase();
-  
-  // Remove barras no início ou espaços acidentais
   cleaned = cleaned.replace(/^\/+/, '');
-
-  // Se o usuário digitou sem protocolo (ex: "useanny.com" ou "www.useanny.com")
   if (!/^https?:\/\//i.test(cleaned)) {
     cleaned = `https://${cleaned}`;
   } else if (cleaned.startsWith('http://')) {
     cleaned = cleaned.replace('http://', 'https://');
   }
-
-  // Remove barras residuais no final da URL
   return cleaned.replace(/\/+$/, '');
 };
 
@@ -55,35 +51,85 @@ export const OnboardingModal: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const [sectors, setSectors] = useState<any[]>([]);
+  const [selectedSectorId, setSelectedSectorId] = useState<string>('');
+
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('');
+
   const [formData, setFormData] = useState<StorePayload>({
     name: '',
     url: '',
     platform: 'Bagy',
     contact_email: '',
+    contact_name: '',
+    owner_contact_email: '',
+    whatsapp_number: '',
+    whatsapp_message_template: 'Olá! Tenho interesse nesse produto que vi no vídeo: {{story_title}}',
+    logo_url: null,
+    sector_id: null,
   });
+
+  useEffect(() => {
+    if (!needsOnboarding) return;
+    SLLDatabaseService.getSectors()
+      .then(setSectors)
+      .catch(() => setSectors([]));
+  }, [needsOnboarding]);
 
   if (!needsOnboarding) return null;
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      setErrorMsg('Formato de imagem inválido. Use JPG, PNG ou WEBP.');
+      return;
+    }
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
+  const validateStep2 = () => {
+    if (!formData.name.trim()) return 'O nome da loja é obrigatório.';
+    if (!formData.url.trim()) return 'Informe o domínio ou URL da sua loja.';
+    if (!formData.contact_name.trim()) return 'Informe o nome do responsável pela loja.';
+    if (!formData.contact_email.trim() || !formData.contact_email.includes('@'))
+      return 'Informe um e-mail de atendimento válido.';
+    if (!formData.owner_contact_email.trim() || !formData.owner_contact_email.includes('@'))
+      return 'Informe o e-mail do dono da loja.';
+    if (!selectedSectorId) return 'Selecione o setor da sua loja.';
+    return '';
+  };
+
+  const validateStep3 = () => {
+    if (!formData.whatsapp_number.trim()) return 'Informe o número de WhatsApp para contato.';
+    if (!formData.whatsapp_message_template.trim()) return 'Informe a mensagem padrão de contato.';
+    return '';
+  };
+
   const handleNextStep = () => {
     setErrorMsg('');
-    if (step === 2) {
-      if (!formData.name.trim()) {
-        setErrorMsg('O nome da loja é obrigatório.');
-        return;
-      }
-      if (!formData.url.trim()) {
-        setErrorMsg('Informe o domínio ou URL da sua loja.');
-        return;
-      }
-      if (!formData.contact_email.trim() || !formData.contact_email.includes('@')) {
-        setErrorMsg('Informe um e-mail de contato comercial válido.');
-        return;
-      }
 
-      const sanitizedUrl = formatAndSanitizeUrl(formData.url);
-      setFormData(prev => ({ ...prev, url: sanitizedUrl }));
+    if (step === 2) {
+      const err = validateStep2();
+      if (err) {
+        setErrorMsg(err);
+        return;
+      }
+      setFormData((prev) => ({ ...prev, url: formatAndSanitizeUrl(prev.url) }));
     }
-    setStep((prev) => Math.min(prev + 1, 3));
+
+    if (step === 3) {
+      const err = validateStep3();
+      if (err) {
+        setErrorMsg(err);
+        return;
+      }
+    }
+
+    setStep((prev) => Math.min(prev + 1, 4));
   };
 
   const handlePrevStep = () => {
@@ -99,9 +145,32 @@ export const OnboardingModal: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Sessão expirada. Faça login novamente.');
 
+      let finalLogoUrl: string | null = null;
+
+      if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `logos/logo-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from(LOGO_BUCKET)
+          .upload(fileName, logoFile, {
+            cacheControl: '3600',
+            upsert: true,
+            contentType: logoFile.type,
+          });
+
+        if (uploadError) {
+          console.error('Erro ao subir logo:', uploadError);
+        } else {
+          const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(fileName);
+          finalLogoUrl = data.publicUrl;
+        }
+      }
+
       const finalPayload: StorePayload = {
         ...formData,
         url: formatAndSanitizeUrl(formData.url),
+        logo_url: finalLogoUrl,
+        sector_id: selectedSectorId || null,
       };
 
       const newStore = await SLLDatabaseService.createInitialStore(user.id, finalPayload);
@@ -117,8 +186,7 @@ export const OnboardingModal: React.FC = () => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fade-in">
       <div className="w-full max-w-2xl bg-white dark:bg-[#111524] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
-        
-        {/* HEADER DO STEPPER */}
+
         <div className="px-8 pt-8 pb-4 border-b border-slate-100 dark:border-slate-800/80">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -127,42 +195,37 @@ export const OnboardingModal: React.FC = () => {
                 Setup Inicial • Sistema Loja Lucrativa
               </span>
             </div>
-            <span className="text-xs font-bold text-slate-400">
-              Passo {step} de 3
-            </span>
+            <span className="text-xs font-bold text-slate-400">Passo {step} de 4</span>
           </div>
 
-          {/* BARRA DE PROGRESSO */}
-          <div className="grid grid-cols-3 gap-2 mt-4">
+          <div className="grid grid-cols-4 gap-2 mt-4">
             <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 1 ? 'bg-[#0094eb]' : 'bg-slate-100 dark:bg-slate-800'}`} />
             <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 2 ? 'bg-[#0094eb]' : 'bg-slate-100 dark:bg-slate-800'}`} />
-            <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 3 ? 'bg-[#fd8539]' : 'bg-slate-100 dark:bg-slate-800'}`} />
+            <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 3 ? 'bg-[#0094eb]' : 'bg-slate-100 dark:bg-slate-800'}`} />
+            <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 4 ? 'bg-[#fd8539]' : 'bg-slate-100 dark:bg-slate-800'}`} />
           </div>
         </div>
 
-        {/* CORPO DO STEP */}
-        <div className="p-8 flex-1 min-h-[380px]">
+        <div className="p-8 flex-1 min-h-[420px] overflow-y-auto max-h-[70vh]">
           {errorMsg && (
             <div className="mb-6 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs font-bold text-rose-600 dark:text-rose-400">
               {errorMsg}
             </div>
           )}
 
-{/* PASSO 1: BOAS-VINDAS & LOGOTIPO OFICIAL */}
+          {/* PASSO 1: BOAS-VINDAS */}
           {step === 1 && (
             <div className="flex flex-col items-center text-center space-y-2">
-              {/* Logotipo SLL ampliado com margens verticais mínimas */}
               <div className="flex items-center justify-center w-full py-0 -mt-2">
-                <img 
-                  src={LOGO_SRC} 
-                  alt="Sistema Loja Lucrativa" 
+                <img
+                  src={LOGO_SRC}
+                  alt="Sistema Loja Lucrativa"
                   className="w-64 sm:w-72 h-auto max-h-40 object-contain drop-shadow-sm"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/sll-logotipo-b.png';
                   }}
                 />
               </div>
-
               <div>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">
                   Boas-vindas ao ecossistema SLL
@@ -171,8 +234,6 @@ export const OnboardingModal: React.FC = () => {
                   Vamos configurar a sua loja para liberar os recursos e aplicativos contratados na plataforma.
                 </p>
               </div>
-
-              {/* CONTAINER DE VÍDEO INTRODUTÓRIO (16:9) */}
               <div className="w-full aspect-video rounded-2xl bg-slate-900 border border-slate-200 dark:border-slate-800 relative overflow-hidden flex items-center justify-center group shadow-inner mt-2">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
                 <div className="w-14 h-14 rounded-full bg-white/95 text-slate-950 flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 cursor-pointer">
@@ -185,7 +246,7 @@ export const OnboardingModal: React.FC = () => {
             </div>
           )}
 
-          {/* PASSO 2: FORMULÁRIO DE DADOS */}
+          {/* PASSO 2: DADOS DA LOJA */}
           {step === 2 && (
             <div className="space-y-4">
               <div>
@@ -193,7 +254,7 @@ export const OnboardingModal: React.FC = () => {
                   Identificação da sua Loja
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Esses dados vincularão as métricas, catálogo e recursos da sua conta.
+                  Esses dados vincularão as métricas, catálogo e recursos de todos os módulos da sua conta.
                 </p>
               </div>
 
@@ -222,7 +283,7 @@ export const OnboardingModal: React.FC = () => {
                     <Globe size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="text"
-                      placeholder="ex: minhaloja.com.br ou https://minhaloja.com.br"
+                      placeholder="ex: minhaloja.com.br"
                       value={formData.url}
                       onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                       className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
@@ -243,9 +304,7 @@ export const OnboardingModal: React.FC = () => {
                         className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white cursor-pointer"
                       >
                         {PLATAFORMAS.map((plat) => (
-                          <option key={plat} value={plat}>
-                            {plat}
-                          </option>
+                          <option key={plat} value={plat}>{plat}</option>
                         ))}
                       </select>
                     </div>
@@ -253,7 +312,44 @@ export const OnboardingModal: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      E-mail Comercial *
+                      Setor da Loja *
+                    </label>
+                    <div className="relative">
+                      <Tag size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <select
+                        value={selectedSectorId}
+                        onChange={(e) => setSelectedSectorId(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white cursor-pointer"
+                      >
+                        <option value="">Selecione...</option>
+                        {sectors.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Nome do Contato/Responsável *
+                  </label>
+                  <div className="relative">
+                    <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Ex: Annellyse Moreira"
+                      value={formData.contact_name}
+                      onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      E-mail de Atendimento *
                     </label>
                     <div className="relative">
                       <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -266,55 +362,137 @@ export const OnboardingModal: React.FC = () => {
                       />
                     </div>
                   </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      E-mail do Dono da Loja *
+                    </label>
+                    <div className="relative">
+                      <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="email"
+                        placeholder="dono@sualoja.com.br"
+                        value={formData.owner_contact_email}
+                        onChange={(e) => setFormData({ ...formData, owner_contact_email: e.target.value })}
+                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* PASSO 3: RESUMO E CONFIRMAÇÃO */}
+          {/* PASSO 3: WHATSAPP + LOGO */}
           {step === 3 && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                  Contato e Identidade Visual
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Usado nos botões de WhatsApp dos vídeos e na exibição da marca.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Número do WhatsApp *
+                </label>
+                <div className="relative">
+                  <MessageCircle size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="tel"
+                    placeholder="5545999999999"
+                    value={formData.whatsapp_number}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        whatsapp_number: e.target.value.replace(/[^\d+\-() ]/g, ''),
+                      })
+                    }
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">Com código do país e DDD (Ex: 5545999999999).</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Mensagem Padrão de Contato *
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.whatsapp_message_template}
+                  onChange={(e) => setFormData({ ...formData, whatsapp_message_template: e.target.value })}
+                  className="w-full px-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Logo da Loja (opcional)
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+                    {logoPreview ? (
+                      <img src={logoPreview} className="w-full h-full object-cover" alt="Logo" />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-slate-400" />
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleLogoChange}
+                    className="flex-1 text-xs font-bold text-slate-600 dark:text-slate-300 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-[#0094eb] file:text-white file:font-black file:text-xs file:cursor-pointer cursor-pointer"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">Pode enviar depois em Configurações, se preferir.</p>
+              </div>
+            </div>
+          )}
+
+          {/* PASSO 4: RESUMO */}
+          {step === 4 && (
             <div className="space-y-5">
               <div>
                 <h3 className="text-xl font-black text-slate-900 dark:text-white">
                   Confirmar dados da Loja
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Tudo pronto para conectar sua loja. Revise as informações abaixo:
+                  Revise as informações abaixo antes de concluir:
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3.5">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
-                  <span className="text-xs font-bold text-slate-500">Nome da Loja:</span>
-                  <span className="text-sm font-black text-slate-900 dark:text-white">{formData.name}</span>
-                </div>
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
-                  <span className="text-xs font-bold text-slate-500">Domínio / URL:</span>
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono">{formData.url}</span>
-                </div>
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
-                  <span className="text-xs font-bold text-slate-500">Plataforma:</span>
-                  <span className="text-xs font-black uppercase text-[#0094eb] bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-lg">
-                    {formData.platform}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500">E-mail:</span>
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{formData.contact_email}</span>
-                </div>
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3 max-h-64 overflow-y-auto">
+                {[
+                  ['Nome da Loja', formData.name],
+                  ['URL', formData.url],
+                  ['Plataforma', formData.platform],
+                  ['Setor', sectors.find((s) => s.id === selectedSectorId)?.name || '-'],
+                  ['Contato', formData.contact_name],
+                  ['E-mail Atendimento', formData.contact_email],
+                  ['E-mail do Dono', formData.owner_contact_email],
+                  ['WhatsApp', formData.whatsapp_number],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800 last:border-0 last:pb-0">
+                    <span className="text-xs font-bold text-slate-500">{label}:</span>
+                    <span className="text-sm font-black text-slate-900 dark:text-white text-right">{value}</span>
+                  </div>
+                ))}
               </div>
 
               <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 flex items-center gap-3">
                 <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
                 <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                  Sua loja será configurada e conectada ao banco de dados com sucesso.
+                  Sua loja será configurada e conectada a todos os módulos contratados.
                 </p>
               </div>
             </div>
           )}
         </div>
 
-        {/* RODAPÉ DO WIZARD */}
         <div className="px-8 py-5 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-between">
           <div>
             {step > 1 && (
@@ -330,7 +508,7 @@ export const OnboardingModal: React.FC = () => {
           </div>
 
           <div>
-            {step < 3 ? (
+            {step < 4 ? (
               <button
                 type="button"
                 onClick={handleNextStep}
