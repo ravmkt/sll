@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { useAuth } from './contexts/AuthContext';
 import { LojaProvider } from './context/LojaContext';
 import { OnboardingModal } from './components/OnboardingModal';
@@ -40,7 +41,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
-        
+
         <Route
           path="/dashboard"
           element={user ? <Dashboard /> : <Navigate to="/auth" replace />}
@@ -61,10 +62,10 @@ function AppRoutes() {
           path="/dashboard/products"
           element={user ? <Products /> : <Navigate to="/auth" replace />}
         />
-            <Route
-              path="/dashboard/afiliados"
-              element={user ? <IndicaEGanha /> : <Navigate to="/auth" replace />}
-            />
+        <Route
+          path="/dashboard/afiliados"
+          element={user ? <IndicaEGanha /> : <Navigate to="/auth" replace />}
+        />
         <Route
           path="/dashboard/settings"
           element={user ? <SettingsPage /> : <Navigate to="/auth" replace />}
@@ -84,6 +85,7 @@ export default function App() {
     <Router>
       <LojaProvider>
         <AppRoutes />
+        <Toaster richColors position="top-right" />
       </LojaProvider>
     </Router>
   );
