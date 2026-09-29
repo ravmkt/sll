@@ -56,6 +56,30 @@ const formatStoreUrl = (url: string): string => {
   return trimmed.toLowerCase();
 };
 
+const formatWhatsapp = (raw: string): string => {
+  let digits = raw.replace(/\D/g, '');
+  if (!digits) return '';
+
+  if (digits.length === 10 || digits.length === 11) {
+    digits = `55${digits}`;
+  }
+
+  if (digits.length < 12) return digits;
+
+  const country = digits.slice(0, 2);
+  const ddd = digits.slice(2, 4);
+  const rest = digits.slice(4);
+
+  let number = rest;
+  if (rest.length === 9) {
+    number = `${rest.slice(0, 5)}-${rest.slice(5)}`;
+  } else if (rest.length === 8) {
+    number = `${rest.slice(0, 4)}-${rest.slice(4)}`;
+  }
+
+  return `+${country} (${ddd}) ${number}`;
+};
+
 const SettingsPage: React.FC = () => {
   const { store, storeId, loading: lojaLoading, refreshStore } = useLoja();
 
@@ -443,6 +467,7 @@ const SettingsPage: React.FC = () => {
                 onChange={(e) =>
                   setForm((p) => ({ ...p, whatsapp_number: e.target.value.replace(/[^\d+\-() ]/g, '') }))
                 }
+                onBlur={(e) => setForm((p) => ({ ...p, whatsapp_number: formatWhatsapp(e.target.value) }))}
                 placeholder="Ex: (41) 99999-9999"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
@@ -516,6 +541,10 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
+
+
+
+
 
 
 
