@@ -90,26 +90,15 @@ export const IntegrationPage = () => {
   }, [activeModules]);
 
   const scriptCode = useMemo(() => {
-    const widgetsJson = JSON.stringify(widgetsConfig, null, 2).replace(/\n/g, "\n  ");
     return `<script>
-window.SLL_CONFIG = {
-  storeId: "${storeId || ""}",
-  platform: "custom",
-  supabaseUrl: "${supabaseUrl}",
-  supabaseAnonKey: "${supabaseAnonKey}",
-  modules: ${widgetsJson}
-};
-
-(function() {
-  var script = document.createElement('script');
-  script.src = '${publicUrl}/widget.js?v=${widgetVersion}';
-  script.type = 'text/javascript';
-  script.async = true;
-  script.charset = 'UTF-8';
-  document.head.appendChild(script);
-})();
-</script>`;
-  }, [storeId, supabaseUrl, supabaseAnonKey, publicUrl, widgetVersion, widgetsConfig]);
+window.SLL_STORE_ID = "${storeId || ""}";
+</script>
+<script
+  src="${publicUrl}/sll-loader.js"
+  data-store-id="${storeId || ""}"
+  async
+></script>`;
+  }, [storeId, publicUrl]);
 
   const trackingScriptCode = useMemo(() => {
     return `<script>
@@ -173,8 +162,7 @@ window.SLL_CONFIG = {
             Instalação do SLL
           </h1>
           <p className="mt-1 max-w-3xl text-sm font-medium text-slate-500">
-            Instale uma única vez e todos os módulos que você assinar (Vidlytics, Live Shopping e futuros lançamentos)
-            passam a funcionar automaticamente, sem precisar reinstalar nada.
+            Instale uma única vez e todos os módulos que você assinar passam a funcionar automaticamente, sem precisar reinstalar nada.
           </p>
         </div>
 
@@ -292,7 +280,7 @@ window.SLL_CONFIG = {
               correspondentes. Cole dentro da tag <strong>&lt;head&gt;</strong>.
             </>
           }
-          filename="widget.js"
+          filename="sll-loader.js"
           code={scriptCode}
           disabled={!canInstall}
           copied={copied}
@@ -415,3 +403,6 @@ function ScriptBlock({
 }
 
 export default IntegrationPage;
+
+
+
