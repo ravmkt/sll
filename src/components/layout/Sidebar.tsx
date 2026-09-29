@@ -30,12 +30,17 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       <div className="p-4 flex flex-col gap-3 h-24 justify-center border-b border-slate-200 dark:border-slate-800">
         <div className="flex justify-center items-center">
           {isExpanded ? (
-            <span className="text-xl font-bold tracking-tight whitespace-nowrap">
-              <span className="text-[#0094eb]">Loja</span>{' '}
-              <span className="text-[#fd8539]">Lucrativa</span>
-            </span>
+            <img
+              src="/assets/sll-logotipo.png"
+              alt="Loja Lucrativa"
+              className="h-10 w-auto object-contain"
+            />
           ) : (
-            <span className="text-2xl font-black text-[#0094eb]">L</span>
+            <img
+              src="/assets/sll-logotipo-ico.png"
+              alt="Loja Lucrativa"
+              className="h-9 w-9 object-contain"
+            />
           )}
         </div>
       </div>
@@ -84,7 +89,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 !isExpanded ? 'justify-center' : ''
               } ${
                 isActive
-                  ? 'bg-[#fd8539] text-white font-medium shadow-md shadow-[#fd8539]/20'
+                  ? 'bg-[#0094eb] text-white font-medium shadow-md shadow-[#0094eb]/20'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb]'
               }`}
             >
@@ -111,3 +116,4 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     </aside>
   );
 }
+
