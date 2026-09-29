@@ -104,7 +104,7 @@ export async function subscribeToPlan(params: {
     return { error: "SESSAO_EXPIRADA" };
   }
 
-  const { data, error } = await supabase.functions.invoke("create-asaas-subscription", {
+  const { data, error } = await supabase.functions.invoke("asaas-create-subscription", {
     body: {
       plan_id: params.planId,
       store_id: params.storeId,
@@ -127,3 +127,4 @@ export async function subscribeToPlan(params: {
 
   return { invoiceUrl: body?.invoice_url };
 }
+
