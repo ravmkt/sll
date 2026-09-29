@@ -15,7 +15,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const menuItems = [
     { name: 'Visão Geral', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Módulos', icon: Video, path: '/dashboard/modules' },
-    { name: 'Assinatura', icon: ShoppingCart, path: '/dashboard/subscription' },
+    { name: 'Assinatura', icon: ShoppingCart, path: '/dashboard/assinaturas' },
     { name: 'Indica & Ganha', icon: Gift, path: '/dashboard/afiliados' },
     { name: 'Configurações', icon: Settings, path: '/dashboard/settings' },
   ];
