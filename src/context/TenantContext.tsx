@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { db, Store } from '@/lib/db';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 type TenantContextValue = {
   currentStore: Store | null;
@@ -150,3 +150,4 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useTenant = () => useContext(TenantContext);
+
