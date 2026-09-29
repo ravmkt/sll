@@ -75,17 +75,6 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
           .map((member) => getId(member.store_id))
           .filter(Boolean) as string[];
 
-        const savedStore =
-          savedStoreId && memberStoreIds.includes(savedStoreId)
-            ? stores.find((store) => getId(store.id) === savedStoreId) || null
-            : null;
-
-        const membershipStore =
-          memberStoreIds.length > 0
-            ? stores.find((store) => getId(store.id) === memberStoreIds[0]) ||
-              null
-            : null;
-
         const ownedStore =
           stores.find((store) => {
             const storeAny = store as unknown as {
@@ -105,10 +94,23 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
             );
           }) || null;
 
+        const savedStore =
+          savedStoreId &&
+          (memberStoreIds.includes(savedStoreId) ||
+            getId(ownedStore?.id) === savedStoreId)
+            ? stores.find((store) => getId(store.id) === savedStoreId) || null
+            : null;
+
+        const membershipStore =
+          memberStoreIds.length > 0
+            ? stores.find((store) => getId(store.id) === memberStoreIds[0]) ||
+              null
+            : null;
+
         const fallbackStore = stores[0] || null;
 
         const selectedStore =
-          savedStore || membershipStore || ownedStore || fallbackStore;
+          savedStore || ownedStore || membershipStore || fallbackStore;
 
         if (selectedStore?.id) {
           localStorage.setItem(SELECTED_STORE_KEY, String(selectedStore.id));
