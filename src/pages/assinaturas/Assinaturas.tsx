@@ -12,13 +12,13 @@ import { SubscriptionModuleCard } from "@/components/assinaturas/SubscriptionMod
 
 export default function Assinaturas() {
   const { user } = useAuth();
-  const { loja } = useLoja();
+  const { storeId } = useLoja();
   const [subscriptions, setSubscriptions] = useState<StoreSubscription[]>([]);
   const [billingAnchorDay, setBillingAnchorDay] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function load() {
-    if (!loja?.id) return;
+    if (!storeId) return;
     setLoading(true);
 
     const [subs, storeInfo] = await Promise.all([
@@ -33,7 +33,7 @@ export default function Assinaturas() {
 
   useEffect(() => {
     load();
-  }, [loja?.id]);
+  }, [storeId]);
 
   const totalMensalCents = subscriptions.reduce((acc, s) => {
     if (s.status === "canceled" || !s.plan) return acc;
