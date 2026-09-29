@@ -22,8 +22,8 @@ export default function Assinaturas() {
     setLoading(true);
 
     const [subs, storeInfo] = await Promise.all([
-      getActiveSubscriptions(loja.id),
-      supabase.from("stores").select("billing_anchor_day").eq("id", loja.id).maybeSingle(),
+      getActiveSubscriptions(storeId),
+      supabase.from("stores").select("billing_anchor_day").eq("id", storeId).maybeSingle(),
     ]);
 
     setSubscriptions(subs);

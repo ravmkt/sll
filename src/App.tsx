@@ -15,6 +15,7 @@ const Products = lazy(() => import('./pages/Products'));
 const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
 const SettingsPage = lazy(() => import('./pages/configuracoes/SettingsPage'));
 const Assinaturas = lazy(() => import('./pages/assinaturas/Assinaturas'));
+const Planos = lazy(() => import('./pages/planos/Planos'));
 
 function PageLoader() {
   return (
@@ -56,6 +57,10 @@ function AppRoutes() {
   element={user ? <Assinaturas /> : <Navigate to="/auth" replace />}
 />
         <Route
+          path="/dashboard/planos"
+          element={user ? <Planos /> : <Navigate to="/auth" replace />}
+        />
+        <Route
           path="/dashboard/modules/live-commerce"
           element={user ? <LiveCommerce /> : <Navigate to="/auth" replace />}
         />
@@ -95,3 +100,4 @@ export default function App() {
     </Router>
   );
 }
+
