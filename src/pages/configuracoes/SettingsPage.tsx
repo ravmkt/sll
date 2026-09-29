@@ -13,7 +13,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 const LOGO_BUCKET = 'store-assets';
 
 const PLATAFORMAS = [
-  'Bagy', 'Cartpanda', 'Ideris', 'Loja Integrada', 'Nuvemshop',
+  'Bagy', 'Cartpanda', 'Irroba', 'Loja Integrada', 'Nuvemshop',
   'Shopify', 'Tray', 'WooCommerce', 'Yampi', 'Outra',
 ];
 
@@ -246,7 +246,7 @@ const SettingsPage: React.FC = () => {
               Configurações da Loja
             </h1>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
-              Esses dados são usados por todos os módulos contratados (Vidlytics, Live e futuros apps do SLL).
+              Esses dados são usados por todos os módulos contratados.
             </p>
           </div>
 
@@ -287,6 +287,7 @@ const SettingsPage: React.FC = () => {
                 type="text"
                 value={form.store_name}
                 onChange={(e) => setForm((p) => ({ ...p, store_name: e.target.value }))}
+                placeholder="Ex: Loja da Ana Moda Feminina"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
             </div>
@@ -300,6 +301,7 @@ const SettingsPage: React.FC = () => {
                 value={form.store_url}
                 onChange={(e) => setForm((p) => ({ ...p, store_url: e.target.value }))}
                 onBlur={(e) => setForm((p) => ({ ...p, store_url: formatStoreUrl(e.target.value) }))}
+                placeholder="Ex: minhaloja.com.br"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
             </div>
@@ -375,6 +377,7 @@ const SettingsPage: React.FC = () => {
                 type="text"
                 value={form.contact_name}
                 onChange={(e) => setForm((p) => ({ ...p, contact_name: e.target.value }))}
+                placeholder="Ex: Ana Silva"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
             </div>
@@ -387,6 +390,7 @@ const SettingsPage: React.FC = () => {
                 type="email"
                 value={form.owner_contact_email}
                 onChange={(e) => setForm((p) => ({ ...p, owner_contact_email: e.target.value }))}
+                placeholder="Ex: dono@minhaloja.com.br"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
             </div>
@@ -399,6 +403,7 @@ const SettingsPage: React.FC = () => {
                 type="email"
                 value={form.contact_email}
                 onChange={(e) => setForm((p) => ({ ...p, contact_email: e.target.value }))}
+                placeholder="Ex: atendimento@minhaloja.com.br"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
             </div>
@@ -438,6 +443,7 @@ const SettingsPage: React.FC = () => {
                 onChange={(e) =>
                   setForm((p) => ({ ...p, whatsapp_number: e.target.value.replace(/[^\d+\-() ]/g, '') }))
                 }
+                placeholder="Ex: (41) 99999-9999"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
             </div>
@@ -450,6 +456,7 @@ const SettingsPage: React.FC = () => {
                 rows={3}
                 value={form.whatsapp_message_template}
                 onChange={(e) => setForm((p) => ({ ...p, whatsapp_message_template: e.target.value }))}
+                placeholder="Ex: Olá! Tenho interesse nesse produto que vi no vídeo: {{story_title}}"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb] resize-none"
               />
             </div>
@@ -509,3 +516,6 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
+
+
+
