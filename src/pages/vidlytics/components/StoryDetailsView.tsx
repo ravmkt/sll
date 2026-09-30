@@ -1,34 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft,
-  Save,
   X,
   Layout,
   Layers,
   MousePointer2,
   Film,
-  MapPin,
   Globe,
   CheckCircle2,
   Loader2,
   GripVertical,
-  Rocket,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 
 type PageRuleCondition = 'home' | 'all_pages' | 'url_contains' | 'url_not_contains' | 'url_not_equals';
+type DisplayPosition = 'beforebegin' | 'afterend';
 
-interface PageRuleUi {
+interface StoryPageLocationUi {
   id: string;
   condition_type: PageRuleCondition;
   value: string;
-}
-
-interface DisplayLocationUi {
-  id: string;
   selector: string;
-  position: 'beforebegin' | 'afterend';
+  position: DisplayPosition;
 }
 
 interface StoryDetailsViewProps {
@@ -47,9 +43,9 @@ const PAGE_RULE_OPTIONS: Array<{ label: string; value: PageRuleCondition }> = [
 
 const CONDITION_TYPES_WITH_VALUE: PageRuleCondition[] = ['url_contains', 'url_not_contains', 'url_not_equals'];
 
-const POSITION_OPTIONS = [
-  { label: 'Acima do elemento', value: 'beforebegin' as const },
-  { label: 'Abaixo do elemento', value: 'afterend' as const },
+const POSITION_OPTIONS: Array<{ label: string; value: DisplayPosition }> = [
+  { label: 'Acima do elemento', value: 'beforebegin' },
+  { label: 'Abaixo do elemento', value: 'afterend' },
 ];
 
 export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDetailsViewProps) {
@@ -73,59 +69,63 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
   const [allVideos, setAllVideos] = useState<any[]>([]);
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
   const [appearances, setAppearances] = useState<any[]>([]);
-  const [location, setLocation] = useState<DisplayLocationUi>({
-    id: crypto.randomUUID(),
-    selector: '.breadcrumbs',
-    position: 'beforebegin',
-  });
-  const [pageRules, setPageRules] = useState<PageRuleUi[]>([]);
+
+  // Locais por Página (Cada página tem sua regra, seu CSS Selector e sua posição)
+  const [pageLocations, setPageLocations] = useState<StoryPageLocationUi[]>([
+    {
+      id: crypto.randomUUID(),
+      condition_type: 'home',
+      value: '',
+      selector: '.breadcrumbs',
+      position: 'beforebegin',
+    },
+  ]);
 
   // Carregar dados
   const loadData = useCallback(async () => {
     if (!storeId) return;
     try {
       setLoading(true);
-      const [videosRes, appsRes] = await Promise.all([
+      const [videosRes, appsRes, storiesRes] = await Promise.all([
         VidlyticsDatabaseService.getVideos(storeId).catch(() => []),
         VidlyticsDatabaseService.getAppearances(storeId).catch(() => []),
+        VidlyticsDatabaseService.getStories(storeId).catch(() => []),
       ]);
 
       setAllVideos(videosRes || []);
       setAppearances(appsRes || []);
 
       if (!isCreate && storyId) {
-        const storiesRes = await VidlyticsDatabaseService.getStories(storeId);
-        const currentStory = storiesRes.find((s: any) => s.id === storyId);
+        const currentStory = (storiesRes || []).find((s: any) => s.id === storyId);
 
         if (currentStory) {
           setFormData({
             title: currentStory.name || currentStory.title || '',
             format: currentStory.layout || currentStory.format || 'carousel',
-            scroll_direction: currentStory.scroll_direction || 'horizontal',
-            active: currentStory.status === 'active' || currentStory.active === true,
-            appearance_id: currentStory.appearance_id || '',
+            scroll_direction: currentStory.scroll_direction || currentStory.scrollDirection || 'horizontal',
+            active: currentStory.status === 'active' || currentStory.status === 'ATIVO' || currentStory.active === true,
+            appearance_id: currentStory.appearance_id || currentStory.visualStyle || '',
           });
 
-          if (currentStory.cssSelector) {
-            setLocation((prev) => ({
-              ...prev,
-              selector: currentStory.cssSelector,
-              position: (currentStory.position as any) || 'beforebegin',
-            }));
-          }
-
-          if (Array.isArray(currentStory.video_ids)) {
+          // Recuperar vídeos selecionados
+          if (Array.isArray(currentStory.videoUrls) && currentStory.videoUrls.length > 0) {
+            const matchedIds = (videosRes || [])
+              .filter((v: any) => currentStory.videoUrls.includes(v.video_url || v.url))
+              .map((v: any) => v.id);
+            setSelectedVideoIds(matchedIds.length > 0 ? matchedIds : currentStory.videoUrls);
+          } else if (Array.isArray(currentStory.video_ids)) {
             setSelectedVideoIds(currentStory.video_ids);
-          } else if (Array.isArray(currentStory.videos)) {
-            setSelectedVideoIds(currentStory.videos.map((v: any) => v.id || v));
           }
 
-          if (Array.isArray(currentStory.page_rules) && currentStory.page_rules.length > 0) {
-            setPageRules(
-              currentStory.page_rules.map((r: any) => ({
-                id: r.id || crypto.randomUUID(),
-                condition_type: r.condition_type || 'all_pages',
-                value: r.value || '',
+          // Recuperar locais/páginas individuais
+          if (Array.isArray(currentStory.displayLocations) && currentStory.displayLocations.length > 0) {
+            setPageLocations(
+              currentStory.displayLocations.map((loc: any) => ({
+                id: loc.id || crypto.randomUUID(),
+                condition_type: (loc.page || loc.condition_type || 'home') as PageRuleCondition,
+                value: loc.pageValue || loc.value || '',
+                selector: loc.cssSelector || loc.selector || '.breadcrumbs',
+                position: (loc.position || 'beforebegin') as DisplayPosition,
               }))
             );
           }
@@ -172,25 +172,52 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
     setDragIndex(null);
   };
 
-  // Regras de Página
-  const handleAddPageRule = () => {
-    setPageRules((prev) => [
+  // Manipulação de Locais de Exibição por Página
+  const handleAddPageLocation = () => {
+    setPageLocations((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), condition_type: 'all_pages', value: '' },
+      {
+        id: crypto.randomUUID(),
+        condition_type: 'home',
+        value: '',
+        selector: '.breadcrumbs',
+        position: 'beforebegin',
+      },
     ]);
   };
 
-  const handleUpdatePageRule = (ruleId: string, patch: Partial<PageRuleUi>) => {
-    setPageRules((prev) =>
-      prev.map((r) => (r.id === ruleId ? { ...r, ...patch } : r))
+  const handleUpdatePageLocation = (id: string, patch: Partial<StoryPageLocationUi>) => {
+    setPageLocations((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...patch } : item))
     );
   };
 
-  const handleDeletePageRule = (ruleId: string) => {
-    setPageRules((prev) => prev.filter((r) => r.id !== ruleId));
+  const handleDeletePageLocation = (id: string) => {
+    if (pageLocations.length <= 1) {
+      alert('Você precisa ter pelo menos um local de exibição configurado.');
+      return;
+    }
+    setPageLocations((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // Salvar
+  // Capturar Elemento / Abrir loja
+  const handleInspectStore = (rule: StoryPageLocationUi) => {
+    const baseUrl = currentStore?.url || (currentStore as any)?.store_url || '';
+    if (!baseUrl) {
+      alert('Por favor, cadastre a URL da loja nas Configurações da Loja antes de inspecionar.');
+      return;
+    }
+
+    let targetUrl = baseUrl.replace(/\/+$/, '');
+    if (CONDITION_TYPES_WITH_VALUE.includes(rule.condition_type) && rule.value.trim()) {
+      const cleanPath = rule.value.startsWith('/') ? rule.value : `/${rule.value}`;
+      targetUrl += cleanPath;
+    }
+
+    window.open(targetUrl, '_blank');
+  };
+
+  // Salvar Story
   const handleSave = async () => {
     if (!formData.title.trim()) {
       alert('Por favor, informe o nome do Story.');
@@ -199,26 +226,32 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
 
     try {
       setIsSaving(true);
-      const payload = {
-        name: formData.title.trim(),
-        title: formData.title.trim(),
-        layout: formData.format,
-        format: formData.format,
-        scroll_direction: formData.scroll_direction,
-        status: formData.active ? 'active' : 'inactive',
-        active: formData.active,
-        appearance_id: formData.appearance_id || null,
-        cssSelector: location.selector.trim(),
-        position: location.position,
-        video_ids: selectedVideoIds,
-        page_rules: pageRules,
-      };
 
-      if (isCreate) {
-        await VidlyticsDatabaseService.createStory(storeId, payload);
-      } else {
-        await VidlyticsDatabaseService.updateStory(storeId, storyId!, payload);
-      }
+      const videoUrls = selectedVideoIds
+        .map((vidId) => {
+          const v = allVideos.find((item) => item.id === vidId);
+          return v ? v.video_url || v.url : vidId;
+        })
+        .filter(Boolean);
+
+      const displayLocations = pageLocations.map((loc) => ({
+        id: loc.id,
+        page: loc.condition_type as any,
+        pageValue: CONDITION_TYPES_WITH_VALUE.includes(loc.condition_type) ? loc.value.trim() : null,
+        cssSelector: loc.selector.trim(),
+        position: loc.position,
+      }));
+
+      await VidlyticsDatabaseService.saveStory(storeId, {
+        id: storyId || undefined,
+        name: formData.title.trim(),
+        status: formData.active ? 'ATIVO' : 'INATIVO',
+        layout: formData.format,
+        scrollDirection: formData.scroll_direction,
+        visualStyle: formData.appearance_id,
+        displayLocations,
+        videoUrls,
+      });
 
       onSaved();
     } catch (err) {
@@ -507,124 +540,148 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
         )}
       </div>
 
-      {/* ── CARD 3: LOCAL DE EXIBIÇÃO ── */}
+      {/* ── CARD 3: LOCAIS DE EXIBIÇÃO POR PÁGINA (INTEGRADO) ── */}
       <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-xs">
-        <div className="mb-6 flex items-center gap-2.5 border-b border-slate-100 pb-4">
-          <MapPin className="text-[#0094EB]" size={18} />
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-            LOCAL DE EXIBIÇÃO
-          </h3>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-[1fr_220px]">
-          <div>
-            <label className="mb-2 block text-[9px] font-black uppercase tracking-wider text-slate-400">
-              SELETOR CSS
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={location.selector}
-                onChange={(e) => setLocation((prev) => ({ ...prev, selector: e.target.value }))}
-                placeholder=".breadcrumbs"
-                className="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const url = currentStore?.url || (currentStore as any)?.store_url || '';
-                  if (!url) {
-                    alert('Por favor, informe a URL da loja nas Configurações.');
-                    return;
-                  }
-                  window.open(url, '_blank');
-                }}
-                className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-black text-[#0094EB] hover:bg-blue-50 transition"
-              >
-                🎯 Selecionar
-              </button>
+        <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-2.5">
+            <Globe className="text-[#0094EB]" size={18} />
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                PÁGINAS E LOCAIS DE EXIBIÇÃO
+              </h3>
+              <p className="text-[10px] font-bold text-slate-400">
+                Defina em quais páginas o Story irá aparecer e o seletor CSS exato para cada uma
+              </p>
             </div>
           </div>
-
-          <div>
-            <label className="mb-2 block text-[9px] font-black uppercase tracking-wider text-slate-400">
-              POSIÇÃO
-            </label>
-            <select
-              value={location.position}
-              onChange={(e) => setLocation((prev) => ({ ...prev, position: e.target.value as any }))}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
-            >
-              {POSITION_OPTIONS.map((pos) => (
-                <option key={pos.value} value={pos.value}>
-                  {pos.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* ── CARD 4: QUAL PÁGINA IRÁ APARECER? ── */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-xs">
-        <div className="mb-6 flex items-center gap-2.5 border-b border-slate-100 pb-4">
-          <Globe className="text-[#0094EB]" size={18} />
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-            QUAL PÁGINA IRÁ APARECER?
-          </h3>
-        </div>
-
-        <div className="space-y-3">
-          {pageRules.map((rule) => (
-            <div
-              key={rule.id}
-              className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 sm:flex-row sm:items-center"
-            >
-              <div className="w-full sm:w-56">
-                <select
-                  value={rule.condition_type}
-                  onChange={(e) =>
-                    handleUpdatePageRule(rule.id, { condition_type: e.target.value as any })
-                  }
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
-                >
-                  {PAGE_RULE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {CONDITION_TYPES_WITH_VALUE.includes(rule.condition_type) && (
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={rule.value}
-                    onChange={(e) => handleUpdatePageRule(rule.id, { value: e.target.value })}
-                    placeholder="/colecao, /produto ou trecho da URL"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
-                  />
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={() => handleDeletePageRule(rule.id)}
-                className="self-end rounded-xl border border-rose-100 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-wider text-rose-500 hover:bg-rose-50 sm:self-auto"
-              >
-                Remover
-              </button>
-            </div>
-          ))}
 
           <button
             type="button"
-            onClick={handleAddPageRule}
-            className="rounded-xl bg-[#0094EB] px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-xs hover:bg-[#0080cb]"
+            onClick={handleAddPageLocation}
+            className="flex items-center gap-1.5 rounded-xl bg-[#0094EB] px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-xs hover:bg-[#0080cb]"
           >
-            + ADICIONAR PÁGINA
+            <Plus size={14} /> Adicionar Página
           </button>
+        </div>
+
+        <div className="space-y-4">
+          {pageLocations.map((item, index) => {
+            const hasUrlInput = CONDITION_TYPES_WITH_VALUE.includes(item.condition_type);
+
+            return (
+              <div
+                key={item.id}
+                className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 transition hover:border-slate-200 hover:bg-slate-50"
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-700 text-[10px]">
+                      {index + 1}
+                    </span>
+                    Configuração de Página
+                  </span>
+                  {pageLocations.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePageLocation(item.id)}
+                      className="flex items-center gap-1 text-[10px] font-bold text-rose-500 hover:text-rose-600 transition"
+                    >
+                      <Trash2 size={13} /> Remover
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-12 items-end">
+                  {/* Regra de Página */}
+                  <div className={hasUrlInput ? 'lg:col-span-3' : 'lg:col-span-4'}>
+                    <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      REGRA DA PÁGINA
+                    </label>
+                    <select
+                      value={item.condition_type}
+                      onChange={(e) =>
+                        handleUpdatePageLocation(item.id, {
+                          condition_type: e.target.value as PageRuleCondition,
+                        })
+                      }
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
+                    >
+                      {PAGE_RULE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Valor da URL (condicional) */}
+                  {hasUrlInput && (
+                    <div className="lg:col-span-3">
+                      <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-slate-400">
+                        VALOR / URL
+                      </label>
+                      <input
+                        type="text"
+                        value={item.value}
+                        onChange={(e) =>
+                          handleUpdatePageLocation(item.id, { value: e.target.value })
+                        }
+                        placeholder="/colecao, /produto ou trecho"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
+                      />
+                    </div>
+                  )}
+
+                  {/* Seletor CSS */}
+                  <div className={hasUrlInput ? 'lg:col-span-4' : 'lg:col-span-5'}>
+                    <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      SELETOR CSS DO ELEMENTO
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={item.selector}
+                        onChange={(e) =>
+                          handleUpdatePageLocation(item.id, { selector: e.target.value })
+                        }
+                        placeholder=".breadcrumbs, #main-content..."
+                        className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleInspectStore(item)}
+                        className="flex items-center gap-1 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-black text-[#0094EB] hover:bg-blue-50 transition"
+                      >
+                        🎯 Selecionar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Posição */}
+                  <div className={hasUrlInput ? 'lg:col-span-2' : 'lg:col-span-3'}>
+                    <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      POSIÇÃO
+                    </label>
+                    <select
+                      value={item.position}
+                      onChange={(e) =>
+                        handleUpdatePageLocation(item.id, {
+                          position: e.target.value as DisplayPosition,
+                        })
+                      }
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
+                    >
+                      {POSITION_OPTIONS.map((pos) => (
+                        <option key={pos.value} value={pos.value}>
+                          {pos.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
