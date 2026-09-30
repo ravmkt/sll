@@ -47,17 +47,21 @@ export default function VisaoGeralTab() {
       {/* 1. Header de Boas-Vindas e Status do App */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <div className="space-y-2">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
+            {store?.name || 'Sua Loja'}
+          </h1>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-[#0094eb]/10 text-[#0094eb] uppercase tracking-wide">
               Plano Scale
             </span>
             <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-pink-100 text-pink-600 uppercase tracking-wide">
-              Acesso Vitalício
+              {store?.subscription_status === 'lifetime'
+                ? 'Acesso Vitalício'
+                : store?.subscription_status === 'trialing'
+                ? 'Período de Teste'
+                : 'Acesso Ativo'}
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
-            Olá, Loja
-          </h1>
         </div>
 
         {/* Card Aplicativo Ativado */}
