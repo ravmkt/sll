@@ -17,10 +17,10 @@ interface SocialAccount {
 
 const DEFAULT_CONFIGS = {
   INSTAGRAM: {
-    APP_ID: import.meta.env.VITE_INSTAGRAM_CLIENT_ID || "1780976113328436",
+    APP_ID: import.meta.env.VITE_INSTAGRAM_CLIENT_ID || "4333596016924345",
     REDIRECT_URI:
       import.meta.env.VITE_INSTAGRAM_REDIRECT_URI ||
-      "https://app.vidlytics.com.br/api/auth/instagram/callback",
+      "https://sll-hub-sooty.vercel.app/auth/instagram/callback",
     SCOPE: "instagram_business_basic",
   },
   TIKTOK: {
@@ -344,3 +344,4 @@ export const SocialIntegrationsCard: React.FC<SocialIntegrationsCardProps> = ({ 
     </div>
   );
 };
+

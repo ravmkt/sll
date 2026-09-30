@@ -24,7 +24,7 @@ export default function InstagramCallback() {
       try {
         if (supabase) {
           const { data, error } = await supabase.functions.invoke("instagram-auth", {
-            body: { code, store_id: storeId },
+            body: { code, store_id: storeId, redirect_uri: `${window.location.origin}/auth/instagram/callback` },
           });
 
           if (error || data?.error) {
@@ -82,3 +82,4 @@ export default function InstagramCallback() {
     </div>
   );
 }
+
