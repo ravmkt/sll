@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { Check, AlertCircle, RefreshCw, Unlink, ExternalLink } from "lucide-react";
+import { Check, AlertCircle, RefreshCw, Unlink } from "lucide-react";
 
 interface SocialAccount {
   id?: string;
@@ -13,11 +13,9 @@ interface SocialAccount {
 
 const DEFAULT_CONFIGS = {
   INSTAGRAM: {
-    APP_ID: import.meta.env.VITE_INSTAGRAM_CLIENT_ID || "1486774756647103",
-    REDIRECT_URI:
-      import.meta.env.VITE_INSTAGRAM_REDIRECT_URI ||
-      "https://sll-hub-sooty.vercel.app/auth/instagram/callback",
-    SCOPE: "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement",
+    APP_ID: "4333596016924345",
+    REDIRECT_URI: "https://sll-hub-sooty.vercel.app/auth/instagram/callback",
+    SCOPE: "instagram_business_basic",
   },
   TIKTOK: {
     CLIENT_KEY: import.meta.env.VITE_TIKTOK_CLIENT_KEY || "sbaw4swn8vca0a5p25",
@@ -79,8 +77,8 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
 
     const { APP_ID, REDIRECT_URI, SCOPE } = DEFAULT_CONFIGS.INSTAGRAM;
 
-    // Fluxo oficial da Meta para aplicativos do tipo Empresa / Instagram Graph API
-    const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${APP_ID}&redirect_uri=${encodeURIComponent(
+    // Conexão oficial da API com login empresarial no Instagram
+    const authUrl = `https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_reauth=true&client_id=${APP_ID}&redirect_uri=${encodeURIComponent(
       REDIRECT_URI
     )}&response_type=code&scope=${encodeURIComponent(SCOPE)}&state=${storeId}`;
 
