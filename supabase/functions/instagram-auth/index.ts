@@ -24,11 +24,14 @@ serve(async (req) => {
     const APP_ID = Deno.env.get('INSTAGRAM_APP_ID')!;
     const APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET')!;
 
-    // Garante que o redirect_uri seja identico ao enviado no frontend
     const FINAL_REDIRECT_URI = redirect_uri?.trim() || 'https://sll-hub-sooty.vercel.app/dashboard/integracao';
 
+    console.log('INICIO - code prefix:', code.substring(0, 15) + '...', 'store_id:', store_id);
+    console.log('APP_ID usado:', APP_ID);
+    console.log('redirect_uri usado:', FINAL_REDIRECT_URI);
+    console.log('APP_SECRET length:', APP_SECRET?.length);
+
     // 1. Troca o codigo temporario pelo Short-Lived Access Token
-    // Usa graph.instagram.com para Instagram Login for Business
     const exchangeBody = new URLSearchParams({
       client_id: APP_ID,
       client_secret: APP_SECRET,
@@ -37,8 +40,6 @@ serve(async (req) => {
       code: code,
     });
 
-    console.log('Trocando code pelo token. redirect_uri:', FINAL_REDIRECT_URI);
-
     const tokenResponse = await fetch('https://graph.instagram.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -46,6 +47,7 @@ serve(async (req) => {
     });
 
     const tokenData = await tokenResponse.json();
+    console.log('RESPOSTA TROCA TOKEN:', JSON.stringify(tokenData));
 
     if (!tokenResponse.ok || !tokenData.access_token) {
       console.error('Erro na troca do token Meta:', tokenData);
@@ -62,6 +64,7 @@ serve(async (req) => {
     const longLivedUrl = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${APP_SECRET}&access_token=${shortLivedToken}`;
     const longLivedResp = await fetch(longLivedUrl);
     const longLivedData = await longLivedResp.json();
+    console.log('RESPOSTA LONG-LIVED:', JSON.stringify(longLivedData));
 
     const finalAccessToken = longLivedData.access_token || shortLivedToken;
 
@@ -69,6 +72,7 @@ serve(async (req) => {
     const profileUrl = `https://graph.instagram.com/me?fields=id,username,account_type&access_token=${finalAccessToken}`;
     const profileResp = await fetch(profileUrl);
     const profileData = await profileResp.json();
+    console.log('RESPOSTA PERFIL:', JSON.stringify(profileData));
 
     // 4. Salva ou atualiza a integracao
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
