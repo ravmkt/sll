@@ -21,13 +21,9 @@ serve(async (req) => {
       );
     }
 
-    const APP_ID = Deno.env.get('INSTAGRAM_APP_ID') || '4333596016924345';
-    const APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET') || '';
-    const FINAL_REDIRECT_URI = redirect_uri || Deno.env.get('INSTAGRAM_REDIRECT_URI') || 'https://sll-hub-sooty.vercel.app/auth/instagram/callback';
-
-    if (!APP_SECRET) {
-      throw new Error('Chave secreta INSTAGRAM_APP_SECRET não configurada nas variáveis de ambiente do Supabase.');
-    }
+    const APP_ID = Deno.env.get('INSTAGRAM_APP_ID') || '1780976113328436';
+    const APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET') || 'c195148f7e036d59ad9c39c13415bea2';
+    const FINAL_REDIRECT_URI = redirect_uri || 'https://sll-hub-sooty.vercel.app/auth/instagram/callback';
 
     // 1. Troca o código temporário pelo Short-Lived Access Token
     const formData = new FormData();
@@ -73,7 +69,7 @@ serve(async (req) => {
       store_id: store_id,
       platform: 'instagram',
       access_token: finalAccessToken,
-      account_id: String(instagramUserId || profileData.id),
+      account_id: String(instagramUserId || profileData.id || ''),
       account_username: profileData.username || 'instagram_user',
       updated_at: new Date().toISOString(),
     });

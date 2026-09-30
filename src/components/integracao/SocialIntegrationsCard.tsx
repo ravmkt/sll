@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { Check, AlertCircle, RefreshCw, Unlink, Loader2 } from "lucide-react";
+import { AlertCircle, RefreshCw, Unlink, Loader2 } from "lucide-react";
 
 interface SocialAccount {
   id?: string;
-  provider: "instagram" | "tiktok";
-  account_name: string | null;
+  platform?: "instagram" | "tiktok";
+  provider?: "instagram" | "tiktok";
+  account_username?: string | null;
+  account_name?: string | null;
   account_id?: string | null;
-  status: "connected" | "expired" | "disconnected";
+  status?: "connected" | "expired" | "disconnected";
   updated_at?: string;
 }
 
@@ -25,10 +26,8 @@ const TikTokIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
 );
 
 export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [integrations, setIntegrations] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
-  const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
 
   const fetchIntegrations = useCallback(async () => {
@@ -41,7 +40,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     try {
       const { data, error } = await supabase
         .from("store_integrations")
-        .select("id, provider, account_name, account_id, status, updated_at")
+        .select("*")
         .eq("store_id", storeId);
 
       if (error) throw error;
@@ -57,57 +56,19 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     fetchIntegrations();
   }, [fetchIntegrations]);
 
-  // Captura o retorno do OAuth caso venha na URL do dashboard
-  useEffect(() => {
-    const code = searchParams.get("code");
-    if (code && storeId && !connecting) {
-      const cleanCode = code.replace(/#_$/, "");
-      setConnecting(true);
-
-      const exchangeToken = async () => {
-        try {
-          const redirectUri = "https://sll-hub-sooty.vercel.app/dashboard/integracao";
-          const { data, error } = await supabase.functions.invoke("instagram-auth", {
-            body: {
-              code: cleanCode,
-              store_id: storeId,
-              redirect_uri: redirectUri,
-            },
-          });
-
-          if (error) throw error;
-          alert("Instagram conectado com sucesso!");
-          await fetchIntegrations();
-        } catch (err: any) {
-          console.error("Erro no exchange de token:", err);
-          alert(`Erro ao conectar Instagram: ${err.message || "Tente novamente"}`);
-        } finally {
-          setConnecting(false);
-          // Limpa os parâmetros da URL
-          searchParams.delete("code");
-          searchParams.delete("state");
-          setSearchParams(searchParams, { replace: true });
-        }
-      };
-
-      exchangeToken();
-    }
-  }, [searchParams, storeId, connecting, fetchIntegrations, setSearchParams]);
-
   const handleConnectInstagram = () => {
     if (!storeId) {
       alert("Selecione ou cadastre uma loja primeiro.");
       return;
     }
 
-    // Salva o storeId no localStorage para garantir persistência após o redirect
     localStorage.setItem("sll_oauth_store_id", storeId);
 
-    // URL oficial gerada pela própria Meta Developers (Item 3)
-    const appId = "4333596016924345";
-    const redirectUri = "https://sll-hub-sooty.vercel.app/dashboard/integracao";
+    // App ID homologado da Meta e Redirect URI apontando para o callback do app
+    const appId = "1780976113328436";
+    const redirectUri = `${window.location.origin}/auth/instagram/callback`;
 
-    const authUrl = `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=${appId}&redirect_uri=${encodeURIComponent(
+    const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(
       redirectUri
     )}&response_type=code&scope=instagram_business_basic&state=${storeId}`;
 
@@ -121,7 +82,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     }
 
     const clientKey = import.meta.env.VITE_TIKTOK_CLIENT_KEY || "sbaw4swn8vca0a5p25";
-    const redirectUri = "https://sll-hub-sooty.vercel.app/auth/tiktok/callback";
+    const redirectUri = `${window.location.origin}/auth/tiktok/callback`;
     const scope = "user.info.basic,video.list";
     const csrfState = `${storeId}_${Math.random().toString(36).substring(7)}`;
 
@@ -144,15 +105,9 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     try {
       const { error } = await supabase
         .from("store_integrations")
-        .update({
-          status: "disconnected",
-          access_token: null,
-          refresh_token: null,
-          token_expires_at: null,
-          updated_at: new Date().toISOString(),
-        })
+        .delete()
         .eq("store_id", storeId)
-        .eq("provider", provider);
+        .or(`platform.eq.${provider},provider.eq.${provider}`);
 
       if (error) throw error;
       await fetchIntegrations();
@@ -164,11 +119,14 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
   };
 
   const getStatus = (provider: "instagram" | "tiktok") => {
-    return integrations.find((i) => i.provider === provider);
+    return integrations.find((i) => (i.platform === provider || i.provider === provider));
   };
 
-  const igStatus = getStatus("instagram");
-  const ttStatus = getStatus("tiktok");
+  const igAccount = getStatus("instagram");
+  const ttAccount = getStatus("tiktok");
+
+  const isIgConnected = Boolean(igAccount && (igAccount.status === "connected" || !igAccount.status));
+  const isTtConnected = Boolean(ttAccount && (ttAccount.status === "connected" || !ttAccount.status));
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-10 shadow-sm space-y-6">
@@ -188,20 +146,13 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
         </div>
         <button
           onClick={fetchIntegrations}
-          disabled={loading || connecting}
+          disabled={loading}
           className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           Atualizar status
         </button>
       </div>
-
-      {connecting && (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-pink-50 border border-pink-200 text-pink-700 text-sm font-medium">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Conectando e autenticando seu Instagram com a Meta... aguarde um instante.
-        </div>
-      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Card Instagram */}
@@ -218,12 +169,12 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
                 </div>
               </div>
 
-              {igStatus && igStatus.status === "connected" ? (
+              {isIgConnected ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                   Conectado
                 </span>
-              ) : igStatus && igStatus.status === "expired" ? (
+              ) : igAccount && igAccount.status === "expired" ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 border border-amber-200/60">
                   <AlertCircle className="h-3.5 w-3.5" />
                   Expirado
@@ -235,10 +186,10 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
               )}
             </div>
 
-            {igStatus && igStatus.status === "connected" ? (
+            {isIgConnected ? (
               <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/60 text-xs">
                 <span className="font-medium text-slate-500">Perfil vinculado:</span>{" "}
-                <span className="font-bold text-slate-900">@{igStatus.account_name || "Instagram Business"}</span>
+                <span className="font-bold text-slate-900">@{igAccount?.account_username || igAccount?.account_name || "Instagram Business"}</span>
               </div>
             ) : (
               <p className="text-xs text-slate-600 leading-relaxed">
@@ -248,12 +199,11 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
           </div>
 
           <div className="mt-6 pt-4 border-t border-slate-100">
-            {igStatus && igStatus.status === "connected" ? (
+            {isIgConnected ? (
               <div className="flex items-center justify-between">
                 <button
                   type="button"
                   onClick={handleConnectInstagram}
-                  disabled={connecting}
                   className="text-xs font-semibold text-pink-600 hover:text-pink-700 inline-flex items-center gap-1"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
@@ -262,7 +212,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
                 <button
                   type="button"
                   onClick={() => handleDisconnect("instagram")}
-                  disabled={disconnecting === "instagram" || connecting}
+                  disabled={disconnecting === "instagram"}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
                 >
                   <Unlink className="h-3.5 w-3.5" />
@@ -273,11 +223,11 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
               <button
                 type="button"
                 onClick={handleConnectInstagram}
-                disabled={!storeId || connecting}
+                disabled={!storeId}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:brightness-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <InstagramIcon className="h-4 w-4" />
-                {connecting ? "Conectando..." : "Conectar Conta Instagram"}
+                Conectar Conta Instagram
               </button>
             )}
           </div>
@@ -297,12 +247,12 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
                 </div>
               </div>
 
-              {ttStatus && ttStatus.status === "connected" ? (
+              {isTtConnected ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                   Conectado
                 </span>
-              ) : ttStatus && ttStatus.status === "expired" ? (
+              ) : ttAccount && ttAccount.status === "expired" ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 border border-amber-200/60">
                   <AlertCircle className="h-3.5 w-3.5" />
                   Expirado
@@ -314,10 +264,10 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
               )}
             </div>
 
-            {ttStatus && ttStatus.status === "connected" ? (
+            {isTtConnected ? (
               <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/60 text-xs">
                 <span className="font-medium text-slate-500">Perfil vinculado:</span>{" "}
-                <span className="font-bold text-slate-900">@{ttStatus.account_name || "TikTok Account"}</span>
+                <span className="font-bold text-slate-900">@{ttAccount?.account_username || ttAccount?.account_name || "TikTok Account"}</span>
               </div>
             ) : (
               <p className="text-xs text-slate-600 leading-relaxed">
@@ -327,7 +277,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
           </div>
 
           <div className="mt-6 pt-4 border-t border-slate-100">
-            {ttStatus && ttStatus.status === "connected" ? (
+            {isTtConnected ? (
               <div className="flex items-center justify-between">
                 <button
                   type="button"
