@@ -98,9 +98,13 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     const redirectUri = `${window.location.origin}/dashboard/integracao`;
     sessionStorage.setItem("ig_redirect_uri", redirectUri);
 
-    const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(
-      redirectUri
-    )}&response_type=code&scope=instagram_business_basic&state=${storeId}`;
+        const params = new URLSearchParams();
+    params.set("client_id", appId);
+    params.set("redirect_uri", redirectUri);
+    params.set("response_type", "code");
+    params.set("scope", "instagram_business_basic");
+    params.set("state", storeId);
+    const authUrl = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
 
     window.location.href = authUrl;
   };
