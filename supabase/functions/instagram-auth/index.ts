@@ -43,7 +43,7 @@ serve(async (req) => {
 
     if (!tokenResponse.ok || !tokenData.access_token) {
       console.error('Erro na troca do token Meta:', tokenData);
-      throw new Error(tokenData.error_message || tokenData.error?.message || 'Falha ao obter token do Instagram.');
+      throw new Error((tokenData.error_message || tokenData.error?.message || 'Falha ao obter token do Instagram.') + ' | redirect_uri=[' + FINAL_REDIRECT_URI + '] client_id=[' + APP_ID + ']');
     }
 
     const shortLivedToken = tokenData.access_token;
