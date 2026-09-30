@@ -306,6 +306,9 @@ window.SLL_STORE_ID = "${storeId || ""}";
           copied={copiedTracking}
           onCopy={handleCopyTrackingScript}
         />
+
+        {/* Conexões de Redes Sociais */}
+        <SocialIntegrationsCard storeId={storeId} />
       </div>
     </DashboardLayout>
   );

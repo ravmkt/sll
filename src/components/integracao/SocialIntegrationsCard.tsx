@@ -1,235 +1,316 @@
-import React, { useEffect, useState } from "react";
-import { CheckCircle2, AlertCircle, RefreshCw, Unlink, ExternalLink, Instagram, Video } from "lucide-react";
-import { toast } from "sonner";
-import {
-  getStoreIntegrations,
-  disconnectIntegration,
-  StoreIntegration,
-} from "@/services/integrationsService";
+import React, { useEffect, useState, useCallback } from "react";
+import { CheckCircle2, AlertCircle, RefreshCw, Unlink, ExternalLink, Video } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface SocialIntegrationsCardProps {
-  storeId?: string;
+  storeId: string | null;
 }
 
-export function SocialIntegrationsCard({ storeId }: SocialIntegrationsCardProps) {
-  const [integrations, setIntegrations] = useState<StoreIntegration[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+interface SocialAccount {
+  id: string;
+  provider: "instagram" | "tiktok";
+  account_name: string | null;
+  account_id: string | null;
+  status: "connected" | "expired" | "disconnected";
+  updated_at: string;
+}
 
-  const fetchIntegrations = async () => {
-    if (!storeId) return;
+// Ícones SVG inline para Instagram e TikTok
+const InstagramIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+);
+
+const TikTokIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
+  </svg>
+);
+
+export const SocialIntegrationsCard: React.FC<SocialIntegrationsCardProps> = ({ storeId }) => {
+  const [integrations, setIntegrations] = useState<SocialAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+
+  const fetchIntegrations = useCallback(async () => {
+    if (!storeId) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      setLoading(true);
-      const data = await getStoreIntegrations(storeId);
-      setIntegrations(data);
+      const { data, error } = await supabase
+        .from("store_social_integrations")
+        .select("id, provider, account_name, account_id, status, updated_at")
+        .eq("store_id", storeId);
+
+      if (error) {
+        // Se a tabela ainda não existir no schema public, mantemos a lista vazia
+        console.warn("Informação sobre integrações de redes:", error.message);
+        setIntegrations([]);
+      } else {
+        setIntegrations(data || []);
+      }
     } catch (err) {
-      console.error("Erro ao carregar integrações:", err);
+      console.error("Erro ao carregar conexões sociais:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [storeId]);
 
   useEffect(() => {
     fetchIntegrations();
-  }, [storeId]);
-
-  const instagramIntegration = integrations.find((i) => i.platform === "instagram");
-  const tiktokIntegration = integrations.find((i) => i.platform === "tiktok");
-
-  const handleDisconnect = async (platform: "instagram" | "tiktok") => {
-    if (!storeId) return;
-    const confirm = window.confirm(`Deseja realmente desconectar sua conta do ${platform === "instagram" ? "Instagram" : "TikTok"}?`);
-    if (!confirm) return;
-
-    try {
-      setActionLoading(platform);
-      await disconnectIntegration(storeId, platform);
-      toast.success(`${platform === "instagram" ? "Instagram" : "TikTok"} desconectado com sucesso!`);
-      await fetchIntegrations();
-    } catch (err: any) {
-      toast.error(`Erro ao desconectar: ${err?.message || "Tente novamente."}`);
-    } finally {
-      setActionLoading(null);
-    }
-  };
+  }, [fetchIntegrations]);
 
   const handleConnectInstagram = () => {
-    if (!storeId) {
-      toast.error("Loja não identificada.");
+    if (!storeId) return;
+    const clientId = import.meta.env.VITE_INSTAGRAM_CLIENT_ID || "";
+    const redirectUri = `${window.location.origin}/auth/instagram/callback`;
+    const scope = "instagram_basic,instagram_content_publish,pages_show_list";
+    const state = btoa(JSON.stringify({ storeId, provider: "instagram" }));
+
+    if (!clientId) {
+      alert("Configure a variável VITE_INSTAGRAM_CLIENT_ID no arquivo de ambiente.");
       return;
     }
-    const clientId = import.meta.env.VITE_INSTAGRAM_CLIENT_ID || "1028751335438848";
-    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/instagram/callback`);
-    const state = storeId;
-    const scope = "user_profile,user_media";
-    const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code&state=${state}`;
+
+    const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&scope=${scope}&response_type=code&state=${state}`;
 
     window.location.href = authUrl;
   };
 
   const handleConnectTikTok = () => {
-    if (!storeId) {
-      toast.error("Loja não identificada.");
-      return;
-    }
-    const clientKey = import.meta.env.VITE_TIKTOK_CLIENT_KEY;
+    if (!storeId) return;
+    const clientKey = import.meta.env.VITE_TIKTOK_CLIENT_KEY || "";
+    const redirectUri = `${window.location.origin}/auth/tiktok/callback`;
+    const scope = "user.info.basic,video.list";
+    const state = btoa(JSON.stringify({ storeId, provider: "tiktok" }));
+
     if (!clientKey) {
-      toast.info("A integração direta com o TikTok está sendo configurada para sua loja.");
+      alert("Configure a variável VITE_TIKTOK_CLIENT_KEY no arquivo de ambiente.");
       return;
     }
-    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/tiktok/callback`);
-    const state = storeId;
-    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=user.info.basic,video.list&response_type=code&redirect_uri=${redirectUri}&state=${state}`;
+
+    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=${scope}&response_type=code&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&state=${state}`;
 
     window.location.href = authUrl;
   };
 
+  const handleDisconnect = async (provider: string) => {
+    if (!storeId) return;
+    if (!confirm(`Deseja realmente desconectar a conta do ${provider === "instagram" ? "Instagram" : "TikTok"}?`)) {
+      return;
+    }
+
+    setDisconnecting(provider);
+    try {
+      const { error } = await supabase
+        .from("store_social_integrations")
+        .delete()
+        .eq("store_id", storeId)
+        .eq("provider", provider);
+
+      if (error) throw error;
+      await fetchIntegrations();
+    } catch (err) {
+      console.error("Erro ao desconectar conta:", err);
+      alert("Erro ao desconectar. Tente novamente.");
+    } finally {
+      setDisconnecting(null);
+    }
+  };
+
+  const getStatus = (provider: "instagram" | "tiktok") => {
+    return integrations.find((i) => i.provider === provider);
+  };
+
+  const igStatus = getStatus("instagram");
+  const ttStatus = getStatus("tiktok");
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-10 shadow-sm space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-              Integrações de Redes Sociais
-            </h2>
-            <span className="rounded-full bg-blue-50 border border-blue-200 px-3 py-0.5 text-[10px] font-black uppercase tracking-wider text-blue-700">
-              Mídias & Catálogo
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-pink-100 text-xs font-black text-pink-600">
+              3
             </span>
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 uppercase tracking-tight">
+              Conectar Redes Sociais
+            </h2>
           </div>
-          <p className="mt-1 max-w-3xl text-xs sm:text-sm font-medium leading-relaxed text-slate-500">
-            Conecte suas contas do Instagram e TikTok para sincronizar Reels e vídeos automaticamente com o SLL.
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Conecte suas contas para importar Stories, Reels e TikToks diretamente para os widgets da sua loja.
           </p>
         </div>
-
         <button
           onClick={fetchIntegrations}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 self-start sm:self-auto text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors disabled:opacity-50"
-          title="Recarregar status"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors disabled:opacity-50 self-start sm:self-auto"
+          title="Atualizar status das conexões"
         >
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           Atualizar
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Card Instagram */}
-        <div className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-slate-50/70 p-6 transition-all hover:border-slate-200">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white shadow-sm">
-                <Instagram size={22} />
+        <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-pink-50/20 p-6 transition-all hover:shadow-md hover:border-pink-200">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white shadow-md">
+                  <InstagramIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Instagram</h3>
+                  <p className="text-xs text-slate-500">Stories e Reels da sua página</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-black text-slate-900">Instagram</h3>
-                <p className="text-xs font-medium text-slate-500">
-                  {instagramIntegration ? (
-                    <span className="text-slate-700 font-semibold">
-                      @{instagramIntegration.account_username || "conectado"}
-                    </span>
-                  ) : (
-                    "Reels e vídeos do perfil"
-                  )}
-                </p>
-              </div>
+
+              {igStatus && igStatus.status === "connected" ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Conectado
+                </span>
+              ) : igStatus?.status === "expired" ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Expirado
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                  Desconectado
+                </span>
+              )}
             </div>
 
-            {instagramIntegration ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
-                <CheckCircle2 size={12} />
-                Conectado
-              </span>
+            {igStatus && igStatus.status === "connected" ? (
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/60 text-xs">
+                <span className="font-medium text-slate-500">Perfil vinculado:</span>{" "}
+                <span className="font-bold text-slate-900">@{igStatus.account_name || "Instagram Business"}</span>
+              </div>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-500">
-                <AlertCircle size={12} />
-                Não conectado
-              </span>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Permite sincronizar vídeos automaticamente do feed e stories para exibir em carrosséis interativos.
+              </p>
             )}
           </div>
 
-          <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between">
-            <span className="text-[11px] text-slate-400 font-medium">
-              {instagramIntegration ? "Sincronização ativa" : "Requer autorização da Meta"}
-            </span>
-
-            {instagramIntegration ? (
-              <button
-                onClick={() => handleDisconnect("instagram")}
-                disabled={actionLoading === "instagram"}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition-colors disabled:opacity-50"
-              >
-                <Unlink size={13} />
-                Desconectar
-              </button>
+          <div className="mt-6 pt-4 border-t border-slate-100">
+            {igStatus && igStatus.status === "connected" ? (
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={handleConnectInstagram}
+                  className="text-xs font-semibold text-pink-600 hover:text-pink-700 inline-flex items-center gap-1"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Reconectar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDisconnect("instagram")}
+                  disabled={disconnecting === "instagram"}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                >
+                  <Unlink className="h-3.5 w-3.5" />
+                  {disconnecting === "instagram" ? "Desconectando..." : "Desconectar"}
+                </button>
+              </div>
             ) : (
               <button
+                type="button"
                 onClick={handleConnectInstagram}
-                disabled={actionLoading === "instagram"}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-rose-500 text-white text-xs font-black shadow-sm hover:opacity-95 transition-all"
+                disabled={!storeId}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:brightness-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ExternalLink size={13} />
-                Conectar Conta
+                <InstagramIcon className="h-4 w-4" />
+                Conectar Conta Instagram
               </button>
             )}
           </div>
         </div>
 
         {/* Card TikTok */}
-        <div className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-slate-50/70 p-6 transition-all hover:border-slate-200">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
-                <Video size={22} className="text-cyan-400" />
+        <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/50 p-6 transition-all hover:shadow-md hover:border-slate-300">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white shadow-md">
+                  <TikTokIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">TikTok</h3>
+                  <p className="text-xs text-slate-500">Vídeos do feed e campanhas</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-black text-slate-900">TikTok</h3>
-                <p className="text-xs font-medium text-slate-500">
-                  {tiktokIntegration ? (
-                    <span className="text-slate-700 font-semibold">
-                      @{tiktokIntegration.account_username || "conectado"}
-                    </span>
-                  ) : (
-                    "Vídeos e publicações do TikTok"
-                  )}
-                </p>
-              </div>
+
+              {ttStatus && ttStatus.status === "connected" ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Conectado
+                </span>
+              ) : ttStatus?.status === "expired" ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Expirado
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                  Desconectado
+                </span>
+              )}
             </div>
 
-            {tiktokIntegration ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
-                <CheckCircle2 size={12} />
-                Conectado
-              </span>
+            {ttStatus && ttStatus.status === "connected" ? (
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/60 text-xs">
+                <span className="font-medium text-slate-500">Perfil vinculado:</span>{" "}
+                <span className="font-bold text-slate-900">@{ttStatus.account_name || "TikTok Creator"}</span>
+              </div>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-500">
-                <AlertCircle size={12} />
-                Não conectado
-              </span>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Integre seu canal do TikTok para alimentar automaticamente as vitrines de vídeos curtos no seu e-commerce.
+              </p>
             )}
           </div>
 
-          <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between">
-            <span className="text-[11px] text-slate-400 font-medium">
-              {tiktokIntegration ? "Sincronização ativa" : "Requer autorização do TikTok"}
-            </span>
-
-            {tiktokIntegration ? (
-              <button
-                onClick={() => handleDisconnect("tiktok")}
-                disabled={actionLoading === "tiktok"}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition-colors disabled:opacity-50"
-              >
-                <Unlink size={13} />
-                Desconectar
-              </button>
+          <div className="mt-6 pt-4 border-t border-slate-100">
+            {ttStatus && ttStatus.status === "connected" ? (
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={handleConnectTikTok}
+                  className="text-xs font-semibold text-slate-800 hover:text-black inline-flex items-center gap-1"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Reconectar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDisconnect("tiktok")}
+                  disabled={disconnecting === "tiktok"}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                >
+                  <Unlink className="h-3.5 w-3.5" />
+                  {disconnecting === "tiktok" ? "Desconectando..." : "Desconectar"}
+                </button>
+              </div>
             ) : (
               <button
+                type="button"
                 onClick={handleConnectTikTok}
-                disabled={actionLoading === "tiktok"}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black shadow-sm transition-all"
+                disabled={!storeId}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-black px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ExternalLink size={13} />
-                Conectar Conta
+                <TikTokIcon className="h-4 w-4" />
+                Conectar Conta TikTok
               </button>
             )}
           </div>
@@ -237,4 +318,4 @@ export function SocialIntegrationsCard({ storeId }: SocialIntegrationsCardProps)
       </div>
     </div>
   );
-}
+};
