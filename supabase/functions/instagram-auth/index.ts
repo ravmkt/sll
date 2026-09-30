@@ -21,8 +21,8 @@ serve(async (req) => {
       );
     }
 
-    const APP_ID = Deno.env.get('INSTAGRAM_APP_ID') || '1780976113328436';
-    const APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET') || 'c195148f7e036d59ad9c39c13415bea2';
+    const APP_ID = Deno.env.get('INSTAGRAM_APP_ID') || '4333596016924345';
+    const APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET') || '5231502f1b877ba7d6318b5503d473b4';
     const FINAL_REDIRECT_URI = redirect_uri || 'https://sll-hub-sooty.vercel.app/auth/instagram/callback';
 
     // 1. Troca o código temporário pelo Short-Lived Access Token
