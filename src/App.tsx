@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { useAuth } from './contexts/AuthContext';
 import { LojaProvider } from './contexts/LojaContext';
 import { OnboardingModal } from './components/OnboardingModal';
+import { SubscriptionGate } from './components/auth/SubscriptionGate';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -16,6 +17,7 @@ const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
 const SettingsPage = lazy(() => import('./pages/configuracoes/SettingsPage'));
 const Assinaturas = lazy(() => import('./pages/assinaturas/Assinaturas'));
 const Planos = lazy(() => import('./pages/planos/Planos'));
+const PlanosGatePage = lazy(() => import('./pages/planos/PlanosGatePage'));
 const IntegrationPage = lazy(() => import('./pages/integracao/IntegrationPage'));
 
 function PageLoader() {
@@ -45,50 +47,123 @@ function AppRoutes() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
 
+        {/* Landing Page de Bloqueio/Upgrade (Acessível a usuários logados) */}
         <Route
-          path="/dashboard"
-          element={user ? <Dashboard /> : <Navigate to="/auth" replace />}
+          path="/planos-bloqueio"
+          element={user ? <PlanosGatePage /> : <Navigate to="/auth" replace />}
         />
-        <Route
-          path="/dashboard/modules/vidlytics"
-          element={user ? <Vidlytics /> : <Navigate to="/auth" replace />}
-        />
-<Route
-  path="/dashboard/assinaturas"
-  element={user ? <Assinaturas /> : <Navigate to="/auth" replace />}
-/>
+
+        {/* Área de Planos e Assinaturas (Sempre acessível para permitir contratação) */}
         <Route
           path="/dashboard/planos"
           element={user ? <Planos /> : <Navigate to="/auth" replace />}
         />
         <Route
+          path="/dashboard/assinaturas"
+          element={user ? <Assinaturas /> : <Navigate to="/auth" replace />}
+        />
+
+        {/* Rotas Operacionais Protegidas pelo SubscriptionGate */}
+        <Route
+          path="/dashboard"
+          element={
+            user ? (
+              <SubscriptionGate>
+                <Dashboard />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
+        <Route
+          path="/dashboard/modules/vidlytics"
+          element={
+            user ? (
+              <SubscriptionGate>
+                <Vidlytics />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
+        <Route
           path="/dashboard/modules/live-commerce"
-          element={user ? <LiveCommerce /> : <Navigate to="/auth" replace />}
+          element={
+            user ? (
+              <SubscriptionGate>
+                <LiveCommerce />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
         />
         <Route
           path="/dashboard/modules/live-commerce/admin/:id"
-          element={user ? <LiveAdminPage /> : <Navigate to="/auth" replace />}
+          element={
+            user ? (
+              <SubscriptionGate>
+                <LiveAdminPage />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
         />
         <Route
           path="/dashboard/products"
-          element={user ? <Products /> : <Navigate to="/auth" replace />}
+          element={
+            user ? (
+              <SubscriptionGate>
+                <Products />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
         />
         <Route
           path="/dashboard/afiliados"
-          element={user ? <IndicaEGanha /> : <Navigate to="/auth" replace />}
+          element={
+            user ? (
+              <SubscriptionGate>
+                <IndicaEGanha />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
         />
         <Route
           path="/dashboard/settings"
-          element={user ? <SettingsPage /> : <Navigate to="/auth" replace />}
+          element={
+            user ? (
+              <SubscriptionGate>
+                <SettingsPage />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
         />
         <Route
           path="/dashboard/modules"
           element={<Navigate to="/dashboard/modules/vidlytics" replace />}
         />
-<Route
-  path="/dashboard/integracao"
-  element={user ? <IntegrationPage /> : <Navigate to="/auth" replace />}
-/>
+        <Route
+          path="/dashboard/integracao"
+          element={
+            user ? (
+              <SubscriptionGate>
+                <IntegrationPage />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
 
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
@@ -106,5 +181,3 @@ export default function App() {
     </Router>
   );
 }
-
-

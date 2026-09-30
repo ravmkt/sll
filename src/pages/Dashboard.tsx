@@ -2,24 +2,41 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { useLoja } from '../contexts/LojaContext';
-import { Video, Radio, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Video, Radio, ShoppingBag, ArrowRight, Store } from 'lucide-react';
 
 export default function Dashboard() {
   const { store } = useLoja();
 
+  const storeName = store?.name || 'sua loja';
+  const logoUrl = store?.logo_url;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Visão Geral
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Loja Selecionada:{' '}
-            <span className="font-semibold text-[#0094eb]">
-              {store?.name || 'Nenhuma loja ativa'}
-            </span>
-          </p>
+        {/* Cabeçalho simplificado com logotipo e cumprimento */}
+        <div className="flex items-center gap-4 bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-6 shadow-sm">
+          <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-[#0094eb]/30 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 shadow-sm">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={storeName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-[#0094eb]/10 text-[#0094eb] flex items-center justify-center font-bold text-xl uppercase">
+                {storeName.charAt(0) || <Store size={24} />}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              Olá, <span className="text-[#0094eb]">{storeName}</span>!
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm mt-0.5">
+              Seja bem-vindo ao seu painel de controle do ecossistema SLL.
+            </p>
+          </div>
         </div>
 
         {/* Módulos em Destaque */}
