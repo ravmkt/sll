@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { CheckCircle2, AlertCircle, RefreshCw, Unlink } from "lucide-react";
+import { CheckCircle2, AlertCircle, RefreshCw, Unlink, HelpCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface SocialIntegrationsCardProps {
@@ -15,14 +15,19 @@ interface SocialAccount {
   updated_at?: string;
 }
 
-// Configurações padrão oficiais herdadas do Vidlytics
 const DEFAULT_CONFIGS = {
   INSTAGRAM: {
     APP_ID: import.meta.env.VITE_INSTAGRAM_CLIENT_ID || "1780976113328436",
+    REDIRECT_URI:
+      import.meta.env.VITE_INSTAGRAM_REDIRECT_URI ||
+      "https://app.vidlytics.com.br/api/auth/instagram/callback",
     SCOPE: "instagram_business_basic",
   },
   TIKTOK: {
     CLIENT_KEY: import.meta.env.VITE_TIKTOK_CLIENT_KEY || "sbaw4swn8vca0a5p25",
+    REDIRECT_URI:
+      import.meta.env.VITE_TIKTOK_REDIRECT_URI ||
+      "https://wznvecurmisgoaijykbt.supabase.co/functions/v1/tiktok-oauth-callback",
     SCOPE: "user.info.basic,video.list",
   },
 };
@@ -51,7 +56,6 @@ export const SocialIntegrationsCard: React.FC<SocialIntegrationsCardProps> = ({ 
     }
 
     try {
-      // 1. Tenta buscar da tabela store_integrations (legado e compatível)
       const { data: legacyData } = await supabase
         .from("store_integrations")
         .select("platform, account_username, updated_at")
@@ -68,7 +72,6 @@ export const SocialIntegrationsCard: React.FC<SocialIntegrationsCardProps> = ({ 
         return;
       }
 
-      // 2. Se não achar no legado, busca em store_social_integrations
       const { data: socialData } = await supabase
         .from("store_social_integrations")
         .select("id, provider, account_name, account_id, status, updated_at")
@@ -94,12 +97,10 @@ export const SocialIntegrationsCard: React.FC<SocialIntegrationsCardProps> = ({ 
       return;
     }
 
-    const { APP_ID, SCOPE } = DEFAULT_CONFIGS.INSTAGRAM;
-    const redirectUri = `${window.location.origin}/auth/instagram/callback`;
+    const { APP_ID, REDIRECT_URI, SCOPE } = DEFAULT_CONFIGS.INSTAGRAM;
 
-    // Redireciona diretamente para o fluxo oficial de autorização da Meta/Instagram
     const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${APP_ID}&redirect_uri=${encodeURIComponent(
-      redirectUri
+      REDIRECT_URI
     )}&response_type=code&scope=${SCOPE}&state=${storeId}`;
 
     window.location.href = authUrl;
@@ -111,11 +112,10 @@ export const SocialIntegrationsCard: React.FC<SocialIntegrationsCardProps> = ({ 
       return;
     }
 
-    const { CLIENT_KEY, SCOPE } = DEFAULT_CONFIGS.TIKTOK;
-    const redirectUri = `${window.location.origin}/auth/tiktok/callback`;
+    const { CLIENT_KEY, REDIRECT_URI, SCOPE } = DEFAULT_CONFIGS.TIKTOK;
 
-    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${CLIENT_KEY}&response_type=code&scope=${SCOPE}&redirect_uri=${encodeURIComponent(
-      redirectUri
+    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${CLIENT_KEY}&scope=${SCOPE}&response_type=code&redirect_uri=${encodeURIComponent(
+      REDIRECT_URI
     )}&state=${storeId}`;
 
     window.location.href = authUrl;
