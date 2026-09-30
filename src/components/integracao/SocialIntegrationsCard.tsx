@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { CheckCircle2, AlertCircle, RefreshCw, Unlink, ExternalLink, Video } from "lucide-react";
+import { CheckCircle2, AlertCircle, RefreshCw, Unlink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface SocialIntegrationsCardProps {
@@ -7,15 +7,26 @@ interface SocialIntegrationsCardProps {
 }
 
 interface SocialAccount {
-  id: string;
+  id?: string;
   provider: "instagram" | "tiktok";
   account_name: string | null;
-  account_id: string | null;
+  account_id?: string | null;
   status: "connected" | "expired" | "disconnected";
-  updated_at: string;
+  updated_at?: string;
 }
 
-// Ícones SVG inline para Instagram e TikTok
+// Configurações padrão oficiais herdadas do Vidlytics
+const DEFAULT_CONFIGS = {
+  INSTAGRAM: {
+    APP_ID: import.meta.env.VITE_INSTAGRAM_CLIENT_ID || "1780976113328436",
+    SCOPE: "instagram_business_basic",
+  },
+  TIKTOK: {
+    CLIENT_KEY: import.meta.env.VITE_TIKTOK_CLIENT_KEY || "sbaw4swn8vca0a5p25",
+    SCOPE: "user.info.basic,video.list",
+  },
+};
+
 const InstagramIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -40,20 +51,34 @@ export const SocialIntegrationsCard: React.FC<SocialIntegrationsCardProps> = ({ 
     }
 
     try {
-      const { data, error } = await supabase
+      // 1. Tenta buscar da tabela store_integrations (legado e compatível)
+      const { data: legacyData } = await supabase
+        .from("store_integrations")
+        .select("platform, account_username, updated_at")
+        .eq("store_id", storeId);
+
+      if (legacyData && legacyData.length > 0) {
+        const mapped: SocialAccount[] = legacyData.map((item: any) => ({
+          provider: item.platform,
+          account_name: item.account_username,
+          status: "connected",
+          updated_at: item.updated_at,
+        }));
+        setIntegrations(mapped);
+        return;
+      }
+
+      // 2. Se não achar no legado, busca em store_social_integrations
+      const { data: socialData } = await supabase
         .from("store_social_integrations")
         .select("id, provider, account_name, account_id, status, updated_at")
         .eq("store_id", storeId);
 
-      if (error) {
-        // Se a tabela ainda não existir no schema public, mantemos a lista vazia
-        console.warn("Informação sobre integrações de redes:", error.message);
-        setIntegrations([]);
-      } else {
-        setIntegrations(data || []);
+      if (socialData) {
+        setIntegrations(socialData);
       }
     } catch (err) {
-      console.error("Erro ao carregar conexões sociais:", err);
+      console.warn("Status de integrações:", err);
     } finally {
       setLoading(false);
     }
@@ -64,39 +89,34 @@ export const SocialIntegrationsCard: React.FC<SocialIntegrationsCardProps> = ({ 
   }, [fetchIntegrations]);
 
   const handleConnectInstagram = () => {
-    if (!storeId) return;
-    const clientId = import.meta.env.VITE_INSTAGRAM_CLIENT_ID || "";
-    const redirectUri = `${window.location.origin}/auth/instagram/callback`;
-    const scope = "instagram_basic,instagram_content_publish,pages_show_list";
-    const state = btoa(JSON.stringify({ storeId, provider: "instagram" }));
-
-    if (!clientId) {
-      alert("Configure a variável VITE_INSTAGRAM_CLIENT_ID no arquivo de ambiente.");
+    if (!storeId) {
+      alert("Selecione ou cadastre uma loja primeiro.");
       return;
     }
 
-    const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+    const { APP_ID, SCOPE } = DEFAULT_CONFIGS.INSTAGRAM;
+    const redirectUri = `${window.location.origin}/auth/instagram/callback`;
+
+    // Redireciona diretamente para o fluxo oficial de autorização da Meta/Instagram
+    const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${APP_ID}&redirect_uri=${encodeURIComponent(
       redirectUri
-    )}&scope=${scope}&response_type=code&state=${state}`;
+    )}&response_type=code&scope=${SCOPE}&state=${storeId}`;
 
     window.location.href = authUrl;
   };
 
   const handleConnectTikTok = () => {
-    if (!storeId) return;
-    const clientKey = import.meta.env.VITE_TIKTOK_CLIENT_KEY || "";
-    const redirectUri = `${window.location.origin}/auth/tiktok/callback`;
-    const scope = "user.info.basic,video.list";
-    const state = btoa(JSON.stringify({ storeId, provider: "tiktok" }));
-
-    if (!clientKey) {
-      alert("Configure a variável VITE_TIKTOK_CLIENT_KEY no arquivo de ambiente.");
+    if (!storeId) {
+      alert("Selecione ou cadastre uma loja primeiro.");
       return;
     }
 
-    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=${scope}&response_type=code&redirect_uri=${encodeURIComponent(
+    const { CLIENT_KEY, SCOPE } = DEFAULT_CONFIGS.TIKTOK;
+    const redirectUri = `${window.location.origin}/auth/tiktok/callback`;
+
+    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${CLIENT_KEY}&response_type=code&scope=${SCOPE}&redirect_uri=${encodeURIComponent(
       redirectUri
-    )}&state=${state}`;
+    )}&state=${storeId}`;
 
     window.location.href = authUrl;
   };
@@ -109,13 +129,18 @@ export const SocialIntegrationsCard: React.FC<SocialIntegrationsCardProps> = ({ 
 
     setDisconnecting(provider);
     try {
-      const { error } = await supabase
+      await supabase
+        .from("store_integrations")
+        .delete()
+        .eq("store_id", storeId)
+        .eq("platform", provider);
+
+      await supabase
         .from("store_social_integrations")
         .delete()
         .eq("store_id", storeId)
         .eq("provider", provider);
 
-      if (error) throw error;
       await fetchIntegrations();
     } catch (err) {
       console.error("Erro ao desconectar conta:", err);
