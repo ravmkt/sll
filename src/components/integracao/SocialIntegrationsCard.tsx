@@ -73,7 +73,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
         body: { code, store_id: state, redirect_uri: currentRedirect }
       }).then(({ error }) => {
         if (error) {
-          alert("Erro ao conectar: " + error.message);
+          Promise.resolve((error as any)?.context?.json?.()).then((b: any) => alert("Erro ao conectar: " + (b?.error || error.message))).catch(() => alert("Erro ao conectar: " + error.message));
         } else {
           fetchIntegrations();
         }
@@ -95,7 +95,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
 
     // App ID homologado da Meta e Redirect URI apontando para o callback do app
     const appId = "4333396016924345";
-    const redirectUri = `${window.location.origin}/auth/instagram/callback`;
+    const redirectUri = `${window.location.origin}/dashboard/integracao`;
     sessionStorage.setItem("ig_redirect_uri", redirectUri);
 
     const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(
