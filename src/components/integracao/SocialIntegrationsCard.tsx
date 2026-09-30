@@ -1,1 +1,350 @@
-import { useState, useEffect, useCallback } from "react";import { supabase } from "@/lib/supabase";import { AlertCircle, RefreshCw, Unlink, Loader2 } from "lucide-react";interface SocialAccount {  id?: string;  platform?: "instagram" | "tiktok";  provider?: "instagram" | "tiktok";  account_username?: string | null;  account_name?: string | null;  account_id?: string | null;  status?: "connected" | "expired" | "disconnected";  updated_at?: string;}const InstagramIcon = ({ className = "w-5 h-5" }: { className?: string }) => (  <svg className={className} viewBox="0 0 24 24" fill="currentColor">    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>  </svg>);const TikTokIcon = ({ className = "w-5 h-5" }: { className?: string }) => (  <svg className={className} viewBox="0 0 24 24" fill="currentColor">    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/>  </svg>);export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {  const [integrations, setIntegrations] = useState<SocialAccount[]>([]);  const [loading, setLoading] = useState(true);  const [disconnecting, setDisconnecting] = useState<string | null>(null);  const fetchIntegrations = useCallback(async () => {    if (!storeId) {      setIntegrations([]);      setLoading(false);      return;    }    setLoading(true);    try {      const { data, error } = await supabase        .from("store_integrations")        .select("*")        .eq("store_id", storeId);      if (error) throw error;      setIntegrations((data as SocialAccount[]) || []);    } catch (err) {      console.error("Erro ao buscar integrações sociais:", err);    } finally {      setLoading(false);    }  }, [storeId]);  useEffect(() => {    fetchIntegrations();  }, [fetchIntegrations]);    // Captura o retorno do Instagram direto na página de integrações  useEffect(() => {    const params = new URLSearchParams(window.location.search);    const code = params.get("code");    const state = params.get("state");        if (code && state) {      // Limpa a URL para ficar elegante e não processar duas vezes      window.history.replaceState({}, document.title, window.location.pathname);      setLoading(true);            const currentRedirect = window.location.origin + "/dashboard/integracao";            supabase.functions.invoke("instagram-auth", {        body: { code, store_id: state, redirect_uri: currentRedirect }      }).then(({ error }) => {        if (error) {          Promise.resolve((error as any)?.context?.json?.()).then((b: any) => alert("Erro ao conectar: " + (b?.error || error.message))).catch(() => alert("Erro ao conectar: " + error.message));        } else {          fetchIntegrations();        }      }).catch(err => {        console.error("Erro fatal:", err);      }).finally(() => {        setLoading(false);      });    }  }, [fetchIntegrations]);  const handleConnectInstagram = () => {    if (!storeId) {      alert("Selecione ou cadastre uma loja primeiro.");      return;    }    localStorage.setItem("sll_oauth_store_id", storeId);    // App ID homologado da Meta e Redirect URI apontando para o callback do app    const appId = "4333396016924345";    const redirectUri = `${window.location.origin}/dashboard/integracao`;    sessionStorage.setItem("ig_redirect_uri", redirectUri);        const params = new URLSearchParams();    params.set("client_id", appId);    params.set("redirect_uri", redirectUri);    params.set("response_type", "code");    params.set("scope", "instagram_business_basic");    params.set("state", storeId);    const authUrl = `https://www.instagram.com/oauth/authorize?${params.toString()}`;    window.location.href = authUrl;  };  const handleConnectTikTok = () => {    if (!storeId) {      alert("Selecione ou cadastre uma loja primeiro.");      return;    }    const clientKey = import.meta.env.VITE_TIKTOK_CLIENT_KEY || "sbaw4swn8vca0a5p25";    const redirectUri = `${window.location.origin}/auth/tiktok/callback`;    const scope = "user.info.basic,video.list";    const csrfState = `${storeId}_${Math.random().toString(36).substring(7)}`;    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=${encodeURIComponent(      scope    )}&response_type=code&redirect_uri=${encodeURIComponent(      redirectUri    )}&state=${csrfState}`;    window.location.href = authUrl;  };  const handleDisconnect = async (provider: string) => {    if (!storeId) return;    if (!confirm(`Deseja realmente desconectar a conta do ${provider === "instagram" ? "Instagram" : "TikTok"}?`)) {      return;    }    setDisconnecting(provider);    try {      const { error } = await supabase        .from("store_integrations")        .delete()        .eq("store_id", storeId)        .or(`platform.eq.${provider},provider.eq.${provider}`);      if (error) throw error;      await fetchIntegrations();    } catch (err: any) {      alert(`Erro ao desconectar: ${err.message}`);    } finally {      setDisconnecting(null);    }  };  const getStatus = (provider: "instagram" | "tiktok") => {    return integrations.find((i) => (i.platform === provider || i.provider === provider));  };  const igAccount = getStatus("instagram");  const ttAccount = getStatus("tiktok");  const isIgConnected = Boolean(igAccount && (igAccount.status === "connected" || !igAccount.status));  const isTtConnected = Boolean(ttAccount && (ttAccount.status === "connected" || !ttAccount.status));  return (    <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-10 shadow-sm space-y-6">      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">        <div>          <div className="flex items-center gap-2">            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-50 text-xs font-bold text-pink-600 border border-pink-100">              3            </span>            <h2 className="text-lg font-bold text-slate-900">              Conectar Redes Sociais            </h2>          </div>          <p className="mt-1 text-sm text-slate-500">            Importe vídeos, stories e reels automaticamente para sua loja sem precisar subir arquivos manuais.          </p>        </div>        <button          onClick={fetchIntegrations}          disabled={loading}          className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"        >          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />          Atualizar status        </button>      </div>      <div className="grid gap-6 md:grid-cols-2">        {/* Card Instagram */}        <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-pink-50/20 p-6 transition-all hover:shadow-md hover:border-pink-200">          <div className="space-y-4">            <div className="flex items-center justify-between">              <div className="flex items-center gap-3">                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white shadow-md">                  <InstagramIcon className="h-6 w-6" />                </div>                <div>                  <h3 className="text-base font-bold text-slate-900">Instagram</h3>                  <p className="text-xs text-slate-500">Stories e Reels da sua página</p>                </div>              </div>              {isIgConnected ? (                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200/60">                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />                  Conectado                </span>              ) : igAccount && igAccount.status === "expired" ? (                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 border border-amber-200/60">                  <AlertCircle className="h-3.5 w-3.5" />                  Expirado                </span>              ) : (                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">                  Não conectado                </span>              )}            </div>            {isIgConnected ? (              <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/60 text-xs">                <span className="font-medium text-slate-500">Perfil vinculado:</span>{" "}                <span className="font-bold text-slate-900">@{igAccount?.account_username || igAccount?.account_name || "Instagram Business"}</span>              </div>            ) : (              <p className="text-xs text-slate-600 leading-relaxed">                Permite sincronizar vídeos automaticamente do feed e stories para exibir em carrosséis interativos.              </p>            )}          </div>          <div className="mt-6 pt-4 border-t border-slate-100">            {isIgConnected ? (              <div className="flex items-center justify-between">                <button                  type="button"                  onClick={handleConnectInstagram}                  className="text-xs font-semibold text-pink-600 hover:text-pink-700 inline-flex items-center gap-1"                >                  <RefreshCw className="h-3.5 w-3.5" />                  Reconectar                </button>                <button                  type="button"                  onClick={() => handleDisconnect("instagram")}                  disabled={disconnecting === "instagram"}                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"                >                  <Unlink className="h-3.5 w-3.5" />                  {disconnecting === "instagram" ? "Desconectando..." : "Desconectar"}                </button>              </div>            ) : (              <button                type="button"                onClick={handleConnectInstagram}                disabled={!storeId}                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:brightness-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"              >                <InstagramIcon className="h-4 w-4" />                Conectar Conta Instagram              </button>            )}          </div>        </div>        {/* Card TikTok */}        <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/50 p-6 transition-all hover:shadow-md hover:border-slate-300">          <div className="space-y-4">            <div className="flex items-center justify-between">              <div className="flex items-center gap-3">                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white shadow-md">                  <TikTokIcon className="h-6 w-6" />                </div>                <div>                  <h3 className="text-base font-bold text-slate-900">TikTok</h3>                  <p className="text-xs text-slate-500">Vídeos do seu perfil comercial</p>                </div>              </div>              {isTtConnected ? (                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200/60">                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />                  Conectado                </span>              ) : ttAccount && ttAccount.status === "expired" ? (                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 border border-amber-200/60">                  <AlertCircle className="h-3.5 w-3.5" />                  Expirado                </span>              ) : (                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">                  Não conectado                </span>              )}            </div>            {isTtConnected ? (              <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/60 text-xs">                <span className="font-medium text-slate-500">Perfil vinculado:</span>{" "}                <span className="font-bold text-slate-900">@{ttAccount?.account_username || ttAccount?.account_name || "TikTok Account"}</span>              </div>            ) : (              <p className="text-xs text-slate-600 leading-relaxed">                Importe os vídeos publicados na sua conta do TikTok para transformar em vídeos interativos e shoppable.              </p>            )}          </div>          <div className="mt-6 pt-4 border-t border-slate-100">            {isTtConnected ? (              <div className="flex items-center justify-between">                <button                  type="button"                  onClick={handleConnectTikTok}                  className="text-xs font-semibold text-slate-800 hover:text-black inline-flex items-center gap-1"                >                  <RefreshCw className="h-3.5 w-3.5" />                  Reconectar                </button>                <button                  type="button"                  onClick={() => handleDisconnect("tiktok")}                  disabled={disconnecting === "tiktok"}                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"                >                  <Unlink className="h-3.5 w-3.5" />                  {disconnecting === "tiktok" ? "Desconectando..." : "Desconectar"}                </button>              </div>            ) : (              <button                type="button"                onClick={handleConnectTikTok}                disabled={!storeId}                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"              >                <TikTokIcon className="h-4 w-4" />                Conectar Conta TikTok              </button>            )}          </div>        </div>      </div>    </div>  );}
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
+import { AlertCircle, RefreshCw, Unlink, Loader2 } from "lucide-react";
+
+interface SocialAccount {
+  id?: string;
+  platform?: "instagram" | "tiktok";
+  provider?: "instagram" | "tiktok";
+  account_username?: string | null;
+  account_name?: string | null;
+  account_id?: string | null;
+  status?: "connected" | "expired" | "disconnected";
+  updated_at?: string;
+}
+
+const InstagramIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+);
+
+const TikTokIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/>
+  </svg>
+);
+
+export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
+  const [integrations, setIntegrations] = useState<SocialAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+
+  const fetchIntegrations = useCallback(async () => {
+    if (!storeId) {
+      setIntegrations([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("store_integrations")
+        .select("*")
+        .eq("store_id", storeId);
+
+      if (error) throw error;
+      setIntegrations((data as SocialAccount[]) || []);
+    } catch (err) {
+      console.error("Erro ao buscar integrações sociais:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [storeId]);
+
+  useEffect(() => {
+    fetchIntegrations();
+  }, [fetchIntegrations]);
+
+    // Captura o retorno do Instagram direto na página de integrações
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const state = params.get("state");
+    
+    if (code && state) {
+      // Limpa a URL para ficar elegante e não processar duas vezes
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setLoading(true);
+      
+      const currentRedirect = window.location.origin + "/dashboard/integracao";
+      
+      supabase.functions.invoke("instagram-auth", {
+        body: { code, store_id: state, redirect_uri: currentRedirect }
+      }).then(({ error }) => {
+        if (error) {
+          Promise.resolve((error as any)?.context?.json?.()).then((b: any) => alert("Erro ao conectar: " + (b?.error || error.message))).catch(() => alert("Erro ao conectar: " + error.message));
+        } else {
+          fetchIntegrations();
+        }
+      }).catch(err => {
+        console.error("Erro fatal:", err);
+      }).finally(() => {
+        setLoading(false);
+      });
+    }
+  }, [fetchIntegrations]);
+
+  const handleConnectInstagram = () => {
+    if (!storeId) {
+      alert("Selecione ou cadastre uma loja primeiro.");
+      return;
+    }
+
+    localStorage.setItem("sll_oauth_store_id", storeId);
+
+    // App ID homologado da Meta e Redirect URI apontando para o callback do app
+    const appId = "4333396016924345";
+    const redirectUri = `${window.location.origin}/dashboard/integracao`;
+    sessionStorage.setItem("ig_redirect_uri", redirectUri);
+
+        const params = new URLSearchParams();
+    params.set("client_id", appId);
+    params.set("redirect_uri", redirectUri);
+    params.set("response_type", "code");
+    params.set("scope", "instagram_business_basic");
+    params.set("state", storeId);
+    const authUrl = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+
+    window.location.href = authUrl;
+  };
+
+  const handleConnectTikTok = () => {
+    if (!storeId) {
+      alert("Selecione ou cadastre uma loja primeiro.");
+      return;
+    }
+
+    const clientKey = import.meta.env.VITE_TIKTOK_CLIENT_KEY || "sbaw4swn8vca0a5p25";
+    const redirectUri = `${window.location.origin}/auth/tiktok/callback`;
+    const scope = "user.info.basic,video.list";
+    const csrfState = `${storeId}_${Math.random().toString(36).substring(7)}`;
+
+    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=${encodeURIComponent(
+      scope
+    )}&response_type=code&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&state=${csrfState}`;
+
+    window.location.href = authUrl;
+  };
+
+  const handleDisconnect = async (provider: string) => {
+    if (!storeId) return;
+    if (!confirm(`Deseja realmente desconectar a conta do ${provider === "instagram" ? "Instagram" : "TikTok"}?`)) {
+      return;
+    }
+
+    setDisconnecting(provider);
+    try {
+      const { error } = await supabase
+        .from("store_integrations")
+        .delete()
+        .eq("store_id", storeId)
+        .or(`platform.eq.${provider},provider.eq.${provider}`);
+
+      if (error) throw error;
+      await fetchIntegrations();
+    } catch (err: any) {
+      alert(`Erro ao desconectar: ${err.message}`);
+    } finally {
+      setDisconnecting(null);
+    }
+  };
+
+  const getStatus = (provider: "instagram" | "tiktok") => {
+    return integrations.find((i) => (i.platform === provider || i.provider === provider));
+  };
+
+  const igAccount = getStatus("instagram");
+  const ttAccount = getStatus("tiktok");
+
+  const isIgConnected = Boolean(igAccount && (igAccount.status === "connected" || !igAccount.status));
+  const isTtConnected = Boolean(ttAccount && (ttAccount.status === "connected" || !ttAccount.status));
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-10 shadow-sm space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-50 text-xs font-bold text-pink-600 border border-pink-100">
+              3
+            </span>
+            <h2 className="text-lg font-bold text-slate-900">
+              Conectar Redes Sociais
+            </h2>
+          </div>
+          <p className="mt-1 text-sm text-slate-500">
+            Importe vídeos, stories e reels automaticamente para sua loja sem precisar subir arquivos manuais.
+          </p>
+        </div>
+        <button
+          onClick={fetchIntegrations}
+          disabled={loading}
+          className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+          Atualizar status
+        </button>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Card Instagram */}
+        <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-pink-50/20 p-6 transition-all hover:shadow-md hover:border-pink-200">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white shadow-md">
+                  <InstagramIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Instagram</h3>
+                  <p className="text-xs text-slate-500">Stories e Reels da sua página</p>
+                </div>
+              </div>
+
+              {isIgConnected ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Conectado
+                </span>
+              ) : igAccount && igAccount.status === "expired" ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 border border-amber-200/60">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Expirado
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
+                  Não conectado
+                </span>
+              )}
+            </div>
+
+            {isIgConnected ? (
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/60 text-xs">
+                <span className="font-medium text-slate-500">Perfil vinculado:</span>{" "}
+                <span className="font-bold text-slate-900">@{igAccount?.account_username || igAccount?.account_name || "Instagram Business"}</span>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Permite sincronizar vídeos automaticamente do feed e stories para exibir em carrosséis interativos.
+              </p>
+            )}
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-slate-100">
+            {isIgConnected ? (
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleConnectInstagram}
+                  className="text-xs font-semibold text-pink-600 hover:text-pink-700 inline-flex items-center gap-1"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Reconectar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDisconnect("instagram")}
+                  disabled={disconnecting === "instagram"}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                >
+                  <Unlink className="h-3.5 w-3.5" />
+                  {disconnecting === "instagram" ? "Desconectando..." : "Desconectar"}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnectInstagram}
+                disabled={!storeId}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:brightness-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <InstagramIcon className="h-4 w-4" />
+                Conectar Conta Instagram
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Card TikTok */}
+        <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/50 p-6 transition-all hover:shadow-md hover:border-slate-300">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white shadow-md">
+                  <TikTokIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">TikTok</h3>
+                  <p className="text-xs text-slate-500">Vídeos do seu perfil comercial</p>
+                </div>
+              </div>
+
+              {isTtConnected ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Conectado
+                </span>
+              ) : ttAccount && ttAccount.status === "expired" ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 border border-amber-200/60">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Expirado
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
+                  Não conectado
+                </span>
+              )}
+            </div>
+
+            {isTtConnected ? (
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/60 text-xs">
+                <span className="font-medium text-slate-500">Perfil vinculado:</span>{" "}
+                <span className="font-bold text-slate-900">@{ttAccount?.account_username || ttAccount?.account_name || "TikTok Account"}</span>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Importe os vídeos publicados na sua conta do TikTok para transformar em vídeos interativos e shoppable.
+              </p>
+            )}
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-slate-100">
+            {isTtConnected ? (
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleConnectTikTok}
+                  className="text-xs font-semibold text-slate-800 hover:text-black inline-flex items-center gap-1"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Reconectar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDisconnect("tiktok")}
+                  disabled={disconnecting === "tiktok"}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                >
+                  <Unlink className="h-3.5 w-3.5" />
+                  {disconnecting === "tiktok" ? "Desconectando..." : "Desconectar"}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnectTikTok}
+                disabled={!storeId}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <TikTokIcon className="h-4 w-4" />
+                Conectar Conta TikTok
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
