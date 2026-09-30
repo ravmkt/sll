@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Copy, Store } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLoja } from "@/contexts/LojaContext";
 import { supabase } from "@/lib/supabase";
 import { getActiveSubscriptions } from "@/services/subscriptions/getStoreSubscriptions";
+import { SocialIntegrationsCard } from "@/components/integracao/SocialIntegrationsCard";
 
 declare const __APP_BUILD_ID__: string;
 

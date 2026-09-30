@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+﻿import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useAuth } from './contexts/AuthContext';
@@ -19,6 +19,7 @@ const Assinaturas = lazy(() => import('./pages/assinaturas/Assinaturas'));
 const Planos = lazy(() => import('./pages/planos/Planos'));
 const PlanosGatePage = lazy(() => import('./pages/planos/PlanosGatePage'));
 const IntegrationPage = lazy(() => import('./pages/integracao/IntegrationPage'));
+const InstagramCallback = lazy(() => import('./pages/auth/InstagramCallback'));
 
 function PageLoader() {
   return (
@@ -46,6 +47,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+        <Route path="/auth/instagram/callback" element={<InstagramCallback />} />
 
         {/* Landing Page de Bloqueio/Upgrade (Acessível a usuários logados) */}
         <Route
