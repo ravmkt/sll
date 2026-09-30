@@ -27,6 +27,7 @@ serve(async (req) => {
 
     // 1. Troca o código temporário pelo Short-Lived Access Token
     const formData = new FormData();
+    console.log('redirect_uri usado na troca:', FINAL_REDIRECT_URI);
     formData.append('client_id', APP_ID);
     formData.append('client_secret', APP_SECRET);
     formData.append('grant_type', 'authorization_code');

@@ -13,8 +13,8 @@ export default function InstagramCallback() {
 
   useEffect(() => {
     const handleProcessCallback = async () => {
-      if (ran.current) return;
-      ran.current = true;
+      if ((window as any).__igBusy) return;
+      (window as any).__igBusy = true;
       const code = searchParams.get("code");
       const storeId = searchParams.get("state");
 
