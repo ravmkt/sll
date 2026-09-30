@@ -56,6 +56,35 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     fetchIntegrations();
   }, [fetchIntegrations]);
 
+    // Captura o retorno do Instagram direto na página de integrações
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const state = params.get("state");
+    
+    if (code && state) {
+      // Limpa a URL para ficar elegante e não processar duas vezes
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setLoading(true);
+      
+      const currentRedirect = window.location.origin + "/dashboard/integracao";
+      
+      supabase.functions.invoke("instagram-auth", {
+        body: { code, store_id: state, redirect_uri: currentRedirect }
+      }).then(({ error }) => {
+        if (error) {
+          alert("Erro ao conectar: " + error.message);
+        } else {
+          fetchIntegrations();
+        }
+      }).catch(err => {
+        console.error("Erro fatal:", err);
+      }).finally(() => {
+        setLoading(false);
+      });
+    }
+  }, [fetchIntegrations]);
+
   const handleConnectInstagram = () => {
     if (!storeId) {
       alert("Selecione ou cadastre uma loja primeiro.");
@@ -66,7 +95,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
 
     // App ID homologado da Meta e Redirect URI apontando para o callback do app
     const appId = "1780976113328436";
-    const redirectUri = `${window.location.origin}/auth/instagram/callback`;
+    const redirectUri = `${window.location.origin}/dashboard/integracao`;
 
     const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(
       redirectUri
