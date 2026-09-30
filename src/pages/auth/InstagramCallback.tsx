@@ -41,6 +41,15 @@ export default function InstagramCallback() {
         toast.success("Instagram conectado com sucesso!");
         setTimeout(() => navigate("/dashboard/integracao"), 2000);
       } catch (err: any) {
+        if (String(err?.message).includes("has been used") && supabase) {
+          const { data: ex } = await supabase.from("store_integrations").select("store_id").eq("store_id", storeId).eq("platform", "instagram").maybeSingle();
+          if (ex) {
+            setStatus("success");
+            toast.success("Instagram já está conectado!");
+            setTimeout(() => navigate("/dashboard/integracao"), 1500);
+            return;
+          }
+        }
         console.error("Erro no callback do Instagram:", err);
         setStatus("error");
         setErrorMessage(err.message || "Falha ao registrar autorização do Instagram.");
