@@ -28,7 +28,9 @@ export default function InstagramCallback() {
           });
 
           if (error || data?.error) {
-            throw new Error(error?.message || data?.error || "Erro ao validar autorização na Meta.");
+            let detail = error?.message || data?.error;
+          try { const b = await (error as any)?.context?.json(); if (b?.error) detail = b.error; } catch {}
+          throw new Error(detail || "Erro ao validar autorizacao na Meta.");
           }
         }
 
