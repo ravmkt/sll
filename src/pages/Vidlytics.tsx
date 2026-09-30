@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Sparkles, ChevronDown, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { VidlyticsSidebar, VidlyticsTab } from './vidlytics/components/VidlyticsSidebar';
