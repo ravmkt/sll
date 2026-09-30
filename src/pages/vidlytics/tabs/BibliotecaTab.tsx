@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   UploadCloud,
@@ -31,6 +31,7 @@ interface MediaItem {
   };
   linkedStory?: string;
   size: string;
+  sizeBytes: number; // Tamanho real em bytes para cálculo dinâmico
   status: 'DISPONÍVEL' | 'PROCESSANDO' | 'ERRO';
   origin?: string;
   activeStatus?: 'Ativo' | 'Inativo';
@@ -40,7 +41,7 @@ export const BibliotecaTab: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'TODOS' | 'VIDEOS' | 'IMAGENS'>('TODOS');
 
-  // Mídias cadastradas com vídeos reais funcionais (MP4)
+  // Mídias cadastradas com peso real em bytes
   const [mediaList, setMediaList] = useState<MediaItem[]>([
     {
       id: '1',
@@ -51,6 +52,7 @@ export const BibliotecaTab: React.FC = () => {
       videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
       linkedStory: 'TESTE',
       size: '8.3 MB',
+      sizeBytes: 8.3 * 1024 * 1024,
       status: 'DISPONÍVEL',
       origin: 'Upload de vídeo',
       activeStatus: 'Ativo'
@@ -68,6 +70,7 @@ export const BibliotecaTab: React.FC = () => {
       },
       linkedStory: 'TESTE',
       size: '2 MB',
+      sizeBytes: 2.0 * 1024 * 1024,
       status: 'DISPONÍVEL',
       origin: 'Upload de vídeo',
       activeStatus: 'Ativo'
@@ -79,18 +82,44 @@ export const BibliotecaTab: React.FC = () => {
       typeLabel: 'IMAGEM (HOSPEDADA)',
       thumbnail: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=300&auto=format&fit=crop&q=80',
       size: '132.4 KB',
+      sizeBytes: 132.4 * 1024,
       status: 'DISPONÍVEL',
       activeStatus: 'Ativo'
     }
   ]);
 
-  // Modais e navegação interna de Edição
+  // CÁLCULO DINÂMICO E REAL DO ESPAÇO CONSUMIDO
+  const TOTAL_LIMIT_BYTES = 50 * 1024 * 1024 * 1024; // 50 GB
+
+  const { totalUsedFormatted, percentageUsed } = useMemo(() => {
+    const totalBytes = mediaList.reduce((acc, curr) => acc + curr.sizeBytes, 0);
+
+    // Formatar texto (MB ou KB ou GB)
+    let formatted = '0 MB';
+    if (totalBytes >= 1024 * 1024 * 1024) {
+      formatted = `${(totalBytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    } else if (totalBytes >= 1024 * 1024) {
+      formatted = `${(totalBytes / (1024 * 1024)).toFixed(1)} MB`;
+    } else if (totalBytes > 0) {
+      formatted = `${(totalBytes / 1024).toFixed(1)} KB`;
+    }
+
+    const pct = (totalBytes / TOTAL_LIMIT_BYTES) * 100;
+    const formattedPct = pct < 0.01 && pct > 0 ? '0.1%' : `${pct.toFixed(1)}%`;
+
+    return {
+      totalUsedFormatted: formatted,
+      percentageUsed: formattedPct
+    };
+  }, [mediaList]);
+
+  // Modais e navegação de Edição
   const [viewingMedia, setViewingMedia] = useState<MediaItem | null>(null);
   const [editingMedia, setEditingMedia] = useState<MediaItem | null>(null);
   const [deletingMedia, setDeletingMedia] = useState<MediaItem | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Estados do formulário de edição de vídeo (Print 3)
+  // Estados da tela de edição (Print 3)
   const [editTitle, setEditTitle] = useState('');
   const [editOrigin, setEditOrigin] = useState('Upload de vídeo');
   const [editThumbnail, setEditThumbnail] = useState('');
@@ -156,7 +185,7 @@ export const BibliotecaTab: React.FC = () => {
     }
   };
 
-  // Confirmar Exclusão
+  // Confirmar Exclusão com Recálculo Imediato
   const handleConfirmDelete = () => {
     if (!deletingMedia) return;
     setMediaList((prev) => prev.filter((item) => item.id !== deletingMedia.id));
@@ -170,7 +199,7 @@ export const BibliotecaTab: React.FC = () => {
     return matchesSearch;
   });
 
-  // Se estiver editando um vídeo, renderiza a tela completa de "Editar Vídeo" (Print 3)
+  // Tela completa de Edição de Vídeo (Print 3)
   if (editingMedia) {
     return (
       <div className="space-y-6 pb-12">
@@ -179,7 +208,7 @@ export const BibliotecaTab: React.FC = () => {
           <button
             type="button"
             onClick={() => setEditingMedia(null)}
-            className="flex items-center gap-2 text-slate-800 hover:text-slate-600 font-bold text-lg transition-colors"
+            className="flex items-center gap-2 text-slate-800 hover:text-slate-600 font-bold text-lg transition-colors cursor-pointer"
           >
             <div className="p-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50">
               <ArrowLeft size={18} />
@@ -190,7 +219,7 @@ export const BibliotecaTab: React.FC = () => {
           <button
             type="button"
             onClick={() => handleSaveVideoEdit()}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-all shadow-md shadow-blue-500/20"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-all shadow-md shadow-blue-500/20 cursor-pointer"
           >
             {saveSuccess ? (
               <>
@@ -244,7 +273,6 @@ export const BibliotecaTab: React.FC = () => {
               ARQUIVO DE VÍDEO
             </label>
 
-            {/* Alerta de tamanho */}
             <div className="flex items-center gap-2 p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-700 font-medium">
               <AlertTriangle size={15} className="shrink-0 text-amber-500" />
               <span>O arquivo de vídeo deve ter no <strong>máximo 30 MB</strong>. Formatos aceitos: MP4, MOV e WEBM.</span>
@@ -381,7 +409,7 @@ export const BibliotecaTab: React.FC = () => {
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              className="flex items-center gap-2 px-6 py-3 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-all shadow-md shadow-blue-500/20"
+              className="flex items-center gap-2 px-6 py-3 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-all shadow-md shadow-blue-500/20 cursor-pointer"
             >
               {saveSuccess ? (
                 <>
@@ -454,7 +482,7 @@ export const BibliotecaTab: React.FC = () => {
 
           <button
             type="button"
-            className="flex items-center gap-2 px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-colors shadow-md shadow-blue-500/20 whitespace-nowrap shrink-0"
+            className="flex items-center gap-2 px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-colors shadow-md shadow-blue-500/20 whitespace-nowrap shrink-0 cursor-pointer"
           >
             <UploadCloud size={16} />
             <span>FAZER UPLOAD</span>
@@ -462,7 +490,7 @@ export const BibliotecaTab: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. CARD DE CONSUMO DE ARMAZENAMENTO RESTAURADO */}
+      {/* 2. CARD DE CONSUMO DE ARMAZENAMENTO CALCULADO EM TEMPO REAL */}
       <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3.5">
@@ -477,22 +505,22 @@ export const BibliotecaTab: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Uso atual: <strong className="text-slate-700 font-semibold">10.3 MB</strong> de 50 GB
+                Uso atual: <strong className="text-slate-700 font-semibold">{totalUsedFormatted}</strong> de 50 GB
               </p>
             </div>
           </div>
 
           <div className="text-right">
-            <span className="text-xl font-bold text-emerald-500">0.1%</span>
+            <span className="text-xl font-bold text-emerald-500">{percentageUsed}</span>
             <p className="text-[11px] text-slate-400 font-medium">Espaço Consumido</p>
           </div>
         </div>
 
-        {/* Barra de Progresso */}
+        {/* Barra de Progresso Real */}
         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
           <div
             className="bg-[#0094eb] h-full rounded-full transition-all duration-500"
-            style={{ width: '0.1%' }}
+            style={{ width: `${Math.max(0.1, parseFloat(percentageUsed))}%` }}
           />
         </div>
       </div>
@@ -514,7 +542,7 @@ export const BibliotecaTab: React.FC = () => {
           <button
             type="button"
             onClick={() => setFilterType('TODOS')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors cursor-pointer ${
               filterType === 'TODOS'
                 ? 'bg-[#0094eb] text-white shadow-sm'
                 : 'text-slate-600 hover:bg-slate-50'
@@ -526,7 +554,7 @@ export const BibliotecaTab: React.FC = () => {
           <button
             type="button"
             onClick={() => setFilterType('VIDEOS')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors cursor-pointer ${
               filterType === 'VIDEOS'
                 ? 'bg-[#0094eb] text-white shadow-sm'
                 : 'text-slate-600 hover:bg-slate-50'
@@ -539,7 +567,7 @@ export const BibliotecaTab: React.FC = () => {
           <button
             type="button"
             onClick={() => setFilterType('IMAGENS')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors cursor-pointer ${
               filterType === 'IMAGENS'
                 ? 'bg-[#0094eb] text-white shadow-sm'
                 : 'text-slate-600 hover:bg-slate-50'
@@ -553,7 +581,6 @@ export const BibliotecaTab: React.FC = () => {
 
       {/* 4. TABELA DE MÍDIAS COM ALINHAMENTOS RIGOROSOS DE COLUNAS */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-        {/* Sub-header do card com contagem */}
         <div className="px-6 py-3.5 bg-slate-50/60 border-b border-slate-100">
           <span className="text-xs font-extrabold text-slate-700 tracking-wider">
             {filteredMedia.length} MÍDIAS LISTADAS
