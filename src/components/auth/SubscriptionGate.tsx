@@ -22,8 +22,8 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
   }
 
   // 1. SuperAdmin (Rodrigo / role de admin) tem acesso total
-  const isSuperAdmin = 
-    user?.email?.toLowerCase().includes('rodrigo') || 
+  const isSuperAdmin =
+    user?.email?.toLowerCase().includes('rodrigo') ||
     user?.app_metadata?.role === 'superadmin' ||
     user?.user_metadata?.role === 'superadmin';
 
@@ -31,13 +31,13 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
     return <>{children}</>;
   }
 
-  // 2. Verifica status de assinatura / período de teste
+  // 2. Verifica status de assinatura / período de teste / vitalício
   const status = (store?.subscription_status || '').toLowerCase();
   const isTrialActive =
     status === 'trialing' ||
     (store?.trial_ends_at && new Date(store.trial_ends_at).getTime() > Date.now());
 
-  const hasAccess = status === 'active' || isTrialActive;
+  const hasAccess = status === 'active' || status === 'lifetime' || status === 'paid' || isTrialActive;
 
   // Se não tem acesso liberado, redireciona para a landing page de bloqueio/upgrade
   if (!hasAccess) {
