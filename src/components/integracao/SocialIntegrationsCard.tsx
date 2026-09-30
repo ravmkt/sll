@@ -96,6 +96,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     // App ID homologado da Meta e Redirect URI apontando para o callback do app
     const appId = "4333396016924345";
     const redirectUri = `${window.location.origin}/auth/instagram/callback`;
+    sessionStorage.setItem("ig_redirect_uri", redirectUri);
 
     const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(
       redirectUri

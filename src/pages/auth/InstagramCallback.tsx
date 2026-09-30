@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -9,9 +9,12 @@ export default function InstagramCallback() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const ran = useRef(false);
 
   useEffect(() => {
     const handleProcessCallback = async () => {
+      if (ran.current) return;
+      ran.current = true;
       const code = searchParams.get("code");
       const storeId = searchParams.get("state");
 
@@ -24,7 +27,7 @@ export default function InstagramCallback() {
       try {
         if (supabase) {
           const { data, error } = await supabase.functions.invoke("instagram-auth", {
-            body: { code, store_id: storeId, redirect_uri: `${window.location.origin}/auth/instagram/callback` },
+            body: { code, store_id: storeId, redirect_uri: sessionStorage.getItem("ig_redirect_uri") || `${window.location.origin}/auth/instagram/callback` },
           });
 
           if (error || data?.error) {
