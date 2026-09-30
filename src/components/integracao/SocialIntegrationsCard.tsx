@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { Check, AlertCircle, RefreshCw, Unlink } from "lucide-react";
+import { Check, AlertCircle, RefreshCw, Unlink, Loader2 } from "lucide-react";
 
 interface SocialAccount {
   id?: string;
@@ -10,21 +11,6 @@ interface SocialAccount {
   status: "connected" | "expired" | "disconnected";
   updated_at?: string;
 }
-
-const DEFAULT_CONFIGS = {
-  INSTAGRAM: {
-    APP_ID: "4333596016924345",
-    REDIRECT_URI: "https://sll-hub-sooty.vercel.app/auth/instagram/callback",
-    SCOPE: "instagram_business_basic",
-  },
-  TIKTOK: {
-    CLIENT_KEY: import.meta.env.VITE_TIKTOK_CLIENT_KEY || "sbaw4swn8vca0a5p25",
-    REDIRECT_URI:
-      import.meta.env.VITE_TIKTOK_REDIRECT_URI ||
-      "https://sll-hub-sooty.vercel.app/auth/tiktok/callback",
-    SCOPE: "user.info.basic,video.list",
-  },
-};
 
 const InstagramIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -39,8 +25,10 @@ const TikTokIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
 );
 
 export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [integrations, setIntegrations] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
 
   const fetchIntegrations = useCallback(async () => {
@@ -69,18 +57,59 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     fetchIntegrations();
   }, [fetchIntegrations]);
 
+  // Captura o retorno do OAuth caso venha na URL do dashboard
+  useEffect(() => {
+    const code = searchParams.get("code");
+    if (code && storeId && !connecting) {
+      const cleanCode = code.replace(/#_$/, "");
+      setConnecting(true);
+
+      const exchangeToken = async () => {
+        try {
+          const redirectUri = "https://sll-hub-sooty.vercel.app/dashboard/integracao";
+          const { data, error } = await supabase.functions.invoke("instagram-auth", {
+            body: {
+              code: cleanCode,
+              store_id: storeId,
+              redirect_uri: redirectUri,
+            },
+          });
+
+          if (error) throw error;
+          alert("Instagram conectado com sucesso!");
+          await fetchIntegrations();
+        } catch (err: any) {
+          console.error("Erro no exchange de token:", err);
+          alert(`Erro ao conectar Instagram: ${err.message || "Tente novamente"}`);
+        } finally {
+          setConnecting(false);
+          // Limpa os parâmetros da URL
+          searchParams.delete("code");
+          searchParams.delete("state");
+          setSearchParams(searchParams, { replace: true });
+        }
+      };
+
+      exchangeToken();
+    }
+  }, [searchParams, storeId, connecting, fetchIntegrations, setSearchParams]);
+
   const handleConnectInstagram = () => {
     if (!storeId) {
       alert("Selecione ou cadastre uma loja primeiro.");
       return;
     }
 
-    const { APP_ID, REDIRECT_URI, SCOPE } = DEFAULT_CONFIGS.INSTAGRAM;
+    // Salva o storeId no localStorage para garantir persistência após o redirect
+    localStorage.setItem("sll_oauth_store_id", storeId);
 
-    // Conexão oficial da API com login empresarial no Instagram
-    const authUrl = `https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_reauth=true&client_id=${APP_ID}&redirect_uri=${encodeURIComponent(
-      REDIRECT_URI
-    )}&response_type=code&scope=${encodeURIComponent(SCOPE)}&state=${storeId}`;
+    // URL oficial gerada pela própria Meta Developers (Item 3)
+    const appId = "4333596016924345";
+    const redirectUri = "https://sll-hub-sooty.vercel.app/dashboard/integracao";
+
+    const authUrl = `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=${appId}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&response_type=code&scope=instagram_business_basic&state=${storeId}`;
 
     window.location.href = authUrl;
   };
@@ -91,13 +120,15 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
       return;
     }
 
-    const { CLIENT_KEY, REDIRECT_URI, SCOPE } = DEFAULT_CONFIGS.TIKTOK;
+    const clientKey = import.meta.env.VITE_TIKTOK_CLIENT_KEY || "sbaw4swn8vca0a5p25";
+    const redirectUri = "https://sll-hub-sooty.vercel.app/auth/tiktok/callback";
+    const scope = "user.info.basic,video.list";
     const csrfState = `${storeId}_${Math.random().toString(36).substring(7)}`;
 
-    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${CLIENT_KEY}&scope=${encodeURIComponent(
-      SCOPE
+    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=${encodeURIComponent(
+      scope
     )}&response_type=code&redirect_uri=${encodeURIComponent(
-      REDIRECT_URI
+      redirectUri
     )}&state=${csrfState}`;
 
     window.location.href = authUrl;
@@ -157,13 +188,20 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
         </div>
         <button
           onClick={fetchIntegrations}
-          disabled={loading}
+          disabled={loading || connecting}
           className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           Atualizar status
         </button>
       </div>
+
+      {connecting && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-pink-50 border border-pink-200 text-pink-700 text-sm font-medium">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Conectando e autenticando seu Instagram com a Meta... aguarde um instante.
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Card Instagram */}
@@ -215,6 +253,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
                 <button
                   type="button"
                   onClick={handleConnectInstagram}
+                  disabled={connecting}
                   className="text-xs font-semibold text-pink-600 hover:text-pink-700 inline-flex items-center gap-1"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
@@ -223,7 +262,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
                 <button
                   type="button"
                   onClick={() => handleDisconnect("instagram")}
-                  disabled={disconnecting === "instagram"}
+                  disabled={disconnecting === "instagram" || connecting}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
                 >
                   <Unlink className="h-3.5 w-3.5" />
@@ -234,11 +273,11 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
               <button
                 type="button"
                 onClick={handleConnectInstagram}
-                disabled={!storeId}
+                disabled={!storeId || connecting}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:brightness-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <InstagramIcon className="h-4 w-4" />
-                Conectar Conta Instagram
+                {connecting ? "Conectando..." : "Conectar Conta Instagram"}
               </button>
             )}
           </div>
