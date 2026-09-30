@@ -1,8 +1,8 @@
 {
   "rewrites": [
-    { "source": "/vidlytics-widget.js", "destination": "/vidlytics-widget.js" },
-    { "source": "/sll-loader.js", "destination": "/sll-loader.js" },
-    { "source": "/livecommerce-widget.js", "destination": "/livecommerce-widget.js" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
