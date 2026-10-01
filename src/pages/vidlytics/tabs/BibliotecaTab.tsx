@@ -6,6 +6,7 @@ import {
   Share2,
   Trash2,
   Edit2,
+  Eye,
   Download,
   HardDrive,
   Film,
@@ -14,7 +15,8 @@ import {
   AlertCircle,
   RefreshCw,
   X,
-  Play
+  Play,
+  Link2
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -31,8 +33,17 @@ interface VidVideo {
   file_size_bytes?: number;
   product_id?: string;
   model_id?: string;
+  story_title?: string;
   created_at: string;
   updated_at?: string;
+}
+
+interface ProductItem {
+  id: string;
+  title?: string;
+  name?: string;
+  thumbnail?: string;
+  image_url?: string;
 }
 
 interface BibliotecaTabProps {
@@ -50,6 +61,7 @@ const vidlyticsDb = (supabase as any).schema
 export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialStoreId }) => {
   const [storeId, setStoreId] = useState<string>(initialStoreId || "");
   const [videos, setVideos] = useState<VidVideo[]>([]);
+  const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -61,9 +73,10 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   // Modais
   const [isUrlModalOpen, setIsUrlModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [previewMedia, setPreviewMedia] = useState<VidVideo | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<VidVideo | null>(null);
 
-  // Form states URL Externa
+  // Form states URL Externa (idêntico ao Print 1)
   const [externalUrl, setExternalUrl] = useState<string>("");
   const [externalTitle, setExternalTitle] = useState<string>("");
   const [externalProduct, setExternalProduct] = useState<string>("");
@@ -72,7 +85,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
   // Form states Edição
   const [editTitle, setEditTitle] = useState<string>("");
-  const [editThumbnail, setEditThumbnail] = useState<string>("");
+  const [editProductId, setEditProductId] = useState<string>("");
   const [editStatus, setEditStatus] = useState<string>("active");
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
 
@@ -110,7 +123,26 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     resolveStoreId();
   }, [initialStoreId]);
 
-  // Carregar Vídeos do schema vidlytics
+  // Carregar produtos da loja para seleção
+  useEffect(() => {
+    async function fetchProducts() {
+      if (!storeId) return;
+      try {
+        const { data } = await supabase
+          .from("products")
+          .select("id, name, title, image_url, thumbnail")
+          .eq("store_id", storeId)
+          .limit(100);
+
+        if (data) setProducts(data);
+      } catch {
+        // silencioso
+      }
+    }
+    fetchProducts();
+  }, [storeId]);
+
+  // Carregar Mídias
   const fetchVideos = async () => {
     setLoading(true);
     setErrorMsg(null);
@@ -142,6 +174,20 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       fetchVideos();
     }
   }, [storeId]);
+
+  // Helpers de Formatação
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes || bytes === 0) return "—";
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const isImageFile = (url?: string) => {
+    if (!url) return false;
+    return !!url.match(/\.(jpeg|jpg|gif|png|webp)($|\?)/i);
+  };
 
   // Métricas de Armazenamento
   const totalBytesUsed = useMemo(() => {
@@ -177,20 +223,16 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           upsert: true
         });
 
-      if (uploadErr) {
-        throw new Error(uploadErr.message);
-      }
+      if (uploadErr) throw new Error(uploadErr.message);
 
       const { data: urlData } = supabase.storage
         .from(BUCKET_NAME)
         .getPublicUrl(uploadData.path);
 
       const publicUrl = urlData.publicUrl;
-      const cleanTitle = file.name.replace(/\.[^/.]+$/, "");
-
       const payload: any = {
         store_id: storeId || null,
-        title: cleanTitle,
+        title: file.name,
         video_url: publicUrl,
         thumbnail_url: publicUrl,
         status: "active",
@@ -199,10 +241,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         video_source_type: "upload"
       };
 
-      const { error: insertErr } = await vidlyticsDb
-        .from("vid_videos")
-        .insert([payload]);
-
+      const { error: insertErr } = await vidlyticsDb.from("vid_videos").insert([payload]);
       if (insertErr) throw new Error(insertErr.message);
 
       setSuccessMsg("Mídia enviada com sucesso!");
@@ -216,7 +255,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     }
   };
 
-  // Cadastrar URL Externa
+  // Cadastrar URL Externa (Print 1)
   const handleSaveExternal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!externalUrl.trim()) return;
@@ -225,7 +264,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       setIsSavingExternal(true);
       setErrorMsg(null);
 
-      const finalTitle = externalTitle.trim() || `Vídeo ${new Date().toLocaleDateString("pt-BR")}`;
+      const finalTitle = externalTitle.trim() || `Mídia_${Date.now()}`;
 
       const payload: any = {
         store_id: storeId || null,
@@ -240,13 +279,10 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       if (externalProduct) payload.product_id = externalProduct;
       if (externalModel) payload.model_id = externalModel;
 
-      const { error: insertErr } = await vidlyticsDb
-        .from("vid_videos")
-        .insert([payload]);
-
+      const { error: insertErr } = await vidlyticsDb.from("vid_videos").insert([payload]);
       if (insertErr) throw new Error(insertErr.message);
 
-      setSuccessMsg("Vídeo cadastrado com sucesso!");
+      setSuccessMsg("Mídia externa cadastrada com sucesso!");
       setIsUrlModalOpen(false);
       setExternalUrl("");
       setExternalTitle("");
@@ -254,8 +290,8 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       setExternalModel("");
       await fetchVideos();
     } catch (err: any) {
-      console.error("[BibliotecaTab] Erro ao cadastrar URL:", err);
-      setErrorMsg(err.message || "Erro ao salvar vídeo externo.");
+      console.error("[BibliotecaTab] Erro ao cadastrar:", err);
+      setErrorMsg(err.message || "Erro ao salvar vídeo por URL.");
     } finally {
       setIsSavingExternal(false);
     }
@@ -263,22 +299,18 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
   // Excluir Mídia
   const handleDeleteVideo = async (video: VidVideo) => {
-    if (!confirm(`Deseja remover o vídeo "${video.title}"?`)) return;
+    if (!confirm(`Deseja realmente excluir a mídia "${video.title}"?`)) return;
 
     try {
       setErrorMsg(null);
-      const { error } = await vidlyticsDb
-        .from("vid_videos")
-        .delete()
-        .eq("id", video.id);
-
+      const { error } = await vidlyticsDb.from("vid_videos").delete().eq("id", video.id);
       if (error) throw new Error(error.message);
 
-      setSuccessMsg("Mídia removida com sucesso!");
+      setSuccessMsg("Mídia excluída com sucesso!");
       setVideos((prev) => prev.filter((v) => v.id !== video.id));
     } catch (err: any) {
-      console.error("[BibliotecaTab] Erro ao deletar:", err);
-      setErrorMsg(err.message || "Erro ao deletar mídia.");
+      console.error("[BibliotecaTab] Erro ao excluir:", err);
+      setErrorMsg(err.message || "Erro ao excluir mídia.");
     }
   };
 
@@ -286,7 +318,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const openEditModal = (video: VidVideo) => {
     setSelectedVideo(video);
     setEditTitle(video.title || "");
-    setEditThumbnail(video.thumbnail_url || "");
+    setEditProductId(video.product_id || "");
     setEditStatus(video.status || "active");
     setIsEditModalOpen(true);
   };
@@ -301,7 +333,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         .from("vid_videos")
         .update({
           title: editTitle,
-          thumbnail_url: editThumbnail,
+          product_id: editProductId || null,
           status: editStatus,
           updated_at: new Date().toISOString()
         })
@@ -314,21 +346,21 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       setSelectedVideo(null);
       await fetchVideos();
     } catch (err: any) {
-      console.error("[BibliotecaTab] Erro ao atualizar:", err);
-      setErrorMsg(err.message || "Erro ao salvar alterações.");
+      console.error("[BibliotecaTab] Erro ao editar:", err);
+      setErrorMsg(err.message || "Erro ao atualizar dados.");
     } finally {
       setIsSavingEdit(false);
     }
   };
 
-  // Filtragem da lista
+  // Filtragem da Lista
   const filteredVideos = useMemo(() => {
     return videos.filter((item) => {
       const matchSearch = item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.video_url?.toLowerCase().includes(searchTerm.toLowerCase());
       if (!matchSearch) return false;
 
-      const isImg = item.video_url?.match(/\.(jpeg|jpg|gif|png|webp)($|\?)/i);
+      const isImg = isImageFile(item.video_url);
       if (activeFilter === "VIDEOS" && isImg) return false;
       if (activeFilter === "IMAGENS" && !isImg) return false;
 
@@ -338,9 +370,9 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
   return (
     <div className="space-y-6">
-      {/* Notificações */}
+      {/* Alertas */}
       {errorMsg && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center justify-between shadow-sm">
+        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500" />
             <span className="text-sm font-medium">{errorMsg}</span>
@@ -352,7 +384,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       )}
 
       {successMsg && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-center justify-between shadow-sm">
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 flex-shrink-0 text-emerald-500" />
             <span className="text-sm font-medium">{successMsg}</span>
@@ -363,40 +395,40 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         </div>
       )}
 
-      {/* Header & Ações */}
+      {/* Header Superior com Botões */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Biblioteca</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Gerencie os vídeos e imagens hospedados e monitore o consumo de espaço.
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Biblioteca</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Gerencie os vídeos e imagens hospedados no seu plano e monitore o consumo de espaço.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <button
             type="button"
-            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition"
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 text-xs font-bold flex items-center gap-2 shadow-sm transition"
             onClick={() => alert("Módulo Instagram em breve.")}
           >
-            <Share2 className="w-4 h-4 text-pink-600" />
+            <Share2 className="w-3.5 h-3.5 text-pink-600" />
             INSTAGRAM
           </button>
 
           <button
             type="button"
-            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition"
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 text-xs font-bold flex items-center gap-2 shadow-sm transition"
             onClick={() => alert("Módulo TikTok em breve.")}
           >
-            <Film className="w-4 h-4 text-slate-900" />
+            <Film className="w-3.5 h-3.5 text-slate-900" />
             TIKTOK
           </button>
 
           <button
             type="button"
             onClick={() => setIsUrlModalOpen(true)}
-            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition cursor-pointer"
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 text-xs font-bold flex items-center gap-2 shadow-sm transition cursor-pointer"
           >
-            <Globe className="w-4 h-4 text-sky-600" />
+            <Globe className="w-3.5 h-3.5 text-sky-500" />
             URL EXTERNA
           </button>
 
@@ -412,93 +444,97 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             type="button"
             disabled={isUploading}
             onClick={() => fileInputRef.current?.click()}
-            className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm shadow-sky-200 transition disabled:opacity-50 cursor-pointer"
+            className="px-5 py-2 bg-[#0088ff] hover:bg-[#0077e6] text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-sm shadow-sky-200 transition disabled:opacity-50 cursor-pointer"
           >
             {isUploading ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <UploadCloud className="w-4 h-4" />
+              <UploadCloud className="w-3.5 h-3.5" />
             )}
             {isUploading ? "ENVIANDO..." : "FAZER UPLOAD"}
           </button>
         </div>
       </div>
 
-      {/* Cartão de Espaço */}
-      <div className="p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-4">
+      {/* Card de Espaço SCALE (Idêntico ao Print 3) */}
+      <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center shadow-sm">
+            <div className="w-11 h-11 rounded-2xl bg-[#0088ff] text-white flex items-center justify-center shadow-sm">
               <HardDrive className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-800 text-sm">SCALE</span>
-                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-sky-50 text-sky-600 border border-sky-100 rounded-md font-semibold">
+                <span className="font-extrabold text-slate-800 text-sm">SCALE</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-md">
                   50 GB LIMITE
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Uso atual: <span className="font-semibold text-slate-700">{usedMB} MB</span> de 50 GB
+                Uso atual: <span className="font-bold text-slate-800">{usedMB} MB</span> de 50 GB
               </p>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-bold text-emerald-600">{percentUsed}%</div>
+            <div className="text-xl font-bold text-emerald-500">{percentUsed}%</div>
             <div className="text-[11px] text-slate-400">Espaço Consumido</div>
           </div>
         </div>
 
-        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
           <div
-            className="bg-sky-500 h-full rounded-full transition-all duration-500"
-            style={{ width: `${Math.max(1, Number(percentUsed))}%` }}
+            className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+            style={{ width: `${Math.max(0.5, Number(percentUsed))}%` }}
           />
         </div>
       </div>
 
-      {/* Busca e Filtros */}
-      <div className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="relative w-full md:w-96">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+      {/* Card de Pesquisa & Filtros (Print 3) */}
+      <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="relative w-full md:w-[480px]">
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Pesquisar pelo nome do arquivo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+            className="w-full pl-11 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] placeholder:text-slate-400"
           />
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full md:w-auto">
-          {(["TODOS", "VIDEOS", "IMAGENS"] as const).map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
-                activeFilter === filter
-                  ? "bg-sky-500 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              {filter === "VIDEOS" && <Film className="w-3.5 h-3.5" />}
-              {filter === "IMAGENS" && <ImageIcon className="w-3.5 h-3.5" />}
-              {filter}
-            </button>
-          ))}
+        <div className="flex items-center gap-1.5 bg-slate-100/70 p-1 rounded-2xl w-full md:w-auto">
+          {(["TODOS", "VIDEOS", "IMAGENS"] as const).map((filter) => {
+            const isSelected = activeFilter === filter;
+            const label = filter === "VIDEOS" ? "VÍDEOS" : filter;
+            return (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`flex-1 md:flex-none px-5 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+                  isSelected
+                    ? "bg-[#0088ff] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                {filter === "VIDEOS" && <Film className="w-3.5 h-3.5" />}
+                {filter === "IMAGENS" && <ImageIcon className="w-3.5 h-3.5" />}
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Listagem */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs font-bold text-slate-400 tracking-wider uppercase">
-            {filteredVideos.length} Mídias Listadas
-          </h2>
+      {/* Tabela de Mídias (Exatamente como o Print 3) */}
+      <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            {filteredVideos.length} MÍDIAS LISTADAS
+          </span>
           <button
             onClick={fetchVideos}
             disabled={loading}
-            className="text-xs text-sky-600 hover:text-sky-700 flex items-center gap-1 font-medium cursor-pointer"
+            className="text-xs text-[#0088ff] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             Atualizar
@@ -506,180 +542,314 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         </div>
 
         {loading ? (
-          <div className="py-20 text-center bg-white border border-slate-200/80 rounded-2xl">
-            <RefreshCw className="w-8 h-8 animate-spin text-sky-500 mx-auto mb-2" />
-            <p className="text-sm text-slate-500">Carregando mídias da loja...</p>
+          <div className="py-20 text-center">
+            <RefreshCw className="w-8 h-8 animate-spin text-[#0088ff] mx-auto mb-2" />
+            <p className="text-sm text-slate-500">Carregando mídias...</p>
           </div>
         ) : filteredVideos.length === 0 ? (
-          <div className="py-20 text-center bg-white border border-slate-200/80 rounded-2xl p-6">
-            <div className="w-12 h-12 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center mx-auto mb-3">
-              <UploadCloud className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-semibold text-slate-800">Nenhuma mídia encontrada</h3>
-            <p className="text-sm text-slate-500 max-w-sm mx-auto mt-1 mb-4">
-              Envie seus arquivos de vídeo ou cadastre links externos para começar a usar no Vidlytics.
+          <div className="py-20 text-center p-6">
+            <UploadCloud className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-slate-700">Nenhuma mídia encontrada</h3>
+            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              Faça upload ou adicione mídias por URL externa para começar.
             </p>
-            <button
-              onClick={() => setIsUrlModalOpen(true)}
-              className="px-4 py-2 bg-sky-500 text-white text-xs font-semibold rounded-xl hover:bg-sky-600 transition cursor-pointer"
-            >
-              Adicionar Primeiro Vídeo
-            </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredVideos.map((video) => {
-              const isImg = video.video_url?.match(/\.(jpeg|jpg|gif|png|webp)($|\?)/i);
-              return (
-                <div
-                  key={video.id}
-                  className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col group"
-                >
-                  <div className="aspect-[9/16] bg-slate-900 relative overflow-hidden flex items-center justify-center">
-                    {isImg ? (
-                      <img
-                        src={video.video_url}
-                        alt={video.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <video
-                        src={video.video_url}
-                        poster={video.thumbnail_url}
-                        className="w-full h-full object-cover"
-                        controls={false}
-                        muted
-                        playsInline
-                        onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.pause();
-                          e.currentTarget.currentTime = 0;
-                        }}
-                      />
-                    )}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50/60 border-b border-slate-100 text-slate-400 font-extrabold uppercase tracking-wider">
+                <tr>
+                  <th className="py-3.5 px-6">MÍDIA</th>
+                  <th className="py-3.5 px-6">NOME DO ARQUIVO</th>
+                  <th className="py-3.5 px-6">PRODUTO</th>
+                  <th className="py-3.5 px-6">STORY VINCULADO</th>
+                  <th className="py-3.5 px-6">TAMANHO</th>
+                  <th className="py-3.5 px-6">STATUS</th>
+                  <th className="py-3.5 px-6 text-right">AÇÕES</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredVideos.map((video) => {
+                  const isImg = isImageFile(video.video_url);
+                  const matchedProduct = products.find((p) => p.id === video.product_id);
 
-                    {!isImg && (
-                      <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-semibold flex items-center gap-1 pointer-events-none">
-                        <Play className="w-2.5 h-2.5 fill-white" /> VÍDEO
-                      </div>
-                    )}
+                  return (
+                    <tr key={video.id} className="hover:bg-slate-50/50 transition-colors">
+                      {/* Thumbnail Mídia */}
+                      <td className="py-3.5 px-6">
+                        <div className="w-12 h-12 rounded-xl bg-slate-900 overflow-hidden relative flex items-center justify-center border border-slate-200/60 flex-shrink-0">
+                          {isImg ? (
+                            <img
+                              src={video.video_url}
+                              alt={video.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <>
+                              <video
+                                src={video.video_url}
+                                poster={video.thumbnail_url}
+                                className="w-full h-full object-cover"
+                                muted
+                                playsInline
+                              />
+                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                <Play className="w-3.5 h-3.5 text-white fill-white" />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
 
-                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <button
-                        onClick={() => openEditModal(video)}
-                        className="w-8 h-8 rounded-lg bg-white/90 text-slate-700 flex items-center justify-center hover:bg-white transition shadow-sm cursor-pointer"
-                        title="Editar"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteVideo(video)}
-                        className="w-8 h-8 rounded-lg bg-red-500/90 text-white flex items-center justify-center hover:bg-red-600 transition shadow-sm cursor-pointer"
-                        title="Excluir"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
+                      {/* Nome do Arquivo */}
+                      <td className="py-3.5 px-6">
+                        <div className="font-bold text-slate-800 text-[13px] line-clamp-1 max-w-[280px]" title={video.title}>
+                          {video.title}
+                        </div>
+                        <div className="text-[10px] font-bold text-[#0088ff] uppercase tracking-wider mt-0.5">
+                          {isImg ? "IMAGEM (HOSPEDADA)" : "VÍDEO MP4 (HOSPEDADO)"}
+                        </div>
+                      </td>
 
-                  <div className="p-3.5 flex flex-col flex-1 justify-between">
-                    <div>
-                      <h4 className="font-semibold text-slate-800 text-sm line-clamp-1" title={video.title}>
-                        {video.title || "Sem título"}
-                      </h4>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        {video.created_at ? new Date(video.created_at).toLocaleDateString("pt-BR") : "Recente"}
-                      </p>
-                    </div>
+                      {/* Produto Vinculado */}
+                      <td className="py-3.5 px-6">
+                        {matchedProduct ? (
+                          <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full text-slate-700 text-xs font-medium max-w-[180px]">
+                            {matchedProduct.thumbnail || matchedProduct.image_url ? (
+                              <img
+                                src={matchedProduct.thumbnail || matchedProduct.image_url}
+                                alt=""
+                                className="w-4 h-4 rounded-full object-cover"
+                              />
+                            ) : null}
+                            <span className="truncate">{matchedProduct.name || matchedProduct.title}</span>
+                          </div>
+                        ) : (
+                          <span className="inline-block px-3 py-1 bg-slate-100 rounded-full text-slate-400 text-[11px] font-medium">
+                            Sem produto
+                          </span>
+                        )}
+                      </td>
 
-                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                      <span className="capitalize">{video.status || "Ativo"}</span>
-                      {video.video_url && (
-                        <a
-                          href={video.video_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sky-600 hover:text-sky-700 flex items-center gap-1 font-medium"
-                        >
-                          <Download className="w-3.5 h-3.5" /> Abrir
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                      {/* Story Vinculado */}
+                      <td className="py-3.5 px-6">
+                        {video.story_title ? (
+                          <span className="inline-block px-3 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-full text-[11px] font-bold uppercase">
+                            {video.story_title}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300 font-bold text-sm">—</span>
+                        )}
+                      </td>
+
+                      {/* Tamanho */}
+                      <td className="py-3.5 px-6 font-semibold text-slate-600 text-xs">
+                        {formatFileSize(video.file_size_bytes)}
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-3.5 px-6">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[11px] font-bold">
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          DISPONÍVEL
+                        </span>
+                      </td>
+
+                      {/* Ações */}
+                      <td className="py-3.5 px-6 text-right">
+                        <div className="inline-flex items-center gap-2 text-slate-400">
+                          <button
+                            onClick={() => openEditModal(video)}
+                            className="p-1 hover:text-slate-700 transition"
+                            title="Editar"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setPreviewMedia(video)}
+                            className="p-1 hover:text-slate-700 transition"
+                            title="Visualizar"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {video.video_url && (
+                            <a
+                              href={video.video_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-1 hover:text-slate-700 transition"
+                              title="Download / Link"
+                            >
+                              <Download className="w-4 h-4" />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => handleDeleteVideo(video)}
+                            className="p-1 hover:text-red-600 transition"
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
-      {/* Modal: URL Externa */}
+      {/* Modal: Adicionar Vídeo por URL (Idêntico ao Print 1) */}
       {isUrlModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-xl overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                  <Globe className="w-5 h-5" />
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between p-6 pb-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-sky-50 text-[#0088ff] flex items-center justify-center flex-shrink-0">
+                  <Link2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800 text-base">Adicionar Vídeo por URL</h3>
-                  <p className="text-xs text-slate-400">Cole a URL direta ou streaming do vídeo</p>
+                  <h3 className="font-bold text-slate-900 text-base leading-snug">
+                    Adicionar Vídeo por URL
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Insira links do Pinterest, YouTube, Panda Video, Bunny CDN ou link direto.
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsUrlModalOpen(false)}
-                className="w-8 h-8 rounded-xl text-slate-400 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                className="w-8 h-8 rounded-full text-slate-400 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveExternal} className="p-6 space-y-4">
+            {/* Modal Body */}
+            <form onSubmit={handleSaveExternal} className="p-6 pt-2 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
-                  URL DO VÍDEO *
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Link / URL Externa do Vídeo <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="url"
                   required
-                  placeholder="https://exemplo.com/video.mp4"
+                  placeholder="https://pinterest.com/pin/... ou YouTube / Link direto"
                   value={externalUrl}
                   onChange={(e) => setExternalUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] placeholder:text-slate-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
-                  TÍTULO DO VÍDEO (OPCIONAL)
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Título ou Identificação da Mídia
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex: Demonstração do Produto"
+                  placeholder="Ex: REEL_PROMO_LANCAMENTO.mp4"
                   value={externalTitle}
                   onChange={(e) => setExternalTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] placeholder:text-slate-400"
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Vincular a um Produto (Opcional)
+                </label>
+                <select
+                  value={externalProduct}
+                  onChange={(e) => setExternalProduct(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] text-slate-700"
+                >
+                  <option value="">Sem produto vinculado</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name || p.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Vincular a um Modelo de Medidas (Opcional)
+                </label>
+                <select
+                  value={externalModel}
+                  onChange={(e) => setExternalModel(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] text-slate-700"
+                >
+                  <option value="">Sem modelo de medidas vinculado</option>
+                  <option value="p">Modelo P (1.65m / 55kg)</option>
+                  <option value="m">Modelo M (1.70m / 65kg)</option>
+                  <option value="g">Modelo G (1.75m / 78kg)</option>
+                </select>
+              </div>
+
+              {/* Modal Footer */}
               <div className="pt-4 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsUrlModalOpen(false)}
-                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition cursor-pointer"
+                  className="px-5 py-2.5 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-100 transition cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingExternal}
-                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50 cursor-pointer"
+                  className="px-6 py-2.5 bg-[#0088ff] hover:bg-[#0077e6] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition disabled:opacity-50 cursor-pointer shadow-sm shadow-sky-200"
                 >
-                  {isSavingExternal ? "Salvando..." : "CADASTRAR MÍDIA"}
+                  {isSavingExternal ? "SALVANDO..." : "CADASTRAR MÍDIA"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Preview de Mídia */}
+      {previewMedia && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-950 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative border border-slate-800">
+            <button
+              onClick={() => setPreviewMedia(null)}
+              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="aspect-[9/16] max-h-[80vh] flex items-center justify-center">
+              {isImageFile(previewMedia.video_url) ? (
+                <img
+                  src={previewMedia.video_url}
+                  alt={previewMedia.title}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <video
+                  src={previewMedia.video_url}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                />
+              )}
+            </div>
+            <div className="p-4 bg-slate-900 border-t border-slate-800 text-white flex items-center justify-between">
+              <span className="font-semibold text-sm truncate">{previewMedia.title}</span>
+              <a
+                href={previewMedia.video_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-[#0088ff] hover:underline flex items-center gap-1 font-bold"
+              >
+                <Download className="w-3.5 h-3.5" /> Abrir Original
+              </a>
+            </div>
           </div>
         </div>
       )}
@@ -701,29 +871,32 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
-                  TÍTULO
+                  Título
                 </label>
                 <input
                   type="text"
                   required
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
-                  STATUS
+                  Produto Vinculado
                 </label>
                 <select
-                  value={editStatus}
-                  onChange={(e) => setEditStatus(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                  value={editProductId}
+                  onChange={(e) => setEditProductId(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
                 >
-                  <option value="active">Ativo</option>
-                  <option value="inactive">Inativo</option>
-                  <option value="draft">Rascunho</option>
+                  <option value="">Nenhum produto</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name || p.title}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -738,7 +911,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 <button
                   type="submit"
                   disabled={isSavingEdit}
-                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50 cursor-pointer"
+                  className="px-6 py-2.5 bg-[#0088ff] hover:bg-[#0077e6] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition disabled:opacity-50 cursor-pointer"
                 >
                   {isSavingEdit ? "Salvando..." : "Salvar Alterações"}
                 </button>
