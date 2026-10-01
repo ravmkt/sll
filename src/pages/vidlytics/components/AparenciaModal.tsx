@@ -679,7 +679,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
       setStyleName(finalName);
 
-      await VidlyticsDatabaseService.saveAppearance(resolvedStoreId, {\n        id: isDefaultSystemStyle ? undefined : formData?.id,
+      await VidlyticsDatabaseService.saveAppearance(resolvedStoreId, {
+        id: isDefaultSystemStyle ? undefined : formData?.id,
         name: finalName,
         is_default: isDefault,
         widget_style: {
@@ -1690,5 +1691,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 };
 
 export default AparenciaModal;
+
 
 
