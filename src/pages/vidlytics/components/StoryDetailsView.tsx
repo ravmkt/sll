@@ -247,6 +247,11 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
       alert('Por favor, informe o nome do Story.');
       return;
     }
+    const isFloatingFormat = formData.format === 'floating_widget';
+    if (!isFloatingFormat && pageLocations.some((loc) => !loc.selector.trim())) {
+      alert('Informe o seletor CSS de cada p\u00e1gina. Ele \u00e9 obrigat\u00f3rio para carrossel, carrossel din\u00e2mico e grade.');
+      return;
+    }
 
     try {
       setIsSaving(true);
@@ -262,7 +267,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
         id: loc.id,
         page: loc.condition_type as any,
         pageValue: CONDITION_TYPES_WITH_VALUE.includes(loc.condition_type) ? loc.value.trim() : null,
-        cssSelector: loc.selector.trim(),
+        cssSelector: isFloatingFormat ? '' : loc.selector.trim(),
         position: loc.position,
       }));
 
@@ -604,6 +609,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
         <div className="space-y-4">
           {pageLocations.map((item, index) => {
             const hasUrlInput = CONDITION_TYPES_WITH_VALUE.includes(item.condition_type);
+            const isFloating = formData.format === 'floating_widget';
 
             return (
               <div
@@ -670,6 +676,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                   )}
 
                   {/* Seletor CSS */}
+                  {!isFloating && (
                   <div className={hasUrlInput ? 'lg:col-span-4' : 'lg:col-span-5'}>
                     <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-slate-400">
                       SELETOR CSS DO ELEMENTO
@@ -693,8 +700,10 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                       </button>
                     </div>
                   </div>
+                  )}
 
                   {/* Posição */}
+                  {!isFloating && (
                   <div className={hasUrlInput ? 'lg:col-span-2' : 'lg:col-span-3'}>
                     <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-slate-400">
                       POSIÇÃO
@@ -715,6 +724,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                       ))}
                     </select>
                   </div>
+                  )}
                 </div>
               </div>
             );
