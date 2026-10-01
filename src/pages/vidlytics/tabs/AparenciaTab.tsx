@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Palette, Star, Pencil, Trash2, Eye } from 'lucide-react';
 import AparenciaModal from '../components/AparenciaModal';
 import { useAppearanceLogic } from "../../../hooks/vidlytics/useAppearanceLogic";
 import { DEFAULT_APPEARANCES, isDefaultAppearance } from '../../../data/defaultAppearances';
+import ConfirmDeleteModal from '../../../components/common/ConfirmDeleteModal';
 
 const StyleRow: React.FC<{
   app: any;
   onEdit: (id: string) => void;
-  onDelete?: (id: string) => void;
+  onOpenDelete?: (id: string, name: string) => void;
   onSetDefault: (id: string) => void;
   isTemplate?: boolean;
-}> = ({ app, onEdit, onDelete, onSetDefault, isTemplate }) => {
+}> = ({ app, onEdit, onOpenDelete, onSetDefault, isTemplate }) => {
   const primaryColor = app.widget_style?.desktop?.floating_border_color || '#0094EB';
   return (
     <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
@@ -45,8 +46,8 @@ const StyleRow: React.FC<{
         >
           {isTemplate ? <Eye size={16} /> : <Pencil size={16} />}
         </button>
-        {!isTemplate && onDelete && (
-          <button onClick={() => onDelete(app.id)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+        {!isTemplate && onOpenDelete && (
+          <button onClick={() => onOpenDelete(app.id, app.name)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
             <Trash2 size={16} />
           </button>
         )}
@@ -88,6 +89,24 @@ const AparenciaTab: React.FC = () => {
     resetTab, saveStyle,
     isLoadingStyle, isSaving,
   } = useAppearanceLogic();
+
+  // ─────────── Modal de confirmação de exclusão ───────────
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleOpenDelete = (id: string, name: string) => setDeleteTarget({ id, name });
+  const handleCloseDelete = () => setDeleteTarget(null);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await deleteStyle(deleteTarget.id);
+    } finally {
+      setIsDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   return (
     <div className="p-6 space-y-8">
@@ -143,7 +162,7 @@ const AparenciaTab: React.FC = () => {
             ) : (
               <StyleTable>
                 {customAppearances.map((app) => (
-                  <StyleRow key={app.id} app={app} onEdit={openEditStyle} onDelete={deleteStyle} onSetDefault={setAsDefault} />
+                  <StyleRow key={app.id} app={app} onEdit={openEditStyle} onOpenDelete={handleOpenDelete} onSetDefault={setAsDefault} />
                 ))}
               </StyleTable>
             )}
@@ -170,8 +189,18 @@ const AparenciaTab: React.FC = () => {
         editingId={editingId}
         isDefaultEditing={isDefaultEditing}
       />
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={handleCloseDelete}
+        onConfirm={handleConfirmDelete}
+        title="EXCLUIR ESTILO"
+        itemName={deleteTarget?.name ?? ""}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };
 
 export default AparenciaTab;
+
