@@ -5972,7 +5972,15 @@ sendAnalyticsEvent('product_view', video ? video.id : null, productData ? produc
 
   // 👇 INÍCIO DA IMPLEMENTAÇÃO DO LOOP VISUAL (CLONES) 👇
   var itemsArray = Array.from(track.children);
-  if (itemsArray.length > 0) {
+  var hasClones = itemsArray.length > visibleItems;
+  if (!hasClones && itemsArray.length > 0) {
+    track.style.setProperty('justify-content', 'center', 'important');
+    if (!isMobileDevice) {
+      var fitW = (itemWidthPx * itemsArray.length) + (gapPx * (itemsArray.length - 1));
+      trackContainer.style.setProperty('width', fitW + 'px', 'important');
+    }
+  }
+  if (hasClones) {
     // 1. Clona o ÚLTIMO item e insere no COMEÇO (preenche o buraco esquerdo)
     var cloneLast = itemsArray[itemsArray.length - 1].cloneNode(true);
     cloneLast.classList.add('vidlytics-clone', 'clone-left');
@@ -5996,7 +6004,7 @@ sendAnalyticsEvent('product_view', video ? video.id : null, productData ? produc
   var currentTranslate = 0;
   var dragStartTranslate = 0;
 
-var activeIndex = 1;
+var activeIndex = (hasClones ? 1 : 0);
 
 function getItemCenter(idx) {
   var itemEls = track.children;
@@ -6009,7 +6017,7 @@ function getItemCenter(idx) {
 }
 
 function centerActiveItem(animate) {
-  if (!isMobileDevice) return;
+  if (!isMobileDevice || !hasClones) return;
   var containerWidth = trackContainer.offsetWidth;
   var itemCenter = getItemCenter(activeIndex);
   var maxScroll = getMaxScroll();
