@@ -83,11 +83,12 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
 
   // Carregar dados
   const loadData = useCallback(async () => {
-    if (!storeId) return;
+    // Permite buscar videos mesmo enquanto storeId resolve
+    const targetStoreId = storeId || localStorage.getItem("sll_store_id") || undefined;
     try {
       setLoading(true);
       const [videosRes, appsRes, storiesRes] = await Promise.all([
-        VidlyticsDatabaseService.getVideos(storeId).catch(() => []),
+        VidlyticsDatabaseService.getVideos(targetStoreId).catch(() => []),
         VidlyticsDatabaseService.getAppearances(storeId).catch(() => []),
         VidlyticsDatabaseService.getStories(storeId).catch(() => []),
       ]);
