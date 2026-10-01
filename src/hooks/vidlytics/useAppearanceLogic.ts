@@ -250,13 +250,15 @@ export function useAppearanceLogic() {
       // Se estava editando um template, salva como novo estilo
       const isTemplateEdit = isDefaultAppearance(editingId);
 
-      const saved = await VidlyticsDatabaseService.saveAppearance({
-        id: isTemplateEdit ? undefined : editingId || undefined,
-        store_id: storeId,
-        name: styleName.trim(),
-        is_default: isDefault,
-        widget_style: widgetStyleToSave,
-      });
+      const saved = await VidlyticsDatabaseService.saveAppearance(
+        storeId,
+        {
+          id: isTemplateEdit ? undefined : editingId || undefined,
+          name: styleName.trim(),
+          is_default: isDefault,
+          widget_style: widgetStyleToSave,
+        },
+      );
 
       await loadAppearances();
       closeModal();
