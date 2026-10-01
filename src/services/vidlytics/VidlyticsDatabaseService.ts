@@ -1,4 +1,4 @@
-﻿import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { DisplayLocation, PageRuleType, DisplayPosition } from '@/types/vidlytics';
 
 export interface VidlyticsAppearance {
@@ -253,7 +253,39 @@ export class VidlyticsDatabaseService {
     }
   }
 
-  // --- STORIES ---
+    // --- STORIES ---
+  private static normalizeStory(row: any): any {
+    if (!row) return null;
+
+    const config = row.config || {};
+
+    return {
+      id: row.id,
+      store_id: row.store_id,
+      title: row.title,
+      name: row.title || config.name || '',
+      cover_url: row.cover_url || config.cover_url || '',
+      status: row.status || 'active',
+      active: row.status === 'active' || row.status === 'ATIVO' || config.active === true,
+      position: row.position ?? config.position ?? 0,
+      layout: config.layout || config.format || 'carousel',
+      format: config.format || config.layout || 'carousel',
+      scroll_direction: config.scroll_direction || config.scrollDirection || 'horizontal',
+      scrollDirection: config.scrollDirection || config.scroll_direction || 'horizontal',
+      appearance_id: config.appearance_id || config.visualStyle || '',
+      visualStyle: config.visualStyle || config.appearance_id || '',
+      videoUrls: config.videoUrls || config.video_urls || [],
+      video_ids: config.video_ids || config.videoUrls || [],
+      displayLocations: config.displayLocations || config.display_locations || [],
+      display_locations: config.display_locations || config.displayLocations || [],
+      views: config.views || 0,
+      clicks: config.clicks || 0,
+      ctr: config.ctr || 0,
+      created_at: row.created_at,
+      config,
+    };
+  }
+
   static async getStories(storeId?: string): Promise<any[]> {
     try {
       const vidlyticsDb = (supabase as any).schema
@@ -268,10 +300,9 @@ export class VidlyticsDatabaseService {
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) {
         console.warn('[VidlyticsDatabaseService] Erro ao buscar vid_stories:', error);
-        const fb = await vidlyticsDb.from('vid_stories').select('*').order('created_at', { ascending: false });
-        return fb.data || [];
+        return [];
       }
-      return data || [];
+      return (data || []).map(this.normalizeStory);
     } catch (err) {
       console.warn('[VidlyticsDatabaseService] Falha em getStories:', err);
       return [];
@@ -291,7 +322,7 @@ export class VidlyticsDatabaseService {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return this.normalizeStory(data);
     } catch (err) {
       console.warn('[VidlyticsDatabaseService] Erro em getStoryById:', err);
       return null;
@@ -304,16 +335,33 @@ export class VidlyticsDatabaseService {
         ? (supabase as any).schema('vidlytics')
         : supabase;
 
+      const normalizedStatus =
+        storyData.status === 'ATIVO' || storyData.status === 'active' || storyData.active === true
+          ? 'active'
+          : 'inactive';
+
+      const config = {
+        name: storyData.name || storyData.title || '',
+        layout: storyData.layout || storyData.format || 'carousel',
+        format: storyData.format || storyData.layout || 'carousel',
+        scroll_direction: storyData.scrollDirection || storyData.scroll_direction || 'horizontal',
+        scrollDirection: storyData.scrollDirection || storyData.scroll_direction || 'horizontal',
+        appearance_id: storyData.visualStyle || storyData.appearance_id || '',
+        visualStyle: storyData.visualStyle || storyData.appearance_id || '',
+        videoUrls: storyData.videoUrls || storyData.video_ids || [],
+        video_ids: storyData.video_ids || storyData.videoUrls || [],
+        displayLocations: storyData.displayLocations || storyData.display_locations || [],
+        display_locations: storyData.display_locations || storyData.displayLocations || [],
+        active: normalizedStatus === 'active',
+      };
+
       const payload: any = {
         store_id: storeId,
         title: storyData.name || storyData.title || 'Story sem título',
-        status: storyData.status || 'ATIVO',
-        layout: storyData.layout || 'CIRCLE',
-        scroll_direction: storyData.scrollDirection || storyData.scroll_direction || 'HORIZONTAL',
-        appearance_id: storyData.appearanceId || storyData.appearance_id || null,
-        video_ids: storyData.videos ? storyData.videos.map((v: any) => v.id || v) : [],
-        display_rules: storyData.displayRules || storyData.display_rules || [],
-        updated_at: new Date().toISOString(),
+        status: normalizedStatus,
+        position: typeof storyData.position === 'number' ? storyData.position : 0,
+        config,
+        cover_url: storyData.cover_url || null,
       };
 
       if (storyData.id) {
@@ -324,7 +372,7 @@ export class VidlyticsDatabaseService {
           .select()
           .single();
         if (error) throw error;
-        return data;
+        return this.normalizeStory(data);
       } else {
         const { data, error } = await vidlyticsDb
           .from('vid_stories')
@@ -332,7 +380,7 @@ export class VidlyticsDatabaseService {
           .select()
           .single();
         if (error) throw error;
-        return data;
+        return this.normalizeStory(data);
       }
     } catch (err) {
       console.error('[VidlyticsDatabaseService] Erro ao salvar Story:', err);
