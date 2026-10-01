@@ -49,6 +49,13 @@
     });
   }
 
+  function cleanUuid(val) {
+    if (!val) return null;
+    var s = String(val).trim();
+    if (!s || s === 'null' || s === 'undefined' || s === '""') return null;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s) ? s : null;
+  }
+
 function fetchActiveLive() {
   console.log('[VIDLYTICS DEBUG] fetchActiveLive chamado.', { hasSupabase: hasSupabase, storeId: storeId });
   if (!hasSupabase) return Promise.resolve(null);
