@@ -196,6 +196,12 @@ const FloatingPreview = ({ floating, colors, device }: { floating: any; colors: 
   );
 };
 
+// Mobile: sempre 3 itens (1 central + 2 cortados), independente de "Itens Visíveis"
+const mobileCarouselViewport = (c: any) => {
+  const w = limitNumber(c?.width, 80, 48, 240);
+  const s = Math.max(0, Number(c?.spacing ?? c?.gap ?? 8) || 0);
+  return Math.round(w * 2 + s * 2);
+};
 const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any; colors: any; isMobile?: boolean }) => {
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1616,11 +1622,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
                     {activeTab === 'carrossel' && (
                       <div className="flex-1 w-full h-full overflow-hidden flex flex-col justify-center px-0 py-3">
+                        <div className="mx-auto" style={{ width: mobileCarouselViewport(carouselPreviewData), maxWidth: "100%" }}>
                         <CarouselPreview
                           carousel={carouselPreviewData}
                           colors={{ primary: formData?.primary_color || '#0094EB' }}
                           isMobile={true}
                         />
+                        </div>
                       </div>
                     )}
 
