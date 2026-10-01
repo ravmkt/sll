@@ -42,7 +42,8 @@ interface BibliotecaTabProps {
 const STORAGE_LIMIT_BYTES = 50 * 1024 * 1024 * 1024; // 50 GB
 const BUCKET_NAME = "videos";
 
-export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
+export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialStoreId }) => {
+  const [storeId, setStoreId] = useState<string>(initialStoreId || "");
   const [videos, setVideos] = useState<VidVideo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -74,46 +75,48 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  // Listas de apoio
-  const [storeProducts, setStoreProducts] = useState<{ id: string; name: string }[]>([]);
-
-  // Obter client do schema vidlytics
-  const getVidlyticsClient = () => {
-    return typeof (supabase as any).schema === "function"
-      ? (supabase as any).schema("vidlytics")
-      : supabase;
-  };
-
-  // Carregar produtos da loja
+  // Recuperar storeId caso venha vazio
   useEffect(() => {
-    async function loadProducts() {
-      if (!storeId) return;
+    if (initialStoreId) {
+      setStoreId(initialStoreId);
+      return;
+    }
+
+    async function resolveStoreId() {
       try {
-        const { data } = await supabase
-          .from("products")
-          .select("id, name")
-          .eq("store_id", storeId)
-          .limit(50);
-        if (data) setStoreProducts(data);
-      } catch {
-        // silencioso
+        const stored = localStorage.getItem("current_store_id") || localStorage.getItem("store_id");
+        if (stored) {
+          setStoreId(stored);
+          return;
+        }
+
+        const { data: stores } = await supabase.from("stores").select("id").limit(1);
+        if (stores && stores.length > 0) {
+          setStoreId(stores[0].id);
+        } else {
+          setLoading(false);
+        }
+      } catch (e) {
+        console.warn("[BibliotecaTab] Falha ao resolver storeId:", e);
+        setLoading(false);
       }
     }
-    loadProducts();
-  }, [storeId]);
 
-  // Carregar Vídeos do schema vidlytics
+    resolveStoreId();
+  }, [initialStoreId]);
+
+  // Carregar Vídeos
   const fetchVideos = async () => {
-    if (!storeId) return;
     setLoading(true);
     setErrorMsg(null);
+
     try {
-      const client = getVidlyticsClient();
-      const { data, error } = await client
-        .from("vid_videos")
-        .select("*")
-        .eq("store_id", storeId)
-        .order("created_at", { ascending: false });
+      let query = supabase.from("vid_videos").select("*");
+      if (storeId) {
+        query = query.eq("store_id", storeId);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) {
         console.error("[BibliotecaTab] Erro ao buscar vídeos:", error);
@@ -122,7 +125,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
         setVideos(data || []);
       }
     } catch (err: any) {
-      console.error("[BibliotecaTab] Erro catch:", err);
+      console.error("[BibliotecaTab] Catch fetchVideos:", err);
       setErrorMsg(err.message || "Falha ao carregar mídias.");
     } finally {
       setLoading(false);
@@ -130,7 +133,9 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
   };
 
   useEffect(() => {
-    fetchVideos();
+    if (storeId) {
+      fetchVideos();
+    }
   }, [storeId]);
 
   // Métricas de Armazenamento
@@ -141,13 +146,13 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
   const usedMB = (totalBytesUsed / (1024 * 1024)).toFixed(1);
   const percentUsed = Math.min(100, (totalBytesUsed / STORAGE_LIMIT_BYTES) * 100).toFixed(1);
 
-  // Tratamento de Upload
+  // Upload Direto
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !storeId) return;
+    if (!file) return;
 
-    if (file.size > 30 * 1024 * 1024) {
-      setErrorMsg("O arquivo excede o limite máximo permitido de 30 MB.");
+    if (file.size > 50 * 1024 * 1024) {
+      setErrorMsg("O arquivo excede o limite máximo permitido de 50 MB.");
       return;
     }
 
@@ -156,14 +161,15 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
       setErrorMsg(null);
       setSuccessMsg(null);
 
+      const targetStoreId = storeId || "00000000-0000-0000-0000-000000000000";
       const fileExt = file.name.split(".").pop();
-      const fileName = `${storeId}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+      const fileName = `${targetStoreId}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
 
       const { data: uploadData, error: uploadErr } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, file, {
           cacheControl: "3600",
-          upsert: false
+          upsert: true
         });
 
       if (uploadErr) {
@@ -178,7 +184,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
       const cleanTitle = file.name.replace(/\.[^/.]+$/, "");
 
       const payload: any = {
-        store_id: storeId,
+        store_id: storeId || null,
         title: cleanTitle,
         video_url: publicUrl,
         thumbnail_url: publicUrl,
@@ -188,16 +194,13 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
         video_source_type: "upload"
       };
 
-      const client = getVidlyticsClient();
-      const { error: insertErr } = await client
+      const { error: insertErr } = await supabase
         .from("vid_videos")
         .insert([payload]);
 
-      if (insertErr) {
-        throw new Error(insertErr.message);
-      }
+      if (insertErr) throw new Error(insertErr.message);
 
-      setSuccessMsg("Mídia enviada e cadastrada com sucesso!");
+      setSuccessMsg("Mídia enviada com sucesso!");
       await fetchVideos();
     } catch (err: any) {
       console.error("[BibliotecaTab] Falha no upload:", err);
@@ -211,7 +214,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
   // Cadastrar URL Externa
   const handleSaveExternal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!externalUrl.trim() || !storeId) return;
+    if (!externalUrl.trim()) return;
 
     try {
       setIsSavingExternal(true);
@@ -220,7 +223,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
       const finalTitle = externalTitle.trim() || `Vídeo ${new Date().toLocaleDateString("pt-BR")}`;
 
       const payload: any = {
-        store_id: storeId,
+        store_id: storeId || null,
         title: finalTitle,
         video_url: externalUrl.trim(),
         thumbnail_url: "",
@@ -232,14 +235,13 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
       if (externalProduct) payload.product_id = externalProduct;
       if (externalModel) payload.model_id = externalModel;
 
-      const client = getVidlyticsClient();
-      const { error: insertErr } = await client
+      const { error: insertErr } = await supabase
         .from("vid_videos")
         .insert([payload]);
 
       if (insertErr) throw new Error(insertErr.message);
 
-      setSuccessMsg("Vídeo externo cadastrado com sucesso!");
+      setSuccessMsg("Vídeo cadastrado com sucesso!");
       setIsUrlModalOpen(false);
       setExternalUrl("");
       setExternalTitle("");
@@ -247,8 +249,8 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
       setExternalModel("");
       await fetchVideos();
     } catch (err: any) {
-      console.error("[BibliotecaTab] Erro ao cadastrar mídia externa:", err);
-      setErrorMsg(err.message || "Erro ao salvar vídeo por URL.");
+      console.error("[BibliotecaTab] Erro ao cadastrar URL:", err);
+      setErrorMsg(err.message || "Erro ao salvar vídeo externo.");
     } finally {
       setIsSavingExternal(false);
     }
@@ -256,12 +258,11 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
 
   // Excluir Mídia
   const handleDeleteVideo = async (video: VidVideo) => {
-    if (!confirm(`Deseja realmente remover o vídeo "${video.title}"?`)) return;
+    if (!confirm(`Deseja remover o vídeo "${video.title}"?`)) return;
 
     try {
       setErrorMsg(null);
-      const client = getVidlyticsClient();
-      const { error } = await client
+      const { error } = await supabase
         .from("vid_videos")
         .delete()
         .eq("id", video.id);
@@ -276,7 +277,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
     }
   };
 
-  // Abrir Modal de Edição
+  // Modal Edição
   const openEditModal = (video: VidVideo) => {
     setSelectedVideo(video);
     setEditTitle(video.title || "");
@@ -285,15 +286,13 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
     setIsEditModalOpen(true);
   };
 
-  // Salvar Edição
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedVideo) return;
 
     try {
       setIsSavingEdit(true);
-      const client = getVidlyticsClient();
-      const { error } = await client
+      const { error } = await supabase
         .from("vid_videos")
         .update({
           title: editTitle,
@@ -334,7 +333,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
 
   return (
     <div className="space-y-6">
-      {/* Mensagens de Notificação */}
+      {/* Notificações */}
       {errorMsg && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
@@ -372,7 +371,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
           <button
             type="button"
             className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition"
-            onClick={() => alert("Módulo Instagram conectado em breve.")}
+            onClick={() => alert("Módulo Instagram em breve.")}
           >
             <Share2 className="w-4 h-4 text-pink-600" />
             INSTAGRAM
@@ -381,7 +380,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
           <button
             type="button"
             className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition"
-            onClick={() => alert("Módulo TikTok conectado em breve.")}
+            onClick={() => alert("Módulo TikTok em breve.")}
           >
             <Film className="w-4 h-4 text-slate-900" />
             TIKTOK
@@ -408,7 +407,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
             type="button"
             disabled={isUploading}
             onClick={() => fileInputRef.current?.click()}
-            className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm shadow-sky-200 transition disabled:opacity-50"
+            className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm shadow-sky-200 transition disabled:opacity-50 cursor-pointer"
           >
             {isUploading ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -420,7 +419,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
         </div>
       </div>
 
-      {/* Cartão de Espaço de Armazenamento */}
+      {/* Cartão de Espaço */}
       <div className="p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -453,7 +452,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
         </div>
       </div>
 
-      {/* Barra de Busca e Filtros */}
+      {/* Busca e Filtros */}
       <div className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full md:w-96">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -485,7 +484,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
         </div>
       </div>
 
-      {/* Listagem de Mídias */}
+      {/* Listagem */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xs font-bold text-slate-400 tracking-wider uppercase">
@@ -494,7 +493,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
           <button
             onClick={fetchVideos}
             disabled={loading}
-            className="text-xs text-sky-600 hover:text-sky-700 flex items-center gap-1 font-medium"
+            className="text-xs text-sky-600 hover:text-sky-700 flex items-center gap-1 font-medium cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             Atualizar
@@ -517,7 +516,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
             </p>
             <button
               onClick={() => setIsUrlModalOpen(true)}
-              className="px-4 py-2 bg-sky-500 text-white text-xs font-semibold rounded-xl hover:bg-sky-600 transition"
+              className="px-4 py-2 bg-sky-500 text-white text-xs font-semibold rounded-xl hover:bg-sky-600 transition cursor-pointer"
             >
               Adicionar Primeiro Vídeo
             </button>
@@ -563,14 +562,14 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
                     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <button
                         onClick={() => openEditModal(video)}
-                        className="w-8 h-8 rounded-lg bg-white/90 text-slate-700 flex items-center justify-center hover:bg-white transition shadow-sm"
+                        className="w-8 h-8 rounded-lg bg-white/90 text-slate-700 flex items-center justify-center hover:bg-white transition shadow-sm cursor-pointer"
                         title="Editar"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDeleteVideo(video)}
-                        className="w-8 h-8 rounded-lg bg-red-500/90 text-white flex items-center justify-center hover:bg-red-600 transition shadow-sm"
+                        className="w-8 h-8 rounded-lg bg-red-500/90 text-white flex items-center justify-center hover:bg-red-600 transition shadow-sm cursor-pointer"
                         title="Excluir"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -584,7 +583,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
                         {video.title || "Sem título"}
                       </h4>
                       <p className="text-[11px] text-slate-400 mt-0.5">
-                        {new Date(video.created_at).toLocaleDateString("pt-BR")}
+                        {video.created_at ? new Date(video.created_at).toLocaleDateString("pt-BR") : "Recente"}
                       </p>
                     </div>
 
@@ -609,10 +608,10 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
         )}
       </div>
 
-      {/* Modal: Adicionar URL Externa */}
+      {/* Modal: Adicionar URL */}
       {isUrlModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
@@ -625,7 +624,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
               </div>
               <button
                 onClick={() => setIsUrlModalOpen(false)}
-                className="w-8 h-8 rounded-xl text-slate-400 hover:bg-slate-100 flex items-center justify-center transition"
+                className="w-8 h-8 rounded-xl text-slate-400 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -639,7 +638,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
                 <input
                   type="url"
                   required
-                  placeholder="https://exemplo.com/video.mp4 ou streaming"
+                  placeholder="https://exemplo.com/video.mp4"
                   value={externalUrl}
                   onChange={(e) => setExternalUrl(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
@@ -652,59 +651,25 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex: Apresentação Vestido Midi"
+                  placeholder="Ex: Vídeo de Demonstração"
                   value={externalTitle}
                   onChange={(e) => setExternalTitle(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
-                  PRODUTO VINCULADO (OPCIONAL)
-                </label>
-                <select
-                  value={externalProduct}
-                  onChange={(e) => setExternalProduct(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                >
-                  <option value="">Nenhum produto vinculado</option>
-                  {storeProducts.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
-                  MODELO/MEDIDA VINCULADO (OPCIONAL)
-                </label>
-                <select
-                  value={externalModel}
-                  onChange={(e) => setExternalModel(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                >
-                  <option value="">Nenhum</option>
-                  <option value="p">Modelo P (1.65m / 55kg)</option>
-                  <option value="m">Modelo M (1.70m / 65kg)</option>
-                  <option value="g">Modelo G (1.75m / 78kg)</option>
-                </select>
-              </div>
-
               <div className="pt-4 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsUrlModalOpen(false)}
-                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition"
+                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingExternal}
-                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50"
+                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50 cursor-pointer"
                 >
                   {isSavingExternal ? "Salvando..." : "CADASTRAR MÍDIA"}
                 </button>
@@ -714,15 +679,15 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
         </div>
       )}
 
-      {/* Modal: Edição de Mídia */}
+      {/* Modal: Edição */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-100">
               <h3 className="font-bold text-slate-800 text-base">Editar Detalhes da Mídia</h3>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="w-8 h-8 rounded-xl text-slate-400 hover:bg-slate-100 flex items-center justify-center transition"
+                className="w-8 h-8 rounded-xl text-slate-400 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -738,19 +703,6 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
                   required
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
-                  URL DA THUMBNAIL (CAPA)
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={editThumbnail}
-                  onChange={(e) => setEditThumbnail(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                 />
               </div>
@@ -774,14 +726,14 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition"
+                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingEdit}
-                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50"
+                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50 cursor-pointer"
                 >
                   {isSavingEdit ? "Salvando..." : "Salvar Alterações"}
                 </button>
