@@ -5974,7 +5974,7 @@ sendAnalyticsEvent('product_view', video ? video.id : null, productData ? produc
   var itemsArray = Array.from(track.children);
   var hasClones = itemsArray.length > visibleItems;
   if (!hasClones && itemsArray.length > 0) {
-    track.style.setProperty('justify-content', 'center', 'important');
+    track.style.setProperty('justify-content', 'safe center', 'important');
     if (!isMobileDevice) {
       var fitW = (itemWidthPx * itemsArray.length) + (gapPx * (itemsArray.length - 1));
       trackContainer.style.setProperty('width', fitW + 'px', 'important');
