@@ -20,9 +20,9 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
-  const fetchStore = async () => {
+  const fetchStore = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
@@ -64,13 +64,13 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Ouve alterações de autenticação
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        fetchStore();
+        fetchStore(true);
       }
     });
 
     // Ouve evento disparado após criar loja no Onboarding
     const handleStoreCreated = () => {
-      fetchStore();
+      fetchStore(true);
     };
     window.addEventListener('sll:store_created', handleStoreCreated);
 
@@ -100,7 +100,7 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
         stores,
         loading,
         needsOnboarding,
-        refreshStore: fetchStore,
+        refreshStore: () => fetchStore(false),
         setStoreManually,
       }}
     >
