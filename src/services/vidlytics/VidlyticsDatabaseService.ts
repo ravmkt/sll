@@ -1,6 +1,24 @@
 import { supabase } from '@/lib/supabase';
 import { DisplayLocation, PageRuleType, DisplayPosition } from '@/types/vidlytics';
 
+export interface VidlyticsComment {
+  id: string;
+  video_id: string;
+  author_name: string | null;
+  content: string;
+  status: 'PENDENTE' | 'APROVADO' | 'REJEITADO';
+  created_at: string | null;
+}
+
+export interface VidlyticsCommentReply {
+  id: string;
+  comment_id: string;
+  store_id: string;
+  author_name: string;
+  content: string;
+  created_at: string | null;
+}
+
 export interface VidlyticsAppearance {
   id?: string;
   store_id: string;
@@ -406,4 +424,76 @@ export class VidlyticsDatabaseService {
       return false;
     }
   }
+  // --- COMMENTS ---
+  static async getComments(storeId: string): Promise<VidlyticsComment[]> {
+    const { data: videos, error: videosError } = await supabase
+      .schema('vidlytics')
+      .from('vid_videos')
+      .select('id')
+      .eq('store_id', storeId);
+    if (videosError) throw videosError;
+
+    const videoIds = (videos || []).map((v: any) => v.id);
+    if (videoIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .schema('vidlytics')
+      .from('vid_comments')
+      .select('*')
+      .in('video_id', videoIds)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    return (data || []) as VidlyticsComment[];
+  }
+
+  static async updateCommentStatus(
+    commentId: string,
+    status: VidlyticsComment['status']
+  ): Promise<void> {
+    const { error } = await supabase
+      .schema('vidlytics')
+      .from('vid_comments')
+      .update({ status })
+      .eq('id', commentId);
+    if (error) throw error;
+  }
+
+  static async deleteComment(commentId: string): Promise<void> {
+    const { error } = await supabase
+      .schema('vidlytics')
+      .from('vid_comments')
+      .delete()
+      .eq('id', commentId);
+    if (error) throw error;
+  }
+
+  static async getCommentReplies(commentIds: string[]): Promise<VidlyticsCommentReply[]> {
+    if (commentIds.length === 0) return [];
+    const { data, error } = await supabase
+      .schema('vidlytics')
+      .from('vid_comment_replies')
+      .select('*')
+      .in('comment_id', commentIds)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return (data || []) as VidlyticsCommentReply[];
+  }
+
+  static async addCommentReply(
+    commentId: string,
+    storeId: string,
+    authorName: string,
+    content: string
+  ): Promise<VidlyticsCommentReply> {
+    const { data, error } = await supabase
+      .schema('vidlytics')
+      .from('vid_comment_replies')
+      .insert({ comment_id: commentId, store_id: storeId, author_name: authorName, content })
+      .select()
+      .single();
+    if (error) throw error;
+    return data as VidlyticsCommentReply;
+  }
 }
+
