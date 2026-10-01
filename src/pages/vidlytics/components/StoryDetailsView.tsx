@@ -67,7 +67,7 @@ const POSITION_OPTIONS: Array<{ label: string; value: DisplayPosition }> = [
 ];
 
 export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDetailsViewProps) {
-  const { storeId, currentStore } = useLoja();
+  const { storeId, store: currentStore } = useLoja();
   const isCreate = !storyId;
 
   const [loading, setLoading] = useState(true);

@@ -35,7 +35,7 @@ export default function NewStoryModal({
   onSaved,
   storeId,
 }: NewStoryModalProps) {
-  const { currentStore } = useLoja();
+  const { store: currentStore } = useLoja();
   const [stableStoryId] = useState(() => crypto.randomUUID());
   const [title, setTitle] = useState('');
   const [layout, setLayout] = useState('circle');
