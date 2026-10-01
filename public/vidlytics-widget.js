@@ -7579,7 +7579,7 @@ if (!storeId || !hasSupabase) {
                 products: readProductsData,
                 sizing_models: readSizingModelsData,
                 comments: readCommentsData,
-                appearance: getStoryAppearance(story),$1storyFormat: storyFormat
+                appearance: getStoryAppearance(story), storyFormat: storyFormat
               });
               if (widgetInjected) {
                 injectedStoryIds[story.id] = true;
@@ -7609,7 +7609,7 @@ if (!storeId || !hasSupabase) {
               products: readProductsData,
               sizing_models: readSizingModelsData,
               comments: readCommentsData,
-              appearance: getStoryAppearance(fallbackList[0]),$1storyFormat: getStoryFormat(fallbackList[0])
+              appearance: getStoryAppearance(fallbackList[0]), storyFormat: getStoryFormat(fallbackList[0])
             });
           } catch (err) {
             console.error('[Vidlytics] ❌ Erro no fallback:', err);
