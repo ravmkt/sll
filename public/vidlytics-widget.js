@@ -6122,7 +6122,41 @@ function onDragEnd() {
     }, true);
   });
   
-target.insertAdjacentElement(position, container);
+// --- SETAS (só com clones e showArrows ligado) ---
+  if (hasClones && cfg.showArrows) {
+    var makeArrow = function (dir) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'vidlytics-carousel-arrow vidlytics-carousel-arrow-' + (dir < 0 ? 'prev' : 'next');
+      b.setAttribute('aria-label', dir < 0 ? 'Anterior' : 'Próximo');
+      b.innerHTML = dir < 0 ? '&#8249;' : '&#8250;';
+      b.style.cssText =
+        'position:absolute !important;top:50% !important;' +
+        (dir < 0 ? 'left:4px' : 'right:4px') + ' !important;' +
+        'transform:translateY(-50%) !important;width:32px !important;height:32px !important;' +
+        'border-radius:50% !important;border:none !important;background:' + primaryColor + ' !important;' +
+        'color:#fff !important;font-size:22px !important;line-height:1 !important;cursor:pointer !important;' +
+        'z-index:5 !important;display:flex !important;align-items:center !important;' +
+        'justify-content:center !important;padding:0 !important;box-shadow:0 2px 6px rgba(0,0,0,.25) !important;';
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (isMobileDevice) {
+          activeIndex = clamp(activeIndex + dir, 0, track.children.length - 1);
+          centerActiveItem(true);
+        } else {
+          var step = itemWidthPx + gapPx;
+          var next = clamp(getTranslateX(track) - dir * step, -getMaxScroll(), 0);
+          track.style.transition = 'transform 0.3s ease';
+          track.style.transform = 'translateX(' + next + 'px)';
+        }
+      });
+      return b;
+    };
+    trackContainer.appendChild(makeArrow(-1));
+    trackContainer.appendChild(makeArrow(1));
+  }
+
+  target.insertAdjacentElement(position, container);
 
 if (isMobileDevice) {
   requestAnimationFrame(function () {
