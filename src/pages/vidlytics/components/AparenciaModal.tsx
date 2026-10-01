@@ -356,7 +356,8 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
   const spacingNum = Number(carousel?.spacing ?? 8) || 0;
   const visibleItems = Math.max(1, Number(carousel?.visible_items ?? 4));
   const cw = containerWidth || (isMobile ? 320 : 850);
-  const baseItemWidth = isMobile ? cw * 0.6 : Math.max(80, (cw - (spacingNum * (visibleItems - 1))) / visibleItems);
+  const configuredW = limitNumber(carousel?.width, 80, 48, 240);
+  const baseItemWidth = isMobile ? Math.min(configuredW, Math.round(cw * 0.5)) : configuredW;
   const step = baseItemWidth + spacingNum;
   const borderWidth = Number(carousel?.border_width ?? carousel?.border_style ?? 2);
   const borderColor = carousel?.border_color || colors?.primary || '#0094EB';
@@ -423,6 +424,35 @@ const ModalPlayerPreview = ({ playerConfig, primaryColor, isMobile = false }: { 
   );
 };
 
+// ──────────────────── FRAME VIRTUAL (DEVICE REAL REDUZIDO PARA CABER) ────────────────────
+const FitFrame = ({ width, height, className, children }: { width: number; height: number; className?: string; children: React.ReactNode }) => {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const calc = () => {
+      const o = outerRef.current;
+      if (!o) return;
+      const r = o.getBoundingClientRect();
+      const s = Math.min((r.width - 16) / width, (r.height - 16) / height, 1);
+      setScale(s > 0 ? s : 1);
+    };
+    calc();
+    const ro = new ResizeObserver(calc);
+    if (outerRef.current) ro.observe(outerRef.current);
+    return () => ro.disconnect();
+  }, [width, height]);
+
+  return (
+    <div ref={outerRef} className="w-full h-full flex items-center justify-center overflow-hidden">
+      <div className="shrink-0" style={{ width: width * scale, height: height * scale }}>
+        <div className={className} style={{ width, height, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
 const FormField = ({ label, children }: any) => (
   <div className="flex flex-col gap-1.5">
     {label && <label className="text-xs font-bold text-slate-700 dark:text-slate-300">{label}</label>}
@@ -1507,7 +1537,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 {previewDevice === 'desktop' ? (
-                  <div className="w-full max-w-5xl aspect-video bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+                  <FitFrame width={1100} height={620} className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
                      <div className="h-10 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 gap-2 shrink-0">
                         <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
                         <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
@@ -1572,10 +1602,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           </div>
                         )}
                      </div>
-                  </div>
+                  </FitFrame>
                 ) : (
-                  <div className="h-full max-h-[800px] aspect-[9/19] rounded-[2.5rem] border-[10px] border-[#1a1f36] bg-slate-50 dark:bg-slate-900 shadow-2xl relative flex items-center justify-center overflow-hidden shrink-0">
-                    <div className="absolute top-0 inset-x-0 h-5 bg-[#1a1f36] w-[40%] mx-auto rounded-b-xl z-20"></div>
+                  <FitFrame width={360} height={720} className="rounded-[2.5rem] border-[10px] border-[#1a1f36] bg-slate-50 dark:bg-slate-900 shadow-2xl relative flex items-center justify-center overflow-hidden">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 h-5 w-24 bg-[#1a1f36] rounded-b-2xl z-20"></div>
 
                     {activeTab === 'flutuante' && (
                       <div className="relative w-full h-full p-2">
@@ -1622,7 +1652,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         />
                       </div>
                     )}
-                  </div>
+                  </FitFrame>
                 )}
               </div>
             )}
