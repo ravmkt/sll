@@ -6813,12 +6813,12 @@ console.log('[VIDLYTICS DEBUG INIT]', { storeId, supabaseUrl, supabaseAnonKey: s
    RENDERIZAÇÃO DO WIDGET FLUTUANTE
    ================================================================ */
 
-function renderFloatingWidget(floatingStories) {
+function renderOneFloatingWidget(story, hostId) {
   console.log("VIDLYTICS DEBUG - Configuração Atual:", currentAppearance);
   
-  if (!currentAppearance) return;
+  currentAppearance = getStoryAppearance(story) || currentAppearance; if (!currentAppearance) return; var myAppearance = currentAppearance; var storyIdx = Math.max(0, currentStories.indexOf(story));
 
-  var stories = floatingStories || currentStories;
+  var stories = [story];
 
   if (!stories || stories.length === 0) {
     return;
@@ -6829,18 +6829,18 @@ function renderFloatingWidget(floatingStories) {
   var primaryColor = getPrimaryColor(currentAppearance);
 
   // Remove host antigo se existir
-  var oldHost = document.getElementById('vidlytics-floating-host');
+  var oldHost = document.getElementById(hostId);
   if (oldHost) {
     oldHost.remove();
     globalShadowRoot = null;
   }
 
   var shadowHost = document.createElement('div');
-  shadowHost.id = 'vidlytics-floating-host';
+  shadowHost.id = hostId;
   applyHostPosition(shadowHost, currentAppearance);
   document.body.appendChild(shadowHost);
-  globalShadowRoot = shadowHost.attachShadow({ mode: 'open' });
-  injectStyles(globalShadowRoot);
+  var root = shadowHost.attachShadow({ mode: 'open' }); globalShadowRoot = root;
+  injectStyles(root);
 
   // ── CONTAINER PRINCIPAL ──
   var widget = createEl('div', 'vidlytics-floating-widget');
@@ -6900,7 +6900,7 @@ function renderFloatingWidget(floatingStories) {
         return;
       }
 
-      var host = document.getElementById('vidlytics-floating-host');
+      var host = document.getElementById(hostId);
       if (host) host.remove();
       globalShadowRoot = null;
     });
@@ -7015,7 +7015,7 @@ function renderFloatingWidget(floatingStories) {
       return;
     }
 
-    openStoryModal(0);
+    currentAppearance = myAppearance; openStoryModal(storyIdx);
   });
 
   // ── MONTAR WIDGET ──
@@ -7113,17 +7113,32 @@ function renderFloatingWidget(floatingStories) {
 ctaElement.addEventListener('click', function(e) {
   e.preventDefault();
   e.stopPropagation();
-  openStoryModal(0);
+  currentAppearance = myAppearance; openStoryModal(storyIdx);
 });
 
     widget.appendChild(ctaElement);
   }
 
-  globalShadowRoot.appendChild(widget);
-  applyDraggable(wrapper, cardOuter, currentAppearance);
+  root.appendChild(widget);
+  wrapper.addEventListener('pointerdown', function () { globalShadowRoot = root; currentAppearance = myAppearance; }, true); globalShadowRoot = root; applyDraggable(wrapper, cardOuter, myAppearance);
 }
 
-  /* ================================================================
+  function renderFloatingWidget(floatingStories) {
+  var stories = floatingStories || currentStories.filter(function (s) { return getStoryFormat(s) === 'floating_widget'; });
+  if (!stories || stories.length === 0) return;
+
+  Array.prototype.slice.call(document.querySelectorAll('[id^="vidlytics-floating-host"]')).forEach(function (h) { h.remove(); });
+  globalShadowRoot = null;
+
+  var firstAppearance = null;
+  stories.forEach(function (s, i) {
+    renderOneFloatingWidget(s, 'vidlytics-floating-host-' + (s.id || i));
+    if (i === 0) firstAppearance = currentAppearance;
+  });
+  if (firstAppearance) currentAppearance = firstAppearance;
+}
+
+/* ================================================================
      ELEMENT PICKER COM storyId
      ================================================================ */
 

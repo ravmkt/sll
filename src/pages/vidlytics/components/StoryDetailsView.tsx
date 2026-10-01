@@ -66,6 +66,7 @@ const POSITION_OPTIONS: Array<{ label: string; value: DisplayPosition }> = [
   { label: 'Abaixo do elemento', value: 'afterend' },
 ];
 
+let activeSelectorPolling: ReturnType<typeof setInterval> | null = null;
 export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDetailsViewProps) {
   const { storeId, store: currentStore } = useLoja();
   const isCreate = !storyId;
@@ -226,13 +227,61 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
       return;
     }
 
-    let targetUrl = baseUrl.replace(/\/+$/, '');
+    let defaultUrl = baseUrl.replace(/\/+$/, '');
     if (CONDITION_TYPES_WITH_VALUE.includes(rule.condition_type) && rule.value.trim()) {
       const cleanPath = rule.value.startsWith('/') ? rule.value : `/${rule.value}`;
-      targetUrl += cleanPath;
+      defaultUrl += cleanPath;
     }
 
-    window.open(targetUrl, '_blank');
+    const userUrl = window.prompt(
+      'Informe a URL completa da página da sua loja para selecionar o elemento:',
+      defaultUrl
+    );
+    if (!userUrl || !userUrl.trim()) return;
+
+    let finalUrl = userUrl.trim();
+    if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
+
+    const token = 'sel_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+    finalUrl +=
+      (finalUrl.includes('?') ? '&' : '?') +
+      'widgetSelectToken=' + token +
+      (storyId ? '&widgetSelectStoryId=' + encodeURIComponent(storyId) : '');
+
+    window.open(finalUrl, '_blank');
+
+    if (activeSelectorPolling) clearInterval(activeSelectorPolling);
+
+    const env = (import.meta as any).env || {};
+    const supabaseUrl = String(env.VITE_SUPABASE_URL || 'https://flivmllysdhaydhogmhg.supabase.co').replace(/\/+$/, '');
+    const anonKey = env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_fYM4F5uRs_8DbYF7ozy0hA_eA_Z5XUz';
+
+    let tries = 0;
+    activeSelectorPolling = setInterval(async () => {
+      tries++;
+      try {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/widget_selectors?token=eq.${encodeURIComponent(token)}&select=selector`,
+          { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } }
+        );
+        if (res.ok) {
+          const rows = await res.json();
+          const css = Array.isArray(rows) && rows[0] ? rows[0].selector : null;
+          if (css) {
+            if (activeSelectorPolling) clearInterval(activeSelectorPolling);
+            activeSelectorPolling = null;
+            handleUpdatePageLocation(rule.id, { selector: css });
+            return;
+          }
+        }
+      } catch {
+        // segue polling silencioso
+      }
+      if (tries > 120 && activeSelectorPolling) {
+        clearInterval(activeSelectorPolling);
+        activeSelectorPolling = null;
+      }
+    }, 2000);
   };
 
   // Salvar Story
