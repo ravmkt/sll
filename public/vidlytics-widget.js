@@ -7440,6 +7440,7 @@ if (!storeId || !hasSupabase) {
       });
     });
   });
+  });
 }
 
 // Executa a inicializacao automatica via atributo data-vidlytics-init
