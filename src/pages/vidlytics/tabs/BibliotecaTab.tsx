@@ -42,6 +42,11 @@ interface BibliotecaTabProps {
 const STORAGE_LIMIT_BYTES = 50 * 1024 * 1024 * 1024; // 50 GB
 const BUCKET_NAME = "videos";
 
+// Cliente direcionado ao schema vidlytics
+const vidlyticsDb = (supabase as any).schema 
+  ? (supabase as any).schema("vidlytics") 
+  : supabase;
+
 export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialStoreId }) => {
   const [storeId, setStoreId] = useState<string>(initialStoreId || "");
   const [videos, setVideos] = useState<VidVideo[]>([]);
@@ -75,7 +80,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  // Recuperar storeId caso venha vazio
+  // Resolver store_id
   useEffect(() => {
     if (initialStoreId) {
       setStoreId(initialStoreId);
@@ -105,13 +110,13 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     resolveStoreId();
   }, [initialStoreId]);
 
-  // Carregar Vídeos
+  // Carregar Vídeos do schema vidlytics
   const fetchVideos = async () => {
     setLoading(true);
     setErrorMsg(null);
 
     try {
-      let query = supabase.from("vid_videos").select("*");
+      let query = vidlyticsDb.from("vid_videos").select("*");
       if (storeId) {
         query = query.eq("store_id", storeId);
       }
@@ -194,7 +199,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         video_source_type: "upload"
       };
 
-      const { error: insertErr } = await supabase
+      const { error: insertErr } = await vidlyticsDb
         .from("vid_videos")
         .insert([payload]);
 
@@ -235,7 +240,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       if (externalProduct) payload.product_id = externalProduct;
       if (externalModel) payload.model_id = externalModel;
 
-      const { error: insertErr } = await supabase
+      const { error: insertErr } = await vidlyticsDb
         .from("vid_videos")
         .insert([payload]);
 
@@ -262,7 +267,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
     try {
       setErrorMsg(null);
-      const { error } = await supabase
+      const { error } = await vidlyticsDb
         .from("vid_videos")
         .delete()
         .eq("id", video.id);
@@ -292,7 +297,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
     try {
       setIsSavingEdit(true);
-      const { error } = await supabase
+      const { error } = await vidlyticsDb
         .from("vid_videos")
         .update({
           title: editTitle,
@@ -389,7 +394,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           <button
             type="button"
             onClick={() => setIsUrlModalOpen(true)}
-            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition"
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition cursor-pointer"
           >
             <Globe className="w-4 h-4 text-sky-600" />
             URL EXTERNA
@@ -608,7 +613,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         )}
       </div>
 
-      {/* Modal: Adicionar URL */}
+      {/* Modal: URL Externa */}
       {isUrlModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-xl overflow-hidden">
@@ -651,7 +656,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex: Vídeo de Demonstração"
+                  placeholder="Ex: Demonstração do Produto"
                   value={externalTitle}
                   onChange={(e) => setExternalTitle(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
