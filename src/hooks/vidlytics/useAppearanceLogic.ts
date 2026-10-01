@@ -66,7 +66,12 @@ const createDefaultWidgetStyle = () => ({
 export function useAppearanceLogic() {
   const storeContext = useLoja();
   const currentStore = storeContext?.store;
-  const storeId = currentStore?.id || localStorage.getItem('sll_store_id') || undefined;
+  const rawStoreId = currentStore?.id || localStorage.getItem('sll_store_id') || undefined;
+  const isValidUUID = (value: string | undefined): value is string => {
+    if (!value) return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  };
+  const storeId = isValidUUID(rawStoreId) ? rawStoreId : undefined;
   // Estado da LISTA (para AparenciaTab.tsx)
   const [appearances, setAppearances] = useState<VidAppearanceRow[]>([]);
   const [listLoading, setListLoading] = useState(true);

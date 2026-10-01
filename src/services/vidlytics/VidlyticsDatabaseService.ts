@@ -96,6 +96,21 @@ export class VidlyticsDatabaseService {
     return data || [];
   }
 
+  static async getAppearanceById(appearanceId: string): Promise<VidlyticsAppearance | null> {
+    if (!appearanceId) return null;
+    const { data, error } = await supabase
+      .schema(this.SCHEMA)
+      .from(this.TABLE_APPEARANCES)
+      .select('*')
+      .eq('id', appearanceId)
+      .maybeSingle();
+    if (error) {
+      console.error('[VidlyticsDatabaseService] Erro ao buscar aparência por ID:', error);
+      throw error;
+    }
+    return data;
+  }
+
   static async saveAppearance(
     storeId: string,
     appearance: Omit<VidlyticsAppearance, 'store_id'>
