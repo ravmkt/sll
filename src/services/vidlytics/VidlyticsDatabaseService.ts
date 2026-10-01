@@ -229,26 +229,133 @@ export class VidlyticsDatabaseService {
   }
 
   
+  // --- VIDEOS (SINCRONIZADO COM BIBLIOTECA) ---
   static async getVideos(storeId?: string): Promise<any[]> {
     try {
-      let query = supabase
-        .schema('vidlytics')
-        .from('vid_videos')
-        .select('*');
+      const vidlyticsDb = (supabase as any).schema
+        ? (supabase as any).schema('vidlytics')
+        : supabase;
 
+      let query = vidlyticsDb.from('vid_videos').select('*');
       if (storeId) {
-        query = query.or('store_id.eq.' + storeId + ',store_id.is.null');
+        query = query.eq('store_id', storeId);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
-      if (error) {
-        console.warn('[VidlyticsDatabaseService] Erro ao buscar vid_videos:', error);
-        return [];
+      if (error || !data || data.length === 0) {
+        const fallback = await vidlyticsDb.from('vid_videos').select('*').order('created_at', { ascending: false });
+        return fallback.data || [];
       }
       return data || [];
     } catch (err) {
       console.error('[VidlyticsDatabaseService] Falha em getVideos:', err);
       return [];
+    }
+  }
+
+  // --- STORIES ---
+  static async getStories(storeId?: string): Promise<any[]> {
+    try {
+      const vidlyticsDb = (supabase as any).schema
+        ? (supabase as any).schema('vidlytics')
+        : supabase;
+
+      let query = vidlyticsDb.from('vid_stories').select('*');
+      if (storeId) {
+        query = query.eq('store_id', storeId);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) {
+        console.warn('[VidlyticsDatabaseService] Erro ao buscar vid_stories:', error);
+        const fb = await vidlyticsDb.from('vid_stories').select('*').order('created_at', { ascending: false });
+        return fb.data || [];
+      }
+      return data || [];
+    } catch (err) {
+      console.warn('[VidlyticsDatabaseService] Falha em getStories:', err);
+      return [];
+    }
+  }
+
+  static async getStoryById(storyId: string): Promise<any | null> {
+    try {
+      const vidlyticsDb = (supabase as any).schema
+        ? (supabase as any).schema('vidlytics')
+        : supabase;
+
+      const { data, error } = await vidlyticsDb
+        .from('vid_stories')
+        .select('*')
+        .eq('id', storyId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn('[VidlyticsDatabaseService] Erro em getStoryById:', err);
+      return null;
+    }
+  }
+
+  static async saveStory(storeId: string, storyData: any): Promise<any> {
+    try {
+      const vidlyticsDb = (supabase as any).schema
+        ? (supabase as any).schema('vidlytics')
+        : supabase;
+
+      const payload: any = {
+        store_id: storeId,
+        title: storyData.name || storyData.title || 'Story sem título',
+        status: storyData.status || 'ATIVO',
+        layout: storyData.layout || 'CIRCLE',
+        scroll_direction: storyData.scrollDirection || storyData.scroll_direction || 'HORIZONTAL',
+        appearance_id: storyData.appearanceId || storyData.appearance_id || null,
+        video_ids: storyData.videos ? storyData.videos.map((v: any) => v.id || v) : [],
+        display_rules: storyData.displayRules || storyData.display_rules || [],
+        updated_at: new Date().toISOString(),
+      };
+
+      if (storyData.id) {
+        const { data, error } = await vidlyticsDb
+          .from('vid_stories')
+          .update(payload)
+          .eq('id', storyData.id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await vidlyticsDb
+          .from('vid_stories')
+          .insert([payload])
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
+    } catch (err) {
+      console.error('[VidlyticsDatabaseService] Erro ao salvar Story:', err);
+      throw err;
+    }
+  }
+
+  static async deleteStory(storeId: string, storyId: string): Promise<boolean> {
+    try {
+      const vidlyticsDb = (supabase as any).schema
+        ? (supabase as any).schema('vidlytics')
+        : supabase;
+
+      const { error } = await vidlyticsDb
+        .from('vid_stories')
+        .delete()
+        .eq('id', storyId);
+
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('[VidlyticsDatabaseService] Erro ao deletar Story:', err);
+      return false;
     }
   }
 }
