@@ -725,7 +725,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
     // Criando novo estilo (novo ou salvar como)
     if (asNew || isDefaultSystemStyle || !editingId || !name || name.toUpperCase() === 'PADRAO' || name.toUpperCase() === 'VIDLYTICS') {
-      setModalInputName(asNew ? `${name} Cópia` : name === 'Vidlytics' ? '' : name);
+      setModalInputName(asNew ? '' : name === 'Vidlytics' ? '' : name);
       setShowNameModal(true);
       return;
     }
@@ -775,7 +775,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 </button>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                O modelo "Vidlytics" é o nativo do sistema. Digite um nome para salvar sua versão customizada:
+                Digite um nome para salvar o novo estilo:
               </p>
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Nome do Estilo</label>
@@ -1700,6 +1700,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 };
 
 export default AparenciaModal;
+
 
 
 
