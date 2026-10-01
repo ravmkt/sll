@@ -10,9 +10,29 @@
   var config = globalConfig.config || globalConfig;
   var widgetsCfg = globalConfig.widgets || globalConfig.widgetsConfig || {};
 
-  var supabaseUrl = String(globalConfig.supabaseUrl || config.supabaseUrl || '').replace(/\/+$/, '');
-  var supabaseAnonKey = globalConfig.supabaseAnonKey || globalConfig.anonKey || config.supabaseAnonKey || config.anonKey || '';
-  var storeId = globalConfig.storeId || config.storeId || '';
+  var currentWidgetScript = document.currentScript || (function() {
+    var scripts = document.getElementsByTagName("script");
+    for (var i = scripts.length - 1; i >= 0; i--) {
+      if (scripts[i].src && scripts[i].src.indexOf("vidlytics-widget") !== -1) return scripts[i];
+    }
+    return null;
+  })();
+
+  var scriptStoreId = currentWidgetScript ? (currentWidgetScript.getAttribute("data-store-id") || currentWidgetScript.getAttribute("data-store")) : null;
+
+  var DEFAULT_SLL_SUPABASE_URL = "https://flivmllysdhaydhogmhg.supabase.co";
+  var DEFAULT_SLL_ANON_KEY = "sb_publishable_fYM4F5uRs_8DbYF7ozy0hA_eA_Z5XUz";
+
+  var supabaseUrl = String(globalConfig.supabaseUrl || config.supabaseUrl || DEFAULT_SLL_SUPABASE_URL).replace(/\/+$/, '');
+  var supabaseAnonKey = globalConfig.supabaseAnonKey || globalConfig.anonKey || config.supabaseAnonKey || config.anonKey || DEFAULT_SLL_ANON_KEY;
+  var storeId = globalConfig.storeId || config.storeId || window.SLL_STORE_ID || scriptStoreId || '';
+
+  if (!storeId) {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      storeId = params.get('sll_store_id') || params.get('store_id') || '';
+    } catch(e) {}
+  }
 
   var hasSupabase = Boolean(supabaseUrl && supabaseAnonKey && storeId);
 

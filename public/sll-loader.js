@@ -28,6 +28,13 @@
 
   window.SLL_STORE_ID = storeId;
 
+  // Garante a ponte de configuração global para o Vidlytics e outros módulos
+  window.VIDLYTICS_CONFIG = window.VIDLYTICS_CONFIG || {};
+  window.VIDLYTICS_CONFIG.storeId = storeId;
+  window.VIDLYTICS_CONFIG.supabaseUrl = SUPABASE_URL;
+  window.VIDLYTICS_CONFIG.supabaseAnonKey = SUPABASE_ANON_KEY;
+  window.VIDLYTICS_CONFIG.anonKey = SUPABASE_ANON_KEY;
+
   var baseUrl = "";
   if (currentScript && currentScript.src) {
     var lastSlash = currentScript.src.lastIndexOf("/");
