@@ -16,9 +16,13 @@ import {
   RefreshCw,
   X,
   Play,
-  Link2
+  Link2,
+  ArrowLeft,
+  AlertTriangle,
+  Save
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 
 interface VidVideo {
   id: string;
@@ -44,6 +48,7 @@ interface ProductItem {
   name?: string;
   thumbnail?: string;
   image_url?: string;
+  price?: number;
 }
 
 interface BibliotecaTabProps {
@@ -53,7 +58,6 @@ interface BibliotecaTabProps {
 const STORAGE_LIMIT_BYTES = 50 * 1024 * 1024 * 1024; // 50 GB
 const BUCKET_NAME = "videos";
 
-// Cliente direcionado ao schema vidlytics
 const vidlyticsDb = (supabase as any).schema 
   ? (supabase as any).schema("vidlytics") 
   : supabase;
@@ -70,27 +74,38 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState<"TODOS" | "VIDEOS" | "IMAGENS">("TODOS");
 
-  // Modais
-  const [isUrlModalOpen, setIsUrlModalOpen] = useState<boolean>(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  // Visualização e Subpáginas
   const [previewMedia, setPreviewMedia] = useState<VidVideo | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<VidVideo | null>(null);
+  const [editingVideo, setEditingVideo] = useState<VidVideo | null>(null);
 
-  // Form states URL Externa (idêntico ao Print 1)
+  // Modal Exclusão Padrão (Print 5)
+  const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
+  const [videoToDelete, setVideoToDelete] = useState<VidVideo | null>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  // Modal URL Externa
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState<boolean>(false);
   const [externalUrl, setExternalUrl] = useState<string>("");
   const [externalTitle, setExternalTitle] = useState<string>("");
   const [externalProduct, setExternalProduct] = useState<string>("");
   const [externalModel, setExternalModel] = useState<string>("");
   const [isSavingExternal, setIsSavingExternal] = useState<boolean>(false);
 
-  // Form states Edição
+  // Estados da Página de Edição (Print 3)
   const [editTitle, setEditTitle] = useState<string>("");
+  const [editSourceType, setEditSourceType] = useState<string>("upload");
+  const [editVideoUrl, setEditVideoUrl] = useState<string>("");
+  const [editThumbnailUrl, setEditThumbnailUrl] = useState<string>("");
   const [editProductId, setEditProductId] = useState<string>("");
+  const [editModelId, setEditModelId] = useState<string>("");
   const [editStatus, setEditStatus] = useState<string>("active");
+  const [editStoryTitle, setEditStoryTitle] = useState<string>("");
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
 
-  // Upload
+  // Inputs de arquivo
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editVideoFileRef = useRef<HTMLInputElement>(null);
+  const editThumbFileRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
 
   // Resolver store_id
@@ -123,14 +138,14 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     resolveStoreId();
   }, [initialStoreId]);
 
-  // Carregar produtos da loja para seleção
+  // Carregar produtos da loja
   useEffect(() => {
     async function fetchProducts() {
       if (!storeId) return;
       try {
         const { data } = await supabase
           .from("products")
-          .select("id, name, title, image_url, thumbnail")
+          .select("id, name, title, image_url, thumbnail, price")
           .eq("store_id", storeId)
           .limit(100);
 
@@ -142,7 +157,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     fetchProducts();
   }, [storeId]);
 
-  // Carregar Mídias
+  // Carregar mídias
   const fetchVideos = async () => {
     setLoading(true);
     setErrorMsg(null);
@@ -175,7 +190,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     }
   }, [storeId]);
 
-  // Helpers de Formatação
+  // Helpers
   const formatFileSize = (bytes?: number) => {
     if (!bytes || bytes === 0) return "—";
     if (bytes < 1024 * 1024) {
@@ -189,7 +204,6 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     return !!url.match(/\.(jpeg|jpg|gif|png|webp)($|\?)/i);
   };
 
-  // Métricas de Armazenamento
   const totalBytesUsed = useMemo(() => {
     return videos.reduce((acc, item) => acc + (Number(item.file_size_bytes) || 0), 0);
   }, [videos]);
@@ -197,7 +211,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const usedMB = (totalBytesUsed / (1024 * 1024)).toFixed(1);
   const percentUsed = Math.min(100, (totalBytesUsed / STORAGE_LIMIT_BYTES) * 100).toFixed(1);
 
-  // Upload Direto
+  // Upload Direto da Biblioteca
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -218,18 +232,13 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
       const { data: uploadData, error: uploadErr } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: true
-        });
+        .upload(fileName, file, { cacheControl: "3600", upsert: true });
 
       if (uploadErr) throw new Error(uploadErr.message);
 
-      const { data: urlData } = supabase.storage
-        .from(BUCKET_NAME)
-        .getPublicUrl(uploadData.path);
-
+      const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(uploadData.path);
       const publicUrl = urlData.publicUrl;
+
       const payload: any = {
         store_id: storeId || null,
         title: file.name,
@@ -255,7 +264,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     }
   };
 
-  // Cadastrar URL Externa (Print 1)
+  // Cadastrar URL Externa
   const handleSaveExternal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!externalUrl.trim()) return;
@@ -265,7 +274,6 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       setErrorMsg(null);
 
       const finalTitle = externalTitle.trim() || `Mídia_${Date.now()}`;
-
       const payload: any = {
         store_id: storeId || null,
         title: finalTitle,
@@ -297,57 +305,126 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     }
   };
 
-  // Excluir Mídia
-  const handleDeleteVideo = async (video: VidVideo) => {
-    if (!confirm(`Deseja realmente excluir a mídia "${video.title}"?`)) return;
+  // Abrir Exclusão (Print 5)
+  const openDeleteModal = (video: VidVideo) => {
+    setVideoToDelete(video);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!videoToDelete) return;
 
     try {
+      setIsDeleting(true);
       setErrorMsg(null);
-      const { error } = await vidlyticsDb.from("vid_videos").delete().eq("id", video.id);
+
+      const { error } = await vidlyticsDb.from("vid_videos").delete().eq("id", videoToDelete.id);
       if (error) throw new Error(error.message);
 
-      setSuccessMsg("Mídia excluída com sucesso!");
-      setVideos((prev) => prev.filter((v) => v.id !== video.id));
+      setSuccessMsg(`O arquivo "${videoToDelete.title}" foi excluído com sucesso!`);
+      setVideos((prev) => prev.filter((v) => v.id !== videoToDelete.id));
+      setDeleteModalOpen(false);
+      setVideoToDelete(null);
     } catch (err: any) {
       console.error("[BibliotecaTab] Erro ao excluir:", err);
-      setErrorMsg(err.message || "Erro ao excluir mídia.");
+      setErrorMsg(err.message || "Erro ao excluir arquivo.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  // Modal Edição
-  const openEditModal = (video: VidVideo) => {
-    setSelectedVideo(video);
+  // Abrir Subpágina de Edição (Print 3)
+  const openEditPage = (video: VidVideo) => {
+    setEditingVideo(video);
     setEditTitle(video.title || "");
+    setEditSourceType(video.video_source_type || "upload");
+    setEditVideoUrl(video.video_url || "");
+    setEditThumbnailUrl(video.thumbnail_url || "");
     setEditProductId(video.product_id || "");
+    setEditModelId(video.model_id || "");
     setEditStatus(video.status || "active");
-    setIsEditModalOpen(true);
+    setEditStoryTitle(video.story_title || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleSaveEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedVideo) return;
+  // Upload de novo vídeo na página de edição
+  const handleEditVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 30 * 1024 * 1024) {
+      alert("O arquivo de vídeo deve ter no máximo 30 MB.");
+      return;
+    }
+
+    try {
+      const targetStoreId = storeId || "00000000-0000-0000-0000-000000000000";
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${targetStoreId}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+
+      const { data, error } = await supabase.storage.from(BUCKET_NAME).upload(fileName, file, { upsert: true });
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
+      setEditVideoUrl(urlData.publicUrl);
+    } catch (err: any) {
+      alert(`Falha ao subir novo vídeo: ${err.message}`);
+    }
+  };
+
+  // Upload de nova thumbnail na página de edição
+  const handleEditThumbUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 350 * 1024) {
+      alert("A capa deve ter no máximo 350 KB.");
+      return;
+    }
+
+    try {
+      const targetStoreId = storeId || "00000000-0000-0000-0000-000000000000";
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${targetStoreId}/thumbnails/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+
+      const { data, error } = await supabase.storage.from(BUCKET_NAME).upload(fileName, file, { upsert: true });
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
+      setEditThumbnailUrl(urlData.publicUrl);
+    } catch (err: any) {
+      alert(`Falha ao subir nova thumbnail: ${err.message}`);
+    }
+  };
+
+  // Salvar Alterações da Página de Edição (Print 3)
+  const handleSavePageEdit = async () => {
+    if (!editingVideo) return;
 
     try {
       setIsSavingEdit(true);
-      const { error } = await vidlyticsDb
-        .from("vid_videos")
-        .update({
-          title: editTitle,
-          product_id: editProductId || null,
-          status: editStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", selectedVideo.id);
+      setErrorMsg(null);
 
+      const payload: any = {
+        title: editTitle.trim(),
+        video_source_type: editSourceType,
+        video_url: editVideoUrl.trim(),
+        thumbnail_url: editThumbnailUrl.trim(),
+        product_id: editProductId || null,
+        model_id: editModelId || null,
+        status: editStatus,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await vidlyticsDb.from("vid_videos").update(payload).eq("id", editingVideo.id);
       if (error) throw new Error(error.message);
 
-      setSuccessMsg("Mídia atualizada com sucesso!");
-      setIsEditModalOpen(false);
-      setSelectedVideo(null);
+      setSuccessMsg("Vídeo atualizado com sucesso!");
+      setEditingVideo(null);
       await fetchVideos();
     } catch (err: any) {
-      console.error("[BibliotecaTab] Erro ao editar:", err);
-      setErrorMsg(err.message || "Erro ao atualizar dados.");
+      console.error("[BibliotecaTab] Erro ao salvar edição:", err);
+      setErrorMsg(err.message || "Erro ao salvar alterações do vídeo.");
     } finally {
       setIsSavingEdit(false);
     }
@@ -368,9 +445,257 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     });
   }, [videos, searchTerm, activeFilter]);
 
+  // ==========================================
+  // RENDERIZAÇÃO: PÁGINA DE EDIÇÃO (PRINT 3)
+  // ==========================================
+  if (editingVideo) {
+    const isImg = isImageFile(editVideoUrl);
+    return (
+      <div className="space-y-6 max-w-5xl mx-auto pb-16">
+        {/* Topo da Edição com Botão Voltar e Botão Superior */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setEditingVideo(null)}
+            className="flex items-center gap-2 text-slate-800 hover:text-slate-950 font-extrabold text-lg transition cursor-pointer"
+          >
+            <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+              <ArrowLeft className="w-5 h-5 text-slate-700" />
+            </div>
+            <span>Editar Vídeo</span>
+          </button>
+
+          <button
+            onClick={handleSavePageEdit}
+            disabled={isSavingEdit}
+            className="px-6 py-2.5 bg-[#0088ff] hover:bg-[#0077e6] text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm shadow-sky-200 transition disabled:opacity-50 cursor-pointer"
+          >
+            <Save className="w-4 h-4" />
+            {isSavingEdit ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
+          </button>
+        </div>
+
+        {/* Card Principal de Formulário */}
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-sm space-y-7">
+          {/* TÍTULO DO VÍDEO */}
+          <div>
+            <label className="block text-[11px] font-extrabold text-slate-400 mb-2 uppercase tracking-wider">
+              TÍTULO DO VÍDEO
+            </label>
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+            />
+          </div>
+
+          {/* ORIGEM DO VÍDEO */}
+          <div>
+            <label className="block text-[11px] font-extrabold text-slate-400 mb-2 uppercase tracking-wider">
+              ORIGEM DO VÍDEO
+            </label>
+            <select
+              value={editSourceType}
+              onChange={(e) => setEditSourceType(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+            >
+              <option value="upload">Upload de vídeo</option>
+              <option value="external">URL Externa</option>
+            </select>
+          </div>
+
+          {/* ARQUIVO DE VÍDEO */}
+          <div>
+            <label className="block text-[11px] font-extrabold text-slate-400 mb-2 uppercase tracking-wider">
+              ARQUIVO DE VÍDEO
+            </label>
+
+            {/* Aviso Amarelo 30MB */}
+            <div className="p-3.5 bg-amber-50/70 border border-amber-200/70 rounded-2xl flex items-center gap-2.5 text-xs text-amber-900 mb-4">
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <span>
+                O arquivo de vídeo deve ter no <strong>máximo 30 MB</strong>. Formatos aceitos: MP4, MOV e WEBM.
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                ref={editVideoFileRef}
+                type="file"
+                accept="video/mp4,video/quicktime,video/webm"
+                className="hidden"
+                onChange={handleEditVideoUpload}
+              />
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => editVideoFileRef.current?.click()}
+                  className="px-4 py-2 bg-sky-50 hover:bg-sky-100 text-[#0088ff] border border-sky-100 rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Escolher arquivo
+                </button>
+                <span className="text-xs text-slate-400">Nenhum arquivo escolhido</span>
+              </div>
+
+              {/* Player do Vídeo Atual */}
+              <div className="w-36 aspect-[9/16] rounded-2xl bg-black overflow-hidden relative border border-slate-200 shadow-sm">
+                {isImg ? (
+                  <img src={editVideoUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <video
+                    src={editVideoUrl}
+                    poster={editThumbnailUrl}
+                    controls
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* CAPA DO VÍDEO (THUMBNAIL) */}
+          <div>
+            <label className="block text-[11px] font-extrabold text-slate-400 mb-2 uppercase tracking-wider">
+              CAPA DO VÍDEO (THUMBNAIL)
+            </label>
+
+            <div className="flex items-start gap-4">
+              <div className="w-20 h-28 rounded-2xl bg-slate-900 border border-slate-200 overflow-hidden flex-shrink-0">
+                {editThumbnailUrl ? (
+                  <img src={editThumbnailUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-500 text-[10px]">
+                    Sem capa
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 space-y-2">
+                <input
+                  ref={editThumbFileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleEditThumbUpload}
+                />
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => editThumbFileRef.current?.click()}
+                    className="px-4 py-2 bg-sky-50 hover:bg-sky-100 text-[#0088ff] border border-sky-100 rounded-xl text-xs font-bold transition cursor-pointer"
+                  >
+                    Escolher arquivo
+                  </button>
+                  <span className="text-xs text-slate-400">Nenhum arquivo escolhido</span>
+                </div>
+
+                <input
+                  type="text"
+                  value={editThumbnailUrl}
+                  onChange={(e) => setEditThumbnailUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-mono text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+                />
+
+                <p className="text-[11px] text-slate-400">
+                  JPG, PNG ou WEBP. Máx. 350 KB. Se deixado em branco, um frame do vídeo será usado automaticamente.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* PRODUTO VINCULADO (OPCIONAL) */}
+          <div>
+            <label className="block text-[11px] font-extrabold text-slate-400 mb-2 uppercase tracking-wider">
+              PRODUTO VINCULADO (OPCIONAL)
+            </label>
+            <select
+              value={editProductId}
+              onChange={(e) => setEditProductId(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+            >
+              <option value="">Nenhum produto vinculado</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name || p.title} {p.price ? `- R$ ${Number(p.price).toFixed(2)}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* MODELO/MEDIDA VINCULADO (OPCIONAL) */}
+          <div>
+            <label className="block text-[11px] font-extrabold text-slate-400 mb-2 uppercase tracking-wider">
+              MODELO/MEDIDA VINCULADO (OPCIONAL)
+            </label>
+            <select
+              value={editModelId}
+              onChange={(e) => setEditModelId(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+            >
+              <option value="">Sem modelo vinculado</option>
+              <option value="Clara">Clara (1.70m / 60kg - Vestindo M)</option>
+              <option value="Julia">Julia (1.65m / 55kg - Vestindo P)</option>
+              <option value="Mariana">Mariana (1.75m / 75kg - Vestindo G)</option>
+            </select>
+          </div>
+
+          {/* STATUS */}
+          <div>
+            <label className="block text-[11px] font-extrabold text-slate-400 mb-2 uppercase tracking-wider">
+              STATUS
+            </label>
+            <select
+              value={editStatus}
+              onChange={(e) => setEditStatus(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+            >
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
+              <option value="draft">Rascunho</option>
+            </select>
+          </div>
+
+          {/* USADO EM STORIES */}
+          <div className="pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-extrabold text-slate-400 uppercase tracking-wider">USADO EM STORIES</span>
+              <span className="font-bold text-slate-800">{editStoryTitle ? "Sim" : "Não"}</span>
+            </div>
+            {editStoryTitle && (
+              <div className="mt-2 text-xs text-slate-500">
+                <span className="font-semibold text-slate-600">Stories vinculados:</span>
+                <ul className="list-disc list-inside mt-1 ml-1 font-bold text-slate-800">
+                  <li>{editStoryTitle}</li>
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Botão Inferior Salvar */}
+        <div className="flex justify-end">
+          <button
+            onClick={handleSavePageEdit}
+            disabled={isSavingEdit}
+            className="px-7 py-3 bg-[#0088ff] hover:bg-[#0077e6] text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm shadow-sky-200 transition disabled:opacity-50 cursor-pointer"
+          >
+            <Save className="w-4 h-4" />
+            {isSavingEdit ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // RENDERIZAÇÃO: LISTA PRINCIPAL DA TABELA
+  // ==========================================
   return (
     <div className="space-y-6">
-      {/* Alertas */}
+      {/* Notificações */}
       {errorMsg && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
@@ -395,7 +720,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         </div>
       )}
 
-      {/* Header Superior com Botões */}
+      {/* Topo com Ações */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Biblioteca</h1>
@@ -456,7 +781,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         </div>
       </div>
 
-      {/* Card de Espaço SCALE (Idêntico ao Print 3) */}
+      {/* Card SCALE */}
       <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -489,7 +814,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         </div>
       </div>
 
-      {/* Card de Pesquisa & Filtros (Print 3) */}
+      {/* Busca e Abas Filtros */}
       <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full md:w-[480px]">
           <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -525,7 +850,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         </div>
       </div>
 
-      {/* Tabela de Mídias (Exatamente como o Print 3) */}
+      {/* Tabela de Mídias */}
       <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -659,15 +984,15 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                       <td className="py-3.5 px-6 text-right">
                         <div className="inline-flex items-center gap-2 text-slate-400">
                           <button
-                            onClick={() => openEditModal(video)}
-                            className="p-1 hover:text-slate-700 transition"
+                            onClick={() => openEditPage(video)}
+                            className="p-1 hover:text-slate-700 transition cursor-pointer"
                             title="Editar"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setPreviewMedia(video)}
-                            className="p-1 hover:text-slate-700 transition"
+                            className="p-1 hover:text-slate-700 transition cursor-pointer"
                             title="Visualizar"
                           >
                             <Eye className="w-4 h-4" />
@@ -684,8 +1009,8 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                             </a>
                           )}
                           <button
-                            onClick={() => handleDeleteVideo(video)}
-                            className="p-1 hover:text-red-600 transition"
+                            onClick={() => openDeleteModal(video)}
+                            className="p-1 hover:text-red-600 transition cursor-pointer"
                             title="Excluir"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -701,11 +1026,70 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         )}
       </div>
 
-      {/* Modal: Adicionar Vídeo por URL (Idêntico ao Print 1) */}
+      {/* ========================================================= */}
+      {/* MODAL: PLAYER DE PREVIEW IDÊNTICO AO PRINT 1              */}
+      {/* ========================================================= */}
+      {previewMedia && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] max-w-sm w-full p-6 shadow-2xl relative border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            {/* Cabeçalho */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-sky-50 text-[#0088ff] flex items-center justify-center flex-shrink-0">
+                  <Eye className="w-5 h-5" />
+                </div>
+                <div className="max-w-[200px]">
+                  <h3 className="font-extrabold text-slate-900 text-sm truncate leading-snug">
+                    {previewMedia.title}
+                  </h3>
+                  <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                    VISUALIZAÇÃO DE MÍDIA
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPreviewMedia(null)}
+                className="w-7 h-7 rounded-full text-slate-400 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Container 9:16 do Vídeo com bordas pretas suaves */}
+            <div className="aspect-[9/16] w-full rounded-[24px] bg-black overflow-hidden relative border border-slate-900 shadow-inner flex items-center justify-center mb-5">
+              {isImageFile(previewMedia.video_url) ? (
+                <img
+                  src={previewMedia.video_url}
+                  alt={previewMedia.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <video
+                  src={previewMedia.video_url}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+
+            {/* Botão FECHAR ocupando toda a largura (Print 1) */}
+            <button
+              onClick={() => setPreviewMedia(null)}
+              className="w-full py-3.5 bg-[#0088ff] hover:bg-[#0077e6] text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-sm shadow-sky-200 transition cursor-pointer"
+            >
+              FECHAR
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL: ADICIONAR VÍDEO POR URL                           */}
+      {/* ========================================================= */}
       {isUrlModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            {/* Modal Header */}
             <div className="flex items-start justify-between p-6 pb-4">
               <div className="flex items-center gap-3.5">
                 <div className="w-11 h-11 rounded-2xl bg-sky-50 text-[#0088ff] flex items-center justify-center flex-shrink-0">
@@ -728,7 +1112,6 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
               </button>
             </div>
 
-            {/* Modal Body */}
             <form onSubmit={handleSaveExternal} className="p-6 pt-2 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -791,7 +1174,6 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 </select>
               </div>
 
-              {/* Modal Footer */}
               <div className="pt-4 flex items-center justify-end gap-3">
                 <button
                   type="button"
@@ -813,113 +1195,17 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         </div>
       )}
 
-      {/* Modal: Preview de Mídia */}
-      {previewMedia && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-950 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative border border-slate-800">
-            <button
-              onClick={() => setPreviewMedia(null)}
-              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="aspect-[9/16] max-h-[80vh] flex items-center justify-center">
-              {isImageFile(previewMedia.video_url) ? (
-                <img
-                  src={previewMedia.video_url}
-                  alt={previewMedia.title}
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <video
-                  src={previewMedia.video_url}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-contain"
-                />
-              )}
-            </div>
-            <div className="p-4 bg-slate-900 border-t border-slate-800 text-white flex items-center justify-between">
-              <span className="font-semibold text-sm truncate">{previewMedia.title}</span>
-              <a
-                href={previewMedia.video_url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-[#0088ff] hover:underline flex items-center gap-1 font-bold"
-              >
-                <Download className="w-3.5 h-3.5" /> Abrir Original
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Edição */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-xl overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-              <h3 className="font-bold text-slate-800 text-base">Editar Detalhes da Mídia</h3>
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="w-8 h-8 rounded-xl text-slate-400 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
-                  Título
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
-                  Produto Vinculado
-                </label>
-                <select
-                  value={editProductId}
-                  onChange={(e) => setEditProductId(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
-                >
-                  <option value="">Nenhum produto</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name || p.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="pt-4 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingEdit}
-                  className="px-6 py-2.5 bg-[#0088ff] hover:bg-[#0077e6] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition disabled:opacity-50 cursor-pointer"
-                >
-                  {isSavingEdit ? "Salvando..." : "Salvar Alterações"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* ========================================================= */}
+      {/* MODAL GLOBAL DE EXCLUSÃO PADRÃO SLL (PRINT 5)            */}
+      {/* ========================================================= */}
+      <ConfirmDeleteModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="EXCLUIR ARQUIVO"
+        itemName={videoToDelete?.title || ""}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };
