@@ -1593,9 +1593,106 @@ product_card_price_size: toNumber(rcv('product_card_price_size', '12'), 12),
   };
 }
 
+  var vidConfigLocations = [];
+
+  function vidlyticsFetch(table, query) {
+    if (!supabaseUrl || !supabaseAnonKey) return Promise.resolve([]);
+    var url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/' + table + '?' + query;
+    return fetch(url, {
+      method: 'GET',
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Authorization': 'Bearer ' + supabaseAnonKey,
+        'Accept-Profile': 'vidlytics',
+        'Content-Type': 'application/json'
+      }
+    }).then(function (res) {
+      if (!res.ok) return [];
+      return res.json();
+    }).then(function (rows) {
+      return Array.isArray(rows) ? rows : [];
+    }).catch(function () { return []; });
+  }
+
+  function parseVidConfig(row) {
+    var cfg = row && row.config;
+    if (typeof cfg === 'string') { try { cfg = JSON.parse(cfg); } catch (e) { cfg = null; } }
+    return (cfg && typeof cfg === 'object') ? cfg : {};
+  }
+
+  function vidConfigLocationMatches(loc) {
+    var rule = loc.page_rule;
+    var value = String(loc.page_value || '').trim();
+    var path = window.location.pathname || '/';
+    var href = window.location.href;
+    if (rule === 'all_pages') return true;
+    if (rule === 'home') return /^\/(index(\.html?)?)?$/i.test(path);
+    if (!value) return true;
+    if (rule === 'url_contains') return href.indexOf(value) !== -1;
+    if (rule === 'url_not_contains') return href.indexOf(value) === -1;
+    if (rule === 'url_not_equals') {
+      return path.replace(/\/$/, '') !== value.replace(/\/$/, '') && href.replace(/\/$/, '') !== value.replace(/\/$/, '');
+    }
+    return true;
+  }
+
+  function readVidlyticsStories() {
+    if (!storeId || !hasSupabase) return Promise.resolve(null);
+    var sid = encodeURIComponent(storeId);
+    return Promise.all([
+      vidlyticsFetch('vid_stories', 'select=*&store_id=eq.' + sid + '&order=position.asc'),
+      vidlyticsFetch('vid_videos', 'select=*&store_id=eq.' + sid)
+    ]).then(function (res) {
+      var rows = res[0];
+      var vids = res[1];
+      if (!rows.length) return null;
+      vidConfigLocations = [];
+      return rows.map(function (row) {
+        var cfg = parseVidConfig(row);
+        var refs = cfg.videoUrls || cfg.video_urls || cfg.video_ids || [];
+        var storyVideos = [];
+        refs.forEach(function (ref) {
+          for (var i = 0; i < vids.length; i++) {
+            if (String(vids[i].video_url) === String(ref) || String(vids[i].id) === String(ref)) {
+              storyVideos.push(vids[i]);
+              break;
+            }
+          }
+        });
+        (cfg.displayLocations || cfg.display_locations || []).forEach(function (loc, idx) {
+          vidConfigLocations.push({
+            id: loc.id || (row.id + '-' + idx),
+            story_id: row.id,
+            page_rule: loc.page || loc.condition_type || 'all_pages',
+            page_value: loc.pageValue || loc.value || '',
+            css_selector: loc.cssSelector || loc.selector || '',
+            position: loc.position || 'beforebegin',
+            active: true,
+            _fromConfig: true
+          });
+        });
+        return {
+          id: row.id,
+          store_id: row.store_id,
+          title: row.title || cfg.name || '',
+          cover_url: row.cover_url || cfg.cover_url || '',
+          status: row.status || 'active',
+          active: row.status === 'active',
+          position: row.position || 0,
+          format: cfg.format || cfg.layout || 'carousel',
+          scroll_direction: cfg.scroll_direction || cfg.scrollDirection || 'horizontal',
+          appearance_id: cfg.appearance_id || cfg.visualStyle || null,
+          _vidVideos: storyVideos
+        };
+      });
+    });
+  }
+
   function readStories() {
     if (!storeId || !hasSupabase) return Promise.resolve(getStorageItem('vidlytics_stories', []));
-    return fetchJson('stories?select=*&store_id=eq.' + encodeURIComponent(storeId))
+    return readVidlyticsStories().then(function (vidRows) {
+      return vidRows || fetchJson('stories?select=*&store_id=eq.' + encodeURIComponent(storeId));
+    })
       .then(function (items) {
         return items.filter(function (story) {
           // 🚀 Bypass de segurança para simulação de preview
@@ -1634,6 +1731,7 @@ product_card_price_size: toNumber(rcv('product_card_price_size', '12'), 12),
 
     // Para cada story, monta o array de vídeos ordenado por position
     (stories || []).forEach(function (story) {
+      if (story._vidVideos) { story.videos = story._vidVideos; return; }
       var svRows = (storyVideos || []).filter(function (sv) {
         return sv.story_id === story.id;
       });
@@ -7310,6 +7408,7 @@ if (!storeId || !hasSupabase) {
 }
 
            return readDisplayLocationsWithRules().then(function (locations) {
+        locations = (locations || []).concat(vidConfigLocations);
 
         var activeLocations = (locations || []).filter(function (loc) {
           return loc.active !== false && loc.active !== 'false' && loc.active !== 0 && loc.active !== '0';
@@ -7336,6 +7435,7 @@ if (!storeId || !hasSupabase) {
 
         // Regra de página: agora cada LOCATION tem page_rule/page_value próprios
         function locationMatchesPage(loc) {
+          if (loc._fromConfig) return vidConfigLocationMatches(loc);
           if (!loc.page_rule || loc.page_rule === 'all' || loc.page_rule === 'todas') return true;
           return matchesRule(loc); // matchesRule já lê rule.page_rule / rule.page_value
         }
