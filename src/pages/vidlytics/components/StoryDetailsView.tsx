@@ -278,6 +278,8 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
         layout: formData.format,
         scrollDirection: formData.scroll_direction,
         visualStyle: formData.appearance_id,
+        appearance_snapshot: customAppearances.find((a) => a.id === formData.appearance_id)?.widget_style ?? DEFAULT_APPEARANCES.find((t) => t.id === formData.appearance_id)?.widget_style ?? null,
+        appearance_name: customAppearances.find((a) => a.id === formData.appearance_id)?.widget_style?.name ?? DEFAULT_APPEARANCES.find((t) => t.id === formData.appearance_id)?.name ?? '',
         displayLocations,
         videoUrls,
       });

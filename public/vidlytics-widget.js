@@ -1170,7 +1170,7 @@ function fetchLiveSpotlight(live) {
     var ws = parseJsonIfNeeded(row && row.widget_style);
     var desktop = ws.desktop || ws.mobile || {};
     var mobile = ws.mobile || ws.desktop || {};
-    var main = desktop.floating_border_color || '#0094EB';
+    var main = ws.primary_color || desktop.floating_border_color || '#0094EB';
     return {
       style_name: ws.name || row.name || 'vidlytics',
       primary_color: main,
@@ -1190,6 +1190,39 @@ function fetchLiveSpotlight(live) {
     ).then(function (rows) {
       if (rows.length > 0) return normalizeAppearanceItem(vidAppearanceFromRow(rows[0]));
       return fetchLegacyDbAppearance();
+    });
+  }
+
+  function resolveStoryAppearance(stories) {
+    var m = window.location.search.match(/[?&]vidlytics_preview_story_id=([^&]+)/);
+    var previewId = m ? m[1] : null;
+    var list = (stories || []).filter(function (s) {
+      return s.status === 'active' || (previewId && String(s.id) === String(previewId));
+    });
+    var story = null;
+    if (previewId) story = list.filter(function (s) { return String(s.id) === String(previewId); })[0] || null;
+    if (!story) story = list.filter(function (s) { return s.format === 'floating_widget'; })[0] || null;
+    if (!story) story = list[0] || null;
+    if (!story) return Promise.resolve();
+
+    function apply(row) {
+      var app = normalizeAppearanceItem(vidAppearanceFromRow(row));
+      currentAppearance = Object.assign({}, currentAppearance || {}, app);
+    }
+    function applySnapshot() {
+      if (story._appearanceSnapshot) apply({ widget_style: story._appearanceSnapshot, name: story._appearanceName });
+    }
+
+    var id = String(story.appearance_id || '');
+    if (!id) return Promise.resolve();
+    var isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (!isUuid) { applySnapshot(); return Promise.resolve(); }
+
+    return vidlyticsFetch(
+      'vid_appearances',
+      'select=*&store_id=eq.' + encodeURIComponent(storeId) + '&id=eq.' + encodeURIComponent(id) + '&limit=1'
+    ).then(function (rows) {
+      if (rows.length > 0) apply(rows[0]); else applySnapshot();
     });
   }
 
@@ -1741,6 +1774,8 @@ product_card_price_size: toNumber(rcv('product_card_price_size', '12'), 12),
           format: cfg.format || cfg.layout || 'carousel',
           scroll_direction: cfg.scroll_direction || cfg.scrollDirection || 'horizontal',
           appearance_id: cfg.appearance_id || cfg.visualStyle || null,
+          _appearanceSnapshot: cfg.appearance_snapshot || null,
+          _appearanceName: cfg.appearance_name || '',
           _vidVideos: storyVideos
         };
       });
@@ -1750,7 +1785,8 @@ product_card_price_size: toNumber(rcv('product_card_price_size', '12'), 12),
   function readStories() {
     if (!storeId || !hasSupabase) return Promise.resolve(getStorageItem('vidlytics_stories', []));
     return readVidlyticsStories().then(function (vidRows) {
-      return vidRows || fetchJson('stories?select=*&store_id=eq.' + encodeURIComponent(storeId));
+      if (!vidRows) return fetchJson('stories?select=*&store_id=eq.' + encodeURIComponent(storeId));
+      return resolveStoryAppearance(vidRows).then(function () { return vidRows; });
     })
       .then(function (items) {
         return items.filter(function (story) {
