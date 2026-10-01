@@ -45,7 +45,7 @@ interface Toast {
 
 interface StoreBranding {
   name: string;
-  shortName: string;
+  replyDisplayName: string;
   logoUrl: string;
 }
 
@@ -57,7 +57,7 @@ const abbreviateStoreName = (name: string): string => {
 };
 
 export const ComentariosTab: React.FC = () => {
-  const { store, storeId, loading: storeLoading } = useLoja();
+  const { store, loading: storeLoading } = useLoja();
 
   const [autoApprove, setAutoApprove] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,7 +67,6 @@ export const ComentariosTab: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState<CommentItem | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [replyDisplayName, setReplyDisplayName] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -75,7 +74,9 @@ export const ComentariosTab: React.FC = () => {
   // Dados reais da loja (vêm do LojaContext)
   const storeBranding: StoreBranding = {
     name: store?.name || store?.store_name || 'Sua loja',
-    shortName: abbreviateStoreName(store?.name || store?.store_name || ''),
+    replyDisplayName:
+      store?.reply_display_name ||
+      abbreviateStoreName(store?.name || store?.store_name || ''),
     logoUrl: store?.logo_url || '',
   };
 
@@ -164,25 +165,6 @@ export const ComentariosTab: React.FC = () => {
     localStorage.setItem('vidlytics_auto_approve_comments', String(autoApprove));
   }, [autoApprove]);
 
-  // Carrega/salva "Responder como" por loja
-  useEffect(() => {
-    if (!storeId) return;
-    const key = `vidlytics_reply_display_name_${storeId}`;
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      setReplyDisplayName(saved);
-    } else {
-      setReplyDisplayName(storeBranding.shortName);
-    }
-  }, [storeId, storeBranding.shortName]);
-
-  const saveReplyDisplayName = (value: string) => {
-    setReplyDisplayName(value);
-    if (storeId) {
-      localStorage.setItem(`vidlytics_reply_display_name_${storeId}`, value);
-    }
-  };
-
   const showToast = (message: string, type: Toast['type'] = 'success') => {
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -244,11 +226,9 @@ export const ComentariosTab: React.FC = () => {
   const handleSendReply = () => {
     if (!selectedComment || !replyText.trim()) return;
 
-    const displayName = replyDisplayName.trim() || storeBranding.shortName;
-
     const newReply: ReplyItem = {
       id: `r-${Date.now()}`,
-      authorName: displayName,
+      authorName: storeBranding.replyDisplayName,
       authorRole: 'Resposta oficial',
       content: replyText.trim(),
       createdAt: 'Agora',
@@ -643,40 +623,23 @@ export const ComentariosTab: React.FC = () => {
                   {storeBranding.logoUrl ? (
                     <img 
                       src={storeBranding.logoUrl} 
-                      alt={storeBranding.name} 
+                      alt={storeBranding.replyDisplayName} 
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <span className="text-sm font-bold text-slate-500">
-                      {storeBranding.shortName.charAt(0).toUpperCase()}
+                      {storeBranding.replyDisplayName.charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-700 truncate" title={storeBranding.name}>
-                    {storeBranding.name}
+                    {storeBranding.replyDisplayName}
                   </p>
                   <p className="text-[10px] text-slate-400">
-                    Logo e nome exibidos nas respostas oficiais
+                    Responder como {storeBranding.replyDisplayName}
                   </p>
                 </div>
-              </div>
-
-              {/* Responder como */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Responder como
-                </label>
-                <input
-                  type="text"
-                  value={replyDisplayName}
-                  onChange={(e) => saveReplyDisplayName(e.target.value)}
-                  placeholder="Nome exibido na resposta"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors"
-                />
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Sugestão automática: <strong>{storeBranding.shortName}</strong>. Você pode editar a qualquer momento.
-                </p>
               </div>
 
               {/* Resposta com emoji picker */}

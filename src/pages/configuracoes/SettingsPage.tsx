@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService } from '@/services/SLLDatabaseService';
 import { useLoja } from '@/contexts/LojaContext';
 import {
-  Loader2, Save, Image as ImageIcon, X, CheckCircle2,
+  Loader2, Save, Image as ImageIcon, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -20,6 +20,7 @@ const PLATAFORMAS = [
 
 interface FormState {
   store_name: string;
+  reply_display_name: string;
   store_url: string;
   platform: string;
   contact_name: string;
@@ -35,6 +36,7 @@ interface FormState {
 
 const DEFAULT_FORM: FormState = {
   store_name: '',
+  reply_display_name: '',
   store_url: '',
   platform: 'Bagy',
   contact_name: '',
@@ -46,6 +48,13 @@ const DEFAULT_FORM: FormState = {
   stories_enabled: true,
   logo_url: null,
   sector_id: '',
+};
+
+// Abrevia o nome da loja automaticamente (primeira palavra, máx 15 chars)
+const abbreviateStoreName = (name: string): string => {
+  if (!name) return 'Sua loja';
+  const firstWord = name.trim().split(' ')[0];
+  return firstWord.length > 15 ? firstWord.slice(0, 15) : firstWord;
 };
 
 const formatStoreUrl = (url: string): string => {
@@ -107,6 +116,10 @@ const SettingsPage: React.FC = () => {
 
         setForm({
           store_name: settingsRow?.store_name || store?.name || '',
+          reply_display_name:
+            settingsRow?.reply_display_name ||
+            store?.reply_display_name ||
+            abbreviateStoreName(settingsRow?.store_name || store?.name || ''),
           store_url: settingsRow?.store_url || store?.url || '',
           platform: settingsRow?.platform || store?.platform || 'Bagy',
           contact_name: store?.contact_name || '',
@@ -151,6 +164,7 @@ const SettingsPage: React.FC = () => {
 
   const validate = (): string => {
     if (!form.store_name.trim()) return 'O nome da loja é obrigatório.';
+    if (!form.reply_display_name.trim()) return 'O nome de resposta é obrigatório.';
     if (!form.store_url.trim()) return 'A URL da loja é obrigatória.';
     if (!form.contact_name.trim()) return 'O nome do contato é obrigatório.';
     if (!form.contact_email.trim() || !form.contact_email.includes('@'))
@@ -202,10 +216,12 @@ const SettingsPage: React.FC = () => {
 
       const finalUrl = formatStoreUrl(form.store_url);
       const selectedSector = sectors.find((s) => s.id === form.sector_id);
+      const replyDisplayName = form.reply_display_name.trim() || abbreviateStoreName(form.store_name.trim());
 
       // Atualiza store_settings (fonte usada por todos os módulos: Vidlytics, Live, futuros)
       await SLLDatabaseService.updateStoreSettings(storeId, {
         store_name: form.store_name.trim(),
+        reply_display_name: replyDisplayName,
         store_url: finalUrl,
         platform: form.platform,
         contact_email: form.contact_email.trim(),
@@ -218,9 +234,10 @@ const SettingsPage: React.FC = () => {
         stories_enabled: form.stories_enabled,
       });
 
-      // Espelha os campos-chave em stores (usados em listagens/painel master)
+      // Espelha os campos-chave em stores (usados em listagens/painel master e contexto da loja)
       await SLLDatabaseService.updateStore(storeId, {
         name: form.store_name.trim(),
+        reply_display_name: replyDisplayName,
         contact_name: form.contact_name.trim(),
         url: finalUrl,
         platform: form.platform,
@@ -231,13 +248,18 @@ const SettingsPage: React.FC = () => {
         sector: selectedSector?.slug || null,
       });
 
-      setForm((prev) => ({ ...prev, store_url: finalUrl, logo_url: finalLogoUrl || null }));
+      setForm((prev) => ({
+        ...prev,
+        store_url: finalUrl,
+        logo_url: finalLogoUrl || null,
+        reply_display_name: replyDisplayName,
+      }));
       setLogoFile(null);
 
       await refreshStore();
 
       toast.success('Configurações salvas com sucesso!');
-        navigate('/dashboard');
+      navigate('/dashboard');
     } catch (err) {
       console.error('Erro ao salvar configurações:', err);
       toast.error('Falha ao salvar configurações.');
@@ -317,6 +339,22 @@ const SettingsPage: React.FC = () => {
                 placeholder="Ex: Loja da Ana Moda Feminina"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Responder como *
+              </label>
+              <input
+                type="text"
+                value={form.reply_display_name}
+                onChange={(e) => setForm((p) => ({ ...p, reply_display_name: e.target.value }))}
+                placeholder="Ex: Uziane"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
+              />
+              <p className="text-[10px] text-slate-400">
+                Nome exibido nas respostas aos comentários dos clientes.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -544,13 +582,3 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
-
-
-
-
-
-
-
-
-
-
