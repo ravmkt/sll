@@ -5,7 +5,7 @@ import { useAppearanceLogic } from "../../../hooks/vidlytics/useAppearanceLogic"
 
 const AparenciaTab: React.FC = () => {
   const {
-    appearances, listLoading,
+    appearances, listLoading, editingId,
     isModalOpen, openNewStyle, openEditStyle, closeModal,
     deleteStyle, setAsDefault,
     styleName, setStyleName,
@@ -114,9 +114,12 @@ const AparenciaTab: React.FC = () => {
         saveStyle={saveStyle}
         isLoadingStyle={isLoadingStyle}
         isSaving={isSaving}
+        editingId={editingId}
       />
     </div>
   );
 };
 
 export default AparenciaTab;
+
+

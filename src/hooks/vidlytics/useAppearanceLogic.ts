@@ -98,6 +98,13 @@ export function useAppearanceLogic() {
     loadAppearances();
   }, [loadAppearances]);
 
+  // Atualiza lista quando um estilo é salvo no modal
+  useEffect(() => {
+    const handleSaved = () => loadAppearances();
+    window.addEventListener('vidlytics:appearance_saved', handleSaved);
+    return () => window.removeEventListener('vidlytics:appearance_saved', handleSaved);
+  }, [loadAppearances]);
+
   // ─────────── Abrir modal: novo estilo ───────────
   const openNewStyle = useCallback(() => {
     setEditingId(null);
@@ -237,14 +244,14 @@ export function useAppearanceLogic() {
   // ─────────── Excluir ───────────
   const deleteStyle = useCallback(async (id: string) => {
     if (!storeId) return;
-    await VidlyticsDatabaseService.deleteAppearance(id, storeId);
+    await VidlyticsDatabaseService.deleteAppearance(storeId, id);
     await loadAppearances();
   }, [storeId, loadAppearances]);
 
   // ─────────── Definir como padrão (a partir da tabela) ───────────
   const setAsDefault = useCallback(async (id: string) => {
     if (!storeId) return;
-    await VidlyticsDatabaseService.setDefaultAppearance(id, storeId);
+    await VidlyticsDatabaseService.setDefaultAppearance(storeId, id);
     await loadAppearances();
   }, [storeId, loadAppearances]);
 
@@ -276,6 +283,9 @@ export function useAppearanceLogic() {
     isSaving,
   };
 }
+
+
+
 
 
 

@@ -24,6 +24,7 @@ interface AparenciaModalProps {
   saveStyle: () => Promise<any>;
   isLoadingStyle: boolean;
   isSaving: boolean;
+  editingId?: string | null;
 }
 
 const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white cursor-pointer";
@@ -465,6 +466,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   getConfig, setConfig,
   resetTab, saveStyle,
   isLoadingStyle, isSaving,
+  editingId,
 }) => {
   const { storeId: activeStoreId, store } = useLoja();
   const [activeTab, setActiveTab] = useState('basico');
@@ -670,7 +672,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   };
 
   // ──────────────────── PERSISTÊNCIA REAL NO BANCO ────────────────────
-  const executeSave = async (finalName: string) => {
+  const executeSave = async (finalName: string, asNew = false) => {
     setLocalSaving(true);
     try {
       if (!resolvedStoreId) {
@@ -679,29 +681,33 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
       setStyleName(finalName);
 
+      const widgetStyleToSave = isUnified
+        ? {
+            name: finalName,
+            is_default: isDefault,
+            is_unified: true,
+            desktop: formData?.desktop || {},
+            mobile: { ...(formData?.desktop || {}) },
+          }
+        : {
+            name: finalName,
+            is_default: isDefault,
+            is_unified: false,
+            desktop: formData?.desktop || {},
+            mobile: formData?.mobile || {},
+          };
+
       await VidlyticsDatabaseService.saveAppearance(resolvedStoreId, {
-        id: isDefaultSystemStyle ? undefined : formData?.id,
+        id: asNew ? undefined : (editingId || formData?.id || undefined),
         name: finalName,
         is_default: isDefault,
-        widget_style: {
-          name: finalName,
-          is_default: isDefault,
-          is_unified: isUnified,
-          desktop: formData?.desktop || {},
-          mobile: formData?.mobile || {},
-          floating: floatingPreviewData,
-          carousel: carouselPreviewData,
-          dynamic_carousel: dynCarouselPreviewData,
-          grid: gridPreviewData,
-          player: playerPreviewData,
-        },
+        widget_style: widgetStyleToSave,
       });
 
       if (typeof saveStyle === 'function') {
         try { await saveStyle(); } catch (e) { /* fallback seguro */ }
       }
 
-      // Notifica a tela de listagem de aparências para atualizar imediatamente
       window.dispatchEvent(new CustomEvent('vidlytics:appearance_saved'));
       setShowNameModal(false);
       onClose();
@@ -714,15 +720,18 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   };
 
   // DECISÃO DE SALVAR OU ABRIR POP-UP
-  const handleInitiateSave = () => {
-    // Se for o estilo VIDLYTICS oficial ou sem nome, solicita um nome novo
-    if (isDefaultSystemStyle || !styleName?.trim() || styleName.trim().toUpperCase() === 'PADRAO' || styleName.trim().toUpperCase() === 'VIDLYTICS') {
-      setModalInputName('');
+  const handleInitiateSave = (asNew = false) => {
+    const name = styleName?.trim() || '';
+
+    // Criando novo estilo (novo ou salvar como)
+    if (asNew || isDefaultSystemStyle || !editingId || !name || name.toUpperCase() === 'PADRAO' || name.toUpperCase() === 'VIDLYTICS') {
+      setModalInputName(asNew ? `${name} Cópia` : name === 'Vidlytics' ? '' : name);
       setShowNameModal(true);
       return;
     }
-    // Se já é um estilo personalizado com nome e ID próprios, salva diretamente
-    executeSave(styleName.trim());
+
+    // Edição de estilo existente: salva diretamente
+    executeSave(name);
   };
 
   const handleTabChange = (tabId: string) => {
@@ -760,7 +769,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
           <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md border border-slate-200 dark:border-slate-700 shadow-2xl space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
-                <h4 className="text-base font-extrabold text-slate-800 dark:text-white">Salvar Novo Estilo</h4>
+                <h4 className="text-base font-extrabold text-slate-800 dark:text-white">Salvar Como Novo Estilo</h4>
                 <button type="button" onClick={() => setShowNameModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
                   <X size={18} />
                 </button>
@@ -783,7 +792,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 <button type="button" onClick={() => setShowNameModal(false)} className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer">
                   Cancelar
                 </button>
-                <button type="button" disabled={!modalInputName.trim() || localSaving} onClick={() => executeSave(modalInputName.trim())} className="flex items-center gap-1.5 px-5 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold shadow-md disabled:opacity-50 cursor-pointer">
+                <button type="button" disabled={!modalInputName.trim() || localSaving} onClick={() => executeSave(modalInputName.trim(), true)} className="flex items-center gap-1.5 px-5 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold shadow-md disabled:opacity-50 cursor-pointer">
                   {localSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   Salvar
                 </button>
@@ -1691,6 +1700,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 };
 
 export default AparenciaModal;
+
+
+
+
+
+
+
 
 
 
