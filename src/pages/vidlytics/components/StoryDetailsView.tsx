@@ -1,4 +1,4 @@
-﻿// Extrator oficial de ID de YouTube e Shorts
+// Extrator oficial de ID de YouTube e Shorts
 const extractYouTubeId = (url?: string): string | null => {
   if (!url) return null;
   const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
+import { DEFAULT_APPEARANCES } from '@/data/defaultAppearances';
 
 type PageRuleCondition = 'home' | 'all_pages' | 'url_contains' | 'url_not_contains' | 'url_not_equals';
 type DisplayPosition = 'beforebegin' | 'afterend';
@@ -85,7 +86,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
 
   const [allVideos, setAllVideos] = useState<any[]>([]);
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
-  const [appearances, setAppearances] = useState<any[]>([]);
+  const [customAppearances, setCustomAppearances] = useState<any[]>([]);
 
   // Locais por Página (Cada página tem sua regra, seu CSS Selector e sua posição)
   const [pageLocations, setPageLocations] = useState<StoryPageLocationUi[]>([
@@ -100,18 +101,17 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
 
   // Carregar dados
   const loadData = useCallback(async () => {
-    // Permite buscar videos mesmo enquanto storeId resolve
     const targetStoreId = storeId || localStorage.getItem("sll_store_id") || undefined;
     try {
       setLoading(true);
       const [videosRes, appsRes, storiesRes] = await Promise.all([
         VidlyticsDatabaseService.getVideos(targetStoreId).catch(() => []),
-        VidlyticsDatabaseService.getAppearances(storeId).catch(() => []),
-        VidlyticsDatabaseService.getStories(storeId).catch(() => []),
+        targetStoreId ? VidlyticsDatabaseService.getAppearances(targetStoreId).catch(() => []) : Promise.resolve([]),
+        targetStoreId ? VidlyticsDatabaseService.getStories(targetStoreId).catch(() => []) : Promise.resolve([]),
       ]);
 
       setAllVideos(videosRes || []);
-      setAppearances(appsRes || []);
+      setCustomAppearances(appsRes || []);
 
       if (!isCreate && storyId) {
         const currentStory = (storiesRes || []).find((s: any) => s.id === storyId);
@@ -237,6 +237,12 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
 
   // Salvar Story
   const handleSave = async () => {
+    const targetStoreId = storeId || localStorage.getItem("sll_store_id");
+    if (!targetStoreId) {
+      alert('Erro: Nenhuma loja selecionada.');
+      return;
+    }
+
     if (!formData.title.trim()) {
       alert('Por favor, informe o nome do Story.');
       return;
@@ -260,7 +266,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
         position: loc.position,
       }));
 
-      await VidlyticsDatabaseService.saveStory(storeId, {
+      await VidlyticsDatabaseService.saveStory(targetStoreId, {
         id: storyId || undefined,
         name: formData.title.trim(),
         status: formData.active ? 'ATIVO' : 'INATIVO',
@@ -437,7 +443,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
             </select>
           </div>
 
-          {/* Estilo Visual */}
+          {/* Estilo Visual / Aparência */}
           <div>
             <label className="mb-2 block text-[10px] font-black uppercase tracking-wider text-slate-400">
               ESTILO VISUAL / APARÊNCIA
@@ -447,12 +453,25 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
               onChange={(e) => setFormData((prev) => ({ ...prev, appearance_id: e.target.value }))}
               className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
             >
-              <option value="">Seguir Padrão do App</option>
-              {appearances.map((app) => (
-                <option key={app.id} value={app.id}>
-                  {app.name} {app.is_default ? '(Padrão)' : ''}
-                </option>
-              ))}
+              <option value="">Padrão do Sistema</option>
+
+              {customAppearances.length > 0 && (
+                <optgroup label="Meus Estilos Personalizados">
+                  {customAppearances.map((app) => (
+                    <option key={app.id} value={app.id}>
+                      {app.name} {app.is_default ? '(Padrão da Loja)' : ''}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+
+              <optgroup label="Templates Padrão">
+                {DEFAULT_APPEARANCES.map((tpl) => (
+                  <option key={tpl.id} value={tpl.id}>
+                    {tpl.name} ({tpl.description || 'Template'})
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
         </div>
