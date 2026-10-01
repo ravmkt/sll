@@ -1193,37 +1193,36 @@ function fetchLiveSpotlight(live) {
     });
   }
 
+  var storyAppearanceMap = {};
+  var storyAppearanceBase = null;
+
+  function getStoryAppearance(story) {
+    var own = story ? storyAppearanceMap[String(story.id)] : null;
+    return own || storyAppearanceBase || currentAppearance;
+  }
+
   function resolveStoryAppearance(stories) {
-    var m = window.location.search.match(/[?&]vidlytics_preview_story_id=([^&]+)/);
-    var previewId = m ? m[1] : null;
-    var list = (stories || []).filter(function (s) {
-      return s.status === 'active' || (previewId && String(s.id) === String(previewId));
+    storyAppearanceBase = Object.assign({}, currentAppearance || {});
+    var jobs = (stories || []).map(function (story) {
+      var key = String(story.id);
+      function applyRow(row) {
+        storyAppearanceMap[key] = Object.assign({}, storyAppearanceBase, normalizeAppearanceItem(vidAppearanceFromRow(row)));
+      }
+      function applySnapshot() {
+        if (story._appearanceSnapshot) applyRow({ widget_style: story._appearanceSnapshot, name: story._appearanceName });
+      }
+      var id = String(story.appearance_id || '');
+      if (!id) return Promise.resolve();
+      var isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (!isUuid) { applySnapshot(); return Promise.resolve(); }
+      return vidlyticsFetch(
+        'vid_appearances',
+        'select=*&store_id=eq.' + encodeURIComponent(storeId) + '&id=eq.' + encodeURIComponent(id) + '&limit=1'
+      ).then(function (rows) {
+        if (rows.length > 0) applyRow(rows[0]); else applySnapshot();
+      });
     });
-    var story = null;
-    if (previewId) story = list.filter(function (s) { return String(s.id) === String(previewId); })[0] || null;
-    if (!story) story = list.filter(function (s) { return s.format === 'floating_widget'; })[0] || null;
-    if (!story) story = list[0] || null;
-    if (!story) return Promise.resolve();
-
-    function apply(row) {
-      var app = normalizeAppearanceItem(vidAppearanceFromRow(row));
-      currentAppearance = Object.assign({}, currentAppearance || {}, app);
-    }
-    function applySnapshot() {
-      if (story._appearanceSnapshot) apply({ widget_style: story._appearanceSnapshot, name: story._appearanceName });
-    }
-
-    var id = String(story.appearance_id || '');
-    if (!id) return Promise.resolve();
-    var isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    if (!isUuid) { applySnapshot(); return Promise.resolve(); }
-
-    return vidlyticsFetch(
-      'vid_appearances',
-      'select=*&store_id=eq.' + encodeURIComponent(storeId) + '&id=eq.' + encodeURIComponent(id) + '&limit=1'
-    ).then(function (rows) {
-      if (rows.length > 0) apply(rows[0]); else applySnapshot();
-    });
+    return Promise.all(jobs);
   }
 
   function fetchLegacyDbAppearance() {
@@ -7549,6 +7548,7 @@ if (!storeId || !hasSupabase) {
             ? floatingStories
             : floatingStories.filter(function (s) { return storyHasAnyMatchingLocation(s.id); });
           if (visibleFloatingStories.length > 0) {
+            currentAppearance = getStoryAppearance(visibleFloatingStories[0]);
             renderFloatingWidget(visibleFloatingStories);
           }
         }
@@ -7579,8 +7579,7 @@ if (!storeId || !hasSupabase) {
                 products: readProductsData,
                 sizing_models: readSizingModelsData,
                 comments: readCommentsData,
-                appearance: currentAppearance,
-                storyFormat: storyFormat
+                appearance: getStoryAppearance(story),$1storyFormat: storyFormat
               });
               if (widgetInjected) {
                 injectedStoryIds[story.id] = true;
@@ -7610,8 +7609,7 @@ if (!storeId || !hasSupabase) {
               products: readProductsData,
               sizing_models: readSizingModelsData,
               comments: readCommentsData,
-              appearance: currentAppearance,
-              storyFormat: getStoryFormat(fallbackList[0])
+              appearance: getStoryAppearance(fallbackList[0]),$1storyFormat: getStoryFormat(fallbackList[0])
             });
           } catch (err) {
             console.error('[Vidlytics] ❌ Erro no fallback:', err);

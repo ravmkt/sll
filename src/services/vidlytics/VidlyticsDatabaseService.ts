@@ -381,6 +381,8 @@ export class VidlyticsDatabaseService {
         scrollDirection: storyData.scrollDirection || storyData.scroll_direction || 'horizontal',
         appearance_id: storyData.visualStyle || storyData.appearance_id || '',
         visualStyle: storyData.visualStyle || storyData.appearance_id || '',
+        appearance_snapshot: storyData.appearance_snapshot ?? null,
+        appearance_name: storyData.appearance_name || '',
         videoUrls: storyData.videoUrls || storyData.video_ids || [],
         video_ids: storyData.video_ids || storyData.videoUrls || [],
         displayLocations: storyData.displayLocations || storyData.display_locations || [],
