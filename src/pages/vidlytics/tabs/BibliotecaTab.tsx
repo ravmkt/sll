@@ -1,1176 +1,639 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Search,
   UploadCloud,
-  ExternalLink,
-  HardDrive,
-  Video,
-  Image as ImageIcon,
-  Pencil,
-  Eye,
-  Download,
+  Globe,
+  Share2,
   Trash2,
-  CheckCircle2,
+  Edit2,
+  Download,
+  HardDrive,
+  Film,
+  Image as ImageIcon,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
   X,
-  ArrowLeft,
-  AlertTriangle,
-  Save,
-  Check,
-  Loader2,
-  Link2
-} from 'lucide-react';
-import { useLoja } from '../../../contexts/LojaContext';
-import { supabase } from '../../../lib/supabase';
+  Play
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
-interface MediaItem {
+interface VidVideo {
   id: string;
-  name: string;
-  type: 'video' | 'image';
-  typeLabel: string;
-  thumbnail: string;
-  videoUrl?: string;
-  product?: {
-    id?: string;
-    name: string;
-    image: string;
-  };
-  modelId?: string | null;
-  linkedStory?: string;
-  size: string;
-  sizeBytes: number;
-  status: 'DISPONÍVEL' | 'PROCESSANDO' | 'ERRO';
-  origin?: string;
-  activeStatus?: 'Ativo' | 'Inativo';
-}
-
-interface ProductOption {
-  id: string;
+  store_id: string;
   title: string;
-  image_url?: string;
+  video_url: string;
+  thumbnail_url?: string;
+  status?: string;
+  position?: number;
+  active?: boolean;
+  video_source_type?: string;
+  file_size_bytes?: number;
+  product_id?: string;
+  model_id?: string;
+  created_at: string;
+  updated_at?: string;
 }
 
-interface ModelOption {
-  id: string;
-  name: string;
+interface BibliotecaTabProps {
+  storeId?: string;
 }
 
-export const BibliotecaTab: React.FC = () => {
-  const { storeId } = useLoja();
+const STORAGE_LIMIT_BYTES = 50 * 1024 * 1024 * 1024; // 50 GB
+const BUCKET_NAME = "videos";
 
+export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId }) => {
+  const [videos, setVideos] = useState<VidVideo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'TODOS' | 'VIDEOS' | 'IMAGENS'>('TODOS');
-  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Produtos e Modelos para os selects
-  const [availableProducts, setAvailableProducts] = useState<ProductOption[]>([]);
-  const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [activeFilter, setActiveFilter] = useState<"TODOS" | "VIDEOS" | "IMAGENS">("TODOS");
 
-  // Modais de controle
-  const [viewingMedia, setViewingMedia] = useState<MediaItem | null>(null);
-  const [editingMedia, setEditingMedia] = useState<MediaItem | null>(null);
-  const [deletingMedia, setDeletingMedia] = useState<MediaItem | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  // Modais
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [selectedVideo, setSelectedVideo] = useState<VidVideo | null>(null);
 
-  // Modal URL Externa
-  const [showUrlModal, setShowUrlModal] = useState(false);
-  const [externalUrl, setExternalUrl] = useState('');
-  const [externalTitle, setExternalTitle] = useState('');
-  const [externalProductId, setExternalProductId] = useState('');
-  const [externalModelId, setExternalModelId] = useState('');
-  const [isSubmittingUrl, setIsSubmittingUrl] = useState(false);
-  const [urlError, setUrlError] = useState<string | null>(null);
+  // Form states URL Externa
+  const [externalUrl, setExternalUrl] = useState<string>("");
+  const [externalTitle, setExternalTitle] = useState<string>("");
+  const [externalProduct, setExternalProduct] = useState<string>("");
+  const [externalModel, setExternalModel] = useState<string>("");
+  const [isSavingExternal, setIsSavingExternal] = useState<boolean>(false);
 
-  // Upload direto de arquivo
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  // Form states Edição
+  const [editTitle, setEditTitle] = useState<string>("");
+  const [editThumbnail, setEditThumbnail] = useState<string>("");
+  const [editStatus, setEditStatus] = useState<string>("active");
+  const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
+
+  // Upload
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  // Estados da tela de edição
-  const [editTitle, setEditTitle] = useState('');
-  const [editOrigin, setEditOrigin] = useState('Upload de vídeo');
-  const [editThumbnail, setEditThumbnail] = useState('');
-  const [editProductId, setEditProductId] = useState<string>('');
-  const [editModelId, setEditModelId] = useState<string>('');
-  const [editStatus, setEditStatus] = useState<'Ativo' | 'Inativo'>('Ativo');
+  // Listas de apoio
+  const [storeProducts, setStoreProducts] = useState<{ id: string; name: string }[]>([]);
 
-  // Formatação de bytes para KB / MB / GB
-  const formatBytes = (bytes: number): string => {
-    if (!bytes || bytes <= 0) return '0 KB';
-    if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    return `${(bytes / 1024).toFixed(1)} KB`;
+  // Obter client do schema vidlytics
+  const getVidlyticsClient = () => {
+    return typeof (supabase as any).schema === "function"
+      ? (supabase as any).schema("vidlytics")
+      : supabase;
   };
 
-  // Carregar produtos e modelos da loja ativa
-  const loadAuxiliaryData = async () => {
-    if (!storeId) return;
-    try {
-      // 1. Produtos
-      const { data: prodData } = await supabase
-        .from('products')
-        .select('id, title, image_url')
-        .eq('store_id', storeId)
-        .order('title', { ascending: true });
-
-      if (prodData) {
-        setAvailableProducts(prodData.map((p: any) => ({
-          id: p.id,
-          title: p.title || 'Produto sem título',
-          image_url: p.image_url || ''
-        })));
-      }
-
-      // 2. Modelos de Medidas
-      const { data: modelData } = await supabase
-        .from('sizing_models')
-        .select('id, name')
-        .eq('store_id', storeId)
-        .order('name', { ascending: true });
-
-      if (modelData) {
-        setAvailableModels(modelData.map((m: any) => ({
-          id: m.id,
-          name: m.name || 'Modelo'
-        })));
-      }
-    } catch (err) {
-      console.warn('[BibliotecaTab] Erro ao carregar dados auxiliares:', err);
-    }
-  };
-
-  // Carregar lista de vídeos da loja ativa
-  const fetchMediaList = async () => {
-    if (!storeId) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Tenta carregar do schema vidlytics, com fallback para o schema public
-      let videosData: any[] | null = null;
-      let fetchErr: any = null;
-
-      try {
-        const res = await supabase
-          .schema('vidlytics')
-          .from('vid_videos')
-          .select(`
-            id,
-            title,
-            video_url,
-            thumbnail_url,
-            video_source_type,
-            source_type,
-            file_size,
-            status,
-            active,
-            product_id,
-            model_id,
-            created_at
-          `)
-          .eq('store_id', storeId)
-          .order('created_at', { ascending: false });
-
-        videosData = res.data;
-        fetchErr = res.error;
-      } catch {
-        // Fallback para schema public caso schema vidlytics não esteja exposto
-        const resFallback = await supabase
-          .from('vid_videos')
-          .select('*')
-          .eq('store_id', storeId)
-          .order('created_at', { ascending: false });
-
-        videosData = resFallback.data;
-        fetchErr = resFallback.error;
-      }
-
-      if (fetchErr) {
-        console.warn('[BibliotecaTab] Erro ao buscar vídeos:', fetchErr);
-      }
-
-      if (videosData && videosData.length > 0) {
-        // Mapear produtos
-        const prodMap = new Map<string, ProductOption>();
-        availableProducts.forEach(p => prodMap.set(p.id, p));
-
-        const mapped: MediaItem[] = videosData.map((item: any) => {
-          const isImg = (item.video_source_type === 'image' || item.source_type === 'image');
-          const isUrl = (item.video_source_type === 'url' || item.source_type === 'url');
-          const pInfo = item.product_id ? prodMap.get(item.product_id) : undefined;
-          const bytes = Number(item.file_size) || 0;
-
-          return {
-            id: item.id,
-            name: item.title || (isUrl ? 'Vídeo Externo' : 'Mídia'),
-            type: isImg ? 'image' : 'video',
-            typeLabel: isImg
-              ? 'IMAGEM (HOSPEDADA)'
-              : isUrl
-              ? 'VÍDEO EXTERNO (URL)'
-              : 'VÍDEO MP4 (HOSPEDADO)',
-            thumbnail: item.thumbnail_url || 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300&auto=format&fit=crop&q=80',
-            videoUrl: item.video_url || undefined,
-            product: pInfo
-              ? { id: pInfo.id, name: pInfo.title, image: pInfo.image_url || '' }
-              : undefined,
-            modelId: item.model_id || null,
-            linkedStory: undefined,
-            size: formatBytes(bytes),
-            sizeBytes: bytes,
-            status: item.status === 'error' ? 'ERRO' : 'DISPONÍVEL',
-            origin: isUrl ? 'URL externa' : 'Upload de vídeo',
-            activeStatus: item.active !== false ? 'Ativo' : 'Inativo'
-          };
-        });
-
-        setMediaList(mapped);
-      } else {
-        setMediaList([]);
-      }
-    } catch (err) {
-      console.error('[BibliotecaTab] Exceção ao carregar mídias:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Carregar produtos da loja
   useEffect(() => {
-    loadAuxiliaryData();
+    async function loadProducts() {
+      if (!storeId) return;
+      try {
+        const { data } = await supabase
+          .from("products")
+          .select("id, name")
+          .eq("store_id", storeId)
+          .limit(50);
+        if (data) setStoreProducts(data);
+      } catch {
+        // silencioso
+      }
+    }
+    loadProducts();
   }, [storeId]);
 
-  useEffect(() => {
-    fetchMediaList();
-  }, [storeId, availableProducts.length]);
-
-  // CÁLCULO DINÂMICO E REAL DO ESPAÇO CONSUMIDO
-  const TOTAL_LIMIT_BYTES = 50 * 1024 * 1024 * 1024; // 50 GB
-
-  const { totalUsedFormatted, percentageUsed } = useMemo(() => {
-    const totalBytes = mediaList.reduce((acc, curr) => acc + curr.sizeBytes, 0);
-
-    let formatted = '0 MB';
-    if (totalBytes >= 1024 * 1024 * 1024) {
-      formatted = `${(totalBytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-    } else if (totalBytes >= 1024 * 1024) {
-      formatted = `${(totalBytes / (1024 * 1024)).toFixed(1)} MB`;
-    } else if (totalBytes > 0) {
-      formatted = `${(totalBytes / 1024).toFixed(1)} KB`;
-    }
-
-    const pct = (totalBytes / TOTAL_LIMIT_BYTES) * 100;
-    const formattedPct = pct < 0.01 && pct > 0 ? '0.1%' : `${pct.toFixed(1)}%`;
-
-    return {
-      totalUsedFormatted: formatted,
-      percentageUsed: formattedPct
-    };
-  }, [mediaList]);
-
-  // 1. CADASTRAR VÍDEO POR URL EXTERNA
-  const handleSaveExternalUrl = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!externalUrl.trim()) {
-      setUrlError('Informe a URL do vídeo.');
-      return;
-    }
-    if (!storeId) {
-      setUrlError('Nenhuma loja ativa selecionada.');
-      return;
-    }
-
-    setIsSubmittingUrl(true);
-    setUrlError(null);
-
-    const title = externalTitle.trim() || `VÍDEO_EXTERNO_${Date.now().toString().slice(-4)}`;
-    const defaultThumbnail = 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300&auto=format&fit=crop&q=80';
-
-    const payload = {
-      store_id: storeId,
-      title: title,
-      video_source_type: 'url',
-      source_type: 'url',
-      video_url: externalUrl.trim(),
-      thumbnail_url: defaultThumbnail,
-      thumbnail_source_type: 'auto',
-      product_id: externalProductId || null,
-      model_id: externalModelId || null,
-      file_size: 0,
-      thumbnail_file_size: 0,
-      status: 'active',
-      active: true,
-      created_at: new Date().toISOString()
-    };
-
+  // Carregar Vídeos do schema vidlytics
+  const fetchVideos = async () => {
+    if (!storeId) return;
+    setLoading(true);
+    setErrorMsg(null);
     try {
-      let insertErr: any = null;
-      try {
-        const { error } = await supabase
-          .schema('vidlytics')
-          .from('vid_videos')
-          .insert(payload);
-        insertErr = error;
-      } catch {
-        const { error } = await supabase
-          .from('vid_videos')
-          .insert(payload);
-        insertErr = error;
+      const client = getVidlyticsClient();
+      const { data, error } = await client
+        .from("vid_videos")
+        .select("*")
+        .eq("store_id", storeId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("[BibliotecaTab] Erro ao buscar vídeos:", error);
+        setErrorMsg(error.message);
+      } else {
+        setVideos(data || []);
       }
-
-      if (insertErr) {
-        throw new Error(insertErr.message || 'Erro ao salvar vídeo externo');
-      }
-
-      // Limpar formulário e fechar modal
-      setExternalUrl('');
-      setExternalTitle('');
-      setExternalProductId('');
-      setExternalModelId('');
-      setShowUrlModal(false);
-
-      // Recarregar lista
-      await fetchMediaList();
     } catch (err: any) {
-      console.error('[BibliotecaTab] Erro ao cadastrar mídia externa:', err);
-      setUrlError(err.message || 'Falha ao salvar URL externa');
+      console.error("[BibliotecaTab] Erro catch:", err);
+      setErrorMsg(err.message || "Falha ao carregar mídias.");
     } finally {
-      setIsSubmittingUrl(false);
+      setLoading(false);
     }
   };
 
-  // 2. UPLOAD DIRETO DE ARQUIVO (VÍDEO OU IMAGEM)
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    fetchVideos();
+  }, [storeId]);
+
+  // Métricas de Armazenamento
+  const totalBytesUsed = useMemo(() => {
+    return videos.reduce((acc, item) => acc + (Number(item.file_size_bytes) || 0), 0);
+  }, [videos]);
+
+  const usedMB = (totalBytesUsed / (1024 * 1024)).toFixed(1);
+  const percentUsed = Math.min(100, (totalBytesUsed / STORAGE_LIMIT_BYTES) * 100).toFixed(1);
+
+  // Tratamento de Upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !storeId) return;
 
-    // Limite de 30MB
     if (file.size > 30 * 1024 * 1024) {
-      setUploadError('O arquivo excede o limite máximo permitido de 30 MB.');
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setErrorMsg("O arquivo excede o limite máximo permitido de 30 MB.");
       return;
     }
 
-    setIsUploading(true);
-    setUploadError(null);
-
     try {
-      const isImage = file.type.startsWith('image/');
-      const fileExt = file.name.split('.').pop();
-      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const filePath = `${storeId}/${Date.now()}_${sanitizedName}`;
+      setIsUploading(true);
+      setErrorMsg(null);
+      setSuccessMsg(null);
 
-      // Upload para Supabase Storage
-      let uploadRes = await supabase.storage
-        .from('videos')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${storeId}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+
+      const { data: uploadData, error: uploadErr } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false
         });
 
-      if (uploadRes.error) {
-        // Tenta bucket 'media' como alternativa
-        uploadRes = await supabase.storage
-          .from('media')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: true
-          });
+      if (uploadErr) {
+        throw new Error(uploadErr.message);
       }
 
-      if (uploadRes.error) {
-        throw new Error(uploadRes.error.message || 'Erro no envio do arquivo para o Storage');
-      }
+      const { data: urlData } = supabase.storage
+        .from(BUCKET_NAME)
+        .getPublicUrl(uploadData.path);
 
-      // Obter URL pública
-      const { data: publicUrlData } = supabase.storage
-        .from(uploadRes.data.fullPath.split('/')[0] || 'videos')
-        .getPublicUrl(uploadRes.data.path || filePath);
+      const publicUrl = urlData.publicUrl;
+      const cleanTitle = file.name.replace(/\.[^/.]+$/, "");
 
-      const finalUrl = publicUrlData?.publicUrl || '';
-      const defaultThumb = isImage
-        ? finalUrl
-        : 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300&auto=format&fit=crop&q=80';
-
-      const payload = {
+      const payload: any = {
         store_id: storeId,
-        title: file.name,
-        video_source_type: isImage ? 'image' : 'upload',
-        source_type: isImage ? 'image' : 'upload',
-        video_url: finalUrl,
-        thumbnail_url: defaultThumb,
-        thumbnail_source_type: isImage ? 'upload' : 'auto',
-        file_size: file.size,
-        thumbnail_file_size: 0,
-        status: 'active',
+        title: cleanTitle,
+        video_url: publicUrl,
+        thumbnail_url: publicUrl,
+        status: "active",
         active: true,
-        created_at: new Date().toISOString()
+        file_size_bytes: file.size,
+        video_source_type: "upload"
       };
 
-      let insertErr: any = null;
-      try {
-        const { error } = await supabase
-          .schema('vidlytics')
-          .from('vid_videos')
-          .insert(payload);
-        insertErr = error;
-      } catch {
-        const { error } = await supabase
-          .from('vid_videos')
-          .insert(payload);
-        insertErr = error;
-      }
+      const client = getVidlyticsClient();
+      const { error: insertErr } = await client
+        .from("vid_videos")
+        .insert([payload]);
 
       if (insertErr) {
-        throw new Error(insertErr.message || 'Erro ao registrar vídeo no banco de dados');
+        throw new Error(insertErr.message);
       }
 
-      await fetchMediaList();
+      setSuccessMsg("Mídia enviada e cadastrada com sucesso!");
+      await fetchVideos();
     } catch (err: any) {
-      console.error('[BibliotecaTab] Falha no upload:', err);
-      setUploadError(err.message || 'Erro ao realizar upload do arquivo.');
+      console.error("[BibliotecaTab] Falha no upload:", err);
+      setErrorMsg(`Falha no upload: ${err.message}`);
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  // Abrir página de Edição de Vídeo
-  const handleOpenEdit = (media: MediaItem) => {
-    setEditingMedia(media);
-    setEditTitle(media.name);
-    setEditOrigin(media.origin || 'Upload de vídeo');
-    setEditThumbnail(media.thumbnail);
-    setEditProductId(media.product?.id || '');
-    setEditModelId(media.modelId || '');
-    setEditStatus(media.activeStatus || 'Ativo');
-    setSaveSuccess(false);
+  // Cadastrar URL Externa
+  const handleSaveExternal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!externalUrl.trim() || !storeId) return;
+
+    try {
+      setIsSavingExternal(true);
+      setErrorMsg(null);
+
+      const finalTitle = externalTitle.trim() || `Vídeo ${new Date().toLocaleDateString("pt-BR")}`;
+
+      const payload: any = {
+        store_id: storeId,
+        title: finalTitle,
+        video_url: externalUrl.trim(),
+        thumbnail_url: "",
+        status: "active",
+        active: true,
+        video_source_type: "external"
+      };
+
+      if (externalProduct) payload.product_id = externalProduct;
+      if (externalModel) payload.model_id = externalModel;
+
+      const client = getVidlyticsClient();
+      const { error: insertErr } = await client
+        .from("vid_videos")
+        .insert([payload]);
+
+      if (insertErr) throw new Error(insertErr.message);
+
+      setSuccessMsg("Vídeo externo cadastrado com sucesso!");
+      setIsUrlModalOpen(false);
+      setExternalUrl("");
+      setExternalTitle("");
+      setExternalProduct("");
+      setExternalModel("");
+      await fetchVideos();
+    } catch (err: any) {
+      console.error("[BibliotecaTab] Erro ao cadastrar mídia externa:", err);
+      setErrorMsg(err.message || "Erro ao salvar vídeo por URL.");
+    } finally {
+      setIsSavingExternal(false);
+    }
+  };
+
+  // Excluir Mídia
+  const handleDeleteVideo = async (video: VidVideo) => {
+    if (!confirm(`Deseja realmente remover o vídeo "${video.title}"?`)) return;
+
+    try {
+      setErrorMsg(null);
+      const client = getVidlyticsClient();
+      const { error } = await client
+        .from("vid_videos")
+        .delete()
+        .eq("id", video.id);
+
+      if (error) throw new Error(error.message);
+
+      setSuccessMsg("Mídia removida com sucesso!");
+      setVideos((prev) => prev.filter((v) => v.id !== video.id));
+    } catch (err: any) {
+      console.error("[BibliotecaTab] Erro ao deletar:", err);
+      setErrorMsg(err.message || "Erro ao deletar mídia.");
+    }
+  };
+
+  // Abrir Modal de Edição
+  const openEditModal = (video: VidVideo) => {
+    setSelectedVideo(video);
+    setEditTitle(video.title || "");
+    setEditThumbnail(video.thumbnail_url || "");
+    setEditStatus(video.status || "active");
+    setIsEditModalOpen(true);
   };
 
   // Salvar Edição
-  const handleSaveVideoEdit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!editingMedia || !storeId) return;
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedVideo) return;
 
     try {
-      const selectedProd = availableProducts.find(p => p.id === editProductId);
-
-      const updatePayload: any = {
-        title: editTitle.trim(),
-        product_id: editProductId || null,
-        model_id: editModelId || null,
-        active: editStatus === 'Ativo'
-      };
-
-      if (editThumbnail.trim()) {
-        updatePayload.thumbnail_url = editThumbnail.trim();
-      }
-
-      let updErr: any = null;
-      try {
-        const { error } = await supabase
-          .schema('vidlytics')
-          .from('vid_videos')
-          .update(updatePayload)
-          .eq('id', editingMedia.id)
-          .eq('store_id', storeId);
-        updErr = error;
-      } catch {
-        const { error } = await supabase
-          .from('vid_videos')
-          .update(updatePayload)
-          .eq('id', editingMedia.id)
-          .eq('store_id', storeId);
-        updErr = error;
-      }
-
-      if (updErr) {
-        console.warn('[BibliotecaTab] Erro ao atualizar no banco:', updErr);
-      }
-
-      // Atualiza localmente
-      setMediaList((prev) =>
-        prev.map((item) => {
-          if (item.id === editingMedia.id) {
-            return {
-              ...item,
-              name: editTitle,
-              origin: editOrigin,
-              thumbnail: editThumbnail || item.thumbnail,
-              activeStatus: editStatus,
-              product: selectedProd
-                ? { id: selectedProd.id, name: selectedProd.title, image: selectedProd.image_url || '' }
-                : undefined,
-              modelId: editModelId || null
-            };
-          }
-          return item;
+      setIsSavingEdit(true);
+      const client = getVidlyticsClient();
+      const { error } = await client
+        .from("vid_videos")
+        .update({
+          title: editTitle,
+          thumbnail_url: editThumbnail,
+          status: editStatus,
+          updated_at: new Date().toISOString()
         })
-      );
+        .eq("id", selectedVideo.id);
 
-      setSaveSuccess(true);
-      setTimeout(() => {
-        setSaveSuccess(false);
-        setEditingMedia(null);
-      }, 900);
-    } catch (err) {
-      console.error('[BibliotecaTab] Falha ao salvar edição:', err);
-    }
-  };
+      if (error) throw new Error(error.message);
 
-  // Download real do arquivo
-  const handleDownload = async (media: MediaItem) => {
-    const fileUrl = media.videoUrl || media.thumbnail;
-    try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = media.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch {
-      window.open(fileUrl, '_blank');
-    }
-  };
-
-  // Confirmar Exclusão com Remoção no Banco de Dados
-  const handleConfirmDelete = async () => {
-    if (!deletingMedia || !storeId) return;
-
-    setIsDeleting(true);
-    try {
-      let delErr: any = null;
-      try {
-        const { error } = await supabase
-          .schema('vidlytics')
-          .from('vid_videos')
-          .delete()
-          .eq('id', deletingMedia.id)
-          .eq('store_id', storeId);
-        delErr = error;
-      } catch {
-        const { error } = await supabase
-          .from('vid_videos')
-          .delete()
-          .eq('id', deletingMedia.id)
-          .eq('store_id', storeId);
-        delErr = error;
-      }
-
-      if (delErr) {
-        console.warn('[BibliotecaTab] Erro ao deletar no banco:', delErr);
-      }
-
-      setMediaList((prev) => prev.filter((item) => item.id !== deletingMedia.id));
-      setDeletingMedia(null);
-    } catch (err) {
-      console.error('[BibliotecaTab] Falha ao excluir mídia:', err);
+      setSuccessMsg("Mídia atualizada com sucesso!");
+      setIsEditModalOpen(false);
+      setSelectedVideo(null);
+      await fetchVideos();
+    } catch (err: any) {
+      console.error("[BibliotecaTab] Erro ao atualizar:", err);
+      setErrorMsg(err.message || "Erro ao salvar alterações.");
     } finally {
-      setIsDeleting(false);
+      setIsSavingEdit(false);
     }
   };
 
-  const filteredMedia = mediaList.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    if (filterType === 'VIDEOS') return matchesSearch && item.type === 'video';
-    if (filterType === 'IMAGENS') return matchesSearch && item.type === 'image';
-    return matchesSearch;
-  });
+  // Filtragem da lista
+  const filteredVideos = useMemo(() => {
+    return videos.filter((item) => {
+      const matchSearch = item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.video_url?.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!matchSearch) return false;
 
-  // Tela completa de Edição de Vídeo
-  if (editingMedia) {
-    return (
-      <div className="space-y-6 pb-12">
-        {/* Barra superior de Ação da Edição */}
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setEditingMedia(null)}
-            className="flex items-center gap-2 text-slate-800 hover:text-slate-600 font-bold text-lg transition-colors cursor-pointer"
-          >
-            <div className="p-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50">
-              <ArrowLeft size={18} />
-            </div>
-            <span>Editar Vídeo</span>
-          </button>
+      const isImg = item.video_url?.match(/\.(jpeg|jpg|gif|png|webp)($|\?)/i);
+      if (activeFilter === "VIDEOS" && isImg) return false;
+      if (activeFilter === "IMAGENS" && !isImg) return false;
 
-          <button
-            type="button"
-            onClick={() => handleSaveVideoEdit()}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-all shadow-md shadow-blue-500/20 cursor-pointer"
-          >
-            {saveSuccess ? (
-              <>
-                <Check size={16} />
-                <span>SALVO COM SUCESSO!</span>
-              </>
-            ) : (
-              <>
-                <Save size={16} />
-                <span>SALVAR ALTERAÇÕES</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Card do Formulário de Edição */}
-        <form onSubmit={handleSaveVideoEdit} className="bg-white border border-slate-100 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
-          {/* TÍTULO DO VÍDEO */}
-          <div className="space-y-2">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              TÍTULO DO VÍDEO
-            </label>
-            <input
-              type="text"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
-            />
-          </div>
-
-          {/* ORIGEM DO VÍDEO */}
-          <div className="space-y-2">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              ORIGEM DO VÍDEO
-            </label>
-            <select
-              value={editOrigin}
-              onChange={(e) => setEditOrigin(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
-            >
-              <option value="Upload de vídeo">Upload de vídeo</option>
-              <option value="Instagram">Instagram</option>
-              <option value="TikTok">TikTok</option>
-              <option value="URL externa">URL externa</option>
-            </select>
-          </div>
-
-          {/* ARQUIVO DE VÍDEO */}
-          <div className="space-y-3">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              ARQUIVO DE VÍDEO
-            </label>
-
-            <div className="flex items-center gap-2 p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-700 font-medium">
-              <AlertTriangle size={15} className="shrink-0 text-amber-500" />
-              <span>O arquivo de vídeo deve ter no <strong>máximo 30 MB</strong>. Formatos aceitos: MP4, MOV e WEBM.</span>
-            </div>
-
-            {/* Preview do Vídeo */}
-            <div className="w-36 h-56 rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-sm relative group">
-              {editingMedia.videoUrl ? (
-                <video
-                  src={editingMedia.videoUrl}
-                  controls
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <img
-                  src={editingMedia.thumbnail}
-                  alt={editingMedia.name}
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* CAPA DO VÍDEO (THUMBNAIL) */}
-          <div className="space-y-3 pt-2">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              CAPA DO VÍDEO (THUMBNAIL)
-            </label>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="w-16 h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0 shadow-sm">
-                <img
-                  src={editThumbnail || editingMedia.thumbnail}
-                  alt="Capa"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              <div className="flex-1 w-full space-y-2">
-                <input
-                  type="text"
-                  placeholder="Cole a URL da capa"
-                  value={editThumbnail}
-                  onChange={(e) => setEditThumbnail(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb]"
-                />
-              </div>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              JPG, PNG ou WEBP. Máx. 350 KB. Se deixado em branco, um frame do vídeo será usado automaticamente.
-            </p>
-          </div>
-
-          {/* PRODUTO VINCULADO (OPCIONAL) */}
-          <div className="space-y-2 pt-2">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              PRODUTO VINCULADO (OPCIONAL)
-            </label>
-            <select
-              value={editProductId}
-              onChange={(e) => setEditProductId(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
-            >
-              <option value="">Nenhum produto vinculado</option>
-              {availableProducts.map((p) => (
-                <option key={p.id} value={p.id}>{p.title}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* MODELO/MEDIDA VINCULADO (OPCIONAL) */}
-          <div className="space-y-2">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              MODELO/MEDIDA VINCULADO (OPCIONAL)
-            </label>
-            <select
-              value={editModelId}
-              onChange={(e) => setEditModelId(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
-            >
-              <option value="">Nenhum</option>
-              {availableModels.map((m) => (
-                <option key={m.id} value={m.id}>{m.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* STATUS */}
-          <div className="space-y-2">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              STATUS
-            </label>
-            <select
-              value={editStatus}
-              onChange={(e) => setEditStatus(e.target.value as 'Ativo' | 'Inativo')}
-              className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
-            >
-              <option value="Ativo">Ativo</option>
-              <option value="Inativo">Inativo</option>
-            </select>
-          </div>
-
-          {/* BOTÃO SALVAR INFERIOR */}
-          <div className="flex justify-end pt-4">
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-6 py-3 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-all shadow-md shadow-blue-500/20 cursor-pointer"
-            >
-              {saveSuccess ? (
-                <>
-                  <Check size={16} />
-                  <span>SALVO COM SUCESSO!</span>
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  <span>SALVAR ALTERAÇÕES</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    );
-  }
+      return true;
+    });
+  }, [videos, searchTerm, activeFilter]);
 
   return (
     <div className="space-y-6">
-      {/* Input de Arquivo oculto para Upload Direto */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="video/mp4,video/quicktime,video/webm,image/*"
-        onChange={handleFileChange}
-        className="hidden"
-      />
+      {/* Mensagens de Notificação */}
+      {errorMsg && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500" />
+            <span className="text-sm font-medium">{errorMsg}</span>
+          </div>
+          <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
-      {/* 1. CABEÇALHO */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {successMsg && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 flex-shrink-0 text-emerald-500" />
+            <span className="text-sm font-medium">{successMsg}</span>
+          </div>
+          <button onClick={() => setSuccessMsg(null)} className="text-emerald-400 hover:text-emerald-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Header & Ações */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Biblioteca</h2>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Biblioteca</h1>
           <p className="text-sm text-slate-500 mt-1">
             Gerencie os vídeos e imagens hospedados e monitore o consumo de espaço.
           </p>
         </div>
 
-        {/* Botões de Ação lado a lado */}
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-1 md:pb-0 flex-nowrap shrink-0">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition"
+            onClick={() => alert("Módulo Instagram conectado em breve.")}
           >
-            <svg
-              className="w-3.5 h-3.5 text-slate-700"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-            </svg>
-            <span>INSTAGRAM</span>
+            <Share2 className="w-4 h-4 text-pink-600" />
+            INSTAGRAM
           </button>
 
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition"
+            onClick={() => alert("Módulo TikTok conectado em breve.")}
           >
-            <svg className="w-3.5 h-3.5 fill-current text-slate-700" viewBox="0 0 24 24">
-              <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
-            </svg>
-            <span>TIKTOK</span>
+            <Film className="w-4 h-4 text-slate-900" />
+            TIKTOK
           </button>
 
-          {/* BOTÃO URL EXTERNA */}
           <button
             type="button"
-            onClick={() => {
-              setUrlError(null);
-              setShowUrlModal(true);
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0 cursor-pointer"
+            onClick={() => setIsUrlModalOpen(true)}
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition"
           >
-            <ExternalLink size={14} className="text-slate-600" />
-            <span>URL EXTERNA</span>
+            <Globe className="w-4 h-4 text-sky-600" />
+            URL EXTERNA
           </button>
 
-          {/* BOTÃO FAZER UPLOAD */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/mp4,video/quicktime,video/webm,image/*"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+
           <button
             type="button"
             disabled={isUploading}
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-colors shadow-md shadow-blue-500/20 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-60"
+            className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm shadow-sky-200 transition disabled:opacity-50"
           >
             {isUploading ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                <span>ENVIANDO...</span>
-              </>
+              <RefreshCw className="w-4 h-4 animate-spin" />
             ) : (
-              <>
-                <UploadCloud size={16} />
-                <span>FAZER UPLOAD</span>
-              </>
+              <UploadCloud className="w-4 h-4" />
             )}
+            {isUploading ? "ENVIANDO..." : "FAZER UPLOAD"}
           </button>
         </div>
       </div>
 
-      {/* Alerta de erro de upload */}
-      {uploadError && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium">
-          <AlertTriangle size={15} className="shrink-0 text-red-500" />
-          <span>{uploadError}</span>
-        </div>
-      )}
-
-      {/* 2. CARD DE CONSUMO DE ARMAZENAMENTO */}
-      <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#0094eb] flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
-              <HardDrive size={22} />
+      {/* Cartão de Espaço de Armazenamento */}
+      <div className="p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center shadow-sm">
+              <HardDrive className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-slate-800 text-sm tracking-wide">SCALE</span>
-                <span className="px-2 py-0.5 bg-blue-50 text-[#0094eb] text-[10px] font-bold rounded-full">
+                <span className="font-bold text-slate-800 text-sm">SCALE</span>
+                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-sky-50 text-sky-600 border border-sky-100 rounded-md font-semibold">
                   50 GB LIMITE
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Uso atual: <strong className="text-slate-700 font-semibold">{totalUsedFormatted}</strong> de 50 GB
+                Uso atual: <span className="font-semibold text-slate-700">{usedMB} MB</span> de 50 GB
               </p>
             </div>
           </div>
-
           <div className="text-right">
-            <span className="text-xl font-bold text-emerald-500">{percentageUsed}</span>
-            <p className="text-[11px] text-slate-400 font-medium">Espaço Consumido</p>
+            <div className="text-lg font-bold text-emerald-600">{percentUsed}%</div>
+            <div className="text-[11px] text-slate-400">Espaço Consumido</div>
           </div>
         </div>
 
-        {/* Barra de Progresso Real */}
-        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
           <div
-            className="bg-[#0094eb] h-full rounded-full transition-all duration-500"
-            style={{ width: `${Math.max(0.1, parseFloat(percentageUsed))}%` }}
+            className="bg-sky-500 h-full rounded-full transition-all duration-500"
+            style={{ width: `${Math.max(1, Number(percentUsed))}%` }}
           />
         </div>
       </div>
 
-      {/* 3. BARRA DE PESQUISA E FILTROS */}
-      <div className="bg-white border border-slate-100 rounded-2xl p-2.5 shadow-sm flex flex-col sm:flex-row items-center gap-3">
-        <div className="relative flex-1 w-full">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+      {/* Barra de Busca e Filtros */}
+      <div className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="relative w-full md:w-96">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Pesquisar pelo nome do arquivo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-transparent text-sm text-slate-700 placeholder-slate-400 focus:outline-none"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
-          <button
-            type="button"
-            onClick={() => setFilterType('TODOS')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors cursor-pointer ${
-              filterType === 'TODOS'
-                ? 'bg-[#0094eb] text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            TODOS
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setFilterType('VIDEOS')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors cursor-pointer ${
-              filterType === 'VIDEOS'
-                ? 'bg-[#0094eb] text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <Video size={14} />
-            <span>VÍDEOS</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setFilterType('IMAGENS')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition-colors cursor-pointer ${
-              filterType === 'IMAGENS'
-                ? 'bg-[#0094eb] text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <ImageIcon size={14} />
-            <span>IMAGENS</span>
-          </button>
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+          {(["TODOS", "VIDEOS", "IMAGENS"] as const).map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                activeFilter === filter
+                  ? "bg-sky-500 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              {filter === "VIDEOS" && <Film className="w-3.5 h-3.5" />}
+              {filter === "IMAGENS" && <ImageIcon className="w-3.5 h-3.5" />}
+              {filter}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* 4. TABELA DE MÍDIAS */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-6 py-3.5 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between">
-          <span className="text-xs font-extrabold text-slate-700 tracking-wider">
-            {filteredMedia.length} MÍDIAS LISTADAS
-          </span>
-          {loading && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <Loader2 size={13} className="animate-spin text-[#0094eb]" />
-              <span>Sincronizando...</span>
-            </div>
-          )}
+      {/* Listagem de Mídias */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xs font-bold text-slate-400 tracking-wider uppercase">
+            {filteredVideos.length} Mídias Listadas
+          </h2>
+          <button
+            onClick={fetchVideos}
+            disabled={loading}
+            className="text-xs text-sky-600 hover:text-sky-700 flex items-center gap-1 font-medium"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            Atualizar
+          </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 tracking-wider uppercase">
-                <th className="py-3.5 px-6 text-center w-20">MÍDIA</th>
-                <th className="py-3.5 px-4 text-left">NOME DO ARQUIVO</th>
-                <th className="py-3.5 px-4 text-center">PRODUTO</th>
-                <th className="py-3.5 px-4 text-center">STORY VINCULADO</th>
-                <th className="py-3.5 px-4 text-center">TAMANHO</th>
-                <th className="py-3.5 px-4 text-center">STATUS</th>
-                <th className="py-3.5 px-6 text-center w-40">AÇÕES</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
-              {filteredMedia.length === 0 && !loading && (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
-                    Nenhuma mídia encontrada. Clique em <strong>FAZER UPLOAD</strong> ou <strong>URL EXTERNA</strong> para adicionar.
-                  </td>
-                </tr>
-              )}
-
-              {filteredMedia.map((media) => (
-                <tr key={media.id} className="hover:bg-slate-50/80 transition-colors">
-                  {/* Mídia Thumbnail */}
-                  <td className="py-3 px-6 text-center">
-                    <div className="flex justify-center">
-                      <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
-                        <img
-                          src={media.thumbnail}
-                          alt={media.name}
-                          className="w-full h-full object-cover"
-                        />
-                        {media.type === 'video' && (
-                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                            <div className="w-5 h-5 rounded-full bg-black/40 flex items-center justify-center text-white">
-                              <span className="text-[9px] font-bold">▶</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Nome do Arquivo */}
-                  <td className="py-3 px-4 text-left">
-                    <p className="font-bold text-slate-800 text-sm truncate max-w-[240px]">
-                      {media.name}
-                    </p>
-                    <p className="text-[11px] font-semibold text-[#0094eb] mt-0.5">
-                      {media.typeLabel}
-                    </p>
-                  </td>
-
-                  {/* Produto */}
-                  <td className="py-3 px-4 text-center">
-                    <div className="flex justify-center items-center">
-                      {media.product ? (
-                        <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-700">
-                          {media.product.image && (
-                            <img
-                              src={media.product.image}
-                              alt={media.product.name}
-                              className="w-4 h-4 rounded-full object-cover"
-                            />
-                          )}
-                          <span className="font-medium max-w-[130px] truncate">{media.product.name}</span>
-                        </div>
-                      ) : (
-                        <span className="inline-block px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-400 font-medium">
-                          Sem produto
-                        </span>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* Story Vinculado */}
-                  <td className="py-3 px-4 text-center">
-                    {media.linkedStory ? (
-                      <span className="inline-block px-3 py-1 bg-blue-50 text-[#0094eb] text-xs font-bold rounded-full">
-                        {media.linkedStory}
-                      </span>
+        {loading ? (
+          <div className="py-20 text-center bg-white border border-slate-200/80 rounded-2xl">
+            <RefreshCw className="w-8 h-8 animate-spin text-sky-500 mx-auto mb-2" />
+            <p className="text-sm text-slate-500">Carregando mídias da loja...</p>
+          </div>
+        ) : filteredVideos.length === 0 ? (
+          <div className="py-20 text-center bg-white border border-slate-200/80 rounded-2xl p-6">
+            <div className="w-12 h-12 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center mx-auto mb-3">
+              <UploadCloud className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-semibold text-slate-800">Nenhuma mídia encontrada</h3>
+            <p className="text-sm text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+              Envie seus arquivos de vídeo ou cadastre links externos para começar a usar no Vidlytics.
+            </p>
+            <button
+              onClick={() => setIsUrlModalOpen(true)}
+              className="px-4 py-2 bg-sky-500 text-white text-xs font-semibold rounded-xl hover:bg-sky-600 transition"
+            >
+              Adicionar Primeiro Vídeo
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredVideos.map((video) => {
+              const isImg = video.video_url?.match(/\.(jpeg|jpg|gif|png|webp)($|\?)/i);
+              return (
+                <div
+                  key={video.id}
+                  className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col group"
+                >
+                  <div className="aspect-[9/16] bg-slate-900 relative overflow-hidden flex items-center justify-center">
+                    {isImg ? (
+                      <img
+                        src={video.video_url}
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <span className="text-slate-400 font-bold">—</span>
+                      <video
+                        src={video.video_url}
+                        poster={video.thumbnail_url}
+                        className="w-full h-full object-cover"
+                        controls={false}
+                        muted
+                        playsInline
+                        onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.pause();
+                          e.currentTarget.currentTime = 0;
+                        }}
+                      />
                     )}
-                  </td>
 
-                  {/* Tamanho */}
-                  <td className="py-3 px-4 text-center text-xs font-semibold text-slate-600">
-                    {media.size}
-                  </td>
+                    {!isImg && (
+                      <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-semibold flex items-center gap-1 pointer-events-none">
+                        <Play className="w-2.5 h-2.5 fill-white" /> VÍDEO
+                      </div>
+                    )}
 
-                  {/* Status */}
-                  <td className="py-3 px-4 text-center">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full">
-                      <CheckCircle2 size={13} />
-                      <span>{media.status}</span>
-                    </span>
-                  </td>
-
-                  {/* AÇÕES: GRID ALINHADO */}
-                  <td className="py-3 px-6 text-center">
-                    <div className="grid grid-cols-4 w-32 mx-auto justify-items-center items-center text-slate-400">
-                      {/* 1. Coluna EDITAR */}
-                      {media.type === 'video' ? (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(media)}
-                          className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                          title="Editar Vídeo"
-                        >
-                          <Pencil size={15} />
-                        </button>
-                      ) : (
-                        <div className="w-[27px] h-[27px]" />
-                      )}
-
-                      {/* 2. Coluna VISUALIZAR */}
+                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <button
-                        type="button"
-                        onClick={() => setViewingMedia(media)}
-                        className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                        title="Visualizar"
+                        onClick={() => openEditModal(video)}
+                        className="w-8 h-8 rounded-lg bg-white/90 text-slate-700 flex items-center justify-center hover:bg-white transition shadow-sm"
+                        title="Editar"
                       >
-                        <Eye size={15} />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
-
-                      {/* 3. Coluna BAIXAR */}
                       <button
-                        type="button"
-                        onClick={() => handleDownload(media)}
-                        className="p-1.5 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
-                        title="Baixar"
-                      >
-                        <Download size={15} />
-                      </button>
-
-                      {/* 4. Coluna EXCLUIR */}
-                      <button
-                        type="button"
-                        onClick={() => setDeletingMedia(media)}
-                        className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                        onClick={() => handleDeleteVideo(video)}
+                        className="w-8 h-8 rounded-lg bg-red-500/90 text-white flex items-center justify-center hover:bg-red-600 transition shadow-sm"
                         title="Excluir"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+
+                  <div className="p-3.5 flex flex-col flex-1 justify-between">
+                    <div>
+                      <h4 className="font-semibold text-slate-800 text-sm line-clamp-1" title={video.title}>
+                        {video.title || "Sem título"}
+                      </h4>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {new Date(video.created_at).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                      <span className="capitalize">{video.status || "Ativo"}</span>
+                      {video.video_url && (
+                        <a
+                          href={video.video_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sky-600 hover:text-sky-700 flex items-center gap-1 font-medium"
+                        >
+                          <Download className="w-3.5 h-3.5" /> Abrir
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* MODAL 1: ADICIONAR VÍDEO POR URL EXTERNA */}
-      {showUrlModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            {/* Header Modal */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+      {/* Modal: Adicionar URL Externa */}
+      {isUrlModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0094eb] flex items-center justify-center">
-                  <Link2 size={18} />
+                <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                  <Globe className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-800">Adicionar Vídeo por URL</h3>
-                  <p className="text-[11px] text-slate-500">Cole a URL direta ou streaming do vídeo</p>
+                  <h3 className="font-bold text-slate-800 text-base">Adicionar Vídeo por URL</h3>
+                  <p className="text-xs text-slate-400">Cole a URL direta ou streaming do vídeo</p>
                 </div>
               </div>
               <button
-                type="button"
-                onClick={() => setShowUrlModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                onClick={() => setIsUrlModalOpen(false)}
+                className="w-8 h-8 rounded-xl text-slate-400 hover:bg-slate-100 flex items-center justify-center transition"
               >
-                <X size={18} />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Formulário URL Externa */}
-            <form onSubmit={handleSaveExternalUrl} className="p-6 space-y-4">
-              {urlError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600">
-                  {urlError}
-                </div>
-              )}
-
-              {/* URL DO VÍDEO */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+            <form onSubmit={handleSaveExternal} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
                   URL DO VÍDEO *
                 </label>
                 <input
@@ -1179,80 +642,71 @@ export const BibliotecaTab: React.FC = () => {
                   placeholder="https://exemplo.com/video.mp4 ou streaming"
                   value={externalUrl}
                   onChange={(e) => setExternalUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                 />
               </div>
 
-              {/* TÍTULO DO VÍDEO */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
                   TÍTULO DO VÍDEO (OPCIONAL)
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex: Demonstração do Produto"
+                  placeholder="Ex: Apresentação Vestido Midi"
                   value={externalTitle}
                   onChange={(e) => setExternalTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                 />
               </div>
 
-              {/* PRODUTO VINCULADO */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
                   PRODUTO VINCULADO (OPCIONAL)
                 </label>
                 <select
-                  value={externalProductId}
-                  onChange={(e) => setExternalProductId(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
+                  value={externalProduct}
+                  onChange={(e) => setExternalProduct(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                 >
                   <option value="">Nenhum produto vinculado</option>
-                  {availableProducts.map((p) => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
+                  {storeProducts.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
                   ))}
                 </select>
               </div>
 
-              {/* MODELO / MEDIDA */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
                   MODELO/MEDIDA VINCULADO (OPCIONAL)
                 </label>
                 <select
-                  value={externalModelId}
-                  onChange={(e) => setExternalModelId(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
+                  value={externalModel}
+                  onChange={(e) => setExternalModel(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                 >
                   <option value="">Nenhum</option>
-                  {availableModels.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
+                  <option value="p">Modelo P (1.65m / 55kg)</option>
+                  <option value="m">Modelo M (1.70m / 65kg)</option>
+                  <option value="g">Modelo G (1.75m / 78kg)</option>
                 </select>
               </div>
 
-              {/* BOTÕES DE AÇÃO */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="pt-4 flex items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowUrlModal(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  onClick={() => setIsUrlModalOpen(false)}
+                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmittingUrl}
-                  className="flex items-center gap-2 px-5 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-colors shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-60"
+                  disabled={isSavingExternal}
+                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50"
                 >
-                  {isSubmittingUrl ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>SALVANDO...</span>
-                    </>
-                  ) : (
-                    <span>CADASTRAR MÍDIA</span>
-                  )}
+                  {isSavingExternal ? "Salvando..." : "CADASTRAR MÍDIA"}
                 </button>
               </div>
             </form>
@@ -1260,98 +714,79 @@ export const BibliotecaTab: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 2: VISUALIZAÇÃO COM VÍDEO REAL HTML5 */}
-      {viewingMedia && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-800 text-sm truncate max-w-[280px]">
-                  {viewingMedia.name}
-                </span>
-                <span className="px-2 py-0.5 bg-blue-50 text-[#0094eb] text-[10px] font-bold rounded-full">
-                  {viewingMedia.type === 'video' ? 'VÍDEO' : 'IMAGEM'}
-                </span>
-              </div>
+      {/* Modal: Edição de Mídia */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <h3 className="font-bold text-slate-800 text-base">Editar Detalhes da Mídia</h3>
               <button
-                type="button"
-                onClick={() => setViewingMedia(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                onClick={() => setIsEditModalOpen(false)}
+                className="w-8 h-8 rounded-xl text-slate-400 hover:bg-slate-100 flex items-center justify-center transition"
               >
-                <X size={18} />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-4 flex flex-col items-center justify-center bg-black min-h-[300px]">
-              {viewingMedia.type === 'video' && viewingMedia.videoUrl ? (
-                <video
-                  src={viewingMedia.videoUrl}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="w-full max-h-[460px] rounded-xl object-contain shadow-md"
-                />
-              ) : (
-                <img
-                  src={viewingMedia.thumbnail}
-                  alt={viewingMedia.name}
-                  className="w-full max-h-[460px] object-contain rounded-xl shadow-md"
-                />
-              )}
-            </div>
-
-            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span>Tamanho: <strong className="text-slate-700">{viewingMedia.size}</strong></span>
-              <button
-                type="button"
-                onClick={() => handleDownload(viewingMedia)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-lg font-bold transition-colors cursor-pointer"
-              >
-                <Download size={14} />
-                <span>Baixar Arquivo</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 3: CONFIRMAÇÃO DE EXCLUSÃO */}
-      {deletingMedia && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                <Trash2 size={20} />
-              </div>
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-800">Excluir Mídia</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Esta ação não pode ser desfeita.</p>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
+                  TÍTULO
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                />
               </div>
-            </div>
 
-            <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
-              Tem certeza que deseja excluir o arquivo <strong className="text-slate-800">{deletingMedia.name}</strong>?
-            </p>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
+                  URL DA THUMBNAIL (CAPA)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={editThumbnail}
+                  onChange={(e) => setEditThumbnail(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                />
+              </div>
 
-            <div className="flex items-center justify-end gap-2 pt-1">
-              <button
-                type="button"
-                disabled={isDeleting}
-                onClick={() => setDeletingMedia(null)}
-                className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors cursor-pointer disabled:opacity-60"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                disabled={isDeleting}
-                onClick={handleConfirmDelete}
-                className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-colors shadow-sm cursor-pointer disabled:opacity-60"
-              >
-                {isDeleting && <Loader2 size={13} className="animate-spin" />}
-                <span>Sim, Excluir</span>
-              </button>
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
+                  STATUS
+                </label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                >
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                  <option value="draft">Rascunho</option>
+                </select>
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50"
+                >
+                  {isSavingEdit ? "Salvando..." : "Salvar Alterações"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
