@@ -5678,7 +5678,7 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
 
       videoCard.style.cssText =
         'width:100% !important;' +
-        'aspect-ratio:' + cfg.itemAspect + ' !important;' +
+        'aspect-ratio:' + (cfg.itemAspect || cfg.aspectRatio || '9/16') + ' !important;' +
         'border-radius:' + cfg.itemRadius + ' !important;' +
         'overflow:hidden !important;' +
         'position:relative !important;' +
