@@ -245,8 +245,7 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
   const borderRadius = isCircle ? '50%' : `${borderRadiusNum}px`;
   const titleAlign = carousel?.title_align ?? (isMobileView ? 'left' : 'center');
 
-  const configuredW = limitNumber(carousel?.width, 80, 48, 240);
-  const baseItemWidth = isMobileView ? Math.min(configuredW, Math.round(cw * 0.5)) : Math.max(40, (cw - (spacingNum * (visibleItemsDesktop - 1))) / visibleItemsDesktop);
+  const baseItemWidth = isMobileView ? Math.round(cw * 0.60) : Math.max(40, (cw - (spacingNum * (visibleItemsDesktop - 1))) / visibleItemsDesktop);
   const step = baseItemWidth + spacingNum;
 
   useEffect(() => {
@@ -1086,6 +1085,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         </FormField>
                         <FormField label="Itens Visíveis">
                           <input type="number" min="1" max="10" value={getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4)} onChange={e => setC('carousel_visible_items', parseInt(e.target.value) || 1)} className={inputClass} />
+                <p className="mt-1 text-[11px] leading-snug text-slate-500">No mobile sempre aparecem 3 itens (1 central + 2 cortados) preenchendo a tela, com loop infinito. Largura e Itens Visíveis só valem no desktop.</p>
                         </FormField>
                         <FormField label="Espaçamento (px)" className="col-span-2">
                           <input type="number" min="0" value={getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
