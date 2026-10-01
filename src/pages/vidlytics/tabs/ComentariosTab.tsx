@@ -1,43 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { 
-  ShieldCheck, 
-  Search, 
-  MessageSquare, 
-  Trash2, 
-  CheckCircle, 
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ShieldCheck,
+  Search,
+  MessageSquare,
+  Trash2,
+  CheckCircle,
   XCircle,
   CornerDownRight,
   X,
   Send,
   AlertTriangle,
   Smile,
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
+import { VidlyticsDatabaseService, VidlyticsComment, VidlyticsCommentReply } from '@/services/vidlytics/VidlyticsDatabaseService';
+import { toast } from 'sonner';
 
-interface ReplyItem {
-  id: string;
-  authorName: string;
-  authorRole: string;
-  content: string;
-  createdAt: string;
-  storeLogoUrl?: string;
-  storeFullName?: string;
-}
-
-interface CommentItem {
-  id: string;
-  authorName: string;
-  authorRole: string;
-  avatarBgColor?: string;
-  content: string;
-  videoTitle: string;
-  status: 'PENDENTE' | 'APROVADO' | 'REJEITADO';
-  createdAt: string;
-  replies?: ReplyItem[];
-}
-
-interface Toast {
+interface ToastItem {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info';
@@ -49,29 +30,59 @@ interface StoreBranding {
   logoUrl: string;
 }
 
-// Abrevia o nome da loja automaticamente (primeira palavra, máx 15 chars)
 const abbreviateStoreName = (name: string): string => {
   if (!name) return 'Sua loja';
   const firstWord = name.trim().split(' ')[0];
   return firstWord.length > 15 ? firstWord.slice(0, 15) : firstWord;
 };
 
+const timeAgo = (dateStr: string | null): string => {
+  if (!dateStr) return 'Agora';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Agora';
+  if (diffMins < 60) return `Há ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+  if (diffHours < 24) return `Há ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+  if (diffDays < 7) return `Há ${diffDays} dia${diffDays > 1 ? 's' : ''}`;
+  return date.toLocaleDateString('pt-BR');
+};
+
+const getInitials = (name: string): string => {
+  return name?.charAt(0).toUpperCase() || '?';
+};
+
+const commonEmojis = [
+  '❤️', '👍', '😊', '😍', '🔥', '✅', '🙏', '🎉', '😉', '👏',
+  '🌟', '💯', '🤗', '👋', '😎', '💪', '🌹', '🎁', '🛍️', '💕',
+  '⭐', '😘', '🥰', '😂', '🤩', '👗', '👠', '👜', '💎', '🎀'
+];
+
 export const ComentariosTab: React.FC = () => {
-  const { store, loading: storeLoading } = useLoja();
+  const { store, storeId, loading: storeLoading } = useLoja();
 
   const [autoApprove, setAutoApprove] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('TODOS');
-  const [videoFilter, setVideoFilter] = useState('TODOS');
+  const [statusFilter, setStatusFilter] = useState<'TODOS' | 'PENDENTE' | 'APROVADO' | 'REJEITADO'>('TODOS');
+  const [videoFilter, setVideoFilter] = useState<string>('TODOS');
   const [replyModalOpen, setReplyModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedComment, setSelectedComment] = useState<CommentItem | null>(null);
+  const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Dados reais da loja (vêm do LojaContext)
+  const [comments, setComments] = useState<VidlyticsComment[]>([]);
+  const [replies, setReplies] = useState<Record<string, VidlyticsCommentReply[]>>({});
+  const [videos, setVideos] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   const storeBranding: StoreBranding = {
     name: store?.name || store?.store_name || 'Sua loja',
     replyDisplayName:
@@ -80,92 +91,7 @@ export const ComentariosTab: React.FC = () => {
     logoUrl: store?.logo_url || '',
   };
 
-  const commonEmojis = [
-    '❤️', '👍', '😊', '😍', '🔥', '✅', '🙏', '🎉', '😉', '👏',
-    '🌟', '💯', '🤗', '👋', '😎', '💪', '🌹', '🎁', '🛍️', '💕',
-    '⭐', '😘', '🥰', '😂', '🤩', '👗', '👠', '👜', '💎', '🎀'
-  ];
-
-  // Dados mockados robustos para visualização
-  const [comments, setComments] = useState<CommentItem[]>([
-    {
-      id: '1',
-      authorName: 'Rodrigo Cel',
-      authorRole: 'Cliente',
-      avatarBgColor: 'bg-[#0094eb]',
-      content: 'Teste ❤️',
-      videoTitle: 'Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4',
-      status: 'PENDENTE',
-      createdAt: 'Há 10 minutos',
-      replies: []
-    },
-    {
-      id: '2',
-      authorName: 'www',
-      authorRole: 'Cliente',
-      avatarBgColor: 'bg-[#0094eb]',
-      content: 'eweewee',
-      videoTitle: 'Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4',
-      status: 'PENDENTE',
-      createdAt: 'Há 25 minutos',
-      replies: []
-    },
-    {
-      id: '3',
-      authorName: 'Mariana Silva',
-      authorRole: 'Cliente',
-      avatarBgColor: 'bg-emerald-500',
-      content: 'Tem previsão de reposição do tamanho M da blusa verde?',
-      videoTitle: 'Blusa_Confort_Colecao_Primavera.mp4',
-      status: 'APROVADO',
-      createdAt: 'Há 2 horas',
-      replies: [
-        {
-          id: 'r1',
-          authorName: 'Use Anny',
-          authorRole: 'Resposta oficial',
-          content: 'Oi Mariana! Sim, teremos reposição na próxima semana. Te avisamos por e-mail, ok?',
-          createdAt: 'Há 1 hora',
-          storeFullName: 'Use Anny Moda Feminina Profissional'
-        }
-      ]
-    },
-    {
-      id: '4',
-      authorName: 'Carlos Eduardo',
-      authorRole: 'Cliente',
-      avatarBgColor: 'bg-[#fd8539]',
-      content: 'Chegou super rápido aqui em Curitiba! Amei a qualidade do óculos!',
-      videoTitle: 'oculos-de-sol.mp4',
-      status: 'APROVADO',
-      createdAt: 'Há 5 horas',
-      replies: []
-    },
-    {
-      id: '5',
-      authorName: 'Fake User 99',
-      authorRole: 'Cliente',
-      avatarBgColor: 'bg-slate-400',
-      content: 'Entre no link para ganhar cupons grátis bit.ly/spam-link',
-      videoTitle: 'oculos-de-sol.mp4',
-      status: 'REJEITADO',
-      createdAt: 'Ontem',
-      replies: []
-    }
-  ]);
-
-  // Carrega preferências salvas
-  useEffect(() => {
-    const savedAutoApprove = localStorage.getItem('vidlytics_auto_approve_comments');
-    if (savedAutoApprove) setAutoApprove(savedAutoApprove === 'true');
-  }, []);
-
-  // Salva auto-aprovação
-  useEffect(() => {
-    localStorage.setItem('vidlytics_auto_approve_comments', String(autoApprove));
-  }, [autoApprove]);
-
-  const showToast = (message: string, type: Toast['type'] = 'success') => {
+  const showToast = (message: string, type: ToastItem['type'] = 'success') => {
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -173,39 +99,106 @@ export const ComentariosTab: React.FC = () => {
     }, 3000);
   };
 
-  const handleApprove = (commentId: string) => {
-    setComments((prev) =>
-      prev.map((c) => (c.id === commentId ? { ...c, status: 'APROVADO' as const } : c))
-    );
-    showToast('Comentário aprovado com sucesso!');
+  const loadComments = useCallback(async () => {
+    if (!storeId) return;
+    setLoading(true);
+    try {
+      const [videoRows, commentRows] = await Promise.all([
+        VidlyticsDatabaseService.getVideos(storeId),
+        VidlyticsDatabaseService.getComments(storeId),
+      ]);
+
+      const videoMap: Record<string, string> = {};
+      (videoRows || []).forEach((v: any) => {
+        videoMap[v.id] = v.title || v.name || 'Vídeo sem título';
+      });
+      setVideos(videoMap);
+
+      setComments(commentRows);
+
+      const commentIds = commentRows.map((c) => c.id);
+      const replyRows = await VidlyticsDatabaseService.getCommentReplies(commentIds);
+      const replyMap: Record<string, VidlyticsCommentReply[]> = {};
+      commentIds.forEach((id) => (replyMap[id] = []));
+      replyRows.forEach((r) => {
+        if (!replyMap[r.comment_id]) replyMap[r.comment_id] = [];
+        replyMap[r.comment_id].push(r);
+      });
+      setReplies(replyMap);
+    } catch (err) {
+      console.error('Erro ao carregar comentários:', err);
+      toast.error('Erro ao carregar comentários.');
+    } finally {
+      setLoading(false);
+    }
+  }, [storeId]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('vidlytics_auto_approve_comments');
+    if (saved) setAutoApprove(saved === 'true');
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('vidlytics_auto_approve_comments', String(autoApprove));
+  }, [autoApprove]);
+
+  useEffect(() => {
+    if (!storeLoading && storeId) loadComments();
+  }, [storeLoading, storeId, loadComments]);
+
+  const handleApprove = async (commentId: string) => {
+    try {
+      await VidlyticsDatabaseService.updateCommentStatus(commentId, 'APROVADO');
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, status: 'APROVADO' } : c))
+      );
+      showToast('Comentário aprovado com sucesso!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao aprovar comentário.');
+    }
   };
 
-  const handleReject = (commentId: string) => {
-    setComments((prev) =>
-      prev.map((c) => (c.id === commentId ? { ...c, status: 'REJEITADO' as const } : c))
-    );
-    showToast('Comentário rejeitado.');
+  const handleReject = async (commentId: string) => {
+    try {
+      await VidlyticsDatabaseService.updateCommentStatus(commentId, 'REJEITADO');
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, status: 'REJEITADO' } : c))
+      );
+      showToast('Comentário rejeitado.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao rejeitar comentário.');
+    }
   };
 
-  const openDeleteModal = (comment: CommentItem) => {
-    setSelectedComment(comment);
+  const openDeleteModal = (commentId: string) => {
+    setSelectedCommentId(commentId);
     setDeleteModalOpen(true);
   };
 
-  const handleDelete = () => {
-    if (!selectedComment) return;
-    setComments((prev) => prev.filter((c) => c.id !== selectedComment.id));
-    setDeleteModalOpen(false);
-    setSelectedComment(null);
-    showToast('Comentário excluído com sucesso.');
+  const handleDelete = async () => {
+    if (!selectedCommentId) return;
+    try {
+      await VidlyticsDatabaseService.deleteComment(selectedCommentId);
+      setComments((prev) => prev.filter((c) => c.id !== selectedCommentId));
+      setDeleteModalOpen(false);
+      setSelectedCommentId(null);
+      showToast('Comentário excluído com sucesso.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao excluir comentário.');
+    }
   };
 
-  const openReplyModal = (comment: CommentItem) => {
-    setSelectedComment(comment);
+  const openReplyModal = (commentId: string) => {
+    setSelectedCommentId(commentId);
     setReplyText('');
     setShowEmojiPicker(false);
     setReplyModalOpen(true);
   };
+
+  const selectedComment = comments.find((c) => c.id === selectedCommentId) || null;
 
   const insertEmoji = (emoji: string) => {
     const el = textareaRef.current;
@@ -223,46 +216,48 @@ export const ComentariosTab: React.FC = () => {
     }, 0);
   };
 
-  const handleSendReply = () => {
-    if (!selectedComment || !replyText.trim()) return;
+  const handleSendReply = async () => {
+    if (!selectedCommentId || !replyText.trim() || !storeId) return;
 
-    const newReply: ReplyItem = {
-      id: `r-${Date.now()}`,
-      authorName: storeBranding.replyDisplayName,
-      authorRole: 'Resposta oficial',
-      content: replyText.trim(),
-      createdAt: 'Agora',
-      storeLogoUrl: storeBranding.logoUrl,
-      storeFullName: storeBranding.name
-    };
+    setSaving(true);
+    try {
+      const reply = await VidlyticsDatabaseService.addCommentReply(
+        selectedCommentId,
+        storeId,
+        storeBranding.replyDisplayName,
+        replyText.trim()
+      );
 
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === selectedComment.id
-          ? { ...c, replies: [...(c.replies || []), newReply] }
-          : c
-      )
-    );
+      setReplies((prev) => ({
+        ...prev,
+        [selectedCommentId]: [...(prev[selectedCommentId] || []), reply],
+      }));
 
-    setReplyModalOpen(false);
-    setReplyText('');
-    setShowEmojiPicker(false);
-    showToast('Resposta publicada com sucesso!');
+      setReplyModalOpen(false);
+      setReplyText('');
+      setShowEmojiPicker(false);
+      showToast('Resposta publicada com sucesso!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao publicar resposta.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  // Filtros aplicados
   const filteredComments = comments.filter((item) => {
-    const matchesSearch = 
-      item.authorName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch =
+      (item.author_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.content.toLowerCase().includes(searchTerm.toLowerCase());
-    
     const matchesStatus = statusFilter === 'TODOS' || item.status === statusFilter;
-    const matchesVideo = videoFilter === 'TODOS' || item.videoTitle === videoFilter;
+    const matchesVideo = videoFilter === 'TODOS' || item.video_id === videoFilter;
 
     return matchesSearch && matchesStatus && matchesVideo;
   });
 
-  const getStatusBadge = (status: CommentItem['status']) => {
+  const videoOptions = Object.entries(videos).map(([id, title]) => ({ id, title }));
+
+  const getStatusBadge = (status: VidlyticsComment['status']) => {
     switch (status) {
       case 'APROVADO':
         return (
@@ -286,7 +281,6 @@ export const ComentariosTab: React.FC = () => {
     }
   };
 
-  // Loading enquanto carrega a loja
   if (storeLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-slate-400">
@@ -313,7 +307,7 @@ export const ComentariosTab: React.FC = () => {
         ))}
       </div>
 
-      {/* 1. TÍTULO E SUBTÍTULO */}
+      {/* Título */}
       <div>
         <h2 className="text-2xl font-bold text-slate-800">Comentários</h2>
         <p className="text-sm text-slate-500 mt-1">
@@ -321,9 +315,8 @@ export const ComentariosTab: React.FC = () => {
         </p>
       </div>
 
-      {/* 2. CARDS SUPERIORES COMPACTOS / DISCRETOS */}
+      {/* Cards superiores */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Card: Moderação de Conteúdo (Compacto) */}
         <div className="lg:col-span-4 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#0094eb] flex items-center justify-center shrink-0">
@@ -347,7 +340,6 @@ export const ComentariosTab: React.FC = () => {
               </p>
             </div>
 
-            {/* Toggle Switch */}
             <button
               type="button"
               onClick={() => setAutoApprove(!autoApprove)}
@@ -364,19 +356,28 @@ export const ComentariosTab: React.FC = () => {
           </div>
         </div>
 
-        {/* Card: Filtros & Busca (Compacto) */}
         <div className="lg:col-span-8 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
               Filtros & Busca
             </span>
-            <span className="px-2.5 py-0.5 bg-blue-50 text-[#0094eb] text-[11px] font-bold rounded-full">
-              {filteredComments.length} COMENTÁRIOS
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={loadComments}
+                disabled={loading}
+                className="p-1.5 text-slate-400 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                title="Recarregar comentários"
+              >
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              </button>
+              <span className="px-2.5 py-0.5 bg-blue-50 text-[#0094eb] text-[11px] font-bold rounded-full">
+                {filteredComments.length} COMENTÁRIOS
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
-            {/* Input Busca */}
             <div className="sm:col-span-6 relative">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -388,11 +389,10 @@ export const ComentariosTab: React.FC = () => {
               />
             </div>
 
-            {/* Select Status */}
             <div className="sm:col-span-3">
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[#0094eb] transition-colors cursor-pointer"
               >
                 <option value="TODOS">Todos os Status</option>
@@ -402,7 +402,6 @@ export const ComentariosTab: React.FC = () => {
               </select>
             </div>
 
-            {/* Select Vídeos */}
             <div className="sm:col-span-3">
               <select
                 value={videoFilter}
@@ -410,201 +409,190 @@ export const ComentariosTab: React.FC = () => {
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[#0094eb] transition-colors cursor-pointer truncate"
               >
                 <option value="TODOS">Todos os Vídeos</option>
-                <option value="Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4">Fashion Editorial</option>
-                <option value="Blusa_Confort_Colecao_Primavera.mp4">Blusa Confort</option>
-                <option value="oculos-de-sol.mp4">Óculos de Sol</option>
+                {videoOptions.map((v) => (
+                  <option key={v.id} value={v.id}>{v.title}</option>
+                ))}
               </select>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3. TABELA DE COMENTÁRIOS */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 tracking-wider uppercase bg-slate-50/50">
-                <th className="py-3.5 px-6 text-left w-64">AUTOR</th>
-                <th className="py-3.5 px-4 text-left">CONTEÚDO / VÍDEO</th>
-                <th className="py-3.5 px-4 text-center w-36">STATUS</th>
-                <th className="py-3.5 px-6 text-center w-36">AÇÕES</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
-              {filteredComments.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="py-12 text-center text-slate-400 text-xs">
-                    Nenhum comentário encontrado com os filtros selecionados.
-                  </td>
+      {/* Loading */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+          <Loader2 className="w-6 h-6 animate-spin mb-2" />
+          <p className="text-xs">Carregando comentários...</p>
+        </div>
+      )}
+
+      {/* Tabela */}
+      {!loading && (
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 tracking-wider uppercase bg-slate-50/50">
+                  <th className="py-3.5 px-6 text-left w-64">AUTOR</th>
+                  <th className="py-3.5 px-4 text-left">CONTEÚDO / VÍDEO</th>
+                  <th className="py-3.5 px-4 text-center w-36">STATUS</th>
+                  <th className="py-3.5 px-6 text-center w-36">AÇÕES</th>
                 </tr>
-              ) : (
-                filteredComments.map((comment) => (
-                  <React.Fragment key={comment.id}>
-                    <tr className="hover:bg-slate-50/70 transition-colors">
-                      {/* Autor */}
-                      <td className="py-4 px-6 text-left align-top">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-9 h-9 rounded-full ${
-                              comment.avatarBgColor || 'bg-[#0094eb]'
-                            } text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm`}
-                          >
-                            {comment.authorName.charAt(0).toUpperCase()}
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {filteredComments.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-12 text-center text-slate-400 text-xs">
+                      Nenhum comentário encontrado.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredComments.map((comment) => (
+                    <React.Fragment key={comment.id}>
+                      <tr className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-4 px-6 text-left align-top">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-[#0094eb] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+                              {getInitials(comment.author_name || 'Cliente')}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800 text-sm leading-tight">
+                                {comment.author_name || 'Cliente'}
+                              </p>
+                              <span className="text-[11px] text-slate-400 font-medium">
+                                {timeAgo(comment.created_at)}
+                              </span>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-slate-800 text-sm leading-tight">
-                              {comment.authorName}
-                            </p>
-                            <span className="text-[11px] text-slate-400 font-medium">
-                              {comment.authorRole} • {comment.createdAt}
+                        </td>
+
+                        <td className="py-4 px-4 text-left align-top">
+                          <p className="text-slate-800 text-sm font-medium">
+                            "{comment.content}"
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                              VÍDEO:
+                            </span>
+                            <span className="text-xs font-semibold text-[#0094eb] truncate max-w-[320px] md:max-w-md">
+                              {videos[comment.video_id] || 'Vídeo não encontrado'}
                             </span>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Conteúdo / Vídeo */}
-                      <td className="py-4 px-4 text-left align-top">
-                        <p className="text-slate-800 text-sm font-medium">
-                          "{comment.content}"
-                        </p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
-                            VÍDEO:
-                          </span>
-                          <a
-                            href="#ver-video"
-                            className="text-xs font-semibold text-[#0094eb] hover:underline truncate max-w-[320px] md:max-w-md"
-                          >
-                            {comment.videoTitle}
-                          </a>
-                        </div>
-                      </td>
+                        <td className="py-4 px-4 text-center align-top">
+                          <div className="flex justify-center">{getStatusBadge(comment.status || 'PENDENTE')}</div>
+                        </td>
 
-                      {/* Status */}
-                      <td className="py-4 px-4 text-center align-top">
-                        <div className="flex justify-center">
-                          {getStatusBadge(comment.status)}
-                        </div>
-                      </td>
+                        <td className="py-4 px-6 text-center align-top">
+                          <div className="inline-flex items-center justify-center text-slate-400">
+                            <div className="w-8 h-8 flex items-center justify-center">
+                              {comment.status !== 'APROVADO' ? (
+                                <button
+                                  type="button"
+                                  title="Aprovar comentário"
+                                  onClick={() => handleApprove(comment.id)}
+                                  className="p-1.5 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                >
+                                  <CheckCircle size={16} />
+                                </button>
+                              ) : (
+                                <span className="w-7 h-7" aria-hidden="true" />
+                              )}
+                            </div>
 
-                      {/* Ações */}
-                      <td className="py-4 px-6 text-center align-top">
-                        <div className="inline-flex items-center justify-center text-slate-400">
-                          {/* Aprovar */}
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            {comment.status !== 'APROVADO' ? (
+                            <div className="w-8 h-8 flex items-center justify-center">
+                              {comment.status !== 'REJEITADO' ? (
+                                <button
+                                  type="button"
+                                  title="Rejeitar comentário"
+                                  onClick={() => handleReject(comment.id)}
+                                  className="p-1.5 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                >
+                                  <XCircle size={16} />
+                                </button>
+                              ) : (
+                                <span className="w-7 h-7" aria-hidden="true" />
+                              )}
+                            </div>
+
+                            <div className="w-8 h-8 flex items-center justify-center">
                               <button
                                 type="button"
-                                title="Aprovar comentário"
-                                onClick={() => handleApprove(comment.id)}
-                                className="p-1.5 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                title="Responder cliente"
+                                onClick={() => openReplyModal(comment.id)}
+                                className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                               >
-                                <CheckCircle size={16} />
+                                <MessageSquare size={16} />
                               </button>
-                            ) : (
-                              <span className="w-7 h-7" aria-hidden="true" />
-                            )}
-                          </div>
+                            </div>
 
-                          {/* Rejeitar */}
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            {comment.status !== 'REJEITADO' ? (
+                            <div className="w-8 h-8 flex items-center justify-center">
                               <button
                                 type="button"
-                                title="Rejeitar comentário"
-                                onClick={() => handleReject(comment.id)}
-                                className="p-1.5 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                title="Excluir comentário"
+                                onClick={() => openDeleteModal(comment.id)}
+                                className="p-1.5 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
                               >
-                                <XCircle size={16} />
+                                <Trash2 size={16} />
                               </button>
-                            ) : (
-                              <span className="w-7 h-7" aria-hidden="true" />
-                            )}
-                          </div>
-
-                          {/* Responder */}
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            <button
-                              type="button"
-                              title="Responder cliente"
-                              onClick={() => openReplyModal(comment)}
-                              className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                            >
-                              <MessageSquare size={16} />
-                            </button>
-                          </div>
-
-                          {/* Excluir */}
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            <button
-                              type="button"
-                              title="Excluir comentário"
-                              onClick={() => openDeleteModal(comment)}
-                              className="p-1.5 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-
-                    {/* Respostas do lojista */}
-                    {comment.replies && comment.replies.length > 0 && (
-                      <tr className="bg-slate-50/50">
-                        <td colSpan={4} className="py-3 px-6">
-                          <div className="space-y-3">
-                            {comment.replies.map((reply) => (
-                              <div key={reply.id} className="flex items-start gap-3 pl-12">
-                                <CornerDownRight size={16} className="text-slate-300 mt-0.5 shrink-0" />
-                                <div className="flex-1 bg-white border border-slate-100 rounded-xl p-3 shadow-sm">
-                                  <div className="flex items-center gap-2.5 mb-1">
-                                    {/* Avatar com logo da loja */}
-                                    <div 
-                                      className="w-7 h-7 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-100"
-                                      title={reply.storeFullName || reply.authorName}
-                                    >
-                                      {reply.storeLogoUrl ? (
-                                        <img 
-                                          src={reply.storeLogoUrl} 
-                                          alt={reply.authorName} 
-                                          className="w-full h-full object-cover"
-                                        />
-                                      ) : (
-                                        <span className="text-[10px] font-bold text-slate-500">
-                                          {reply.authorName.charAt(0).toUpperCase()}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <p 
-                                        className="text-xs font-bold text-[#0094eb]"
-                                        title={reply.storeFullName || reply.authorName}
-                                      >
-                                        {reply.authorName}
-                                      </p>
-                                      <span className="px-1.5 py-0.5 bg-blue-50 text-[#0094eb] text-[9px] rounded-full">
-                                        {reply.authorRole}
-                                      </span>
-                                    </div>
-                                    <span className="text-[10px] text-slate-400 ml-auto">{reply.createdAt}</span>
-                                  </div>
-                                  <p className="text-sm text-slate-700 pl-9.5">{reply.content}</p>
-                                </div>
-                              </div>
-                            ))}
+                            </div>
                           </div>
                         </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                ))
-              )}
-            </tbody>
-          </table>
+
+                      {/* Respostas */}
+                      {replies[comment.id] && replies[comment.id].length > 0 && (
+                        <tr className="bg-slate-50/50">
+                          <td colSpan={4} className="py-3 px-6">
+                            <div className="space-y-3">
+                              {replies[comment.id].map((reply) => (
+                                <div key={reply.id} className="flex items-start gap-3 pl-12">
+                                  <CornerDownRight size={16} className="text-slate-300 mt-0.5 shrink-0" />
+                                  <div className="flex-1 bg-white border border-slate-100 rounded-xl p-3 shadow-sm">
+                                    <div className="flex items-center gap-2.5 mb-1">
+                                      <div
+                                        className="w-7 h-7 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-100"
+                                        title={reply.author_name}
+                                      >
+                                        {storeBranding.logoUrl ? (
+                                          <img
+                                            src={storeBranding.logoUrl}
+                                            alt={reply.author_name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <span className="text-[10px] font-bold text-slate-500">
+                                            {getInitials(reply.author_name)}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-xs font-bold text-[#0094eb]" title={reply.author_name}>
+                                          {reply.author_name}
+                                        </p>
+                                        <span className="px-1.5 py-0.5 bg-blue-50 text-[#0094eb] text-[9px] rounded-full">
+                                          Resposta oficial
+                                        </span>
+                                      </div>
+                                      <span className="text-[10px] text-slate-400 ml-auto">{timeAgo(reply.created_at)}</span>
+                                    </div>
+                                    <p className="text-sm text-slate-700">{reply.content}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Modal: Responder */}
       {replyModalOpen && selectedComment && (
@@ -625,22 +613,23 @@ export const ComentariosTab: React.FC = () => {
             </div>
             <div className="p-5 space-y-4">
               <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                <p className="text-xs text-slate-500 mb-1">Comentário de <strong>{selectedComment.authorName}</strong></p>
+                <p className="text-xs text-slate-500 mb-1">
+                  Comentário de <strong>{selectedComment.author_name || 'Cliente'}</strong>
+                </p>
                 <p className="text-sm text-slate-800">"{selectedComment.content}"</p>
               </div>
 
-              {/* Preview da loja */}
               <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-white flex items-center justify-center shrink-0 border border-slate-200">
                   {storeBranding.logoUrl ? (
-                    <img 
-                      src={storeBranding.logoUrl} 
-                      alt={storeBranding.replyDisplayName} 
+                    <img
+                      src={storeBranding.logoUrl}
+                      alt={storeBranding.replyDisplayName}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <span className="text-sm font-bold text-slate-500">
-                      {storeBranding.replyDisplayName.charAt(0).toUpperCase()}
+                      {getInitials(storeBranding.replyDisplayName)}
                     </span>
                   )}
                 </div>
@@ -654,7 +643,6 @@ export const ComentariosTab: React.FC = () => {
                 </div>
               </div>
 
-              {/* Resposta com emoji picker */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Sua resposta
@@ -678,7 +666,6 @@ export const ComentariosTab: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Emoji picker popup */}
                 {showEmojiPicker && (
                   <div className="mt-2 p-2 bg-white border border-slate-200 rounded-xl shadow-lg">
                     <div className="grid grid-cols-10 gap-1">
@@ -712,11 +699,18 @@ export const ComentariosTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSendReply}
-                  disabled={!replyText.trim()}
+                  disabled={!replyText.trim() || saving}
                   className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0094eb] hover:bg-[#0083d1] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
                 >
-                  <Send size={14} />
-                  Publicar resposta
+                  {saving ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Publicando...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={14} /> Publicar resposta
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -734,7 +728,7 @@ export const ComentariosTab: React.FC = () => {
               </div>
               <h3 className="text-base font-bold text-slate-800 mb-1">Excluir comentário?</h3>
               <p className="text-sm text-slate-500">
-                Você está prestes a excluir o comentário de <strong>{selectedComment.authorName}</strong>. Essa ação não poderá ser desfeita.
+                Você está prestes a excluir o comentário de <strong>{selectedComment.author_name || 'Cliente'}</strong>. Essa ação não poderá ser desfeita.
               </p>
             </div>
             <div className="flex gap-2 p-5 pt-0">
@@ -761,4 +755,3 @@ export const ComentariosTab: React.FC = () => {
 };
 
 export default ComentariosTab;
-
