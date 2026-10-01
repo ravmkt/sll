@@ -62,6 +62,68 @@ const vidlyticsDb = (supabase as any).schema
   ? (supabase as any).schema("vidlytics") 
   : supabase;
 
+// Utilitário para extrair ID do YouTube (suporta /shorts/, /watch?v=, youtu.be/)
+export const extractYouTubeId = (url: string): string | null => {
+  if (!url) return null;
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+  const match = url.match(regExp);
+  return match && match[1] ? match[1] : null;
+};
+
+// Gerador de thumbnail capturando frame do vídeo via Canvas no navegador
+const captureVideoThumbnail = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+
+    const url = URL.createObjectURL(file);
+    video.src = url;
+
+    video.onloadeddata = () => {
+      // Avança para 0.5s para evitar primeiro frame preto
+      video.currentTime = Math.min(0.5, (video.duration || 1) / 2);
+    };
+
+    video.onseeked = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth || 720;
+        canvas.height = video.videoHeight || 1280;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          reject(new Error("Canvas context não disponível"));
+          return;
+        }
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(url);
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error("Falha ao converter canvas para blob"));
+            }
+          },
+          "image/jpeg",
+          0.85
+        );
+      } catch (err) {
+        URL.revokeObjectURL(url);
+        reject(err);
+      }
+    };
+
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Não foi possível carregar vídeo para extração de thumbnail"));
+    };
+  });
+};
+
 export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialStoreId }) => {
   const [storeId, setStoreId] = useState<string>(initialStoreId || "");
   const [videos, setVideos] = useState<VidVideo[]>([]);
@@ -91,7 +153,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const [externalModel, setExternalModel] = useState<string>("");
   const [isSavingExternal, setIsSavingExternal] = useState<boolean>(false);
 
-  // Estados da Página de Edição (Print 3)
+  // Edição
   const [editTitle, setEditTitle] = useState<string>("");
   const [editSourceType, setEditSourceType] = useState<string>("upload");
   const [editVideoUrl, setEditVideoUrl] = useState<string>("");
@@ -102,7 +164,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const [editStoryTitle, setEditStoryTitle] = useState<string>("");
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
 
-  // Inputs de arquivo
+  // Inputs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editVideoFileRef = useRef<HTMLInputElement>(null);
   const editThumbFileRef = useRef<HTMLInputElement>(null);
@@ -157,7 +219,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     fetchProducts();
   }, [storeId]);
 
-  // Carregar mídias
+  // Carregar Mídias
   const fetchVideos = async () => {
     setLoading(true);
     setErrorMsg(null);
@@ -211,7 +273,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const usedMB = (totalBytesUsed / (1024 * 1024)).toFixed(1);
   const percentUsed = Math.min(100, (totalBytesUsed / STORAGE_LIMIT_BYTES) * 100).toFixed(1);
 
-  // Upload Direto da Biblioteca
+  // Upload Direto da Biblioteca com Extração de Thumbnail Automática
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -228,8 +290,10 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
       const targetStoreId = storeId || "00000000-0000-0000-0000-000000000000";
       const fileExt = file.name.split(".").pop();
-      const fileName = `${targetStoreId}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+      const uniqueId = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const fileName = `${targetStoreId}/${uniqueId}.${fileExt}`;
 
+      // 1. Upload do Arquivo Principal
       const { data: uploadData, error: uploadErr } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, file, { cacheControl: "3600", upsert: true });
@@ -239,21 +303,49 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(uploadData.path);
       const publicUrl = urlData.publicUrl;
 
+      let finalThumbnailUrl = publicUrl;
+      let totalBytes = file.size;
+      const isVideo = file.type.startsWith("video/") || ["mp4", "mov", "webm"].includes((fileExt || "").toLowerCase());
+
+      // 2. Se for vídeo, gerar o primeiro frame via Canvas e subir para o Storage
+      if (isVideo) {
+        try {
+          const thumbBlob = await captureVideoThumbnail(file);
+          const thumbFileName = `${targetStoreId}/thumbnails/${uniqueId}_thumb.jpg`;
+
+          const { data: thumbData, error: thumbErr } = await supabase.storage
+            .from(BUCKET_NAME)
+            .upload(thumbFileName, thumbBlob, {
+              contentType: "image/jpeg",
+              upsert: true
+            });
+
+          if (!thumbErr && thumbData) {
+            const { data: thumbUrlObj } = supabase.storage.from(BUCKET_NAME).getPublicUrl(thumbData.path);
+            finalThumbnailUrl = thumbUrlObj.publicUrl;
+            totalBytes += thumbBlob.size;
+          }
+        } catch (thumbGenErr) {
+          console.warn("[BibliotecaTab] Não foi possível extrair thumbnail automática:", thumbGenErr);
+        }
+      }
+
+      // 3. Salva no banco de dados (schema vidlytics)
       const payload: any = {
         store_id: storeId || null,
         title: file.name,
         video_url: publicUrl,
-        thumbnail_url: publicUrl,
+        thumbnail_url: finalThumbnailUrl,
         status: "active",
         active: true,
-        file_size_bytes: file.size,
-        video_source_type: "upload"
+        file_size_bytes: totalBytes,
+        video_source_type: isVideo ? "upload" : "image"
       };
 
       const { error: insertErr } = await vidlyticsDb.from("vid_videos").insert([payload]);
       if (insertErr) throw new Error(insertErr.message);
 
-      setSuccessMsg("Mídia enviada com sucesso!");
+      setSuccessMsg("Mídia e capa processadas com sucesso!");
       await fetchVideos();
     } catch (err: any) {
       console.error("[BibliotecaTab] Falha no upload:", err);
@@ -264,24 +356,37 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     }
   };
 
-  // Cadastrar URL Externa
+  // Cadastrar URL Externa (YouTube Shorts, YouTube Normal ou MP4 externo)
   const handleSaveExternal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!externalUrl.trim()) return;
+    const cleanUrl = externalUrl.trim();
+    if (!cleanUrl) return;
 
     try {
       setIsSavingExternal(true);
       setErrorMsg(null);
 
-      const finalTitle = externalTitle.trim() || `Mídia_${Date.now()}`;
+      const ytId = extractYouTubeId(cleanUrl);
+      let calculatedThumb = "";
+      let sourceType = "external";
+
+      if (ytId) {
+        sourceType = "youtube";
+        // Thumbnail de alta resolução oficial do YouTube
+        calculatedThumb = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+      }
+
+      const finalTitle = externalTitle.trim() || (ytId ? `YouTube Shorts ${ytId}` : `Mídia_${Date.now()}`);
+
       const payload: any = {
         store_id: storeId || null,
         title: finalTitle,
-        video_url: externalUrl.trim(),
-        thumbnail_url: "",
+        video_url: cleanUrl,
+        thumbnail_url: calculatedThumb,
         status: "active",
         active: true,
-        video_source_type: "external"
+        file_size_bytes: 0,
+        video_source_type: sourceType
       };
 
       if (externalProduct) payload.product_id = externalProduct;
@@ -290,7 +395,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       const { error: insertErr } = await vidlyticsDb.from("vid_videos").insert([payload]);
       if (insertErr) throw new Error(insertErr.message);
 
-      setSuccessMsg("Mídia externa cadastrada com sucesso!");
+      setSuccessMsg("Vídeo cadastrado com sucesso!");
       setIsUrlModalOpen(false);
       setExternalUrl("");
       setExternalTitle("");
@@ -298,14 +403,14 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       setExternalModel("");
       await fetchVideos();
     } catch (err: any) {
-      console.error("[BibliotecaTab] Erro ao cadastrar:", err);
-      setErrorMsg(err.message || "Erro ao salvar vídeo por URL.");
+      console.error("[BibliotecaTab] Erro ao cadastrar URL:", err);
+      setErrorMsg(err.message || "Erro ao salvar vídeo externo.");
     } finally {
       setIsSavingExternal(false);
     }
   };
 
-  // Abrir Exclusão (Print 5)
+  // Excluir Mídia
   const openDeleteModal = (video: VidVideo) => {
     setVideoToDelete(video);
     setDeleteModalOpen(true);
@@ -333,13 +438,17 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     }
   };
 
-  // Abrir Subpágina de Edição (Print 3)
+  // Abrir Página de Edição (Print 3)
   const openEditPage = (video: VidVideo) => {
     setEditingVideo(video);
     setEditTitle(video.title || "");
     setEditSourceType(video.video_source_type || "upload");
     setEditVideoUrl(video.video_url || "");
-    setEditThumbnailUrl(video.thumbnail_url || "");
+
+    const ytId = extractYouTubeId(video.video_url);
+    const fallbackThumb = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : "";
+    setEditThumbnailUrl(video.thumbnail_url || fallbackThumb);
+
     setEditProductId(video.product_id || "");
     setEditModelId(video.model_id || "");
     setEditStatus(video.status || "active");
@@ -360,19 +469,36 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     try {
       const targetStoreId = storeId || "00000000-0000-0000-0000-000000000000";
       const fileExt = file.name.split(".").pop();
-      const fileName = `${targetStoreId}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+      const uniqueId = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const fileName = `${targetStoreId}/${uniqueId}.${fileExt}`;
 
       const { data, error } = await supabase.storage.from(BUCKET_NAME).upload(fileName, file, { upsert: true });
       if (error) throw error;
 
       const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
       setEditVideoUrl(urlData.publicUrl);
+
+      // Gerar nova thumb
+      try {
+        const thumbBlob = await captureVideoThumbnail(file);
+        const thumbFileName = `${targetStoreId}/thumbnails/${uniqueId}_thumb.jpg`;
+        const { data: tData } = await supabase.storage.from(BUCKET_NAME).upload(thumbFileName, thumbBlob, {
+          contentType: "image/jpeg",
+          upsert: true
+        });
+        if (tData) {
+          const { data: tUrl } = supabase.storage.from(BUCKET_NAME).getPublicUrl(tData.path);
+          setEditThumbnailUrl(tUrl.publicUrl);
+        }
+      } catch (tErr) {
+        console.warn("Falha ao gerar frame na edição:", tErr);
+      }
     } catch (err: any) {
       alert(`Falha ao subir novo vídeo: ${err.message}`);
     }
   };
 
-  // Upload de nova thumbnail na página de edição
+  // Upload de thumbnail customizada na página de edição
   const handleEditThumbUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -397,7 +523,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     }
   };
 
-  // Salvar Alterações da Página de Edição (Print 3)
+  // Salvar Alterações da Edição
   const handleSavePageEdit = async () => {
     if (!editingVideo) return;
 
@@ -405,11 +531,17 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       setIsSavingEdit(true);
       setErrorMsg(null);
 
+      const ytId = extractYouTubeId(editVideoUrl);
+      let finalThumb = editThumbnailUrl;
+      if (!finalThumb && ytId) {
+        finalThumb = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+      }
+
       const payload: any = {
         title: editTitle.trim(),
-        video_source_type: editSourceType,
+        video_source_type: ytId ? "youtube" : editSourceType,
         video_url: editVideoUrl.trim(),
-        thumbnail_url: editThumbnailUrl.trim(),
+        thumbnail_url: finalThumb.trim(),
         product_id: editProductId || null,
         model_id: editModelId || null,
         status: editStatus,
@@ -450,9 +582,10 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   // ==========================================
   if (editingVideo) {
     const isImg = isImageFile(editVideoUrl);
+    const ytId = extractYouTubeId(editVideoUrl);
+
     return (
       <div className="space-y-6 max-w-5xl mx-auto pb-16">
-        {/* Topo da Edição com Botão Voltar e Botão Superior */}
         <div className="flex items-center justify-between">
           <button
             onClick={() => setEditingVideo(null)}
@@ -474,7 +607,6 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           </button>
         </div>
 
-        {/* Card Principal de Formulário */}
         <div className="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-sm space-y-7">
           {/* TÍTULO DO VÍDEO */}
           <div>
@@ -500,6 +632,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
               className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
             >
               <option value="upload">Upload de vídeo</option>
+              <option value="youtube">YouTube / YouTube Shorts</option>
               <option value="external">URL Externa</option>
             </select>
           </div>
@@ -507,40 +640,53 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           {/* ARQUIVO DE VÍDEO */}
           <div>
             <label className="block text-[11px] font-extrabold text-slate-400 mb-2 uppercase tracking-wider">
-              ARQUIVO DE VÍDEO
+              ARQUIVO DE VÍDEO / URL
             </label>
 
-            {/* Aviso Amarelo 30MB */}
-            <div className="p-3.5 bg-amber-50/70 border border-amber-200/70 rounded-2xl flex items-center gap-2.5 text-xs text-amber-900 mb-4">
-              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-              <span>
-                O arquivo de vídeo deve ter no <strong>máximo 30 MB</strong>. Formatos aceitos: MP4, MOV e WEBM.
-              </span>
-            </div>
+            {!ytId && (
+              <div className="p-3.5 bg-amber-50/70 border border-amber-200/70 rounded-2xl flex items-center gap-2.5 text-xs text-amber-900 mb-4">
+                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <span>
+                  O arquivo de vídeo deve ter no <strong>máximo 30 MB</strong>. Formatos aceitos: MP4, MOV e WEBM.
+                </span>
+              </div>
+            )}
 
             <div className="space-y-4">
-              <input
-                ref={editVideoFileRef}
-                type="file"
-                accept="video/mp4,video/quicktime,video/webm"
-                className="hidden"
-                onChange={handleEditVideoUpload}
-              />
+              {!ytId && (
+                <>
+                  <input
+                    ref={editVideoFileRef}
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/webm"
+                    className="hidden"
+                    onChange={handleEditVideoUpload}
+                  />
 
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => editVideoFileRef.current?.click()}
-                  className="px-4 py-2 bg-sky-50 hover:bg-sky-100 text-[#0088ff] border border-sky-100 rounded-xl text-xs font-bold transition cursor-pointer"
-                >
-                  Escolher arquivo
-                </button>
-                <span className="text-xs text-slate-400">Nenhum arquivo escolhido</span>
-              </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => editVideoFileRef.current?.click()}
+                      className="px-4 py-2 bg-sky-50 hover:bg-sky-100 text-[#0088ff] border border-sky-100 rounded-xl text-xs font-bold transition cursor-pointer"
+                    >
+                      Escolher arquivo
+                    </button>
+                    <span className="text-xs text-slate-400">Trocar arquivo de vídeo</span>
+                  </div>
+                </>
+              )}
 
-              {/* Player do Vídeo Atual */}
-              <div className="w-36 aspect-[9/16] rounded-2xl bg-black overflow-hidden relative border border-slate-200 shadow-sm">
-                {isImg ? (
+              {/* Preview no card de edição */}
+              <div className="w-36 aspect-[9/16] rounded-2xl bg-black overflow-hidden relative border border-slate-200 shadow-sm flex items-center justify-center">
+                {ytId ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${ytId}`}
+                    title={editTitle}
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : isImg ? (
                   <img src={editVideoUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <video
@@ -561,11 +707,21 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             </label>
 
             <div className="flex items-start gap-4">
-              <div className="w-20 h-28 rounded-2xl bg-slate-900 border border-slate-200 overflow-hidden flex-shrink-0">
+              <div className="w-20 h-28 rounded-2xl bg-slate-900 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
                 {editThumbnailUrl ? (
-                  <img src={editThumbnailUrl} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={editThumbnailUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback se a imagem der erro
+                      if (ytId) {
+                        (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+                      }
+                    }}
+                  />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-500 text-[10px]">
+                  <div className="w-full h-full flex items-center justify-center text-slate-500 text-[10px] text-center p-1">
                     Sem capa
                   </div>
                 )}
@@ -588,7 +744,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                   >
                     Escolher arquivo
                   </button>
-                  <span className="text-xs text-slate-400">Nenhum arquivo escolhido</span>
+                  <span className="text-xs text-slate-400">Trocar imagem da capa</span>
                 </div>
 
                 <input
@@ -675,7 +831,6 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           </div>
         </div>
 
-        {/* Botão Inferior Salvar */}
         <div className="flex justify-end">
           <button
             onClick={handleSavePageEdit}
@@ -896,32 +1051,42 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
               <tbody className="divide-y divide-slate-100">
                 {filteredVideos.map((video) => {
                   const isImg = isImageFile(video.video_url);
+                  const ytId = extractYouTubeId(video.video_url);
                   const matchedProduct = products.find((p) => p.id === video.product_id);
+
+                  // Definir a thumb correta
+                  let thumbSrc = video.thumbnail_url;
+                  if (!thumbSrc && ytId) {
+                    thumbSrc = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+                  }
 
                   return (
                     <tr key={video.id} className="hover:bg-slate-50/50 transition-colors">
                       {/* Thumbnail Mídia */}
                       <td className="py-3.5 px-6">
                         <div className="w-12 h-12 rounded-xl bg-slate-900 overflow-hidden relative flex items-center justify-center border border-slate-200/60 flex-shrink-0">
-                          {isImg ? (
+                          {thumbSrc ? (
+                            <img
+                              src={thumbSrc}
+                              alt={video.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : isImg ? (
                             <img
                               src={video.video_url}
                               alt={video.title}
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <>
-                              <video
-                                src={video.video_url}
-                                poster={video.thumbnail_url}
-                                className="w-full h-full object-cover"
-                                muted
-                                playsInline
-                              />
-                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                <Play className="w-3.5 h-3.5 text-white fill-white" />
-                              </div>
-                            </>
+                            <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                              <Play className="w-4 h-4 text-white" />
+                            </div>
+                          )}
+
+                          {!isImg && (
+                            <div className="absolute inset-0 bg-black/25 flex items-center justify-center pointer-events-none">
+                              <Play className="w-3.5 h-3.5 text-white fill-white" />
+                            </div>
                           )}
                         </div>
                       </td>
@@ -932,7 +1097,13 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                           {video.title}
                         </div>
                         <div className="text-[10px] font-bold text-[#0088ff] uppercase tracking-wider mt-0.5">
-                          {isImg ? "IMAGEM (HOSPEDADA)" : "VÍDEO MP4 (HOSPEDADO)"}
+                          {ytId
+                            ? "YOUTUBE SHORTS"
+                            : isImg
+                            ? "IMAGEM (HOSPEDADA)"
+                            : video.video_source_type === "external"
+                            ? "VÍDEO (URL EXTERNA)"
+                            : "VÍDEO MP4 (HOSPEDADO)"}
                         </div>
                       </td>
 
@@ -1027,66 +1198,77 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       </div>
 
       {/* ========================================================= */}
-      {/* MODAL: PLAYER DE PREVIEW IDÊNTICO AO PRINT 1              */}
+      {/* MODAL: PLAYER DE PREVIEW COM SUPORTE A YOUTUBE E MP4      */}
       {/* ========================================================= */}
-      {previewMedia && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] max-w-sm w-full p-6 shadow-2xl relative border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
-            {/* Cabeçalho */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-sky-50 text-[#0088ff] flex items-center justify-center flex-shrink-0">
-                  <Eye className="w-5 h-5" />
+      {previewMedia && (() => {
+        const ytId = extractYouTubeId(previewMedia.video_url);
+        const isImg = isImageFile(previewMedia.video_url);
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-[32px] max-w-sm w-full p-6 shadow-2xl relative border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-sky-50 text-[#0088ff] flex items-center justify-center flex-shrink-0">
+                    <Eye className="w-5 h-5" />
+                  </div>
+                  <div className="max-w-[200px]">
+                    <h3 className="font-extrabold text-slate-900 text-sm truncate leading-snug">
+                      {previewMedia.title}
+                    </h3>
+                    <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                      VISUALIZAÇÃO DE MÍDIA
+                    </p>
+                  </div>
                 </div>
-                <div className="max-w-[200px]">
-                  <h3 className="font-extrabold text-slate-900 text-sm truncate leading-snug">
-                    {previewMedia.title}
-                  </h3>
-                  <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
-                    VISUALIZAÇÃO DE MÍDIA
-                  </p>
-                </div>
+                <button
+                  onClick={() => setPreviewMedia(null)}
+                  className="w-7 h-7 rounded-full text-slate-400 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
+
+              {/* Player 9:16 Responsivo */}
+              <div className="aspect-[9/16] w-full rounded-[24px] bg-black overflow-hidden relative border border-slate-900 shadow-inner flex items-center justify-center mb-5">
+                {ytId ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${ytId}?autoplay=1&playsinline=1&rel=0`}
+                    title={previewMedia.title}
+                    className="w-full h-full border-0 rounded-[24px]"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : isImg ? (
+                  <img
+                    src={previewMedia.video_url}
+                    alt={previewMedia.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <video
+                    src={previewMedia.video_url}
+                    poster={previewMedia.thumbnail_url}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+
               <button
                 onClick={() => setPreviewMedia(null)}
-                className="w-7 h-7 rounded-full text-slate-400 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                className="w-full py-3.5 bg-[#0088ff] hover:bg-[#0077e6] text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-sm shadow-sky-200 transition cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                FECHAR
               </button>
             </div>
-
-            {/* Container 9:16 do Vídeo com bordas pretas suaves */}
-            <div className="aspect-[9/16] w-full rounded-[24px] bg-black overflow-hidden relative border border-slate-900 shadow-inner flex items-center justify-center mb-5">
-              {isImageFile(previewMedia.video_url) ? (
-                <img
-                  src={previewMedia.video_url}
-                  alt={previewMedia.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <video
-                  src={previewMedia.video_url}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </div>
-
-            {/* Botão FECHAR ocupando toda a largura (Print 1) */}
-            <button
-              onClick={() => setPreviewMedia(null)}
-              className="w-full py-3.5 bg-[#0088ff] hover:bg-[#0077e6] text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-sm shadow-sky-200 transition cursor-pointer"
-            >
-              FECHAR
-            </button>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
-      {/* ========================================================= */}
-      {/* MODAL: ADICIONAR VÍDEO POR URL                           */}
-      {/* ========================================================= */}
+      {/* MODAL: ADICIONAR VÍDEO POR URL */}
       {isUrlModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -1120,7 +1302,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 <input
                   type="url"
                   required
-                  placeholder="https://pinterest.com/pin/... ou YouTube / Link direto"
+                  placeholder="https://youtube.com/shorts/... ou https://youtu.be/... ou MP4 direto"
                   value={externalUrl}
                   onChange={(e) => setExternalUrl(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] placeholder:text-slate-400"
@@ -1195,9 +1377,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* MODAL GLOBAL DE EXCLUSÃO PADRÃO SLL (PRINT 5)            */}
-      {/* ========================================================= */}
+      {/* MODAL GLOBAL DE EXCLUSÃO */}
       <ConfirmDeleteModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
