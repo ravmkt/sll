@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   ShieldCheck, 
   Search, 
@@ -6,8 +6,19 @@ import {
   Trash2, 
   CheckCircle, 
   XCircle,
-  CornerDownRight
+  CornerDownRight,
+  X,
+  Send,
+  AlertTriangle
 } from 'lucide-react';
+
+interface ReplyItem {
+  id: string;
+  authorName: string;
+  authorRole: string;
+  content: string;
+  createdAt: string;
+}
 
 interface CommentItem {
   id: string;
@@ -18,6 +29,13 @@ interface CommentItem {
   videoTitle: string;
   status: 'PENDENTE' | 'APROVADO' | 'REJEITADO';
   createdAt: string;
+  replies?: ReplyItem[];
+}
+
+interface Toast {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
 }
 
 export const ComentariosTab: React.FC = () => {
@@ -25,6 +43,11 @@ export const ComentariosTab: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('TODOS');
   const [videoFilter, setVideoFilter] = useState('TODOS');
+  const [replyModalOpen, setReplyModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedComment, setSelectedComment] = useState<CommentItem | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
   // Dados mockados robustos para visualização
   const [comments, setComments] = useState<CommentItem[]>([
@@ -36,7 +59,8 @@ export const ComentariosTab: React.FC = () => {
       content: 'Teste ❤️',
       videoTitle: 'Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4',
       status: 'PENDENTE',
-      createdAt: 'Há 10 minutos'
+      createdAt: 'Há 10 minutos',
+      replies: []
     },
     {
       id: '2',
@@ -46,7 +70,8 @@ export const ComentariosTab: React.FC = () => {
       content: 'eweewee',
       videoTitle: 'Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4',
       status: 'PENDENTE',
-      createdAt: 'Há 25 minutos'
+      createdAt: 'Há 25 minutos',
+      replies: []
     },
     {
       id: '3',
@@ -56,7 +81,16 @@ export const ComentariosTab: React.FC = () => {
       content: 'Tem previsão de reposição do tamanho M da blusa verde?',
       videoTitle: 'Blusa_Confort_Colecao_Primavera.mp4',
       status: 'APROVADO',
-      createdAt: 'Há 2 horas'
+      createdAt: 'Há 2 horas',
+      replies: [
+        {
+          id: 'r1',
+          authorName: 'Loja Use Anny',
+          authorRole: 'Resposta oficial',
+          content: 'Oi Mariana! Sim, teremos reposição na próxima semana. Te avisamos por e-mail, ok?',
+          createdAt: 'Há 1 hora'
+        }
+      ]
     },
     {
       id: '4',
@@ -66,7 +100,8 @@ export const ComentariosTab: React.FC = () => {
       content: 'Chegou super rápido aqui em Curitiba! Amei a qualidade do óculos!',
       videoTitle: 'oculos-de-sol.mp4',
       status: 'APROVADO',
-      createdAt: 'Há 5 horas'
+      createdAt: 'Há 5 horas',
+      replies: []
     },
     {
       id: '5',
@@ -76,9 +111,86 @@ export const ComentariosTab: React.FC = () => {
       content: 'Entre no link para ganhar cupons grátis bit.ly/spam-link',
       videoTitle: 'oculos-de-sol.mp4',
       status: 'REJEITADO',
-      createdAt: 'Ontem'
+      createdAt: 'Ontem',
+      replies: []
     }
   ]);
+
+  // Carrega preferência de auto-aprovação
+  useEffect(() => {
+    const saved = localStorage.getItem('vidlytics_auto_approve_comments');
+    if (saved) setAutoApprove(saved === 'true');
+  }, []);
+
+  // Salva preferência de auto-aprovação
+  useEffect(() => {
+    localStorage.setItem('vidlytics_auto_approve_comments', String(autoApprove));
+  }, [autoApprove]);
+
+  const showToast = (message: string, type: Toast['type'] = 'success') => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3000);
+  };
+
+  const handleApprove = (commentId: string) => {
+    setComments((prev) =>
+      prev.map((c) => (c.id === commentId ? { ...c, status: 'APROVADO' as const } : c))
+    );
+    showToast('Comentário aprovado com sucesso!');
+  };
+
+  const handleReject = (commentId: string) => {
+    setComments((prev) =>
+      prev.map((c) => (c.id === commentId ? { ...c, status: 'REJEITADO' as const } : c))
+    );
+    showToast('Comentário rejeitado.');
+  };
+
+  const openDeleteModal = (comment: CommentItem) => {
+    setSelectedComment(comment);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (!selectedComment) return;
+    setComments((prev) => prev.filter((c) => c.id !== selectedComment.id));
+    setDeleteModalOpen(false);
+    setSelectedComment(null);
+    showToast('Comentário excluído com sucesso.');
+  };
+
+  const openReplyModal = (comment: CommentItem) => {
+    setSelectedComment(comment);
+    setReplyText('');
+    setReplyModalOpen(true);
+  };
+
+  const handleSendReply = () => {
+    if (!selectedComment || !replyText.trim()) return;
+
+    const newReply: ReplyItem = {
+      id: `r-${Date.now()}`,
+      authorName: 'Loja Use Anny',
+      authorRole: 'Resposta oficial',
+      content: replyText.trim(),
+      createdAt: 'Agora'
+    };
+
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === selectedComment.id
+          ? { ...c, replies: [...(c.replies || []), newReply] }
+          : c
+      )
+    );
+
+    setReplyModalOpen(false);
+    setReplyText('');
+    showToast('Resposta publicada com sucesso!');
+  };
 
   // Filtros aplicados
   const filteredComments = comments.filter((item) => {
@@ -117,7 +229,22 @@ export const ComentariosTab: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 relative">
+      {/* Toasts */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`px-4 py-3 rounded-xl shadow-lg text-sm font-semibold text-white transform transition-all duration-300 ${
+              toast.type === 'success' ? 'bg-emerald-500' :
+              toast.type === 'error' ? 'bg-rose-500' : 'bg-[#0094eb]'
+            }`}
+          >
+            {toast.message}
+          </div>
+        ))}
+      </div>
+
       {/* 1. TÍTULO E SUBTÍTULO */}
       <div>
         <h2 className="text-2xl font-bold text-slate-800">Comentários</h2>
@@ -245,104 +372,222 @@ export const ComentariosTab: React.FC = () => {
                 </tr>
               ) : (
                 filteredComments.map((comment) => (
-                  <tr key={comment.id} className="hover:bg-slate-50/70 transition-colors">
-                    {/* Autor */}
-                    <td className="py-4 px-6 text-left">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-9 h-9 rounded-full ${
-                            comment.avatarBgColor || 'bg-[#0094eb]'
-                          } text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm`}
-                        >
-                          {comment.authorName.charAt(0).toUpperCase()}
+                  <React.Fragment key={comment.id}>
+                    <tr className="hover:bg-slate-50/70 transition-colors">
+                      {/* Autor */}
+                      <td className="py-4 px-6 text-left align-top">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-9 h-9 rounded-full ${
+                              comment.avatarBgColor || 'bg-[#0094eb]'
+                            } text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm`}
+                          >
+                            {comment.authorName.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-800 text-sm leading-tight">
+                              {comment.authorName}
+                            </p>
+                            <span className="text-[11px] text-slate-400 font-medium">
+                              {comment.authorRole} • {comment.createdAt}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-slate-800 text-sm leading-tight">
-                            {comment.authorName}
-                          </p>
-                          <span className="text-[11px] text-slate-400 font-medium">
-                            {comment.authorRole} • {comment.createdAt}
+                      </td>
+
+                      {/* Conteúdo / Vídeo */}
+                      <td className="py-4 px-4 text-left align-top">
+                        <p className="text-slate-800 text-sm font-medium">
+                          "{comment.content}"
+                        </p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                            VÍDEO:
                           </span>
+                          <a
+                            href="#ver-video"
+                            className="text-xs font-semibold text-[#0094eb] hover:underline truncate max-w-[320px] md:max-w-md"
+                          >
+                            {comment.videoTitle}
+                          </a>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Conteúdo / Vídeo */}
-                    <td className="py-4 px-4 text-left">
-                      <p className="text-slate-800 text-sm font-medium">
-                        "{comment.content}"
-                      </p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
-                          VÍDEO:
-                        </span>
-                        <a
-                          href="#ver-video"
-                          className="text-xs font-semibold text-[#0094eb] hover:underline truncate max-w-[320px] md:max-w-md"
-                        >
-                          {comment.videoTitle}
-                        </a>
-                      </div>
-                    </td>
+                      {/* Status */}
+                      <td className="py-4 px-4 text-center align-top">
+                        <div className="flex justify-center">
+                          {getStatusBadge(comment.status)}
+                        </div>
+                      </td>
 
-                    {/* Status */}
-                    <td className="py-4 px-4 text-center">
-                      <div className="flex justify-center">
-                        {getStatusBadge(comment.status)}
-                      </div>
-                    </td>
+                      {/* Ações */}
+                      <td className="py-4 px-6 text-center align-top">
+                        <div className="inline-flex items-center justify-center gap-1.5 text-slate-400">
+                          {/* Aprovar rápida (se pendente ou rejeitado) */}
+                          {comment.status !== 'APROVADO' && (
+                            <button
+                              type="button"
+                              title="Aprovar comentário"
+                              onClick={() => handleApprove(comment.id)}
+                              className="p-1.5 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            >
+                              <CheckCircle size={16} />
+                            </button>
+                          )}
 
-                    {/* Ações */}
-                    <td className="py-4 px-6 text-center">
-                      <div className="inline-flex items-center justify-center gap-1.5 text-slate-400">
-                        {/* Aprovar rápida (se pendente ou rejeitado) */}
-                        {comment.status !== 'APROVADO' && (
+                          {/* Rejeitar rápido (se pendente ou aprovado) */}
+                          {comment.status !== 'REJEITADO' && (
+                            <button
+                              type="button"
+                              title="Rejeitar comentário"
+                              onClick={() => handleReject(comment.id)}
+                              className="p-1.5 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                            >
+                              <XCircle size={16} />
+                            </button>
+                          )}
+
+                          {/* Responder */}
                           <button
                             type="button"
-                            title="Aprovar comentário"
-                            className="p-1.5 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="Responder cliente"
+                            onClick={() => openReplyModal(comment)}
+                            className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                           >
-                            <CheckCircle size={16} />
+                            <MessageSquare size={16} />
                           </button>
-                        )}
 
-                        {/* Rejeitar rápido (se pendente ou aprovado) */}
-                        {comment.status !== 'REJEITADO' && (
+                          {/* Excluir */}
                           <button
                             type="button"
-                            title="Rejeitar comentário"
-                            className="p-1.5 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                            title="Excluir comentário"
+                            onClick={() => openDeleteModal(comment)}
+                            className="p-1.5 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
                           >
-                            <XCircle size={16} />
+                            <Trash2 size={16} />
                           </button>
-                        )}
+                        </div>
+                      </td>
+                    </tr>
 
-                        {/* Responder */}
-                        <button
-                          type="button"
-                          title="Responder cliente"
-                          className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                        >
-                          <MessageSquare size={16} />
-                        </button>
-
-                        {/* Excluir */}
-                        <button
-                          type="button"
-                          title="Excluir comentário"
-                          className="p-1.5 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                    {/* Respostas do lojista */}
+                    {comment.replies && comment.replies.length > 0 && (
+                      <tr className="bg-slate-50/50">
+                        <td colSpan={4} className="py-3 px-6">
+                          <div className="space-y-3">
+                            {comment.replies.map((reply) => (
+                              <div key={reply.id} className="flex items-start gap-3 pl-12">
+                                <CornerDownRight size={16} className="text-slate-300 mt-0.5 shrink-0" />
+                                <div className="flex-1 bg-white border border-slate-100 rounded-xl p-3 shadow-sm">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <p className="text-xs font-bold text-[#0094eb]">
+                                      {reply.authorName}
+                                      <span className="ml-2 px-1.5 py-0.5 bg-blue-50 text-[#0094eb] text-[9px] rounded-full">
+                                        {reply.authorRole}
+                                      </span>
+                                    </p>
+                                    <span className="text-[10px] text-slate-400">{reply.createdAt}</span>
+                                  </div>
+                                  <p className="text-sm text-slate-700">{reply.content}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modal: Responder */}
+      {replyModalOpen && selectedComment && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-slate-800">Responder comentário</h3>
+              <button
+                type="button"
+                onClick={() => setReplyModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                <p className="text-xs text-slate-500 mb-1">Comentário de <strong>{selectedComment.authorName}</strong></p>
+                <p className="text-sm text-slate-800">"{selectedComment.content}"</p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Sua resposta</label>
+                <textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Digite sua resposta ao cliente..."
+                  rows={4}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors resize-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setReplyModalOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendReply}
+                  disabled={!replyText.trim()}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0094eb] hover:bg-[#0083d1] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                >
+                  <Send size={14} />
+                  Publicar resposta
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Confirmar exclusão */}
+      {deleteModalOpen && selectedComment && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-5 text-center">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className="text-base font-bold text-slate-800 mb-1">Excluir comentário?</h3>
+              <p className="text-sm text-slate-500">
+                Você está prestes a excluir o comentário de <strong>{selectedComment.authorName}</strong>. Essa ação não poderá ser desfeita.
+              </p>
+            </div>
+            <div className="flex gap-2 p-5 pt-0">
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(false)}
+                className="flex-1 px-4 py-2.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="flex-1 px-4 py-2.5 text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-colors"
+              >
+                Sim, excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
