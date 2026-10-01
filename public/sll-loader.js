@@ -48,6 +48,11 @@
     reviews: "reviews-widget.js"
   };
 
+  function resolveScript(mod) {
+    if (typeof mod !== "string" || /[^a-z0-9_-]/i.test(mod)) return null;
+    return MODULE_TO_SCRIPT[mod] || (mod + "-widget.js");
+  }
+
   function injectModule(scriptName) {
     var scriptId = "sll-script-" + scriptName.replace(/\.js$/, "");
     if (document.getElementById(scriptId)) return;
@@ -80,7 +85,7 @@
     if (list.length === 0) list = ["vidlytics"];
 
     list.forEach(function(mod) {
-      var scriptFile = MODULE_TO_SCRIPT[mod];
+      var scriptFile = resolveScript(mod);
       if (scriptFile) {
         console.log("[SLL-Loader] Injetando módulo:", mod);
         injectModule(scriptFile);
