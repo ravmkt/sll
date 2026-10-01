@@ -6615,7 +6615,7 @@ if (displayMode === 'dynamic_carousel') {
     // 🔧 CRÍTICO: altura mínima + overflow visible
     Object.assign(wrapper.style, {
       width: '100%',
-      minHeight: '300px',
+      minHeight: '0',
       margin: '20px 0',
       overflow: 'visible',
       display: 'block'
