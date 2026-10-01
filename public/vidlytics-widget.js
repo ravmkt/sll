@@ -1134,7 +1134,66 @@ function fetchLiveSpotlight(live) {
       .catch(function () { return []; });
   }
 
+  function vidShapeFromFormat(fmt) {
+    var f = String(fmt || '').toLowerCase();
+    if (f.indexOf('16_9') !== -1 || f.indexOf('landscape') !== -1) return 'landscape';
+    if (f.indexOf('circle') !== -1) return 'circle';
+    if (f.indexOf('square') !== -1 || f.indexOf('1_1') !== -1) return 'square';
+    return 'portrait';
+  }
+
+  function vidFloatingDevice(s) {
+    s = s || {};
+    var pos = 'fixed_' + String(s.floating_position || 'bottom-right').replace(/-/g, '_');
+    return {
+      shape: vidShapeFromFormat(s.floating_format),
+      width: String(s.floating_width || 80),
+      position: pos,
+      show_cta: s.floating_show_cta === true,
+      allow_close: s.floating_show_close_button === true,
+      draggable: false,
+      auto_play: s.floating_auto_play !== false,
+      show_play_icon: s.floating_show_play_icon !== false,
+      object_fit: s.floating_object_fit || 'cover',
+      border_color: s.floating_border_color || '#0094EB',
+      border_style: String(s.floating_border_width != null ? s.floating_border_width : 2),
+      border_width: String(s.floating_border_width != null ? s.floating_border_width : 2),
+      border_radius: String(s.floating_border_radius != null ? s.floating_border_radius : 12),
+      top_spacing: String(s.floating_margin_top != null ? s.floating_margin_top : 20),
+      bottom_spacing: String(s.floating_margin_bottom != null ? s.floating_margin_bottom : 20),
+      left_spacing: String(s.floating_margin_side != null ? s.floating_margin_side : 20),
+      right_spacing: String(s.floating_margin_side != null ? s.floating_margin_side : 20)
+    };
+  }
+
+  function vidAppearanceFromRow(row) {
+    var ws = parseJsonIfNeeded(row && row.widget_style);
+    var desktop = ws.desktop || ws.mobile || {};
+    var mobile = ws.mobile || ws.desktop || {};
+    var main = desktop.floating_border_color || '#0094EB';
+    return {
+      style_name: ws.name || row.name || 'vidlytics',
+      primary_color: main,
+      secondary_color: main,
+      floating_config: {
+        mobile: vidFloatingDevice(mobile),
+        desktop: vidFloatingDevice(desktop)
+      }
+    };
+  }
+
   function fetchDbAppearance() {
+    if (!storeId || !hasSupabase) return Promise.resolve({});
+    return vidlyticsFetch(
+      'vid_appearances',
+      'select=*&store_id=eq.' + encodeURIComponent(storeId) + '&order=is_default.desc,updated_at.desc&limit=1'
+    ).then(function (rows) {
+      if (rows.length > 0) return normalizeAppearanceItem(vidAppearanceFromRow(rows[0]));
+      return fetchLegacyDbAppearance();
+    });
+  }
+
+  function fetchLegacyDbAppearance() {
     if (!storeId || !hasSupabase) return Promise.resolve({});
     // Uma única query: is_default DESC coloca o estilo padrão primeiro (true > false no Postgres),
     // desempatando pelo mais recentemente atualizado
