@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   ShieldCheck, 
   Search, 
@@ -9,7 +9,8 @@ import {
   CornerDownRight,
   X,
   Send,
-  AlertTriangle
+  AlertTriangle,
+  Smile
 } from 'lucide-react';
 
 interface ReplyItem {
@@ -18,6 +19,8 @@ interface ReplyItem {
   authorRole: string;
   content: string;
   createdAt: string;
+  storeLogoUrl?: string;
+  storeFullName?: string;
 }
 
 interface CommentItem {
@@ -38,6 +41,19 @@ interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
+interface StoreBranding {
+  name: string;
+  shortName: string;
+  logoUrl: string;
+}
+
+// Abrevia o nome da loja automaticamente (primeira palavra, máx 15 chars)
+const abbreviateStoreName = (name: string): string => {
+  if (!name) return 'Sua loja';
+  const firstWord = name.trim().split(' ')[0];
+  return firstWord.length > 15 ? firstWord.slice(0, 15) : firstWord;
+};
+
 export const ComentariosTab: React.FC = () => {
   const [autoApprove, setAutoApprove] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,7 +63,23 @@ export const ComentariosTab: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState<CommentItem | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [replyDisplayName, setReplyDisplayName] = useState('Uziane');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Dados mockados da loja (depois virá do banco/hook de configurações)
+  const [storeBranding] = useState<StoreBranding>({
+    name: 'Uziane Moda Feminina profissional',
+    shortName: 'Uziane',
+    logoUrl: '' // substituir por URL real do logo quando disponível
+  });
+
+  const commonEmojis = [
+    '❤️', '👍', '😊', '😍', '🔥', '✅', '🙏', '🎉', '😉', '👏',
+    '🌟', '💯', '🤗', '👋', '😎', '💪', '🌹', '🎁', '🛍️', '💕',
+    '⭐', '😘', '🥰', '😂', '🤩', '👗', '👠', '👜', '💎', '🎀'
+  ];
 
   // Dados mockados robustos para visualização
   const [comments, setComments] = useState<CommentItem[]>([
@@ -85,10 +117,11 @@ export const ComentariosTab: React.FC = () => {
       replies: [
         {
           id: 'r1',
-          authorName: 'Loja Use Anny',
+          authorName: 'Uziane',
           authorRole: 'Resposta oficial',
           content: 'Oi Mariana! Sim, teremos reposição na próxima semana. Te avisamos por e-mail, ok?',
-          createdAt: 'Há 1 hora'
+          createdAt: 'Há 1 hora',
+          storeFullName: 'Uziane Moda Feminina profissional'
         }
       ]
     },
@@ -165,7 +198,25 @@ export const ComentariosTab: React.FC = () => {
   const openReplyModal = (comment: CommentItem) => {
     setSelectedComment(comment);
     setReplyText('');
+    setReplyDisplayName(storeBranding.shortName || abbreviateStoreName(storeBranding.name));
+    setShowEmojiPicker(false);
     setReplyModalOpen(true);
+  };
+
+  const insertEmoji = (emoji: string) => {
+    const el = textareaRef.current;
+    if (!el) {
+      setReplyText((prev) => prev + emoji);
+      return;
+    }
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const newText = replyText.slice(0, start) + emoji + replyText.slice(end);
+    setReplyText(newText);
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + emoji.length, start + emoji.length);
+    }, 0);
   };
 
   const handleSendReply = () => {
@@ -173,10 +224,12 @@ export const ComentariosTab: React.FC = () => {
 
     const newReply: ReplyItem = {
       id: `r-${Date.now()}`,
-      authorName: 'Loja Use Anny',
+      authorName: replyDisplayName.trim() || storeBranding.shortName,
       authorRole: 'Resposta oficial',
       content: replyText.trim(),
-      createdAt: 'Agora'
+      createdAt: 'Agora',
+      storeLogoUrl: storeBranding.logoUrl,
+      storeFullName: storeBranding.name
     };
 
     setComments((prev) =>
@@ -189,6 +242,7 @@ export const ComentariosTab: React.FC = () => {
 
     setReplyModalOpen(false);
     setReplyText('');
+    setShowEmojiPicker(false);
     showToast('Resposta publicada com sucesso!');
   };
 
@@ -479,16 +533,38 @@ export const ComentariosTab: React.FC = () => {
                               <div key={reply.id} className="flex items-start gap-3 pl-12">
                                 <CornerDownRight size={16} className="text-slate-300 mt-0.5 shrink-0" />
                                 <div className="flex-1 bg-white border border-slate-100 rounded-xl p-3 shadow-sm">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <p className="text-xs font-bold text-[#0094eb]">
-                                      {reply.authorName}
-                                      <span className="ml-2 px-1.5 py-0.5 bg-blue-50 text-[#0094eb] text-[9px] rounded-full">
+                                  <div className="flex items-center gap-2.5 mb-1">
+                                    {/* Avatar com logo da loja */}
+                                    <div 
+                                      className="w-7 h-7 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-100"
+                                      title={reply.storeFullName || reply.authorName}
+                                    >
+                                      {reply.storeLogoUrl ? (
+                                        <img 
+                                          src={reply.storeLogoUrl} 
+                                          alt={reply.authorName} 
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <span className="text-[10px] font-bold text-slate-500">
+                                          {reply.authorName.charAt(0).toUpperCase()}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <p 
+                                        className="text-xs font-bold text-[#0094eb]"
+                                        title={reply.storeFullName || reply.authorName}
+                                      >
+                                        {reply.authorName}
+                                      </p>
+                                      <span className="px-1.5 py-0.5 bg-blue-50 text-[#0094eb] text-[9px] rounded-full">
                                         {reply.authorRole}
                                       </span>
-                                    </p>
-                                    <span className="text-[10px] text-slate-400">{reply.createdAt}</span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 ml-auto">{reply.createdAt}</span>
                                   </div>
-                                  <p className="text-sm text-slate-700">{reply.content}</p>
+                                  <p className="text-sm text-slate-700 pl-9.5">{reply.content}</p>
                                 </div>
                               </div>
                             ))}
@@ -512,7 +588,10 @@ export const ComentariosTab: React.FC = () => {
               <h3 className="text-sm font-bold text-slate-800">Responder comentário</h3>
               <button
                 type="button"
-                onClick={() => setReplyModalOpen(false)}
+                onClick={() => {
+                  setReplyModalOpen(false);
+                  setShowEmojiPicker(false);
+                }}
                 className="text-slate-400 hover:text-slate-600"
               >
                 <X size={18} />
@@ -523,20 +602,88 @@ export const ComentariosTab: React.FC = () => {
                 <p className="text-xs text-slate-500 mb-1">Comentário de <strong>{selectedComment.authorName}</strong></p>
                 <p className="text-sm text-slate-800">"{selectedComment.content}"</p>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Sua resposta</label>
-                <textarea
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Digite sua resposta ao cliente..."
-                  rows={4}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors resize-none"
-                />
+
+              {/* Responder como */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Responder como
+                  </label>
+                  <input
+                    type="text"
+                    value={replyDisplayName}
+                    onChange={(e) => setReplyDisplayName(e.target.value)}
+                    placeholder="Nome exibido na resposta"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Sugestão automática: <strong>{abbreviateStoreName(storeBranding.name)}</strong>
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Nome completo da loja
+                  </label>
+                  <input
+                    type="text"
+                    value={storeBranding.name}
+                    disabled
+                    className="w-full px-3 py-2 bg-slate-100 border border-slate-200/80 rounded-xl text-xs text-slate-500 cursor-not-allowed"
+                  />
+                </div>
               </div>
+
+              {/* Resposta com emoji picker */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Sua resposta
+                </label>
+                <div className="relative">
+                  <textarea
+                    ref={textareaRef}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Digite sua resposta ao cliente..."
+                    rows={4}
+                    className="w-full px-3 py-2 pr-10 bg-slate-50 border border-slate-200/80 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors resize-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className="absolute right-2 top-2 p-1.5 text-slate-400 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Inserir emoji"
+                  >
+                    <Smile size={18} />
+                  </button>
+                </div>
+
+                {/* Emoji picker popup */}
+                {showEmojiPicker && (
+                  <div className="mt-2 p-2 bg-white border border-slate-200 rounded-xl shadow-lg">
+                    <div className="grid grid-cols-10 gap-1">
+                      {commonEmojis.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => insertEmoji(emoji)}
+                          className="w-7 h-7 flex items-center justify-center text-base hover:bg-slate-100 rounded-md transition-colors"
+                          title={emoji}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setReplyModalOpen(false)}
+                  onClick={() => {
+                    setReplyModalOpen(false);
+                    setShowEmojiPicker(false);
+                  }}
                   className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 >
                   Cancelar
