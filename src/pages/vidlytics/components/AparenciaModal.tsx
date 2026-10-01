@@ -25,6 +25,7 @@ interface AparenciaModalProps {
   isLoadingStyle: boolean;
   isSaving: boolean;
   editingId?: string | null;
+  isDefaultEditing?: boolean;
 }
 
 const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white cursor-pointer";
@@ -467,13 +468,14 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   resetTab, saveStyle,
   isLoadingStyle, isSaving,
   editingId,
+  isDefaultEditing = false,
 }) => {
   const { storeId: activeStoreId, store } = useLoja();
   const [activeTab, setActiveTab] = useState('basico');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
   const [localSaving, setLocalSaving] = useState(false);
-  
+
   // POP-UP PARA NOMEAR ESTILO
   const [showNameModal, setShowNameModal] = useState(false);
   const [modalInputName, setModalInputName] = useState('');
@@ -485,13 +487,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     store?.id ||
     localStorage.getItem('sll_store_id') ||
     localStorage.getItem('store_id');
-
-  // Verifica se está editando o estilo oficial fixo do sistema
-  const isDefaultSystemStyle =
-    (styleName || '').trim().toUpperCase() === 'VIDLYTICS' ||
-    (styleName || '').trim().toUpperCase() === 'PADRAO' ||
-    formData?.id === 'default' ||
-    !formData?.id;
 
   const loadStylesList = async () => {
     try {
@@ -723,9 +718,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const handleInitiateSave = (asNew = false) => {
     const name = styleName?.trim() || '';
 
-    // Criando novo estilo (novo ou salvar como)
-    if (asNew || isDefaultSystemStyle || !editingId || !name || name.toUpperCase() === 'PADRAO' || name.toUpperCase() === 'VIDLYTICS') {
-      setModalInputName(asNew ? '' : name === 'Vidlytics' ? '' : name);
+    // Se for template ou salvar como, abre o popup de nomeação
+    if (asNew || isDefaultEditing || !editingId || !name) {
+      setModalInputName(asNew || isDefaultEditing ? '' : name);
       setShowNameModal(true);
       return;
     }
@@ -775,7 +770,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 </button>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Digite um nome para salvar o novo estilo:
+                {isDefaultEditing ? 'Templates padrões não podem ser alterados. Salve como um novo estilo personalizado.' : 'Digite um nome para salvar o novo estilo:'}
               </p>
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Nome do Estilo</label>
@@ -803,7 +798,16 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
         {/* HEADER MODAL */}
         <div className="flex items-center justify-between px-6 py-4">
-          <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Editar Estilo</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">
+              {isDefaultEditing ? 'Visualizar Template' : 'Editar Estilo'}
+            </h2>
+            {isDefaultEditing && (
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
+                Somente visualização
+              </span>
+            )}
+          </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer">
             <X size={24} />
           </button>
@@ -848,55 +852,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
               <div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Configurações Básicas</h3>
                 <div className="space-y-6">
-                  {/* SELETOR DE ESTILOS EXISTENTES */}
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Selecionar Estilo Ativo</label>
-                    <select
-                      value={formData?.id || (isDefaultSystemStyle ? 'VIDLYTICS_DEFAULT' : '')}
-                      onChange={(e) => {
-                        const sel = e.target.value;
-                        if (sel === 'VIDLYTICS_DEFAULT') {
-                          setStyleName('Vidlytics');
-                          setIsDefault(false);
-                          if (formData) {
-                            formData.id = 'default';
-                            formData.name = 'Vidlytics';
-                          }
-                        } else {
-                          const s = availableStyles.find(item => item.id === sel);
-                          if (s) {
-                            setStyleName(s.name || 'Estilo');
-                            setIsDefault(Boolean(s.is_default));
-                            if (formData) {
-                              formData.id = s.id;
-                              formData.name = s.name;
-                              formData.is_default = s.is_default;
-                              if (s.widget_style) {
-                                if (s.widget_style.desktop) formData.desktop = s.widget_style.desktop;
-                                if (s.widget_style.mobile) formData.mobile = s.widget_style.mobile;
-                              }
-                            }
-                          }
-                        }
-                      }}
-                      className={selectClass}
-                    >
-                      <option value="VIDLYTICS_DEFAULT">Vidlytics (Padrão do Sistema)</option>
-                      {availableStyles.map(s => (
-                        <option key={s.id} value={s.id}>
-                          {s.name || 'Estilo sem nome'} {s.is_default ? '★ (Padrão da Loja)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
                   {/* NOME DO ESTILO */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Nome do Estilo Atual</label>
-                      {isDefaultSystemStyle && (
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Nome do Estilo</label>
+                      {isDefaultEditing && (
                         <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
-                          Padrão Oficial Vidlytics
+                          Template
                         </span>
                       )}
                     </div>
@@ -904,20 +866,20 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                       type="text"
                       value={styleName}
                       onChange={(e) => setStyleName(e.target.value)}
-                      disabled={isDefaultSystemStyle}
+                      disabled={isDefaultEditing}
                       placeholder="Ex: Minha Loja"
-                      className={`${inputClass} ${isDefaultSystemStyle ? 'bg-slate-100 text-slate-500 cursor-not-allowed border-dashed' : ''}`}
+                      className={`${inputClass} ${isDefaultEditing ? 'bg-slate-100 text-slate-500 cursor-not-allowed border-dashed' : ''}`}
                     />
                   </div>
 
                   {/* CHECKBOX DEFINIR COMO PADRÃO DA LOJA */}
                   <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                    <label className={`flex items-start gap-3 ${isDefaultSystemStyle ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`}>
+                    <label className={`flex items-start gap-3 ${isDefaultEditing ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`}>
                       <div className="mt-1">
                         <input
                           type="checkbox"
                           checked={isDefault}
-                          disabled={isDefaultSystemStyle}
+                          disabled={isDefaultEditing}
                           onChange={(e) => setIsDefault(e.target.checked)}
                           className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer"
                         />
@@ -1484,7 +1446,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                               <input type="number" min="0" value={getC('modal_product_card_border_width') ?? 1} onChange={e => setC('modal_product_card_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
                             </FormField>
                             <FormField label="Raio Borda (px)">
-                              <input type="number" min="0" value={getC('modal_product_card_border_radius') ?? 12} onChange={e => setC('modal_product_card_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
+                              <input type="number" min="0" value={getC('modal_product_card_border_radius') ?? 12} onChange={e => setC('modal_product_card_border_card_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
                             </FormField>
                             <FormField label="Tamanho Título (px)">
                               <input type="number" min="8" value={getC('modal_product_card_name_size') ?? 11} onChange={e => setC('modal_product_card_name_size', parseInt(e.target.value) || 11)} className={inputClass} />
@@ -1562,10 +1524,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <div className="w-full h-full flex items-center justify-center">
                             <ScaleToFit>
                               <div className="w-[850px] max-w-full flex justify-center">
-                                <CarouselPreview 
-                                  carousel={carouselPreviewData} 
-                                  colors={{ primary: formData?.primary_color || '#0094EB' }} 
-                                  isMobile={false} 
+                                <CarouselPreview
+                                  carousel={carouselPreviewData}
+                                  colors={{ primary: formData?.primary_color || '#0094EB' }}
+                                  isMobile={false}
                                 />
                               </div>
                             </ScaleToFit>
@@ -1576,10 +1538,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <div className="w-full h-full flex items-center justify-center">
                             <ScaleToFit>
                               <div className="w-[850px] max-w-full flex justify-center">
-                                <DynamicCarouselPreview 
-                                  carousel={dynCarouselPreviewData} 
-                                  colors={{ primary: formData?.primary_color || '#0094EB' }} 
-                                  isMobile={false} 
+                                <DynamicCarouselPreview
+                                  carousel={dynCarouselPreviewData}
+                                  colors={{ primary: formData?.primary_color || '#0094EB' }}
+                                  isMobile={false}
                                 />
                               </div>
                             </ScaleToFit>
@@ -1590,10 +1552,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <div className="w-full h-full flex items-center justify-center">
                             <ScaleToFit>
                               <div className="w-[850px] max-w-full flex justify-center">
-                                <GridPreview 
-                                  grid={gridPreviewData} 
-                                  colors={{ primary: formData?.primary_color || '#0094EB' }} 
-                                  isMobile={false} 
+                                <GridPreview
+                                  grid={gridPreviewData}
+                                  colors={{ primary: formData?.primary_color || '#0094EB' }}
+                                  isMobile={false}
                                 />
                               </div>
                             </ScaleToFit>
@@ -1602,10 +1564,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
                         {activeTab === 'player' && (
                           <div className="w-full h-full flex items-center justify-center">
-                            <ModalPlayerPreview 
-                              playerConfig={playerPreviewData} 
-                              primaryColor={formData?.primary_color || '#0094EB'} 
-                              isMobile={false} 
+                            <ModalPlayerPreview
+                              playerConfig={playerPreviewData}
+                              primaryColor={formData?.primary_color || '#0094EB'}
+                              isMobile={false}
                             />
                           </div>
                         )}
@@ -1614,7 +1576,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 ) : (
                   <div className="h-full max-h-[800px] aspect-[9/19] rounded-[2.5rem] border-[10px] border-[#1a1f36] bg-slate-50 dark:bg-slate-900 shadow-2xl relative flex items-center justify-center overflow-hidden shrink-0">
                     <div className="absolute top-0 inset-x-0 h-5 bg-[#1a1f36] w-[40%] mx-auto rounded-b-xl z-20"></div>
-                    
+
                     {activeTab === 'flutuante' && (
                       <div className="relative w-full h-full p-2">
                         <FloatingPreview floating={floatingPreviewData} colors={{ primary: formData?.primary_color || '#0094EB' }} device="mobile" />
@@ -1623,40 +1585,40 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
                     {activeTab === 'carrossel' && (
                       <div className="flex-1 w-full h-full overflow-hidden flex flex-col justify-center px-0 py-3">
-                        <CarouselPreview 
-                          carousel={carouselPreviewData} 
-                          colors={{ primary: formData?.primary_color || '#0094EB' }} 
-                          isMobile={true} 
+                        <CarouselPreview
+                          carousel={carouselPreviewData}
+                          colors={{ primary: formData?.primary_color || '#0094EB' }}
+                          isMobile={true}
                         />
                       </div>
                     )}
 
                     {activeTab === 'carrossel-dinamico' && (
                       <div className="flex-1 w-full h-full overflow-hidden flex flex-col justify-center px-0 py-3">
-                        <DynamicCarouselPreview 
-                          carousel={dynCarouselPreviewData} 
-                          colors={{ primary: formData?.primary_color || '#0094EB' }} 
-                          isMobile={true} 
+                        <DynamicCarouselPreview
+                          carousel={dynCarouselPreviewData}
+                          colors={{ primary: formData?.primary_color || '#0094EB' }}
+                          isMobile={true}
                         />
                       </div>
                     )}
 
                     {activeTab === 'grade' && (
                       <div className="flex-1 w-full h-full overflow-y-auto flex flex-col justify-start px-2 py-4 custom-scrollbar">
-                        <GridPreview 
-                          grid={gridPreviewData} 
-                          colors={{ primary: formData?.primary_color || '#0094EB' }} 
-                          isMobile={true} 
+                        <GridPreview
+                          grid={gridPreviewData}
+                          colors={{ primary: formData?.primary_color || '#0094EB' }}
+                          isMobile={true}
                         />
                       </div>
                     )}
 
                     {activeTab === 'player' && (
                       <div className="w-full h-full">
-                        <ModalPlayerPreview 
-                          playerConfig={playerPreviewData} 
-                          primaryColor={formData?.primary_color || '#0094EB'} 
-                          isMobile={true} 
+                        <ModalPlayerPreview
+                          playerConfig={playerPreviewData}
+                          primaryColor={formData?.primary_color || '#0094EB'}
+                          isMobile={true}
                         />
                       </div>
                     )}
@@ -1680,17 +1642,17 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
             <button onClick={onClose} className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
               <X size={18} strokeWidth={2.5} /> Cancelar
             </button>
-            <button 
-              onClick={handleInitiateSave} 
-              disabled={isSaving || localSaving} 
+            <button
+              onClick={() => handleInitiateSave(false)}
+              disabled={isSaving || localSaving}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer ${
-                isDefaultSystemStyle 
-                  ? 'bg-amber-500 hover:bg-amber-600 text-white' 
+                isDefaultEditing
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white'
                   : 'bg-[#0094eb] hover:bg-[#0082cf] text-white'
               } disabled:opacity-50`}
             >
-              {isSaving || localSaving ? <Loader2 size={18} className="animate-spin" /> : isDefaultSystemStyle ? <Copy size={18} strokeWidth={2.5} /> : <Save size={18} strokeWidth={2.5} />} 
-              {isSaving || localSaving ? 'Salvando...' : isDefaultSystemStyle ? 'Salvar Como Novo Estilo' : 'Salvar'}
+              {isSaving || localSaving ? <Loader2 size={18} className="animate-spin" /> : isDefaultEditing ? <Copy size={18} strokeWidth={2.5} /> : <Save size={18} strokeWidth={2.5} />}
+              {isSaving || localSaving ? 'Salvando...' : isDefaultEditing ? 'Salvar Como Novo Estilo' : 'Salvar'}
             </button>
           </div>
         </div>
@@ -1700,14 +1662,3 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 };
 
 export default AparenciaModal;
-
-
-
-
-
-
-
-
-
-
-

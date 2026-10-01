@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLoja } from '@/contexts/LojaContext';
 import { VidlyticsDatabaseService, VidAppearanceRow } from '../../services/vidlytics/VidlyticsDatabaseService';
+import { DEFAULT_APPEARANCES, getDefaultAppearanceById, isDefaultAppearance } from '../../data/defaultAppearances';
 
 // ─────────────── Defaults (equivalentes ao legado, em chaves flat por device) ───────────────
 
@@ -80,6 +81,10 @@ export function useAppearanceLogic() {
   const [isLoadingStyle, setIsLoadingStyle] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Lista de templates (estilos padrões) + lista de estilos customizados
+  const defaultAppearances = useMemo(() => DEFAULT_APPEARANCES.map((d) => ({ ...d, is_default: false })), []);
+  const customAppearances = useMemo(() => appearances, [appearances]);
+
   // ─────────── Carregar lista de estilos da loja ───────────
   const loadAppearances = useCallback(async () => {
     if (!storeId) return;
@@ -115,12 +120,24 @@ export function useAppearanceLogic() {
     setIsModalOpen(true);
   }, [appearances.length]);
 
-  // ─────────── Abrir modal: editar estilo existente ───────────
+  // ─────────── Abrir modal: editar estilo existente ou visualizar template ───────────
   const openEditStyle = useCallback(async (id: string) => {
     setEditingId(id);
     setIsModalOpen(true);
     setIsLoadingStyle(true);
     try {
+      if (isDefaultAppearance(id)) {
+        // Template padrão: abre em modo "salvar como"
+        const template = getDefaultAppearanceById(id);
+        if (template) {
+          setStyleName(`${template.name} (Cópia)`);
+          setIsDefault(false);
+          setFormData(template.widget_style);
+          const unified = JSON.stringify(template.widget_style.desktop) === JSON.stringify(template.widget_style.mobile);
+          setIsUnified(unified);
+        }
+        return;
+      }
       const style = await VidlyticsDatabaseService.getAppearanceById(id);
       if (style) {
         setStyleName(style.name);
@@ -213,7 +230,7 @@ export function useAppearanceLogic() {
     });
   }, [isUnified]);
 
-  // ─────────── Salvar (criar ou atualizar) ───────────
+  // ─────────── Salvar (criar ou atualizar). Sempre cria novo se for template. ───────────
   const saveStyle = useCallback(async () => {
     if (!storeId) return;
     if (!styleName.trim()) {
@@ -225,8 +242,11 @@ export function useAppearanceLogic() {
         ? { desktop: formData.desktop, mobile: { ...formData.desktop } }
         : formData;
 
+      // Se estava editando um template, salva como novo estilo
+      const isTemplateEdit = isDefaultAppearance(editingId);
+
       const saved = await VidlyticsDatabaseService.saveAppearance({
-        id: editingId || undefined,
+        id: isTemplateEdit ? undefined : editingId || undefined,
         store_id: storeId,
         name: styleName.trim(),
         is_default: isDefault,
@@ -258,6 +278,8 @@ export function useAppearanceLogic() {
   return {
     // Lista (AparenciaTab)
     appearances,
+    customAppearances,
+    defaultAppearances,
     listLoading,
     loadAppearances,
     deleteStyle,
@@ -281,12 +303,7 @@ export function useAppearanceLogic() {
     saveStyle,
     isLoadingStyle,
     isSaving,
+    editingId,
+    isDefaultEditing: isDefaultAppearance(editingId),
   };
 }
-
-
-
-
-
-
-
