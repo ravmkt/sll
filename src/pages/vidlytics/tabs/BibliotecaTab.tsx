@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search,
   UploadCloud,
@@ -15,8 +15,12 @@ import {
   ArrowLeft,
   AlertTriangle,
   Save,
-  Check
+  Check,
+  Loader2,
+  Link2
 } from 'lucide-react';
+import { useLoja } from '../../../contexts/LojaContext';
+import { supabase } from '../../../lib/supabase';
 
 interface MediaItem {
   id: string;
@@ -26,67 +30,221 @@ interface MediaItem {
   thumbnail: string;
   videoUrl?: string;
   product?: {
+    id?: string;
     name: string;
     image: string;
   };
+  modelId?: string | null;
   linkedStory?: string;
   size: string;
-  sizeBytes: number; // Tamanho real em bytes para cálculo dinâmico
+  sizeBytes: number;
   status: 'DISPONÍVEL' | 'PROCESSANDO' | 'ERRO';
   origin?: string;
   activeStatus?: 'Ativo' | 'Inativo';
 }
 
+interface ProductOption {
+  id: string;
+  title: string;
+  image_url?: string;
+}
+
+interface ModelOption {
+  id: string;
+  name: string;
+}
+
 export const BibliotecaTab: React.FC = () => {
+  const { storeId } = useLoja();
+
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'TODOS' | 'VIDEOS' | 'IMAGENS'>('TODOS');
+  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
 
-  // Mídias cadastradas com peso real em bytes
-  const [mediaList, setMediaList] = useState<MediaItem[]>([
-    {
-      id: '1',
-      name: 'oculos-de-sol.mp4',
-      type: 'video',
-      typeLabel: 'VÍDEO MP4 (HOSPEDADO)',
-      thumbnail: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300&auto=format&fit=crop&q=80',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-      linkedStory: 'TESTE',
-      size: '8.3 MB',
-      sizeBytes: 8.3 * 1024 * 1024,
-      status: 'DISPONÍVEL',
-      origin: 'Upload de vídeo',
-      activeStatus: 'Ativo'
-    },
-    {
-      id: '2',
-      name: 'Criação_de_Vídeo_Fashion_Edit...',
-      type: 'video',
-      typeLabel: 'VÍDEO MP4 (HOSPEDADO)',
-      thumbnail: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&auto=format&fit=crop&q=80',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
-      product: {
-        name: 'Blusa Confort - Verd...',
-        image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=100&auto=format&fit=crop&q=80'
-      },
-      linkedStory: 'TESTE',
-      size: '2 MB',
-      sizeBytes: 2.0 * 1024 * 1024,
-      status: 'DISPONÍVEL',
-      origin: 'Upload de vídeo',
-      activeStatus: 'Ativo'
-    },
-    {
-      id: '3',
-      name: 'LOGOTIPO_OFICIAL_LOJA.png',
-      type: 'image',
-      typeLabel: 'IMAGEM (HOSPEDADA)',
-      thumbnail: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=300&auto=format&fit=crop&q=80',
-      size: '132.4 KB',
-      sizeBytes: 132.4 * 1024,
-      status: 'DISPONÍVEL',
-      activeStatus: 'Ativo'
+  // Produtos e Modelos para os selects
+  const [availableProducts, setAvailableProducts] = useState<ProductOption[]>([]);
+  const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
+
+  // Modais de controle
+  const [viewingMedia, setViewingMedia] = useState<MediaItem | null>(null);
+  const [editingMedia, setEditingMedia] = useState<MediaItem | null>(null);
+  const [deletingMedia, setDeletingMedia] = useState<MediaItem | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Modal URL Externa
+  const [showUrlModal, setShowUrlModal] = useState(false);
+  const [externalUrl, setExternalUrl] = useState('');
+  const [externalTitle, setExternalTitle] = useState('');
+  const [externalProductId, setExternalProductId] = useState('');
+  const [externalModelId, setExternalModelId] = useState('');
+  const [isSubmittingUrl, setIsSubmittingUrl] = useState(false);
+  const [urlError, setUrlError] = useState<string | null>(null);
+
+  // Upload direto de arquivo
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Estados da tela de edição
+  const [editTitle, setEditTitle] = useState('');
+  const [editOrigin, setEditOrigin] = useState('Upload de vídeo');
+  const [editThumbnail, setEditThumbnail] = useState('');
+  const [editProductId, setEditProductId] = useState<string>('');
+  const [editModelId, setEditModelId] = useState<string>('');
+  const [editStatus, setEditStatus] = useState<'Ativo' | 'Inativo'>('Ativo');
+
+  // Formatação de bytes para KB / MB / GB
+  const formatBytes = (bytes: number): string => {
+    if (!bytes || bytes <= 0) return '0 KB';
+    if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  };
+
+  // Carregar produtos e modelos da loja ativa
+  const loadAuxiliaryData = async () => {
+    if (!storeId) return;
+    try {
+      // 1. Produtos
+      const { data: prodData } = await supabase
+        .from('products')
+        .select('id, title, image_url')
+        .eq('store_id', storeId)
+        .order('title', { ascending: true });
+
+      if (prodData) {
+        setAvailableProducts(prodData.map((p: any) => ({
+          id: p.id,
+          title: p.title || 'Produto sem título',
+          image_url: p.image_url || ''
+        })));
+      }
+
+      // 2. Modelos de Medidas
+      const { data: modelData } = await supabase
+        .from('sizing_models')
+        .select('id, name')
+        .eq('store_id', storeId)
+        .order('name', { ascending: true });
+
+      if (modelData) {
+        setAvailableModels(modelData.map((m: any) => ({
+          id: m.id,
+          name: m.name || 'Modelo'
+        })));
+      }
+    } catch (err) {
+      console.warn('[BibliotecaTab] Erro ao carregar dados auxiliares:', err);
     }
-  ]);
+  };
+
+  // Carregar lista de vídeos da loja ativa
+  const fetchMediaList = async () => {
+    if (!storeId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Tenta carregar do schema vidlytics, com fallback para o schema public
+      let videosData: any[] | null = null;
+      let fetchErr: any = null;
+
+      try {
+        const res = await supabase
+          .schema('vidlytics')
+          .from('vid_videos')
+          .select(`
+            id,
+            title,
+            video_url,
+            thumbnail_url,
+            video_source_type,
+            source_type,
+            file_size,
+            status,
+            active,
+            product_id,
+            model_id,
+            created_at
+          `)
+          .eq('store_id', storeId)
+          .order('created_at', { ascending: false });
+
+        videosData = res.data;
+        fetchErr = res.error;
+      } catch {
+        // Fallback para schema public caso schema vidlytics não esteja exposto
+        const resFallback = await supabase
+          .from('vid_videos')
+          .select('*')
+          .eq('store_id', storeId)
+          .order('created_at', { ascending: false });
+
+        videosData = resFallback.data;
+        fetchErr = resFallback.error;
+      }
+
+      if (fetchErr) {
+        console.warn('[BibliotecaTab] Erro ao buscar vídeos:', fetchErr);
+      }
+
+      if (videosData && videosData.length > 0) {
+        // Mapear produtos
+        const prodMap = new Map<string, ProductOption>();
+        availableProducts.forEach(p => prodMap.set(p.id, p));
+
+        const mapped: MediaItem[] = videosData.map((item: any) => {
+          const isImg = (item.video_source_type === 'image' || item.source_type === 'image');
+          const isUrl = (item.video_source_type === 'url' || item.source_type === 'url');
+          const pInfo = item.product_id ? prodMap.get(item.product_id) : undefined;
+          const bytes = Number(item.file_size) || 0;
+
+          return {
+            id: item.id,
+            name: item.title || (isUrl ? 'Vídeo Externo' : 'Mídia'),
+            type: isImg ? 'image' : 'video',
+            typeLabel: isImg
+              ? 'IMAGEM (HOSPEDADA)'
+              : isUrl
+              ? 'VÍDEO EXTERNO (URL)'
+              : 'VÍDEO MP4 (HOSPEDADO)',
+            thumbnail: item.thumbnail_url || 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300&auto=format&fit=crop&q=80',
+            videoUrl: item.video_url || undefined,
+            product: pInfo
+              ? { id: pInfo.id, name: pInfo.title, image: pInfo.image_url || '' }
+              : undefined,
+            modelId: item.model_id || null,
+            linkedStory: undefined,
+            size: formatBytes(bytes),
+            sizeBytes: bytes,
+            status: item.status === 'error' ? 'ERRO' : 'DISPONÍVEL',
+            origin: isUrl ? 'URL externa' : 'Upload de vídeo',
+            activeStatus: item.active !== false ? 'Ativo' : 'Inativo'
+          };
+        });
+
+        setMediaList(mapped);
+      } else {
+        setMediaList([]);
+      }
+    } catch (err) {
+      console.error('[BibliotecaTab] Exceção ao carregar mídias:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAuxiliaryData();
+  }, [storeId]);
+
+  useEffect(() => {
+    fetchMediaList();
+  }, [storeId, availableProducts.length]);
 
   // CÁLCULO DINÂMICO E REAL DO ESPAÇO CONSUMIDO
   const TOTAL_LIMIT_BYTES = 50 * 1024 * 1024 * 1024; // 50 GB
@@ -94,7 +252,6 @@ export const BibliotecaTab: React.FC = () => {
   const { totalUsedFormatted, percentageUsed } = useMemo(() => {
     const totalBytes = mediaList.reduce((acc, curr) => acc + curr.sizeBytes, 0);
 
-    // Formatar texto (MB ou KB ou GB)
     let formatted = '0 MB';
     if (totalBytes >= 1024 * 1024 * 1024) {
       formatted = `${(totalBytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
@@ -113,19 +270,172 @@ export const BibliotecaTab: React.FC = () => {
     };
   }, [mediaList]);
 
-  // Modais e navegação de Edição
-  const [viewingMedia, setViewingMedia] = useState<MediaItem | null>(null);
-  const [editingMedia, setEditingMedia] = useState<MediaItem | null>(null);
-  const [deletingMedia, setDeletingMedia] = useState<MediaItem | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  // 1. CADASTRAR VÍDEO POR URL EXTERNA
+  const handleSaveExternalUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!externalUrl.trim()) {
+      setUrlError('Informe a URL do vídeo.');
+      return;
+    }
+    if (!storeId) {
+      setUrlError('Nenhuma loja ativa selecionada.');
+      return;
+    }
 
-  // Estados da tela de edição (Print 3)
-  const [editTitle, setEditTitle] = useState('');
-  const [editOrigin, setEditOrigin] = useState('Upload de vídeo');
-  const [editThumbnail, setEditThumbnail] = useState('');
-  const [editProduct, setEditProduct] = useState('Nenhum produto vinculado');
-  const [editModel, setEditModel] = useState('Nenhum');
-  const [editStatus, setEditStatus] = useState<'Ativo' | 'Inativo'>('Ativo');
+    setIsSubmittingUrl(true);
+    setUrlError(null);
+
+    const title = externalTitle.trim() || `VÍDEO_EXTERNO_${Date.now().toString().slice(-4)}`;
+    const defaultThumbnail = 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300&auto=format&fit=crop&q=80';
+
+    const payload = {
+      store_id: storeId,
+      title: title,
+      video_source_type: 'url',
+      source_type: 'url',
+      video_url: externalUrl.trim(),
+      thumbnail_url: defaultThumbnail,
+      thumbnail_source_type: 'auto',
+      product_id: externalProductId || null,
+      model_id: externalModelId || null,
+      file_size: 0,
+      thumbnail_file_size: 0,
+      status: 'active',
+      active: true,
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      let insertErr: any = null;
+      try {
+        const { error } = await supabase
+          .schema('vidlytics')
+          .from('vid_videos')
+          .insert(payload);
+        insertErr = error;
+      } catch {
+        const { error } = await supabase
+          .from('vid_videos')
+          .insert(payload);
+        insertErr = error;
+      }
+
+      if (insertErr) {
+        throw new Error(insertErr.message || 'Erro ao salvar vídeo externo');
+      }
+
+      // Limpar formulário e fechar modal
+      setExternalUrl('');
+      setExternalTitle('');
+      setExternalProductId('');
+      setExternalModelId('');
+      setShowUrlModal(false);
+
+      // Recarregar lista
+      await fetchMediaList();
+    } catch (err: any) {
+      console.error('[BibliotecaTab] Erro ao cadastrar mídia externa:', err);
+      setUrlError(err.message || 'Falha ao salvar URL externa');
+    } finally {
+      setIsSubmittingUrl(false);
+    }
+  };
+
+  // 2. UPLOAD DIRETO DE ARQUIVO (VÍDEO OU IMAGEM)
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !storeId) return;
+
+    // Limite de 30MB
+    if (file.size > 30 * 1024 * 1024) {
+      setUploadError('O arquivo excede o limite máximo permitido de 30 MB.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const isImage = file.type.startsWith('image/');
+      const fileExt = file.name.split('.').pop();
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const filePath = `${storeId}/${Date.now()}_${sanitizedName}`;
+
+      // Upload para Supabase Storage
+      let uploadRes = await supabase.storage
+        .from('videos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadRes.error) {
+        // Tenta bucket 'media' como alternativa
+        uploadRes = await supabase.storage
+          .from('media')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+      }
+
+      if (uploadRes.error) {
+        throw new Error(uploadRes.error.message || 'Erro no envio do arquivo para o Storage');
+      }
+
+      // Obter URL pública
+      const { data: publicUrlData } = supabase.storage
+        .from(uploadRes.data.fullPath.split('/')[0] || 'videos')
+        .getPublicUrl(uploadRes.data.path || filePath);
+
+      const finalUrl = publicUrlData?.publicUrl || '';
+      const defaultThumb = isImage
+        ? finalUrl
+        : 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300&auto=format&fit=crop&q=80';
+
+      const payload = {
+        store_id: storeId,
+        title: file.name,
+        video_source_type: isImage ? 'image' : 'upload',
+        source_type: isImage ? 'image' : 'upload',
+        video_url: finalUrl,
+        thumbnail_url: defaultThumb,
+        thumbnail_source_type: isImage ? 'upload' : 'auto',
+        file_size: file.size,
+        thumbnail_file_size: 0,
+        status: 'active',
+        active: true,
+        created_at: new Date().toISOString()
+      };
+
+      let insertErr: any = null;
+      try {
+        const { error } = await supabase
+          .schema('vidlytics')
+          .from('vid_videos')
+          .insert(payload);
+        insertErr = error;
+      } catch {
+        const { error } = await supabase
+          .from('vid_videos')
+          .insert(payload);
+        insertErr = error;
+      }
+
+      if (insertErr) {
+        throw new Error(insertErr.message || 'Erro ao registrar vídeo no banco de dados');
+      }
+
+      await fetchMediaList();
+    } catch (err: any) {
+      console.error('[BibliotecaTab] Falha no upload:', err);
+      setUploadError(err.message || 'Erro ao realizar upload do arquivo.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   // Abrir página de Edição de Vídeo
   const handleOpenEdit = (media: MediaItem) => {
@@ -133,37 +443,81 @@ export const BibliotecaTab: React.FC = () => {
     setEditTitle(media.name);
     setEditOrigin(media.origin || 'Upload de vídeo');
     setEditThumbnail(media.thumbnail);
-    setEditProduct(media.product ? media.product.name : 'Nenhum produto vinculado');
+    setEditProductId(media.product?.id || '');
+    setEditModelId(media.modelId || '');
     setEditStatus(media.activeStatus || 'Ativo');
     setSaveSuccess(false);
   };
 
   // Salvar Edição
-  const handleSaveVideoEdit = (e?: React.FormEvent) => {
+  const handleSaveVideoEdit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!editingMedia) return;
+    if (!editingMedia || !storeId) return;
 
-    setMediaList((prev) =>
-      prev.map((item) => {
-        if (item.id === editingMedia.id) {
-          return {
-            ...item,
-            name: editTitle,
-            origin: editOrigin,
-            thumbnail: editThumbnail || item.thumbnail,
-            activeStatus: editStatus,
-            product: editProduct === 'Nenhum produto vinculado' ? undefined : item.product
-          };
-        }
-        return item;
-      })
-    );
+    try {
+      const selectedProd = availableProducts.find(p => p.id === editProductId);
 
-    setSaveSuccess(true);
-    setTimeout(() => {
-      setSaveSuccess(false);
-      setEditingMedia(null);
-    }, 900);
+      const updatePayload: any = {
+        title: editTitle.trim(),
+        product_id: editProductId || null,
+        model_id: editModelId || null,
+        active: editStatus === 'Ativo'
+      };
+
+      if (editThumbnail.trim()) {
+        updatePayload.thumbnail_url = editThumbnail.trim();
+      }
+
+      let updErr: any = null;
+      try {
+        const { error } = await supabase
+          .schema('vidlytics')
+          .from('vid_videos')
+          .update(updatePayload)
+          .eq('id', editingMedia.id)
+          .eq('store_id', storeId);
+        updErr = error;
+      } catch {
+        const { error } = await supabase
+          .from('vid_videos')
+          .update(updatePayload)
+          .eq('id', editingMedia.id)
+          .eq('store_id', storeId);
+        updErr = error;
+      }
+
+      if (updErr) {
+        console.warn('[BibliotecaTab] Erro ao atualizar no banco:', updErr);
+      }
+
+      // Atualiza localmente
+      setMediaList((prev) =>
+        prev.map((item) => {
+          if (item.id === editingMedia.id) {
+            return {
+              ...item,
+              name: editTitle,
+              origin: editOrigin,
+              thumbnail: editThumbnail || item.thumbnail,
+              activeStatus: editStatus,
+              product: selectedProd
+                ? { id: selectedProd.id, name: selectedProd.title, image: selectedProd.image_url || '' }
+                : undefined,
+              modelId: editModelId || null
+            };
+          }
+          return item;
+        })
+      );
+
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setEditingMedia(null);
+      }, 900);
+    } catch (err) {
+      console.error('[BibliotecaTab] Falha ao salvar edição:', err);
+    }
   };
 
   // Download real do arquivo
@@ -185,11 +539,41 @@ export const BibliotecaTab: React.FC = () => {
     }
   };
 
-  // Confirmar Exclusão com Recálculo Imediato
-  const handleConfirmDelete = () => {
-    if (!deletingMedia) return;
-    setMediaList((prev) => prev.filter((item) => item.id !== deletingMedia.id));
-    setDeletingMedia(null);
+  // Confirmar Exclusão com Remoção no Banco de Dados
+  const handleConfirmDelete = async () => {
+    if (!deletingMedia || !storeId) return;
+
+    setIsDeleting(true);
+    try {
+      let delErr: any = null;
+      try {
+        const { error } = await supabase
+          .schema('vidlytics')
+          .from('vid_videos')
+          .delete()
+          .eq('id', deletingMedia.id)
+          .eq('store_id', storeId);
+        delErr = error;
+      } catch {
+        const { error } = await supabase
+          .from('vid_videos')
+          .delete()
+          .eq('id', deletingMedia.id)
+          .eq('store_id', storeId);
+        delErr = error;
+      }
+
+      if (delErr) {
+        console.warn('[BibliotecaTab] Erro ao deletar no banco:', delErr);
+      }
+
+      setMediaList((prev) => prev.filter((item) => item.id !== deletingMedia.id));
+      setDeletingMedia(null);
+    } catch (err) {
+      console.error('[BibliotecaTab] Falha ao excluir mídia:', err);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const filteredMedia = mediaList.filter((item) => {
@@ -199,7 +583,7 @@ export const BibliotecaTab: React.FC = () => {
     return matchesSearch;
   });
 
-  // Tela completa de Edição de Vídeo (Print 3)
+  // Tela completa de Edição de Vídeo
   if (editingMedia) {
     return (
       <div className="space-y-6 pb-12">
@@ -278,14 +662,6 @@ export const BibliotecaTab: React.FC = () => {
               <span>O arquivo de vídeo deve ter no <strong>máximo 30 MB</strong>. Formatos aceitos: MP4, MOV e WEBM.</span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <label className="cursor-pointer px-4 py-2 bg-blue-50 hover:bg-blue-100 text-[#0094eb] rounded-xl text-xs font-bold transition-colors">
-                Escolher arquivo
-                <input type="file" accept="video/mp4,video/quicktime,video/webm" className="hidden" />
-              </label>
-              <span className="text-xs text-slate-400">Nenhum arquivo escolhido</span>
-            </div>
-
             {/* Preview do Vídeo */}
             <div className="w-36 h-56 rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-sm relative group">
               {editingMedia.videoUrl ? (
@@ -320,17 +696,9 @@ export const BibliotecaTab: React.FC = () => {
               </div>
 
               <div className="flex-1 w-full space-y-2">
-                <div className="flex items-center gap-3">
-                  <label className="cursor-pointer px-4 py-2 bg-blue-50 hover:bg-blue-100 text-[#0094eb] rounded-xl text-xs font-bold transition-colors">
-                    Escolher arquivo
-                    <input type="file" accept="image/*" className="hidden" />
-                  </label>
-                  <span className="text-xs text-slate-400">Nenhum arquivo escolhido</span>
-                </div>
-
                 <input
                   type="text"
-                  placeholder="Ou cole a URL da capa"
+                  placeholder="Cole a URL da capa"
                   value={editThumbnail}
                   onChange={(e) => setEditThumbnail(e.target.value)}
                   className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb]"
@@ -348,14 +716,14 @@ export const BibliotecaTab: React.FC = () => {
               PRODUTO VINCULADO (OPCIONAL)
             </label>
             <select
-              value={editProduct}
-              onChange={(e) => setEditProduct(e.target.value)}
+              value={editProductId}
+              onChange={(e) => setEditProductId(e.target.value)}
               className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
             >
-              <option value="Nenhum produto vinculado">Nenhum produto vinculado</option>
-              {editingMedia.product && (
-                <option value={editingMedia.product.name}>{editingMedia.product.name}</option>
-              )}
+              <option value="">Nenhum produto vinculado</option>
+              {availableProducts.map((p) => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
             </select>
           </div>
 
@@ -365,12 +733,14 @@ export const BibliotecaTab: React.FC = () => {
               MODELO/MEDIDA VINCULADO (OPCIONAL)
             </label>
             <select
-              value={editModel}
-              onChange={(e) => setEditModel(e.target.value)}
+              value={editModelId}
+              onChange={(e) => setEditModelId(e.target.value)}
               className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
             >
-              <option value="Nenhum">Nenhum</option>
-              <option value="Padrão">Padrão</option>
+              <option value="">Nenhum</option>
+              {availableModels.map((m) => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
             </select>
           </div>
 
@@ -387,22 +757,6 @@ export const BibliotecaTab: React.FC = () => {
               <option value="Ativo">Ativo</option>
               <option value="Inativo">Inativo</option>
             </select>
-          </div>
-
-          {/* USADO EM STORIES */}
-          <div className="space-y-2 pt-3 border-t border-slate-100 text-xs">
-            <div className="flex items-center gap-1.5 text-slate-600">
-              <span className="font-bold text-slate-700">USADO EM STORIES:</span>
-              <span className="font-semibold">{editingMedia.linkedStory ? 'Sim' : 'Não'}</span>
-            </div>
-            {editingMedia.linkedStory && (
-              <div className="space-y-1 pt-1">
-                <span className="text-slate-400 font-medium">Stories vinculados:</span>
-                <ul className="list-disc pl-5 text-slate-700 font-semibold">
-                  <li>{editingMedia.linkedStory}</li>
-                </ul>
-              </div>
-            )}
           </div>
 
           {/* BOTÃO SALVAR INFERIOR */}
@@ -431,6 +785,15 @@ export const BibliotecaTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Input de Arquivo oculto para Upload Direto */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="video/mp4,video/quicktime,video/webm,image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
       {/* 1. CABEÇALHO */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -444,7 +807,7 @@ export const BibliotecaTab: React.FC = () => {
         <div className="flex items-center gap-2.5 overflow-x-auto pb-1 md:pb-0 flex-nowrap shrink-0">
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0 cursor-pointer"
           >
             <svg
               className="w-3.5 h-3.5 text-slate-700"
@@ -464,7 +827,7 @@ export const BibliotecaTab: React.FC = () => {
 
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0 cursor-pointer"
           >
             <svg className="w-3.5 h-3.5 fill-current text-slate-700" viewBox="0 0 24 24">
               <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
@@ -472,25 +835,50 @@ export const BibliotecaTab: React.FC = () => {
             <span>TIKTOK</span>
           </button>
 
+          {/* BOTÃO URL EXTERNA */}
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0"
+            onClick={() => {
+              setUrlError(null);
+              setShowUrlModal(true);
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-slate-700 tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0 cursor-pointer"
           >
             <ExternalLink size={14} className="text-slate-600" />
             <span>URL EXTERNA</span>
           </button>
 
+          {/* BOTÃO FAZER UPLOAD */}
           <button
             type="button"
-            className="flex items-center gap-2 px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-colors shadow-md shadow-blue-500/20 whitespace-nowrap shrink-0 cursor-pointer"
+            disabled={isUploading}
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-colors shadow-md shadow-blue-500/20 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-60"
           >
-            <UploadCloud size={16} />
-            <span>FAZER UPLOAD</span>
+            {isUploading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>ENVIANDO...</span>
+              </>
+            ) : (
+              <>
+                <UploadCloud size={16} />
+                <span>FAZER UPLOAD</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      {/* 2. CARD DE CONSUMO DE ARMAZENAMENTO CALCULADO EM TEMPO REAL */}
+      {/* Alerta de erro de upload */}
+      {uploadError && (
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium">
+          <AlertTriangle size={15} className="shrink-0 text-red-500" />
+          <span>{uploadError}</span>
+        </div>
+      )}
+
+      {/* 2. CARD DE CONSUMO DE ARMAZENAMENTO */}
       <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3.5">
@@ -579,12 +967,18 @@ export const BibliotecaTab: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. TABELA DE MÍDIAS COM ALINHAMENTOS RIGOROSOS DE COLUNAS */}
+      {/* 4. TABELA DE MÍDIAS */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-6 py-3.5 bg-slate-50/60 border-b border-slate-100">
+        <div className="px-6 py-3.5 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between">
           <span className="text-xs font-extrabold text-slate-700 tracking-wider">
             {filteredMedia.length} MÍDIAS LISTADAS
           </span>
+          {loading && (
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <Loader2 size={13} className="animate-spin text-[#0094eb]" />
+              <span>Sincronizando...</span>
+            </div>
+          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -601,9 +995,17 @@ export const BibliotecaTab: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
+              {filteredMedia.length === 0 && !loading && (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
+                    Nenhuma mídia encontrada. Clique em <strong>FAZER UPLOAD</strong> ou <strong>URL EXTERNA</strong> para adicionar.
+                  </td>
+                </tr>
+              )}
+
               {filteredMedia.map((media) => (
                 <tr key={media.id} className="hover:bg-slate-50/80 transition-colors">
-                  {/* Mídia Thumbnail (Centralizado) */}
+                  {/* Mídia Thumbnail */}
                   <td className="py-3 px-6 text-center">
                     <div className="flex justify-center">
                       <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
@@ -623,7 +1025,7 @@ export const BibliotecaTab: React.FC = () => {
                     </div>
                   </td>
 
-                  {/* Nome do Arquivo (Alinhado à Esquerda) */}
+                  {/* Nome do Arquivo */}
                   <td className="py-3 px-4 text-left">
                     <p className="font-bold text-slate-800 text-sm truncate max-w-[240px]">
                       {media.name}
@@ -633,16 +1035,18 @@ export const BibliotecaTab: React.FC = () => {
                     </p>
                   </td>
 
-                  {/* Produto (Centralizado) */}
+                  {/* Produto */}
                   <td className="py-3 px-4 text-center">
                     <div className="flex justify-center items-center">
                       {media.product ? (
                         <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-700">
-                          <img
-                            src={media.product.image}
-                            alt={media.product.name}
-                            className="w-4 h-4 rounded-full object-cover"
-                          />
+                          {media.product.image && (
+                            <img
+                              src={media.product.image}
+                              alt={media.product.name}
+                              className="w-4 h-4 rounded-full object-cover"
+                            />
+                          )}
                           <span className="font-medium max-w-[130px] truncate">{media.product.name}</span>
                         </div>
                       ) : (
@@ -653,7 +1057,7 @@ export const BibliotecaTab: React.FC = () => {
                     </div>
                   </td>
 
-                  {/* Story Vinculado (Centralizado) */}
+                  {/* Story Vinculado */}
                   <td className="py-3 px-4 text-center">
                     {media.linkedStory ? (
                       <span className="inline-block px-3 py-1 bg-blue-50 text-[#0094eb] text-xs font-bold rounded-full">
@@ -664,12 +1068,12 @@ export const BibliotecaTab: React.FC = () => {
                     )}
                   </td>
 
-                  {/* Tamanho (Centralizado) */}
+                  {/* Tamanho */}
                   <td className="py-3 px-4 text-center text-xs font-semibold text-slate-600">
                     {media.size}
                   </td>
 
-                  {/* Status (Centralizado) */}
+                  {/* Status */}
                   <td className="py-3 px-4 text-center">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full">
                       <CheckCircle2 size={13} />
@@ -677,7 +1081,7 @@ export const BibliotecaTab: React.FC = () => {
                     </span>
                   </td>
 
-                  {/* AÇÕES: GRID COM COLUNAS RIGOROSAMENTE ALINHADAS */}
+                  {/* AÇÕES: GRID ALINHADO */}
                   <td className="py-3 px-6 text-center">
                     <div className="grid grid-cols-4 w-32 mx-auto justify-items-center items-center text-slate-400">
                       {/* 1. Coluna EDITAR */}
@@ -732,7 +1136,131 @@ export const BibliotecaTab: React.FC = () => {
         </div>
       </div>
 
-      {/* MODAL DE VISUALIZAÇÃO COM VÍDEO REAL HTML5 REPRODUZINDO COM SOM E CONTROLES */}
+      {/* MODAL 1: ADICIONAR VÍDEO POR URL EXTERNA */}
+      {showUrlModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            {/* Header Modal */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0094eb] flex items-center justify-center">
+                  <Link2 size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">Adicionar Vídeo por URL</h3>
+                  <p className="text-[11px] text-slate-500">Cole a URL direta ou streaming do vídeo</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowUrlModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Formulário URL Externa */}
+            <form onSubmit={handleSaveExternalUrl} className="p-6 space-y-4">
+              {urlError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600">
+                  {urlError}
+                </div>
+              )}
+
+              {/* URL DO VÍDEO */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                  URL DO VÍDEO *
+                </label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://exemplo.com/video.mp4 ou streaming"
+                  value={externalUrl}
+                  onChange={(e) => setExternalUrl(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors"
+                />
+              </div>
+
+              {/* TÍTULO DO VÍDEO */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                  TÍTULO DO VÍDEO (OPCIONAL)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Demonstração do Produto"
+                  value={externalTitle}
+                  onChange={(e) => setExternalTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors"
+                />
+              </div>
+
+              {/* PRODUTO VINCULADO */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                  PRODUTO VINCULADO (OPCIONAL)
+                </label>
+                <select
+                  value={externalProductId}
+                  onChange={(e) => setExternalProductId(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
+                >
+                  <option value="">Nenhum produto vinculado</option>
+                  {availableProducts.map((p) => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* MODELO / MEDIDA */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                  MODELO/MEDIDA VINCULADO (OPCIONAL)
+                </label>
+                <select
+                  value={externalModelId}
+                  onChange={(e) => setExternalModelId(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#0094eb] transition-colors"
+                >
+                  <option value="">Nenhum</option>
+                  {availableModels.map((m) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* BOTÕES DE AÇÃO */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowUrlModal(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingUrl}
+                  className="flex items-center gap-2 px-5 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold tracking-wider transition-colors shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-60"
+                >
+                  {isSubmittingUrl ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>SALVANDO...</span>
+                    </>
+                  ) : (
+                    <span>CADASTRAR MÍDIA</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: VISUALIZAÇÃO COM VÍDEO REAL HTML5 */}
       {viewingMedia && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
@@ -787,7 +1315,7 @@ export const BibliotecaTab: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
+      {/* MODAL 3: CONFIRMAÇÃO DE EXCLUSÃO */}
       {deletingMedia && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -808,17 +1336,20 @@ export const BibliotecaTab: React.FC = () => {
             <div className="flex items-center justify-end gap-2 pt-1">
               <button
                 type="button"
+                disabled={isDeleting}
                 onClick={() => setDeletingMedia(null)}
-                className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors cursor-pointer disabled:opacity-60"
               >
                 Cancelar
               </button>
               <button
                 type="button"
+                disabled={isDeleting}
                 onClick={handleConfirmDelete}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-colors shadow-sm cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-colors shadow-sm cursor-pointer disabled:opacity-60"
               >
-                Sim, Excluir
+                {isDeleting && <Loader2 size={13} className="animate-spin" />}
+                <span>Sim, Excluir</span>
               </button>
             </div>
           </div>
