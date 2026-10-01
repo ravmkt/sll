@@ -1,63 +1,23 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Eye, Check, ChevronLeft, ChevronRight, Sparkles, Radio, Flame, Gift } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Eye, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { DEFAULT_APPEARANCES, DefaultAppearance } from "@/data/defaultAppearances";
 
 interface TemplatesCarouselProps {
-  currentDefaultId?: string | null;
-  onSetDefault: (id: string) => void;
-  onPreview: (template: DefaultAppearance) => void;
+  templates?: any[];
+  onView: (id: string) => void;
+  onSetDefault?: (id: string) => void;
 }
 
-// Configuração visual temática para cada template
-const TEMPLATE_PREVIEWS: Record<string, {
-  accentColor: string;
-  badgeBg: string;
-  gradient: string;
-  icon: React.ComponentType<{ className?: string }>;
-  tagline: string;
-}> = {
-  DEFAULT_VIDLYTICS: {
-    accentColor: "#0094EB",
-    badgeBg: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    gradient: "from-blue-950/40 via-neutral-900 to-neutral-950",
-    icon: Sparkles,
-    tagline: "Identidade Azul Oficial",
-  },
-  DEFAULT_LIVE: {
-    accentColor: "#EF4444",
-    badgeBg: "bg-red-500/10 text-red-400 border-red-500/20",
-    gradient: "from-red-950/40 via-neutral-900 to-neutral-950",
-    icon: Radio,
-    tagline: "Foco em Transmissões e Urgência",
-  },
-  DEFAULT_BLACK_FRIDAY: {
-    accentColor: "#F59E0B",
-    badgeBg: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    gradient: "from-amber-950/30 via-neutral-900 to-neutral-950",
-    icon: Flame,
-    tagline: "Alta Conversão e Ofertas",
-  },
-  DEFAULT_NATAL: {
-    accentColor: "#DC2626",
-    badgeBg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    gradient: "from-emerald-950/30 via-neutral-900 to-neutral-950",
-    icon: Gift,
-    tagline: "Festividades de Fim de Ano",
-  },
-};
-
 export const TemplatesCarousel: React.FC<TemplatesCarouselProps> = ({
-  currentDefaultId,
+  templates = DEFAULT_APPEARANCES,
+  onView,
   onSetDefault,
-  onPreview,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  // Estados para suportar drag com mouse
+  // Estados de arrastar com mouse (drag-to-scroll)
   const isDown = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
@@ -66,19 +26,19 @@ export const TemplatesCarousel: React.FC<TemplatesCarouselProps> = ({
   const checkScroll = () => {
     if (!scrollRef.current) return;
     const { scrollLeft: sLeft, scrollWidth, clientWidth } = scrollRef.current;
-    setCanScrollLeft(sLeft > 8);
-    setCanScrollRight(sLeft < scrollWidth - clientWidth - 8);
+    setCanScrollLeft(sLeft > 10);
+    setCanScrollRight(sLeft < scrollWidth - clientWidth - 10);
   };
 
   useEffect(() => {
     checkScroll();
     window.addEventListener("resize", checkScroll);
     return () => window.removeEventListener("resize", checkScroll);
-  }, []);
+  }, [templates]);
 
   const handleScroll = (direction: "left" | "right") => {
     if (!scrollRef.current) return;
-    const offset = 320;
+    const offset = 340;
     scrollRef.current.scrollBy({
       left: direction === "left" ? -offset : offset,
       behavior: "smooth",
@@ -97,7 +57,7 @@ export const TemplatesCarousel: React.FC<TemplatesCarouselProps> = ({
     if (!isDown.current || !scrollRef.current) return;
     e.preventDefault();
     const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.4;
+    const walk = (x - startX.current) * 1.3;
     if (Math.abs(walk) > 5) {
       isDragging.current = true;
     }
@@ -110,30 +70,32 @@ export const TemplatesCarousel: React.FC<TemplatesCarouselProps> = ({
   };
 
   return (
-    <div className="relative group">
-      {/* Botão Scroll Esquerda */}
+    <div className="relative group/carousel py-2">
+      {/* Botão Seta Esquerda */}
       {canScrollLeft && (
         <button
+          type="button"
           onClick={() => handleScroll("left")}
-          aria-label="Rolar para a esquerda"
-          className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-neutral-900/90 border border-neutral-700 text-white shadow-xl flex items-center justify-center hover:bg-neutral-800 transition-all hover:scale-110"
+          aria-label="Anterior"
+          className="absolute -left-3 top-[44%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-800 dark:hover:text-white hover:scale-105 transition-all"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-6 h-6 stroke-[1.5]" />
         </button>
       )}
 
-      {/* Botão Scroll Direita */}
+      {/* Botão Seta Direita */}
       {canScrollRight && (
         <button
+          type="button"
           onClick={() => handleScroll("right")}
-          aria-label="Rolar para a direita"
-          className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-neutral-900/90 border border-neutral-700 text-white shadow-xl flex items-center justify-center hover:bg-neutral-800 transition-all hover:scale-110"
+          aria-label="Próximo"
+          className="absolute -right-3 top-[44%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-800 dark:hover:text-white hover:scale-105 transition-all"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-6 h-6 stroke-[1.5]" />
         </button>
       )}
 
-      {/* Trilho de Cards (Snap + Drag) */}
+      {/* Trilho horizontal */}
       <div
         ref={scrollRef}
         onScroll={checkScroll}
@@ -141,125 +103,116 @@ export const TemplatesCarousel: React.FC<TemplatesCarouselProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className="flex gap-4 overflow-x-auto pb-4 pt-1 px-1 scroll-smooth snap-x snap-mandatory select-none cursor-grab active:cursor-grabbing no-scrollbar"
+        className="flex gap-6 overflow-x-auto pb-4 pt-1 px-1 scroll-smooth snap-x snap-mandatory select-none cursor-grab active:cursor-grabbing no-scrollbar"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {DEFAULT_APPEARANCES.map((template) => {
-          const isCurrentDefault = currentDefaultId === template.id;
-          const meta = TEMPLATE_PREVIEWS[template.id] || {
-            accentColor: "#0094EB",
-            badgeBg: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-            gradient: "from-neutral-900 to-neutral-950",
-            icon: Sparkles,
-            tagline: "Template Pronto",
-          };
-          const Icon = meta.icon;
+        {templates.map((tpl: any) => {
+          const themeColor =
+            tpl.widget_style?.desktop?.floating_border_color || "#0094EB";
+          const isDefault = tpl.is_default;
 
           return (
             <div
-              key={template.id}
-              className={`snap-start shrink-0 w-[280px] sm:w-[300px] rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden bg-neutral-900/60 backdrop-blur-sm ${
-                isCurrentDefault
-                  ? "border-emerald-500/60 ring-2 ring-emerald-500/20 shadow-lg shadow-emerald-500/5"
-                  : "border-neutral-800 hover:border-neutral-700 hover:shadow-md hover:shadow-black/40"
-              }`}
+              key={tpl.id}
+              className="snap-start shrink-0 w-[290px] sm:w-[320px] flex flex-col gap-2"
             >
-              {/* Header do Card / Visual Mockup */}
-              <div
-                className={`relative h-40 bg-gradient-to-b ${meta.gradient} p-4 flex flex-col justify-between overflow-hidden border-b border-neutral-800/80`}
-              >
-                {/* Elementos visuais simulando a UI do tema */}
-                <div className="absolute inset-0 opacity-15 pointer-events-none">
-                  <div
-                    className="absolute -right-8 -bottom-8 w-36 h-36 rounded-full blur-2xl"
-                    style={{ backgroundColor: meta.accentColor }}
-                  />
-                  <div
-                    className="absolute -left-6 -top-6 w-28 h-28 rounded-full blur-xl"
-                    style={{ backgroundColor: meta.accentColor }}
-                  />
-                </div>
-
-                <div className="relative z-1 flex items-start justify-between">
-                  <div className="p-2 rounded-lg bg-neutral-900/80 border border-neutral-700/50 shadow-sm backdrop-blur-md">
-                    <Icon className="w-5 h-5" style={{ color: meta.accentColor }} />
-                  </div>
-                  {isCurrentDefault && (
-                    <Badge className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 gap-1 text-[11px] font-medium">
-                      <Check className="w-3 h-3" /> Padrão Ativo
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Mockup de Vídeo Stories do Tema */}
-                <div className="relative z-1 flex items-center gap-2">
-                  <div
-                    className="w-10 h-14 rounded-md border shadow-sm flex items-center justify-center bg-neutral-950/80"
-                    style={{ borderColor: meta.accentColor }}
-                  >
-                    <div
-                      className="w-2.5 h-2.5 rounded-full animate-pulse"
-                      style={{ backgroundColor: meta.accentColor }}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-medium text-neutral-400 truncate uppercase tracking-wider">
-                      {meta.tagline}
-                    </p>
-                    <p className="text-sm font-semibold text-white truncate">
-                      {template.name}
-                    </p>
-                  </div>
-                </div>
+              {/* Título do Template acima da imagem */}
+              <div className="flex items-center justify-between px-1">
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  {tpl.name}
+                </span>
+                {isDefault && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-[#0094eb] bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-full">
+                    <Star size={11} className="fill-[#0094eb]" /> Padrão
+                  </span>
+                )}
               </div>
 
-              {/* Corpo do Card */}
-              <div className="p-4 flex-1 flex flex-col justify-between gap-4">
-                <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">
-                  {template.description}
-                </p>
-
-                {/* Ações: Visualizar e Marcar como Padrão */}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-800/60">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      if (isDragging.current) return;
-                      e.stopPropagation();
-                      onPreview(template);
+              {/* Moldura da Imagem / Mockup com cantos arredondados */}
+              <div
+                onClick={() => {
+                  if (isDragging.current) return;
+                  onView(tpl.id);
+                }}
+                className="group relative w-full aspect-[16/10] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-200"
+              >
+                {/* Caso o template tenha imagem real cadastrada */}
+                {tpl.imageUrl && (
+                  <img
+                    src={tpl.imageUrl}
+                    alt={tpl.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = "none";
                     }}
-                    className="w-full text-xs border-neutral-700 bg-neutral-900/60 hover:bg-neutral-800 text-neutral-200 hover:text-white gap-1.5"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    Visualizar
-                  </Button>
+                  />
+                )}
 
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={isCurrentDefault}
-                    onClick={(e) => {
-                      if (isDragging.current) return;
-                      e.stopPropagation();
-                      onSetDefault(template.id);
-                    }}
-                    className={`w-full text-xs font-medium transition-all ${
-                      isCurrentDefault
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default"
-                        : "bg-white hover:bg-neutral-200 text-neutral-950"
-                    }`}
-                  >
-                    {isCurrentDefault ? (
-                      <span className="flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" /> Ativo
-                      </span>
-                    ) : (
-                      "Definir padrão"
-                    )}
-                  </Button>
+                {/* Mockup visual estilizado (fallback elegante como a vitrine) */}
+                <div className="w-full h-full p-4 flex flex-col justify-between bg-[#f8f6f2] dark:bg-slate-900">
+                  {/* Topo tipo navegador */}
+                  <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-2">
+                    <span className="text-[11px] font-serif font-bold tracking-widest text-slate-700 dark:text-slate-300">
+                      ÉCLAT
+                    </span>
+                    <div className="flex gap-2 text-[9px] uppercase tracking-wider text-slate-400">
+                      <span>Vestidos</span>
+                      <span>Calçados</span>
+                    </div>
+                  </div>
+
+                  {/* Conteúdo com moldura de celular simulando Stories/Widget */}
+                  <div className="flex-1 flex items-center justify-between px-2 pt-2">
+                    <div className="space-y-1 max-w-[140px]">
+                      <p className="text-[9px] uppercase tracking-widest text-slate-400 font-semibold">
+                        Últimas Unidades
+                      </p>
+                      <h5 className="text-xs font-serif font-bold text-slate-800 dark:text-slate-100 uppercase leading-tight">
+                        Elegância Essencial
+                      </h5>
+                    </div>
+
+                    {/* Mockup do Widget Flutuante / Stories com a cor do template */}
+                    <div
+                      className="w-14 h-24 rounded-xl border-2 shadow-md bg-white dark:bg-slate-800 flex flex-col justify-between p-1 relative overflow-hidden"
+                      style={{ borderColor: themeColor }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: themeColor }}
+                        />
+                        <span className="text-[7px] text-slate-400 font-bold">LIVE</span>
+                      </div>
+                      <div className="w-full h-8 rounded bg-slate-100 dark:bg-slate-700/60" />
+                      <div
+                        className="w-full py-0.5 rounded text-[7px] text-center text-white font-medium shadow-xs"
+                        style={{ backgroundColor: themeColor }}
+                      >
+                        Ver Loja
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Efeito hover suave */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 dark:group-hover:bg-white/5 transition-colors" />
+              </div>
+
+              {/* Botão Visualizar abaixo da imagem */}
+              <div className="flex justify-center pt-1">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    if (isDragging.current) return;
+                    e.stopPropagation();
+                    onView(tpl.id);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 dark:hover:text-white font-medium py-1 px-3 rounded-md transition-colors"
+                >
+                  <Eye size={15} />
+                  Visualizar
+                </button>
               </div>
             </div>
           );

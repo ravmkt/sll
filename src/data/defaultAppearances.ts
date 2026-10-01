@@ -2,6 +2,7 @@ export interface DefaultAppearance {
   id: string;
   name: string;
   description: string;
+  imageUrl?: string;
   widget_style: {
     desktop: Record<string, any>;
     mobile: Record<string, any>;
@@ -63,7 +64,8 @@ export const DEFAULT_APPEARANCES: DefaultAppearance[] = [
   {
     id: 'DEFAULT_VIDLYTICS',
     name: 'Vidlytics',
-    description: 'Estilo padrão do sistema, com a identidade azul Vidlytics.',
+    description: 'Estilo padrão do sistema com a identidade azul Vidlytics.',
+    imageUrl: '/templates/vidlytics-preview.png',
     widget_style: {
       desktop: createBaseConfig('#0094EB'),
       mobile: createBaseConfig('#0094EB'),
@@ -72,7 +74,8 @@ export const DEFAULT_APPEARANCES: DefaultAppearance[] = [
   {
     id: 'DEFAULT_LIVE',
     name: 'Live',
-    description: 'Visual com destaque vermelho, ideal para transmissões ao vivo e promoções urgentes.',
+    description: 'Visual com destaque vermelho, ideal para transmissões ao vivo.',
+    imageUrl: '/templates/live-preview.png',
     widget_style: {
       desktop: createBaseConfig('#EF4444'),
       mobile: createBaseConfig('#EF4444'),
@@ -81,7 +84,8 @@ export const DEFAULT_APPEARANCES: DefaultAppearance[] = [
   {
     id: 'DEFAULT_BLACK_FRIDAY',
     name: 'Black Friday',
-    description: 'Preto e amarelo/dourado para campanhas de Black Friday.',
+    description: 'Preto e dourado/amarelo para campanhas de Black Friday.',
+    imageUrl: '/templates/blackfriday-preview.png',
     widget_style: {
       desktop: createBaseConfig('#F59E0B'),
       mobile: createBaseConfig('#F59E0B'),
@@ -91,6 +95,7 @@ export const DEFAULT_APPEARANCES: DefaultAppearance[] = [
     id: 'DEFAULT_NATAL',
     name: 'Natal',
     description: 'Vermelho e verde para campanhas natalinas.',
+    imageUrl: '/templates/natal-preview.png',
     widget_style: {
       desktop: createBaseConfig('#DC2626'),
       mobile: createBaseConfig('#DC2626'),

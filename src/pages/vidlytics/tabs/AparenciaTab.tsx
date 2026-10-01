@@ -2,16 +2,15 @@ import React, { useState } from 'react';
 import { Plus, Palette, Star, Pencil, Trash2, Eye } from 'lucide-react';
 import AparenciaModal from '../components/AparenciaModal';
 import { useAppearanceLogic } from "../../../hooks/vidlytics/useAppearanceLogic";
-import { DEFAULT_APPEARANCES, isDefaultAppearance } from '../../../data/defaultAppearances';
 import ConfirmDeleteModal from '../../../components/common/ConfirmDeleteModal';
+import { TemplatesCarousel } from '@/components/vidlytics/appearance/TemplatesCarousel';
 
 const StyleRow: React.FC<{
   app: any;
   onEdit: (id: string) => void;
   onOpenDelete?: (id: string, name: string) => void;
   onSetDefault: (id: string) => void;
-  isTemplate?: boolean;
-}> = ({ app, onEdit, onOpenDelete, onSetDefault, isTemplate }) => {
+}> = ({ app, onEdit, onOpenDelete, onSetDefault }) => {
   const primaryColor = app.widget_style?.desktop?.floating_border_color || '#0094EB';
   return (
     <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
@@ -42,11 +41,11 @@ const StyleRow: React.FC<{
         <button
           onClick={() => onEdit(app.id)}
           className="p-2 text-slate-400 hover:text-[#0094eb] transition-colors"
-          title={isTemplate ? 'Visualizar e usar como base' : 'Editar estilo'}
+          title="Editar estilo"
         >
-          {isTemplate ? <Eye size={16} /> : <Pencil size={16} />}
+          <Pencil size={16} />
         </button>
-        {!isTemplate && onOpenDelete && (
+        {onOpenDelete && (
           <button onClick={() => onOpenDelete(app.id, app.name)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
             <Trash2 size={16} />
           </button>
@@ -56,7 +55,7 @@ const StyleRow: React.FC<{
   );
 };
 
-const StyleTable: React.FC<{ children: React.ReactNode; empty?: boolean }> = ({ children, empty }) => (
+const StyleTable: React.FC<{ children?: React.ReactNode; empty?: boolean }> = ({ children, empty }) => (
   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
     {empty ? (
       <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm">Nenhum estilo personalizado criado ainda.</div>
@@ -90,7 +89,7 @@ const AparenciaTab: React.FC = () => {
     isLoadingStyle, isSaving,
   } = useAppearanceLogic();
 
-  // ─────────── Modal de confirmação de exclusão ───────────
+  // Modal de confirmação de exclusão
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -126,22 +125,19 @@ const AparenciaTab: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* CARD 1: ESTILOS PADRÕES (TEMPLATES) */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Estilos Padrões</h3>
-                <p className="text-sm text-slate-500">Templates prontos. Visualize, personalize e salve como um novo estilo.</p>
-              </div>
+          {/* SEÇÃO 1: TEMPLATES (Carrossel Horizontal com Mockups) */}
+          <section className="space-y-2">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">Templates</h3>
             </div>
-            <StyleTable>
-              {defaultAppearances.map((app) => (
-                <StyleRow key={app.id} app={app} onEdit={openEditStyle} onSetDefault={setAsDefault} isTemplate />
-              ))}
-            </StyleTable>
+            <TemplatesCarousel
+              templates={defaultAppearances}
+              onView={openEditStyle}
+              onSetDefault={setAsDefault}
+            />
           </section>
 
-          {/* CARD 2: SEUS ESTILOS */}
+          {/* SEÇÃO 2: SEUS ESTILOS */}
           <section>
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -162,7 +158,13 @@ const AparenciaTab: React.FC = () => {
             ) : (
               <StyleTable>
                 {customAppearances.map((app) => (
-                  <StyleRow key={app.id} app={app} onEdit={openEditStyle} onOpenDelete={handleOpenDelete} onSetDefault={setAsDefault} />
+                  <StyleRow
+                    key={app.id}
+                    app={app}
+                    onEdit={openEditStyle}
+                    onOpenDelete={handleOpenDelete}
+                    onSetDefault={setAsDefault}
+                  />
                 ))}
               </StyleTable>
             )}
@@ -203,5 +205,3 @@ const AparenciaTab: React.FC = () => {
 };
 
 export default AparenciaTab;
-
-
