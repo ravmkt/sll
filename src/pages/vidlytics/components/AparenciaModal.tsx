@@ -1092,6 +1092,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         </FormField>
                         <FormField label="Itens Visíveis">
                           <input type="number" min="1" max="10" value={getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4)} onChange={e => setC('carousel_visible_items', parseInt(e.target.value) || 1)} className={inputClass} />
+                <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">No mobile sempre aparecem 3 itens (1 central + 2 cortados), com loop infinito. Este valor só vale no desktop.</p>
                         </FormField>
                         <FormField label="Espaçamento (px)" className="col-span-2">
                           <input type="number" min="0" value={getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
