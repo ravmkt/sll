@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+﻿import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Search,
   UploadCloud,
@@ -207,7 +207,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       try {
         const { data } = await supabase
           .from("products")
-          .select("id, name, title, image_url, thumbnail, price")
+          .select("*")
           .eq("store_id", storeId)
           .limit(100);
 

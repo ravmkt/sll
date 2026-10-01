@@ -1,3 +1,20 @@
+﻿// Extrator oficial de ID de YouTube e Shorts
+const extractYouTubeId = (url?: string): string | null => {
+  if (!url) return null;
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+  const match = url.match(regExp);
+  return match && match[1] ? match[1] : null;
+};
+
+const getVideoPoster = (video: any): string => {
+  if (!video) return '';
+  if (video.thumbnail_url && !video.thumbnail_url.includes('.mp4')) return video.thumbnail_url;
+  if (video.cover_url && !video.cover_url.includes('.mp4')) return video.cover_url;
+  const ytId = extractYouTubeId(video.video_url);
+  if (ytId) return "https://img.youtube.com/vi/" + ytId + "/hqdefault.jpg";
+  if (video.thumbnail && !video.thumbnail.includes('.mp4')) return video.thumbnail;
+  return '';
+};
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft,
@@ -471,7 +488,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
             {selectedVideoIds.map((vidId, index) => {
               const video = allVideos.find((v) => v.id === vidId);
               if (!video) return null;
-              const poster = video.thumbnail_url || video.cover_url || video.video_url;
+              const poster = getVideoPoster(video);
               const isDragging = dragIndex === index;
 
               return (
@@ -719,7 +736,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-5">
                   {allVideos.map((vid) => {
                     const isSelected = selectedVideoIds.includes(vid.id);
-                    const poster = vid.thumbnail_url || vid.cover_url || vid.video_url;
+                    const poster = getVideoPoster(vid);
 
                     return (
                       <button
