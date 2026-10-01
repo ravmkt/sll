@@ -49,6 +49,35 @@
     });
   }
 
+var liveWidgetRoot = null;
+var liveWidgetShadow = null;
+var currentLiveData = null;
+var liveDivulgacaoConfig = null;
+var liveAoVivoConfig = null;
+var livePlayerConfig = {
+  primary_color: '#e11d48',
+  background_color: '#000000',
+  show_viewer_count: true,
+  show_chat: true,
+  autoplay_muted: true
+};
+
+  function fetchJson(path, options) {
+    return supabaseFetch(path, options).then(function (res) {
+      if (!res.ok) {
+        return res.text().then(function (t) {
+          console.warn('[LiveCommerce] HTTP ' + res.status + ' em ' + path, t);
+          return [];
+        });
+      }
+      if (res.status === 204) return [];
+      return res.json();
+    }).catch(function (err) {
+      console.error('[LiveCommerce] Erro de rede em ' + path, err);
+      return [];
+    });
+  }
+
   function cleanUuid(val) {
     if (!val) return null;
     var s = String(val).trim();
