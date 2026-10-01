@@ -490,50 +490,62 @@ export const ComentariosTab: React.FC = () => {
 
                       {/* Ações */}
                       <td className="py-4 px-6 text-center align-top">
-                        <div className="inline-flex items-center justify-center gap-1.5 text-slate-400">
-                          {/* Aprovar rápida (se pendente ou rejeitado) */}
-                          {comment.status !== 'APROVADO' && (
-                            <button
-                              type="button"
-                              title="Aprovar comentário"
-                              onClick={() => handleApprove(comment.id)}
-                              className="p-1.5 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                            >
-                              <CheckCircle size={16} />
-                            </button>
-                          )}
+                        <div className="inline-flex items-center justify-center text-slate-400">
+                          {/* Aprovar */}
+                          <div className="w-8 h-8 flex items-center justify-center">
+                            {comment.status !== 'APROVADO' ? (
+                              <button
+                                type="button"
+                                title="Aprovar comentário"
+                                onClick={() => handleApprove(comment.id)}
+                                className="p-1.5 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                              >
+                                <CheckCircle size={16} />
+                              </button>
+                            ) : (
+                              <span className="w-7 h-7" aria-hidden="true" />
+                            )}
+                          </div>
 
-                          {/* Rejeitar rápido (se pendente ou aprovado) */}
-                          {comment.status !== 'REJEITADO' && (
-                            <button
-                              type="button"
-                              title="Rejeitar comentário"
-                              onClick={() => handleReject(comment.id)}
-                              className="p-1.5 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                            >
-                              <XCircle size={16} />
-                            </button>
-                          )}
+                          {/* Rejeitar */}
+                          <div className="w-8 h-8 flex items-center justify-center">
+                            {comment.status !== 'REJEITADO' ? (
+                              <button
+                                type="button"
+                                title="Rejeitar comentário"
+                                onClick={() => handleReject(comment.id)}
+                                className="p-1.5 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              >
+                                <XCircle size={16} />
+                              </button>
+                            ) : (
+                              <span className="w-7 h-7" aria-hidden="true" />
+                            )}
+                          </div>
 
                           {/* Responder */}
-                          <button
-                            type="button"
-                            title="Responder cliente"
-                            onClick={() => openReplyModal(comment)}
-                            className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                          >
-                            <MessageSquare size={16} />
-                          </button>
+                          <div className="w-8 h-8 flex items-center justify-center">
+                            <button
+                              type="button"
+                              title="Responder cliente"
+                              onClick={() => openReplyModal(comment)}
+                              className="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                            >
+                              <MessageSquare size={16} />
+                            </button>
+                          </div>
 
                           {/* Excluir */}
-                          <button
-                            type="button"
-                            title="Excluir comentário"
-                            onClick={() => openDeleteModal(comment)}
-                            className="p-1.5 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <div className="w-8 h-8 flex items-center justify-center">
+                            <button
+                              type="button"
+                              title="Excluir comentário"
+                              onClick={() => openDeleteModal(comment)}
+                              className="p-1.5 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -749,3 +761,4 @@ export const ComentariosTab: React.FC = () => {
 };
 
 export default ComentariosTab;
+
