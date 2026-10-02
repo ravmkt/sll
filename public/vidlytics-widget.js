@@ -480,12 +480,31 @@ function normalizeAppearanceItem(item) {
   }
 var JSONB_KEYS = ['floating_config', 'carousel_config', 'grid_config', 'modal_config', 'dynamic_carousel_config'];
 
+  function orderedFlattenKeys(source) {
+    var keys = Object.keys(source);
+    if (keys.indexOf('desktop') === -1 && keys.indexOf('mobile') === -1) return keys;
+    var dev = 'desktop';
+    try { dev = getDevice(); } catch (e) {}
+    var same = source.same_appearance_all_devices;
+    ['desktop', 'mobile'].forEach(function (k) {
+      var o = source[k];
+      if (same === undefined && isPlainObject(o) && o.same_appearance_all_devices !== undefined) same = o.same_appearance_all_devices;
+    });
+    var sameAll = same === true || same === 'true' || same === 1 || same === '1';
+    var winner = sameAll ? 'desktop' : dev;
+    var loser = winner === 'desktop' ? 'mobile' : 'desktop';
+    var rest = keys.filter(function (k) { return k !== 'desktop' && k !== 'mobile'; });
+    return rest
+      .concat(keys.indexOf(loser) !== -1 ? [loser] : [])
+      .concat(keys.indexOf(winner) !== -1 ? [winner] : []);
+  }
+
   function flattenAppearanceInto(target, source, depth) {
     if (depth === undefined) depth = 0;
     if (depth > 12 || !source) return target;
     if (typeof source === 'string') source = parseJsonIfNeeded(source);
     if (!isPlainObject(source)) return target;
-    Object.keys(source).forEach(function (key) {
+    orderedFlattenKeys(source).forEach(function (key) {
       var value = source[key];
       if (value === undefined || value === null || value === '') return;
       if (JSONB_KEYS.indexOf(key) !== -1) { target[key] = value; return; }
@@ -1417,9 +1436,9 @@ function getCarouselConfig(appearance) {
   else if (shape === 'landscape' || shape === 'paisagem' || shape === '16:9' || shape === '16_9') aspect = '16/9';
 
   var objectFit = String(rcv('object_fit', 'carousel_object_fit', 'cover')).trim().toLowerCase();
-  var itemWidth = toNumber(rcv('width', 'card_size', '120'), 120);
+  var itemWidth = toNumber(rcv('width', 'carousel_item_size', rcv('width', 'card_size', '120')), 120);
   var visibleItems = safeInt(rcv('visible_items', 'carousel_visible_items', '4'), 4);
-  var itemSpacing = toNumber(rcv('spacing', 'carousel_item_spacing', '8'), 8);
+  var itemSpacing = toNumber(rcv('spacing', 'carousel_gap', rcv('spacing', 'carousel_item_spacing', '8')), 8);
   
   var marginTop = toNumber(rcv('margin_top', 'carousel_margin_top', '0'), 0);
   var marginBottom = toNumber(rcv('margin_bottom', 'carousel_margin_bottom', '0'), 0);
@@ -1523,7 +1542,7 @@ function getGridConfig(appearance) {
   var sizeNumber = toNumber(rcv('width', 'grid_size', '200'), 200);
   var columns = safeInt(rcv('visible_items', 'grid_columns', '4'), 4);
   var rows = safeInt(rcv('rows', 'grid_rows', '1'), 1);
-var spacing = safeInt(rcv('spacing', 'grid_spacing', '16'), 16);
+var spacing = safeInt(rcv('spacing', 'grid_gap', rcv('spacing', 'grid_spacing', '16')), 16);
   var marginTop = toNumber(rcv('margin_top', 'grid_margin_top', '0'), 0);
   var marginBottom = toNumber(rcv('margin_bottom', 'grid_margin_bottom', '0'), 0);
   var marginLeft = toNumber(rcv('margin_left', 'grid_margin_left', '0'), 0);
@@ -7718,3 +7737,4 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
