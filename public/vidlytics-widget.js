@@ -4688,6 +4688,10 @@ return {
   enabled: enabled,
   width: toNumber(rcv('width', '160'), 160),
   sizeMode: String(rcv('size_mode', 'width')).trim().toLowerCase(),
+  marginTop: parseFloat(rcv('margin_top', 0)) || 0,
+  marginBottom: parseFloat(rcv('margin_bottom', 0)) || 0,
+  marginLeft: parseFloat(rcv('margin_left', 0)) || 0,
+  marginRight: parseFloat(rcv('margin_right', 0)) || 0,
   visibleItems: parseFloat(rcv('visible_items', (window.innerWidth < 768 ? 2 : 4))) || (window.innerWidth < 768 ? 2 : 4),
   spacing: toNumber(rcv('spacing', '14'), 14),
   shape: shape,
@@ -4861,8 +4865,8 @@ cfg.borderRadius = isNaN(parsedRadius) ? 12 : parsedRadius;
       paddingBottom: '8px',
       marginTop: (cfg.marginTop || 0) + 'px',
       marginBottom: (cfg.marginBottom || 0) + 'px',
-      paddingLeft: (cfg.marginLeft || 0) + 'px',
-      paddingRight: (cfg.marginRight || 0) + 'px',
+      paddingLeft: '0px',
+      paddingRight: '0px',
       boxSizing: 'border-box',
     });
 
@@ -5115,10 +5119,11 @@ var activeIndex = visibleCount;
     // 6. Atualização visual de escalas, filtros e reprodução de vídeo unificada
     function applyStyles() {
       if (container) {
-        container.style.width = '100vw';
-        container.style.marginLeft = 'calc(-50vw + 50%)';
-        container.style.marginRight = 'calc(-50vw + 50%)';
-        container.style.maxWidth = '100vw';
+        var vlDcL = parseFloat(cfg.marginLeft) || 0, vlDcR = parseFloat(cfg.marginRight) || 0;
+        container.style.width = 'calc(100vw - ' + vlDcL + 'px - ' + vlDcR + 'px)';
+        container.style.marginLeft = 'calc(-50vw + 50% + ' + vlDcL + 'px)';
+        container.style.marginRight = 'calc(-50vw + 50% + ' + vlDcR + 'px)';
+        container.style.maxWidth = 'none';
         container.style.boxSizing = 'border-box';
         container.style.overflow = 'hidden'; container.style.setProperty('overflow', 'clip', 'important'); container.style.setProperty('overscroll-behavior-x', 'contain', 'important');
   ['mousedown','touchstart','pointerdown'].forEach(function (ev) { container.addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: true }); });

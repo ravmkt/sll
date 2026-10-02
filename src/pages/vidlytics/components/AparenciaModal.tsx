@@ -1439,16 +1439,16 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <input type="number" min="0" value={getC('dyn_carousel_spacing') ?? 8} onChange={e => setC('dyn_carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField></div>
                         <FormField label="Margem Superior (px)">
-                          <input type="number" min="0" value={getC('dyn_carousel_margin_top') || 0} onChange={e => setC('dyn_carousel_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="text" inputMode="text" value={getC('dyn_carousel_margin_top') || 0} onChange={e => { const v = e.target.value.trim(); setC('dyn_carousel_margin_top', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('dyn_carousel_margin_top') as any) === '-') setC('dyn_carousel_margin_top', 0); }} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Inferior (px)">
-                          <input type="number" min="0" value={getC('dyn_carousel_margin_bottom') || 0} onChange={e => setC('dyn_carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="text" inputMode="text" value={getC('dyn_carousel_margin_bottom') || 0} onChange={e => { const v = e.target.value.trim(); setC('dyn_carousel_margin_bottom', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('dyn_carousel_margin_bottom') as any) === '-') setC('dyn_carousel_margin_bottom', 0); }} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Esquerda (px)">
-                          <input type="number" min="0" value={getC('dyn_carousel_margin_left') || 0} onChange={e => setC('dyn_carousel_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="text" inputMode="text" value={getC('dyn_carousel_margin_left') || 0} onChange={e => { const v = e.target.value.trim(); setC('dyn_carousel_margin_left', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('dyn_carousel_margin_left') as any) === '-') setC('dyn_carousel_margin_left', 0); }} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Direita (px)">
-                          <input type="number" min="0" value={getC('dyn_carousel_margin_right') || 0} onChange={e => setC('dyn_carousel_margin_right', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="text" inputMode="text" value={getC('dyn_carousel_margin_right') || 0} onChange={e => { const v = e.target.value.trim(); setC('dyn_carousel_margin_right', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('dyn_carousel_margin_right') as any) === '-') setC('dyn_carousel_margin_right', 0); }} className={inputClass} />
                         </FormField>
                       </div>
                     </Accordion>
