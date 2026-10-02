@@ -5120,9 +5120,25 @@ var activeIndex = visibleCount;
     function applyStyles() {
       if (container) {
         var vlDcL = parseFloat(cfg.marginLeft) || 0, vlDcR = parseFloat(cfg.marginRight) || 0;
-        container.style.width = 'calc(100vw - ' + vlDcL + 'px - ' + vlDcR + 'px)';
-        container.style.marginLeft = 'calc(-50vw + 50% + ' + vlDcL + 'px)';
-        container.style.marginRight = 'calc(-50vw + 50% + ' + vlDcR + 'px)';
+        var vlRef = { left: 0, right: document.documentElement.clientWidth };
+        var vlPE = container.parentElement;
+        var vlAnc = vlPE;
+        while (vlAnc && vlAnc !== document.body && vlAnc !== document.documentElement) {
+          var vlOv = getComputedStyle(vlAnc).overflowX;
+          if (vlOv === 'hidden' || vlOv === 'clip' || vlOv === 'auto' || vlOv === 'scroll') {
+            var vlAr = vlAnc.getBoundingClientRect();
+            vlRef = { left: Math.max(0, vlAr.left), right: Math.min(vlRef.right, vlAr.right) };
+            break;
+          }
+          vlAnc = vlAnc.parentElement;
+        }
+        var vlPr = vlPE.getBoundingClientRect(), vlPs = getComputedStyle(vlPE);
+        var vlParLeft = vlPr.left + (parseFloat(vlPs.paddingLeft) || 0) + (parseFloat(vlPs.borderLeftWidth) || 0);
+        container.style.width = Math.max(0, vlRef.right - vlRef.left - vlDcL - vlDcR) + 'px';
+        container.style.marginLeft = (vlRef.left - vlParLeft + vlDcL) + 'px';
+        container.style.marginRight = '0px';
+        var vlDelta = (vlRef.left + vlDcL) - container.getBoundingClientRect().left;
+        if (Math.abs(vlDelta) > 0.5) { container.style.marginLeft = ((parseFloat(container.style.marginLeft) || 0) + vlDelta) + 'px'; }
         container.style.maxWidth = 'none';
         container.style.boxSizing = 'border-box';
         container.style.overflow = 'hidden'; container.style.setProperty('overflow', 'clip', 'important'); container.style.setProperty('overscroll-behavior-x', 'contain', 'important');
