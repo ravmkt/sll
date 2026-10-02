@@ -394,7 +394,7 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
   const borderRadius = isCircle ? '50%' : `${Number(carousel?.border_radius ?? 12)}px`;
 
   return (
-    <div className="w-full overflow-hidden select-none box-border" style={{ paddingLeft: marginL, paddingRight: marginR, paddingTop: marginT, paddingBottom: marginB }} ref={containerRef}>
+    <div className="w-full overflow-hidden select-none box-border" style={{ paddingTop: marginT, paddingBottom: marginB }} ref={containerRef}>
       {carousel?.show_title && (
         <div className="w-full px-4 mb-2" style={{ textAlign: titleAlign as any }}>
           <h4 style={{ fontSize: `${Number(carousel?.title_font_size ?? 14)}px`, fontWeight: carousel?.title_bold ? 'bold' : 'normal' }} className={isMobile ? 'text-slate-800 dark:text-white' : 'text-slate-800 dark:text-slate-100 uppercase tracking-wider'}>
@@ -402,7 +402,7 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
           </h4>
         </div>
       )}
-      <div className="relative w-full py-4 cursor-grab active:cursor-grabbing touch-pan-y" onMouseDown={e => { setNoTransition(true); setDragStartX(e.clientX); }} onMouseMove={e => { if (dragStartX !== null) setDragOffset(e.clientX - dragStartX); }} onMouseUp={() => { if (dragStartX !== null) { if (dragOffset > 50) setTrackIndex(p => p - 1); else if (dragOffset < -50) setTrackIndex(p => p + 1); setDragStartX(null); setDragOffset(0); setNoTransition(false); } }}>
+      <div className="overflow-hidden" style={{ marginLeft: marginL, marginRight: marginR }}><div className="relative w-full py-4 cursor-grab active:cursor-grabbing touch-pan-y" onMouseDown={e => { setNoTransition(true); setDragStartX(e.clientX); }} onMouseMove={e => { if (dragStartX !== null) setDragOffset(e.clientX - dragStartX); }} onMouseUp={() => { if (dragStartX !== null) { if (dragOffset > 50) setTrackIndex(p => p - 1); else if (dragOffset < -50) setTrackIndex(p => p + 1); setDragStartX(null); setDragOffset(0); setNoTransition(false); } }}>
         <div className="flex items-center" style={{ gap: `${spacingNum}px`, transform: `translateX(calc(50% - ${trackIndex * step + baseItemWidth / 2}px + ${dragOffset}px))`, transition: noTransition || dragStartX !== null ? 'none' : 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)' }}>
           {trackVideos.map((videoSrc, i) => {
             const isAct = i === trackIndex;
@@ -425,6 +425,7 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
           })}
         </div>
       </div>
+    </div>
     </div>
   );
 };
