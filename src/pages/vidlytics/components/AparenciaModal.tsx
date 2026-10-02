@@ -1606,29 +1606,25 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
                         {activeTab === 'carrossel' && (
                           <div className="w-full h-full flex items-center justify-center">
-                            <ScaleToFit>
-                              <div className="w-[850px] max-w-full flex justify-center">
+                            <div className="w-full flex justify-center">
                                 <CarouselPreview
                                   carousel={carouselPreviewData}
                                   colors={{ primary: formData?.primary_color || '#0094EB' }}
                                   isMobile={false}
                                 />
                               </div>
-                            </ScaleToFit>
                           </div>
                         )}
 
                         {activeTab === 'carrossel-dinamico' && (
                           <div className="w-full h-full flex items-center justify-center">
-                            <ScaleToFit>
-                              <div className="w-[850px] max-w-full flex justify-center">
+                            <div className="w-full flex justify-center">
                                 <DynamicCarouselPreview
                                   carousel={dynCarouselPreviewData}
                                   colors={{ primary: formData?.primary_color || '#0094EB' }}
                                   isMobile={false}
                                 />
                               </div>
-                            </ScaleToFit>
                           </div>
                         )}
 
