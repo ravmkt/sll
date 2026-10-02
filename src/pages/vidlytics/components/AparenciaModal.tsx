@@ -292,7 +292,7 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
         </h4>
       )}
       <div className="relative w-full cursor-grab active:cursor-grabbing" onMouseDown={e => handleDragStart(e.clientX)} onMouseMove={e => handleDragMove(e.clientX)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd} onTouchStart={e => handleDragStart(e.touches[0].clientX)} onTouchMove={e => handleDragMove(e.touches[0].clientX)} onTouchEnd={handleDragEnd}>
-        <div style={{ width: `${groupWidth}px`, marginLeft: `${marginL + (availW - groupWidth) / 2}px`, overflow: 'hidden' }}>
+        <div style={{ width: `${groupWidth}px`, maxWidth: '100%', marginLeft: 'auto', marginRight: 'auto', position: 'relative', left: `${(marginL - marginR) / 2}px`, overflow: 'hidden' }}>
         <div className="flex items-start" style={{ gap: `${spacingNum}px`, transform: transformStyle, transition: noTransition || dragStartX !== null ? 'none' : 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)' }}>
           {trackVideos.map((videoSrc, i) => (
             <div key={i} className="shrink-0 flex flex-col transition-all duration-300" style={{ width: `${baseItemWidth}px`, gap: '8px' }}>
