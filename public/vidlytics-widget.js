@@ -5725,7 +5725,7 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
       innerMask.className = 'vidlytics-carousel-inner-mask';
       innerMask.style.cssText = [
         'position:absolute !important;',
-        'inset:' + borderWidthNum + 'px !important;',
+        'inset:' + borderWidthNum + 'px !important;', 'border-radius:' + innerRadiusCss + ' !important;',
         'overflow:hidden !important;',
         'z-index:1 !important;',
         'pointer-events:none !important;',
@@ -7832,6 +7832,7 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
 
 
