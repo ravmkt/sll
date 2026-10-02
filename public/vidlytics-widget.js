@@ -1448,7 +1448,7 @@ function getCarouselConfig(appearance) {
 
   var objectFit = String(rcv('object_fit', 'carousel_object_fit', 'cover')).trim().toLowerCase();
   var itemWidth = toNumber(rcv('width', 'carousel_width', rcv('width', 'carousel_item_size', rcv('width', 'card_size', '120'))), 120);
-  var visibleItems = safeInt(rcv('visible_items', 'carousel_visible_items', '4'), 4);
+  var visibleItems = (function (v) { var x = parseFloat(String(v).replace(',', '.')); return (isFinite(x) && x >= 1) ? x : 4; })(rcv('visible_items', 'carousel_visible_items', '4'));
   var itemSpacing = toNumber(rcv('spacing', 'carousel_spacing', rcv('spacing', 'carousel_gap', rcv('spacing', 'carousel_item_spacing', '8'))), 8);
   
   var marginTop = toNumber(rcv('margin_top', 'carousel_margin_top', '0'), 0);
@@ -5651,6 +5651,7 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
   if (cfg.sizeMode === 'items') {
     var vlHost = (position === 'afterbegin' || position === 'beforeend') ? target : (target.parentNode || target);
     var vlAvail = Math.min(vlHost.clientWidth || window.innerWidth, window.innerWidth) - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0);
+    if (isMobileDevice && vlAvail < window.innerWidth * 0.6) { vlAvail = window.innerWidth - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0) - 16; }
     itemWidthPx = Math.max(40, Math.floor((vlAvail - gapPx * (visibleItems - 1)) / visibleItems));
     cfg.itemWidth = itemWidthPx + 'px';
   }
@@ -6072,10 +6073,12 @@ sendAnalyticsEvent('product_view', video ? video.id : null, productData ? produc
 
     // Mobile: Itens Visiveis manda. Card = (largura - espacamentos) / itens
   if (isMobileDevice) {
-    var mVisible = Math.max(1, parseInt(visibleItems, 10) || 1);
+    var mVisible = Math.max(1, parseFloat(visibleItems) || 1);
     var mGaps = gapPx * (mVisible - 1);
+    wrapper.style.setProperty('width', '100%', 'important');
+    wrapper.style.setProperty('box-sizing', 'border-box', 'important');
     Array.prototype.forEach.call(track.children, function (el) {
-      el.style.setProperty('width', 'calc((100% - ' + mGaps + 'px) / ' + mVisible + ')', 'important');
+      el.style.setProperty('width', itemWidthPx + 'px', 'important'); el.style.setProperty('max-width', itemWidthPx + 'px', 'important');
       el.style.setProperty('flex', '0 0 auto', 'important');
       el.style.setProperty('min-width', '0', 'important');
     });
