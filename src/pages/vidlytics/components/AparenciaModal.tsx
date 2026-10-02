@@ -1,8 +1,9 @@
+import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   X, Monitor, Smartphone, Link, Link2Off,
   Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
-  Save, CornerUpLeft, Star, ChevronDown, Play,
+  Save, AlertTriangle as WarnIcon, Star, ChevronDown, Play,
   Heart, MessageCircle, Share2, ChevronRight, Copy, Loader2
 } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
@@ -495,7 +496,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   isUnified, toggleUnified,
   formData,
   getConfig, setConfig,
-  resetTab, saveStyle,
+  saveStyle,
   isLoadingStyle, isSaving,
   editingId,
   isDefaultEditing = false,
@@ -505,6 +506,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
   const [localSaving, setLocalSaving] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
   // POP-UP PARA NOMEAR ESTILO
   const [showNameModal, setShowNameModal] = useState(false);
@@ -559,10 +561,11 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
   const selectDevice = (d: 'desktop' | 'mobile') => setPreviewDevice(d);
 
-  const handleSyncFromMobile = () => {
-    if (window.confirm('Sincronizar vai substituir TODAS as configurações do Desktop pelas do Mobile. Continuar?')) {
-      copyMobileToDesktop();
-    }
+  const handleSyncFromMobile = () => setShowSyncModal(true);
+
+  const confirmSyncFromMobile = () => {
+    copyMobileToDesktop();
+    setShowSyncModal(false);
   };
 
   // Mapeamentos Flutuante
@@ -780,11 +783,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
   const toggleAccordion = (title: string) => {
     setOpenAccordion(openAccordion === title ? '' : title);
-  };
-
-  const handleReset = () => {
-    if (activeTab === 'basico') return;
-    resetTab(activeTab, previewDevice);
   };
 
   if (!isOpen) return null;
@@ -1670,16 +1668,45 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
           </div>
         </div>
 
-        {/* FOOTER */}
+        {showSyncModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowSyncModal(false)} />
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 p-8 text-center">
+            <div className="mx-auto mb-5 w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+              <WarnIcon size={30} className="text-amber-500" strokeWidth={2.5} />
+            </div>
+            <h3 className="text-xl font-black tracking-wide text-slate-800 dark:text-white mb-2">SINCRONIZAR COM MOBILE</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-7">
+              Todas as configurações do <span className="font-bold text-[#0094eb]">Desktop</span> serão substituídas pelas do <span className="font-bold text-[#0094eb]">Mobile</span>. Depois você pode editar o Desktop novamente.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowSyncModal(false)}
+                className="flex-1 px-5 py-3 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmSyncFromMobile}
+                className="flex-1 px-5 py-3 rounded-xl text-sm font-extrabold text-white bg-[#0094eb] hover:bg-[#0082d0] shadow-lg shadow-[#0094eb]/30 cursor-pointer transition-colors"
+              >
+                Sincronizar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* FOOTER */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
-          <button onClick={handleReset} className="bg-red-50 text-red-500 font-extrabold px-5 py-2.5 rounded-xl text-sm tracking-wide border border-transparent outline-none cursor-pointer hover:bg-red-100 transition-colors">
-            RESETAR
-          </button>
           <div className="hidden lg:flex items-center gap-2 text-slate-500 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-full text-sm border border-slate-100 dark:border-slate-700 shadow-sm">
-            <CornerUpLeft size={16} className="text-[#0094eb]" />
+            <WarnIcon size={16} className="text-amber-500 shrink-0" />
             <span>Este painel é um <strong>preview meramente visual</strong>. Para testar cliques e interações, use o simulador na edição dos stories.</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 ml-auto">
             <button onClick={onClose} className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
               <X size={18} strokeWidth={2.5} /> Cancelar
             </button>
