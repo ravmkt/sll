@@ -1449,7 +1449,7 @@ function getCarouselConfig(appearance) {
   var objectFit = String(rcv('object_fit', 'carousel_object_fit', 'cover')).trim().toLowerCase();
   var itemWidth = toNumber(rcv('width', 'carousel_width', rcv('width', 'carousel_item_size', rcv('width', 'card_size', '120'))), 120);
   var visibleItems = safeInt(rcv('visible_items', 'carousel_visible_items', '4'), 4);
-  var itemSpacing = toNumber(rcv('spacing', 'carousel_gap', rcv('spacing', 'carousel_item_spacing', '8')), 8);
+  var itemSpacing = toNumber(rcv('spacing', 'carousel_spacing', rcv('spacing', 'carousel_gap', rcv('spacing', 'carousel_item_spacing', '8'))), 8);
   
   var marginTop = toNumber(rcv('margin_top', 'carousel_margin_top', '0'), 0);
   var marginBottom = toNumber(rcv('margin_bottom', 'carousel_margin_bottom', '0'), 0);
@@ -1471,9 +1471,9 @@ function getCarouselConfig(appearance) {
   // 3. ELEMENTOS VISÍVEIS
   // ==========================================
   var showTitle = toBoolean(rcv('show_title', 'carousel_show_title', false), false);
-  var titleText = String(rcv('title_text', 'carousel_title_text', '') || '').trim();
+  var titleText = String(rcv('title_text', 'carousel_title_text', 'Stories') || '').trim();
   var titleFontSize = toNumber(rcv('title_font_size', 'carousel_title_font_size', '18'), 18);
-  var titleAlign = String(rcv('title_align', 'carousel_title_align', 'left')).trim().toLowerCase();
+  var titleAlign = String(rcv('title_align', 'carousel_title_align', (getDevice() === 'mobile' ? 'left' : 'center'))).trim().toLowerCase();
   var titleBold = toBoolean(rcv('title_bold', 'carousel_title_bold', true), true);
 
   var autoplayVideos = rcv('autoplay_videos', 'carousel_autoplay_videos', true);
@@ -7832,6 +7832,7 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
 
 
