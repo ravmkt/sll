@@ -1185,7 +1185,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     <Accordion title="4. Card de Produto" isOpen={openAccordion === '4. Card de Produto'} onClick={() => toggleAccordion('4. Card de Produto')}>
                       <div className="flex flex-col">
                         <CheckboxField label="Exibir card de produto abaixo de cada vídeo" checked={getC('carousel_show_product') ?? true} onChange={(v: boolean) => setC('carousel_show_product', v)} />
-                        {getC('carousel_show_product') && (
+                        {(getC('carousel_show_product') ?? true) && (
                           <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 grid grid-cols-2 gap-3">
                             <FormField label="Cor do Fundo">
                               <ColorInput value={getC('carousel_product_card_bg') || '#FFFFFF'} onChange={(v: string) => setC('carousel_product_card_bg', v)} />
