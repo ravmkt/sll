@@ -540,7 +540,7 @@ const ModalPlayerPreview = ({ playerConfig, primaryColor, isMobile = false }: { 
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/40 pointer-events-none" />
 
         <div className="relative z-20 flex items-center justify-between p-3 text-white">
-          <span className="text-xs font-bold">{showTitle ? 'Player Vidlytics' : ''}</span>
+          <span className="flex-1 min-w-0 pr-2 truncate text-left" style={{ fontSize: `${Number(pc.title_font_size ?? 14)}px`, fontWeight: pc.title_bold === false ? 'normal' : 'bold' }}>{showTitle ? (pc.title_text ?? 'Título do vídeo') : ''}</span>
           <X size={14} className="cursor-pointer" />
         </div>
 
@@ -866,6 +866,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     border_width: getC('modal_border_width') ?? 2,
     border_radius: getC('modal_border_radius') ?? 16,
     show_title: getC('modal_show_title') !== false,
+    title_text: getC('modal_title_text') ?? 'Título do vídeo',
+    title_font_size: getC('modal_title_font_size') ?? 14,
+    title_bold: getC('modal_title_bold') ?? true,
     show_like_button: getC('modal_show_like_button') !== false,
     show_comment_button: getC('modal_show_comment_button') !== false,
     show_share_button: getC('modal_show_share_button') !== false,
@@ -1655,6 +1658,17 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                     <Accordion title="2. Elementos Visíveis" isOpen={openAccordion === '2. Elementos Visíveis'} onClick={() => toggleAccordion('2. Elementos Visíveis')}>
                       <div className="flex flex-col">
                         <CheckboxField label="Exibir título do vídeo" checked={getC('modal_show_title') !== false} onChange={(v: boolean) => setC('modal_show_title', v)} />
+                        {getC('modal_show_title') !== false && (
+                          <div className="p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 space-y-3">
+                            <FormField label="Texto do título">
+                              <input type="text" value={getC('modal_title_text') ?? 'Título do vídeo'} onChange={e => setC('modal_title_text', e.target.value)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Tamanho da fonte (px)">
+                              <input type="number" min="8" max="48" value={getC('modal_title_font_size') ?? 14} onChange={e => setC('modal_title_font_size', parseInt(e.target.value) || 14)} className={inputClass} />
+                            </FormField>
+                            <CheckboxField label="Título em negrito" checked={getC('modal_title_bold') ?? true} onChange={(v: boolean) => setC('modal_title_bold', v)} />
+                          </div>
+                        )}
                         <CheckboxField label="Exibir botão Like (Curtir)" checked={getC('modal_show_like_button') !== false} onChange={(v: boolean) => setC('modal_show_like_button', v)} />
                         <CheckboxField label="Exibir botão de Comentários" checked={getC('modal_show_comment_button') !== false} onChange={(v: boolean) => setC('modal_show_comment_button', v)} />
                         <CheckboxField label="Exibir botão de Compartilhar" checked={getC('modal_show_share_button') !== false} onChange={(v: boolean) => setC('modal_show_share_button', v)} />
