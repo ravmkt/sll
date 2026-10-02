@@ -5282,7 +5282,18 @@ var activeIndex = visibleCount;
     return matrix.m41 || 0;
   }
 
+  function vlDcSelBlock(e) { e.preventDefault(); }
+  function vlDcLock(on) {
+    var m = on ? 'addEventListener' : 'removeEventListener';
+    document[m]('selectstart', vlDcSelBlock, true);
+    document[m]('dragstart', vlDcSelBlock, true);
+    document.documentElement.style.userSelect = on ? 'none' : '';
+    document.documentElement.style.webkitUserSelect = on ? 'none' : '';
+    if (on) { var sel = window.getSelection && window.getSelection(); if (sel && sel.removeAllRanges) sel.removeAllRanges(); }
+  }
+
   function onDragStart(e) {
+    vlDcLock(true);
     if (e.type === 'mousedown') {
       e.preventDefault();
     }
@@ -5317,7 +5328,7 @@ var activeIndex = visibleCount;
   function onDragEnd() {
     if (!isDragging) return;
     isDragging = false;
-
+    vlDcLock(false);
     setTimeout(function () {
       wasDragged = false;
     }, 50);
