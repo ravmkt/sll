@@ -5120,7 +5120,7 @@ var activeIndex = visibleCount;
         container.style.marginRight = 'calc(-50vw + 50%)';
         container.style.maxWidth = '100vw';
         container.style.boxSizing = 'border-box';
-        container.style.overflow = 'hidden';
+        container.style.overflow = 'hidden'; container.style.setProperty('overflow', 'clip', 'important'); container.style.setProperty('overscroll-behavior-x', 'contain', 'important');
       }
 
       cardEls.forEach(function (card, idx) {
