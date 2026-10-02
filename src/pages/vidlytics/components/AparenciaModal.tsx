@@ -1120,9 +1120,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             </select>
                           </FormField>
                         )}
-                        <FormField label="Espaçamento (px)" className="col-span-2">
+                        <div className="col-span-2"><FormField label="Espaçamento (px)">
                           <input type="number" min="0" value={getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
-                        </FormField>
+                        </FormField></div>
                         <FormField label="Margem Superior (px)">
                           <input type="number" min="0" value={getC('carousel_margin_top') || 0} onChange={e => setC('carousel_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
@@ -1255,9 +1255,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             </select>
                           </FormField>
                         )}
-                        <FormField label="Espaçamento (px)">
+                        <div className="col-span-2"><FormField label="Espaçamento (px)">
                           <input type="number" min="0" value={getC('dyn_carousel_spacing') ?? 8} onChange={e => setC('dyn_carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
-                        </FormField>
+                        </FormField></div>
                         <FormField label="Margem Esquerda (px)">
                           <input type="number" min="0" value={getC('dyn_carousel_margin_left') || 0} onChange={e => setC('dyn_carousel_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
