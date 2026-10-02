@@ -58,7 +58,7 @@
     if (document.getElementById(scriptId)) return;
     var s = document.createElement("script");
     s.id = scriptId;
-    s.src = (baseUrl ? baseUrl + "/" : "/") + scriptName;
+    s.src = (baseUrl ? baseUrl + "/" : "/") + scriptName + "?v=" + Math.floor(Date.now() / 600000);
     s.async = true;
     s.setAttribute("data-store-id", storeId);
     document.head.appendChild(s);
@@ -97,3 +97,4 @@
     injectModule("vidlytics-widget.js");
   });
 })();
+
