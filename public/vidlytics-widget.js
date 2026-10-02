@@ -5714,7 +5714,7 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
         'border-radius:' + cfg.itemRadius + ' !important;' +
         'overflow:hidden !important;' +
         'position:relative !important;' +
-        'background:#000 !important;' +
+        'background:' + (borderWidthNum > 0 ? cfg.borderColor : '#000') + ' !important;' +
         'transform:translateZ(0) !important;' +
         '-webkit-backface-visibility:hidden !important;' +
         '-webkit-mask-image: -webkit-radial-gradient(white, black) !important;' +
@@ -5731,7 +5731,7 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
         'pointer-events:none !important;',
         'transform:translateZ(0) !important;',
         '-webkit-transform:translateZ(0) !important;',
-        'background:#000 !important;' 
+        'background:' + (borderWidthNum > 0 ? 'transparent' : '#000') + ' !important;' 
       ].join('');
 
       // Modo 'playing' (preview): reproduz vídeo mutado com poster nativo da capa
@@ -7832,6 +7832,7 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
 
 
