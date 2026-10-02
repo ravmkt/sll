@@ -1,8 +1,7 @@
 import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  X, Monitor, Smartphone, Link, Link2Off,
-  Settings2, PlaySquare, Layout, LayoutGrid, MonitorPlay,
+  X, Monitor, Smartphone, Link, Link2Off, PlaySquare, Layout, LayoutGrid, MonitorPlay,
   Save, AlertTriangle as WarnIcon, Star, ChevronDown, Play,
   Heart, MessageCircle, Share2, ChevronRight, Copy, Loader2
 } from 'lucide-react';
@@ -658,7 +657,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   isDefaultEditing = false,
 }) => {
   const { storeId: activeStoreId, store } = useLoja();
-  const [activeTab, setActiveTab] = useState('basico');
+  const [activeTab, setActiveTab] = useState('flutuante');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
   const [localSaving, setLocalSaving] = useState(false);
@@ -688,7 +687,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setActiveTab('basico');
+      setActiveTab('flutuante');
       setPreviewDevice('mobile');
       setOpenAccordion('1. Layout & Dimensões');
       loadStylesList();
@@ -951,7 +950,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   if (!isOpen) return null;
 
   const tabs = [
-    { id: 'basico', label: 'Básico', icon: Settings2 },
     { id: 'flutuante', label: 'Flutuante', icon: PlaySquare },
     { id: 'carrossel', label: 'Carrossel', icon: Layout },
     { id: 'carrossel-dinamico', label: 'Carrossel Dinâmico', icon: Layout },
@@ -1003,9 +1001,21 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
         {/* HEADER MODAL */}
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">
-              {isDefaultEditing ? 'Visualizar Template' : 'Editar Estilo'}
-            </h2>
+            {isDefaultEditing ? (
+              <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Visualizar Template</h2>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={styleName || ''}
+                  onChange={(e) => setStyleName(e.target.value)}
+                  placeholder="Nome do estilo"
+                  maxLength={60}
+                  className="w-[300px] max-w-full bg-transparent text-xl font-extrabold text-slate-800 dark:text-white placeholder:text-slate-300 border-b-2 border-dashed border-transparent hover:border-slate-300 focus:border-[#0094eb] outline-none py-0.5 transition-colors"
+                />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 shrink-0"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+              </div>
+            )}
             {isDefaultEditing && (
               <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
                 Somente visualização
@@ -1906,7 +1916,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
             <span>Este painel é um <strong>preview meramente visual</strong>. Para testar cliques e interações, use o simulador na edição dos stories.</span>
           </div>
           <div className="flex items-center gap-3 ml-auto">
-            <button onClick={onClose} className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+            {!isDefaultEditing && (
+  <label className="flex items-center gap-2 mr-2 cursor-pointer select-none" title="Os vídeos sem estilo específico usarão este modelo">
+    <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} className="w-4 h-4 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer" />
+    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">Padrão da loja</span>
+  </label>
+)}
+<button onClick={onClose} className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
               <X size={18} strokeWidth={2.5} /> Cancelar
             </button>
             <button
