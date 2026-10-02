@@ -4795,14 +4795,14 @@ function renderDynamicCarouselWidget(options, items, cfg) {
     // 2. Higienização das configurações & fallbacks
     cfg = cfg || {};
     cfg.width = parseFloat(cfg.width) || 200;
-    cfg.spacing = parseFloat(cfg.spacing) || 16;
+    var _dcSp = parseFloat(cfg.spacing); cfg.spacing = isNaN(_dcSp) ? 16 : _dcSp;
     cfg.borderWidth = parseFloat(cfg.borderWidth) || 0;
     cfg.borderColor = cfg.borderColor || '#ccc';
     cfg.enlargeActive = cfg.enlargeActive !== false;
     cfg.activeScale = parseFloat(cfg.activeScale) || 1.15;
     cfg.highlightShadow = cfg.highlightShadow !== false;
     cfg.highlightMode = cfg.highlightMode || 'ring';
-    cfg.highlightBorderWidth = parseFloat(cfg.highlightBorderWidth) || 3;
+    var _dcHbw = parseFloat(cfg.highlightBorderWidth); cfg.highlightBorderWidth = isNaN(_dcHbw) ? 3 : _dcHbw;
     cfg.highlightBorderColor = cfg.highlightBorderColor || '#ff0055';
     cfg.desaturateInactive = cfg.desaturateInactive !== false;
     var parsedRadius = parseFloat(cfg.borderRadius);
