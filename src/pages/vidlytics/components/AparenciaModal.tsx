@@ -362,6 +362,13 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
     }
   }, [trackIndex, baseIndex, len]);
 
+  useEffect(() => {
+    const all = carousel?.autoplay_videos !== false;
+    videoRefs.current.forEach((v, i) => {
+      if (all || i === trackIndex) { const p = v.play(); if (p) p.catch(() => {}); } else { v.pause(); }
+    });
+  }, [trackIndex, carousel?.autoplay_videos]);
+
   const shape = normalizeWidgetShape(carousel?.shape, 'portrait');
   const isCircle = shape === 'circle';
   const spacingNum = Number(carousel?.spacing ?? 8) || 0;
@@ -372,14 +379,24 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
     ? Math.max(40, Math.round((cw - spacingNum * (visibleItems - 1)) / visibleItems))
     : (isMobile ? Math.min(configuredW, Math.round(cw * 0.5)) : configuredW);
   const step = baseItemWidth + spacingNum;
+  const isSquare = shape === 'square';
+  const marginL = Math.max(0, Number(carousel?.margin_left ?? 0) || 0);
+  const marginR = Math.max(0, Number(carousel?.margin_right ?? 0) || 0);
+  const marginT = Math.max(0, Number(carousel?.margin_top ?? 0) || 0);
+  const marginB = Math.max(0, Number(carousel?.margin_bottom ?? 0) || 0);
+  const titleAlign = carousel?.title_align ?? 'center';
+  const enlarge = !!carousel?.highlight_enlarge_active;
+  const desat = !!carousel?.highlight_desaturate_inactive;
+  const showPlay = carousel?.show_play_icon !== false;
+  const playSize = Math.max(18, Math.min(44, Math.round(baseItemWidth * 0.35)));
   const borderWidth = Number(carousel?.border_width ?? carousel?.border_style ?? 2);
   const borderColor = carousel?.border_color || colors?.primary || '#0094EB';
   const borderRadius = isCircle ? '50%' : `${Number(carousel?.border_radius ?? 12)}px`;
 
   return (
-    <div className="w-full overflow-hidden select-none box-border" ref={containerRef}>
+    <div className="w-full overflow-hidden select-none box-border" style={{ paddingLeft: marginL, paddingRight: marginR, paddingTop: marginT, paddingBottom: marginB }} ref={containerRef}>
       {carousel?.show_title && (
-        <div className="w-full px-4 mb-2 text-center">
+        <div className="w-full px-4 mb-2" style={{ textAlign: titleAlign as any }}>
           <h4 style={{ fontSize: `${Number(carousel?.title_font_size ?? 14)}px`, fontWeight: carousel?.title_bold ? 'bold' : 'normal' }} className={isMobile ? 'text-slate-800 dark:text-white' : 'text-slate-800 dark:text-slate-100 uppercase tracking-wider'}>
             {carousel?.title_text ?? 'Destaques'}
           </h4>
@@ -390,9 +407,9 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
           {trackVideos.map((videoSrc, i) => {
             const isAct = i === trackIndex;
             return (
-              <div key={i} className="shrink-0 flex flex-col items-center transition-all duration-500" style={{ width: `${baseItemWidth}px`, transform: `scale(${isAct ? 1.05 : 0.95})`, zIndex: isAct ? 10 : 1, gap: '12px' }}>
-                <div style={{ width: '100%', height: isCircle ? `${baseItemWidth}px` : shape === 'landscape' ? `${Math.round(baseItemWidth * 9 / 16)}px` : `${Math.round(baseItemWidth * 16 / 9)}px`, borderRadius, border: isAct ? `${borderWidth}px solid ${borderColor}` : `${borderWidth}px solid transparent`, boxSizing: 'border-box' }} className="relative overflow-hidden bg-slate-900 transition-all duration-500 box-border pointer-events-none">
-                  <video ref={el => { if (el) videoRefs.current.set(i, el); }} src={videoSrc} loop muted playsInline autoPlay preload="metadata" style={{ objectFit: carousel?.object_fit || 'cover' }} className="w-full h-full" />
+              <div key={i} className="shrink-0 flex flex-col items-center transition-all duration-500" style={{ width: `${baseItemWidth}px`, transform: `scale(${enlarge ? (isAct ? 1.1 : 0.95) : 1})`, filter: (desat && !isAct) ? 'saturate(0.5)' : 'none', zIndex: isAct ? 10 : 1, gap: '12px' }}>
+                <div style={{ width: '100%', height: (isCircle || isSquare) ? `${baseItemWidth}px` : shape === 'landscape' ? `${Math.round(baseItemWidth * 9 / 16)}px` : `${Math.round(baseItemWidth * 16 / 9)}px`, borderRadius, border: isAct ? `${borderWidth}px solid ${borderColor}` : `${borderWidth}px solid transparent`, boxSizing: 'border-box', boxShadow: (isAct && carousel?.highlight_shadow) ? '0 8px 24px rgba(0,0,0,0.45)' : 'none' }} className="relative overflow-hidden bg-slate-900 transition-all duration-500 box-border pointer-events-none">
+                  <video ref={el => { if (el) videoRefs.current.set(i, el); }} src={videoSrc} loop muted playsInline autoPlay preload="metadata" style={{ objectFit: carousel?.object_fit || 'cover' }} className="w-full h-full" />{showPlay && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="rounded-full bg-black/50 flex items-center justify-center" style={{ width: playSize, height: playSize }}><svg viewBox="0 0 24 24" width={Math.round(playSize * 0.5)} height={Math.round(playSize * 0.5)} fill="#fff"><path d="M8 5v14l11-7z" /></svg></div></div>)}
                 </div>
               </div>
             );
@@ -1258,17 +1275,17 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         <div className="col-span-2"><FormField label="Espaçamento (px)">
                           <input type="number" min="0" value={getC('dyn_carousel_spacing') ?? 8} onChange={e => setC('dyn_carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField></div>
-                        <FormField label="Margem Esquerda (px)">
-                          <input type="number" min="0" value={getC('dyn_carousel_margin_left') || 0} onChange={e => setC('dyn_carousel_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
-                        </FormField>
-                        <FormField label="Margem Direita (px)">
-                          <input type="number" min="0" value={getC('dyn_carousel_margin_right') || 0} onChange={e => setC('dyn_carousel_margin_right', parseInt(e.target.value) || 0)} className={inputClass} />
-                        </FormField>
                         <FormField label="Margem Superior (px)">
                           <input type="number" min="0" value={getC('dyn_carousel_margin_top') || 0} onChange={e => setC('dyn_carousel_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Inferior (px)">
                           <input type="number" min="0" value={getC('dyn_carousel_margin_bottom') || 0} onChange={e => setC('dyn_carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Esquerda (px)">
+                          <input type="number" min="0" value={getC('dyn_carousel_margin_left') || 0} onChange={e => setC('dyn_carousel_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Direita (px)">
+                          <input type="number" min="0" value={getC('dyn_carousel_margin_right') || 0} onChange={e => setC('dyn_carousel_margin_right', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                       </div>
                     </Accordion>
