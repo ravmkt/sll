@@ -1483,6 +1483,7 @@ function getCarouselConfig(appearance) {
   var showPlayIcon = toBoolean(rcv('show_play_icon', 'carousel_show_play_icon', true), true);
   var showItemTitle = toBoolean(rcv('show_item_title', 'carousel_show_item_title', false), false);
   var showArrows = toBoolean(rcv('show_arrows', 'carousel_show_arrows', true), true);
+    var arrowColor = String(rcv('arrow_color', 'carousel_arrow_color', '') || '');
 
   // ==========================================
   // 4. CARD DE PRODUTO
@@ -1529,6 +1530,7 @@ aspectRatio: aspect,
     showPlayIcon: showPlayIcon,
     showItemTitle: showItemTitle,
     showArrows: showArrows,
+    arrowColor: arrowColor,
     infinite: toBoolean(rcv('infinite', 'carousel_infinite', false), false),
     
     // 4
@@ -6258,7 +6260,7 @@ function onDragEnd() {
   });
   
 // --- SETAS (só com clones e showArrows ligado) ---
-  if ((hasClones || vlInfDesktop) && cfg.showArrows) {
+  if (cfg.showArrows && (hasClones || vlInfDesktop || (!isMobileDevice && itemsArray.length > visibleItems))) {
     var makeArrow = function (dir) {
       var b = document.createElement('button');
       b.type = 'button';
@@ -6269,7 +6271,7 @@ function onDragEnd() {
         'position:absolute !important;top:50% !important;' +
         (dir < 0 ? 'left:4px' : 'right:4px') + ' !important;' +
         'transform:translateY(-50%) !important;width:32px !important;height:32px !important;' +
-        'border-radius:50% !important;border:none !important;background:' + primaryColor + ' !important;' +
+        'border-radius:50% !important;border:none !important;background:' + (cfg.arrowColor || primaryColor) + ' !important;' +
         'color:#fff !important;font-size:22px !important;line-height:1 !important;cursor:pointer !important;' +
         'z-index:5 !important;display:flex !important;align-items:center !important;' +
         'justify-content:center !important;padding:0 !important;box-shadow:0 2px 6px rgba(0,0,0,.25) !important;';
