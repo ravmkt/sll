@@ -505,7 +505,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
   const [localSaving, setLocalSaving] = useState(false);
-  const [desktopSeeded, setDesktopSeeded] = useState(false);
 
   // POP-UP PARA NOMEAR ESTILO
   const [showNameModal, setShowNameModal] = useState(false);
@@ -533,7 +532,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     if (isOpen) {
       setActiveTab('basico');
       setPreviewDevice('mobile');
-      setDesktopSeeded(false);
       setOpenAccordion('1. Layout & Dimensões');
       loadStylesList();
       if (!getConfig('desktop', 'carousel_shape') && !getConfig('mobile', 'carousel_shape')) {
@@ -544,7 +542,14 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   }, [isOpen, resolvedStoreId]);
 
   const getC = (key: string) => getConfig(previewDevice, key);
-  const setC = (key: string, value: any) => setConfig(previewDevice, key, value);
+  const setC = (key: string, value: any) => {
+    setConfig(previewDevice, key, value);
+    // Mobile -> Desktop: se o Desktop ainda esta igual ao Mobile neste campo, acompanha
+    if (previewDevice === 'mobile') {
+      const same = JSON.stringify(getConfig('desktop', key)) === JSON.stringify(getConfig('mobile', key));
+      if (same) setConfig('desktop', key, value);
+    }
+  };
 
   // Copia TODAS as configuracoes do Mobile para o Desktop
   const copyMobileToDesktop = () => {
@@ -552,14 +557,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     Object.keys(src).forEach((k) => setConfig('desktop', k, src[k]));
   };
 
-  // Troca de dispositivo. Em estilo novo, a 1a vez no Desktop recebe copia do Mobile
-  const selectDevice = (d: 'desktop' | 'mobile') => {
-    if (d === 'desktop' && !desktopSeeded) {
-      setDesktopSeeded(true);
-      if (!(editingId || formData?.id)) copyMobileToDesktop();
-    }
-    setPreviewDevice(d);
-  };
+  const selectDevice = (d: 'desktop' | 'mobile') => setPreviewDevice(d);
 
   const handleSyncFromMobile = () => {
     if (window.confirm('Sincronizar vai substituir TODAS as configurações do Desktop pelas do Mobile. Continuar?')) {
@@ -954,17 +952,17 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   </div>
                   <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1">
                     <button
-                      onClick={() => selectDevice('desktop')}
-                      className={`p-1.5 rounded-md transition-colors ${previewDevice === 'desktop' ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
+                      onClick={() => selectDevice('mobile')}
+                      className={`p-1.5 rounded-md transition-colors ${previewDevice === 'mobile' ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
                     >
-                      <Monitor size={16} strokeWidth={2.5} />
+                      <Smartphone size={16} strokeWidth={2.5} />
                     </button>
                     <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
                     <button
-                      onClick={() => selectDevice('mobile')}
-                      className={`p-1.5 rounded-md transition-colors ${previewDevice === 'mobile' ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
+                      onClick={() => selectDevice('desktop')}
+                      className={`p-1.5 rounded-md transition-colors ${previewDevice === 'desktop' ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
                     >
-                      <Smartphone size={16} strokeWidth={2.5} />
+                      <Monitor size={16} strokeWidth={2.5} />
                     </button>
                   </div>
                 </div>
