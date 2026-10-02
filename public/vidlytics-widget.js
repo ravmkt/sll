@@ -1429,7 +1429,7 @@ function getCarouselConfig(appearance) {
   // ==========================================
   // 1. LAYOUT & DIMENSÕES
   // ==========================================
-  var shape = String(rcv('shape', 'card_shape', 'portrait')).trim().toLowerCase();
+  var shape = String(rcv('shape', 'carousel_shape', rcv('shape', 'card_shape', 'portrait'))).trim().toLowerCase();
   var aspect = '9/16';
   if (shape === 'square' || shape === '1:1') aspect = '1/1';
   else if (shape === 'circle') aspect = '1/1';
@@ -7741,6 +7741,7 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
 
 
