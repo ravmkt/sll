@@ -1301,7 +1301,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <input type="number" min="0" value={getC('carousel_margin_top') || 0} onChange={e => setC('carousel_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Inferior (px)">
-                          <input type="number" value={getC('carousel_margin_bottom') || 0} onChange={e => setC('carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="text" inputMode="text" value={getC('carousel_margin_bottom') || 0} onChange={e => { const v = e.target.value.trim(); setC('carousel_margin_bottom', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('carousel_margin_bottom') as any) === '-') setC('carousel_margin_bottom', 0); }} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Esquerda (px)">
                           <input type="number" min="0" value={getC('carousel_margin_left') || 0} onChange={e => setC('carousel_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
