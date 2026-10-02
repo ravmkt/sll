@@ -1450,6 +1450,7 @@ function getCarouselConfig(appearance) {
   var itemWidth = toNumber(rcv('width', 'carousel_width', rcv('width', 'carousel_item_size', rcv('width', 'card_size', '120'))), 120);
   var visibleItems = (function (v) { var x = parseFloat(String(v).replace(',', '.')); return (isFinite(x) && x >= 1) ? x : 4; })(rcv('visible_items', 'carousel_visible_items', '4'));
   var itemSpacing = toNumber(rcv('spacing', 'carousel_spacing', rcv('spacing', 'carousel_gap', rcv('spacing', 'carousel_item_spacing', '8'))), 8);
+  console.log('[VL-DEBUG] carousel', JSON.stringify({ dev: getDevice(), w: window.innerWidth, visibleItems: visibleItems, flatVI: appearance.carousel_visible_items, sizeMode: rcv('size_mode','carousel_size_mode','items'), gap: itemSpacing, sameAll: appearance.same_appearance_all_devices }));
   
   var marginTop = toNumber(rcv('margin_top', 'carousel_margin_top', '0'), 0);
   var marginBottom = toNumber(rcv('margin_bottom', 'carousel_margin_bottom', '0'), 0);
