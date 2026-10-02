@@ -4826,7 +4826,8 @@ cfg.borderRadius = isNaN(parsedRadius) ? 12 : parsedRadius;
     cfg.showProduct = cfg.showProduct !== false;
 
     if (cfg.sizeMode === 'items' && cfg.visibleItems > 0) {
-      var _dcAvail = window.innerWidth - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0);
+      var _dcBase = (target && target.clientWidth) ? target.clientWidth : window.innerWidth;
+      var _dcAvail = _dcBase - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0);
       var _dcN = cfg.visibleItems;
       cfg.width = Math.max(40, Math.floor((_dcAvail - cfg.spacing * (_dcN - 1)) / _dcN));
     }
@@ -4846,6 +4847,11 @@ cfg.borderRadius = isNaN(parsedRadius) ? 12 : parsedRadius;
     // 4. Criação do CONTAINER principal do widget (com os estilos originais flex)
     var container = document.createElement('div');
     container.className = 'vidlytics-dynamic-carousel-container';
+    container.style.userSelect = 'none';
+    container.style.webkitUserSelect = 'none';
+    container.style.touchAction = 'pan-y';
+    container.addEventListener('dragstart', function (e) { e.preventDefault(); }, true);
+    container.addEventListener('selectstart', function (e) { e.preventDefault(); }, true);
     Object.assign(container.style, {
       display: 'flex',
       justifyContent: 'center',
