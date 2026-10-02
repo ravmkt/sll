@@ -1481,26 +1481,28 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             <option value="fill">Fill (Esticar)</option>
                           </select>
                         </FormField>
-                        <FormField label="Largura (px)">
-                          <input type="number" min="20" value={getC('grid_width') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('grid_width', parseInt(e.target.value) || 0)} className={inputClass} />
-                        </FormField>
+                        {previewDevice !== 'mobile' && (
+                          <FormField label="Largura (px)">
+                            <input type="number" min="20" value={getC('grid_width') || 80} onChange={e => setC('grid_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                          </FormField>
+                        )}
                         <FormField label="Colunas">
                           <input type="number" min="1" max="10" value={getC('grid_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4)} onChange={e => setC('grid_visible_items', parseInt(e.target.value) || 1)} className={inputClass} />
                         </FormField>
-                        <FormField label="Espaçamento (px)" className="col-span-2">
+                        <FormField label="Espaçamento (px)" className={previewDevice === 'mobile' ? '' : 'col-span-2'}>
                           <input type="number" min="0" value={getC('grid_spacing') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('grid_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
-                        </FormField>
-                        <FormField label="Margem Esquerda (px)">
-                          <input type="number" min="0" value={getC('grid_margin_left') || 0} onChange={e => setC('grid_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
-                        </FormField>
-                        <FormField label="Margem Direita (px)">
-                          <input type="number" min="0" value={getC('grid_margin_right') || 0} onChange={e => setC('grid_margin_right', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Superior (px)">
                           <input type="number" min="0" value={getC('grid_margin_top') || 0} onChange={e => setC('grid_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Inferior (px)">
                           <input type="number" min="0" value={getC('grid_margin_bottom') || 0} onChange={e => setC('grid_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Esquerda (px)">
+                          <input type="number" min="0" value={getC('grid_margin_left') || 0} onChange={e => setC('grid_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Direita (px)">
+                          <input type="number" min="0" value={getC('grid_margin_right') || 0} onChange={e => setC('grid_margin_right', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                       </div>
                     </Accordion>
