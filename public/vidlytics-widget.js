@@ -5666,6 +5666,22 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
   track.style.transform = 'translateX(0px)';
   
 // Items renderizam completamente com suporte robusto a vídeo e imagem
+  // Repete os stories em ciclo ate completar os itens visiveis
+  var vlTotal = 0;
+  stories.forEach(function (s) { vlTotal += ((s && s.videos) || []).filter(Boolean).length; });
+  if (vlTotal > 0 && vlTotal < visibleItems) {
+    var vlBase = stories.slice();
+    var vlExpanded = stories.slice();
+    var vlCount = vlTotal;
+    var vlI = 0;
+    while (vlCount < visibleItems && vlI < 200) {
+      var vlS = vlBase[vlI % vlBase.length];
+      vlExpanded.push(vlS);
+      vlCount += ((vlS && vlS.videos) || []).filter(Boolean).length;
+      vlI++;
+    }
+    stories = vlExpanded;
+  }
   stories.forEach(function(story, storyIndex) {
     var videos = (story.videos || []).filter(Boolean);
     videos.forEach(function(video, videoIndex) {
@@ -7832,6 +7848,7 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
 
 
