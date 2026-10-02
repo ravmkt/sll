@@ -433,16 +433,24 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
 const GridPreview = ({ grid, colors, isMobile = false }: { grid: any; colors: any; isMobile?: boolean }) => {
   const shape = normalizeWidgetShape(grid?.shape, 'portrait');
   const isCircle = shape === 'circle';
-  const cols = limitNumber(grid?.visible_items, 4, 1, 10);
-  const items = Array.from({ length: isMobile ? 4 : cols * 2 });
+  const isSquare = shape === 'square';
+  const cols = limitNumber(grid?.visible_items, isMobile ? 2 : 4, 1, 10);
+  const items = Array.from({ length: cols * 2 });
+  const gap = Math.max(0, Number(grid?.spacing ?? 12) || 0);
+  const cardW = limitNumber(grid?.width, isMobile ? 64 : 80, 20, 600);
+  const marginL = Math.max(0, Number(grid?.margin_left ?? 0) || 0);
+  const marginR = Math.max(0, Number(grid?.margin_right ?? 0) || 0);
+  const marginT = Math.max(0, Number(grid?.margin_top ?? 0) || 0);
+  const marginB = Math.max(0, Number(grid?.margin_bottom ?? 0) || 0);
   const borderRadius = isCircle ? '50%' : `${Number(grid?.border_radius ?? 12)}px`;
+  const aspect = (isCircle || isSquare) ? '1 / 1' : shape === 'landscape' ? '16 / 9' : '9 / 16';
 
   return (
-    <div className="w-full py-3 space-y-3 box-border">
-      <div className="grid w-full" style={{ gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : `repeat(${cols}, minmax(0, 1fr))`, gap: `${Number(grid?.spacing || 12)}px` }}>
+    <div className="w-full box-border overflow-hidden" style={{ paddingLeft: marginL, paddingRight: marginR, paddingTop: 12 + marginT, paddingBottom: 12 + marginB }}>
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, ${cardW}px))`, justifyContent: 'center', gap }}>
         {items.map((_, i) => (
-          <div key={i} className="relative overflow-hidden bg-slate-950 shadow-sm flex items-center justify-center shrink-0" style={{ width: '100%', aspectRatio: isCircle ? '1 / 1' : shape === 'landscape' ? '16 / 9' : '9 / 16', borderRadius, border: `${Number(grid?.border_width ?? 2)}px solid ${grid?.border_color || colors?.primary || '#0094EB'}` }}>
-            <video src={DEMO_PREVIEW_VIDEOS[i % DEMO_PREVIEW_VIDEOS.length]} loop muted playsInline autoPlay preload="metadata" className="w-full h-full object-cover pointer-events-none" />
+          <div key={i} className="relative overflow-hidden bg-slate-950 shadow-sm flex items-center justify-center shrink-0" style={{ width: '100%', aspectRatio: aspect, borderRadius, border: `${Number(grid?.border_width ?? 2)}px solid ${grid?.border_color || colors?.primary || '#0094EB'}`, boxSizing: 'border-box' }}>
+            <video src={DEMO_PREVIEW_VIDEOS[i % DEMO_PREVIEW_VIDEOS.length]} loop muted playsInline autoPlay preload="metadata" style={{ objectFit: grid?.object_fit || 'cover' }} className="w-full h-full pointer-events-none" />
           </div>
         ))}
       </div>
