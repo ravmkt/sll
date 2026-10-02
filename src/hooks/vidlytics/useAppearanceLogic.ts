@@ -81,7 +81,8 @@ export function useAppearanceLogic() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [styleName, setStyleName] = useState('');
   const [isDefault, setIsDefault] = useState(false);
-  const [isUnified, setIsUnified] = useState(true);
+  const [isUnified] = useState(false); // modo link removido: Desktop e Mobile sempre separados
+  const setIsUnified = (_v: boolean) => {};
   const [formData, setFormData] = useState<any>(createDefaultWidgetStyle());
   const [isLoadingStyle, setIsLoadingStyle] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

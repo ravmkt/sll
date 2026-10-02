@@ -505,6 +505,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
   const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
   const [localSaving, setLocalSaving] = useState(false);
+  const [desktopSeeded, setDesktopSeeded] = useState(false);
 
   // POP-UP PARA NOMEAR ESTILO
   const [showNameModal, setShowNameModal] = useState(false);
@@ -532,6 +533,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     if (isOpen) {
       setActiveTab('basico');
       setPreviewDevice('mobile');
+      setDesktopSeeded(false);
       setOpenAccordion('1. Layout & Dimensões');
       loadStylesList();
       if (!getConfig('desktop', 'carousel_shape') && !getConfig('mobile', 'carousel_shape')) {
@@ -543,6 +545,27 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
   const getC = (key: string) => getConfig(previewDevice, key);
   const setC = (key: string, value: any) => setConfig(previewDevice, key, value);
+
+  // Copia TODAS as configuracoes do Mobile para o Desktop
+  const copyMobileToDesktop = () => {
+    const src = formData?.mobile || {};
+    Object.keys(src).forEach((k) => setConfig('desktop', k, src[k]));
+  };
+
+  // Troca de dispositivo. Em estilo novo, a 1a vez no Desktop recebe copia do Mobile
+  const selectDevice = (d: 'desktop' | 'mobile') => {
+    if (d === 'desktop' && !desktopSeeded) {
+      setDesktopSeeded(true);
+      if (!(editingId || formData?.id)) copyMobileToDesktop();
+    }
+    setPreviewDevice(d);
+  };
+
+  const handleSyncFromMobile = () => {
+    if (window.confirm('Sincronizar vai substituir TODAS as configurações do Desktop pelas do Mobile. Continuar?')) {
+      copyMobileToDesktop();
+    }
+  };
 
   // Mapeamentos Flutuante
   const currentFloatingShape = normalizeWidgetShape(getC('floating_format') || 'portrait');
@@ -706,21 +729,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
       setStyleName(finalName);
 
-      const widgetStyleToSave = isUnified
-        ? {
-            name: finalName,
-            is_default: isDefault,
-            is_unified: true,
-            desktop: formData?.desktop || {},
-            mobile: { ...(formData?.desktop || {}) },
-          }
-        : {
-            name: finalName,
-            is_default: isDefault,
-            is_unified: false,
-            desktop: formData?.desktop || {},
-            mobile: formData?.mobile || {},
-          };
+      const widgetStyleToSave = {
+        name: finalName,
+        is_default: isDefault,
+        is_unified: false,
+        desktop: formData?.desktop || {},
+        mobile: formData?.mobile || {},
+      };
 
       await VidlyticsDatabaseService.saveAppearance(resolvedStoreId, {
         id: asNew ? undefined : (editingId || formData?.id || undefined),
@@ -862,12 +877,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
             })}
           </div>
 
-          {activeTab !== 'basico' && (
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shrink-0 border border-slate-200 dark:border-slate-700">
-              <button onClick={() => setPreviewDevice('desktop')} className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${previewDevice === 'desktop' ? 'bg-white dark:bg-slate-700 text-[#0094eb] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}><Monitor size={16} /> Desktop</button>
-              <button onClick={() => setPreviewDevice('mobile')} className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${previewDevice === 'mobile' ? 'bg-white dark:bg-slate-700 text-[#0094eb] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}><Smartphone size={16} /> Mobile</button>
-            </div>
-          )}
+          
         </div>
 
         {/* ÁREA CENTRAL */}
@@ -920,17 +930,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                       </div>
                     </label>
                   </div>
-
-                  {/* CHECKBOX UNIFICAR DISPOSITIVOS */}
-                  <div className={`p-4 border rounded-xl transition-colors ${isUnified ? 'border-[#0094eb]/40 bg-[#0094eb]/5' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50'}`}>
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <div className="mt-1"><input type="checkbox" checked={isUnified} onChange={(e) => toggleUnified(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer" /></div>
-                      <div>
-                        <p className="font-bold text-slate-800 dark:text-white">Unificar dispositivos</p>
-                        <p className="text-xs text-slate-500 mt-1">As alterações que você fizer em Desktop serão aplicadas automaticamente ao Mobile.</p>
-                      </div>
-                    </label>
-                  </div>
                 </div>
               </div>
             ) : (
@@ -940,18 +939,30 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 </h3>
 
                 <div className="flex items-center justify-between p-4 mb-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 shadow-sm">
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Dispositivo</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Dispositivo</span>
+                    {previewDevice === 'desktop' && (
+                      <button
+                        type="button"
+                        onClick={handleSyncFromMobile}
+                        title="Copia todas as configurações do Mobile para o Desktop"
+                        className="px-3 py-1 rounded-lg text-xs font-bold text-[#0094eb] bg-[#0094eb]/10 hover:bg-[#0094eb]/20 border border-[#0094eb]/30 cursor-pointer transition-colors"
+                      >
+                        Sincronizar com Mobile
+                      </button>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1">
                     <button
-                      onClick={() => !isUnified && setPreviewDevice('desktop')}
-                      className={`p-1.5 rounded-md transition-colors ${(isUnified || previewDevice === 'desktop') ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
+                      onClick={() => selectDevice('desktop')}
+                      className={`p-1.5 rounded-md transition-colors ${previewDevice === 'desktop' ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <Monitor size={16} strokeWidth={2.5} />
                     </button>
-                    {isUnified ? <Link size={14} className="text-[#0094eb] mx-1" strokeWidth={2.5} /> : <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>}
+                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
                     <button
-                      onClick={() => !isUnified && setPreviewDevice('mobile')}
-                      className={`p-1.5 rounded-md transition-colors ${(isUnified || previewDevice === 'mobile') ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
+                      onClick={() => selectDevice('mobile')}
+                      className={`p-1.5 rounded-md transition-colors ${previewDevice === 'mobile' ? 'text-[#0094eb]' : 'text-slate-400'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <Smartphone size={16} strokeWidth={2.5} />
                     </button>
