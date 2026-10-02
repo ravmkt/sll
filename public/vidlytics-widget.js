@@ -5669,6 +5669,7 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
   var track = document.createElement('div');
   track.className = 'vidlytics-carousel-track';
   trackContainer.style.setProperty('padding-bottom', '2px', 'important');
+  trackContainer.style.userSelect = 'none'; trackContainer.style.webkitUserSelect = 'none'; trackContainer.style.touchAction = 'pan-y'; trackContainer.addEventListener('dragstart', function (e) { e.preventDefault(); }); // vlNoNativeDrag
   track.style.cssText =
     'display:flex !important;' +
     'gap:' + cfg.itemSpacing + ' !important;' +
