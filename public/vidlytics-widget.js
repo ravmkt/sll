@@ -1447,7 +1447,7 @@ function getCarouselConfig(appearance) {
   else if (shape === 'landscape' || shape === 'paisagem' || shape === '16:9' || shape === '16_9') aspect = '16/9';
 
   var objectFit = String(rcv('object_fit', 'carousel_object_fit', 'cover')).trim().toLowerCase();
-  var itemWidth = toNumber(rcv('width', 'carousel_item_size', rcv('width', 'card_size', '120')), 120);
+  var itemWidth = toNumber(rcv('width', 'carousel_width', rcv('width', 'carousel_item_size', rcv('width', 'card_size', '120'))), 120);
   var visibleItems = safeInt(rcv('visible_items', 'carousel_visible_items', '4'), 4);
   var itemSpacing = toNumber(rcv('spacing', 'carousel_gap', rcv('spacing', 'carousel_item_spacing', '8')), 8);
   
@@ -1462,7 +1462,7 @@ function getCarouselConfig(appearance) {
   var borderColor = String(rcv('border_color', 'carousel_border_color', 'transparent') || 'transparent');
   var borderWidth = toNumber(rcv('border_style', 'carousel_border_width', '0') || rcv('border_width', 'carousel_border_width', '0'), 0);
   
-  var rawRadiusInput = rcv('border_radius', 'carousel_item_radius', 12);
+  var rawRadiusInput = rcv('border_radius', 'carousel_border_radius', rcv('border_radius', 'carousel_item_radius', 12));
   var parsedRadiusVal = parseFloat(rawRadiusInput);
   var safeRadiusNum = !isNaN(parsedRadiusVal) ? Math.max(0, parsedRadiusVal) : 12;
   var itemRadius = (String(rawRadiusInput).trim() === '0' || rawRadiusInput === 0) ? '0px' : px(safeRadiusNum, 12);
@@ -7832,6 +7832,7 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
 
 
