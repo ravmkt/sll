@@ -411,6 +411,15 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
                 <div style={{ width: '100%', height: (isCircle || isSquare) ? `${baseItemWidth}px` : shape === 'landscape' ? `${Math.round(baseItemWidth * 9 / 16)}px` : `${Math.round(baseItemWidth * 16 / 9)}px`, borderRadius, border: isAct ? `${borderWidth}px solid ${borderColor}` : `${borderWidth}px solid transparent`, boxSizing: 'border-box', boxShadow: (isAct && carousel?.highlight_shadow) ? '0 8px 24px rgba(0,0,0,0.45)' : 'none' }} className="relative overflow-hidden bg-slate-900 transition-all duration-500 box-border pointer-events-none">
                   <video ref={el => { if (el) videoRefs.current.set(i, el); }} src={videoSrc} loop muted playsInline autoPlay preload="metadata" style={{ objectFit: carousel?.object_fit || 'cover' }} className="w-full h-full" />{showPlay && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="rounded-full bg-black/50 flex items-center justify-center" style={{ width: playSize, height: playSize }}><svg viewBox="0 0 24 24" width={Math.round(playSize * 0.5)} height={Math.round(playSize * 0.5)} fill="#fff"><path d="M8 5v14l11-7z" /></svg></div></div>)}
                 </div>
+                {carousel?.show_product && !isCircle && (
+                  <div className="w-full flex items-center gap-2 overflow-hidden box-border pointer-events-none" style={{ backgroundColor: carousel?.product_card_bg || '#FFFFFF', border: `${Number(carousel?.product_card_border_width ?? 1)}px solid ${carousel?.product_card_border_color || '#E2E8F0'}`, borderRadius: `${Number(carousel?.product_card_border_radius ?? 12)}px`, padding: '8px' }}>
+                    <div className="w-8 h-8 rounded bg-slate-100 shrink-0 overflow-hidden border border-slate-100"><img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=80&q=80" alt="Produto" className="w-full h-full object-cover" /></div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p style={{ fontSize: `${Number(carousel?.product_card_name_size ?? 9)}px`, color: carousel?.product_card_name_color || '#0F172A' }} className="font-bold truncate">Calça Confort</p>
+                      <p style={{ fontSize: `${Number(carousel?.product_card_price_size ?? 8)}px`, color: carousel?.product_card_price_color || colors?.primary || '#0094EB' }} className="font-black">R$ 149,95</p>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
