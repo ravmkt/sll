@@ -6802,7 +6802,7 @@ if (displayMode === 'dynamic_carousel') {
     Object.assign(wrapper.style, {
       width: '100%',
       minHeight: '0',
-      margin: '20px 0',
+      margin: '0',
       overflow: 'visible',
       display: 'block'
     });
