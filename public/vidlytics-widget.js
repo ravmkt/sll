@@ -5359,6 +5359,34 @@ var activeIndex = visibleCount;
   window.addEventListener('mouseup', onDragEnd);
   window.addEventListener('touchend', onDragEnd);
 
+  // vlDcNoPageShift: trava rolagem da pagina/pais durante o arrasto (igual ao carrossel normal)
+  var vlDcClip = track.parentElement;
+  if (vlDcClip) {
+    var vlDcCs = window.getComputedStyle(vlDcClip);
+    if (/hidden|auto|scroll/.test(vlDcCs.overflowX)) {
+      vlDcClip.style.setProperty('overflow', 'clip', 'important');
+    }
+    vlDcClip.style.setProperty('overscroll-behavior-x', 'contain', 'important');
+  }
+  var vlDcSaved = [];
+  var vlDcLocked = false;
+  function vlDcSaveScroll() {
+    vlDcSaved = [];
+    var n = track;
+    while (n && n.nodeType === 1) { vlDcSaved.push([n, n.scrollLeft]); n = n.parentElement; }
+    var se = document.scrollingElement || document.documentElement;
+    vlDcSaved.push([se, se.scrollLeft]);
+  }
+  function vlDcRestoreScroll() {
+    if (!vlDcLocked) return;
+    vlDcSaved.forEach(function (r) { if (r[0].scrollLeft !== r[1]) r[0].scrollLeft = r[1]; });
+  }
+  track.addEventListener('mousedown', function () { vlDcSaveScroll(); vlDcLocked = true; });
+  track.addEventListener('touchstart', function () { vlDcSaveScroll(); vlDcLocked = true; }, { passive: true });
+  window.addEventListener('mouseup', function () { vlDcRestoreScroll(); vlDcLocked = false; });
+  window.addEventListener('touchend', function () { vlDcRestoreScroll(); vlDcLocked = false; });
+  window.addEventListener('scroll', vlDcRestoreScroll, true);
+
   var interval = null;
 
   function startAutoplay() {
