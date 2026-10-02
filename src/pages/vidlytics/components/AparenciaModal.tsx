@@ -1004,16 +1004,16 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
             {isDefaultEditing ? (
               <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Visualizar Template</h2>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="relative w-[320px] max-w-full">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                 <input
                   type="text"
                   value={styleName || ''}
                   onChange={(e) => setStyleName(e.target.value)}
                   placeholder="Nome do estilo"
                   maxLength={60}
-                  className="w-[300px] max-w-full bg-transparent text-xl font-extrabold text-slate-800 dark:text-white placeholder:text-slate-300 border-b-2 border-dashed border-transparent hover:border-slate-300 focus:border-[#0094eb] outline-none py-0.5 transition-colors"
+                  className="w-full h-10 pl-9 pr-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-base font-bold text-slate-800 dark:text-white placeholder:text-slate-400 hover:border-slate-300 focus:bg-white dark:focus:bg-slate-900 focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20 outline-none transition-colors"
                 />
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 shrink-0"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
               </div>
             )}
             {isDefaultEditing && (
