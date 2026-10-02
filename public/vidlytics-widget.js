@@ -310,7 +310,7 @@ var isUserMuted = true; // Controla a persistência da preferência de som duran
     }
     var device = getDevice();
     var sameAll = configObj.same_for_all;
-    if (sameAll === true || sameAll === undefined || sameAll === null) {
+    if (sameAll === true) {
       if (configObj.desktop && configObj.desktop[fieldName] !== undefined && configObj.desktop[fieldName] !== null && configObj.desktop[fieldName] !== '') {
         return configObj.desktop[fieldName];
       }
