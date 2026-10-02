@@ -1506,6 +1506,7 @@ function getCarouselConfig(appearance) {
 aspectRatio: aspect,
     objectFit: objectFit,
     itemWidth: px(itemWidth),
+    sizeMode: String(rcv('size_mode', 'carousel_size_mode', 'items')).trim().toLowerCase(),
     visibleItems: visibleItems,
     itemSpacing: px(itemSpacing),
     marginTop: px(marginTop),
@@ -5638,6 +5639,14 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
   var visibleItems = cfg.visibleItems || 4;
 
   var isMobileDevice = getDevice() === 'mobile';
+  var vlGapNum = parseFloat(cfg.itemSpacing);
+  if (!isNaN(vlGapNum)) gapPx = vlGapNum;
+  if (cfg.sizeMode === 'items' && !isMobileDevice) {
+    var vlHost = (position === 'afterbegin' || position === 'beforeend') ? target : (target.parentNode || target);
+    var vlAvail = Math.min(vlHost.clientWidth || window.innerWidth, window.innerWidth) - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0);
+    itemWidthPx = Math.max(40, Math.floor((vlAvail - gapPx * (visibleItems - 1)) / visibleItems));
+    cfg.itemWidth = itemWidthPx + 'px';
+  }
   var containerWidthPx = (itemWidthPx * visibleItems) + (gapPx * (visibleItems - 1));
 
   if (isMobileDevice) {
@@ -7848,6 +7857,7 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
 
 
