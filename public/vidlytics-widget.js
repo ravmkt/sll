@@ -5648,7 +5648,7 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
   var isMobileDevice = getDevice() === 'mobile';
   var vlGapNum = parseFloat(cfg.itemSpacing);
   if (!isNaN(vlGapNum)) gapPx = vlGapNum;
-  if (cfg.sizeMode === 'items' && !isMobileDevice) {
+  if (cfg.sizeMode === 'items') {
     var vlHost = (position === 'afterbegin' || position === 'beforeend') ? target : (target.parentNode || target);
     var vlAvail = Math.min(vlHost.clientWidth || window.innerWidth, window.innerWidth) - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0);
     itemWidthPx = Math.max(40, Math.floor((vlAvail - gapPx * (visibleItems - 1)) / visibleItems));
