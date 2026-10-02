@@ -245,8 +245,7 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
   const borderRadius = isCircle ? '50%' : `${borderRadiusNum}px`;
   const titleAlign = carousel?.title_align ?? (isMobileView ? 'left' : 'center');
 
-  const configuredW = limitNumber(carousel?.width, 80, 48, 240);
-  const baseItemWidth = isMobileView ? configuredW : Math.max(40, (cw - (spacingNum * (visibleItemsDesktop - 1))) / visibleItemsDesktop);
+  const baseItemWidth = Math.max(40, (cw - (spacingNum * (visibleItemsDesktop - 1))) / visibleItemsDesktop);
   const step = baseItemWidth + spacingNum;
 
   useEffect(() => {

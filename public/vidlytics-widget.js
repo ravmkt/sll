@@ -5995,7 +5995,17 @@ sendAnalyticsEvent('product_view', video ? video.id : null, productData ? produc
   }
   // 👆 FIM DA IMPLEMENTAÇÃO 👆
 
-  trackContainer.appendChild(track);
+    // Mobile: Itens Visiveis manda. Card = (largura - espacamentos) / itens
+  if (isMobileDevice) {
+    var mVisible = Math.max(1, parseInt(visibleItems, 10) || 1);
+    var mGaps = gapPx * (mVisible - 1);
+    Array.prototype.forEach.call(track.children, function (el) {
+      el.style.setProperty('width', 'calc((100% - ' + mGaps + 'px) / ' + mVisible + ')', 'important');
+      el.style.setProperty('flex', '0 0 auto', 'important');
+      el.style.setProperty('min-width', '0', 'important');
+    });
+  }
+trackContainer.appendChild(track);
   wrapper.appendChild(trackContainer);
   
   // --- DRAG TO SCROLL ---
