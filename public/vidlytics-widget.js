@@ -5121,6 +5121,7 @@ var activeIndex = visibleCount;
         container.style.maxWidth = '100vw';
         container.style.boxSizing = 'border-box';
         container.style.overflow = 'hidden'; container.style.setProperty('overflow', 'clip', 'important'); container.style.setProperty('overscroll-behavior-x', 'contain', 'important');
+  ['mousedown','touchstart','pointerdown'].forEach(function (ev) { container.addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: true }); });
       }
 
       cardEls.forEach(function (card, idx) {
