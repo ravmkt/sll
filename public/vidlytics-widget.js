@@ -5608,6 +5608,10 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
 
   // Insere o wrapper dentro do container principal
   container.appendChild(wrapper);
+  // vlShieldHost: impede que sliders do tema (Splide) capturem o arrasto do carrossel
+  ['mousedown', 'touchstart', 'pointerdown'].forEach(function (ev) {
+    container.addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: true });
+  });
   
     // Header
   if (cfg.showTitle && (cfg.titleText || (stories[0] && stories[0].title))) {
