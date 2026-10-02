@@ -6207,6 +6207,26 @@ function onDragEnd() {
 
   track.style.cursor = 'grab';
 
+  // vlNoPageShift: trava rolagem horizontal da pagina/pais durante o arrasto
+  trackContainer.style.setProperty('overflow', 'clip', 'important');
+  trackContainer.style.setProperty('overscroll-behavior-x', 'contain', 'important');
+  var vlSaved = [];
+  var vlLocked = false;
+  function vlSaveScroll() {
+    vlSaved = [];
+    var n = trackContainer;
+    while (n && n.nodeType === 1) { vlSaved.push([n, n.scrollLeft]); n = n.parentElement; }
+    var se = document.scrollingElement || document.documentElement;
+    vlSaved.push([se, se.scrollLeft]);
+  }
+  function vlRestoreScroll() {
+    if (!vlLocked) return;
+    vlSaved.forEach(function (r) { if (r[0].scrollLeft !== r[1]) r[0].scrollLeft = r[1]; });
+  }
+  track.addEventListener('mousedown', function () { vlSaveScroll(); vlLocked = true; });
+  window.addEventListener('mouseup', function () { vlRestoreScroll(); vlLocked = false; });
+  window.addEventListener('scroll', vlRestoreScroll, true);
+
   // Mouse events
   track.addEventListener('mousedown', function(e) {
     e.preventDefault();
