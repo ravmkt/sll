@@ -1529,6 +1529,7 @@ aspectRatio: aspect,
     showPlayIcon: showPlayIcon,
     showItemTitle: showItemTitle,
     showArrows: showArrows,
+    infinite: toBoolean(rcv('infinite', 'carousel_infinite', false), false),
     
     // 4
     showProduct: showProduct,
@@ -5679,7 +5680,7 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
   // Repete os stories em ciclo ate completar os itens visiveis
   var vlTotal = 0;
   stories.forEach(function (s) { vlTotal += ((s && s.videos) || []).filter(Boolean).length; });
-  if (vlTotal > 0 && vlTotal < visibleItems) {
+  if (cfg.infinite && vlTotal > 0 && vlTotal < visibleItems) {
     var vlBase = stories.slice();
     var vlExpanded = stories.slice();
     var vlCount = vlTotal;
@@ -6030,8 +6031,8 @@ sendAnalyticsEvent('product_view', video ? video.id : null, productData ? produc
 
   // 👇 INÍCIO DA IMPLEMENTAÇÃO DO LOOP VISUAL (CLONES) 👇
   var itemsArray = Array.from(track.children);
-  var hasClones = itemsArray.length > visibleItems;
-  if (!hasClones && itemsArray.length > 0) {
+  var hasClones = !!cfg.infinite && itemsArray.length > visibleItems;
+  if (itemsArray.length > 0 && itemsArray.length <= visibleItems) {
     track.style.setProperty('justify-content', 'safe center', 'important');
     if (!isMobileDevice) {
       var fitW = (itemWidthPx * itemsArray.length) + (gapPx * (itemsArray.length - 1));
