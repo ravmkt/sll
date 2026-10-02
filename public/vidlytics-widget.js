@@ -7470,8 +7470,10 @@ return supabaseFetch(
 
 function readDisplayLocationsWithRules() {
   if (!supabaseUrl || !supabaseAnonKey) return Promise.resolve([]);
+  var _dlIds = (currentStories || []).map(function (s) { return s && s.id; }).filter(Boolean);
+  if (!_dlIds.length) return Promise.resolve([]);
   var url = supabaseUrl.replace(/\/$/, '') +
-    '/rest/v1/vid_display_locations?select=*&order=sort_order.asc.nullslast';
+    '/rest/v1/vid_display_locations?select=*&story_id=in.(' + _dlIds.map(function (i) { return encodeURIComponent(i); }).join(',') + ')&order=sort_order.asc.nullslast';
 
   return fetch(url, {
     method: 'GET',
@@ -7739,5 +7741,6 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
 
