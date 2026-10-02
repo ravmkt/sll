@@ -7735,12 +7735,93 @@ if (document.readyState === 'loading') {
 
 initWidget();
 
+/* ===== RE-LEITURA AO VIVO (SLL) ===== */
+(function liveRefresh() {
+  var qs = new URLSearchParams(window.location.search);
+  if (qs.get('widgetSelectToken')) return;
+  var fast = qs.has('sll_preview') || qs.has('vidlytics_preview_story_id');
+  var EVERY = fast ? 5000 : 60000;
+  var lastSig = null;
+  var busy = false;
+
+  function safe(fn) {
+    try { return Promise.resolve(fn()).then(function (r) { return r; }, function () { return null; }); }
+    catch (e) { return Promise.resolve(null); }
+  }
+
+  function hash(str) {
+    var h = 5381;
+    for (var i = 0; i < str.length; i += 1) { h = ((h << 5) + h + str.charCodeAt(i)) | 0; }
+    return String(h) + ':' + str.length;
+  }
+
+  function readSignature() {
+    if (!storeId || !hasSupabase) return Promise.resolve(null);
+    var sid = encodeURIComponent(storeId);
+    return Promise.all([
+      safe(function () { return vidlyticsFetch('vid_appearances', 'select=*&store_id=eq.' + sid); }),
+      safe(function () { return vidlyticsFetch('vid_stories', 'select=*&store_id=eq.' + sid); }),
+      safe(function () { return readVideos(); }),
+      safe(function () { return readStoryVideos(); }),
+      safe(function () { return readDisplayLocationsWithRules(); }),
+      safe(function () { return readStoreSettings(); }),
+      safe(function () { return readStoreStatus(); })
+    ]).then(function (parts) {
+      if (parts.every(function (p) { return p === null; })) return null;
+      return hash(JSON.stringify(parts));
+    });
+  }
+
+  function modalOpen() {
+    if (document.getElementById('vl-overlay')) return true;
+    var hosts = document.querySelectorAll('[id^="vidlytics-"]');
+    for (var i = 0; i < hosts.length; i += 1) {
+      if (hosts[i].shadowRoot && hosts[i].shadowRoot.querySelector('#vl-overlay')) return true;
+    }
+    return false;
+  }
+
+  function teardown() {
+    Array.prototype.slice.call(document.querySelectorAll(
+      '[id^="vidlytics-floating-host"],[id^="vidlytics-wrapper-"],#vidlytics-widget-root,[data-vidlytics-widget]'
+    )).forEach(function (el) { if (el.parentNode) el.parentNode.removeChild(el); });
+    globalShadowRoot = null;
+    try { Object.keys(storyAppearanceMap).forEach(function (k) { delete storyAppearanceMap[k]; }); } catch (e) {}
+    appDisabledBySettings = false;
+  }
+
+  function rerender() {
+    console.info('[Vidlytics] Configuracao alterada: atualizando widgets.');
+    teardown();
+    initWidget();
+  }
+
+  function tick() {
+    if (busy || document.hidden) return;
+    busy = true;
+    readSignature().then(function (sig) {
+      if (sig === null) return;
+      if (lastSig === null) { lastSig = sig; return; }
+      if (sig === lastSig) return;
+      if (modalOpen()) return;
+      lastSig = sig;
+      rerender();
+    }).then(function () { busy = false; }, function () { busy = false; });
+  }
+
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
+  setInterval(tick, EVERY);
+  setTimeout(tick, 4000);
+  window.__vlRefresh = tick;
+})();
+
 // Dispara a busca pela Live Ativa assim que o widget inicializar
 Promise.resolve(null).then(function(live) {
   if (live) renderLiveWidget(live);
 });
 
 })();
+
 
 
 
