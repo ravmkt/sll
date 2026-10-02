@@ -196,14 +196,6 @@ const FloatingPreview = ({ floating, colors, device }: { floating: any; colors: 
   );
 };
 
-// Mobile: janela do carrossel = Largura x Itens Visiveis + espacamento (max 100% da tela)
-const mobileCarouselWindow = (c: any) => {
-  const w = Math.min(240, Math.max(48, Number(c?.width) || 80));
-  const n = Math.max(1, Math.round(Number(c?.visible_items ?? 2)) || 2);
-  const s = Math.max(0, Number(c?.spacing ?? c?.gap ?? 12) || 0);
-  return Math.round(w * n + s * (n - 1));
-};
-
 const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any; colors: any; isMobile?: boolean }) => {
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1624,7 +1616,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
                     {activeTab === 'carrossel' && (
                       <div className="flex-1 w-full h-full overflow-hidden flex flex-col justify-center px-0 py-3">
-                        <div className="mx-auto" style={{ width: mobileCarouselWindow(carouselPreviewData), maxWidth: "100%" }}>
+                        <div className="mx-auto" style={{ width: "100%" }}>
                         <CarouselPreview
                           carousel={carouselPreviewData}
                           colors={{ primary: formData?.primary_color || '#0094EB' }}
