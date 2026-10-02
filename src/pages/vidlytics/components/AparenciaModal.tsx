@@ -389,7 +389,7 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
   const marginL = Math.max(0, Number(carousel?.margin_left ?? 0) || 0);
   const marginR = Math.max(0, Number(carousel?.margin_right ?? 0) || 0);
   const marginT = Math.max(0, Number(carousel?.margin_top ?? 0) || 0);
-  const marginB = Math.max(0, Number(carousel?.margin_bottom ?? 0) || 0);
+  const marginB = Number(carousel?.margin_bottom ?? 0) || 0;
   const titleAlign = carousel?.title_align ?? 'center';
   const enlarge = !!carousel?.highlight_enlarge_active;
   const desat = !!carousel?.highlight_desaturate_inactive;
@@ -1301,7 +1301,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <input type="number" min="0" value={getC('carousel_margin_top') || 0} onChange={e => setC('carousel_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Inferior (px)">
-                          <input type="number" min="0" value={getC('carousel_margin_bottom') || 0} onChange={e => setC('carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
+                          <input type="number" value={getC('carousel_margin_bottom') || 0} onChange={e => setC('carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Esquerda (px)">
                           <input type="number" min="0" value={getC('carousel_margin_left') || 0} onChange={e => setC('carousel_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
