@@ -1345,9 +1345,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         <CheckboxField label="Reproduzir vídeos automaticamente" checked={getC('carousel_autoplay_videos') !== false} onChange={(v: boolean) => setC('carousel_autoplay_videos', v)} />
                         <CheckboxField label="Exibir setas laterais" checked={getC('carousel_show_arrows') !== false} onChange={(v: boolean) => setC('carousel_show_arrows', v)} />
                         {getC('carousel_show_arrows') !== false && (
-                          <FormField label="Cor das setas">
+                          <div className="mb-3"><FormField label="Cor das setas">
                             <ColorInput value={getC('carousel_arrow_color') || '#0094EB'} onChange={(v: string) => setC('carousel_arrow_color', v)} />
-                          </FormField>
+                          </FormField></div>
                         )}
                         <CheckboxField label="Exibir ícone de Play" checked={getC('carousel_show_play_icon') !== false} onChange={(v: boolean) => setC('carousel_show_play_icon', v)} />
                       </div>
