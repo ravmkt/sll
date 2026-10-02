@@ -778,6 +778,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     title_bold: getC('carousel_title_bold') ?? true,
     autoplay_videos: getC('carousel_autoplay_videos') ?? true,
     show_play_icon: getC('carousel_show_play_icon') !== false,
+    show_arrows: getC('carousel_show_arrows') !== false,
+    arrow_color: getC('carousel_arrow_color') || '',
     show_product: getC('carousel_show_product') ?? true,
     product_card_bg: getC('carousel_product_card_bg') || '#FFFFFF',
     product_card_border_color: getC('carousel_product_card_border_color') || '#E2E8F0',
