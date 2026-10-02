@@ -4636,7 +4636,9 @@ function getDynamicCarouselConfig(appearance) {
 
   // Dupla leitura (padrão do carousel/grid): jsonb dynamic_carousel_config + campos flattened
   function rcv(jsonbField, fallback) {
-    return readConfigValue(appearance, 'dynamic_carousel_config', jsonbField, jsonbField, fallback);
+    var _dcAlias = { width: 'item_size', spacing: 'gap' };
+    var _dcLegacy = readConfigValue(appearance, 'dynamic_carousel_config', jsonbField, jsonbField, fallback);
+    return readConfigValue(appearance, 'dynamic_carousel_config', jsonbField, 'dynamic_carousel_' + (_dcAlias[jsonbField] || jsonbField), _dcLegacy);
   }
 
   // enabled vem de "enabled" no jsonb OU do flattened no topo
@@ -7737,4 +7739,5 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
