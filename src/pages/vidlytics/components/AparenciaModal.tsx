@@ -246,8 +246,14 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
   const borderRadius = isCircle ? '50%' : `${borderRadiusNum}px`;
   const titleAlign = carousel?.title_align ?? (isMobileView ? 'left' : 'center');
 
-  const baseItemWidth = Math.max(40, (cw - (spacingNum * (visibleItemsDesktop - 1))) / visibleItemsDesktop);
+  const sizeMode = carousel?.size_mode === 'width' ? 'width' : 'items';
+  const fixedWidth = limitNumber(carousel?.width, isMobileView ? 64 : 80, 20, 600);
+  const baseItemWidth = sizeMode === 'width'
+    ? fixedWidth
+    : Math.max(40, (cw - (spacingNum * (visibleItemsDesktop - 1))) / visibleItemsDesktop);
   const step = baseItemWidth + spacingNum;
+  const fitCount = sizeMode === 'items' ? visibleItemsDesktop : Math.max(1, Math.floor((cw + spacingNum) / step));
+  const groupWidth = Math.min(cw, fitCount * baseItemWidth + (fitCount - 1) * spacingNum);
 
   useEffect(() => {
     videoRefs.current.forEach((video, i) => {
@@ -284,6 +290,7 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
         </h4>
       )}
       <div className="relative w-full cursor-grab active:cursor-grabbing" onMouseDown={e => handleDragStart(e.clientX)} onMouseMove={e => handleDragMove(e.clientX)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd} onTouchStart={e => handleDragStart(e.touches[0].clientX)} onTouchMove={e => handleDragMove(e.touches[0].clientX)} onTouchEnd={handleDragEnd}>
+        <div style={{ width: isMobileView ? '100%' : `${groupWidth}px`, margin: '0 auto', overflow: isMobileView ? 'visible' : 'hidden' }}>
         <div className="flex items-start" style={{ gap: `${spacingNum}px`, transform: transformStyle, transition: noTransition || dragStartX !== null ? 'none' : 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)' }}>
           {trackVideos.map((videoSrc, i) => (
             <div key={i} className="shrink-0 flex flex-col transition-all duration-300" style={{ width: `${baseItemWidth}px`, gap: '8px' }}>
@@ -306,6 +313,7 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
               )}
             </div>
           ))}
+        </div>
         </div>
       </div>
     </div>
@@ -358,7 +366,9 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
   const visibleItems = Math.max(1, Number(carousel?.visible_items ?? 4));
   const cw = containerWidth || (isMobile ? 320 : 850);
   const configuredW = limitNumber(carousel?.width, 80, 48, 240);
-  const baseItemWidth = isMobile ? Math.min(configuredW, Math.round(cw * 0.5)) : configuredW;
+  const baseItemWidth = carousel?.size_mode === 'items'
+    ? Math.max(40, Math.round((cw - spacingNum * (visibleItems - 1)) / visibleItems))
+    : (isMobile ? Math.min(configuredW, Math.round(cw * 0.5)) : configuredW);
   const step = baseItemWidth + spacingNum;
   const borderWidth = Number(carousel?.border_width ?? carousel?.border_style ?? 2);
   const borderColor = carousel?.border_color || colors?.primary || '#0094EB';
@@ -606,6 +616,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     shape: normalizeWidgetShape(getC('carousel_shape') || getC('carousel_style') || 'portrait'),
     object_fit: getC('carousel_object_fit') || 'cover',
     width: getC('carousel_width') || getC('carousel_item_size') || (previewDevice === 'mobile' ? 64 : 80),
+    size_mode: getC('carousel_size_mode') || 'items',
     visible_items: getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4),
     spacing: getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16),
     margin_top: getC('carousel_margin_top') ?? 0,
@@ -636,6 +647,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     shape: normalizeWidgetShape(getC('dyn_carousel_shape') || 'portrait'),
     object_fit: getC('dyn_carousel_object_fit') || 'cover',
     width: getC('dyn_carousel_width') || (previewDevice === 'mobile' ? 64 : 80),
+    size_mode: getC('dyn_carousel_size_mode') || 'width',
     visible_items: getC('dyn_carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4),
     spacing: getC('dyn_carousel_spacing') ?? 8,
     margin_left: getC('dyn_carousel_margin_left') ?? 0,
@@ -1087,12 +1099,23 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             <option value="fill">Fill (Esticar)</option>
                           </select>
                         </FormField>
-                        <FormField label="Largura (px)">
-                          <input type="number" min="20" value={getC('carousel_width') || getC('carousel_item_size') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('carousel_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                        <FormField label="Modo de tamanho" className="col-span-2">
+                          <select value={getC('carousel_size_mode') || 'items'} onChange={e => setC('carousel_size_mode', e.target.value)} className={selectClass}>
+                            <option value="items">Itens visíveis (largura automática)</option>
+                            <option value="width">Largura fixa do card</option>
+                          </select>
                         </FormField>
-                        <FormField label="Itens Visíveis">
-                          <input type="number" min="1" max="10" value={getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4)} onChange={e => setC('carousel_visible_items', parseInt(e.target.value) || 1)} className={inputClass} />
-                        </FormField>
+                        {(getC('carousel_size_mode') || 'items') === 'width' ? (
+                          <FormField label="Largura do card (px)" className="col-span-2">
+                            <input type="number" min="20" max="600" value={getC('carousel_width') || getC('carousel_item_size') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('carousel_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                          </FormField>
+                        ) : (
+                          <FormField label="Itens visíveis (0,5 = espiadinha)" className="col-span-2">
+                            <select value={Number(getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4))} onChange={e => setC('carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
+                              {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map(n => (<option key={n} value={n}>{String(n).replace('.', ',')}</option>))}
+                            </select>
+                          </FormField>
+                        )}
                         <FormField label="Espaçamento (px)" className="col-span-2">
                           <input type="number" min="0" value={getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
@@ -1205,9 +1228,23 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             <option value="fill">Fill (Esticar)</option>
                           </select>
                         </FormField>
-                        <FormField label="Largura (px)">
-                          <input type="number" min="20" value={getC('dyn_carousel_width') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('dyn_carousel_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                        <FormField label="Modo de tamanho" className="col-span-2">
+                          <select value={getC('dyn_carousel_size_mode') || 'width'} onChange={e => setC('dyn_carousel_size_mode', e.target.value)} className={selectClass}>
+                            <option value="width">Largura fixa do card</option>
+                            <option value="items">Itens visíveis (largura automática)</option>
+                          </select>
                         </FormField>
+                        {(getC('dyn_carousel_size_mode') || 'width') === 'width' ? (
+                          <FormField label="Largura do card (px)" className="col-span-2">
+                            <input type="number" min="48" max="240" value={getC('dyn_carousel_width') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('dyn_carousel_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                          </FormField>
+                        ) : (
+                          <FormField label="Itens visíveis (0,5 = espiadinha)" className="col-span-2">
+                            <select value={Number(getC('dyn_carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4))} onChange={e => setC('dyn_carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
+                              {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map(n => (<option key={n} value={n}>{String(n).replace('.', ',')}</option>))}
+                            </select>
+                          </FormField>
+                        )}
                         <FormField label="Espaçamento (px)">
                           <input type="number" min="0" value={getC('dyn_carousel_spacing') ?? 8} onChange={e => setC('dyn_carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
