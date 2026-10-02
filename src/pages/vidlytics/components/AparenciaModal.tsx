@@ -432,6 +432,15 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
 
 const GridPreview = ({ grid, colors, isMobile = false }: { grid: any; colors: any; isMobile?: boolean }) => {
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(isMobile ? 320 : 850);
+
+  useEffect(() => {
+    const obs = new ResizeObserver(entries => { if (entries[0]) setContainerWidth(entries[0].contentRect.width); });
+    if (containerRef.current) obs.observe(containerRef.current);
+    return () => obs.disconnect();
+  }, []);
+
   const shape = normalizeWidgetShape(grid?.shape, 'portrait');
   const isCircle = shape === 'circle';
   const isSquare = shape === 'square';
@@ -439,11 +448,19 @@ const GridPreview = ({ grid, colors, isMobile = false }: { grid: any; colors: an
   const count = cols * 2;
   const items = Array.from({ length: count });
   const gap = Math.max(0, Number(grid?.spacing ?? 12) || 0);
-  const cardW = limitNumber(grid?.width, isMobile ? 64 : 80, 20, 600);
   const marginL = Math.max(0, Number(grid?.margin_left ?? 0) || 0);
   const marginR = Math.max(0, Number(grid?.margin_right ?? 0) || 0);
   const marginT = Math.max(0, Number(grid?.margin_top ?? 0) || 0);
   const marginB = Math.max(0, Number(grid?.margin_bottom ?? 0) || 0);
+
+  const cw = containerWidth || (isMobile ? 320 : 850);
+  const avail = Math.max(60, cw - marginL - marginR);
+  const gapsTotal = gap * (cols - 1);
+  const fit = Math.max(20, Math.floor((avail - gapsTotal) / cols));
+  const configuredW = Math.max(20, Math.round(Number(grid?.width) || 80));
+  const cardPx = isMobile ? fit : Math.min(configuredW, fit);
+  const gridW = cardPx * cols + gapsTotal;
+
   const borderRadius = isCircle ? '50%' : `${Number(grid?.border_radius ?? 12)}px`;
   const aspect = (isCircle || isSquare) ? '1 / 1' : shape === 'landscape' ? '16 / 9' : '9 / 16';
   const autoplay = grid?.autoplay_videos !== false;
@@ -466,36 +483,38 @@ const GridPreview = ({ grid, colors, isMobile = false }: { grid: any; colors: an
   }, [autoplay, sequential, activeIdx, count, cols]);
 
   return (
-    <div className="w-full box-border overflow-hidden" style={{ paddingLeft: marginL, paddingRight: marginR, paddingTop: 12 + marginT, paddingBottom: 12 + marginB }}>
-      {grid?.show_title && (
-        <div className="w-full mb-3" style={{ textAlign: titleAlign as any }}>
-          <h4 style={{ fontSize: `${Number(grid?.title_font_size ?? 14)}px`, fontWeight: grid?.title_bold ? 'bold' : 'normal' }} className="text-slate-800 dark:text-white">
-            {grid?.title_text ?? 'Grade de Vídeos'}
-          </h4>
-        </div>
-      )}
-      <div className="grid" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, ${cardW}px))`, justifyContent: 'center', gap, alignItems: 'start' }}>
-        {items.map((_, i) => (
-          <div key={i} className="flex flex-col min-w-0" style={{ gap: '8px' }}>
-            <div className="relative overflow-hidden bg-slate-950 shadow-sm flex items-center justify-center shrink-0" style={{ width: '100%', aspectRatio: aspect, borderRadius, border: `${Number(grid?.border_width ?? 2)}px solid ${grid?.border_color || colors?.primary || '#0094EB'}`, boxSizing: 'border-box' }}>
-              <video ref={el => { if (el) videoRefs.current.set(i, el); else videoRefs.current.delete(i); }} src={DEMO_PREVIEW_VIDEOS[i % DEMO_PREVIEW_VIDEOS.length]} loop muted playsInline preload="metadata" style={{ objectFit: grid?.object_fit || 'cover' }} className="w-full h-full pointer-events-none" />
-              {showPlay && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                  <div className="w-8 h-8 rounded-full bg-white/95 shadow-md flex items-center justify-center"><Play size={10} className="text-slate-900 fill-slate-900 ml-0.5" /></div>
+    <div ref={containerRef} className="w-full box-border overflow-hidden" style={{ paddingTop: 12 + marginT, paddingBottom: 12 + marginB }}>
+      <div style={{ marginLeft: marginL, marginRight: marginR }}>
+        {grid?.show_title && (
+          <div className="w-full mb-3" style={{ textAlign: titleAlign as any }}>
+            <h4 style={{ fontSize: `${Number(grid?.title_font_size ?? 14)}px`, fontWeight: grid?.title_bold ? 'bold' : 'normal' }} className="text-slate-800 dark:text-white">
+              {grid?.title_text ?? 'Grade de Vídeos'}
+            </h4>
+          </div>
+        )}
+        <div style={{ display: 'grid', width: gridW, maxWidth: '100%', marginLeft: 'auto', marginRight: 'auto', gridTemplateColumns: `repeat(${cols}, ${cardPx}px)`, gap, alignItems: 'start' }}>
+          {items.map((_, i) => (
+            <div key={i} className="flex flex-col min-w-0" style={{ gap: '8px' }}>
+              <div className="relative overflow-hidden bg-slate-950 shadow-sm flex items-center justify-center shrink-0" style={{ width: '100%', aspectRatio: aspect, borderRadius, border: `${Number(grid?.border_width ?? 2)}px solid ${grid?.border_color || colors?.primary || '#0094EB'}`, boxSizing: 'border-box' }}>
+                <video ref={el => { if (el) videoRefs.current.set(i, el); else videoRefs.current.delete(i); }} src={DEMO_PREVIEW_VIDEOS[i % DEMO_PREVIEW_VIDEOS.length]} loop muted playsInline preload="metadata" style={{ objectFit: grid?.object_fit || 'cover' }} className="w-full h-full pointer-events-none" />
+                {showPlay && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                    <div className="w-8 h-8 rounded-full bg-white/95 shadow-md flex items-center justify-center"><Play size={10} className="text-slate-900 fill-slate-900 ml-0.5" /></div>
+                  </div>
+                )}
+              </div>
+              {grid?.show_product && !isCircle && (
+                <div className="w-full flex items-center gap-2 overflow-hidden box-border pointer-events-none" style={{ backgroundColor: grid?.product_card_bg || '#FFFFFF', border: `${Number(grid?.product_card_border_width ?? 1)}px solid ${grid?.product_card_border_color || '#E2E8F0'}`, borderRadius: `${Number(grid?.product_card_border_radius ?? 10)}px`, padding: '8px' }}>
+                  <div className="w-8 h-8 rounded bg-slate-100 shrink-0 overflow-hidden border border-slate-100"><img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=80&q=80" alt="Produto" className="w-full h-full object-cover" /></div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p style={{ fontSize: `${Number(grid?.product_card_name_size ?? 9)}px`, color: grid?.product_card_name_color || '#0F172A' }} className="font-bold truncate">Calça Confort</p>
+                    <p style={{ fontSize: `${Number(grid?.product_card_price_size ?? 8)}px`, color: grid?.product_card_price_color || colors?.primary || '#0094EB' }} className="font-black">R$ 149,95</p>
+                  </div>
                 </div>
               )}
             </div>
-            {grid?.show_product && !isCircle && (
-              <div className="w-full flex items-center gap-2 overflow-hidden box-border pointer-events-none" style={{ backgroundColor: grid?.product_card_bg || '#FFFFFF', border: `${Number(grid?.product_card_border_width ?? 1)}px solid ${grid?.product_card_border_color || '#E2E8F0'}`, borderRadius: `${Number(grid?.product_card_border_radius ?? 10)}px`, padding: '8px' }}>
-                <div className="w-8 h-8 rounded bg-slate-100 shrink-0 overflow-hidden border border-slate-100"><img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=80&q=80" alt="Produto" className="w-full h-full object-cover" /></div>
-                <div className="flex-1 min-w-0 text-left">
-                  <p style={{ fontSize: `${Number(grid?.product_card_name_size ?? 9)}px`, color: grid?.product_card_name_color || '#0F172A' }} className="font-bold truncate">Calça Confort</p>
-                  <p style={{ fontSize: `${Number(grid?.product_card_price_size ?? 8)}px`, color: grid?.product_card_price_color || colors?.primary || '#0094EB' }} className="font-black">R$ 149,95</p>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
