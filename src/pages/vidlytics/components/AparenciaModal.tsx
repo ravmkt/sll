@@ -1277,6 +1277,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             </select>
                           </FormField>
                         )}
+                        {(getC('carousel_size_mode') || 'items') === 'width' && (
+                          <FormField label="Itens visíveis (janela)">
+                            <select value={Number(getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4))} onChange={e => setC('carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
+                              {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map(n => (<option key={n} value={n}>{String(n).replace('.', ',') + (n % 1 ? ' (parcial)' : '')}</option>))}
+                            </select>
+                          </FormField>
+                        )}
                         <div className="col-span-2"><FormField label="Espaçamento (px)">
                           <input type="number" min="0" value={getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField></div>
