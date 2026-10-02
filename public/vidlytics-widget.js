@@ -6828,7 +6828,7 @@ if (displayMode === 'dynamic_carousel') {
         width: '100%',
         marginLeft: 'auto',
         marginRight: 'auto',
-        padding: '0',
+        
         minHeight: 'auto'
       });
       
