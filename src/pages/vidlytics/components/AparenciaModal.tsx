@@ -212,7 +212,7 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
 
   const videoSources = DEMO_PREVIEW_VIDEOS;
   const len = videoSources.length;
-  const REPEAT_TILES = 6;
+  const REPEAT_TILES = 16;
   const baseIndex = Math.floor(REPEAT_TILES / 2) * len;
   const trackVideos = Array.from({ length: REPEAT_TILES }, () => videoSources).flat();
 
@@ -335,7 +335,7 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
 
   const videoSources = DEMO_PREVIEW_VIDEOS;
   const len = videoSources.length;
-  const REPEAT_TILES = 6;
+  const REPEAT_TILES = 16;
   const baseIndex = Math.floor(REPEAT_TILES / 2) * len;
   const trackVideos = Array.from({ length: REPEAT_TILES }, () => videoSources).flat();
 
