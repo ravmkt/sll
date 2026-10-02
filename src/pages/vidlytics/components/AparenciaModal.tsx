@@ -1489,9 +1489,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         <FormField label="Colunas">
                           <input type="number" min="1" max="10" value={getC('grid_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4)} onChange={e => setC('grid_visible_items', parseInt(e.target.value) || 1)} className={inputClass} />
                         </FormField>
-                        <FormField label="Espaçamento (px)" className={previewDevice === 'mobile' ? '' : 'col-span-2'}>
+                        <div className={previewDevice === 'mobile' ? '' : 'col-span-2'}><FormField label="Espaçamento (px)">
                           <input type="number" min="0" value={getC('grid_spacing') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('grid_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
-                        </FormField>
+                        </FormField></div>
                         <FormField label="Margem Superior (px)">
                           <input type="number" min="0" value={getC('grid_margin_top') || 0} onChange={e => setC('grid_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
@@ -1729,15 +1729,11 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
                         {activeTab === 'grade' && (
                           <div className="w-full h-full flex items-center justify-center">
-                            <ScaleToFit>
-                              <div className="w-[850px] max-w-full flex justify-center">
-                                <GridPreview
+                            <div className="w-full max-h-full overflow-y-auto custom-scrollbar m-auto"><GridPreview
                                   grid={gridPreviewData}
                                   colors={{ primary: formData?.primary_color || '#0094EB' }}
                                   isMobile={false}
-                                />
-                              </div>
-                            </ScaleToFit>
+                                /></div>
                           </div>
                         )}
 
