@@ -5667,6 +5667,7 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
 
   var track = document.createElement('div');
   track.className = 'vidlytics-carousel-track';
+  trackContainer.style.setProperty('padding-bottom', '2px', 'important');
   track.style.cssText =
     'display:flex !important;' +
     'gap:' + cfg.itemSpacing + ' !important;' +
@@ -7857,6 +7858,7 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
 
 
