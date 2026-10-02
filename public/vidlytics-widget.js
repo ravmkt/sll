@@ -4687,6 +4687,8 @@ else if (shape === 'circle') carouselAspectRatio = '1/1';
 return {
   enabled: enabled,
   width: toNumber(rcv('width', '160'), 160),
+  sizeMode: String(rcv('size_mode', 'width')).trim().toLowerCase(),
+  visibleItems: parseFloat(rcv('visible_items', (window.innerWidth < 768 ? 2 : 4))) || (window.innerWidth < 768 ? 2 : 4),
   spacing: toNumber(rcv('spacing', '14'), 14),
   shape: shape,
   aspectRatio: carouselAspectRatio, // ⬅️ NOVO
@@ -4734,8 +4736,8 @@ return {
     showPlayIcon: toBoolean(rcv('show_play_icon', true), true),
 
     // Título da vitrine
-    showTitle: toBoolean(rcv('show_title', true), true),
-    titleText: String(rcv('title_text', '') || '').trim(),
+    showTitle: toBoolean(rcv('show_title', false), false),
+    titleText: String(rcv('title_text', 'Destaques') || 'Destaques').trim(),
     titleFontSize: toNumber(rcv('title_font_size', '14'), 14),
     titleBold: toBoolean(rcv('title_bold', true), true),
     titleColor: rcv('title_color', '#0F172A') || '#0F172A',
@@ -4823,6 +4825,11 @@ cfg.borderRadius = isNaN(parsedRadius) ? 12 : parsedRadius;
     cfg.objectFit = cfg.objectFit || 'cover';
     cfg.showProduct = cfg.showProduct !== false;
 
+    if (cfg.sizeMode === 'items' && cfg.visibleItems > 0) {
+      var _dcAvail = window.innerWidth - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0);
+      var _dcN = cfg.visibleItems;
+      cfg.width = Math.max(40, Math.floor((_dcAvail - cfg.spacing * (_dcN - 1)) / _dcN));
+    }
     var isCircle = cfg.isCircle === true || cfg.shape === 'circle';
     var aspectRatio = isCircle ? '1/1' : (cfg.aspectRatio || '9/16');
     var extraWidth = cfg.enlargeActive ? (cfg.width * (cfg.activeScale - 1)) : 0;
