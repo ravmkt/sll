@@ -4652,6 +4652,7 @@ function getDynamicCarouselConfig(appearance) {
   // Dupla leitura (padrão do carousel/grid): jsonb dynamic_carousel_config + campos flattened
   function rcv(jsonbField, fallback) {
     var _dcAlias = { width: 'item_size', spacing: 'gap' };
+    var _dynFlat = appearance['dyn_carousel_' + jsonbField]; if (_dynFlat !== undefined && _dynFlat !== null && _dynFlat !== '') return _dynFlat;
     var _dcLegacy = readConfigValue(appearance, 'dynamic_carousel_config', jsonbField, jsonbField, fallback);
     return readConfigValue(appearance, 'dynamic_carousel_config', jsonbField, 'dynamic_carousel_' + (_dcAlias[jsonbField] || jsonbField), _dcLegacy);
   }
