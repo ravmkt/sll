@@ -6137,6 +6137,16 @@ function centerActiveItem(animate) {
     });
   }
 
+  function vlSelBlock(e) { e.preventDefault(); }
+  function vlLockSelection(on) {
+    var m = on ? 'addEventListener' : 'removeEventListener';
+    document[m]('selectstart', vlSelBlock, true);
+    document[m]('dragstart', vlSelBlock, true);
+    document.documentElement.style.userSelect = on ? 'none' : '';
+    document.documentElement.style.webkitUserSelect = on ? 'none' : '';
+    if (on) { var sel = window.getSelection && window.getSelection(); if (sel && sel.removeAllRanges) sel.removeAllRanges(); }
+  }
+
   function getMaxScroll() {
     var trackWidth = track.scrollWidth;
     var containerWidth = trackContainer.offsetWidth;
@@ -6153,6 +6163,7 @@ function centerActiveItem(animate) {
     dragStartTranslate = getTranslateX(track);
     track.style.transition = 'none';
     track.style.cursor = 'grabbing';
+    vlLockSelection(true);
   }
 
   function onDragMove(clientX) {
@@ -6167,6 +6178,7 @@ function onDragEnd() {
   if (!isDragging) return;
   isDragging = false;
   track.style.cursor = 'grab';
+  vlLockSelection(false);
 
   if (isMobileDevice) {
     var currentTranslateX = getTranslateX(track);
