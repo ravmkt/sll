@@ -247,25 +247,29 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
   const titleAlign = carousel?.title_align ?? (isMobileView ? 'left' : 'center');
 
   const sizeMode = carousel?.size_mode === 'width' ? 'width' : 'items';
+  const marginL = Math.max(0, Number(carousel?.margin_left ?? 0) || 0);
+  const marginR = Math.max(0, Number(carousel?.margin_right ?? 0) || 0);
+  const availW = Math.max(60, cw - marginL - marginR);
+  const gapCount = Math.max(0, Math.ceil(visibleItemsDesktop) - 1);
   const fixedWidth = limitNumber(carousel?.width, isMobileView ? 64 : 80, 20, 600);
   const baseItemWidth = sizeMode === 'width'
     ? fixedWidth
-    : Math.max(40, (cw - (spacingNum * (visibleItemsDesktop - 1))) / visibleItemsDesktop);
+    : Math.max(40, (availW - spacingNum * gapCount) / visibleItemsDesktop);
   const step = baseItemWidth + spacingNum;
-  const fitCount = sizeMode === 'items' ? visibleItemsDesktop : Math.max(1, Math.floor((cw + spacingNum) / step));
-  const groupWidth = Math.min(cw, fitCount * baseItemWidth + (fitCount - 1) * spacingNum);
+  const fitCount = sizeMode === 'items' ? visibleItemsDesktop : Math.max(1, Math.floor((availW + spacingNum) / step));
+  const groupWidth = sizeMode === 'items' ? availW : Math.min(availW, fitCount * step - spacingNum);
 
   useEffect(() => {
     videoRefs.current.forEach((video, i) => {
       if (!video) return;
-      const isVisible = isMobileView ? (i >= trackIndex - 1 && i <= trackIndex + 1) : (i >= trackIndex && i < trackIndex + visibleItemsDesktop);
+      const isVisible = i >= trackIndex && i < trackIndex + Math.ceil(fitCount) + 1;
       if (isVisible && (carousel?.autoplay_videos ?? true)) {
         video.play().catch(() => {});
       } else {
         video.pause();
       }
     });
-  }, [carousel?.autoplay_videos, trackIndex, isMobileView, visibleItemsDesktop]);
+  }, [carousel?.autoplay_videos, trackIndex, isMobileView, visibleItemsDesktop, fitCount]);
 
   const handleDragStart = (x: number) => { setNoTransition(true); setDragStartX(x); };
   const handleDragMove = (x: number) => { if (dragStartX !== null) setDragOffset(x - dragStartX); };
@@ -278,9 +282,7 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
     setNoTransition(false);
   };
 
-  const transformStyle = isMobileView
-    ? `translateX(${(cw / 2) - ((trackIndex * step) + (baseItemWidth / 2)) + dragOffset}px)`
-    : `translateX(${-trackIndex * step + dragOffset}px)`;
+  const transformStyle = `translateX(${-trackIndex * step + dragOffset}px)`;
 
   return (
     <div className="w-full py-2 flex flex-col space-y-3 select-none overflow-hidden" ref={containerRef}>
@@ -290,7 +292,7 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
         </h4>
       )}
       <div className="relative w-full cursor-grab active:cursor-grabbing" onMouseDown={e => handleDragStart(e.clientX)} onMouseMove={e => handleDragMove(e.clientX)} onMouseUp={handleDragEnd} onMouseLeave={handleDragEnd} onTouchStart={e => handleDragStart(e.touches[0].clientX)} onTouchMove={e => handleDragMove(e.touches[0].clientX)} onTouchEnd={handleDragEnd}>
-        <div style={{ width: isMobileView ? '100%' : `${groupWidth}px`, margin: '0 auto', overflow: isMobileView ? 'visible' : 'hidden' }}>
+        <div style={{ width: `${groupWidth}px`, marginLeft: `${marginL + (availW - groupWidth) / 2}px`, overflow: 'hidden' }}>
         <div className="flex items-start" style={{ gap: `${spacingNum}px`, transform: transformStyle, transition: noTransition || dragStartX !== null ? 'none' : 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)' }}>
           {trackVideos.map((videoSrc, i) => (
             <div key={i} className="shrink-0 flex flex-col transition-all duration-300" style={{ width: `${baseItemWidth}px`, gap: '8px' }}>
@@ -620,6 +622,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     visible_items: getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4),
     spacing: getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16),
     margin_top: getC('carousel_margin_top') ?? 0,
+    margin_left: getC('carousel_margin_left') ?? 0,
+    margin_right: getC('carousel_margin_right') ?? 0,
     margin_bottom: getC('carousel_margin_bottom') ?? 0,
     border_color: getC('carousel_border_color') || formData?.primary_color || '#0094EB',
     border_style: getC('carousel_border_width') ?? 2,
@@ -1099,20 +1103,20 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             <option value="fill">Fill (Esticar)</option>
                           </select>
                         </FormField>
-                        <FormField label="Modo de tamanho" className="col-span-2">
+                        <FormField label="Modo">
                           <select value={getC('carousel_size_mode') || 'items'} onChange={e => setC('carousel_size_mode', e.target.value)} className={selectClass}>
-                            <option value="items">Itens visíveis (largura automática)</option>
-                            <option value="width">Largura fixa do card</option>
+                            <option value="items">Itens visíveis</option>
+                            <option value="width">Largura fixa</option>
                           </select>
                         </FormField>
                         {(getC('carousel_size_mode') || 'items') === 'width' ? (
-                          <FormField label="Largura do card (px)" className="col-span-2">
+                          <FormField label="Largura do card (px)">
                             <input type="number" min="20" max="600" value={getC('carousel_width') || getC('carousel_item_size') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('carousel_width', parseInt(e.target.value) || 0)} className={inputClass} />
                           </FormField>
                         ) : (
-                          <FormField label="Itens visíveis (0,5 = espiadinha)" className="col-span-2">
+                          <FormField label="Itens visíveis">
                             <select value={Number(getC('carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4))} onChange={e => setC('carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
-                              {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map(n => (<option key={n} value={n}>{String(n).replace('.', ',')}</option>))}
+                              {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map(n => (<option key={n} value={n}>{String(n).replace('.', ',') + (n % 1 ? ' (parcial)' : '')}</option>))}
                             </select>
                           </FormField>
                         )}
@@ -1124,6 +1128,12 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         </FormField>
                         <FormField label="Margem Inferior (px)">
                           <input type="number" min="0" value={getC('carousel_margin_bottom') || 0} onChange={e => setC('carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Esquerda (px)">
+                          <input type="number" min="0" value={getC('carousel_margin_left') || 0} onChange={e => setC('carousel_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
+                        </FormField>
+                        <FormField label="Margem Direita (px)">
+                          <input type="number" min="0" value={getC('carousel_margin_right') || 0} onChange={e => setC('carousel_margin_right', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                       </div>
                     </Accordion>
@@ -1228,20 +1238,20 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             <option value="fill">Fill (Esticar)</option>
                           </select>
                         </FormField>
-                        <FormField label="Modo de tamanho" className="col-span-2">
+                        <FormField label="Modo">
                           <select value={getC('dyn_carousel_size_mode') || 'width'} onChange={e => setC('dyn_carousel_size_mode', e.target.value)} className={selectClass}>
-                            <option value="width">Largura fixa do card</option>
-                            <option value="items">Itens visíveis (largura automática)</option>
+                            <option value="width">Largura fixa</option>
+                            <option value="items">Itens visíveis</option>
                           </select>
                         </FormField>
                         {(getC('dyn_carousel_size_mode') || 'width') === 'width' ? (
-                          <FormField label="Largura do card (px)" className="col-span-2">
+                          <FormField label="Largura do card (px)">
                             <input type="number" min="48" max="240" value={getC('dyn_carousel_width') || (previewDevice === 'mobile' ? 64 : 80)} onChange={e => setC('dyn_carousel_width', parseInt(e.target.value) || 0)} className={inputClass} />
                           </FormField>
                         ) : (
-                          <FormField label="Itens visíveis (0,5 = espiadinha)" className="col-span-2">
+                          <FormField label="Itens visíveis">
                             <select value={Number(getC('dyn_carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4))} onChange={e => setC('dyn_carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
-                              {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map(n => (<option key={n} value={n}>{String(n).replace('.', ',')}</option>))}
+                              {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map(n => (<option key={n} value={n}>{String(n).replace('.', ',') + (n % 1 ? ' (parcial)' : '')}</option>))}
                             </select>
                           </FormField>
                         )}
