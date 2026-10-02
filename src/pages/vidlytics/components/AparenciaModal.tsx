@@ -316,6 +316,13 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
           ))}
         </div>
         </div>
+        {/* vlPreviewArrows */}
+        {carousel?.show_arrows !== false && (
+          <>
+            <button type="button" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onClick={() => setTrackIndex(prev => prev - 1)} className="absolute left-2 z-30 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm leading-none shadow-md" style={{ top: '35%', background: carousel?.arrow_color || colors?.primary || '#0094EB' }}>&lsaquo;</button>
+            <button type="button" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onClick={() => setTrackIndex(prev => prev + 1)} className="absolute right-2 z-30 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm leading-none shadow-md" style={{ top: '35%', background: carousel?.arrow_color || colors?.primary || '#0094EB' }}>&rsaquo;</button>
+          </>
+        )}
       </div>
     </div>
   );
