@@ -1284,6 +1284,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             </select>
                           </FormField>
                         )}
+                        <div className="col-span-2"><CheckboxField label="Carrossel infinito" checked={getC('carousel_infinite') === true} onChange={(v: boolean) => setC('carousel_infinite', v)} /></div>
                         <div className="col-span-2"><FormField label="Espaçamento (px)">
                           <input type="number" min="0" value={getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField></div>
@@ -1341,7 +1342,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             </div>
                           </div>
                         )}
-                        <CheckboxField label="Carrossel infinito" checked={getC('carousel_infinite') === true} onChange={(v: boolean) => setC('carousel_infinite', v)} />
                         <CheckboxField label="Reproduzir vídeos automaticamente" checked={getC('carousel_autoplay_videos') !== false} onChange={(v: boolean) => setC('carousel_autoplay_videos', v)} />
                         <CheckboxField label="Exibir ícone de Play" checked={getC('carousel_show_play_icon') !== false} onChange={(v: boolean) => setC('carousel_show_play_icon', v)} />
                       </div>
