@@ -5679,6 +5679,8 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
   
 // Items renderizam completamente com suporte robusto a vídeo e imagem
   // Repete os stories em ciclo ate completar os itens visiveis
+  var vlOrigStories = stories.slice();
+  function vlRealIdx(s, i) { var k = vlOrigStories.indexOf(s); return k < 0 ? i : k; }
   var vlTotal = 0;
   stories.forEach(function (s) { vlTotal += ((s && s.videos) || []).filter(Boolean).length; });
   if (cfg.infinite && vlTotal > 0 && vlTotal < visibleItems) {
@@ -5693,6 +5695,13 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
       vlI++;
     }
     stories = vlExpanded;
+  }
+  var vlInfDesktop = !!cfg.infinite && !isMobileDevice && vlTotal > 0;
+  var vlSetCount = 0;
+  if (vlInfDesktop) {
+    stories.forEach(function (s) { vlSetCount += ((s && s.videos) || []).filter(Boolean).length; });
+    var vlOne = stories.slice();
+    stories = vlOne.concat(vlOne, vlOne);
   }
   stories.forEach(function(story, storyIndex) {
     var videos = (story.videos || []).filter(Boolean);
@@ -5908,7 +5917,7 @@ directFrameVid.src = directUrl;
       // 8. Evento de clique para abrir Story
       videoCard.addEventListener('click', function(e) {
         e.stopPropagation();
-        openStoryModal(storyIndex, videoIndex);
+        openStoryModal(vlRealIdx(story, storyIndex), videoIndex);
       });
 
       item.appendChild(videoCard);
@@ -6032,7 +6041,7 @@ sendAnalyticsEvent('product_view', video ? video.id : null, productData ? produc
 
   // 👇 INÍCIO DA IMPLEMENTAÇÃO DO LOOP VISUAL (CLONES) 👇
   var itemsArray = Array.from(track.children);
-  var hasClones = !!cfg.infinite && itemsArray.length > visibleItems;
+  var hasClones = !!cfg.infinite && !vlInfDesktop && itemsArray.length > visibleItems;
   if (itemsArray.length > 0 && itemsArray.length <= visibleItems) {
     track.style.setProperty('justify-content', 'safe center', 'important');
     if (!isMobileDevice) {
@@ -6104,6 +6113,30 @@ function centerActiveItem(animate) {
     return matrix.m41;
   }
 
+  function vlWrapW() {
+    var kids = track.children;
+    if (!vlInfDesktop || kids.length <= vlSetCount) return 0;
+    return kids[vlSetCount].offsetLeft - kids[0].offsetLeft;
+  }
+  function vlWrap(t) {
+    var P = vlWrapW();
+    if (!P) return t;
+    while (t > -P) t -= P;
+    while (t <= -2 * P) t += P;
+    return t;
+  }
+  if (vlInfDesktop) {
+    track.addEventListener('transitionend', function (e) {
+      if (e.target !== track) return;
+      var t0 = getTranslateX(track), t1 = vlWrap(t0);
+      if (t1 !== t0) { track.style.transition = 'none'; track.style.transform = 'translateX(' + t1 + 'px)'; }
+    });
+    requestAnimationFrame(function () {
+      var P = vlWrapW();
+      if (P) { track.style.transition = 'none'; track.style.transform = 'translateX(' + (-P) + 'px)'; }
+    });
+  }
+
   function getMaxScroll() {
     var trackWidth = track.scrollWidth;
     var containerWidth = trackContainer.offsetWidth;
@@ -6126,7 +6159,7 @@ function centerActiveItem(animate) {
     if (!isDragging) return;
     var delta = clientX - startX;
     var maxScroll = getMaxScroll();
-    var newTranslate = clamp(dragStartTranslate + delta, -maxScroll, 0);
+    var newTranslate = vlInfDesktop ? vlWrap(dragStartTranslate + delta) : clamp(dragStartTranslate + delta, -maxScroll, 0);
     track.style.transform = 'translateX(' + newTranslate + 'px)';
   }
 
@@ -6193,7 +6226,7 @@ function onDragEnd() {
   });
   
 // --- SETAS (só com clones e showArrows ligado) ---
-  if (hasClones && cfg.showArrows) {
+  if ((hasClones || vlInfDesktop) && cfg.showArrows) {
     var makeArrow = function (dir) {
       var b = document.createElement('button');
       b.type = 'button';
@@ -6215,7 +6248,7 @@ function onDragEnd() {
           centerActiveItem(true);
         } else {
           var step = itemWidthPx + gapPx;
-          var next = clamp(getTranslateX(track) - dir * step, -getMaxScroll(), 0);
+          var next = vlInfDesktop ? (getTranslateX(track) - dir * step) : clamp(getTranslateX(track) - dir * step, -getMaxScroll(), 0);
           track.style.transition = 'transform 0.3s ease';
           track.style.transform = 'translateX(' + next + 'px)';
         }
