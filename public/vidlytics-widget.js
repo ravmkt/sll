@@ -1186,19 +1186,30 @@ function fetchLiveSpotlight(live) {
   }
 
   function vidAppearanceFromRow(row) {
-    var ws = parseJsonIfNeeded(row && row.widget_style);
+    var ws = parseJsonIfNeeded(row && row.widget_style) || {};
     var desktop = ws.desktop || ws.mobile || {};
     var mobile = ws.mobile || ws.desktop || {};
     var main = ws.primary_color || desktop.floating_border_color || '#0094EB';
-    return {
-      style_name: ws.name || row.name || 'vidlytics',
-      primary_color: main,
-      secondary_color: main,
-      floating_config: {
-        mobile: vidFloatingDevice(mobile),
-        desktop: vidFloatingDevice(desktop)
-      }
+    var dev = 'desktop';
+    try { dev = getDevice(); } catch (e) {}
+    var sameAll = ws.same_appearance_all_devices === true || ws.same_appearance_all_devices === 'true';
+    var active = (sameAll || dev !== 'mobile') ? desktop : mobile;
+    var out = {};
+    Object.keys(active).forEach(function (k) {
+      var v = active[k];
+      if (v === undefined || v === null || v === '') return;
+      if (typeof v === 'object') return;
+      if (JSONB_KEYS.indexOf(k) !== -1) return;
+      out[k] = v;
+    });
+    out.style_name = ws.name || row.name || 'vidlytics';
+    out.primary_color = main;
+    out.secondary_color = main;
+    out.floating_config = {
+      mobile: vidFloatingDevice(mobile),
+      desktop: vidFloatingDevice(desktop)
     };
+    return out;
   }
 
   function fetchDbAppearance() {
@@ -7821,6 +7832,7 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
+
 
 
 
