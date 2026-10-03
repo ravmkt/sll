@@ -4701,7 +4701,7 @@ return {
   bgColor: rcv('bg_color', '#000000') || '#000000',
 
     highlightMode: String(rcv('highlight_mode', 'ring')).trim().toLowerCase(),
-    highlightShadow: toBoolean(rcv('highlight_shadow', false), false), highlightReflection: toBoolean(rcv('highlight_reflection', false), false), shadowIntensity: (function (v) { v = parseFloat(v); return isFinite(v) ? v : 50; })(rcv('shadow_intensity', 50)), shadowDistance: (function (v) { v = parseFloat(v); return isFinite(v) ? v : 6; })(rcv('shadow_distance', 6)),
+    highlightShadow: false, highlightReflection: toBoolean(rcv('highlight_reflection', false), false), shadowIntensity: (function (v) { v = parseFloat(v); return isFinite(v) ? v : 50; })(rcv('shadow_intensity', 50)), shadowDistance: (function (v) { v = parseFloat(v); return isFinite(v) ? v : 6; })(rcv('shadow_distance', 6)),
     highlightBorderColor: rcv('border_color', '#0094EB') || '#0094EB',
     highlightBorderWidth: highlightBorderWidthNumber,
     highlightBorderRadius: toNumber(rcv('highlight_border_radius', '14'), 14),
@@ -4808,7 +4808,7 @@ function renderDynamicCarouselWidget(options, items, cfg) {
     cfg.borderColor = cfg.borderColor || '#ccc';
     cfg.enlargeActive = cfg.enlargeActive !== false; cfg._dcShrink = cfg.enlargeActive ? Math.max(0.8, 1 / (parseFloat(cfg.activeScale) || 1.15)) : 1; cfg.enlargeActive = false;
     cfg.activeScale = parseFloat(cfg.activeScale) || 1.15;
-    cfg.highlightShadow = cfg.highlightShadow !== false;
+    cfg.highlightShadow = false;
     cfg.highlightMode = cfg.highlightMode || 'ring';
     var _dcHbw = parseFloat(cfg.highlightBorderWidth); cfg.highlightBorderWidth = isNaN(_dcHbw) ? 3 : _dcHbw;
     cfg.highlightBorderColor = cfg.highlightBorderColor || '#ff0055';
