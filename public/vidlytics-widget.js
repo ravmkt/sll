@@ -3193,9 +3193,12 @@ media.addEventListener('ended', function () {
     var video = story ? (story.videos || [])[currentVideoIndex] : null;
     var videoProductId = video ? (video.product_id || video.productId || null) : null;
     var productData = videoProductId ? readProductsData.find(function (p) { return idsEqual(p.id, videoProductId); }) : null;
-    var shareUrl = (productData && (productData.product_url || productData.url)) || 'https://useanny.com';
+    var shareUrl = (productData && (productData.product_url || productData.url)) || window.location.href;
 
-    var shareText = story ? (story.title || 'Confira este vídeo!') : 'Confira este vídeo!';
+    var shareProductName = productData ? (productData.name || productData.title || '') : '';
+    var shareText = shareProductName
+      ? 'Oi! Olha s\u00f3 esse produto que eu encontrei: ' + shareProductName
+      : 'Oi! Olha s\u00f3, d\u00e1 uma olhadinha nesse site que eu descobri:';
     var panel = createEl('div');
     panel.id = 'vl-share-panel';
     panel.style.cssText = 'position:absolute;bottom:calc(100% + 8px);right:-20px;background:#1e293b;border-radius:12px;padding:8px;min-width:180px;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:200;animation:vlFadeIn 0.15s ease;';
@@ -3239,7 +3242,7 @@ media.addEventListener('ended', function () {
         video_id: (story && (story.videos || [])[currentVideoIndex]) ? story.videos[currentVideoIndex].id : null,
         page_url: window.location.href
       });
-      window.open('https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + shareUrl), '_blank');
+      window.open('https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + shareUrl + ' \u2764\uFE0F'), '_blank');
       panel.remove();
     };
     panel.appendChild(waBtn);
