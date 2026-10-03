@@ -4985,7 +4985,7 @@ function cloneItemDeeply(original, index, isClone) {
 
       var firstVideo = (item.videos && item.videos[0]) || {};
       var video = document.createElement('video');
-      var _dcUrl = firstVideo.video_url || firstVideo.videoUrl || item.video_url || item.videoUrl || item.url || ''; var _dcYt = extractYouTubeId(_dcUrl); if (!_dcYt) { video.src = _dcUrl; }
+      var _dcUrl = firstVideo.video_url || firstVideo.videoUrl || item.video_url || item.videoUrl || item.url || ''; var _dcYt = extractYouTubeId(_dcUrl); if (!_dcYt) { video.src = _dcUrl; } else { video.setAttribute('data-yt-id', _dcYt); }
       var posterUrl = firstVideo.thumbnail_url || firstVideo.thumbnailUrl || item.thumbnail_url || item.thumbnailUrl || item.thumb || ''; if (!posterUrl && _dcYt) { posterUrl = getYouTubeThumbnail(_dcUrl); }
       if (posterUrl) {
         video.poster = posterUrl;
@@ -5181,6 +5181,23 @@ var activeIndex = visibleCount;
 
         // 🛑 CORREÇÃO 3: Controle unificado dos estados do vídeo (Eliminando o loop conflituoso secundário)
         var video = videoEls[idx];
+        if (video && video.getAttribute('data-yt-id') && frame) {
+          var _ytId = video.getAttribute('data-yt-id');
+          var _ytIf = frame.querySelector('iframe[data-vl-yt]');
+          if (isActive) {
+            if (!_ytIf) {
+              _ytIf = document.createElement('iframe');
+              _ytIf.setAttribute('data-vl-yt', '1');
+              _ytIf.src = 'https://www.youtube.com/embed/' + _ytId + '?autoplay=1&mute=1&controls=0&loop=1&playlist=' + _ytId + '&playsinline=1&rel=0&modestbranding=1';
+              _ytIf.allow = 'autoplay; encrypted-media; picture-in-picture';
+              _ytIf.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;pointer-events:none;z-index:2;';
+              frame.appendChild(_ytIf);
+            }
+          } else if (_ytIf) {
+            _ytIf.remove();
+          }
+          video = null;
+        }
         if (video) {
           if (isActive) {
             if (video.paused) {
