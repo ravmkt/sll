@@ -1334,11 +1334,28 @@ function normalizeFloatingShape(value) {
   }
 
 // trecho novo
+var FLOATING_FLAT_MAP = {
+  floating_position: 'floating_position', shape: 'floating_format', width: 'floating_width',
+  border_style: 'floating_border_width', border_color: 'floating_border_color', border_radius: 'floating_border_radius',
+  top_spacing: 'floating_margin_top', bottom_spacing: 'floating_margin_bottom',
+  left_spacing: 'floating_margin_side', right_spacing: 'floating_margin_side',
+  object_fit: 'floating_object_fit', show_play_icon: 'floating_show_play_icon',
+  allow_close: 'floating_show_close_button', autoplay_videos: 'floating_auto_play',
+  show_title: 'floating_show_title', z_index: 'floating_z_index'
+};
+function floatingFlat(appearance, jsonbField) {
+  var k = FLOATING_FLAT_MAP[jsonbField];
+  if (!k || !appearance) return undefined;
+  var v = appearance[k];
+  if (v === undefined || v === null || v === '') return undefined;
+  if (jsonbField === 'floating_position') v = String(v).replace(/^fixed_/, '').replace(/_/g, '-');
+  return v;
+}
 function getFloatingConfig(appearance) {
   appearance = normalizeAppearanceItem(appearance || {});
   
   function rcv(jsonbField, fallback) {
-    return readConfigValue(appearance, 'floating_config', jsonbField, null, fallback);
+    var fv = floatingFlat(appearance, jsonbField); if (fv !== undefined) return fv; return readConfigValue(appearance, 'floating_config', jsonbField, null, fallback);
   }
   
   var rawPosition = rcv('floating_position', DEFAULT_APPEARANCE.floating_position);
@@ -1417,9 +1434,10 @@ function getFloatingConfig(appearance) {
 }
 
 function getFloatingBehaviorConfig(appearance) {
-  appearance = appearance || {};
+  appearance = normalizeAppearanceItem(appearance || {});
   function rcv(jsonbField, fallback) {
-    return readConfigValue(appearance, 'floating_config', jsonbField, fallback);
+    var fv = floatingFlat(appearance, jsonbField); if (fv !== undefined) return fv;
+    return readConfigValue(appearance, 'floating_config', jsonbField, null, fallback);
   }
   return {
     objectFit: rcv('object_fit', DEFAULT_APPEARANCE.floating_object_fit),
