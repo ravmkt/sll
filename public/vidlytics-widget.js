@@ -1691,7 +1691,10 @@ function normalizeModalAppearanceConfig(appearance) {
   }
   
   return {
-    show_title: rcv('show_title', true),
+    show_title: toBoolean(rcv('show_title', true), true),
+title_text: String(rcv('title_text', '') || '').trim(),
+title_font_size: toNumber(rcv('title_font_size', '14'), 14),
+title_bold: toBoolean(rcv('title_bold', true), true),
     show_play_button: rcv('show_play_button', true),
     show_product: rcv('show_product', true),
     show_product_button: rcv('show_product_button', true),
@@ -3944,7 +3947,9 @@ if (closingVideo) {
     var headerLeft = createEl('div', 'vl-header-left');
     if (appearanceConfig.show_title) {
       var title = createEl('div', 'vl-title');
-      title.textContent = story.title || '';
+      title.textContent = appearanceConfig.title_text || story.title || '';
+title.style.setProperty('font-size', appearanceConfig.title_font_size + 'px', 'important');
+title.style.setProperty('font-weight', appearanceConfig.title_bold ? '800' : '400', 'important');
       headerLeft.appendChild(title);
     }
     header.appendChild(headerLeft);
