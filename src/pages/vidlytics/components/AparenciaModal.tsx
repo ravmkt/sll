@@ -1506,8 +1506,17 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <input type="number" min="1" step="1" value={getC('dyn_carousel_autoplay_delay') ? getC('dyn_carousel_autoplay_delay') / 1000 : 5} onChange={e => setC('dyn_carousel_autoplay_delay', (parseInt(e.target.value) || 5) * 1000)} className={inputClass} />
                         </FormField>
                         <CheckboxField label="Aplicar sombra no vídeo em destaque" checked={getC('dyn_carousel_highlight_shadow') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_shadow', v)} />
+                        {getC('dyn_carousel_highlight_shadow') && (
+                          <>
+                            <FormField label={`Intensidade da sombra (${getC('dyn_carousel_shadow_intensity') ?? 50}%)`}>
+                              <input type="range" min="5" max="100" step="5" value={getC('dyn_carousel_shadow_intensity') ?? 50} onChange={e => setC('dyn_carousel_shadow_intensity', parseInt(e.target.value))} className="w-full" />
+                            </FormField>
+                            <FormField label={`Distância da sombra (${getC('dyn_carousel_shadow_distance') ?? 6}px)`}>
+                              <input type="range" min="0" max="30" step="1" value={getC('dyn_carousel_shadow_distance') ?? 6} onChange={e => setC('dyn_carousel_shadow_distance', parseInt(e.target.value))} className="w-full" />
+                            </FormField>
+                          </>
+                        )}
                         <CheckboxField label="Ampliar vídeo em destaque" checked={getC('dyn_carousel_highlight_enlarge_active') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_enlarge_active', v)} />
-<CheckboxField label="Reflexo no chão branco" checked={getC('dyn_carousel_highlight_reflection') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_reflection', v)} />
                         <CheckboxField label="Dessaturar vídeos inativos (50%)" checked={getC('dyn_carousel_highlight_desaturate_inactive') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_desaturate_inactive', v)} />
                       </div>
                     </Accordion>
