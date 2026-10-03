@@ -2392,6 +2392,7 @@ function applyHostPosition(host, appearance) {
 + '.vl-modal{position:relative!important;width:100%!important;max-width:420px!important;height:100%!important;max-height:100dvh!important;background:#000!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;border:' + modalBorderWidthNum + 'px solid ' + modalBorderColor + '!important;box-shadow:' + shadow + '!important;}'
       + '.vl-modal>div:not(.vl-comments-panel-full):not(.vl-sizing-panel-full){position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;height:100%!important;}'
       + '@media(min-width:640px){.vl-modal{height:auto!important;aspect-ratio:9/16!important;max-height:90vh!important;border-radius:' + modalBorderRadiusNum + 'px!important;}}'
++ '@media(max-width:639px){.vl-modal{width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;aspect-ratio:auto!important;border:0!important;border-radius:0!important;}}'
       + '.vl-progress{position:absolute!important;top:12px!important;left:0!important;right:0!important;z-index:50!important;display:flex!important;gap:6px!important;padding:0 16px!important;}'
       + '.vl-progress-bar{height:2px!important;flex:1!important;border-radius:999px!important;background:rgba(255,255,255,.25)!important;overflow:hidden!important;}'
       + '.vl-progress-fill{height:100%!important;border-radius:999px!important;background:' + primary + '!important;transition:width .3s ease!important;}'

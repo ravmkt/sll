@@ -539,10 +539,10 @@ const ModalPlayerPreview = ({ playerConfig, primaryColor, isMobile = false }: { 
   const actionBtn = 'w-9 h-9 rounded-full bg-black/45 backdrop-blur-sm flex items-center justify-center text-white';
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#0f111a] border border-slate-800/80 rounded-2xl flex items-center justify-center" style={{ padding: isMobile ? '5%' : '16px' }}>
+    <div className="relative h-full w-full overflow-hidden bg-[#0f111a] border border-slate-800/80 rounded-2xl flex items-center justify-center" style={{ padding: isMobile ? 0 : '16px' }}>
       <div
         className={`relative overflow-hidden shadow-2xl shrink-0 bg-slate-900 flex flex-col ${isMobile ? 'h-full w-full' : 'h-full max-h-[410px] w-full max-w-[230px]'}`}
-        style={{ borderStyle: 'solid', borderColor: pc.border_color || primaryColor, borderWidth: `${Number(pc.border_width ?? 2)}px`, borderRadius: `${radius}px` }}
+        style={{ borderStyle: 'solid', borderColor: pc.border_color || primaryColor, borderWidth: isMobile ? '0px' : `${Number(pc.border_width ?? 2)}px`, borderRadius: isMobile ? '0px' : `${radius}px` }}
       >
         <video src={DEMO_PREVIEW_VIDEOS[0]} autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/40 pointer-events-none" />
@@ -1676,7 +1676,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 {/* ABA PLAYER (MODAL) */}
                 {activeTab === 'player' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <Accordion title="1. Borda" isOpen={openAccordion === '1. Borda' || openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Borda')}>
+                    {previewDevice === 'desktop' && (
+<Accordion title="1. Borda" isOpen={openAccordion === '1. Borda' || openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Borda')}>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Cor da Borda" className="col-span-2">
                           <ColorInput value={getC('modal_border_color') || '#0094EB'} onChange={(v: string) => setC('modal_border_color', v)} />
@@ -1689,6 +1690,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         </FormField>
                       </div>
                     </Accordion>
+)}
 
                     <Accordion title="2. Elementos Visíveis" isOpen={openAccordion === '2. Elementos Visíveis'} onClick={() => toggleAccordion('2. Elementos Visíveis')}>
                       <div className="flex flex-col">
