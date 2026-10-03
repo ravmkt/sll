@@ -1301,16 +1301,16 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <input type="number" min="0" value={getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField></div>
                         <FormField label="Margem Superior (px)">
-                          <input type="number" value={getC('carousel_margin_top') ?? 0} onChange={e => setC('carousel_margin_top', e.target.value === '' ? '' : (parseInt(e.target.value) || 0))} className={inputClass} />
+                          <input type="text" inputMode="numeric" onFocus={e => e.target.select()} value={getC('carousel_margin_top') ?? 0} onChange={e => { const v = e.target.value; if (/^-?\d*$/.test(v)) setC('carousel_margin_top', (v === '' || v === '-') ? v : parseInt(v, 10)); }} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Inferior (px)">
                           <input type="text" inputMode="text" value={getC('carousel_margin_bottom') || 0} onChange={e => { const v = e.target.value.trim(); setC('carousel_margin_bottom', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('carousel_margin_bottom') as any) === '-') setC('carousel_margin_bottom', 0); }} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Esquerda (px)">
-                          <input type="number" value={getC('carousel_margin_left') ?? 0} onChange={e => setC('carousel_margin_left', e.target.value === '' ? '' : (parseInt(e.target.value) || 0))} className={inputClass} />
+                          <input type="text" inputMode="numeric" onFocus={e => e.target.select()} value={getC('carousel_margin_left') ?? 0} onChange={e => { const v = e.target.value; if (/^-?\d*$/.test(v)) setC('carousel_margin_left', (v === '' || v === '-') ? v : parseInt(v, 10)); }} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Direita (px)">
-                          <input type="number" value={getC('carousel_margin_right') ?? 0} onChange={e => setC('carousel_margin_right', e.target.value === '' ? '' : (parseInt(e.target.value) || 0))} className={inputClass} />
+                          <input type="text" inputMode="numeric" onFocus={e => e.target.select()} value={getC('carousel_margin_right') ?? 0} onChange={e => { const v = e.target.value; if (/^-?\d*$/.test(v)) setC('carousel_margin_right', (v === '' || v === '-') ? v : parseInt(v, 10)); }} className={inputClass} />
                         </FormField>
                       </div>
                     </Accordion>
@@ -1578,16 +1578,16 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <input type="number" min="0" value={getC('grid_spacing') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('grid_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField></div>
                         <FormField label="Margem Superior (px)">
-                          <input type="number" value={getC('grid_margin_top') ?? 0} onChange={e => setC('grid_margin_top', e.target.value === '' ? '' : (parseInt(e.target.value) || 0))} className={inputClass} />
+                          <input type="text" inputMode="numeric" onFocus={e => e.target.select()} value={getC('grid_margin_top') ?? 0} onChange={e => { const v = e.target.value; if (/^-?\d*$/.test(v)) setC('grid_margin_top', (v === '' || v === '-') ? v : parseInt(v, 10)); }} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Inferior (px)">
-                          <input type="number" value={getC('grid_margin_bottom') ?? 0} onChange={e => setC('grid_margin_bottom', e.target.value === '' ? '' : (parseInt(e.target.value) || 0))} className={inputClass} />
+                          <input type="text" inputMode="numeric" onFocus={e => e.target.select()} value={getC('grid_margin_bottom') ?? 0} onChange={e => { const v = e.target.value; if (/^-?\d*$/.test(v)) setC('grid_margin_bottom', (v === '' || v === '-') ? v : parseInt(v, 10)); }} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Esquerda (px)">
-                          <input type="number" value={getC('grid_margin_left') ?? 0} onChange={e => setC('grid_margin_left', e.target.value === '' ? '' : (parseInt(e.target.value) || 0))} className={inputClass} />
+                          <input type="text" inputMode="numeric" onFocus={e => e.target.select()} value={getC('grid_margin_left') ?? 0} onChange={e => { const v = e.target.value; if (/^-?\d*$/.test(v)) setC('grid_margin_left', (v === '' || v === '-') ? v : parseInt(v, 10)); }} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Direita (px)">
-                          <input type="number" value={getC('grid_margin_right') ?? 0} onChange={e => setC('grid_margin_right', e.target.value === '' ? '' : (parseInt(e.target.value) || 0))} className={inputClass} />
+                          <input type="text" inputMode="numeric" onFocus={e => e.target.select()} value={getC('grid_margin_right') ?? 0} onChange={e => { const v = e.target.value; if (/^-?\d*$/.test(v)) setC('grid_margin_right', (v === '' || v === '-') ? v : parseInt(v, 10)); }} className={inputClass} />
                         </FormField>
                       </div>
                     </Accordion>

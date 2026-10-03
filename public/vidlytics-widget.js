@@ -1548,12 +1548,10 @@ aspectRatio: aspect,
 }
 
 function getGridConfig(appearance) {
-  appearance = normalizeAppearanceItem(appearance || {});
+  appearance = normalizeAppearanceItem(appearance || {}); try { console.info('[VL grid]', appearance.name, appearance.id, 'cols=' + appearance.grid_visible_items, 'gap=' + appearance.grid_spacing, 'showTitle=' + appearance.grid_show_title, 'titleKeys=' + Object.keys(appearance).filter(function (k) { return /^grid_.*title/i.test(k); }).join(','), 'hasGridConfig=' + !!appearance.grid_config); } catch (e) {}
   function rcv(jsonbField, flatField, fallback) {
-    var wsAllG = parseJsonIfNeeded(appearance.widget_style || appearance.widgetStyle) || {};
-var wsDevG = wsAllG[getDevice()] || {};
-if (jsonbField !== 'width') {
-  var dvG = wsDevG['grid_' + jsonbField];
+    if (jsonbField !== 'width') {
+  var dvG = appearance['grid_' + jsonbField];
   if (dvG !== undefined && dvG !== null && dvG !== '') return dvG;
 }
 return readConfigValue(appearance, 'grid_config', jsonbField, flatField, fallback);
@@ -1587,6 +1585,7 @@ var borderWidth = safeInt(rcv('border_width', 'grid_border_width', '2'), 2);
   // --- Título da vitrine ---
   var showTitle = toBoolean(rcv('show_title', 'grid_show_title', false), false);
   var titleText = String(rcv('title_text', 'grid_title_text', '') || '').trim();
+if (!titleText) { Object.keys(appearance).forEach(function (k) { if (!titleText && /^grid_.*(title|titulo)/i.test(k) && !/(font|size|color|align|bold|show|weight|style|margin)/i.test(k) && typeof appearance[k] === 'string') titleText = appearance[k].trim(); }); }
   var titleFontSize = toNumber(rcv('title_font_size', 'grid_title_font_size', '14'), 14);
   var titleBold = toBoolean(rcv('title_bold', 'grid_title_bold', true), true);
   var titleColor = rcv('title_color', 'grid_title_color', '#0F172A') || '#0F172A';
