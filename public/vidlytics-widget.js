@@ -4681,7 +4681,7 @@ else if (shape === 'landscape') carouselAspectRatio = '16/9';
 else if (shape === 'circle') carouselAspectRatio = '1/1';
 
   // O painel salva a largura da borda em 'border_style' (legado) — aceitar ambas
-  var borderWidthNumber = toNumber(firstDefined(rcv('border_width', null), rcv('border_style', null), '0'), 0);
+  var borderWidthNumber = toNumber(firstDefined(rcv('border_width', null), rcv('border_style', null), '2'), 2);
   var highlightBorderWidthNumber = toNumber(firstDefined(rcv('highlight_border_width', null), borderWidthNumber > 0 ? String(borderWidthNumber) : null, '0'), 0);
 
 return {
@@ -4895,7 +4895,7 @@ cfg.borderRadius = isNaN(parsedRadius) ? 12 : parsedRadius;
       var carouselTitle = document.createElement('div');
       carouselTitle.className = 'vidlytics-dynamic-carousel-title';
       carouselTitle.textContent = resolvedTitle;
-      carouselTitle.style.cssText = 'width:100%;max-width:100%;margin:0 auto 14px;' +
+      carouselTitle.style.cssText = 'width:100%;max-width:100%;margin:0 auto 2px;' +
         'text-align:' + cfg.titleAlign + ';' +
         'font-size:' + cfg.titleFontSize + 'px;' +
         'font-weight:' + (cfg.titleBold ? '800' : '400') + ';' +
@@ -5118,9 +5118,9 @@ var activeIndex = visibleCount;
       var activeCard = cardEls[activeIndex];
       var cardHeight = activeCard ? activeCard.offsetHeight : 0;
       var grow = cfg.enlargeActive ? Math.ceil((cardHeight * (cfg.activeScale - 1)) / 2) : 0;
-      var pad = grow + (cfg.highlightShadow ? 64 : 16);
+      var pad = grow + 6; var padBot = grow + (cfg.highlightShadow ? 36 : 6);
       viewport.style.paddingTop = pad + 'px';
-      viewport.style.paddingBottom = pad + 'px';
+      viewport.style.paddingBottom = padBot + 'px';
     }
 
     // 6. Atualização visual de escalas, filtros e reprodução de vídeo unificada
@@ -5180,7 +5180,7 @@ var activeIndex = visibleCount;
 
         var frame = frameEls[idx];
         if (frame) {
-          frame.style.border = border;
+          frame.style.boxSizing = 'border-box'; frame.style.setProperty('border', border, 'important');
           frame.style.boxShadow = 'none'; card.style.filter = (isActive && cfg.highlightShadow) ? 'drop-shadow(0 12px 14px rgba(0,0,0,.4))' : 'none';
           frame.style.filter = filter;
           frame.style.borderRadius = isCircle ? '999px' : cfg.borderRadius + 'px';
