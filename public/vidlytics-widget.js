@@ -1550,7 +1550,13 @@ aspectRatio: aspect,
 function getGridConfig(appearance) {
   appearance = normalizeAppearanceItem(appearance || {});
   function rcv(jsonbField, flatField, fallback) {
-    return readConfigValue(appearance, 'grid_config', jsonbField, flatField, fallback);
+    var wsAllG = parseJsonIfNeeded(appearance.widget_style || appearance.widgetStyle) || {};
+var wsDevG = wsAllG[getDevice()] || {};
+if (jsonbField !== 'width') {
+  var dvG = wsDevG['grid_' + jsonbField];
+  if (dvG !== undefined && dvG !== null && dvG !== '') return dvG;
+}
+return readConfigValue(appearance, 'grid_config', jsonbField, flatField, fallback);
   }
   var rawShape = rcv('shape', 'grid_shape', 'portrait');
   var shape = String(rawShape !== undefined && rawShape !== null ? rawShape : 'portrait').trim().toLowerCase();
@@ -6639,8 +6645,28 @@ img.style.cssText = 'width:100%;height:100%;object-fit:' + cfg.objectFit + ';dis
         };
 
         innerMask.appendChild(img);
-      } else if (rawVideoUrl) {
-        var gridVideo = createEl('video');
+      } else if (rawVideoUrl && extractYouTubeId(rawVideoUrl)) {
+  var gridYtId = extractYouTubeId(rawVideoUrl);
+  var gridYtPoster = createEl('img');
+  gridYtPoster.src = thumbUrl || getYouTubeThumbnail(rawVideoUrl);
+  gridYtPoster.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:' + cfg.objectFit + ';display:block;';
+  var gridYtFrame = createEl('iframe');
+  gridYtFrame.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
+  gridYtFrame.setAttribute('frameborder', '0');
+  gridYtFrame.setAttribute('tabindex', '-1');
+  gridYtFrame.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .3s ease;pointer-events:none;';
+  gridYtFrame.onload = function () {
+    var s = gridYtFrame.getAttribute('src');
+    if (s && s !== 'about:blank') gridYtFrame.style.opacity = '1';
+  };
+  var gridYtSrc = 'https://www.youtube.com/embed/' + gridYtId + '?autoplay=1&mute=1&controls=0&loop=1&playlist=' + gridYtId + '&playsinline=1&rel=0&modestbranding=1';
+  cardData.ytStart = function () { gridYtFrame.style.opacity = '0'; gridYtFrame.src = gridYtSrc; };
+  cardData.ytStop = function () { gridYtFrame.style.opacity = '0'; gridYtFrame.src = 'about:blank'; };
+  if (shouldAutoplay && !cfg.sequentialPlayback) cardData.ytStart();
+  innerMask.appendChild(gridYtPoster);
+  innerMask.appendChild(gridYtFrame);
+} else if (rawVideoUrl) {
+  var gridVideo = createEl('video');
         var gridUrlWithFragment = rawVideoUrl.indexOf('#t=') === -1 ? rawVideoUrl + '#t=0.001' : rawVideoUrl;
 
         gridVideo.preload = 'metadata';
@@ -6847,7 +6873,7 @@ card.addEventListener('mouseleave', function () {
         var isActive = idx === activeSeqIndex;
 
         // Visual do Card: Ativo fica 100% visível, inativos esmaecidos (0.4)
-        data.card.style.opacity = isActive ? '1' : '0.4';
+        data.card.style.opacity = '1'; data.card.style.transition = 'filter .3s ease'; data.card.style.filter = isActive ? 'none' : 'saturate(50%)';
 
         // Esconde o play overlay central apenas no ativo que está reproduzindo
         if (data.playBadge) {
@@ -6855,7 +6881,7 @@ card.addEventListener('mouseleave', function () {
         }
 
         if (!data.isImage) {
-          var vid = data.video || data.card.querySelector('video');
+          if (data.ytStart) { if (isActive) { data.ytStart(); } else { data.ytStop(); } return; } var vid = data.video || data.card.querySelector('video');
           if (vid) {
             if (isActive) {
               vid.muted = true;
