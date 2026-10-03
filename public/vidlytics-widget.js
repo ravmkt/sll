@@ -7431,20 +7431,20 @@ function renderOneFloatingWidget(story, hostId) {
 
   // Função auxiliar para ler dados seguros dentro de floating_config
   var rcvCTA = function(field, fallback) {
-    var val = typeof readConfigValue === 'function' ? readConfigValue(currentAppearance, 'floating_config', field, null, null) : null;
+    var val = null; try { var fa = normalizeAppearanceItem(currentAppearance || {}); var fk = fa['floating_' + field]; if (fk !== undefined && fk !== null && fk !== '') val = fk; } catch (e) {} if (val === null) val = typeof readConfigValue === 'function' ? readConfigValue(currentAppearance, 'floating_config', field, null, null) : null;
     if (val !== null && val !== undefined && val !== '') return val;
     return fallback;
   };
 
   var rawShow = rcvCTA('show_cta', false);
   var showCta = (rawShow === true || rawShow === 'true' || rawShow === 1 || rawShow === '1');
-  var ctaText = rcvCTA('cta_text', '');
+  var ctaText = rcvCTA('cta_text', 'VER VÍDEO');
 
   if (showCta && ctaText) {
     var ctaElement = createEl('div', 'vl-floating-cta');
     var btnColor = rcvCTA('cta_bg_color', primaryColor);
     var txtColor = rcvCTA('cta_text_color', '#FFFFFF');
-    var fontSize = rcvCTA('cta_font_size', '14');
+    var fontSize = rcvCTA('cta_font_size', getDevice() === 'mobile' ? '12' : '14');
     
     var rawBold = rcvCTA('cta_is_bold', true);
     var isBold = (rawBold === true || rawBold === 'true' || rawBold === 1 || rawBold === '1');
