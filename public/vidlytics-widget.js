@@ -3242,7 +3242,7 @@ media.addEventListener('ended', function () {
         video_id: (story && (story.videos || [])[currentVideoIndex]) ? story.videos[currentVideoIndex].id : null,
         page_url: window.location.href
       });
-      window.open('https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + shareUrl + ' \u2764\uFE0F'), '_blank');
+      window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(shareText + ' ' + shareUrl + ' \uD83D\uDC96'), '_blank');
       panel.remove();
     };
     panel.appendChild(waBtn);
