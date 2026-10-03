@@ -4805,7 +4805,7 @@ function renderDynamicCarouselWidget(options, items, cfg) {
     var _dcSp = parseFloat(cfg.spacing); cfg.spacing = isNaN(_dcSp) ? 16 : _dcSp;
     cfg.borderWidth = parseFloat(cfg.borderWidth) || 0;
     cfg.borderColor = cfg.borderColor || '#ccc';
-    cfg.enlargeActive = cfg.enlargeActive !== false;
+    cfg.enlargeActive = cfg.enlargeActive !== false; cfg._dcShrink = cfg.enlargeActive ? Math.max(0.8, 1 / (parseFloat(cfg.activeScale) || 1.15)) : 1; cfg.enlargeActive = false;
     cfg.activeScale = parseFloat(cfg.activeScale) || 1.15;
     cfg.highlightShadow = cfg.highlightShadow !== false;
     cfg.highlightMode = cfg.highlightMode || 'ring';
@@ -5169,7 +5169,7 @@ var activeIndex = visibleCount;
             border = cfg.highlightBorderWidth + 'px solid ' + cfg.highlightBorderColor;
           }
         } else {
-          if (cfg.desaturateInactive) filter = 'saturate(50%)';
+          if (cfg.desaturateInactive) filter = 'saturate(50%)'; if (cfg._dcShrink && cfg._dcShrink < 1) scale = cfg._dcShrink;
         }
 
         card.style.transform = 'scale(' + scale + ')';
