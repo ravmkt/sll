@@ -1507,6 +1507,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         </FormField>
                         <CheckboxField label="Aplicar sombra no vídeo em destaque" checked={getC('dyn_carousel_highlight_shadow') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_shadow', v)} />
                         <CheckboxField label="Ampliar vídeo em destaque" checked={getC('dyn_carousel_highlight_enlarge_active') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_enlarge_active', v)} />
+<CheckboxField label="Reflexo no chão branco" checked={getC('dyn_carousel_highlight_reflection') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_reflection', v)} />
                         <CheckboxField label="Dessaturar vídeos inativos (50%)" checked={getC('dyn_carousel_highlight_desaturate_inactive') || false} onChange={(v: boolean) => setC('dyn_carousel_highlight_desaturate_inactive', v)} />
                       </div>
                     </Accordion>

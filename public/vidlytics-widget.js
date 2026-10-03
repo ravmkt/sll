@@ -4701,7 +4701,7 @@ return {
   bgColor: rcv('bg_color', '#000000') || '#000000',
 
     highlightMode: String(rcv('highlight_mode', 'ring')).trim().toLowerCase(),
-    highlightShadow: toBoolean(rcv('highlight_shadow', false), false),
+    highlightShadow: toBoolean(rcv('highlight_shadow', false), false), highlightReflection: toBoolean(rcv('highlight_reflection', false), false),
     highlightBorderColor: rcv('border_color', '#0094EB') || '#0094EB',
     highlightBorderWidth: highlightBorderWidthNumber,
     highlightBorderRadius: toNumber(rcv('highlight_border_radius', '14'), 14),
@@ -5119,7 +5119,7 @@ var activeIndex = visibleCount;
       var activeCard = cardEls[activeIndex];
       var cardHeight = activeCard ? activeCard.offsetHeight : 0;
       var grow = cfg.enlargeActive ? Math.ceil((cardHeight * (cfg.activeScale - 1)) / 2) : 0;
-      var pad = grow + 6; var padBot = grow + (cfg.highlightShadow ? 20 : 6);
+      var pad = grow + 6; var refl = (cfg.highlightReflection && !cfg.showProduct) ? Math.round(cardHeight * 0.42) + 6 : 0; var padBot = grow + Math.max(refl, cfg.highlightShadow ? 20 : 6);
       viewport.style.paddingTop = pad + 'px';
       viewport.style.paddingBottom = padBot + 'px';
     }
@@ -5182,7 +5182,7 @@ var activeIndex = visibleCount;
         var frame = frameEls[idx];
         if (frame) {
           frame.style.boxSizing = 'border-box'; frame.style.setProperty('border', border, 'important');
-          frame.style.boxShadow = 'none'; card.style.filter = 'none'; var sh = card.__vlSh; if (!sh) { sh = document.createElement('div'); sh.className = 'vidlytics-dc-shadow'; sh.style.cssText = 'position:absolute;left:12%;right:12%;height:22px;pointer-events:none;z-index:0;border-radius:50%;opacity:0;background:radial-gradient(ellipse at center, rgba(0,0,0,.34) 0%, rgba(0,0,0,.16) 45%, rgba(0,0,0,0) 72%);transition:opacity ' + cfg.transitionMs + 'ms ease;'; card.appendChild(sh); card.__vlSh = sh; } frame.style.zIndex = '1'; sh.style.top = (frame.offsetTop + frame.offsetHeight - 11) + 'px'; sh.style.opacity = (isActive && cfg.highlightShadow) ? '1' : '0';
+          frame.style.boxShadow = 'none'; card.style.filter = 'none'; var sh = card.__vlSh; if (!sh) { sh = document.createElement('div'); sh.className = 'vidlytics-dc-shadow'; sh.style.cssText = 'position:absolute;left:12%;right:12%;height:14px;pointer-events:none;z-index:0;border-radius:50%;opacity:0;background:radial-gradient(ellipse at center, rgba(0,0,0,.22) 0%, rgba(0,0,0,.09) 45%, rgba(0,0,0,0) 72%);transition:opacity ' + cfg.transitionMs + 'ms ease;'; card.appendChild(sh); card.__vlSh = sh; } frame.style.zIndex = '1'; frame.style.setProperty('-webkit-box-reflect', (cfg.highlightReflection && !cfg.showProduct) ? 'below 3px linear-gradient(to bottom, transparent 58%, rgba(0,0,0,.30))' : 'none'); sh.style.top = (frame.offsetTop + frame.offsetHeight - 7) + 'px'; sh.style.opacity = (isActive && cfg.highlightShadow) ? '1' : '0';
           frame.style.filter = filter;
           frame.style.borderRadius = isCircle ? '999px' : cfg.borderRadius + 'px';
         }
