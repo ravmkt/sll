@@ -1430,8 +1430,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           </FormField>
                         ) : (
                           <FormField label="Itens visíveis">
-                            <select value={previewDevice === 'mobile' ? Math.min(5, Math.max(1, Math.round(Number(getC('dyn_carousel_visible_items') ?? 2)))) : Number(getC('dyn_carousel_visible_items') ?? 4)} onChange={e => setC('dyn_carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
-                              {(previewDevice === 'mobile' ? [1, 2, 3, 4, 5] : Array.from({ length: 19 }, (_, i) => 1 + i * 0.5)).map(n => (<option key={n} value={n}>{String(n).replace('.', ',') + (n % 1 ? ' (parcial)' : '')}</option>))}
+                            <select value={Number(getC('dyn_carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4))} onChange={e => setC('dyn_carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
+                              {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map(n => (<option key={n} value={n}>{String(n).replace('.', ',') + (n % 1 ? ' (parcial)' : '')}</option>))}
                             </select>
                           </FormField>
                         )}

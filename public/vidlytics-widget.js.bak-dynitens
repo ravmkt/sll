@@ -4834,13 +4834,6 @@ cfg.borderRadius = isNaN(parsedRadius) ? 12 : parsedRadius;
       var _dcAvail = _dcBase - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0);
       var _dcN = cfg.visibleItems;
       cfg.width = Math.max(40, Math.floor((_dcAvail - cfg.spacing * (_dcN - 1)) / _dcN));
-      var _dcMob = (typeof isMobileDevice !== 'undefined') ? !!isMobileDevice : window.innerWidth <= 768;
-      cfg._dcShift = 0;
-      if (_dcMob) {
-        var _dcM = Math.min(5, Math.max(1, Math.round(cfg.visibleItems)));
-        cfg.width = Math.max(40, Math.floor((_dcAvail - cfg.spacing * (_dcM + 1)) / (_dcM + 0.8)));
-        cfg._dcShift = (_dcM % 2 === 0) ? (cfg.width + cfg.spacing) / 2 : 0;
-      }
     }
     var isCircle = cfg.isCircle === true || cfg.shape === 'circle';
     var aspectRatio = isCircle ? '1/1' : (cfg.aspectRatio || '9/16');
@@ -5266,7 +5259,7 @@ var activeIndex = visibleCount;
 
       updateViewportPadding();
 
-      var activeCenter = activeIndex * (cfg.width + cfg.spacing) + extraWidth / 2 + cfg.width / 2 + (cfg._dcShift || 0);
+      var activeCenter = activeIndex * (cfg.width + cfg.spacing) + extraWidth / 2 + cfg.width / 2;
       var viewportWidth = viewport.getBoundingClientRect().width || 0;
       track.style.transform = 'translateX(' + (viewportWidth / 2 - activeCenter) + 'px)';
     }

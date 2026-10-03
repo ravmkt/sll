@@ -316,13 +316,6 @@ const CarouselPreview = ({ carousel, colors, isMobile = false }: { carousel: any
           ))}
         </div>
         </div>
-        {/* vlPreviewArrows */}
-        {carousel?.show_arrows !== false && (
-          <>
-            <button type="button" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onClick={() => setTrackIndex(prev => prev - 1)} className="absolute left-2 z-30 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm leading-none shadow-md" style={{ top: '35%', background: carousel?.arrow_color || colors?.primary || '#0094EB' }}>&lsaquo;</button>
-            <button type="button" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onClick={() => setTrackIndex(prev => prev + 1)} className="absolute right-2 z-30 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm leading-none shadow-md" style={{ top: '35%', background: carousel?.arrow_color || colors?.primary || '#0094EB' }}>&rsaquo;</button>
-          </>
-        )}
       </div>
     </div>
   );
@@ -389,7 +382,7 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
   const marginL = Math.max(0, Number(carousel?.margin_left ?? 0) || 0);
   const marginR = Math.max(0, Number(carousel?.margin_right ?? 0) || 0);
   const marginT = Math.max(0, Number(carousel?.margin_top ?? 0) || 0);
-  const marginB = Number(carousel?.margin_bottom ?? 0) || 0;
+  const marginB = Math.max(0, Number(carousel?.margin_bottom ?? 0) || 0);
   const titleAlign = carousel?.title_align ?? 'center';
   const enlarge = !!carousel?.highlight_enlarge_active;
   const desat = !!carousel?.highlight_desaturate_inactive;
@@ -785,8 +778,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     title_bold: getC('carousel_title_bold') ?? true,
     autoplay_videos: getC('carousel_autoplay_videos') ?? true,
     show_play_icon: getC('carousel_show_play_icon') !== false,
-    show_arrows: getC('carousel_show_arrows') !== false,
-    arrow_color: getC('carousel_arrow_color') || '',
     show_product: getC('carousel_show_product') ?? true,
     product_card_bg: getC('carousel_product_card_bg') || '#FFFFFF',
     product_card_border_color: getC('carousel_product_card_border_color') || '#E2E8F0',
@@ -1293,7 +1284,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             </select>
                           </FormField>
                         )}
-                        <div className="col-span-2"><CheckboxField label="Carrossel infinito" checked={getC('carousel_infinite') === true} onChange={(v: boolean) => setC('carousel_infinite', v)} /></div>
                         <div className="col-span-2"><FormField label="Espaçamento (px)">
                           <input type="number" min="0" value={getC('carousel_spacing') ?? getC('carousel_gap') ?? (previewDevice === 'mobile' ? 12 : 16)} onChange={e => setC('carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField></div>
@@ -1301,7 +1291,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <input type="number" min="0" value={getC('carousel_margin_top') || 0} onChange={e => setC('carousel_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Inferior (px)">
-                          <input type="text" inputMode="text" value={getC('carousel_margin_bottom') || 0} onChange={e => { const v = e.target.value.trim(); setC('carousel_margin_bottom', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('carousel_margin_bottom') as any) === '-') setC('carousel_margin_bottom', 0); }} className={inputClass} />
+                          <input type="number" min="0" value={getC('carousel_margin_bottom') || 0} onChange={e => setC('carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Esquerda (px)">
                           <input type="number" min="0" value={getC('carousel_margin_left') || 0} onChange={e => setC('carousel_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
@@ -1352,12 +1342,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           </div>
                         )}
                         <CheckboxField label="Reproduzir vídeos automaticamente" checked={getC('carousel_autoplay_videos') !== false} onChange={(v: boolean) => setC('carousel_autoplay_videos', v)} />
-                        <CheckboxField label="Exibir setas laterais" checked={getC('carousel_show_arrows') !== false} onChange={(v: boolean) => setC('carousel_show_arrows', v)} />
-                        {getC('carousel_show_arrows') !== false && (
-                          <div className="mb-3"><FormField label="Cor das setas">
-                            <ColorInput value={getC('carousel_arrow_color') || '#0094EB'} onChange={(v: string) => setC('carousel_arrow_color', v)} />
-                          </FormField></div>
-                        )}
                         <CheckboxField label="Exibir ícone de Play" checked={getC('carousel_show_play_icon') !== false} onChange={(v: boolean) => setC('carousel_show_play_icon', v)} />
                       </div>
                     </Accordion>
@@ -1430,8 +1414,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           </FormField>
                         ) : (
                           <FormField label="Itens visíveis">
-                            <select value={previewDevice === 'mobile' ? Math.min(5, Math.max(1, Math.round(Number(getC('dyn_carousel_visible_items') ?? 2)))) : Number(getC('dyn_carousel_visible_items') ?? 4)} onChange={e => setC('dyn_carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
-                              {(previewDevice === 'mobile' ? [1, 2, 3, 4, 5] : Array.from({ length: 19 }, (_, i) => 1 + i * 0.5)).map(n => (<option key={n} value={n}>{String(n).replace('.', ',') + (n % 1 ? ' (parcial)' : '')}</option>))}
+                            <select value={Number(getC('dyn_carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4))} onChange={e => setC('dyn_carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
+                              {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map(n => (<option key={n} value={n}>{String(n).replace('.', ',') + (n % 1 ? ' (parcial)' : '')}</option>))}
                             </select>
                           </FormField>
                         )}
@@ -1439,16 +1423,16 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           <input type="number" min="0" value={getC('dyn_carousel_spacing') ?? 8} onChange={e => setC('dyn_carousel_spacing', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField></div>
                         <FormField label="Margem Superior (px)">
-                          <input type="text" inputMode="text" value={getC('dyn_carousel_margin_top') || 0} onChange={e => { const v = e.target.value.trim(); setC('dyn_carousel_margin_top', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('dyn_carousel_margin_top') as any) === '-') setC('dyn_carousel_margin_top', 0); }} className={inputClass} />
+                          <input type="number" min="0" value={getC('dyn_carousel_margin_top') || 0} onChange={e => setC('dyn_carousel_margin_top', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Inferior (px)">
-                          <input type="text" inputMode="text" value={getC('dyn_carousel_margin_bottom') || 0} onChange={e => { const v = e.target.value.trim(); setC('dyn_carousel_margin_bottom', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('dyn_carousel_margin_bottom') as any) === '-') setC('dyn_carousel_margin_bottom', 0); }} className={inputClass} />
+                          <input type="number" min="0" value={getC('dyn_carousel_margin_bottom') || 0} onChange={e => setC('dyn_carousel_margin_bottom', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Esquerda (px)">
-                          <input type="text" inputMode="text" value={getC('dyn_carousel_margin_left') || 0} onChange={e => { const v = e.target.value.trim(); setC('dyn_carousel_margin_left', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('dyn_carousel_margin_left') as any) === '-') setC('dyn_carousel_margin_left', 0); }} className={inputClass} />
+                          <input type="number" min="0" value={getC('dyn_carousel_margin_left') || 0} onChange={e => setC('dyn_carousel_margin_left', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                         <FormField label="Margem Direita (px)">
-                          <input type="text" inputMode="text" value={getC('dyn_carousel_margin_right') || 0} onChange={e => { const v = e.target.value.trim(); setC('dyn_carousel_margin_right', (v === '-' ? '-' : (parseInt(v, 10) || 0)) as any); }} onBlur={() => { if ((getC('dyn_carousel_margin_right') as any) === '-') setC('dyn_carousel_margin_right', 0); }} className={inputClass} />
+                          <input type="number" min="0" value={getC('dyn_carousel_margin_right') || 0} onChange={e => setC('dyn_carousel_margin_right', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
                       </div>
                     </Accordion>

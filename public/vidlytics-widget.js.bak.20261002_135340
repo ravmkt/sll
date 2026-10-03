@@ -310,7 +310,7 @@ var isUserMuted = true; // Controla a persistência da preferência de som duran
     }
     var device = getDevice();
     var sameAll = configObj.same_for_all;
-    if (sameAll === true) {
+    if (sameAll === true || sameAll === undefined || sameAll === null) {
       if (configObj.desktop && configObj.desktop[fieldName] !== undefined && configObj.desktop[fieldName] !== null && configObj.desktop[fieldName] !== '') {
         return configObj.desktop[fieldName];
       }
@@ -1448,7 +1448,7 @@ function getCarouselConfig(appearance) {
 
   var objectFit = String(rcv('object_fit', 'carousel_object_fit', 'cover')).trim().toLowerCase();
   var itemWidth = toNumber(rcv('width', 'carousel_width', rcv('width', 'carousel_item_size', rcv('width', 'card_size', '120'))), 120);
-  var visibleItems = (function (v) { var x = parseFloat(String(v).replace(',', '.')); return (isFinite(x) && x >= 1) ? x : 4; })(rcv('visible_items', 'carousel_visible_items', '4'));
+  var visibleItems = safeInt(rcv('visible_items', 'carousel_visible_items', '4'), 4);
   var itemSpacing = toNumber(rcv('spacing', 'carousel_spacing', rcv('spacing', 'carousel_gap', rcv('spacing', 'carousel_item_spacing', '8'))), 8);
   
   var marginTop = toNumber(rcv('margin_top', 'carousel_margin_top', '0'), 0);
@@ -1483,7 +1483,6 @@ function getCarouselConfig(appearance) {
   var showPlayIcon = toBoolean(rcv('show_play_icon', 'carousel_show_play_icon', true), true);
   var showItemTitle = toBoolean(rcv('show_item_title', 'carousel_show_item_title', false), false);
   var showArrows = toBoolean(rcv('show_arrows', 'carousel_show_arrows', true), true);
-    var arrowColor = String(rcv('arrow_color', 'carousel_arrow_color', '') || '');
 
   // ==========================================
   // 4. CARD DE PRODUTO
@@ -1530,8 +1529,6 @@ aspectRatio: aspect,
     showPlayIcon: showPlayIcon,
     showItemTitle: showItemTitle,
     showArrows: showArrows,
-    arrowColor: arrowColor,
-    infinite: toBoolean(rcv('infinite', 'carousel_infinite', false), false),
     
     // 4
     showProduct: showProduct,
@@ -4652,7 +4649,6 @@ function getDynamicCarouselConfig(appearance) {
   // Dupla leitura (padrão do carousel/grid): jsonb dynamic_carousel_config + campos flattened
   function rcv(jsonbField, fallback) {
     var _dcAlias = { width: 'item_size', spacing: 'gap' };
-    var _dynFlat = appearance['dyn_carousel_' + jsonbField]; if (_dynFlat !== undefined && _dynFlat !== null && _dynFlat !== '') return _dynFlat;
     var _dcLegacy = readConfigValue(appearance, 'dynamic_carousel_config', jsonbField, jsonbField, fallback);
     return readConfigValue(appearance, 'dynamic_carousel_config', jsonbField, 'dynamic_carousel_' + (_dcAlias[jsonbField] || jsonbField), _dcLegacy);
   }
@@ -4687,12 +4683,6 @@ else if (shape === 'circle') carouselAspectRatio = '1/1';
 return {
   enabled: enabled,
   width: toNumber(rcv('width', '160'), 160),
-  sizeMode: String(rcv('size_mode', 'width')).trim().toLowerCase(),
-  marginTop: parseFloat(rcv('margin_top', 0)) || 0,
-  marginBottom: parseFloat(rcv('margin_bottom', 0)) || 0,
-  marginLeft: parseFloat(rcv('margin_left', 0)) || 0,
-  marginRight: parseFloat(rcv('margin_right', 0)) || 0,
-  visibleItems: parseFloat(rcv('visible_items', (window.innerWidth < 768 ? 2 : 4))) || (window.innerWidth < 768 ? 2 : 4),
   spacing: toNumber(rcv('spacing', '14'), 14),
   shape: shape,
   aspectRatio: carouselAspectRatio, // ⬅️ NOVO
@@ -4740,8 +4730,8 @@ return {
     showPlayIcon: toBoolean(rcv('show_play_icon', true), true),
 
     // Título da vitrine
-    showTitle: toBoolean(rcv('show_title', false), false),
-    titleText: String(rcv('title_text', 'Destaques') || 'Destaques').trim(),
+    showTitle: toBoolean(rcv('show_title', true), true),
+    titleText: String(rcv('title_text', '') || '').trim(),
     titleFontSize: toNumber(rcv('title_font_size', '14'), 14),
     titleBold: toBoolean(rcv('title_bold', true), true),
     titleColor: rcv('title_color', '#0F172A') || '#0F172A',
@@ -4802,14 +4792,14 @@ function renderDynamicCarouselWidget(options, items, cfg) {
     // 2. Higienização das configurações & fallbacks
     cfg = cfg || {};
     cfg.width = parseFloat(cfg.width) || 200;
-    var _dcSp = parseFloat(cfg.spacing); cfg.spacing = isNaN(_dcSp) ? 16 : _dcSp;
+    cfg.spacing = parseFloat(cfg.spacing) || 16;
     cfg.borderWidth = parseFloat(cfg.borderWidth) || 0;
     cfg.borderColor = cfg.borderColor || '#ccc';
     cfg.enlargeActive = cfg.enlargeActive !== false;
     cfg.activeScale = parseFloat(cfg.activeScale) || 1.15;
     cfg.highlightShadow = cfg.highlightShadow !== false;
     cfg.highlightMode = cfg.highlightMode || 'ring';
-    var _dcHbw = parseFloat(cfg.highlightBorderWidth); cfg.highlightBorderWidth = isNaN(_dcHbw) ? 3 : _dcHbw;
+    cfg.highlightBorderWidth = parseFloat(cfg.highlightBorderWidth) || 3;
     cfg.highlightBorderColor = cfg.highlightBorderColor || '#ff0055';
     cfg.desaturateInactive = cfg.desaturateInactive !== false;
     var parsedRadius = parseFloat(cfg.borderRadius);
@@ -4829,19 +4819,6 @@ cfg.borderRadius = isNaN(parsedRadius) ? 12 : parsedRadius;
     cfg.objectFit = cfg.objectFit || 'cover';
     cfg.showProduct = cfg.showProduct !== false;
 
-    if (cfg.sizeMode === 'items' && cfg.visibleItems > 0) {
-      var _dcBase = (target && target.clientWidth) ? target.clientWidth : window.innerWidth;
-      var _dcAvail = _dcBase - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0);
-      var _dcN = cfg.visibleItems;
-      cfg.width = Math.max(40, Math.floor((_dcAvail - cfg.spacing * (_dcN - 1)) / _dcN));
-      var _dcMob = (typeof isMobileDevice !== 'undefined') ? !!isMobileDevice : window.innerWidth <= 768;
-      cfg._dcShift = 0;
-      if (_dcMob) {
-        var _dcM = Math.min(5, Math.max(1, Math.round(cfg.visibleItems)));
-        cfg.width = Math.max(40, Math.floor((_dcAvail - cfg.spacing * (_dcM + 1)) / (_dcM + 0.8)));
-        cfg._dcShift = (_dcM % 2 === 0) ? (cfg.width + cfg.spacing) / 2 : 0;
-      }
-    }
     var isCircle = cfg.isCircle === true || cfg.shape === 'circle';
     var aspectRatio = isCircle ? '1/1' : (cfg.aspectRatio || '9/16');
     var extraWidth = cfg.enlargeActive ? (cfg.width * (cfg.activeScale - 1)) : 0;
@@ -4858,11 +4835,6 @@ cfg.borderRadius = isNaN(parsedRadius) ? 12 : parsedRadius;
     // 4. Criação do CONTAINER principal do widget (com os estilos originais flex)
     var container = document.createElement('div');
     container.className = 'vidlytics-dynamic-carousel-container';
-    container.style.userSelect = 'none';
-    container.style.webkitUserSelect = 'none';
-    container.style.touchAction = 'pan-y';
-    container.addEventListener('dragstart', function (e) { e.preventDefault(); }, true);
-    container.addEventListener('selectstart', function (e) { e.preventDefault(); }, true);
     Object.assign(container.style, {
       display: 'flex',
       justifyContent: 'center',
@@ -4872,8 +4844,8 @@ cfg.borderRadius = isNaN(parsedRadius) ? 12 : parsedRadius;
       paddingBottom: '8px',
       marginTop: (cfg.marginTop || 0) + 'px',
       marginBottom: (cfg.marginBottom || 0) + 'px',
-      paddingLeft: '0px',
-      paddingRight: '0px',
+      paddingLeft: (cfg.marginLeft || 0) + 'px',
+      paddingRight: (cfg.marginRight || 0) + 'px',
       boxSizing: 'border-box',
     });
 
@@ -4992,8 +4964,8 @@ function cloneItemDeeply(original, index, isClone) {
 
       var firstVideo = (item.videos && item.videos[0]) || {};
       var video = document.createElement('video');
-      var _dcUrl = firstVideo.video_url || firstVideo.videoUrl || item.video_url || item.videoUrl || item.url || ''; var _dcYt = extractYouTubeId(_dcUrl); if (!_dcYt) { video.src = _dcUrl; } else { video.setAttribute('data-yt-id', _dcYt); }
-      var posterUrl = firstVideo.thumbnail_url || firstVideo.thumbnailUrl || item.thumbnail_url || item.thumbnailUrl || item.thumb || ''; if (!posterUrl && _dcYt) { posterUrl = getYouTubeThumbnail(_dcUrl); }
+      video.src = firstVideo.video_url || firstVideo.videoUrl || item.video_url || item.videoUrl || item.url || '';
+      var posterUrl = firstVideo.thumbnail_url || firstVideo.thumbnailUrl || item.thumbnail_url || item.thumbnailUrl || item.thumb || '';
       if (posterUrl) {
         video.poster = posterUrl;
       }
@@ -5118,7 +5090,7 @@ var activeIndex = visibleCount;
       var activeCard = cardEls[activeIndex];
       var cardHeight = activeCard ? activeCard.offsetHeight : 0;
       var grow = cfg.enlargeActive ? Math.ceil((cardHeight * (cfg.activeScale - 1)) / 2) : 0;
-      var pad = grow + (cfg.highlightShadow ? 64 : 16);
+      var pad = grow + 16;
       viewport.style.paddingTop = pad + 'px';
       viewport.style.paddingBottom = pad + 'px';
     }
@@ -5126,30 +5098,12 @@ var activeIndex = visibleCount;
     // 6. Atualização visual de escalas, filtros e reprodução de vídeo unificada
     function applyStyles() {
       if (container) {
-        var vlDcL = parseFloat(cfg.marginLeft) || 0, vlDcR = parseFloat(cfg.marginRight) || 0;
-        var vlRef = { left: 0, right: document.documentElement.clientWidth };
-        var vlPE = container.parentElement;
-        var vlAnc = vlPE;
-        while (vlAnc && vlAnc !== document.body && vlAnc !== document.documentElement) {
-          var vlOv = getComputedStyle(vlAnc).overflowX;
-          if (vlOv === 'hidden' || vlOv === 'clip' || vlOv === 'auto' || vlOv === 'scroll') {
-            var vlAr = vlAnc.getBoundingClientRect();
-            vlRef = { left: Math.max(0, vlAr.left), right: Math.min(vlRef.right, vlAr.right) };
-            break;
-          }
-          vlAnc = vlAnc.parentElement;
-        }
-        var vlPr = vlPE.getBoundingClientRect(), vlPs = getComputedStyle(vlPE);
-        var vlParLeft = vlPr.left + (parseFloat(vlPs.paddingLeft) || 0) + (parseFloat(vlPs.borderLeftWidth) || 0);
-        container.style.width = Math.max(0, vlRef.right - vlRef.left - vlDcL - vlDcR) + 'px';
-        container.style.marginLeft = (vlRef.left - vlParLeft + vlDcL) + 'px';
-        container.style.marginRight = '0px';
-        var vlDelta = (vlRef.left + vlDcL) - container.getBoundingClientRect().left;
-        if (Math.abs(vlDelta) > 0.5) { container.style.marginLeft = ((parseFloat(container.style.marginLeft) || 0) + vlDelta) + 'px'; }
-        container.style.maxWidth = 'none';
+        container.style.width = '100vw';
+        container.style.marginLeft = 'calc(-50vw + 50%)';
+        container.style.marginRight = 'calc(-50vw + 50%)';
+        container.style.maxWidth = '100vw';
         container.style.boxSizing = 'border-box';
-        container.style.overflow = 'hidden'; container.style.setProperty('overflow', 'clip', 'important'); container.style.setProperty('overscroll-behavior-x', 'contain', 'important');
-  ['mousedown','touchstart','pointerdown'].forEach(function (ev) { container.addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: true }); });
+        container.style.overflow = 'hidden';
       }
 
       cardEls.forEach(function (card, idx) {
@@ -5181,58 +5135,13 @@ var activeIndex = visibleCount;
         var frame = frameEls[idx];
         if (frame) {
           frame.style.border = border;
-          frame.style.boxShadow = 'none'; card.style.filter = (isActive && cfg.highlightShadow) ? 'drop-shadow(0 12px 14px rgba(0,0,0,.4))' : 'none';
+          frame.style.boxShadow = boxShadow;
           frame.style.filter = filter;
           frame.style.borderRadius = isCircle ? '999px' : cfg.borderRadius + 'px';
         }
 
         // 🛑 CORREÇÃO 3: Controle unificado dos estados do vídeo (Eliminando o loop conflituoso secundário)
         var video = videoEls[idx];
-        if (video && video.getAttribute('data-yt-id') && frame) {
-          var _ytId = video.getAttribute('data-yt-id');
-          var _ytIf = frame.querySelector('iframe[data-vl-yt]');
-          if (!window.__vlYtMsg) {
-            window.__vlYtMsg = true;
-            window.addEventListener('message', function (e) {
-              if (String(e.origin).indexOf('youtube.com') < 0) return;
-              var d; try { d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (x) { return; }
-              if (!d) return;
-              var st = d.event === 'onStateChange' ? d.info : (d.info && d.info.playerState);
-              if (st !== 1) return;
-              Array.prototype.forEach.call(document.querySelectorAll('iframe[data-vl-yt]'), function (f) {
-                if (f.contentWindow === e.source && f.getAttribute('data-vl-state') === 'on') f.style.opacity = '1';
-              });
-            });
-          }
-          if (!_ytIf) {
-            _ytIf = document.createElement('iframe');
-            _ytIf.setAttribute('data-vl-yt', '1');
-            _ytIf.src = 'https://www.youtube.com/embed/' + _ytId + '?autoplay=0&mute=1&controls=0&loop=1&playlist=' + _ytId + '&playsinline=1&rel=0&modestbranding=1&enablejsapi=1';
-            _ytIf.allow = 'autoplay; encrypted-media; picture-in-picture';
-            _ytIf.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;pointer-events:none;z-index:2;opacity:0;transition:opacity .25s;';
-            _ytIf.addEventListener('load', function () {
-              try { _ytIf.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {}
-            });
-            frame.appendChild(_ytIf);
-          }
-          var _ytCmd = function (fn, args) {
-            try { _ytIf.contentWindow.postMessage(JSON.stringify({ event: 'command', func: fn, args: args || [] }), '*'); } catch (x) {}
-          };
-          if (isActive) {
-            if (_ytIf.getAttribute('data-vl-state') !== 'on') {
-              _ytIf.setAttribute('data-vl-state', 'on');
-              _ytCmd('seekTo', [0, true]);
-              _ytCmd('playVideo');
-              setTimeout(function () { if (_ytIf.getAttribute('data-vl-state') === 'on') _ytCmd('playVideo'); }, 800);
-              setTimeout(function () { if (_ytIf.getAttribute('data-vl-state') === 'on') _ytIf.style.opacity = '1'; }, 4000);
-            }
-          } else if (_ytIf.getAttribute('data-vl-state') === 'on') {
-            _ytIf.setAttribute('data-vl-state', 'off');
-            _ytIf.style.opacity = '0';
-            _ytCmd('pauseVideo');
-          }
-          video = null;
-        }
         if (video) {
           if (isActive) {
             if (video.paused) {
@@ -5266,7 +5175,7 @@ var activeIndex = visibleCount;
 
       updateViewportPadding();
 
-      var activeCenter = activeIndex * (cfg.width + cfg.spacing) + extraWidth / 2 + cfg.width / 2 + (cfg._dcShift || 0);
+      var activeCenter = activeIndex * (cfg.width + cfg.spacing) + extraWidth / 2 + cfg.width / 2;
       var viewportWidth = viewport.getBoundingClientRect().width || 0;
       track.style.transform = 'translateX(' + (viewportWidth / 2 - activeCenter) + 'px)';
     }
@@ -5356,18 +5265,7 @@ var activeIndex = visibleCount;
     return matrix.m41 || 0;
   }
 
-  function vlDcSelBlock(e) { e.preventDefault(); }
-  function vlDcLock(on) {
-    var m = on ? 'addEventListener' : 'removeEventListener';
-    document[m]('selectstart', vlDcSelBlock, true);
-    document[m]('dragstart', vlDcSelBlock, true);
-    document.documentElement.style.userSelect = on ? 'none' : '';
-    document.documentElement.style.webkitUserSelect = on ? 'none' : '';
-    if (on) { var sel = window.getSelection && window.getSelection(); if (sel && sel.removeAllRanges) sel.removeAllRanges(); }
-  }
-
   function onDragStart(e) {
-    vlDcLock(true);
     if (e.type === 'mousedown') {
       e.preventDefault();
     }
@@ -5402,7 +5300,7 @@ var activeIndex = visibleCount;
   function onDragEnd() {
     if (!isDragging) return;
     isDragging = false;
-    vlDcLock(false);
+
     setTimeout(function () {
       wasDragged = false;
     }, 50);
@@ -5432,34 +5330,6 @@ var activeIndex = visibleCount;
 
   window.addEventListener('mouseup', onDragEnd);
   window.addEventListener('touchend', onDragEnd);
-
-  // vlDcNoPageShift: trava rolagem da pagina/pais durante o arrasto (igual ao carrossel normal)
-  var vlDcClip = track.parentElement;
-  if (vlDcClip) {
-    var vlDcCs = window.getComputedStyle(vlDcClip);
-    if (/hidden|auto|scroll/.test(vlDcCs.overflowX)) {
-      vlDcClip.style.setProperty('overflow', 'clip', 'important');
-    }
-    vlDcClip.style.setProperty('overscroll-behavior-x', 'contain', 'important');
-  }
-  var vlDcSaved = [];
-  var vlDcLocked = false;
-  function vlDcSaveScroll() {
-    vlDcSaved = [];
-    var n = track;
-    while (n && n.nodeType === 1) { vlDcSaved.push([n, n.scrollLeft]); n = n.parentElement; }
-    var se = document.scrollingElement || document.documentElement;
-    vlDcSaved.push([se, se.scrollLeft]);
-  }
-  function vlDcRestoreScroll() {
-    if (!vlDcLocked) return;
-    vlDcSaved.forEach(function (r) { if (r[0].scrollLeft !== r[1]) r[0].scrollLeft = r[1]; });
-  }
-  track.addEventListener('mousedown', function () { vlDcSaveScroll(); vlDcLocked = true; });
-  track.addEventListener('touchstart', function () { vlDcSaveScroll(); vlDcLocked = true; }, { passive: true });
-  window.addEventListener('mouseup', function () { vlDcRestoreScroll(); vlDcLocked = false; });
-  window.addEventListener('touchend', function () { vlDcRestoreScroll(); vlDcLocked = false; });
-  window.addEventListener('scroll', vlDcRestoreScroll, true);
 
   var interval = null;
 
@@ -5735,10 +5605,6 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
 
   // Insere o wrapper dentro do container principal
   container.appendChild(wrapper);
-  // vlShieldHost: impede que sliders do tema (Splide) capturem o arrasto do carrossel
-  ['mousedown', 'touchstart', 'pointerdown'].forEach(function (ev) {
-    container.addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: true });
-  });
   
     // Header
   if (cfg.showTitle && (cfg.titleText || (stories[0] && stories[0].title))) {
@@ -5775,10 +5641,9 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
   var isMobileDevice = getDevice() === 'mobile';
   var vlGapNum = parseFloat(cfg.itemSpacing);
   if (!isNaN(vlGapNum)) gapPx = vlGapNum;
-  if (cfg.sizeMode === 'items') {
+  if (cfg.sizeMode === 'items' && !isMobileDevice) {
     var vlHost = (position === 'afterbegin' || position === 'beforeend') ? target : (target.parentNode || target);
     var vlAvail = Math.min(vlHost.clientWidth || window.innerWidth, window.innerWidth) - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0);
-    if (isMobileDevice && vlAvail < window.innerWidth * 0.6) { vlAvail = window.innerWidth - (parseFloat(cfg.marginLeft) || 0) - (parseFloat(cfg.marginRight) || 0) - 16; }
     itemWidthPx = Math.max(40, Math.floor((vlAvail - gapPx * (visibleItems - 1)) / visibleItems));
     cfg.itemWidth = itemWidthPx + 'px';
   }
@@ -5802,8 +5667,6 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
 
   var track = document.createElement('div');
   track.className = 'vidlytics-carousel-track';
-  trackContainer.style.setProperty('padding-bottom', '2px', 'important');
-  trackContainer.style.userSelect = 'none'; trackContainer.style.webkitUserSelect = 'none'; trackContainer.style.touchAction = 'pan-y'; trackContainer.addEventListener('dragstart', function (e) { e.preventDefault(); }); // vlNoNativeDrag
   track.style.cssText =
     'display:flex !important;' +
     'gap:' + cfg.itemSpacing + ' !important;' +
@@ -5813,11 +5676,9 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
   
 // Items renderizam completamente com suporte robusto a vídeo e imagem
   // Repete os stories em ciclo ate completar os itens visiveis
-  var vlOrigStories = stories.slice();
-  function vlRealIdx(s, i) { var k = vlOrigStories.indexOf(s); return k < 0 ? i : k; }
   var vlTotal = 0;
   stories.forEach(function (s) { vlTotal += ((s && s.videos) || []).filter(Boolean).length; });
-  if (cfg.infinite && vlTotal > 0 && vlTotal < visibleItems) {
+  if (vlTotal > 0 && vlTotal < visibleItems) {
     var vlBase = stories.slice();
     var vlExpanded = stories.slice();
     var vlCount = vlTotal;
@@ -5829,13 +5690,6 @@ function renderCarouselWidget(targetOrOptions, stories, appearance) {
       vlI++;
     }
     stories = vlExpanded;
-  }
-  var vlInfDesktop = !!cfg.infinite && !isMobileDevice && vlTotal > 0;
-  var vlSetCount = 0;
-  if (vlInfDesktop) {
-    stories.forEach(function (s) { vlSetCount += ((s && s.videos) || []).filter(Boolean).length; });
-    var vlOne = stories.slice();
-    stories = vlOne.concat(vlOne, vlOne);
   }
   stories.forEach(function(story, storyIndex) {
     var videos = (story.videos || []).filter(Boolean);
@@ -6051,7 +5905,7 @@ directFrameVid.src = directUrl;
       // 8. Evento de clique para abrir Story
       videoCard.addEventListener('click', function(e) {
         e.stopPropagation();
-        openStoryModal(vlRealIdx(story, storyIndex), videoIndex);
+        openStoryModal(storyIndex, videoIndex);
       });
 
       item.appendChild(videoCard);
@@ -6175,8 +6029,8 @@ sendAnalyticsEvent('product_view', video ? video.id : null, productData ? produc
 
   // 👇 INÍCIO DA IMPLEMENTAÇÃO DO LOOP VISUAL (CLONES) 👇
   var itemsArray = Array.from(track.children);
-  var hasClones = !!cfg.infinite && !vlInfDesktop && itemsArray.length > visibleItems;
-  if (itemsArray.length > 0 && itemsArray.length <= visibleItems) {
+  var hasClones = itemsArray.length > visibleItems;
+  if (!hasClones && itemsArray.length > 0) {
     track.style.setProperty('justify-content', 'safe center', 'important');
     if (!isMobileDevice) {
       var fitW = (itemWidthPx * itemsArray.length) + (gapPx * (itemsArray.length - 1));
@@ -6200,12 +6054,10 @@ sendAnalyticsEvent('product_view', video ? video.id : null, productData ? produc
 
     // Mobile: Itens Visiveis manda. Card = (largura - espacamentos) / itens
   if (isMobileDevice) {
-    var mVisible = Math.max(1, parseFloat(visibleItems) || 1);
+    var mVisible = Math.max(1, parseInt(visibleItems, 10) || 1);
     var mGaps = gapPx * (mVisible - 1);
-    wrapper.style.setProperty('width', '100%', 'important');
-    wrapper.style.setProperty('box-sizing', 'border-box', 'important');
     Array.prototype.forEach.call(track.children, function (el) {
-      el.style.setProperty('width', itemWidthPx + 'px', 'important'); el.style.setProperty('max-width', itemWidthPx + 'px', 'important');
+      el.style.setProperty('width', 'calc((100% - ' + mGaps + 'px) / ' + mVisible + ')', 'important');
       el.style.setProperty('flex', '0 0 auto', 'important');
       el.style.setProperty('min-width', '0', 'important');
     });
@@ -6249,40 +6101,6 @@ function centerActiveItem(animate) {
     return matrix.m41;
   }
 
-  function vlWrapW() {
-    var kids = track.children;
-    if (!vlInfDesktop || kids.length <= vlSetCount) return 0;
-    return kids[vlSetCount].offsetLeft - kids[0].offsetLeft;
-  }
-  function vlWrap(t) {
-    var P = vlWrapW();
-    if (!P) return t;
-    while (t > -P) t -= P;
-    while (t <= -2 * P) t += P;
-    return t;
-  }
-  if (vlInfDesktop) {
-    track.addEventListener('transitionend', function (e) {
-      if (e.target !== track) return;
-      var t0 = getTranslateX(track), t1 = vlWrap(t0);
-      if (t1 !== t0) { track.style.transition = 'none'; track.style.transform = 'translateX(' + t1 + 'px)'; }
-    });
-    requestAnimationFrame(function () {
-      var P = vlWrapW();
-      if (P) { track.style.transition = 'none'; track.style.transform = 'translateX(' + (-P) + 'px)'; }
-    });
-  }
-
-  function vlSelBlock(e) { e.preventDefault(); }
-  function vlLockSelection(on) {
-    var m = on ? 'addEventListener' : 'removeEventListener';
-    document[m]('selectstart', vlSelBlock, true);
-    document[m]('dragstart', vlSelBlock, true);
-    document.documentElement.style.userSelect = on ? 'none' : '';
-    document.documentElement.style.webkitUserSelect = on ? 'none' : '';
-    if (on) { var sel = window.getSelection && window.getSelection(); if (sel && sel.removeAllRanges) sel.removeAllRanges(); }
-  }
-
   function getMaxScroll() {
     var trackWidth = track.scrollWidth;
     var containerWidth = trackContainer.offsetWidth;
@@ -6299,14 +6117,13 @@ function centerActiveItem(animate) {
     dragStartTranslate = getTranslateX(track);
     track.style.transition = 'none';
     track.style.cursor = 'grabbing';
-    vlLockSelection(true);
   }
 
   function onDragMove(clientX) {
     if (!isDragging) return;
     var delta = clientX - startX;
     var maxScroll = getMaxScroll();
-    var newTranslate = vlInfDesktop ? vlWrap(dragStartTranslate + delta) : clamp(dragStartTranslate + delta, -maxScroll, 0);
+    var newTranslate = clamp(dragStartTranslate + delta, -maxScroll, 0);
     track.style.transform = 'translateX(' + newTranslate + 'px)';
   }
 
@@ -6314,7 +6131,6 @@ function onDragEnd() {
   if (!isDragging) return;
   isDragging = false;
   track.style.cursor = 'grab';
-  vlLockSelection(false);
 
   if (isMobileDevice) {
     var currentTranslateX = getTranslateX(track);
@@ -6342,26 +6158,6 @@ function onDragEnd() {
 }
 
   track.style.cursor = 'grab';
-
-  // vlNoPageShift: trava rolagem horizontal da pagina/pais durante o arrasto
-  trackContainer.style.setProperty('overflow', 'clip', 'important');
-  trackContainer.style.setProperty('overscroll-behavior-x', 'contain', 'important');
-  var vlSaved = [];
-  var vlLocked = false;
-  function vlSaveScroll() {
-    vlSaved = [];
-    var n = trackContainer;
-    while (n && n.nodeType === 1) { vlSaved.push([n, n.scrollLeft]); n = n.parentElement; }
-    var se = document.scrollingElement || document.documentElement;
-    vlSaved.push([se, se.scrollLeft]);
-  }
-  function vlRestoreScroll() {
-    if (!vlLocked) return;
-    vlSaved.forEach(function (r) { if (r[0].scrollLeft !== r[1]) r[0].scrollLeft = r[1]; });
-  }
-  track.addEventListener('mousedown', function () { vlSaveScroll(); vlLocked = true; });
-  window.addEventListener('mouseup', function () { vlRestoreScroll(); vlLocked = false; });
-  window.addEventListener('scroll', vlRestoreScroll, true);
 
   // Mouse events
   track.addEventListener('mousedown', function(e) {
@@ -6394,7 +6190,7 @@ function onDragEnd() {
   });
   
 // --- SETAS (só com clones e showArrows ligado) ---
-  if (cfg.showArrows && (hasClones || vlInfDesktop || (!isMobileDevice && itemsArray.length > visibleItems))) {
+  if (hasClones && cfg.showArrows) {
     var makeArrow = function (dir) {
       var b = document.createElement('button');
       b.type = 'button';
@@ -6405,7 +6201,7 @@ function onDragEnd() {
         'position:absolute !important;top:50% !important;' +
         (dir < 0 ? 'left:4px' : 'right:4px') + ' !important;' +
         'transform:translateY(-50%) !important;width:32px !important;height:32px !important;' +
-        'border-radius:50% !important;border:none !important;background:' + (cfg.arrowColor || primaryColor) + ' !important;' +
+        'border-radius:50% !important;border:none !important;background:' + primaryColor + ' !important;' +
         'color:#fff !important;font-size:22px !important;line-height:1 !important;cursor:pointer !important;' +
         'z-index:5 !important;display:flex !important;align-items:center !important;' +
         'justify-content:center !important;padding:0 !important;box-shadow:0 2px 6px rgba(0,0,0,.25) !important;';
@@ -6416,7 +6212,7 @@ function onDragEnd() {
           centerActiveItem(true);
         } else {
           var step = itemWidthPx + gapPx;
-          var next = vlInfDesktop ? (getTranslateX(track) - dir * step) : clamp(getTranslateX(track) - dir * step, -getMaxScroll(), 0);
+          var next = clamp(getTranslateX(track) - dir * step, -getMaxScroll(), 0);
           track.style.transition = 'transform 0.3s ease';
           track.style.transform = 'translateX(' + next + 'px)';
         }
@@ -6929,7 +6725,7 @@ if (displayMode === 'dynamic_carousel') {
     Object.assign(wrapper.style, {
       width: '100%',
       minHeight: '0',
-      margin: '0',
+      margin: '20px 0',
       overflow: 'visible',
       display: 'block'
     });
@@ -6955,7 +6751,7 @@ if (displayMode === 'dynamic_carousel') {
         width: '100%',
         marginLeft: 'auto',
         marginRight: 'auto',
-        
+        padding: '0',
         minHeight: 'auto'
       });
       
@@ -8061,7 +7857,6 @@ Promise.resolve(null).then(function(live) {
 });
 
 })();
-
 
 
 
