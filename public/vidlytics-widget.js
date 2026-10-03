@@ -7365,7 +7365,7 @@ function renderOneFloatingWidget(story, hostId) {
   }
 
   // Ícone de play centralizado
-  if (cfg.showPlayIcon && thumbUrl && !(cfg.autoplayVideos && rawVideoUrl && !isImageItem)) {
+  if (cfg.showPlayIcon && !(cfg.autoplayVideos && rawVideoUrl && !isImageItem)) {
     var playOverlay = createEl('div', 'vl-floating-play-icon');
     playOverlay.style.cssText =
       'position:absolute !important;' +
@@ -7471,17 +7471,20 @@ function renderOneFloatingWidget(story, hostId) {
       'z-index: -1 !important;'; 
       
     // Estética da pílula saindo por trás do widget baseada no alinhamento da tela
-    if (isRight) {
-      ctaElement.style.right = '100%';
-      ctaElement.style.marginRight = '-15px'; // Entra pra debaixo do círculo
-      ctaElement.style.paddingRight = '25px';
-      ctaElement.style.borderRadius = '30px 0 0 30px';
-    } else {
-      ctaElement.style.left = '100%';
-      ctaElement.style.marginLeft = '-15px';
-      ctaElement.style.paddingLeft = '25px';
-      ctaElement.style.borderRadius = '0 30px 30px 0';
-    }
+    var ctaBw = parseFloat(cfg.borderWidth) || 0;
+      var ctaOverlap = 10;
+      var ctaPad = ctaOverlap + ctaBw + 14;
+      if (isRight) {
+        ctaElement.style.setProperty('right', '100%', 'important');
+        ctaElement.style.setProperty('margin-right', '-' + ctaOverlap + 'px', 'important');
+        ctaElement.style.setProperty('padding-right', ctaPad + 'px', 'important');
+        ctaElement.style.setProperty('border-radius', '30px 0 0 30px', 'important');
+      } else {
+        ctaElement.style.setProperty('left', '100%', 'important');
+        ctaElement.style.setProperty('margin-left', '-' + ctaOverlap + 'px', 'important');
+        ctaElement.style.setProperty('padding-left', ctaPad + 'px', 'important');
+        ctaElement.style.setProperty('border-radius', '0 30px 30px 0', 'important');
+      }
 
     // Efeitos visuais
     ctaElement.addEventListener('mouseenter', function() {
