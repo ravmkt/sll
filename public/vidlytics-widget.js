@@ -4681,7 +4681,8 @@ else if (shape === 'landscape') carouselAspectRatio = '16/9';
 else if (shape === 'circle') carouselAspectRatio = '1/1';
 
   // O painel salva a largura da borda em 'border_style' (legado) — aceitar ambas
-  var borderWidthNumber = toNumber(firstDefined(rcv('border_width', null), rcv('border_style', null), '2'), 2);
+  try { window.__vlDcDbg = { same: appearance.same_appearance_all_devices, device: getDevice(), flatColor: appearance['dyn_carousel_border_color'], flatWidth: appearance['dyn_carousel_border_width'], jsonb: appearance.dynamic_carousel_config, color: rcv('border_color', null), width: rcv('border_width', null), style: rcv('border_style', null), keys: Object.keys(appearance).filter(function (k) { return /border|same_app/.test(k); }) }; } catch (e) {}
+var borderWidthNumber = toNumber(firstDefined(rcv('border_width', null), rcv('border_style', null), '2'), 2);
   var highlightBorderWidthNumber = toNumber(firstDefined(rcv('highlight_border_width', null), borderWidthNumber > 0 ? String(borderWidthNumber) : null, '0'), 0);
 
 return {
@@ -5118,7 +5119,7 @@ var activeIndex = visibleCount;
       var activeCard = cardEls[activeIndex];
       var cardHeight = activeCard ? activeCard.offsetHeight : 0;
       var grow = cfg.enlargeActive ? Math.ceil((cardHeight * (cfg.activeScale - 1)) / 2) : 0;
-      var pad = grow + 6; var padBot = grow + (cfg.highlightShadow ? 36 : 6);
+      var pad = grow + 6; var padBot = grow + (cfg.highlightShadow ? 20 : 6);
       viewport.style.paddingTop = pad + 'px';
       viewport.style.paddingBottom = padBot + 'px';
     }
@@ -5181,7 +5182,7 @@ var activeIndex = visibleCount;
         var frame = frameEls[idx];
         if (frame) {
           frame.style.boxSizing = 'border-box'; frame.style.setProperty('border', border, 'important');
-          frame.style.boxShadow = 'none'; card.style.filter = (isActive && cfg.highlightShadow) ? 'drop-shadow(0 12px 14px rgba(0,0,0,.4))' : 'none';
+          frame.style.boxShadow = 'none'; card.style.filter = 'none'; var sh = card.__vlSh; if (!sh) { sh = document.createElement('div'); sh.className = 'vidlytics-dc-shadow'; sh.style.cssText = 'position:absolute;left:12%;right:12%;height:22px;pointer-events:none;z-index:0;border-radius:50%;opacity:0;background:radial-gradient(ellipse at center, rgba(0,0,0,.34) 0%, rgba(0,0,0,.16) 45%, rgba(0,0,0,0) 72%);transition:opacity ' + cfg.transitionMs + 'ms ease;'; card.appendChild(sh); card.__vlSh = sh; } frame.style.zIndex = '1'; sh.style.top = (frame.offsetTop + frame.offsetHeight - 11) + 'px'; sh.style.opacity = (isActive && cfg.highlightShadow) ? '1' : '0';
           frame.style.filter = filter;
           frame.style.borderRadius = isCircle ? '999px' : cfg.borderRadius + 'px';
         }
