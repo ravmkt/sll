@@ -5119,7 +5119,7 @@ var activeIndex = visibleCount;
       var activeCard = cardEls[activeIndex];
       var cardHeight = activeCard ? activeCard.offsetHeight : 0;
       var grow = cfg.enlargeActive ? Math.ceil((cardHeight * (cfg.activeScale - 1)) / 2) : 0;
-      var pad = grow + 6; var refl = (cfg.highlightReflection && !cfg.showProduct) ? Math.round(cardHeight * 0.42) + 6 : 0; var padBot = grow + Math.max(refl, cfg.highlightShadow ? 20 : 6);
+      var pad = grow + 6; var refl = (cfg.highlightReflection && !cfg.showProduct) ? Math.round(cardHeight * 0.22) + 2 : 0; var padBot = grow + Math.max(refl, cfg.highlightShadow ? 20 : 6);
       viewport.style.paddingTop = pad + 'px';
       viewport.style.paddingBottom = padBot + 'px';
     }
