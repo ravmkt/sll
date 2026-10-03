@@ -1711,9 +1711,9 @@ title_bold: toBoolean(rcv('title_bold', wsv('title_bold', true)), true),
     show_sizing_button: rcv('show_sizing_button', true),
     hide_stories: rcv('hide_stories', false),
     shadow_enabled: rcv('shadow_enabled', true),
-    border_color: rcv('border_color', ''),
-    border_width: rcv('border_width', ''),
-    border_radius: rcv('border_radius', ''),
+    border_color: rcv('border_color', wsv('border_color', '')),
+    border_width: rcv('border_width', wsv('border_width', '')),
+    border_radius: rcv('border_radius', wsv('border_radius', '')),
     product_card_bg: sanitizeCssValue(rcv('product_card_bg', '#FFFFFF'), '#FFFFFF', 'color'),
     product_card_border_color: sanitizeCssValue(rcv('product_card_border_color', '#E2E8F0'), '#E2E8F0', 'color'),
     product_card_border_width: toNumber(rcv('product_card_border_width', '1'), 1),
@@ -3934,6 +3934,19 @@ if (closingVideo) {
     var videos = story.videos || [];
     var video = videos[currentVideoIndex];
     var appearanceConfig = normalizeModalAppearanceConfig(getStoryAppearance(story) || currentAppearance);
+var modalEl = modalContent.classList.contains('vl-modal') ? modalContent : modalContent.closest('.vl-modal');
+if (modalEl) {
+  var bw = parseInt(appearanceConfig.border_width, 10) || 0;
+  var br = parseInt(appearanceConfig.border_radius, 10) || 0;
+  var bc = appearanceConfig.border_color || 'transparent';
+  if (window.innerWidth >= 640) {
+    modalEl.style.setProperty('border', bw + 'px solid ' + bc, 'important');
+    modalEl.style.setProperty('border-radius', br + 'px', 'important');
+  } else {
+    modalEl.style.setProperty('border', '0', 'important');
+    modalEl.style.setProperty('border-radius', '0', 'important');
+  }
+}
     var container = createEl('div');
 
     if (videos.length > 1) {
