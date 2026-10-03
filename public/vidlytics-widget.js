@@ -5174,7 +5174,7 @@ var activeIndex = visibleCount;
         var frame = frameEls[idx];
         if (frame) {
           frame.style.border = border;
-          frame.style.boxShadow = boxShadow;
+          frame.style.boxShadow = 'none'; card.style.filter = (isActive && cfg.highlightShadow) ? 'drop-shadow(0 12px 14px rgba(0,0,0,.4))' : 'none';
           frame.style.filter = filter;
           frame.style.borderRadius = isCircle ? '999px' : cfg.borderRadius + 'px';
         }
