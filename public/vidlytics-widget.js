@@ -6872,7 +6872,7 @@ card.addEventListener('mouseleave', function () {
         var isActive = idx === activeSeqIndex;
 
         // Visual do Card: Ativo fica 100% visível, inativos esmaecidos (0.4)
-        data.card.style.opacity = '1'; data.card.style.transition = 'filter .3s ease'; data.card.style.filter = isActive ? 'none' : 'saturate(50%)';
+        data.card.style.opacity = '1'; data.card.style.filter = ''; Array.prototype.forEach.call(data.card.querySelectorAll('video,img,iframe'), function (m) { m.style.transition = 'filter .3s ease'; m.style.filter = isActive ? 'none' : 'saturate(50%)'; });
 
         // Esconde o play overlay central apenas no ativo que está reproduzindo
         if (data.playBadge) {
