@@ -4434,7 +4434,16 @@ function openStoryModal(storyIndex, videoIndex) {
       overlay.id = 'vl-overlay';
       modalContent = createEl('div', 'vl-modal');
       overlay.appendChild(modalContent);
-      document.body.appendChild(overlay);
+      var vlDownOnOverlay = false;
+        overlay.addEventListener('mousedown', function (e) { vlDownOnOverlay = (e.target === overlay); });
+        overlay.addEventListener('click', function (e) {
+          if (e.target !== overlay || !vlDownOnOverlay) return;
+          vlDownOnOverlay = false;
+          if (typeof getDevice === 'function' && getDevice() !== 'desktop') return;
+          var vlCloseBtn = overlay.querySelector('.vl-close');
+          if (vlCloseBtn) vlCloseBtn.click();
+        });
+        document.body.appendChild(overlay);
     }
 
     overlay.className = 'vl-overlay vl-active';
