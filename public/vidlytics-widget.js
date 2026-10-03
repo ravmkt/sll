@@ -1683,6 +1683,12 @@ function getBorderColor(appearance) {
 function normalizeModalAppearanceConfig(appearance) {
   appearance = appearance || {};
   var rawModalConfig = parseJsonIfNeeded(appearance.modal_config || appearance.modalConfig) || {};
+var wsAll = parseJsonIfNeeded(appearance.widget_style || appearance.widgetStyle) || {};
+var wsDev = wsAll[getDevice()] || {};
+function wsv(key, fallback) {
+var v = wsDev['modal_' + key];
+return (v !== undefined && v !== null && v !== '') ? v : fallback;
+}
   
   function rcv(jsonbField, fallback) {
     var jsonbVal = rawModalConfig[jsonbField];
@@ -1691,10 +1697,10 @@ function normalizeModalAppearanceConfig(appearance) {
   }
   
   return {
-    show_title: toBoolean(rcv('show_title', true), true),
-title_text: String(rcv('title_text', '') || '').trim(),
-title_font_size: toNumber(rcv('title_font_size', '14'), 14),
-title_bold: toBoolean(rcv('title_bold', true), true),
+    show_title: toBoolean(rcv('show_title', wsv('show_title', true)), true),
+title_text: String(rcv('title_text', wsv('title_text', '')) || '').trim(),
+title_font_size: toNumber(rcv('title_font_size', wsv('title_font_size', '14')), 14),
+title_bold: toBoolean(rcv('title_bold', wsv('title_bold', true)), true),
     show_play_button: rcv('show_play_button', true),
     show_product: rcv('show_product', true),
     show_product_button: rcv('show_product_button', true),
