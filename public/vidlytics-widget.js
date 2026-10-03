@@ -4837,7 +4837,7 @@ cfg.borderRadius = isNaN(parsedRadius) ? 12 : parsedRadius;
       var _dcMob = (typeof isMobileDevice !== 'undefined') ? !!isMobileDevice : window.innerWidth <= 768;
       cfg._dcShift = 0;
       if (_dcMob) {
-        var _dcM = Math.min(5, Math.max(1, Math.round(cfg.visibleItems)));
+        var _dcM = Math.min(3, Math.max(1, Math.round(cfg.visibleItems)));
         cfg.width = Math.max(40, Math.floor((_dcAvail - cfg.spacing * (_dcM + 1)) / (_dcM + 0.8)));
         cfg._dcShift = (_dcM % 2 === 0) ? (cfg.width + cfg.spacing) / 2 : 0;
       }

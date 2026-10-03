@@ -379,10 +379,12 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
   const isCircle = shape === 'circle';
   const spacingNum = Number(carousel?.spacing ?? 8) || 0;
   const visibleItems = Math.max(1, Number(carousel?.visible_items ?? 4));
+    const dynMob = isMobile || carousel?.preview_mobile === true;
+    const dynM = Math.min(3, Math.max(1, Math.round(visibleItems)));
   const cw = containerWidth || (isMobile ? 320 : 850);
   const configuredW = limitNumber(carousel?.width, 80, 48, 240);
   const baseItemWidth = carousel?.size_mode === 'items'
-    ? Math.max(40, Math.round((cw - spacingNum * (visibleItems - 1)) / visibleItems))
+    ? (dynMob ? Math.max(40, Math.floor((cw - Math.max(0, Number(carousel?.margin_left ?? 0) || 0) - Math.max(0, Number(carousel?.margin_right ?? 0) || 0) - spacingNum * (dynM + 1)) / (dynM + 0.8))) : Math.max(40, Math.round((cw - spacingNum * (visibleItems - 1)) / visibleItems)))
     : (isMobile ? Math.min(configuredW, Math.round(cw * 0.5)) : configuredW);
   const step = baseItemWidth + spacingNum;
   const isSquare = shape === 'square';
@@ -409,7 +411,7 @@ const DynamicCarouselPreview = ({ carousel, colors, isMobile = false }: { carous
         </div>
       )}
       <div className="overflow-hidden" style={{ marginLeft: marginL, marginRight: marginR }}><div className="relative w-full py-4 cursor-grab active:cursor-grabbing touch-pan-y" onMouseDown={e => { setNoTransition(true); setDragStartX(e.clientX); }} onMouseMove={e => { if (dragStartX !== null) setDragOffset(e.clientX - dragStartX); }} onMouseUp={() => { if (dragStartX !== null) { if (dragOffset > 50) setTrackIndex(p => p - 1); else if (dragOffset < -50) setTrackIndex(p => p + 1); setDragStartX(null); setDragOffset(0); setNoTransition(false); } }}>
-        <div className="flex items-center" style={{ gap: `${spacingNum}px`, transform: `translateX(calc(50% - ${trackIndex * step + baseItemWidth / 2}px + ${dragOffset}px))`, transition: noTransition || dragStartX !== null ? 'none' : 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)' }}>
+        <div className="flex items-center" style={{ gap: `${spacingNum}px`, transform: `translateX(calc(50% - ${trackIndex * step + baseItemWidth / 2 + ((dynMob && carousel?.size_mode === 'items' && dynM % 2 === 0) ? step / 2 : 0)}px + ${dragOffset}px))`, transition: noTransition || dragStartX !== null ? 'none' : 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)' }}>
           {trackVideos.map((videoSrc, i) => {
             const isAct = i === trackIndex;
             return (
@@ -805,6 +807,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     width: getC('dyn_carousel_width') || (previewDevice === 'mobile' ? 64 : 80),
     size_mode: getC('dyn_carousel_size_mode') || 'width',
     visible_items: getC('dyn_carousel_visible_items') ?? (previewDevice === 'mobile' ? 2 : 4),
+      preview_mobile: previewDevice === 'mobile',
     spacing: getC('dyn_carousel_spacing') ?? 8,
     margin_left: getC('dyn_carousel_margin_left') ?? 0,
     margin_right: getC('dyn_carousel_margin_right') ?? 0,
@@ -1430,8 +1433,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           </FormField>
                         ) : (
                           <FormField label="Itens visíveis">
-                            <select value={previewDevice === 'mobile' ? Math.min(5, Math.max(1, Math.round(Number(getC('dyn_carousel_visible_items') ?? 2)))) : Number(getC('dyn_carousel_visible_items') ?? 4)} onChange={e => setC('dyn_carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
-                              {(previewDevice === 'mobile' ? [1, 2, 3, 4, 5] : Array.from({ length: 19 }, (_, i) => 1 + i * 0.5)).map(n => (<option key={n} value={n}>{String(n).replace('.', ',') + (n % 1 ? ' (parcial)' : '')}</option>))}
+                            <select value={previewDevice === 'mobile' ? Math.min(3, Math.max(1, Math.round(Number(getC('dyn_carousel_visible_items') ?? 2)))) : Number(getC('dyn_carousel_visible_items') ?? 4)} onChange={e => setC('dyn_carousel_visible_items', parseFloat(e.target.value))} className={selectClass}>
+                              {(previewDevice === 'mobile' ? [1, 2, 3] : Array.from({ length: 19 }, (_, i) => 1 + i * 0.5)).map(n => (<option key={n} value={n}>{String(n).replace('.', ',') + (n % 1 ? ' (parcial)' : '')}</option>))}
                             </select>
                           </FormField>
                         )}
