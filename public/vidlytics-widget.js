@@ -5182,8 +5182,23 @@ var activeIndex = visibleCount;
         var frame = frameEls[idx];
         if (frame) {
           frame.style.boxSizing = 'border-box'; frame.style.setProperty('border', border, 'important');
-          frame.style.boxShadow = 'none'; card.style.filter = 'none'; var sh = card.__vlSh; if (!sh) { sh = document.createElement('div'); sh.className = 'vidlytics-dc-shadow'; sh.style.cssText = 'position:absolute;left:12%;right:12%;height:14px;pointer-events:none;z-index:0;border-radius:50%;opacity:0;background:radial-gradient(ellipse at center, rgba(0,0,0,.22) 0%, rgba(0,0,0,.09) 45%, rgba(0,0,0,0) 72%);transition:opacity ' + cfg.transitionMs + 'ms ease;'; card.appendChild(sh); card.__vlSh = sh; } frame.style.zIndex = '1'; frame.style.setProperty('-webkit-box-reflect', (cfg.highlightReflection && !cfg.showProduct) ? 'below 3px linear-gradient(to bottom, transparent 58%, rgba(0,0,0,.30))' : 'none'); sh.style.top = (frame.offsetTop + frame.offsetHeight - 7) + 'px'; sh.style.opacity = (isActive && cfg.highlightShadow) ? '1' : '0';
+          frame.style.boxShadow = 'none'; card.style.filter = 'none'; var sh = card.__vlSh; if (!sh) { sh = document.createElement('div'); sh.className = 'vidlytics-dc-shadow'; sh.style.cssText = 'position:absolute;left:12%;right:12%;height:14px;pointer-events:none;z-index:0;border-radius:50%;opacity:0;background:radial-gradient(ellipse at center, rgba(0,0,0,.22) 0%, rgba(0,0,0,.09) 45%, rgba(0,0,0,0) 72%);transition:opacity ' + cfg.transitionMs + 'ms ease;'; card.appendChild(sh); card.__vlSh = sh; } frame.style.zIndex = '1'; frame.style.setProperty('-webkit-box-reflect-off', (cfg.highlightReflection && !cfg.showProduct) ? 'below 3px linear-gradient(to bottom, transparent 58%, rgba(0,0,0,.30))' : 'none'); sh.style.top = (frame.offsetTop + frame.offsetHeight - 7) + 'px'; sh.style.opacity = (isActive && cfg.highlightShadow) ? '1' : '0';
           frame.style.filter = filter;
+          (function () {
+            var rf = card.__vlRf;
+            var vd = videoEls[idx];
+            var src = (vd && vd.poster) || '';
+            if (!(isActive && cfg.highlightReflection && src)) { if (rf) rf.style.display = 'none'; return; }
+            if (!rf) { rf = document.createElement('div'); rf.className = 'vidlytics-dc-reflect'; card.appendChild(rf); card.__vlRf = rf; }
+            if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
+            var m = 'linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,0) 85%)';
+            rf.style.cssText = 'position:absolute;pointer-events:none;z-index:0;overflow:hidden;transform:scaleY(-1);' +
+              'left:' + frame.offsetLeft + 'px;top:' + (frame.offsetTop + frame.offsetHeight + 3) + 'px;' +
+              'width:' + frame.offsetWidth + 'px;height:' + Math.round(frame.offsetHeight * 0.4) + 'px;' +
+              'border-radius:' + (isCircle ? '999px' : cfg.borderRadius + 'px') + ';' +
+              'background:#000 url("' + src + '") center bottom/cover no-repeat;' +
+              '-webkit-mask-image:' + m + ';mask-image:' + m + ';';
+          })();
           frame.style.borderRadius = isCircle ? '999px' : cfg.borderRadius + 'px';
         }
 
