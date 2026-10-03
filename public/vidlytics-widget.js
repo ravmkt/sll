@@ -6499,9 +6499,9 @@ function renderGridWidget(container, stories, appearance) {
   container.style.marginRight = (cfg.marginRight || 0) + 'px';
   
   // --- 1. RENDERIZAR TÍTULO DA VITRINE NO TOPO ---
-  if (cfg.showTitle && cfg.titleText) {
+  if (cfg.showTitle) {
     var titleEl = createEl('h2', 'vl-grid-title');
-    titleEl.textContent = cfg.titleText;
+    titleEl.textContent = cfg.titleText || 'Grade de Vídeos';
     titleEl.style.cssText = [
       'display:block;',
       'width:100%;',
