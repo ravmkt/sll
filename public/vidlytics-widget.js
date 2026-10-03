@@ -5111,7 +5111,7 @@ var activeIndex = visibleCount;
       var activeCard = cardEls[activeIndex];
       var cardHeight = activeCard ? activeCard.offsetHeight : 0;
       var grow = cfg.enlargeActive ? Math.ceil((cardHeight * (cfg.activeScale - 1)) / 2) : 0;
-      var pad = grow + 16;
+      var pad = grow + (cfg.highlightShadow ? 64 : 16);
       viewport.style.paddingTop = pad + 'px';
       viewport.style.paddingBottom = pad + 'px';
     }
