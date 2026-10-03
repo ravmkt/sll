@@ -1426,7 +1426,7 @@ function getFloatingConfig(appearance) {
     radius: displayRadius,
     innerRadius: shape === 'circle' ? '999px' : px(Math.max(0, radiusNumber - borderWidthNumber)),
     zIndex: zIndexNumber, alignItems: alignItems, objectFit: objectFit,
-    showTitle: showTitle, showPlayIcon: showPlayIcon, allowClose: allowClose,
+    showTitle: false, showPlayIcon: showPlayIcon, allowClose: allowClose,
         autoplayVideos: autoplayVideos,
     marginTop: px(marginTopNumber), marginBottom: px(marginBottomNumber),
     marginLeft: px(marginSideNumber), marginRight: px(rightSpacingNumber)
