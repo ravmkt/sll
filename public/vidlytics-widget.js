@@ -5119,7 +5119,7 @@ var activeIndex = visibleCount;
       var activeCard = cardEls[activeIndex];
       var cardHeight = activeCard ? activeCard.offsetHeight : 0;
       var grow = cfg.enlargeActive ? Math.ceil((cardHeight * (cfg.activeScale - 1)) / 2) : 0;
-      var pad = grow + 6; var refl = (cfg.highlightReflection && !cfg.showProduct) ? Math.round(cardHeight * 0.22) + 2 : 0; var padBot = grow + Math.max(refl, cfg.highlightShadow ? 20 : 6);
+      var pad = grow + 6; var refl = (cfg.highlightReflection && !cfg.showProduct) ? 0 : 0; var padBot = grow + Math.max(refl, cfg.highlightShadow ? 12 : 6);
       viewport.style.paddingTop = pad + 'px';
       viewport.style.paddingBottom = padBot + 'px';
     }
@@ -5182,42 +5182,8 @@ var activeIndex = visibleCount;
         var frame = frameEls[idx];
         if (frame) {
           frame.style.boxSizing = 'border-box'; frame.style.setProperty('border', border, 'important');
-          frame.style.boxShadow = 'none'; card.style.filter = 'none'; var sh = card.__vlSh; if (!sh) { sh = document.createElement('div'); sh.className = 'vidlytics-dc-shadow'; sh.style.cssText = 'position:absolute;left:12%;right:12%;height:14px;pointer-events:none;z-index:0;border-radius:50%;opacity:0;background:radial-gradient(ellipse at center, rgba(0,0,0,.22) 0%, rgba(0,0,0,.09) 45%, rgba(0,0,0,0) 72%);transition:opacity ' + cfg.transitionMs + 'ms ease;'; card.appendChild(sh); card.__vlSh = sh; } frame.style.zIndex = '1'; frame.style.setProperty('-webkit-box-reflect-off', (cfg.highlightReflection && !cfg.showProduct) ? 'below 3px linear-gradient(to bottom, transparent 58%, rgba(0,0,0,.30))' : 'none'); sh.style.top = (frame.offsetTop + frame.offsetHeight - 7) + 'px'; sh.style.opacity = (isActive && cfg.highlightShadow) ? '1' : '0';
+          frame.style.boxShadow = 'none'; card.style.filter = 'none'; var sh = card.__vlSh; if (!sh) { sh = document.createElement('div'); sh.className = 'vidlytics-dc-shadow'; sh.style.cssText = 'position:absolute;left:14%;right:14%;height:10px;pointer-events:none;z-index:0;border-radius:50%;opacity:0;background:radial-gradient(ellipse at center, rgba(0,0,0,.12) 0%, rgba(0,0,0,.05) 45%, rgba(0,0,0,0) 70%);transition:opacity ' + cfg.transitionMs + 'ms ease;'; card.appendChild(sh); card.__vlSh = sh; } frame.style.zIndex = '1'; sh.style.top = (frame.offsetTop + frame.offsetHeight - 4) + 'px'; sh.style.opacity = (isActive && cfg.highlightShadow) ? '1' : '0';
           frame.style.filter = filter;
-          (function () {
-            var rf = card.__vlRf;
-            var vd = videoEls[idx];
-            var src = (vd && vd.poster) || '';
-            if (!(isActive && cfg.highlightReflection && src)) { if (rf) rf.style.display = 'none'; return; }
-            if (!rf) { rf = document.createElement('div'); rf.className = 'vidlytics-dc-reflect'; card.appendChild(rf); card.__vlRf = rf; }
-            if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
-            var m = 'linear-gradient(to top, rgba(0,0,0,.3) 0%, rgba(0,0,0,.14) 40%, rgba(0,0,0,.04) 75%, rgba(0,0,0,0) 100%)';
-            rf.style.cssText = 'position:absolute;pointer-events:none;z-index:0;overflow:hidden;transform:scaleY(-1);' +
-              'left:' + frame.offsetLeft + 'px;top:' + (frame.offsetTop + frame.offsetHeight) + 'px;' +
-              'width:' + frame.offsetWidth + 'px;height:' + Math.round(frame.offsetHeight * 0.2) + 'px;' +
-              'border-radius:' + (isCircle ? '999px' : cfg.borderRadius + 'px') + ';' +
-              'background:#000 url("' + src + '") center bottom/cover no-repeat;' +
-              '-webkit-mask-image:' + m + ';mask-image:' + m + ';';
-            if (vd && !vd.getAttribute('data-yt-id')) {
-              var cv = rf.__vlCv;
-              if (!cv) { cv = document.createElement('canvas'); cv.width = 160; cv.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;display:block;'; rf.appendChild(cv); rf.__vlCv = cv; }
-              var _ch = Math.max(8, Math.round(cv.width * (frame.offsetHeight * 0.2) / Math.max(1, frame.offsetWidth)));
-              if (cv.height !== _ch) cv.height = _ch;
-              if (!rf.__vlRaf) {
-                var _last = 0;
-                var _tick = function (ts) {
-                  if (!rf.isConnected || rf.style.display === 'none') { rf.__vlRaf = 0; return; }
-                  rf.__vlRaf = requestAnimationFrame(_tick);
-                  if (ts - _last < 50) return; _last = ts;
-                  var vw = vd.videoWidth, vh = vd.videoHeight, W = frame.offsetWidth, H = frame.offsetHeight;
-                  if (!vw || !vh || vd.readyState < 2 || !W || !H) return;
-                  var s = Math.max(W / vw, H / vh), sw = W / s, sh = H / s;
-                  try { cv.getContext('2d').drawImage(vd, (vw - sw) / 2, (vh - sh) / 2 + sh * 0.8, sw, sh * 0.2, 0, 0, cv.width, cv.height); } catch (e) {}
-                };
-                rf.__vlRaf = requestAnimationFrame(_tick);
-              }
-            }
-          })();
           frame.style.borderRadius = isCircle ? '999px' : cfg.borderRadius + 'px';
         }
 
