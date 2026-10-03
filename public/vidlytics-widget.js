@@ -5037,7 +5037,7 @@ function cloneItemDeeply(original, index, isClone) {
         var pData = vpId ? (readProductsData || []).find(function (p) { return idsEqual(p.id, vpId); }) : null;
         if (pData) {
           var pUrl = pData.product_url || pData.url || '';
-          var initialShadow = cfg.highlightShadow ? '0 2px 8px rgba(0,0,0,0.15)' : 'none';
+          var initialShadow = 'none';
 
           var prodCard = document.createElement('div');
           prodCard.className = 'vidlytics-dc-product-card';
@@ -5165,7 +5165,7 @@ var activeIndex = visibleCount;
         }
         if (isActive) {
           if (cfg.enlargeActive) scale = cfg.activeScale;
-          if (cfg.highlightShadow) boxShadow = '0 12px 30px rgba(0,0,0,.35)';
+          
           if (cfg.highlightMode === 'ring' && cfg.highlightBorderWidth > 0) {
             border = cfg.highlightBorderWidth + 'px solid ' + cfg.highlightBorderColor;
           }
