@@ -1686,7 +1686,7 @@ function normalizeModalAppearanceConfig(appearance) {
 var wsAll = parseJsonIfNeeded(appearance.widget_style || appearance.widgetStyle) || {};
 var wsDev = wsAll[getDevice()] || {};
 function wsv(key, fallback) {
-var v = wsDev['modal_' + key];
+var v = appearance['modal_' + key]; if (v === undefined || v === null || v === '') v = wsDev['modal_' + key];
 return (v !== undefined && v !== null && v !== '') ? v : fallback;
 }
   
@@ -3933,7 +3933,7 @@ if (closingVideo) {
     if (!story) { closeOverlay(); return; }
     var videos = story.videos || [];
     var video = videos[currentVideoIndex];
-    var appearanceConfig = normalizeModalAppearanceConfig(currentAppearance);
+    var appearanceConfig = normalizeModalAppearanceConfig(getStoryAppearance(story) || currentAppearance);
     var container = createEl('div');
 
     if (videos.length > 1) {
