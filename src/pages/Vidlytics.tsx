@@ -133,8 +133,7 @@ export default function Vidlytics() {
           <div className="flex items-center gap-1.5">
             <span>DESENVOLVIDO POR:</span>
             <span className="font-bold text-slate-600 flex items-center gap-1">
-              <span className="text-[#0094eb]">Sistema</span>
-              <span className="text-[#fd8539]">Loja Lucrativa</span>
+              <span>RAV Marketing e Treinamento LTDA</span>
             </span>
           </div>
         </footer>
