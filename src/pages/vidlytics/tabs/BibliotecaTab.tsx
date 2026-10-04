@@ -145,6 +145,43 @@ const IconTikTok: React.FC<{ className?: string }> = ({ className }) => (
     <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
   </svg>
 );
+const isExternalMedia = (v: VidVideo): boolean =>
+  v.video_source_type === 'external' || /youtube\.com|youtu\.be/i.test(v.video_url || '');
+
+const downloadMedia = async (v: VidVideo): Promise<void> => {
+  const url = v.video_url;
+  if (!url) return;
+  const ext = (url.split('?')[0].match(/\.([a-z0-9]{2,4})$/i)?.[1] || 'mp4').toLowerCase();
+  const base = (v.title || 'arquivo').replace(/[\\/:*?"<>|]+/g, '').trim() || 'arquivo';
+  const name = base.toLowerCase().endsWith('.' + ext) ? base : `${base}.${ext}`;
+
+  // Download direto (Supabase Storage responde com Content-Disposition: attachment)
+  const direct = () => {
+    const a = document.createElement('a');
+    a.href = url + (url.includes('?') ? '&' : '?') + 'download=' + encodeURIComponent(name);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const picker = (window as any).showSaveFilePicker;
+  if (!picker) {
+    direct();
+    return;
+  }
+  try {
+    const handle = await picker({ suggestedName: name });
+    const res = await fetch(url);
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+    const writable = await handle.createWritable();
+    await res.body.pipeTo(writable);
+  } catch (err: any) {
+    if (err?.name === 'AbortError') return;
+    console.error('[Biblioteca] Falha no seletor de pasta, usando download direto:', err);
+    direct();
+  }
+};
 export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialStoreId }) => {
   const [storeId, setStoreId] = useState<string>(initialStoreId || "");
   const [videos, setVideos] = useState<VidVideo[]>([]);
@@ -1190,15 +1227,26 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                             <Eye className="w-4 h-4" />
                           </button>
                           {video.video_url && (
-                            <a
-                              href={video.video_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="p-1 hover:text-slate-700 transition"
-                              title="Download / Link"
-                            >
-                              <Download className="w-4 h-4" />
-                            </a>
+                            isExternalMedia(video) ? (
+                                  <a
+                                    href={video.video_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-1 hover:text-slate-700 transition"
+                                    title="Abrir link"
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </a>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => downloadMedia(video)}
+                                    className="p-1 hover:text-slate-700 transition cursor-pointer"
+                                    title="Baixar arquivo"
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </button>
+                                )
                           )}
                           <button
                             onClick={() => openDeleteModal(video)}
