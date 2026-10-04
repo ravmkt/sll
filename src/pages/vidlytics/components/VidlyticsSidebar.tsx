@@ -1,15 +1,18 @@
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  Film, 
-  FolderKanban, 
-  MessageSquare, 
-  Palette, 
-  PanelLeftClose, 
-  PanelLeftOpen 
+import {
+  LayoutDashboard,
+  TrendingUp,
+  Film,
+  FolderKanban,
+  MessageSquare,
+  Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ArrowLeft,
+  LogOut,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export type VidlyticsTab = 'visao-geral' | 'resultados' | 'stories' | 'biblioteca' | 'comentarios' | 'aparencia';
 
@@ -27,6 +30,7 @@ export function VidlyticsSidebar({
   onToggle,
 }: VidlyticsSidebarProps) {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const isExpanded = !isCollapsed;
 
   const menuItems: { id: VidlyticsTab; label: string; icon: React.ElementType }[] = [
@@ -40,99 +44,110 @@ export function VidlyticsSidebar({
 
   return (
     <aside
-      className={`h-screen sticky top-0 border-r border-slate-200/90 bg-white transition-all duration-300 ease-in-out flex flex-col z-30 select-none shadow-xs shrink-0 ${
+      className={`h-screen sticky top-0 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] transition-all duration-300 ease-in-out flex flex-col z-20 ${
         isExpanded ? 'w-64' : 'w-20'
       }`}
     >
-      {/* 1. TOPO DA SIDEBAR: LOGO VIDLYTICS CENTRALIZADO + TOGGLE */}
-      <div className="relative h-20 px-4 border-b border-slate-100 flex items-center justify-center">
-        <div className="flex items-center justify-center overflow-hidden">
+      {/* Logo Area */}
+      <div className="p-4 flex flex-col gap-3 h-24 justify-center border-b border-slate-200 dark:border-slate-800">
+        <div className="flex justify-center items-center">
           {isExpanded ? (
             <img
               src="/assets/vidlytics-logo-wide.png"
               alt="Vidlytics"
-              className="h-8 w-auto object-contain"
-              onError={(e) => {
-                (e.currentTarget as HTMLElement).style.display = 'none';
-              }}
+              className="h-10 w-auto object-contain"
+              onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
             />
           ) : (
             <img
               src="/assets/vidlytics-logo-ico.png"
               alt="Vidlytics"
-              className="h-8 w-auto object-contain"
-              onError={(e) => {
-                (e.currentTarget as HTMLElement).style.display = 'none';
-              }}
+              className="h-9 w-9 object-contain"
+              onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
             />
           )}
         </div>
+      </div>
 
-        {/* Botão de Toggle fixado na direita se expandido ou no canto */}
+      {/* Botão Recolher/Expandir */}
+      <div className="px-4 pt-3">
         <button
+          type="button"
           onClick={onToggle}
-          title={isExpanded ? 'Recolher menu' : 'Expandir menu'}
-          className={`text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-1.5 transition-colors cursor-pointer ${
-            isExpanded ? 'absolute right-3' : 'absolute -right-3.5 top-7 bg-white border border-slate-200 shadow-sm rounded-full'
+          className={`flex items-center justify-center gap-2 rounded-lg py-2 px-3 text-xs font-bold transition-all w-full ${
+            isExpanded
+              ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200'
+              : 'bg-[#0094eb] text-white hover:bg-[#007bc4]'
           }`}
+          title={isExpanded ? 'Recolher menu' : 'Expandir menu'}
         >
-          {isExpanded ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={14} />}
+          {isCollapsed ? (
+            <PanelLeftOpen size={16} className="shrink-0" />
+          ) : (
+            <>
+              <PanelLeftClose size={16} className="shrink-0" />
+              <span>Recolher</span>
+            </>
+          )}
         </button>
       </div>
 
-      {/* 2. LISTA DE ABAS DE NAVEGAÇÃO */}
-      <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden">
+        {isExpanded && (
+          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+            Vidlytics
+          </p>
+        )}
+
         {menuItems.map((item) => {
-          const Icon = item.icon;
           const isActive = activeTab === item.id;
+          const Icon = item.icon;
 
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => onTabChange(item.id)}
               title={!isExpanded ? item.label : undefined}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                !isExpanded ? 'justify-center' : ''
+              } ${
                 isActive
-                  ? 'bg-[#0094eb] text-white shadow-sm shadow-[#0094eb]/30'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              } ${!isExpanded ? 'justify-center px-0' : ''}`}
+                  ? 'bg-[#0094eb] text-white font-medium shadow-md shadow-[#0094eb]/20'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb]'
+              }`}
             >
-              <Icon
-                size={18}
-                className={`shrink-0 ${isActive ? 'text-white' : 'text-slate-500'}`}
-              />
-              {isExpanded && <span className="truncate">{item.label}</span>}
+              <Icon size={20} className="shrink-0" />
+              {isExpanded && <span className="whitespace-nowrap">{item.label}</span>}
             </button>
           );
         })}
       </nav>
 
-      {/* 3. RODAPÉ DA SIDEBAR: LOGO SLL CENTRALIZADO (CLICÁVEL PARA DASHBOARD) */}
-      <div className="p-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-center">
+      {/* Footer */}
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
         <button
+          type="button"
           onClick={() => navigate('/dashboard')}
-          title="Voltar ao Dashboard SLL"
-          className="flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer w-full py-1"
+          title={!isExpanded ? 'Voltar ao Dashboard SLL' : undefined}
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb] transition-colors cursor-pointer ${
+            !isExpanded ? 'justify-center' : ''
+          }`}
         >
-          {isExpanded ? (
-            <img
-              src="/assets/sll-logotipo.png"
-              alt="Sistema Loja Lucrativa"
-              className="h-8 w-auto object-contain mx-auto"
-              onError={(e) => {
-                (e.currentTarget as HTMLElement).style.display = 'none';
-              }}
-            />
-          ) : (
-            <img
-              src="/assets/sll-logotipo-ico.png"
-              alt="SLL"
-              className="h-7 w-auto object-contain mx-auto"
-              onError={(e) => {
-                (e.currentTarget as HTMLElement).style.display = 'none';
-              }}
-            />
-          )}
+          <ArrowLeft size={20} className="shrink-0" />
+          {isExpanded && <span className="whitespace-nowrap">Voltar ao SLL</span>}
+        </button>
+        <button
+          type="button"
+          onClick={() => signOut()}
+          title={!isExpanded ? 'Sair da Plataforma' : undefined}
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 transition-colors cursor-pointer ${
+            !isExpanded ? 'justify-center' : ''
+          }`}
+        >
+          <LogOut size={20} className="shrink-0" />
+          {isExpanded && <span>Sair da Plataforma</span>}
         </button>
       </div>
     </aside>
