@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
+import { StoreBrand } from './StoreBrand';
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isDark] = useState(false);
@@ -24,6 +25,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           isCollapsed ? 'ml-20' : 'ml-64'
         }`}
       >
+        <header className="h-16 bg-white dark:bg-[#0f172a] border-b border-slate-100 dark:border-slate-800 flex items-center px-6 sticky top-0 z-20">
+          <StoreBrand />
+        </header>
+
         {/* Dynamic Content */}
         <div className="p-8 flex-1">
           {children}

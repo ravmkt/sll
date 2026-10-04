@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { VidlyticsSidebar, VidlyticsTab } from './vidlytics/VidlyticsSidebar';
 import { Sparkles, Layers } from 'lucide-react';
+import { StoreBrand } from '../components/layout/StoreBrand';
 
 // Importação das Abas Modulares
 import VisaoGeralTab from './vidlytics/tabs/VisaoGeralTab';
@@ -63,15 +64,13 @@ export default function Vidlytics() {
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* BARRA SUPERIOR VIDLYTICS */}
         <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-20">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <StoreBrand />
+
+          <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
               <Layers className="w-3.5 h-3.5 text-[#0094eb]" />
               Vidlytics Stories
             </span>
-          </div>
-
-          <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/dashboard/modules')}
               className="text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
