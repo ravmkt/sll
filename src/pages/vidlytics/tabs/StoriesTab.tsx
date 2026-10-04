@@ -3,6 +3,7 @@ import { Plus, Search, Eye, Pencil, Trash2, Send, TrendingUp, TrendingDown, Info
 import { useLoja } from '../../../contexts/LojaContext';
 import { VidlyticsDatabaseService } from '../../../services/vidlytics/VidlyticsDatabaseService';
 import StoryDetailsView from '../components/StoryDetailsView';
+import ConfirmDeleteModal from '../../../components/common/ConfirmDeleteModal';
 
 interface StoryRow {
   id: string;
@@ -38,6 +39,8 @@ export default function StoriesTab() {
   // Controle de Visualização: Listagem vs Tela de Detalhes
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
+  const [storyToDelete, setStoryToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadStories = useCallback(async () => {
     if (!storeId) return;
@@ -89,14 +92,22 @@ export default function StoriesTab() {
     await loadStories();
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Tem certeza que deseja excluir o Story "${name}"?`)) return;
+  const handleDelete = (id: string, name: string) => {
+    setStoryToDelete({ id, name });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!storyToDelete) return;
+    setIsDeleting(true);
     try {
-      await VidlyticsDatabaseService.deleteStory(storeId, id);
+      await VidlyticsDatabaseService.deleteStory(storeId, storyToDelete.id);
+      setStoryToDelete(null);
       await loadStories();
     } catch (err) {
       console.error('Erro ao excluir story:', err);
       alert('Erro ao excluir story.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -252,6 +263,14 @@ export default function StoriesTab() {
           </table>
         </div>
       </div>
+          <ConfirmDeleteModal
+            isOpen={!!storyToDelete}
+            onClose={() => { if (!isDeleting) setStoryToDelete(null); }}
+            onConfirm={handleConfirmDelete}
+            title="EXCLUIR STORY"
+            itemName={storyToDelete?.name || ''}
+            isDeleting={isDeleting}
+          />
     </div>
   );
 }
