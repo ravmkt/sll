@@ -1,0 +1,13 @@
+public\sll-loader.js:68: var rpcUrl = SUPABASE_URL + "/rest/v1/rpc/get_store_active_modules";
+public\sll-tracking.js:62: fetch(SUPABASE_URL + "/rest/v1/rpc/record_sll_conversion", {
+src\components\performance\retention-tab.tsx:186: .from('store_activity_events')
+src\lib\auth.ts:204: views_count: 0,
+src\lib\db.ts:1706: views_count: number;
+src\services\vidlytics\VidlyticsDatabaseService.ts:201: .from('vid_daily_video_metrics')
+src\services\vidlytics\VidlyticsDatabaseService.ts:210: .from('vid_conversions')
+src\services\vidlytics\VidlyticsDatabaseService.ts:332: // Conversoes por video (vidlytics.vid_daily_video_metrics). Se falhar, retorna vazio (0).
+src\services\vidlytics\VidlyticsDatabaseService.ts:339: .from('vid_daily_video_metrics')
+src\services\vidlytics\VidlyticsDatabaseService.ts:364: .from('daily_video_metrics')
+src\services\vidlytics\VidlyticsDatabaseService.ts:365: .select('id, video_id, views_count, cta_clicks_count, likes_count, comments_count')
+src\services\vidlytics\VidlyticsDatabaseService.ts:379: cur.views += Number(m.views_count) || 0;
+src\services\vidlytics\VidlyticsDatabaseService.ts:380: cur.clicks += Number(m.cta_clicks_count) || 0;

@@ -1,0 +1,147 @@
+== widget: envios ao Supabase
+vidlytics-widget.js:559: return fetch(supabaseUrl + '/rest/v1/' + path, {
+vidlytics-widget.js:597: function trackLiveEvent(liveId, eventType, metadata) {
+vidlytics-widget.js:600: method: 'POST',
+vidlytics-widget.js:604: event_type: eventType,
+vidlytics-widget.js:1095: method: 'POST',
+vidlytics-widget.js:1757: var url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/' + table + '?' + query;
+vidlytics-widget.js:2726: function sendAnalyticsEvent(eventType, videoId, productId, extraData) {
+vidlytics-widget.js:2731: if (eventType !== 'progress') {
+vidlytics-widget.js:2733: var throttleKey = String(eventType) + '_' + String(videoId);
+vidlytics-widget.js:2786: eventType: String(eventType).trim(),
+vidlytics-widget.js:2800: method: 'POST',
+vidlytics-widget.js:2817: data.event_type || 'interaction',
+vidlytics-widget.js:2850: trackMetric({ event_type: 'video_view', story_id: storyId, video_id: video ? video.id : null, page_url: window.location.href });
+vidlytics-widget.js:2864: trackMetric({ event_type: 'video_view', story_id: storyId, video_id: video.id, page_url: window.location.href });
+vidlytics-widget.js:2884: trackMetric({ event_type: 'video_view', story_id: storyId, video_id: video.id, page_url: window.location.href });
+vidlytics-widget.js:2896: trackMetric({ event_type: 'video_view', story_id: storyId, video_id: video.id, page_url: window.location.href });
+vidlytics-widget.js:3038: method: 'POST',
+vidlytics-widget.js:3048: event_type: 'comment',
+vidlytics-widget.js:3127: event_type: isCurrentlyLiked ? 'unlike' : 'like',
+vidlytics-widget.js:3136: method: 'POST',
+vidlytics-widget.js:3212: event_type: 'share',
+vidlytics-widget.js:3240: event_type: 'share',
+vidlytics-widget.js:3261: event_type: 'share',
+vidlytics-widget.js:3868: event_type: 'comment',
+vidlytics-widget.js:4330: event_type: 'next_video',
+vidlytics-widget.js:4457: event_type: 'story_open',
+vidlytics-widget.js:7625: var endpoint = baseSupabase + '/rest/v1/widget_selectors';
+vidlytics-widget.js:7639: method: 'POST',
+vidlytics-widget.js:7800: '/rest/v1/vid_display_locations?select=*&story_id=in.(' + _dlIds.map(function (i) { return encodeURIComponent(i); }).join(',') + ')&order=sort_order.asc.nullslast';
+sll-loader.js:68: var rpcUrl = SUPABASE_URL + "/rest/v1/rpc/get_store_active_modules";
+sll-loader.js:71: method: "POST",
+== sll-tracking.js (1-120)
+1: /**
+2:  * ================================================================
+3:  *  SLL — Script Universal de Rastreamento de Conversões e Vendas
+4:  *  Compatível com: Yampi, Shopify, Nuvemshop, WBuy, Bagy, Tray, CartPanda
+5:  * ================================================================
+6:  */
+7: (function() {
+8:   "use strict";
+9:   if (window.__SLL_TRACKING_INITIALIZED__) return;
+10:   window.__SLL_TRACKING_INITIALIZED__ = true;
+12:   var SUPABASE_URL = "https://flivmllysdhaydhogmhg.supabase.co";
+13:   var SUPABASE_ANON_KEY = "sb_publishable_fYM4F5uRs_8DbYF7ozy0hA_eA_Z5XUz";
+15:   var currentScript = document.currentScript || (function() {
+16:     var scripts = document.getElementsByTagName("script");
+17:     for (var i = scripts.length - 1; i >= 0; i--) {
+18:       if (scripts[i].src && scripts[i].src.indexOf("sll-tracking.js") !== -1) return scripts[i];
+19:     }
+20:     return scripts[scripts.length - 1];
+21:   })();
+23:   function getParam(script, name) {
+24:     if (!script || !script.src) return null;
+25:     try {
+26:       var url = new URL(script.src);
+27:       return url.searchParams.get(name);
+28:     } catch (e) { return null; }
+29:   }
+31:   var storeId = getParam(currentScript, "store") || window.SLL_STORE_ID;
+32:   var token = getParam(currentScript, "token") || window.SLL_SECURITY_TOKEN;
+34:   if (!storeId || !token) {
+35:     console.warn("[SLL-Tracking] store ou token ausente no script.");
+36:     return;
+37:   }
+39:   var alreadySent = false;
+41:   function getAttribution() {
+42:     try {
+43:       var raw = localStorage.getItem("sll_last_interaction") || localStorage.getItem("vidlytics_last_interaction");
+44:       if (!raw) return { module: "direct", source_id: null };
+45:       var data = JSON.parse(raw);
+46:       return {
+47:         module: data.module || "vidlytics",
+48:         source_id: data.id || data.video_id || null
+49:       };
+50:     } catch (e) {
+51:       return { module: "direct", source_id: null };
+52:     }
+53:   }
+55:   function sendConversion(order) {
+56:     if (alreadySent) return;
+57:     if (!order || !order.order_id) return;
+59:     alreadySent = true;
+60:     var attribution = getAttribution();
+62:     fetch(SUPABASE_URL + "/rest/v1/rpc/record_sll_conversion", {
+63:       method: "POST",
+64:       headers: {
+65:         "apikey": SUPABASE_ANON_KEY,
+66:         "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+67:         "Content-Type": "application/json"
+68:       },
+69:       body: JSON.stringify({
+70:         p_store_id: storeId,
+71:         p_token: token,
+72:         p_order_id: String(order.order_id),
+73:         p_total: order.total != null ? Number(order.total) : null,
+74:         p_module: attribution.module,
+75:         p_source_id: attribution.source_id
+76:       })
+77:     })
+78:     .then(function(res) {
+79:       if (!res.ok) throw new Error("HTTP " + res.status);
+80:       console.log("[SLL-Tracking] Venda atribuída com sucesso! Pedido:", order.order_id);
+81:     })
+82:     .catch(function(err) {
+83:       console.error("[SLL-Tracking] Falha ao enviar conversão:", err);
+84:     });
+85:   }
+87:   // 1. Objeto manual window.SLL_ORDER ou parâmetros na URL
+88:   if (window.SLL_ORDER && typeof window.SLL_ORDER === "object" && (window.SLL_ORDER.order_id || window.SLL_ORDER.id)) {
+89:     sendConversion({
+90:       order_id: window.SLL_ORDER.order_id || window.SLL_ORDER.id,
+91:       total: window.SLL_ORDER.total
+92:     });
+93:     return;
+94:   }
+96:   var params = new URLSearchParams(window.location.search);
+97:   var urlOrderId = params.get("order_id") || params.get("pedido") || params.get("id");
+98:   var urlTotal = params.get("total") || params.get("valor");
+99:   if (urlOrderId) {
+100:     sendConversion({ order_id: urlOrderId, total: urlTotal });
+101:     return;
+102:   }
+104:   // 2. Yampi Checkout
+105:   if (window.yampi && (window.yampi.order || window.yampi.checkout)) {
+106:     var yo = window.yampi.order || window.yampi.checkout;
+107:     sendConversion({ order_id: yo.id || yo.number, total: yo.total || yo.value });
+108:     return;
+109:   }
+110:   if (window._yampi && window._yampi.order) {
+111:     sendConversion({ order_id: window._yampi.order.id || window._yampi.order.number, total: window._yampi.order.total });
+112:     return;
+113:   }
+115:   // 3. Shopify Checkout
+116:   if (window.Shopify && window.Shopify.checkout) {
+117:     var sc = window.Shopify.checkout;
+118:     sendConversion({
+119:       order_id: sc.order_id || sc.token,
+120:       total: sc.total_price ? (Number(sc.total_price) > 1000 ? sc.total_price / 100 : sc.total_price) : null
+== RPC record_sll_conversion nas migrations
+20260929_create_sll_conversions.sql:1: create table if not exists public.sll_conversions (
+20260929_create_sll_conversions.sql:11: alter table public.sll_conversions enable row level security;
+20260929_create_sll_conversions.sql:13: drop policy if exists "service_role_full_access" on public.sll_conversions;
+20260929_create_sll_conversions.sql:14: create policy "service_role_full_access" on public.sll_conversions
+20260929_create_sll_conversions.sql:17: create or replace function public.record_sll_conversion(
+20260929_create_sll_conversions.sql:43: insert into public.sll_conversions (store_id, order_id, total, module, source_id)
+20260929_create_sll_conversions.sql:48: grant execute on function public.record_sll_conversion to anon, authenticated;

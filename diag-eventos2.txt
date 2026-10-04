@@ -1,0 +1,157 @@
+== definicao de trackMetric
+2814: function trackMetric(data) {
+== sendAnalyticsEvent (2726-2830)
+2726: function sendAnalyticsEvent(eventType, videoId, productId, extraData) {
+2727:   if (!storeId || !supabaseUrl || !supabaseAnonKey) return;
+2729:   // Throttle: evita reenviar o mesmo evento para o mesmo vídeo em menos de 4s
+2730:   // ('progress' tem throttle próprio controlado no chamador, 1x/s)
+2731:   if (eventType !== 'progress') {
+2732:     sendAnalyticsEvent._lastSent = sendAnalyticsEvent._lastSent || {};
+2733:     var throttleKey = String(eventType) + '_' + String(videoId);
+2734:     var throttleNow = Date.now();
+2735:     if (sendAnalyticsEvent._lastSent[throttleKey] && (throttleNow - sendAnalyticsEvent._lastSent[throttleKey]) < 4000) {
+2736:       return;
+2737:     }
+2738:     sendAnalyticsEvent._lastSent[throttleKey] = throttleNow;
+2739:   }
+2741:   try {
+2742:     // Vidlytics: Atribuição entre subdomínios (ex: useanny.com -> seguro.useanny.com)
+2743:     try {
+2744:       var hName = window.location.hostname || '';
+2745:       var rootDom = '';
+2746:         if (hName && hName !== 'localhost' && !/^(\d{1,3}\.){3}\d{1,3}$/.test(hName)) {
+2747:           var hParts = hName.split('.');
+2748:           if (hParts.length >= 2) rootDom = '; domain=.' + hParts.slice(-2).join('.');
+2749:         }
+2750:         var expDays = 30;
+2751:         var expDate = new Date();
+2752:         expDate.setTime(expDate.getTime() + (expDays * 864e5));
+2753:         var expStr = '; expires=' + expDate.toUTCString() + '; path=/' + rootDom + '; SameSite=Lax';
+2755:         var vlyVisitor = localStorage.getItem('vly_visitor_id');
+2756:         if (!vlyVisitor) {
+2757:           vlyVisitor = 'vly_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+2758:         }
+2759:         document.cookie = 'vly_visitor_id=' + encodeURIComponent(vlyVisitor) + expStr;
+2760:         localStorage.setItem('vly_visitor_id', vlyVisitor);
+2762:         if (videoId) {
+2763:           document.cookie = 'vly_video_id=' + encodeURIComponent(videoId) + expStr;
+2764:           localStorage.setItem('vly_video_id', videoId);
+2765:         }
+2766:         if (productId) {
+2767:           document.cookie = 'vly_product_id=' + encodeURIComponent(productId) + expStr;
+2768:           localStorage.setItem('vly_product_id', productId);
+2769:         }
+2770:       } catch (_) {}
+2772:       var cleanStoreId = cleanUuid(storeId);
+2773:       if (!cleanStoreId) return;
+2775:       extraData = extraData || {};
+2777:       var cleanVideoId = cleanUuid(videoId);
+2778:       var cleanProductId = cleanUuid(productId);
+2779:       var cleanStoryId = cleanUuid(extraData.storyId || extraData.story_id);
+2780:       var resolvedPageUrl = String(extraData.pageUrl || extraData.page_url || window.location.href);
+2781:       var resolvedDevice = window.innerWidth < 768 ? 'mobile' : 'desktop';
+2782:       var resolvedPath = String(window.location.pathname || '/');
+2784: var payload = {
+2785:   storeId: cleanStoreId,
+2786:   eventType: String(eventType).trim(),
+2787:   videoId: cleanVideoId,
+2788:   productId: cleanProductId,
+2789:   storyId: cleanStoryId,
+2790:   pageUrl: resolvedPageUrl,
+2791:   deviceType: resolvedDevice,
+2792:   pagePath: resolvedPath,
+2793:   sessionId: (extraData && extraData.sessionId) || null,
+2794:   watchSecond: (extraData && typeof extraData.watchSecond === 'number') ? extraData.watchSecond : null
+2795: };
+2797:       var endpoint = supabaseUrl.replace(/\/rest\/v1.*/, '').replace(/\/+$/, '') + '/functions/v1/track-event';
+2799:       fetch(endpoint, {
+2800:         method: 'POST',
+2801:         mode: 'cors',
+2802:         credentials: 'omit',
+2803:         headers: {
+2804:           'Content-Type': 'application/json',
+2805:           'apikey': supabaseAnonKey,
+2806:           'Authorization': 'Bearer ' + supabaseAnonKey
+2807:         },
+2808:         body: JSON.stringify(payload),
+2809:         keepalive: true
+2810:       }).catch(function () {});
+2811:     } catch (_) {}
+2812:   }
+2814:   function trackMetric(data) {
+2815:     if (!data) return;
+2816:     sendAnalyticsEvent(
+2817:       data.event_type || 'interaction',
+2818:       data.video_id || null,
+2819:       data.product_id || null,
+2820:       {
+2821:         story_id: data.story_id || null,
+2822:         page_url: data.page_url || window.location.href
+2823:       }
+2824:     );
+2825:   }
+2827:   function buildVideoPlayer(video, storyId, onEnded) {
+2828:     var sourceType = String(video.source_type || video.sourceType || '').toLowerCase();
+2829:     var isImage = sourceType === 'image' || (video && video.type === 'image');
+2830:     var url = isImage ? (getVideoThumbnail(video) || (video && (video.video_url || video.url)) || '') : getVideoUrl(video);
+== tipos de evento enviados pelo widget
+'comment'
+'next_video'
+'product_click'
+'product_view'
+'progress'
+'share'
+'story_complete'
+'story_open'
+'video_close'
+'video_view'
+'whatsapp_click'
+== record_sll_conversion (migration)
+create table if not exists public.sll_conversions (
+  id uuid primary key default gen_random_uuid(),
+  store_id uuid not null references public.stores(id) on delete cascade,
+  order_id text,
+  total numeric,
+  module text,
+  source_id text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.sll_conversions enable row level security;
+
+drop policy if exists "service_role_full_access" on public.sll_conversions;
+create policy "service_role_full_access" on public.sll_conversions
+  for all using (auth.role() = 'service_role');
+
+create or replace function public.record_sll_conversion(
+  p_store_id uuid,
+  p_token text,
+  p_order_id text,
+  p_total numeric,
+  p_module text,
+  p_source_id text
+) returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_valid boolean;
+begin
+  select exists(
+    select 1 from public.stores
+    where id = p_store_id
+      and security_token = p_token
+      and security_token is not null
+  ) into v_valid;
+
+  if not v_valid then
+    raise exception 'invalid store token';
+  end if;
+
+  insert into public.sll_conversions (store_id, order_id, total, module, source_id)
+  values (p_store_id, p_order_id, p_total, p_module, p_source_id);
+end;
+$$;
+
+grant execute on function public.record_sll_conversion to anon, authenticated;

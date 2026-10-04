@@ -1,0 +1,254 @@
+== teste POST track-event (chave publishable do sll-tracking.js)
+HTTP 404 
+{
+  "code": "NOT_FOUND",
+  "message": "Requested function was not found"
+}
+== funcoes publicadas (precisa de supabase login)
+[?25l[90m|[39m
+[35mÔÇó[39m  Fetching functions[1G[J[35mo[39m  Fetching functions[1G[J[35mO[39m  Fetching functions[1G[J[35m0[39m  Fetching functions[1G[J[?25h
+  
+   ID                                   | NAME                      | SLUG                      | STATUS | VERSION | UPDATED_AT (UTC)    
+  --------------------------------------|---------------------------|---------------------------|--------|---------|---------------------
+   f626387c-4d52-4c4c-894e-54b11a1f626d | widget-selector           | widget-selector           | ACTIVE | 30      | 2026-09-28 17:30:28 
+   c30b9b24-b4db-4d9a-8799-c85a7bdbdb11 | asaas-create-subscription | asaas-create-subscription | ACTIVE | 29      | 2026-09-29 17:12:29 
+   c3949260-43d2-4f65-93b6-ebb703b72d26 | asaas-webhook             | asaas-webhook             | ACTIVE | 27      | 2026-09-29 18:13:21 
+   3a6a7ebf-31d4-4a76-9035-d003bdf5db38 | asaas-cancel-subscription | asaas-cancel-subscription | ACTIVE | 17      | 2026-09-29 18:42:49 
+   cc7215d3-01d8-4c00-ba2a-6eb8af20e506 | instagram-auth            | instagram-auth            | ACTIVE | 31      | 2026-09-30 19:22:15 
+   3b15cf68-8025-4a17-a8e0-f1c30352b33a | import-instagram-video    | import-instagram-video    | ACTIVE | 17      | 2026-09-30 15:57:08 
+
+== codigo local da track-event
+== config.toml (verify_jwt)
+== servico: metodos
+176: static async getVideosPerformance(storeId: string, startDate: string, endDate: string): Promise<VidlyticsVideoRow[]> {
+197: static async getOverviewMetrics(storeId: string, startDate: string, endDate: string): Promise<VidlyticsOverviewMetrics> {
+333: private static async getConversionsByVideo(storeId: string, startDay: string, endDay: string): Promise<Map<string, number>> {
+357: static async getVideosPerformanceBase(storeId: string, startDate: string, endDate: string): Promise<VidlyticsVideoRow[]> {
+== getVideosPerformance
+176:   static async getVideosPerformance(storeId: string, startDate: string, endDate: string): Promise<VidlyticsVideoRow[]> {
+177:     const rows = await VidlyticsDatabaseService.getVideosPerformanceBase(storeId, startDate, endDate);
+178:     if (rows.length === 0) return rows;
+179:     const ids = rows.map((r) => r.id);
+180:     const endTs = endDate.length <= 10 ? endDate + 'T23:59:59.999Z' : endDate;
+182:     const [likesRes, commentsRes] = await Promise.all([
+183:       supabase.from('video_likes').select('video_id').eq('store_id', storeId).in('video_id', ids).gte('created_at', startDate).lte('created_at', endTs),
+184:       supabase.from('comments').select('video_id').eq('store_id', storeId).in('video_id', ids).gte('created_at', startDate).lte('created_at', endTs),
+185:     ]);
+186:     if (likesRes.error) throw likesRes.error;
+187:     if (commentsRes.error) throw commentsRes.error;
+189:     const likeMap = new Map<string, number>();
+190:     (likesRes.data || []).forEach((l: any) => likeMap.set(l.video_id, (likeMap.get(l.video_id) || 0) + 1));
+191:     const commentMap = new Map<string, number>();
+192:     (commentsRes.data || []).forEach((c: any) => commentMap.set(c.video_id, (commentMap.get(c.video_id) || 0) + 1));
+194:     return rows.map((r) => ({ ...r, likes: likeMap.get(r.id) || 0, comments: commentMap.get(r.id) || 0 }));
+195:   }
+197:   static async getOverviewMetrics(storeId: string, startDate: string, endDate: string): Promise<VidlyticsOverviewMetrics> {
+198:     const endTs = endDate.length <= 10 ? endDate + 'T23:59:59.999Z' : endDate;
+199:     const { data: dailyMetrics, error: metricsError } = await supabase
+200:       .schema('vidlytics')
+201:       .from('vid_daily_video_metrics')
+202:       .select('metric_date, views, clicks, conversions')
+203:       .eq('store_id', storeId)
+204:       .gte('metric_date', startDate)
+205:       .lte('metric_date', endDate);
+206:     if (metricsError) throw metricsError;
+208:     const { data: conversions, error: convError } = await supabase
+209:       .schema('vidlytics')
+210:       .from('vid_conversions')
+211:       .select('order_value, converted_at')
+212:       .eq('store_id', storeId)
+213:       .gte('converted_at', startDate)
+214:       .lte('converted_at', endDate);
+215:     if (convError) throw convError;
+217:     const { data: videos, error: videosError } = await supabase
+218:       .schema('vidlytics')
+219:       .from('vid_videos')
+220:       .select('id')
+221:       .eq('store_id', storeId);
+222:     if (videosError) throw videosError;
+223:     const videoIds = (videos || []).map((v: any) => v.id);
+225:     let likes: any[] = [];
+226:     let comments: any[] = [];
+228:     if (videoIds.length > 0) {
+229:       const { data: likesData, error: likesError } = await supabase
+230:         .from('video_likes')
+231:         .select('created_at, video_id')
+232:         .in('video_id', videoIds)
+233:         .gte('created_at', startDate)
+234:         .lte('created_at', endTs);
+235:       if (likesError) throw likesError;
+236:       likes = likesData || [];
+238:       const { data: commentsData, error: commentsError } = await supabase
+239:         .from('comments')
+240:         .select('created_at, video_id')
+241:         .in('video_id', videoIds)
+242:         .gte('created_at', startDate)
+243:         .lte('created_at', endTs);
+244:       if (commentsError) throw commentsError;
+245:       comments = commentsData || [];
+246:     }
+248:     const totalViews = (dailyMetrics || []).reduce((s: number, m: any) => s + (m.views || 0), 0);
+249:     const totalClicks = (dailyMetrics || []).reduce((s: number, m: any) => s + (m.clicks || 0), 0);
+250:     const totalConversions = (conversions || []).length;
+251:     const totalRevenue = (conversions || []).reduce((s: number, c: any) => s + Number(c.order_value || 0), 0);
+252:     const totalLikes = likes.length;
+253:     const totalComments = comments.length;
+254:     const ctr = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+256:     const seriesMap = new Map<string, { views: number; clicks: number; likes: number }>();
+257:     (dailyMetrics || []).forEach((m: any) => {
+258:       const key = m.metric_date;
+259:       const entry = seriesMap.get(key) || { views: 0, clicks: 0, likes: 0 };
+260:       entry.views += m.views || 0;
+261:       entry.clicks += m.clicks || 0;
+262:       seriesMap.set(key, entry);
+263:     });
+264:     likes.forEach((l: any) => {
+265:       const key = String(l.created_at).slice(0, 10);
+266:       const entry = seriesMap.get(key) || { views: 0, clicks: 0, likes: 0 };
+267:       entry.likes += 1;
+268:       seriesMap.set(key, entry);
+269:     });
+271:     const dailySeries = Array.from(seriesMap.entries())
+272:       .sort(([a], [b]) => a.localeCompare(b))
+273:       .map(([date, v]) => ({
+274:         date,
+275:         views: v.views,
+276:         clicks: v.clicks,
+277:         likes: v.likes,
+278:         ctr: v.views > 0 ? (v.clicks / v.views) * 100 : 0,
+279:       }));
+281:     return { totalViews, totalClicks, totalConversions, totalRevenue, totalLikes, totalComments, ctr, dailySeries };
+282:   }
+285:   // --- VIDEOS (SINCRONIZADO COM BIBLIOTECA) ---
+286:   static async getVideos(storeId?: string, limit?: number): Promise<any[]> {
+== getOverviewMetrics
+197:   static async getOverviewMetrics(storeId: string, startDate: string, endDate: string): Promise<VidlyticsOverviewMetrics> {
+198:     const endTs = endDate.length <= 10 ? endDate + 'T23:59:59.999Z' : endDate;
+199:     const { data: dailyMetrics, error: metricsError } = await supabase
+200:       .schema('vidlytics')
+201:       .from('vid_daily_video_metrics')
+202:       .select('metric_date, views, clicks, conversions')
+203:       .eq('store_id', storeId)
+204:       .gte('metric_date', startDate)
+205:       .lte('metric_date', endDate);
+206:     if (metricsError) throw metricsError;
+208:     const { data: conversions, error: convError } = await supabase
+209:       .schema('vidlytics')
+210:       .from('vid_conversions')
+211:       .select('order_value, converted_at')
+212:       .eq('store_id', storeId)
+213:       .gte('converted_at', startDate)
+214:       .lte('converted_at', endDate);
+215:     if (convError) throw convError;
+217:     const { data: videos, error: videosError } = await supabase
+218:       .schema('vidlytics')
+219:       .from('vid_videos')
+220:       .select('id')
+221:       .eq('store_id', storeId);
+222:     if (videosError) throw videosError;
+223:     const videoIds = (videos || []).map((v: any) => v.id);
+225:     let likes: any[] = [];
+226:     let comments: any[] = [];
+228:     if (videoIds.length > 0) {
+229:       const { data: likesData, error: likesError } = await supabase
+230:         .from('video_likes')
+231:         .select('created_at, video_id')
+232:         .in('video_id', videoIds)
+233:         .gte('created_at', startDate)
+234:         .lte('created_at', endTs);
+235:       if (likesError) throw likesError;
+236:       likes = likesData || [];
+238:       const { data: commentsData, error: commentsError } = await supabase
+239:         .from('comments')
+240:         .select('created_at, video_id')
+241:         .in('video_id', videoIds)
+242:         .gte('created_at', startDate)
+243:         .lte('created_at', endTs);
+244:       if (commentsError) throw commentsError;
+245:       comments = commentsData || [];
+246:     }
+248:     const totalViews = (dailyMetrics || []).reduce((s: number, m: any) => s + (m.views || 0), 0);
+249:     const totalClicks = (dailyMetrics || []).reduce((s: number, m: any) => s + (m.clicks || 0), 0);
+250:     const totalConversions = (conversions || []).length;
+251:     const totalRevenue = (conversions || []).reduce((s: number, c: any) => s + Number(c.order_value || 0), 0);
+252:     const totalLikes = likes.length;
+253:     const totalComments = comments.length;
+254:     const ctr = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+256:     const seriesMap = new Map<string, { views: number; clicks: number; likes: number }>();
+257:     (dailyMetrics || []).forEach((m: any) => {
+258:       const key = m.metric_date;
+259:       const entry = seriesMap.get(key) || { views: 0, clicks: 0, likes: 0 };
+260:       entry.views += m.views || 0;
+261:       entry.clicks += m.clicks || 0;
+262:       seriesMap.set(key, entry);
+263:     });
+264:     likes.forEach((l: any) => {
+265:       const key = String(l.created_at).slice(0, 10);
+266:       const entry = seriesMap.get(key) || { views: 0, clicks: 0, likes: 0 };
+267:       entry.likes += 1;
+268:       seriesMap.set(key, entry);
+269:     });
+271:     const dailySeries = Array.from(seriesMap.entries())
+272:       .sort(([a], [b]) => a.localeCompare(b))
+273:       .map(([date, v]) => ({
+274:         date,
+275:         views: v.views,
+276:         clicks: v.clicks,
+277:         likes: v.likes,
+278:         ctr: v.views > 0 ? (v.clicks / v.views) * 100 : 0,
+279:       }));
+281:     return { totalViews, totalClicks, totalConversions, totalRevenue, totalLikes, totalComments, ctr, dailySeries };
+282:   }
+285:   // --- VIDEOS (SINCRONIZADO COM BIBLIOTECA) ---
+286:   static async getVideos(storeId?: string, limit?: number): Promise<any[]> {
+287:     const all = await this.getVideosAll(storeId);
+== sll-tracking.js (120-240): deteccao de pedido e total
+120:   if (window._yampi && window._yampi.order) {
+121:     sendConversion({ order_id: window._yampi.order.id || window._yampi.order.number, total: window._yampi.order.total });
+122:     return;
+123:   }
+125:   // 3. Shopify Checkout
+126:   if (window.Shopify && window.Shopify.checkout) {
+127:     var sc = window.Shopify.checkout;
+128:     sendConversion({
+129:       order_id: sc.order_id || sc.token,
+130:       total: sc.total_price ? (Number(sc.total_price) > 1000 ? sc.total_price / 100 : sc.total_price) : null
+131:     });
+132:     return;
+133:   }
+135:   // 4. Nuvemshop
+136:   if (window.LS && window.LS.checkout) {
+137:     sendConversion({ order_id: window.LS.checkout.order_id, total: window.LS.checkout.total });
+138:     return;
+139:   }
+141:   // 5. Escuta de dataLayer (GTM / Eventos assíncronos de compra)
+142:   if (window.dataLayer && Array.isArray(window.dataLayer)) {
+143:     for (var i = 0; i < window.dataLayer.length; i++) {
+144:       var item = window.dataLayer[i];
+145:       if (item && (item.event === "purchase" || item.event === "checkout_finished" || item.event === "yampi:order_created")) {
+146:         var tx = item.transactionId || (item.ecommerce && item.ecommerce.transaction_id) || item.order_id;
+147:         var val = item.value || (item.ecommerce && item.ecommerce.value);
+148:         if (tx) {
+149:           sendConversion({ order_id: tx, total: val });
+150:           return;
+151:         }
+152:       }
+153:     }
+154:   }
+156:   // 6. Fallback via DOM na página de confirmação
+157:   setTimeout(function() {
+158:     if (alreadySent) return;
+159:     var idEl = document.querySelector("[data-order-id], .order-id, .numero-pedido, .order-number, [data-transaction-id]");
+160:     var totalEl = document.querySelector("[data-order-total], .order-total, .checkout-summary__total, [class*='total-pedido']");
+161:     if (idEl) {
+162:       var cleanId = idEl.textContent.replace(/[^a-zA-Z0-9_-]/g, "").trim();
+163:       var cleanTotal = totalEl ? totalEl.textContent.replace(/[^\d,\.]/g, "").replace(",", ".") : null;
+164:       if (cleanId) {
+165:         sendConversion({ order_id: cleanId, total: cleanTotal });
+166:       }
+167:     }
+168:   }, 2500);
+170: })();
+== widget: chaves de atribuicao
+2763: document.cookie = 'vly_video_id=' + encodeURIComponent(videoId) + expStr;
+2764: localStorage.setItem('vly_video_id', videoId);

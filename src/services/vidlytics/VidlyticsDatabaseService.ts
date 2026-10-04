@@ -191,10 +191,66 @@ export class VidlyticsDatabaseService {
     const commentMap = new Map<string, number>();
     (commentsRes.data || []).forEach((c: any) => commentMap.set(c.video_id, (commentMap.get(c.video_id) || 0) + 1));
 
-    return rows.map((r) => ({ ...r, likes: likeMap.get(r.id) || 0, comments: commentMap.get(r.id) || 0 }));
+    const events = await VidlyticsDatabaseService.fetchActivityEvents(storeId, startDate, endDate);
+    const viewMap = new Map<string, number>();
+    const clickMap = new Map<string, number>();
+    events.forEach((e) => {
+      if (!e.video_id) return;
+      const m = e.event_type === 'video_view' ? viewMap : clickMap;
+      m.set(e.video_id, (m.get(e.video_id) || 0) + 1);
+    });
+    return rows.map((r: any) => {
+      const views = viewMap.get(r.id) || 0;
+      const clicks = clickMap.get(r.id) || 0;
+      const o: any = { ...r, views, clicks, likes: likeMap.get(r.id) || 0, comments: commentMap.get(r.id) || 0 };
+      if ('ctr' in r) o.ctr = views > 0 ? (clicks / views) * 100 : 0;
+      return o as VidlyticsVideoRow;
+    });
+  }
+
+  private static async fetchActivityEvents(storeId: string, startDate: string, endDate: string): Promise<{ event_type: string; video_id: string | null; created_at: string }[]> {
+    const endTs = endDate.length <= 10 ? endDate + 'T23:59:59.999Z' : endDate;
+    const out: { event_type: string; video_id: string | null; created_at: string }[] = [];
+    const page = 1000;
+    for (let from = 0; ; from += page) {
+      const { data, error } = await supabase
+        .from('store_activity_events')
+        .select('event_type, video_id, created_at')
+        .eq('store_id', storeId)
+        .in('event_type', ['video_view', 'product_click', 'whatsapp_click'])
+        .gte('created_at', startDate)
+        .lte('created_at', endTs)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, from + page - 1);
+      if (error) throw error;
+      out.push(...((data as any[]) || []));
+      if (!data || data.length < page) break;
+    }
+    return out;
   }
 
   static async getOverviewMetrics(storeId: string, startDate: string, endDate: string): Promise<VidlyticsOverviewMetrics> {
+    const base = await VidlyticsDatabaseService.getOverviewMetricsBase(storeId, startDate, endDate);
+    const events = await VidlyticsDatabaseService.fetchActivityEvents(storeId, startDate, endDate);
+    let totalViews = 0;
+    let totalClicks = 0;
+    const series = new Map<string, any>();
+    base.dailySeries.forEach((p: any) => series.set(p.date, { ...p, views: 0, clicks: 0 }));
+    events.forEach((e) => {
+      const d = String(e.created_at).slice(0, 10);
+      const p = series.get(d) || { date: d, views: 0, clicks: 0, likes: 0, ctr: 0 };
+      if (e.event_type === 'video_view') { p.views += 1; totalViews += 1; } else { p.clicks += 1; totalClicks += 1; }
+      series.set(d, p);
+    });
+    const dailySeries = Array.from(series.values())
+      .sort((a: any, b: any) => String(a.date).localeCompare(String(b.date)))
+      .map((p: any) => ({ ...p, ctr: p.views > 0 ? (p.clicks / p.views) * 100 : 0 }));
+    const ctr = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+    return { ...base, totalViews, totalClicks, ctr, dailySeries };
+  }
+
+  static async getOverviewMetricsBase(storeId: string, startDate: string, endDate: string): Promise<VidlyticsOverviewMetrics> {
     const endTs = endDate.length <= 10 ? endDate + 'T23:59:59.999Z' : endDate;
     const { data: dailyMetrics, error: metricsError } = await supabase
       .schema('vidlytics')
