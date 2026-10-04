@@ -263,7 +263,12 @@ export class VidlyticsDatabaseService {
 
   
   // --- VIDEOS (SINCRONIZADO COM BIBLIOTECA) ---
-  static async getVideos(storeId?: string): Promise<any[]> {
+  static async getVideos(storeId?: string, limit?: number): Promise<any[]> {
+    const all = await this.getVideosAll(storeId);
+    return limit && limit > 0 ? all.slice(0, limit) : all;
+  }
+
+  private static async getVideosAll(storeId?: string): Promise<any[]> {
     try {
       const vidlyticsDb = (supabase as any).schema
         ? (supabase as any).schema('vidlytics')
@@ -286,7 +291,205 @@ export class VidlyticsDatabaseService {
     }
   }
 
-    // --- STORIES ---
+    // --- PERFORMANCE / RETENCAO / INSIGHTS ---
+  private static periodRange(start: string, end: string) {
+    return {
+      startDay: String(start).slice(0, 10),
+      endDay: String(end).slice(0, 10),
+      from: `${String(start).slice(0, 10)}T00:00:00-03:00`,
+      to: `${String(end).slice(0, 10)}T23:59:59.999-03:00`,
+    };
+  }
+
+  private static async fetchAll(build: (from: number, to: number) => any): Promise<any[]> {
+    const pageSize = 1000;
+    const rows: any[] = [];
+    for (let page = 0; page < 50; page++) {
+      const { data, error } = await build(page * pageSize, page * pageSize + pageSize - 1);
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      rows.push(...data);
+      if (data.length < pageSize) break;
+    }
+    return rows;
+  }
+
+  static async getVideosPerformance(storeId: string, startDate: string, endDate: string): Promise<any[]> {
+    const db: any = supabase;
+    const { startDay, endDay } = this.periodRange(startDate, endDate);
+    const [allVideos, metrics] = await Promise.all([
+      this.getVideos(storeId),
+      this.fetchAll((a, b) =>
+        db
+          .from('daily_video_metrics')
+          .select('id, video_id, views_count, cta_clicks_count, likes_count, comments_count, shares_count, whatsapp_clicks_count, website_clicks_count')
+          .eq('store_id', storeId)
+          .gte('date', startDay)
+          .lte('date', endDay)
+          .order('id', { ascending: true })
+          .range(a, b)
+      ),
+    ]);
+
+    const videos = allVideos.filter((v: any) => v.store_id === storeId);
+    const acc = new Map<string, any>();
+    for (const m of metrics) {
+      const key = String(m.video_id);
+      const cur = acc.get(key) || { views: 0, clicks: 0, likes: 0, comments: 0, shares: 0, whatsappClicks: 0, websiteClicks: 0 };
+      cur.views += Number(m.views_count) || 0;
+      cur.clicks += Number(m.cta_clicks_count) || 0;
+      cur.likes += Number(m.likes_count) || 0;
+      cur.comments += Number(m.comments_count) || 0;
+      cur.shares += Number(m.shares_count) || 0;
+      cur.whatsappClicks += Number(m.whatsapp_clicks_count) || 0;
+      cur.websiteClicks += Number(m.website_clicks_count) || 0;
+      acc.set(key, cur);
+    }
+
+    return videos
+      .map((v: any) => {
+        const m = acc.get(String(v.id)) || { views: 0, clicks: 0, likes: 0, comments: 0, shares: 0, whatsappClicks: 0, websiteClicks: 0 };
+        return {
+          id: String(v.id),
+          video_id: String(v.id),
+          title: v.title || 'Vídeo sem título',
+          thumbnail_url: v.thumbnail_url || '',
+          duration: Number(v.duration) || 0,
+          ...m,
+          ctr: m.views > 0 ? (m.clicks / m.views) * 100 : 0,
+        };
+      })
+      .sort((x: any, y: any) => y.views - x.views);
+  }
+
+  static async getRetentionData(storeId: string, startDate: string, endDate: string): Promise<any[]> {
+    const db: any = supabase;
+    const { from, to } = this.periodRange(startDate, endDate);
+    const [allVideos, events] = await Promise.all([
+      this.getVideos(storeId),
+      this.fetchAll((a, b) =>
+        db
+          .from('store_activity_events')
+          .select('video_id, event_type, session_id, watch_second')
+          .eq('store_id', storeId)
+          .in('event_type', ['video_view', 'progress'])
+          .not('video_id', 'is', null)
+          .gte('created_at', from)
+          .lte('created_at', to)
+          .order('created_at', { ascending: true })
+          .range(a, b)
+      ),
+    ]);
+
+    const videos = allVideos.filter((v: any) => v.store_id === storeId);
+    const byVideo = new Map<string, { views: number; sessions: Map<string, number> }>();
+    for (const ev of events) {
+      const vid = String(ev.video_id);
+      let agg = byVideo.get(vid);
+      if (!agg) {
+        agg = { views: 0, sessions: new Map<string, number>() };
+        byVideo.set(vid, agg);
+      }
+      if (ev.event_type === 'video_view') agg.views += 1;
+      if (ev.session_id) {
+        const sec = Math.max(0, Number(ev.watch_second) || 0);
+        agg.sessions.set(ev.session_id, Math.max(agg.sessions.get(ev.session_id) ?? 0, sec));
+      }
+    }
+
+    return videos
+      .map((video: any) => {
+        const id = String(video.id);
+        const agg = byVideo.get(id);
+        const values: number[] = agg ? Array.from(agg.sessions.values()) : [];
+        const total = values.length;
+        const maxSeen = values.reduce((m, v) => Math.max(m, v), 0);
+        const rawDuration = Number(video.duration) > 0 ? Number(video.duration) : maxSeen;
+        const duration = Math.min(300, Math.max(1, Math.ceil(rawDuration)));
+
+        const curve: { second: number; retention: number }[] = [];
+        let dropOffSecond = 0;
+        let dropOffRate = 0;
+        if (total > 0) {
+          for (let s = 0; s <= duration; s++) {
+            const reached = values.filter((v) => v >= s).length;
+            curve.push({ second: s, retention: Math.round((reached / total) * 100) });
+          }
+          for (let i = 1; i < curve.length; i++) {
+            const drop = curve[i - 1].retention - curve[i].retention;
+            if (drop > dropOffRate) {
+              dropOffRate = drop;
+              dropOffSecond = curve[i].second;
+            }
+          }
+        }
+
+        const avgWatchSeconds = total > 0 ? values.reduce((a, v) => a + Math.min(v, duration), 0) / total : 0;
+        const completed = values.filter((v) => v >= duration * 0.95).length;
+
+        return {
+          id,
+          video_id: id,
+          title: video.title || 'Vídeo sem título',
+          thumbnail_url: video.thumbnail_url || '',
+          duration,
+          views: agg?.views || 0,
+          sessions: total,
+          avgWatchSeconds,
+          percentageViewed: total > 0 ? (avgWatchSeconds / duration) * 100 : 0,
+          completionRate: total > 0 ? (completed / total) * 100 : 0,
+          dropOffSecond,
+          dropOffRate,
+          curve,
+          hasData: total > 0,
+          isRealData: true,
+        };
+      })
+      .sort((x: any, y: any) => y.sessions - x.sessions);
+  }
+
+  static async getAiInsights(storeId: string, startDate: string, endDate: string): Promise<any[]> {
+    const [perf, ret] = await Promise.all([
+      this.getVideosPerformance(storeId, startDate, endDate),
+      this.getRetentionData(storeId, startDate, endDate),
+    ]);
+    const out: any[] = [];
+    const add = (type: 'success' | 'warning' | 'info', title: string, description: string, videoId?: string) =>
+      out.push({ id: `${type}-${out.length}`, type, title, description, video_id: videoId || null });
+
+    const withViews = perf.filter((p: any) => p.views > 0);
+    if (withViews.length === 0) {
+      add('info', 'Sem dados no período', 'Ainda não há visualizações registradas neste período. Ajuste o filtro de datas ou aguarde novos acessos.');
+      return out;
+    }
+
+    const top = withViews[0];
+    add('success', 'Vídeo mais visto', `"${top.title}" lidera com ${top.views} visualizações e ${top.clicks} cliques (CTR ${top.ctr.toFixed(1).replace('.', ',')}%).`, top.id);
+
+    const ctrPool = withViews.filter((p: any) => p.views >= 5);
+    if (ctrPool.length > 0) {
+      const best = [...ctrPool].sort((a: any, b: any) => b.ctr - a.ctr)[0];
+      if (best.ctr > 0) add('success', 'Melhor CTR', `"${best.title}" converte visualização em clique melhor (${best.ctr.toFixed(1).replace('.', ',')}%). Vale replicar o formato dele.`, best.id);
+    }
+    ctrPool
+      .filter((p: any) => p.views >= 10 && p.ctr < 2)
+      .slice(0, 2)
+      .forEach((p: any) => add('warning', 'CTR baixo', `"${p.title}" tem ${p.views} visualizações e CTR de ${p.ctr.toFixed(1).replace('.', ',')}%. Revise o CTA ou o produto vinculado.`, p.id));
+
+    ret
+      .filter((r: any) => r.sessions >= 3 && r.dropOffRate >= 30)
+      .slice(0, 2)
+      .forEach((r: any) => add('warning', 'Queda de retenção', `"${r.title}" perde ${r.dropOffRate}% dos espectadores por volta do segundo ${r.dropOffSecond}. Considere reforçar esse trecho.`, r.id));
+
+    ret
+      .filter((r: any) => r.sessions >= 5 && r.completionRate < 20)
+      .slice(0, 2)
+      .forEach((r: any) => add('info', 'Poucos assistem até o fim', `Só ${Math.round(r.completionRate)}% das sessões de "${r.title}" chegam ao final. Vídeos mais curtos podem ajudar.`, r.id));
+
+    return out;
+  }
+
+  // --- STORIES ---
   private static normalizeStory(row: any): any {
     if (!row) return null;
 

@@ -1,0 +1,342 @@
+== metodos do service no SLL
+78: private static SCHEMA = 'vidlytics';
+79: private static TABLE_APPEARANCES = 'vid_appearances';
+81: static async getAppearances(storeId: string): Promise<VidlyticsAppearance[]> {
+99: static async getAppearanceById(appearanceId: string): Promise<VidlyticsAppearance | null> {
+114: static async saveAppearance(
+139: static async setDefaultAppearance(storeId: string, appearanceId: string): Promise<void> {
+162: static async deleteAppearance(storeId: string, appearanceId: string): Promise<void> {
+176: static async getOverviewMetrics(storeId: string, startDate: string, endDate: string): Promise<VidlyticsOverviewMetrics> {
+266: static async getVideos(storeId?: string): Promise<any[]> {
+290: private static normalizeStory(row: any): any {
+322: static async getStories(storeId?: string): Promise<any[]> {
+345: static async getStoryById(storyId: string): Promise<any | null> {
+365: static async saveStory(storeId: string, storyData: any): Promise<any> {
+426: static async deleteStory(storeId: string, storyId: string): Promise<boolean> {
+445: static async getComments(storeId: string): Promise<VidlyticsComment[]> {
+467: static async updateCommentStatus(
+479: static async deleteComment(commentId: string): Promise<void> {
+488: static async getCommentReplies(commentIds: string[]): Promise<VidlyticsCommentReply[]> {
+500: static async addCommentReply(
+===== src\pages\vidlytics\tabs\ResultadosTab.tsx (120-215)
+120:       .finally(() => {
+121:         if (active) setLoading(false);
+122:       });
+124:     return () => {
+125:       active = false;
+126:     };
+127:   }, [storeId, start, end, periodo]);
+129:   useEffect(() => {
+130:     if (!storeId || subTab !== 'videos') return;
+131:     if (periodo === 'custom' && (!customStart || !customEnd)) return;
+133:     let active = true;
+134:     setVideosLoading(true);
+136:     VidlyticsDatabaseService.getVideosPerformance(storeId, start, end)
+137:       .then((data) => {
+138:         if (active) setVideosList(data);
+139:       })
+140:       .catch((err) => {
+141:         console.error('Erro ao buscar vídeos:', err);
+142:       })
+143:       .finally(() => {
+144:         if (active) setVideosLoading(false);
+145:       });
+147:     return () => {
+148:       active = false;
+149:     };
+150:   }, [storeId, start, end, subTab]);
+152:   useEffect(() => {
+153:     if (!storeId || subTab !== 'retencao') return;
+154:     if (periodo === 'custom' && (!customStart || !customEnd)) return;
+156:     let active = true;
+157:     setRetentionLoading(true);
+159:     VidlyticsDatabaseService.getRetentionData(storeId, start, end)
+160:       .then((data) => {
+161:         if (active) setRetentionList(data);
+162:       })
+163:       .catch((err) => {
+164:         console.error('Erro ao buscar retenção:', err);
+165:       })
+166:       .finally(() => {
+167:         if (active) setRetentionLoading(false);
+168:       });
+170:     return () => {
+171:       active = false;
+172:     };
+173:   }, [storeId, start, end, subTab]);
+175:   useEffect(() => {
+176:     if (!storeId || subTab !== 'insights') return;
+177:     if (periodo === 'custom' && (!customStart || !customEnd)) return;
+179:     let active = true;
+180:     setInsightsLoading(true);
+182:     VidlyticsDatabaseService.getAiInsights(storeId, start, end)
+183:       .then((data) => {
+184:         if (active) setInsightsList(data);
+185:       })
+186:       .catch((err) => {
+187:         console.error('Erro ao buscar insights:', err);
+188:       })
+189:       .finally(() => {
+190:         if (active) setInsightsLoading(false);
+191:       });
+193:     return () => {
+194:       active = false;
+195:     };
+196:   }, [storeId, start, end, subTab]);
+198:   const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
+199:   const revenueFormatted = metrics.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+201:   const maxViews = Math.max(1, ...metrics.dailySeries.map((d) => d.views));
+202:   const maxClicks = Math.max(1, ...metrics.dailySeries.map((d) => d.clicks));
+203:   const maxLikes = Math.max(1, ...metrics.dailySeries.map((d) => d.likes));
+205:   const buildPath = (values: number[], max: number, width = 900, height = 140, top = 20, bottom = 135) => {
+206:     if (values.length === 0) return `M 50 ${bottom} L 870 ${bottom}`;
+207:     const step = (870 - 50) / Math.max(1, values.length - 1);
+208:     const points = values.map((v, i) => {
+209:       const x = 50 + i * step;
+210:       const y = bottom - (v / max) * (bottom - top);
+211:       return `${x} ${y}`;
+212:     });
+213:     return `M ${points.join(' L ')}`;
+214:   };
+===== src\services\vidlytics\VidlyticsDatabaseService.ts (255-300)
+255:         views: v.views,
+256:         clicks: v.clicks,
+257:         likes: v.likes,
+258:         ctr: v.views > 0 ? (v.clicks / v.views) * 100 : 0,
+259:       }));
+261:     return { totalViews, totalClicks, totalConversions, totalRevenue, totalLikes, totalComments, ctr, dailySeries };
+262:   }
+265:   // --- VIDEOS (SINCRONIZADO COM BIBLIOTECA) ---
+266:   static async getVideos(storeId?: string): Promise<any[]> {
+267:     try {
+268:       const vidlyticsDb = (supabase as any).schema
+269:         ? (supabase as any).schema('vidlytics')
+270:         : supabase;
+272:       let query = vidlyticsDb.from('vid_videos').select('*');
+273:       if (storeId) {
+274:         query = query.eq('store_id', storeId);
+275:       }
+277:       const { data, error } = await query.order('created_at', { ascending: false });
+278:       if (error || !data || data.length === 0) {
+279:         const fallback = await vidlyticsDb.from('vid_videos').select('*').order('created_at', { ascending: false });
+280:         return fallback.data || [];
+281:       }
+282:       return data || [];
+283:     } catch (err) {
+284:       console.error('[VidlyticsDatabaseService] Falha em getVideos:', err);
+285:       return [];
+286:     }
+287:   }
+289:     // --- STORIES ---
+290:   private static normalizeStory(row: any): any {
+291:     if (!row) return null;
+293:     const config = row.config || {};
+295:     return {
+296:       id: row.id,
+297:       store_id: row.store_id,
+298:       title: row.title,
+299:       name: row.title || config.name || '',
+300:       cover_url: row.cover_url || config.cover_url || '',
+===== F:\RODRIGO VICENTE\DYAD\vidlytics\vidlytics\backup-src-20260919-172331\components\performance\retention-tab.tsx (67-300)
+67: export function RetentionTab({ timeRange, customFrom, customTo }: Props) {
+68:   const { storeId: tenantStoreId } = useTenant();
+70:   const [videos, setVideos] = useState<VideoItem[]>([]);
+71:   const [selectedVideoId, setSelectedVideoId] = useState<string>('');
+72:   const [loading, setLoading] = useState<boolean>(true);
+73:   const [hoveredSecond, setHoveredSecond] = useState<number | null>(null);
+75:   const [videoStats, setVideoStats] = useState<{
+76:     completionRate: number;
+77:     avgDuration: number;
+78:     percentageViewed: number;
+79:     skipsForward: number;
+80:     rewinds: number;
+81:     dropOffRate: number;
+82:     dropOffCount: number;
+83:   isRealData: boolean;
+84:   curve: RetentionPoint[];
+85: }>({
+86:     completionRate: 0,
+87:     avgDuration: 0,
+88:     percentageViewed: 0,
+89:     skipsForward: 0,
+90:     rewinds: 0,
+91:     dropOffRate: 0,
+92:     dropOffCount: 0,
+93:   isRealData: false,
+94:   curve: [],
+95: });
+97:   // 1. Carregar vídeos da loja
+98:   useEffect(() => {
+99:     let isMounted = true;
+101:     async function loadTenantVideos() {
+102:       try {
+103:         setLoading(true);
+104:         const candidate =
+105:           tenantStoreId ||
+106:           localStorage.getItem('vidlytics_selected_store_id') ||
+107:           localStorage.getItem('current_store_id') ||
+108:           localStorage.getItem('store_id') ||
+109:           '';
+110:         const safeStoreId = await resolveStoreId(candidate || undefined);
+112:         if (!safeStoreId) {
+113:           if (isMounted) {
+114:             setVideos([]);
+115:             setSelectedVideoId('');
+116:             setLoading(false);
+117:           }
+118:           return;
+119:         }
+121:         let loadedVideos: any[] = [];
+122:         try {
+123:           loadedVideos = await db.videos.getAll(safeStoreId);
+124:         } catch {
+125:           const { data } = await supabase
+126:             .from('videos')
+127:             .select('*')
+128:             .eq('store_id', safeStoreId);
+129:           loadedVideos = data || [];
+130:         }
+132:         if (!isMounted) return;
+134:         if (loadedVideos && loadedVideos.length > 0) {
+135:           const formatted: VideoItem[] = loadedVideos.map((item: any) => ({
+136:             id: String(item.id),
+137:             title: item.title || item.name || 'Vídeo sem título',
+138:             video_url: item.video_url || item.url || item.file_url || '',
+139:             thumbnail_url: item.thumbnail_url || item.thumb_url || item.poster_url || '',
+140:             duration: Number(item.duration) || 15,
+141:           }));
+143:           setVideos(formatted);
+144:           setSelectedVideoId(formatted[0].id);
+145:         } else {
+146:           setVideos([]);
+147:           setSelectedVideoId('');
+148:         }
+149:       } catch (err) {
+150:         console.error('Erro ao carregar vídeos para retenção:', err);
+151:       } finally {
+152:         if (isMounted) setLoading(false);
+153:       }
+154:     }
+156:     loadTenantVideos();
+158:     return () => {
+159:       isMounted = false;
+160:     };
+161:   }, [tenantStoreId]);
+163:   // Vídeo selecionado
+164:   const selectedVideo = useMemo(() => {
+165:     return videos.find((v) => v.id === selectedVideoId) || videos[0] || null;
+166:   }, [videos, selectedVideoId]);
+168:   // 2. Carregar estatísticas e curva do vídeo selecionado
+169:   useEffect(() => {
+170:     let isMounted = true;
+172:     async function loadVideoStats() {
+173:       if (!selectedVideo) return;
+175:       try {
+176:         const candidate =
+177:           tenantStoreId ||
+178:           localStorage.getItem('vidlytics_selected_store_id') ||
+179:           localStorage.getItem('current_store_id') ||
+180:           '';
+181:         const safeStoreId = await resolveStoreId(candidate || undefined);
+183:         const duration = Math.max(5, Math.min(120, selectedVideo.duration || 15));
+185: let query = supabase
+186:   .from('store_activity_events')
+187:   .select('event_type, metadata, session_id, watch_second, created_at')
+188:   .eq('video_id', selectedVideo.id);
+190: if (safeStoreId) {
+191:   query = query.eq('store_id', safeStoreId);
+192: }
+194: const { data: eventsData, error: eventsError } = await query;
+196: if (eventsError) {
+197:   console.error('Erro ao buscar eventos de retenção:', eventsError);
+198: }
+200: const totalPlays =
+201:   eventsData?.filter((m) => m.event_type === 'video_view').length || 0;
+202: const totalCompletions =
+203:   eventsData?.filter((m) => m.event_type === 'story_complete').length || 0;
+205: const progressEvents = eventsData?.filter((m) => m.event_type === 'progress') || [];
+206: const completionRate = totalPlays > 0 ? Math.round((totalCompletions / totalPlays) * 100) : 0;
+207: const avgDuration = Math.round(duration * (completionRate / 100));
+208: const percentageViewed = Math.round((avgDuration / duration) * 100);
+210: let finalCurve: RetentionPoint[] = [];
+211: let isRealData = false;
+213: if (progressEvents.length > 0) {
+214:   // Curva real: para cada segundo, conta quantas sessões distintas chegaram até ali
+215:   const sessionsBySecond = new Map<number, Set<string>>();
+216:   progressEvents.forEach((ev) => {
+217:     const sec = ev.watch_second ?? 0;
+218:     const sid = ev.session_id ?? 'unknown';
+219:     if (!sessionsBySecond.has(sec)) sessionsBySecond.set(sec, new Set());
+220:     sessionsBySecond.get(sec)!.add(sid);
+221:   });
+223:   const totalSessions = new Set(progressEvents.map((e) => e.session_id)).size || 1;
+225:   for (let sec = 0; sec <= duration; sec++) {
+226:     let reached = 0;
+227:     sessionsBySecond.forEach((set, s) => {
+228:       if (s >= sec) reached += set.size; // aproximação; refinar se necessário
+229:     });
+230:     const retention = Math.round((reached / totalSessions) * 100);
+231:     finalCurve.push({ second: sec, retention: Math.max(0, Math.min(100, retention)) });
+232:   }
+233:   isRealData = true;
+234: } else {
+235:   // Fallback simulado — SEM dados reais de progresso ainda
+236:   const signature = seededFactor(selectedVideo.id);
+237:   const startRetention = 100;
+238:   const endRetention = totalPlays > 0 ? Math.max(10, Math.min(95, completionRate)) : 60;
+239:   for (let sec = 0; sec <= duration; sec++) {
+240:     const progress = sec / duration;
+241:     const decayRate = (1.1 - endRetention / 100) * 1.4 * signature;
+242:     const decay = Math.exp(-progress * decayRate);
+243:     const retention = Math.round(endRetention + (startRetention - endRetention) * decay);
+244:     finalCurve.push({ second: sec, retention: Math.max(0, Math.min(100, retention)) });
+245:   }
+246: }
+248: setVideoStats({
+249:   completionRate,
+250:   avgDuration,
+251:   percentageViewed,
+252:   skipsForward: Math.max(1, Math.round(totalPlays * 0.12)),
+253:   rewinds: Math.max(1, Math.round(totalPlays * 0.05)),
+254:   dropOffRate: Math.max(5, 100 - completionRate),
+255:   dropOffCount: Math.round(totalPlays * 0.32),
+256:   isRealData,
+257:   curve: finalCurve,
+258: });
+259:       } catch (err) {
+260:         console.error('Erro ao calcular estatísticas do vídeo:', err);
+261:       }
+262:     }
+264:     loadVideoStats();
+266:     return () => {
+267:       isMounted = false;
+268:     };
+269:   }, [selectedVideo, tenantStoreId, timeRange, customFrom, customTo]);
+271:   // Identificar ponto crítico de saída (maior queda na curva)
+272:   const criticalDropSecond = useMemo(() => {
+273:     if (!videoStats.curve || videoStats.curve.length < 2) return null;
+274:     let maxDrop = 0;
+275:     let dropSec = videoStats.curve[1].second;
+276:     for (let i = 1; i < videoStats.curve.length; i++) {
+277:       const drop = videoStats.curve[i - 1].retention - videoStats.curve[i].retention;
+278:       if (drop > maxDrop) {
+279:         maxDrop = drop;
+280:         dropSec = videoStats.curve[i].second;
+281:       }
+282:     }
+283:     return dropSec;
+284:   }, [videoStats.curve]);
+286:   if (loading) {
+287:     return (
+288:       <div className="flex h-64 items-center justify-center">
+289:         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0091ff] border-t-transparent dark:border-[#ff7a29]" />
+290:       </div>
+291:     );
+292:   }
+294:   if (videos.length === 0) {
+295:     return (
+296:       <Card className="rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35]">
+297:         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+298:           <VideoIcon className="mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
+299:           <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">
+300:             Nenhum vídeo cadastrado
