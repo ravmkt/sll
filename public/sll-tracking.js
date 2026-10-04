@@ -38,8 +38,18 @@
 
   var alreadySent = false;
 
+  function getCookie(n) {
+    try {
+      var m = document.cookie.match(new RegExp('(?:^|; )' + n + '=([^;]*)'));
+      return m ? decodeURIComponent(m[1]) : null;
+    } catch (e) { return null; }
+  }
+
   function getAttribution() {
     try {
+      var vid = getCookie("vly_video_id");
+      if (!vid) { try { vid = localStorage.getItem("vly_video_id"); } catch (e) {} }
+      if (vid) return { module: "vidlytics", source_id: vid };
       var raw = localStorage.getItem("sll_last_interaction") || localStorage.getItem("vidlytics_last_interaction");
       if (!raw) return { module: "direct", source_id: null };
       var data = JSON.parse(raw);
