@@ -1,0 +1,160 @@
+== definicao dos tipos
+src\services\vidlytics\VidlyticsDatabaseService.ts:43
+src\services\vidlytics\VidlyticsDatabaseService.ts:57
+src\services\vidlytics\VidlyticsDatabaseService.ts:68
+----- F:\RODRIGO VICENTE\DYAD\sll-hub\src\services\vidlytics\VidlyticsDatabaseService.ts
+export interface VidlyticsVideoRow {
+  id: string;
+  title: string;
+  thumbnailUrl: string | null;
+  status: string;
+  views: number;
+  clicks: number;
+  ctr: number;
+  likes: number;
+  comments: number;
+  conversions: number;
+  revenue: number;
+}
+
+export interface VidlyticsRetentionRow {
+  id: string;
+export interface VidlyticsRetentionRow {
+  id: string;
+  title: string;
+  thumbnailUrl: string | null;
+  views: number;
+  clicks: number;
+  conversions: number;
+  clickDropRate: number;
+  conversionDropRate: number;
+}
+
+export interface VidlyticsInsightRow {
+  id: string;
+  videoId: string | null;
+  videoTitle: string | null;
+  insightText: string;
+export interface VidlyticsInsightRow {
+  id: string;
+  videoId: string | null;
+  videoTitle: string | null;
+  insightText: string;
+  metadata: Record<string, any> | null;
+  createdAt: string;
+}
+
+export class VidlyticsDatabaseService {
+  private static SCHEMA = 'vidlytics';
+  private static TABLE_APPEARANCES = 'vid_appearances';
+
+  static async getAppearances(storeId: string): Promise<VidlyticsAppearance[]> {
+    if (!storeId) {
+      console.warn('[VidlyticsDatabaseService] Não foi possível buscar aparências: storeId ausente.');
+== JSX videos, retencao, insights
+--- 600-640
+600:                       <th className="text-right px-4 py-3">CTR</th>
+601:                       <th className="text-right px-4 py-3">Curtidas</th>
+602:                       <th className="text-right px-4 py-3">Comentários</th>
+603:                       <th className="text-right px-4 py-3">Conversões</th>
+604:                       <th className="text-right px-4 py-3">Receita</th>
+605:                     </tr>
+606:                   </thead>
+607:                   <tbody>
+608:                     {videosList.map((v) => (
+609:                       <tr key={v.id} className="border-b border-slate-100 hover:bg-slate-50">
+610:                         <td className="px-4 py-3 flex items-center gap-2">
+611:                           {v.thumbnailUrl ? (
+612:                             <img src={v.thumbnailUrl} alt={v.title} className="w-8 h-12 object-cover rounded-md" />
+613:                           ) : (
+614:                             <div className="w-8 h-12 bg-slate-100 rounded-md flex items-center justify-center">
+615:                               <Play className="w-3 h-3 text-slate-400" />
+616:                             </div>
+617:                           )}
+618:                           <span className="font-semibold text-slate-700 truncate max-w-[160px]">{v.title}</span>
+619:                         </td>
+620:                         <td className="text-right px-4 py-3 text-slate-600">{v.views.toLocaleString('pt-BR')}</td>
+621:                         <td className="text-right px-4 py-3 text-slate-600">{v.clicks.toLocaleString('pt-BR')}</td>
+622:                         <td className="text-right px-4 py-3 text-slate-600">{v.ctr.toFixed(1)}%</td>
+623:                         <td className="text-right px-4 py-3 text-rose-500 font-semibold">{v.likes}</td>
+624:                         <td className="text-right px-4 py-3 text-[#0094eb] font-semibold">{v.comments}</td>
+625:                         <td className="text-right px-4 py-3 text-emerald-600 font-semibold">{v.conversions}</td>
+626:                         <td className="text-right px-4 py-3 text-slate-700 font-bold">
+627:                           {v.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+628:                         </td>
+629:                       </tr>
+630:                     ))}
+631:                   </tbody>
+632:                 </table>
+633:               </div>
+634:             )}
+635:           </div>
+636:         </div>
+637:       )}
+639:       {/* ========================================================= */}
+640:       {/* 3. SUB-ABA: RETENÇÃO */}
+--- 668-705
+668:                       <th className="text-right px-4 py-3">Queda até o Clique</th>
+669:                       <th className="text-right px-4 py-3">Conversões</th>
+670:                       <th className="text-right px-4 py-3">Queda até a Conversão</th>
+671:                     </tr>
+672:                   </thead>
+673:                   <tbody>
+674:                     {retentionList.map((r) => (
+675:                       <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+676:                         <td className="px-4 py-3 flex items-center gap-2">
+677:                           {r.thumbnailUrl ? (
+678:                             <img src={r.thumbnailUrl} alt={r.title} className="w-8 h-12 object-cover rounded-md" />
+679:                           ) : (
+680:                             <div className="w-8 h-12 bg-slate-100 rounded-md flex items-center justify-center">
+681:                               <Play className="w-3 h-3 text-slate-400" />
+682:                             </div>
+683:                           )}
+684:                           <span className="font-semibold text-slate-700 truncate max-w-[160px]">{r.title}</span>
+685:                         </td>
+686:                         <td className="text-right px-4 py-3 text-slate-600">{r.views.toLocaleString('pt-BR')}</td>
+687:                         <td className="text-right px-4 py-3 text-slate-600">{r.clicks.toLocaleString('pt-BR')}</td>
+688:                         <td className="text-right px-4 py-3 text-rose-500 font-semibold">{r.clickDropRate.toFixed(1)}%</td>
+689:                         <td className="text-right px-4 py-3 text-emerald-600 font-semibold">{r.conversions.toLocaleString('pt-BR')}</td>
+690:                         <td className="text-right px-4 py-3 text-rose-500 font-semibold">{r.conversionDropRate.toFixed(1)}%</td>
+691:                       </tr>
+692:                     ))}
+693:                   </tbody>
+694:                 </table>
+695:               </div>
+696:             )}
+697:           </div>
+698:         </div>
+699:       )}
+701:       {/* ========================================================= */}
+702:       {/* 4. SUB-ABA: INSIGHTS */}
+703:       {/* ========================================================= */}
+704:       {subTab === 'insights' && (
+705:         <div className="space-y-3">
+--- 720-770
+720:               <h4 className="text-sm font-bold text-slate-700">Nenhum insight gerado</h4>
+721:               <p className="text-xs text-slate-400 max-w-sm mx-auto">Ainda não há insights de IA para este período.</p>
+722:             </div>
+723:           ) : (
+724:             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+725:               {insightsList.map((insight) => (
+726:                 <div key={insight.id} className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 space-y-2">
+727:                   <div className="flex items-center gap-2">
+728:                     <Sparkles className="w-4 h-4 text-pink-400 shrink-0" />
+729:                     {insight.videoTitle && (
+730:                       <span className="text-[10px] font-bold text-slate-400 uppercase truncate">{insight.videoTitle}</span>
+731:                     )}
+732:                   </div>
+733:                   <p className="text-sm text-slate-700 leading-relaxed">{insight.insightText}</p>
+734:                   <p className="text-[10px] text-slate-400">
+735:                     {new Date(insight.createdAt).toLocaleDateString('pt-BR')}
+736:                   </p>
+737:                 </div>
+738:               ))}
+739:             </div>
+740:           )}
+741:         </div>
+742:       )}
+744:     </div>
+745:   );
+746: }
