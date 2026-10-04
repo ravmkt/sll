@@ -204,6 +204,7 @@ var storeWhatsappMessageTemplate = '';
 var storeWhatsappEnabled = false;
   var storeLogoUrl = '';
   var storeName = '';
+  var replyDisplayName = '';
   var appDisabledBySettings = false;
 
   var currentStories = [];
@@ -2013,7 +2014,7 @@ var query = 'comments_public?select=id,store_id,video_id,user_name,content,statu
 function readStoreSettings() {
     if (!storeId || !hasSupabase) return Promise.resolve({});
     return supabaseFetch(
-'store_settings_public?select=auto_approve_comments,whatsapp_number,whatsapp_message,whatsapp_message_template,store_name,logo_url,live_widget_config,live_player_config&store_id=eq.' + encodeURIComponent(storeId) + '&limit=1',
+'store_settings_public?select=auto_approve_comments,whatsapp_number,whatsapp_message,whatsapp_message_template,store_name,logo_url,live_widget_config,live_player_config,reply_display_name&store_id=eq.' + encodeURIComponent(storeId) + '&limit=1',
       { method: 'GET' }
     )
       .then(function (response) { if (!response.ok) return {}; return response.json(); })
@@ -2035,6 +2036,7 @@ whatsapp_message_template: store.whatsapp_message_template || '',
 whatsapp_enabled: store.whatsapp_enabled !== false,
           store_logo_url: store.logo_url || '',
           store_name: store.store_name || '',
+          reply_display_name: store.reply_display_name || '',
           live_widget_config: store.live_widget_config || null,
           live_player_config: store.live_player_config || null,
           app_enabled: store.app_enabled !== false,
@@ -3604,7 +3606,7 @@ if (replyIsVisible) {
           var replyHeader = createEl('div');
           replyHeader.style.cssText = 'display:flex;align-items:center;gap:8px;';
 
-          var displayName = storeName || 'Loja';
+          var displayName = replyDisplayName || (storeName ? String(storeName).trim().split(/\s+/)[0] : '') || 'Loja';
           var resolvedLogo = storeLogoUrl || '';
 
           if (resolvedLogo) {
@@ -7868,7 +7870,8 @@ storeWhatsappEnabled = settings.whatsapp_enabled !== false;
           if (settings.live_player_config) {
             livePlayerConfig = Object.assign({}, livePlayerConfig, settings.live_player_config);
           }
-          if (settings.store_logo_url || settings.logo_url) {
+          if (settings.reply_display_name) { replyDisplayName = String(settings.reply_display_name).trim(); }
+      if (settings.store_logo_url || settings.logo_url) {
             storeLogoUrl = normalizeMediaUrl(settings.store_logo_url || settings.logo_url);
           }
           if (settings.store_name) {
