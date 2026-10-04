@@ -1,0 +1,116 @@
+== getOverviewMetrics (176-262)
+176:   static async getOverviewMetrics(storeId: string, startDate: string, endDate: string): Promise<VidlyticsOverviewMetrics> {
+177:     const { data: dailyMetrics, error: metricsError } = await supabase
+178:       .schema('vidlytics')
+179:       .from('vid_daily_video_metrics')
+180:       .select('metric_date, views, clicks, conversions')
+181:       .eq('store_id', storeId)
+182:       .gte('metric_date', startDate)
+183:       .lte('metric_date', endDate);
+184:     if (metricsError) throw metricsError;
+186:     const { data: conversions, error: convError } = await supabase
+187:       .schema('vidlytics')
+188:       .from('vid_conversions')
+189:       .select('order_value, converted_at')
+190:       .eq('store_id', storeId)
+191:       .gte('converted_at', startDate)
+192:       .lte('converted_at', endDate);
+193:     if (convError) throw convError;
+195:     const { data: videos, error: videosError } = await supabase
+196:       .schema('vidlytics')
+197:       .from('vid_videos')
+198:       .select('id')
+199:       .eq('store_id', storeId);
+200:     if (videosError) throw videosError;
+201:     const videoIds = (videos || []).map((v: any) => v.id);
+203:     let likes: any[] = [];
+204:     let comments: any[] = [];
+206:     if (videoIds.length > 0) {
+207:       const { data: likesData, error: likesError } = await supabase
+208:         .schema('vidlytics')
+209:         .from('vid_video_likes')
+210:         .select('created_at, video_id')
+211:         .in('video_id', videoIds)
+212:         .gte('created_at', startDate)
+213:         .lte('created_at', endDate);
+214:       if (likesError) throw likesError;
+215:       likes = likesData || [];
+217:       const { data: commentsData, error: commentsError } = await supabase
+218:         .schema('vidlytics')
+219:         .from('vid_comments')
+220:         .select('created_at, video_id')
+221:         .in('video_id', videoIds)
+222:         .gte('created_at', startDate)
+223:         .lte('created_at', endDate);
+224:       if (commentsError) throw commentsError;
+225:       comments = commentsData || [];
+226:     }
+228:     const totalViews = (dailyMetrics || []).reduce((s: number, m: any) => s + (m.views || 0), 0);
+229:     const totalClicks = (dailyMetrics || []).reduce((s: number, m: any) => s + (m.clicks || 0), 0);
+230:     const totalConversions = (conversions || []).length;
+231:     const totalRevenue = (conversions || []).reduce((s: number, c: any) => s + Number(c.order_value || 0), 0);
+232:     const totalLikes = likes.length;
+233:     const totalComments = comments.length;
+234:     const ctr = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+236:     const seriesMap = new Map<string, { views: number; clicks: number; likes: number }>();
+237:     (dailyMetrics || []).forEach((m: any) => {
+238:       const key = m.metric_date;
+239:       const entry = seriesMap.get(key) || { views: 0, clicks: 0, likes: 0 };
+240:       entry.views += m.views || 0;
+241:       entry.clicks += m.clicks || 0;
+242:       seriesMap.set(key, entry);
+243:     });
+244:     likes.forEach((l: any) => {
+245:       const key = String(l.created_at).slice(0, 10);
+246:       const entry = seriesMap.get(key) || { views: 0, clicks: 0, likes: 0 };
+247:       entry.likes += 1;
+248:       seriesMap.set(key, entry);
+249:     });
+251:     const dailySeries = Array.from(seriesMap.entries())
+252:       .sort(([a], [b]) => a.localeCompare(b))
+253:       .map(([date, v]) => ({
+254:         date,
+255:         views: v.views,
+256:         clicks: v.clicks,
+257:         likes: v.likes,
+258:         ctr: v.views > 0 ? (v.clicks / v.views) * 100 : 0,
+259:       }));
+261:     return { totalViews, totalClicks, totalConversions, totalRevenue, totalLikes, totalComments, ctr, dailySeries };
+262:   }
+== getComments (445-466)
+446:     return out;
+447:   }
+449:   // --- STORIES ---
+450:   private static normalizeStory(row: any): any {
+451:     if (!row) return null;
+453:     const config = row.config || {};
+455:     return {
+456:       id: row.id,
+457:       store_id: row.store_id,
+458:       title: row.title,
+459:       name: row.title || config.name || '',
+460:       cover_url: row.cover_url || config.cover_url || '',
+461:       status: row.status || 'active',
+462:       active: row.status === 'active' || row.status === 'ATIVO' || config.active === true,
+463:       position: row.position ?? config.position ?? 0,
+464:       layout: config.layout || config.format || 'carousel',
+465:       format: config.format || config.layout || 'carousel',
+466:       scroll_direction: config.scroll_direction || config.scrollDirection || 'horizontal',
+== onde o SLL grava curtidas/comentarios
+src\lib\auth.ts:58: const { data, error } = await supabase.rpc('create_or_get_user_tenant', {
+src\services\vidlytics\VidlyticsDatabaseService.ts:209: .from('vid_video_likes')
+src\services\vidlytics\VidlyticsDatabaseService.ts:219: .from('vid_comments')
+src\services\vidlytics\VidlyticsDatabaseService.ts:345: .select('id, video_id, views_count, cta_clicks_count, likes_count, comments_count')
+src\services\vidlytics\VidlyticsDatabaseService.ts:361: cur.likes += Number(m.likes_count) || 0;
+src\services\vidlytics\VidlyticsDatabaseService.ts:618: .from('vid_comments')
+src\services\vidlytics\VidlyticsDatabaseService.ts:633: .from('vid_comments')
+src\services\vidlytics\VidlyticsDatabaseService.ts:642: .from('vid_comments')
+public\vidlytics-widget.backup-20260928-135903.js:1693: 'video_likes?select=video_id&store_id=eq.' + encodeURIComponent(storeId) +
+public\vidlytics-widget.backup-20260928-135903.js:1704: 'video_likes?select=video_id&store_id=eq.' + encodeURIComponent(storeId),
+public\vidlytics-widget.backup-20260928-135903.js:2873: videoLikeCounts[vidId] = row.likes_count;
+public\vidlytics-widget.js:1971: 'video_likes?select=video_id&store_id=eq.' + encodeURIComponent(storeId) +
+public\vidlytics-widget.js:1982: 'video_likes?select=video_id&store_id=eq.' + encodeURIComponent(storeId),
+public\vidlytics-widget.js:3152: videoLikeCounts[vidId] = row.likes_count;
+supabase\migrations\20261003_fix_video_fk.sql:1: -- Repoint FKs de comments e video_likes para vidlytics.vid_videos (tabela real)
+supabase\migrations\20261003_fix_video_fk.sql:5: alter table public.video_likes drop constraint if exists video_likes_video_id_fkey;
+supabase\migrations\20261003_fix_video_fk.sql:6: alter table public.video_likes add constraint video_likes_video_id_fkey

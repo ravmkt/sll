@@ -173,7 +173,29 @@ export class VidlyticsDatabaseService {
     }
   }
 
+  static async getVideosPerformance(storeId: string, startDate: string, endDate: string): Promise<VidlyticsVideoRow[]> {
+    const rows = await VidlyticsDatabaseService.getVideosPerformanceBase(storeId, startDate, endDate);
+    if (rows.length === 0) return rows;
+    const ids = rows.map((r) => r.id);
+    const endTs = endDate.length <= 10 ? endDate + 'T23:59:59.999Z' : endDate;
+
+    const [likesRes, commentsRes] = await Promise.all([
+      supabase.from('video_likes').select('video_id').eq('store_id', storeId).in('video_id', ids).gte('created_at', startDate).lte('created_at', endTs),
+      supabase.from('comments').select('video_id').eq('store_id', storeId).in('video_id', ids).gte('created_at', startDate).lte('created_at', endTs),
+    ]);
+    if (likesRes.error) throw likesRes.error;
+    if (commentsRes.error) throw commentsRes.error;
+
+    const likeMap = new Map<string, number>();
+    (likesRes.data || []).forEach((l: any) => likeMap.set(l.video_id, (likeMap.get(l.video_id) || 0) + 1));
+    const commentMap = new Map<string, number>();
+    (commentsRes.data || []).forEach((c: any) => commentMap.set(c.video_id, (commentMap.get(c.video_id) || 0) + 1));
+
+    return rows.map((r) => ({ ...r, likes: likeMap.get(r.id) || 0, comments: commentMap.get(r.id) || 0 }));
+  }
+
   static async getOverviewMetrics(storeId: string, startDate: string, endDate: string): Promise<VidlyticsOverviewMetrics> {
+    const endTs = endDate.length <= 10 ? endDate + 'T23:59:59.999Z' : endDate;
     const { data: dailyMetrics, error: metricsError } = await supabase
       .schema('vidlytics')
       .from('vid_daily_video_metrics')
@@ -205,22 +227,20 @@ export class VidlyticsDatabaseService {
 
     if (videoIds.length > 0) {
       const { data: likesData, error: likesError } = await supabase
-        .schema('vidlytics')
-        .from('vid_video_likes')
+        .from('video_likes')
         .select('created_at, video_id')
         .in('video_id', videoIds)
         .gte('created_at', startDate)
-        .lte('created_at', endDate);
+        .lte('created_at', endTs);
       if (likesError) throw likesError;
       likes = likesData || [];
 
       const { data: commentsData, error: commentsError } = await supabase
-        .schema('vidlytics')
-        .from('vid_comments')
+        .from('comments')
         .select('created_at, video_id')
         .in('video_id', videoIds)
         .gte('created_at', startDate)
-        .lte('created_at', endDate);
+        .lte('created_at', endTs);
       if (commentsError) throw commentsError;
       comments = commentsData || [];
     }
@@ -334,7 +354,7 @@ export class VidlyticsDatabaseService {
     return map;
   }
 
-  static async getVideosPerformance(storeId: string, startDate: string, endDate: string): Promise<VidlyticsVideoRow[]> {
+  static async getVideosPerformanceBase(storeId: string, startDate: string, endDate: string): Promise<VidlyticsVideoRow[]> {
     const db: any = supabase;
     const { startDay, endDay } = this.periodRange(startDate, endDate);
     const [allVideos, metrics, conversions] = await Promise.all([
