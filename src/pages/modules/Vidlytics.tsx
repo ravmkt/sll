@@ -1,3 +1,4 @@
+import { AppFooter } from '@/components/layout/AppFooter';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
@@ -112,16 +113,7 @@ export default function Vidlytics() {
           {activeTab === 'aparencia' && <AparenciaTab />}
         </main>
 
-        {/* RODAPÉ */}
-        <footer className="mt-auto py-4 px-6 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-400 bg-white">
-          <span>&copy; {new Date().getFullYear()} Vidlytics. Todos os direitos reservados.</span>
-          <div className="flex items-center gap-1.5">
-            <span>DESENVOLVIDO POR:</span>
-            <span className="font-bold text-slate-600 flex items-center gap-1">
-              <span>RAV Marketing e Treinamento LTDA</span>
-            </span>
-          </div>
-        </footer>
+        <AppFooter />
       </div>
     </div>
   );

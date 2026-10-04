@@ -1,3 +1,4 @@
+import { AppFooter } from '@/components/layout/AppFooter';
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
@@ -33,6 +34,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="p-8 flex-1">
           {children}
         </div>
+      <AppFooter />
       </main>
     </div>
   );

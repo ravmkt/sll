@@ -1,3 +1,4 @@
+import { AppFooter } from '@/components/layout/AppFooter';
 import { useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 
@@ -112,21 +113,7 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Rodapé claro para contrastar com o fundo escuro */}
-      <footer className="mt-6 text-center text-sm text-slate-300 relative z-10 drop-shadow-md">
-        <p>&copy; {new Date().getFullYear()} Sistema Loja Lucrativa. Todos os direitos reservados.</p>
-        <p className="mt-1">
-          <a 
-            href="https://sistemalojalucrativa.com.br" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="font-medium hover:text-white transition-all"
-            style={{ color: '#fd8539' }}
-          >
-            sistemalojalucrativa.com.br
-          </a>
-        </p>
-      </footer>
+      <div className="mt-6 w-full relative z-10 rounded-lg overflow-hidden"><AppFooter /></div>
     </div>
   );
 }

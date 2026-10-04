@@ -1,3 +1,4 @@
+import { AppFooter } from '@/components/layout/AppFooter';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, Sparkles, CheckCircle2, ArrowRight, Zap, PlayCircle, LogOut } from 'lucide-react';
@@ -78,10 +79,7 @@ export default function PlanosGatePage() {
         </div>
       </main>
 
-      {/* Rodapé */}
-      <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-600">
-        © {new Date().getFullYear()} Sistema Loja Lucrativa (SLL) — Todos os direitos reservados.
-      </footer>
+      <AppFooter />
     </div>
   );
 }
