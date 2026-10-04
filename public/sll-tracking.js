@@ -64,7 +64,9 @@
 
   function sendConversion(order) {
     if (alreadySent) return;
+    function isTagId(v) { return /^(GTM|G|UA|AW|DC|GT)-[A-Z0-9]+$/i.test(String(v).trim()); }
     if (!order || !order.order_id) return;
+    if (isTagId(order.order_id)) return;
 
     alreadySent = true;
     var attribution = getAttribution();
@@ -104,7 +106,7 @@
   }
 
   var params = new URLSearchParams(window.location.search);
-  var urlOrderId = params.get("order_id") || params.get("pedido") || params.get("id");
+  var urlOrderId = params.get("order_id") || params.get("pedido");
   var urlTotal = params.get("total") || params.get("valor");
   if (urlOrderId) {
     sendConversion({ order_id: urlOrderId, total: urlTotal });

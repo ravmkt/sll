@@ -247,7 +247,18 @@ export class VidlyticsDatabaseService {
       .sort((a: any, b: any) => String(a.date).localeCompare(String(b.date)))
       .map((p: any) => ({ ...p, ctr: p.views > 0 ? (p.clicks / p.views) * 100 : 0 }));
     const ctr = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
-    return { ...base, totalViews, totalClicks, ctr, dailySeries };
+    const endTsC = endDate.length <= 10 ? endDate + 'T23:59:59.999Z' : endDate;
+    const { data: convRows, error: convErr } = await supabase
+      .from('sll_conversions')
+      .select('total, source_id, created_at')
+      .eq('store_id', storeId)
+      .eq('module', 'vidlytics')
+      .gte('created_at', startDate)
+      .lte('created_at', endTsC);
+    if (convErr) throw convErr;
+    const totalConversions = (convRows || []).length;
+    const totalRevenue = (convRows || []).reduce((s: number, c: any) => s + Number(c.total || 0), 0);
+    return { ...base, totalViews, totalClicks, totalConversions, totalRevenue, ctr, dailySeries };
   }
 
   static async getOverviewMetricsBase(storeId: string, startDate: string, endDate: string): Promise<VidlyticsOverviewMetrics> {
