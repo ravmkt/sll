@@ -125,19 +125,7 @@ const AparenciaTab: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* SEÇÃO 1: TEMPLATES (Carrossel Horizontal com Mockups) */}
-          <section className="space-y-2">
-            <div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white">Templates</h3>
-            </div>
-            <TemplatesCarousel
-              templates={defaultAppearances}
-              onView={openEditStyle}
-              onSetDefault={setAsDefault}
-            />
-          </section>
-
-          {/* SEÇÃO 2: SEUS ESTILOS */}
+          {/* SEÇÃO 1: SEUS ESTILOS */}
           <section>
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -168,6 +156,18 @@ const AparenciaTab: React.FC = () => {
                 ))}
               </StyleTable>
             )}
+          </section>
+
+          {/* SEÇÃO 2: TEMPLATES (Carrossel Horizontal com Mockups) */}
+          <section className="space-y-2">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">Templates</h3>
+            </div>
+            <TemplatesCarousel
+              templates={defaultAppearances}
+              onView={openEditStyle}
+              onSetDefault={setAsDefault}
+            />
           </section>
         </>
       )}
