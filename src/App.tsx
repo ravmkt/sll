@@ -1,4 +1,4 @@
-﻿import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useAuth } from './contexts/AuthContext';
@@ -46,6 +46,7 @@ function AppRoutes() {
 
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard/products" element={<Navigate to="/dashboard/produtos" replace />} />
         <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
         <Route path="/auth/instagram/callback" element={<InstagramCallback />} />
 
@@ -115,7 +116,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/dashboard/products"
+          path="/dashboard/produtos"
           element={
             user ? (
               <SubscriptionGate>

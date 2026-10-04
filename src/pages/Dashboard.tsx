@@ -81,7 +81,7 @@ export default function Dashboard() {
 
           {/* Catálogo de Produtos */}
           <Link
-            to="/dashboard/products"
+            to="/dashboard/produtos"
             className="bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:border-emerald-500 hover:shadow-md transition-all group block cursor-pointer"
           >
             <div className="w-12 h-12 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
