@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -32,10 +32,10 @@ export function VidlyticsSidebar({
   const menuItems: { id: VidlyticsTab; label: string; icon: React.ElementType }[] = [
     { id: 'visao-geral', label: 'Visão Geral', icon: LayoutDashboard },
     { id: 'resultados', label: 'Resultados & Métricas', icon: TrendingUp },
-    { id: 'stories', label: 'Stories & Vídeos', icon: Film },
-    { id: 'biblioteca', label: 'Biblioteca de Mídia', icon: FolderKanban },
+    { id: 'stories', label: 'Stories', icon: Film },
+    { id: 'biblioteca', label: 'Biblioteca', icon: FolderKanban },
     { id: 'comentarios', label: 'Comentários', icon: MessageSquare },
-    { id: 'aparencia', label: 'Aparência & Widget', icon: Palette },
+    { id: 'aparencia', label: 'Aparência', icon: Palette },
   ];
 
   return (
