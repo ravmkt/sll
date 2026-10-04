@@ -117,7 +117,7 @@ export const ComentariosTab: React.FC = () => {
       setComments(commentRows);
 
       const commentIds = commentRows.map((c) => c.id);
-      const replyRows = await VidlyticsDatabaseService.getCommentReplies(commentIds);
+      const replyRows = await VidlyticsDatabaseService.getCommentReplies(commentIds, storeBranding.replyDisplayName);
       const replyMap: Record<string, VidlyticsCommentReply[]> = {};
       commentIds.forEach((id) => (replyMap[id] = []));
       replyRows.forEach((r) => {
@@ -131,19 +131,34 @@ export const ComentariosTab: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  }, [storeId, storeBranding.replyDisplayName]);
+
+  useEffect(() => {
+    if (!storeId) return;
+    VidlyticsDatabaseService.getAutoApprove(storeId)
+      .then(setAutoApprove)
+      .catch((err) => console.error('Erro ao ler moderação:', err));
   }, [storeId]);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('vidlytics_auto_approve_comments');
-    if (saved) setAutoApprove(saved === 'true');
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('vidlytics_auto_approve_comments', String(autoApprove));
-  }, [autoApprove]);
+  const handleToggleAutoApprove = async () => {
+    if (!storeId) return;
+    const next = !autoApprove;
+    setAutoApprove(next);
+    try {
+      await VidlyticsDatabaseService.setAutoApprove(storeId, next);
+      showToast(next ? 'Aprovação automática ativada.' : 'Aprovação automática desativada. Novos comentários ficam pendentes.');
+    } catch (err) {
+      console.error(err);
+      setAutoApprove(!next);
+      toast.error('Erro ao salvar a moderação.');
+    }
+  };
 
   useEffect(() => {
     if (!storeLoading && storeId) loadComments();
+    const onFocus = () => { if (!storeLoading && storeId) loadComments(); };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, [storeLoading, storeId, loadComments]);
 
   const handleApprove = async (commentId: string) => {
@@ -230,7 +245,7 @@ export const ComentariosTab: React.FC = () => {
 
       setReplies((prev) => ({
         ...prev,
-        [selectedCommentId]: [...(prev[selectedCommentId] || []), reply],
+        [selectedCommentId]: [reply],
       }));
 
       setReplyModalOpen(false);
@@ -342,7 +357,7 @@ export const ComentariosTab: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => setAutoApprove(!autoApprove)}
+              onClick={handleToggleAutoApprove}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                 autoApprove ? 'bg-[#0094eb]' : 'bg-slate-200'
               }`}

@@ -688,60 +688,101 @@ export class VidlyticsDatabaseService {
       return false;
     }
   }
-  // --- COMMENTS ---
+  // --- COMMENTS (fonte unica: public.comments, a mesma usada pelo widget) ---
+  private static toUiStatus(s: string | null): VidlyticsComment['status'] {
+    const v = String(s || '').toLowerCase();
+    if (v === 'approved' || v === 'aprovado') return 'APROVADO';
+    if (v === 'rejected' || v === 'rejeitado') return 'REJEITADO';
+    return 'PENDENTE';
+  }
+
+  private static toDbStatus(s: VidlyticsComment['status']): string {
+    return s === 'APROVADO' ? 'approved' : s === 'REJEITADO' ? 'rejected' : 'pending';
+  }
+
+  static async getAutoApprove(storeId: string): Promise<boolean> {
+    const db: any = supabase;
+    const { data, error } = await db
+      .from('store_settings')
+      .select('auto_approve_comments')
+      .eq('store_id', storeId)
+      .maybeSingle();
+    if (error) throw error;
+    return data?.auto_approve_comments === true;
+  }
+
+  static async setAutoApprove(storeId: string, value: boolean): Promise<void> {
+    const db: any = supabase;
+    const { data, error } = await db
+      .from('store_settings')
+      .update({ auto_approve_comments: value, updated_at: new Date().toISOString() })
+      .eq('store_id', storeId)
+      .select('store_id');
+    if (error) throw error;
+    if (!data || data.length === 0) throw new Error('Configuracao da loja nao encontrada.');
+  }
+
   static async getComments(storeId: string): Promise<VidlyticsComment[]> {
-    const { data: videos, error: videosError } = await supabase
-      .schema('vidlytics')
-      .from('vid_videos')
-      .select('id')
-      .eq('store_id', storeId);
-    if (videosError) throw videosError;
-
-    const videoIds = (videos || []).map((v: any) => v.id);
-    if (videoIds.length === 0) return [];
-
-    const { data, error } = await supabase
-      .schema('vidlytics')
-      .from('vid_comments')
-      .select('*')
-      .in('video_id', videoIds)
+    const db: any = supabase;
+    const { data, error } = await db
+      .from('comments')
+      .select('id, video_id, user_name, content, status, created_at')
+      .eq('store_id', storeId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-
-    return (data || []) as VidlyticsComment[];
+    return (data || []).map((r: any): VidlyticsComment => ({
+      id: r.id,
+      video_id: r.video_id,
+      author_name: r.user_name || null,
+      content: r.content,
+      status: VidlyticsDatabaseService.toUiStatus(r.status),
+      created_at: r.created_at || null,
+    }));
   }
 
   static async updateCommentStatus(
     commentId: string,
     status: VidlyticsComment['status']
   ): Promise<void> {
-    const { error } = await supabase
-      .schema('vidlytics')
-      .from('vid_comments')
-      .update({ status })
+    const db: any = supabase;
+    const { error } = await db
+      .from('comments')
+      .update({ status: VidlyticsDatabaseService.toDbStatus(status), updated_at: new Date().toISOString() })
       .eq('id', commentId);
     if (error) throw error;
   }
 
   static async deleteComment(commentId: string): Promise<void> {
-    const { error } = await supabase
-      .schema('vidlytics')
-      .from('vid_comments')
-      .delete()
-      .eq('id', commentId);
+    const db: any = supabase;
+    const { error } = await db.from('comments').delete().eq('id', commentId);
     if (error) throw error;
   }
 
-  static async getCommentReplies(commentIds: string[]): Promise<VidlyticsCommentReply[]> {
+  static async getCommentReplies(commentIds: string[], authorName: string = 'Loja'): Promise<VidlyticsCommentReply[]> {
     if (commentIds.length === 0) return [];
-    const { data, error } = await supabase
-      .schema('vidlytics')
-      .from('vid_comment_replies')
-      .select('*')
-      .in('comment_id', commentIds)
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    return (data || []) as VidlyticsCommentReply[];
+    const db: any = supabase;
+    const out: VidlyticsCommentReply[] = [];
+    for (let i = 0; i < commentIds.length; i += 100) {
+      const chunk = commentIds.slice(i, i + 100);
+      const { data, error } = await db
+        .from('comments')
+        .select('id, store_id, reply_content, created_at, updated_at')
+        .in('id', chunk)
+        .not('reply_content', 'is', null);
+      if (error) throw error;
+      (data || []).forEach((r: any) => {
+        if (!String(r.reply_content || '').trim()) return;
+        out.push({
+          id: `${r.id}-reply`,
+          comment_id: r.id,
+          store_id: r.store_id,
+          author_name: authorName,
+          content: r.reply_content,
+          created_at: r.updated_at || r.created_at || null,
+        });
+      });
+    }
+    return out;
   }
 
   static async addCommentReply(
@@ -750,14 +791,17 @@ export class VidlyticsDatabaseService {
     authorName: string,
     content: string
   ): Promise<VidlyticsCommentReply> {
-    const { data, error } = await supabase
-      .schema('vidlytics')
-      .from('vid_comment_replies')
-      .insert({ comment_id: commentId, store_id: storeId, author_name: authorName, content })
-      .select()
-      .single();
+    const db: any = supabase;
+    const now = new Date().toISOString();
+    const { data, error } = await db
+      .from('comments')
+      .update({ reply_content: content, reply_status: 'published', updated_at: now })
+      .eq('id', commentId)
+      .eq('store_id', storeId)
+      .select('id');
     if (error) throw error;
-    return data as VidlyticsCommentReply;
+    if (!data || data.length === 0) throw new Error('Comentario nao encontrado.');
+    return { id: `${commentId}-reply`, comment_id: commentId, store_id: storeId, author_name: authorName, content, created_at: now };
   }
 }
 
