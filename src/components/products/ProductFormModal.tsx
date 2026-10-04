@@ -92,7 +92,7 @@ export default function ProductFormModal({ storeId, product, categories, onClose
         </div>
         <div className="flex items-center gap-3">
           <span className={labelCls}>Produto ativo?</span>
-          <button type="button" onClick={() => setActive(!active)} className={cn('relative inline-flex h-7 w-12 items-center rounded-full transition-colors cursor-pointer', active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600')}>
+          <button type="button" onClick={() => setActive(!active)} className={cn('relative inline-flex h-7 w-12 items-center rounded-full transition-colors cursor-pointer', active ? 'bg-[#0094eb]' : 'bg-slate-300 dark:bg-slate-600')}>
             <span className={cn('inline-block h-5 w-5 rounded-full bg-white shadow transition-transform', active ? 'translate-x-6' : 'translate-x-1')} />
           </button>
           <span className="text-xs font-semibold text-slate-500">{active ? 'Ativo' : 'Desativado'}</span>

@@ -147,14 +147,14 @@ export default function Products() {
             <p className="text-sm text-slate-500 dark:text-slate-400">Base central de produtos, compartilhada com todos os seus módulos SLL.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition cursor-pointer">
+            <button type="button" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] hover:bg-[#007bc4] px-4 py-2.5 text-sm font-semibold text-white transition cursor-pointer">
               <Plus size={16} /> Novo produto
             </button>
-            <button type="button" onClick={() => setCatsOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition cursor-pointer">
-              <Tag size={15} className="text-emerald-500" /> Categorias
+            <button type="button" onClick={() => setCatsOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-[#0094eb] transition cursor-pointer">
+              <Tag size={15} className="text-[#0094eb]" /> Categorias
             </button>
-            <button type="button" onClick={() => setImportOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition cursor-pointer">
-              <Upload size={15} className="text-emerald-500" /> Importar produtos
+            <button type="button" onClick={() => setImportOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-[#0094eb] transition cursor-pointer">
+              <Upload size={15} className="text-[#0094eb]" /> Importar produtos
             </button>
           </div>
         </div>
@@ -187,9 +187,9 @@ export default function Products() {
           <div className="flex flex-col items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-[#111524] p-3 sm:flex-row">
             <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
               <span>{sorted.length} {sorted.length === 1 ? 'produto encontrado' : 'produtos encontrados'}</span>
-              {selected.size > 0 && <span className="rounded-full bg-emerald-500/10 px-3 py-0.5 text-emerald-600">{selected.size} selecionados</span>}
+              {selected.size > 0 && <span className="rounded-full bg-[#0094eb]/10 px-3 py-0.5 text-[#0094eb]">{selected.size} selecionados</span>}
               {selected.size > 0 && !allFiltered && (
-                <button type="button" onClick={() => setSelected(new Set(sorted.map((p) => p.id)))} className="text-emerald-600 underline cursor-pointer">Selecionar todos os {sorted.length}</button>
+                <button type="button" onClick={() => setSelected(new Set(sorted.map((p) => p.id)))} className="text-[#0094eb] underline cursor-pointer">Selecionar todos os {sorted.length}</button>
               )}
             </div>
             <div className="flex items-center gap-3">
@@ -210,7 +210,7 @@ export default function Products() {
           </div>
 
           {loading || lojaLoading ? (
-            <div className="flex justify-center py-16"><Loader2 className="animate-spin text-emerald-500" /></div>
+            <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[#0094eb]" /></div>
           ) : !storeId ? (
             <p className="py-12 text-center text-sm text-slate-500">Nenhuma loja vinculada à sua conta.</p>
           ) : (
@@ -230,7 +230,7 @@ export default function Products() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {pageItems.map((p) => (
-                    <tr key={p.id} className={cn('transition-colors', selected.has(p.id) ? 'bg-emerald-500/5' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}>
+                    <tr key={p.id} className={cn('transition-colors', selected.has(p.id) ? 'bg-[#0094eb]/5' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}>
                       <td className="px-4 py-3 text-center"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleOne(p.id)} className="h-4 w-4 cursor-pointer" /></td>
                       <td className="px-4 py-3">
                         <div className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#111524]">
@@ -244,7 +244,7 @@ export default function Products() {
                       <td className="px-4 py-3 text-center font-mono text-xs font-bold text-slate-800 dark:text-white">{brl(p.price)}</td>
                       <td className="px-4 py-3 text-center">
                         <span className="inline-flex max-w-[140px] items-center gap-1 truncate rounded-lg bg-slate-100 dark:bg-[#111524] px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                          <Tag size={11} className="shrink-0 text-emerald-500" />
+                          <Tag size={11} className="shrink-0 text-[#0094eb]" />
                           <span className="truncate">{p.category || 'Sem categoria'}</span>
                         </span>
                       </td>
@@ -252,13 +252,13 @@ export default function Products() {
                         <span className="rounded-full border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">{ORIGIN[p.origin || ''] ?? (p.origin || '—')}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button type="button" onClick={() => toggleStatus(p)} className={cn('h-7 w-[100px] rounded-lg border text-[10px] font-bold uppercase cursor-pointer transition', p.active ? 'border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-800/40 dark:bg-emerald-950/30 dark:text-emerald-400' : 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800/40 dark:bg-rose-950/30 dark:text-rose-400')}>
+                        <button type="button" onClick={() => toggleStatus(p)} className={cn('h-7 w-[100px] rounded-lg border text-[10px] font-bold uppercase cursor-pointer transition', p.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb] dark:border-[#0094eb]/30 dark:bg-[#0094eb]/10 dark:text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800/40 dark:bg-rose-950/30 dark:text-rose-400')}>
                           {p.active ? 'Ativo' : 'Desativado'}
                         </button>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button type="button" title="Editar" onClick={() => { setEditing(p); setFormOpen(true); }} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>
+                          <button type="button" title="Editar" onClick={() => { setEditing(p); setFormOpen(true); }} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>
                           <button type="button" title="Excluir" onClick={() => setDel({ ids: [p.id], label: `"${p.name}"` })} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/40 cursor-pointer"><Trash2 size={15} /></button>
                         </div>
                       </td>

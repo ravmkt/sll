@@ -12,7 +12,7 @@ type Props = { storeId: string; onClose: () => void; onImported: () => void };
 const brl = (n: number) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const tabCls = (on: boolean) =>
   cn('flex-1 py-3 text-sm font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer transition',
-    on ? 'border-b-2 border-emerald-500 text-emerald-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300');
+    on ? 'border-b-2 border-[#0094eb] text-[#0094eb]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300');
 
 export default function ImportModal({ storeId, onClose, onImported }: Props) {
   const [tab, setTab] = useState<'xml' | 'sheet'>('xml');
@@ -151,7 +151,7 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-slate-900 dark:text-white">{items.length} produtos encontrados ({withSku.length} com SKU)</p>
-              {selected.size > 0 && <p className="mt-0.5 text-xs font-semibold text-emerald-600">{selected.size} selecionados</p>}
+              {selected.size > 0 && <p className="mt-0.5 text-xs font-semibold text-[#0094eb]">{selected.size} selecionados</p>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <input placeholder="Buscar nome ou SKU..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className={cn(inputCls, '!w-48 !py-1.5 !text-xs')} />
@@ -171,7 +171,7 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
               <input type="checkbox" checked={allVisible} onChange={(e) => setMany(pageRows.filter((r) => r.sku).map((r) => r.i), e.target.checked)} className="h-3.5 w-3.5" />
               Selecionar visíveis
             </label>
-            <button type="button" onClick={() => setMany(withSku, true)} className="text-emerald-600 underline cursor-pointer">Selecionar todos com SKU ({withSku.length})</button>
+            <button type="button" onClick={() => setMany(withSku, true)} className="text-[#0094eb] underline cursor-pointer">Selecionar todos com SKU ({withSku.length})</button>
             <button type="button" onClick={() => setSelected(new Set())} className="text-slate-400 underline cursor-pointer">Limpar seleção</button>
           </div>
           <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800">
@@ -203,9 +203,9 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
           </div>
           {pages > 1 && (
             <div className="flex items-center justify-between text-xs">
-              <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)} className="font-semibold text-emerald-600 disabled:opacity-30 cursor-pointer">← Anterior</button>
+              <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)} className="font-semibold text-[#0094eb] disabled:opacity-30 cursor-pointer">← Anterior</button>
               <span className="text-slate-400">{safePage} / {pages}</span>
-              <button type="button" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)} className="font-semibold text-emerald-600 disabled:opacity-30 cursor-pointer">Próximo →</button>
+              <button type="button" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)} className="font-semibold text-[#0094eb] disabled:opacity-30 cursor-pointer">Próximo →</button>
             </div>
           )}
           <div className="flex gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
@@ -219,8 +219,8 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
 
       {stage === 'report' && report && (
         <div className="p-6 space-y-4">
-          <div className="flex items-center gap-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 p-4">
-            <CheckCircle2 className="text-emerald-500" />
+          <div className="flex items-center gap-3 rounded-xl bg-[#0094eb]/10 dark:bg-[#0094eb]/10 p-4">
+            <CheckCircle2 className="text-[#0094eb]" />
             <p className="text-sm font-semibold text-slate-800 dark:text-white">{report.imported} produto(s) importado(s)</p>
           </div>
           {report.discarded.length > 0 && (

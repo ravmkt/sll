@@ -2,13 +2,13 @@ import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 
 export const inputCls =
-  'w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#111524] px-4 py-2.5 text-sm text-slate-800 dark:text-white outline-none focus:border-emerald-500 transition';
+  'w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#111524] px-4 py-2.5 text-sm text-slate-800 dark:text-white outline-none focus:border-[#0094eb] transition';
 export const primaryBtn =
-  'inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-50 cursor-pointer';
+  'inline-flex items-center justify-center gap-2 rounded-xl bg-[#0094eb] hover:bg-[#007bc4] px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-50 cursor-pointer';
 export const ghostBtn =
   'inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 transition cursor-pointer';
 export const fileCls =
-  'text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white file:cursor-pointer';
+  'text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-[#0094eb] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white file:cursor-pointer';
 export const labelCls = 'text-sm font-semibold text-slate-700 dark:text-slate-300';
 export const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Erro inesperado.');
 
