@@ -270,7 +270,10 @@ export const ComentariosTab: React.FC = () => {
     return matchesSearch && matchesStatus && matchesVideo;
   });
 
-  const videoOptions = Object.entries(videos).map(([id, title]) => ({ id, title }));
+  const commentVideoIds = new Set(comments.map((c) => c.video_id));
+  const videoOptions = Object.entries(videos)
+    .filter(([id]) => commentVideoIds.has(id) || id === videoFilter)
+    .map(([id, title]) => ({ id, title }));
 
   const getStatusBadge = (status: VidlyticsComment['status']) => {
     switch (status) {
