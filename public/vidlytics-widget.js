@@ -4710,7 +4710,7 @@ var bubbleAutoplay = (function () {
           if (!bubbleTtIf.isConnected && bubbleTtIf.getAttribute('data-seen')) { window.removeEventListener('message', bubbleTtMsg); return; }
           if (!bubbleTtIf.contentWindow || ev.source !== bubbleTtIf.contentWindow) return;
           bubbleTtIf.setAttribute('data-seen', '1');
-          bubbleTtIf.contentWindow.postMessage({ type: 'mute', 'x-tiktok-player': true }, '*');
+          var _bw = bubbleTtIf.contentWindow; var _bc = function (ty) { try { _bw.postMessage({ type: ty, 'x-tiktok-player': true }, '*'); } catch (e) {} }; _bc('mute'); _bc('play'); if (!bubbleTtIf.getAttribute('data-retry')) { bubbleTtIf.setAttribute('data-retry', '1'); setTimeout(function () { _bc('mute'); _bc('play'); }, 1000); setTimeout(function () { _bc('mute'); _bc('play'); }, 2500); }
         });
         inner.appendChild(bubbleTtIf);
       } else if (bubbleAutoplay && bubbleVideoUrl) {
