@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
+import TikTokImportModal from "@/components/vidlytics/TikTokImportModal";
 
 interface VidVideo {
   id: string;
@@ -237,6 +238,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const editVideoFileRef = useRef<HTMLInputElement>(null);
   const editThumbFileRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [tiktokOpen, setTiktokOpen] = useState<boolean>(false);
 
   // Resolver store_id
   useEffect(() => {
@@ -960,14 +962,17 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             INSTAGRAM
           </button>
 
-          <button
+          <>
+<button
             type="button"
             className="h-10 w-full xl:w-[140px] px-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 hover:border-slate-300 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition whitespace-nowrap cursor-pointer"
-            onClick={() => alert("Módulo TikTok em breve.")}
+            onClick={() => setTiktokOpen(true)}
           >
             <IconTikTok className="w-4 h-4 flex-shrink-0 text-slate-900" />
             TIKTOK
           </button>
+{tiktokOpen && (<TikTokImportModal storeId={storeId} onClose={() => { setTiktokOpen(false); fetchVideos(); }} />)}
+</>
 
           <button
             type="button"
