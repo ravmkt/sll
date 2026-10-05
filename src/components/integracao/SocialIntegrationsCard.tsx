@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import { startTikTokConnect } from "@/services/socialIntegrationsService";
 import { AlertCircle, RefreshCw, Unlink, Loader2 } from "lucide-react";
 
 interface SocialAccount {
@@ -83,6 +85,16 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     }
   }, [fetchIntegrations]);
 
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const st = p.get("tiktok");
+    if (!st) return;
+    if (st === "connected") toast.success("TikTok conectado com sucesso!");
+    else toast.error(p.get("message") || "Falha ao conectar o TikTok.");
+    window.history.replaceState({}, document.title, window.location.pathname);
+    fetchIntegrations();
+  }, [fetchIntegrations]);
+
   const handleConnectInstagram = () => {
     if (!storeId) {
       alert("Selecione ou cadastre uma loja primeiro.");
@@ -107,24 +119,16 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     window.location.href = authUrl;
   };
 
-  const handleConnectTikTok = () => {
+  const handleConnectTikTok = async () => {
     if (!storeId) {
       alert("Selecione ou cadastre uma loja primeiro.");
       return;
     }
-
-    const clientKey = import.meta.env.VITE_TIKTOK_CLIENT_KEY || "sbaw4swn8vca0a5p25";
-    const redirectUri = `${window.location.origin}/auth/tiktok/callback`;
-    const scope = "user.info.basic,video.list";
-    const csrfState = `${storeId}_${Math.random().toString(36).substring(7)}`;
-
-    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=${encodeURIComponent(
-      scope
-    )}&response_type=code&redirect_uri=${encodeURIComponent(
-      redirectUri
-    )}&state=${csrfState}`;
-
-    window.location.href = authUrl;
+    try {
+      await startTikTokConnect(storeId);
+    } catch (e) {
+      alert((e as Error).message);
+    }
   };
 
   const handleDisconnect = async (provider: string) => {
@@ -157,8 +161,8 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
   const igAccount = getStatus("instagram");
   const ttAccount = getStatus("tiktok");
 
-  const isIgConnected = Boolean(igAccount && (igAccount.status === "connected" || !igAccount.status));
-  const isTtConnected = Boolean(ttAccount && (ttAccount.status === "connected" || !ttAccount.status));
+  const isIgConnected = Boolean(igAccount && igAccount.status !== "expired" && igAccount.status !== "disconnected");
+  const isTtConnected = Boolean(ttAccount && ttAccount.status !== "expired" && ttAccount.status !== "disconnected");
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-10 shadow-sm space-y-6">
