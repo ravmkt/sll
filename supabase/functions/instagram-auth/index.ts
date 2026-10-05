@@ -37,10 +37,10 @@ serve(async (req) => {
       client_secret: APP_SECRET,
       grant_type: 'authorization_code',
       redirect_uri: FINAL_REDIRECT_URI,
-      code: code,
+      code: code.replace(/#_$/, "").trim(),
     });
 
-    const tokenResponse = await fetch('https://graph.instagram.com/oauth/access_token', {
+    const tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: exchangeBody.toString(),
