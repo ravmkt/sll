@@ -4,6 +4,7 @@ import { CatalogProduct, saveProduct } from '@/services/productsService';
 import { showError, showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { Modal, errMsg, fileCls, ghostBtn, inputCls, labelCls, primaryBtn } from './Modal';
+import { VariantsPanel } from './ProductVariants';
 
 type Props = {
   storeId: string;
@@ -83,8 +84,8 @@ export default function ProductFormModal({ storeId, product, categories, onClose
           </select>
         </div>
         <div>
-          <label className={labelCls}>Preço (R$) *</label>
-          <input type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" className={cn(inputCls, 'mt-2')} />
+          <label className={labelCls}>Preço (R$) *{product?.origin === 'yampi' && <span className="ml-2 normal-case font-medium text-slate-400">(controlado pela Yampi)</span>}</label>
+          <input type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" readOnly={product?.origin === 'yampi'} className={cn(inputCls, 'mt-2', product?.origin === 'yampi' && 'opacity-60 cursor-not-allowed')} />
         </div>
         <div>
           <label className={labelCls}>Link do produto</label>
@@ -97,6 +98,14 @@ export default function ProductFormModal({ storeId, product, categories, onClose
           </button>
           <span className="text-xs font-semibold text-slate-500">{active ? 'Ativo' : 'Desativado'}</span>
         </div>
+        {product && product.origin === 'yampi' && (
+          <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+            <label className={labelCls}>Estoque e variações</label>
+            <div className="mt-3">
+              <VariantsPanel product={{ id: product.id, name: product.name, origin: product.origin }} storeId={storeId} onChanged={onSaved} />
+            </div>
+          </div>
+        )}
         <div className="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
           <button type="button" onClick={onClose} className={ghostBtn}>Cancelar</button>
           <button type="submit" disabled={saving} className={primaryBtn}>
