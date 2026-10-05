@@ -2897,6 +2897,36 @@ var payload = {
       tkIframe.src = buildTikTokSrc(tkId, url);
       tkIframe.setAttribute('data-tt', '1');
       tkIframe.setAttribute('data-is-paused', 'false');
+      var ttSessionId = generateSessionId();
+      currentPlaybackSessionId = ttSessionId;
+      var ttLastSecond = -1, ttLastTime = 0, ttMaxTime = 0, ttDuration = 0, ttDone = false;
+      var ttComplete = function () {
+        if (ttDone) return;
+        ttDone = true;
+        sendAnalyticsEvent('story_complete', video ? video.id : null, null, { sessionId: ttSessionId });
+      };
+      var ttTrack = function (d) {
+        if (d.type === 'onStateChange') {
+          if (d.value === 0) ttComplete();
+          return;
+        }
+        if (d.type !== 'onCurrentTime') return;
+        var v = d.value;
+        var t = Number(v && typeof v === 'object' ? v.currentTime : v);
+        var dur = Number(v && typeof v === 'object' ? v.duration : 0);
+        if (!isFinite(t) || t < 0) return;
+        if (dur > 0) ttDuration = dur;
+        if (ttDone) return;
+        if (ttDuration > 0 && ttLastTime - t > 1 && ttMaxTime >= ttDuration * 0.8) { ttComplete(); return; }
+        ttLastTime = t;
+        if (t > ttMaxTime) ttMaxTime = t;
+        var sec = Math.floor(t);
+        if (sec !== ttLastSecond) {
+          ttLastSecond = sec;
+          sendAnalyticsEvent('progress', video ? video.id : null, null, { sessionId: ttSessionId, watchSecond: sec });
+        }
+        if (ttDuration > 0 && t >= ttDuration - 0.5) ttComplete();
+      };
       var ttOnMsg = function (ev) {
         if (!tkIframe.isConnected && tkIframe.getAttribute('data-tt-seen')) { window.removeEventListener('message', ttOnMsg); return; }
         if (!tkIframe.contentWindow || ev.source !== tkIframe.contentWindow) return;
@@ -2904,6 +2934,7 @@ var payload = {
         var d = ev.data;
         if (typeof d === 'string') { try { d = JSON.parse(d); } catch (x) { return; } }
         if (!d || !d.type) return;
+        ttTrack(d);
         if (d.type === 'onPlayerReady') {
           tkIframe.contentWindow.postMessage({ type: isUserMuted ? 'mute' : 'unMute', 'x-tiktok-player': true }, '*');
         }
@@ -2913,7 +2944,7 @@ var payload = {
       tkIframe.setAttribute('allowfullscreen', '');
       tkIframe.style.cssText = 'width:100% !important;height:100% !important;border:none !important;';
       wrapper.appendChild(tkIframe);
-      trackMetric({ event_type: 'video_view', story_id: storyId, video_id: video.id, page_url: window.location.href });
+      sendAnalyticsEvent('video_view', video.id, null, { sessionId: ttSessionId, story_id: storyId, page_url: window.location.href });
       return wrapper;
     }
 
