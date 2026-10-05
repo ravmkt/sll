@@ -4705,7 +4705,7 @@ var bubbleAutoplay = (function () {
         bubbleTtIf.allow = 'autoplay; fullscreen';
         bubbleTtIf.setAttribute('tabindex', '-1');
         bubbleTtIf.setAttribute('scrolling', 'no');
-        bubbleTtIf.style.cssText = 'position:absolute;left:0;top:-39%;width:100%;height:178%;border:0;pointer-events:none;';
+        bubbleTtIf.style.cssText = 'position:absolute;left:50%;top:50%;width:270px;height:480px;border:0;pointer-events:none;transform-origin:center center;transform:translate(-50%,-50%) scale(' + (bubbleSize / 270) + ');';
         window.addEventListener('message', function bubbleTtMsg(ev) {
           if (!bubbleTtIf.isConnected && bubbleTtIf.getAttribute('data-seen')) { window.removeEventListener('message', bubbleTtMsg); return; }
           if (!bubbleTtIf.contentWindow || ev.source !== bubbleTtIf.contentWindow) return;
