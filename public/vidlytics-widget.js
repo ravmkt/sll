@@ -4693,7 +4693,27 @@ var bubbleAutoplay = (function () {
       })();
       var bubbleVideoUrl = (story.videos && story.videos[0]) ? getVideoUrl(story.videos[0]) : '';
 
-      if (bubbleAutoplay && bubbleVideoUrl) {
+      if (bubbleAutoplay && bubbleVideoUrl && /tiktok\.com\/(player|embed)/i.test(bubbleVideoUrl)) {
+        inner.style.position = 'relative';
+        if (thumbUrl) {
+          inner.style.backgroundImage = 'url("' + thumbUrl + '")';
+          inner.style.backgroundSize = 'cover';
+          inner.style.backgroundPosition = 'center';
+        }
+        var bubbleTtIf = createEl('iframe');
+        bubbleTtIf.src = buildTikTokSrc(extractTikTokId(bubbleVideoUrl), bubbleVideoUrl);
+        bubbleTtIf.allow = 'autoplay; fullscreen';
+        bubbleTtIf.setAttribute('tabindex', '-1');
+        bubbleTtIf.setAttribute('scrolling', 'no');
+        bubbleTtIf.style.cssText = 'position:absolute;left:0;top:-39%;width:100%;height:178%;border:0;pointer-events:none;';
+        window.addEventListener('message', function bubbleTtMsg(ev) {
+          if (!bubbleTtIf.isConnected && bubbleTtIf.getAttribute('data-seen')) { window.removeEventListener('message', bubbleTtMsg); return; }
+          if (!bubbleTtIf.contentWindow || ev.source !== bubbleTtIf.contentWindow) return;
+          bubbleTtIf.setAttribute('data-seen', '1');
+          bubbleTtIf.contentWindow.postMessage({ type: 'mute', 'x-tiktok-player': true }, '*');
+        });
+        inner.appendChild(bubbleTtIf);
+      } else if (bubbleAutoplay && bubbleVideoUrl) {
         var bubbleVid = createEl('video', 'vl-img');
         bubbleVid.src = bubbleVideoUrl;
         bubbleVid.muted = true;
