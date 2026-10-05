@@ -2935,6 +2935,7 @@ var payload = {
         if (typeof d === 'string') { try { d = JSON.parse(d); } catch (x) { return; } }
         if (!d || !d.type) return;
         ttTrack(d);
+        if ((d.type === 'onStateChange' && d.value === 1) || (d.type === 'onCurrentTime' && d.value && Number(typeof d.value === 'object' ? d.value.currentTime : d.value) > 0)) { if (typeof ttReveal === 'function') ttReveal(); }
         if (d.type === 'onPlayerReady') {
           tkIframe.contentWindow.postMessage({ type: isUserMuted ? 'mute' : 'unMute', 'x-tiktok-player': true }, '*');
         }
@@ -2943,6 +2944,17 @@ var payload = {
       tkIframe.allow = 'autoplay; fullscreen';
       tkIframe.setAttribute('allowfullscreen', '');
       tkIframe.style.cssText = 'width:100% !important;height:100% !important;border:none !important;';
+      var ttPoster = getVideoThumbnail(video);
+      if (ttPoster) {
+        wrapper.style.setProperty('background-image', 'url("' + ttPoster + '")', 'important');
+        wrapper.style.setProperty('background-size', 'cover', 'important');
+        wrapper.style.setProperty('background-position', 'center', 'important');
+      }
+      tkIframe.style.setProperty('opacity', '0', 'important');
+      tkIframe.style.setProperty('transition', 'opacity .3s ease', 'important');
+      var ttShown = false;
+      var ttReveal = function () { if (ttShown) return; ttShown = true; tkIframe.style.setProperty('opacity', '1', 'important'); };
+      setTimeout(ttReveal, 6000);
       wrapper.appendChild(tkIframe);
       sendAnalyticsEvent('video_view', video.id, null, { sessionId: ttSessionId, story_id: storyId, page_url: window.location.href });
       return wrapper;
