@@ -10,10 +10,10 @@ import { logPanelActivity } from '@/lib/activityLog';
 import { MeasureModel, ModelMeasure, ModelType, deleteModel, listModels, saveModel } from '@/services/sizingModelsService';
 
 type Extra = { id: string; name: string; value: string };
-type FormState = { type: ModelType; name: string; height: string; width: string; length: string; extras: Extra[] };
+type FormState = { type: ModelType; name: string; height: string; width: string; length: string; weight: string; extras: Extra[] };
 
-const EMPTY: FormState = { type: 'humano', name: '', height: '', width: '', length: '', extras: [] };
-const BASE = ['altura', 'largura', 'comprimento'];
+const EMPTY: FormState = { type: 'humano', name: '', height: '', width: '', length: '', weight: '', extras: [] };
+const BASE = ['altura', 'largura', 'comprimento', 'peso'];
 const uid = () => crypto.randomUUID();
 
 function validate(f: FormState): string[] {
@@ -25,6 +25,7 @@ function validate(f: FormState): string[] {
     else if (Number(v) <= 0) errs.push(`${label} deve ser maior que zero.`);
   };
   num(f.height, 'Altura', f.type === 'humano');
+  num(f.weight, 'Peso', false);
   if (f.type === 'objeto') { num(f.width, 'Largura', false); num(f.length, 'Comprimento', false); }
   f.extras.forEach((m, i) => {
     if (m.name.trim() && !m.value.trim()) errs.push(`Valor do campo "${m.name}" é obrigatório.`);
@@ -63,7 +64,7 @@ export default function Medidas() {
 
   const openEdit = (m: MeasureModel) => {
     const get = (n: string) => String(m.measures.find((x) => String(x.name).toLowerCase() === n)?.value ?? '');
-    const base = m.type === 'objeto' ? BASE : ['altura'];
+    const base = m.type === 'objeto' ? BASE : ['altura', 'peso'];
     setEditing(m);
     setForm({
       type: m.type,
@@ -71,6 +72,7 @@ export default function Medidas() {
       height: get('altura'),
       width: get('largura'),
       length: get('comprimento'),
+      weight: get('peso'),
       extras: m.measures
         .filter((x) => !base.includes(String(x.name).toLowerCase()))
         .map((x) => ({ id: uid(), name: x.name, value: String(x.value) })),
@@ -87,13 +89,14 @@ export default function Medidas() {
     if (errs.length) { errs.forEach((e) => showError(e)); return; }
 
     const measures: ModelMeasure[] = [];
-    const push = (name: string, v: string) => { if (v.trim()) measures.push({ name, value: Number(v), unit: 'cm' }); };
+    const push = (name: string, v: string, unit: 'cm' | 'g' = 'cm') => { if (v.trim()) measures.push({ name, value: Number(v), unit }); };
     push('Altura', form.height);
     if (form.type === 'objeto') { push('Largura', form.width); push('Comprimento', form.length); }
+    push('Peso', form.weight, 'g');
     form.extras.filter((e) => e.name.trim() && e.value.trim()).forEach((e) => {
       const raw = e.value.trim();
       const n = Number(raw);
-      measures.push({ name: e.name.trim(), value: isNaN(n) ? raw : n, unit: 'cm' });
+      measures.push({ name: e.name.trim(), value: isNaN(n) ? raw : n, unit: '' });
     });
 
     try {
@@ -124,10 +127,10 @@ export default function Medidas() {
   };
 
   const isObj = form.type === 'objeto';
-  const unitInput = (value: string, onChange: (v: string) => void, ph: string) => (
+  const unitInput = (value: string, onChange: (v: string) => void, ph: string, unit = 'cm') => (
     <div className="relative">
       <input type="number" min="0" step="1" placeholder={ph} value={value} onChange={(e) => onChange(e.target.value)} className={`${inputCls} pr-10`} />
-      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">cm</span>
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{unit}</span>
     </div>
   );
 
@@ -188,7 +191,7 @@ export default function Medidas() {
                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{x.name}</span>
                       </div>
                       <span className="rounded-xl border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-2.5 py-1 font-mono text-xs font-black">
-                        {x.value} {BASE.includes(String(x.name).toLowerCase()) ? 'cm' : ''}
+                        {x.value}{x.unit ? ` ${x.unit}` : ""}
                       </span>
                     </div>
                   ))}
@@ -239,6 +242,11 @@ export default function Medidas() {
                 {unitInput(form.height, (v) => setForm({ ...form, height: v }), 'Ex: 170')}
               </div>
             )}
+
+            <div className="space-y-2">
+              <label className={labelCls}>Peso em gramas <span className="text-xs font-normal text-slate-400">(opcional)</span></label>
+              {unitInput(form.weight, (v) => setForm({ ...form, weight: v }), 'Ex: 450', 'g')}
+            </div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">

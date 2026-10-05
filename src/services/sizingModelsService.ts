@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 const sb: any = supabase;
 
 export type ModelType = 'humano' | 'objeto';
-export interface ModelMeasure { name: string; value: number | string; unit: 'cm' }
+export interface ModelMeasure { name: string; value: number | string; unit: 'cm' | 'g' | '' }
 export interface MeasureModel {
   id: string;
   store_id: string;
