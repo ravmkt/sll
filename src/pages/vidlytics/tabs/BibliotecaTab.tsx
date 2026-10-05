@@ -1174,7 +1174,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                             ? "IMAGEM (HOSPEDADA)"
                             : video.video_source_type === "external"
                             ? "VÍDEO (URL EXTERNA)"
-                            : "VÍDEO MP4 (HOSPEDADO)"}
+                            : video.video_source_type === "tiktok" ? "TIKTOK" : video.video_source_type === "instagram" ? "INSTAGRAM" : "VÍDEO MP4 (HOSPEDADO)"}
                         </div>
                       </td>
 
