@@ -218,6 +218,16 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const [editThumbnailUrl, setEditThumbnailUrl] = useState<string>("");
   const [editProductId, setEditProductId] = useState<string>("");
   const [editModelId, setEditModelId] = useState<string>("");
+  const [sizingModels, setSizingModels] = useState<{ id: string; name: string; type?: string }[]>([]);
+  useEffect(() => {
+    if (!storeId) { setSizingModels([]); return; }
+    (supabase as any)
+      .from("sizing_models")
+      .select("id,name,type")
+      .eq("store_id", storeId)
+      .order("name", { ascending: true })
+      .then(({ data }: any) => setSizingModels(data || []));
+  }, [storeId]);
   const [editStatus, setEditStatus] = useState<string>("active");
   const [editStoryTitle, setEditStoryTitle] = useState<string>("");
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
@@ -849,11 +859,9 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
               onChange={(e) => setEditModelId(e.target.value)}
               className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
             >
-              <option value="">Sem modelo vinculado</option>
-              <option value="Clara">Clara (1.70m / 60kg - Vestindo M)</option>
-              <option value="Julia">Julia (1.65m / 55kg - Vestindo P)</option>
-              <option value="Mariana">Mariana (1.75m / 75kg - Vestindo G)</option>
-            </select>
+<option value="">Sem modelo vinculado</option>
+{sizingModels.map((m) => (<option key={m.id} value={m.id}>{m.name} ({m.type === "objeto" ? "Objeto" : "Humano"})</option>))}
+</select>
           </div>
 
           {/* STATUS */}
@@ -1418,11 +1426,9 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                   onChange={(e) => setExternalModel(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] text-slate-700"
                 >
-                  <option value="">Sem modelo de medidas vinculado</option>
-                  <option value="p">Modelo P (1.65m / 55kg)</option>
-                  <option value="m">Modelo M (1.70m / 65kg)</option>
-                  <option value="g">Modelo G (1.75m / 78kg)</option>
-                </select>
+<option value="">Sem modelo de medidas vinculado</option>
+{sizingModels.map((m) => (<option key={m.id} value={m.id}>{m.name} ({m.type === "objeto" ? "Objeto" : "Humano"})</option>))}
+</select>
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3">
