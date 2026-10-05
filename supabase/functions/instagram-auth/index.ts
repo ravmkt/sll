@@ -24,7 +24,7 @@ serve(async (req) => {
     const APP_ID = Deno.env.get('INSTAGRAM_APP_ID')!;
     const APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET')!;
 
-    const FINAL_REDIRECT_URI = redirect_uri?.trim() || 'https://sll-hub-sooty.vercel.app/dashboard/integracao';
+    const FINAL_REDIRECT_URI = redirect_uri?.trim() || 'https://app.sllhub.com.br/dashboard/integracao';
 
     console.log('INICIO - code prefix:', code.substring(0, 15) + '...', 'store_id:', store_id);
     console.log('APP_ID usado:', APP_ID);
