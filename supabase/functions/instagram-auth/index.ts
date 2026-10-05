@@ -64,7 +64,7 @@ serve(async (req) => {
     const longLivedUrl = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${APP_SECRET}&access_token=${shortLivedToken}`;
     const longLivedResp = await fetch(longLivedUrl);
     const longLivedData = await longLivedResp.json();
-    console.log('RESPOSTA LONG-LIVED:', JSON.stringify(longLivedData));
+    console.log('RESPOSTA LONG-LIVED:', JSON.stringify({ ok: !!longLivedData.access_token, expires_in: longLivedData.expires_in ?? null, error: longLivedData.error ?? null }));
 
     const finalAccessToken = longLivedData.access_token || shortLivedToken;
 
@@ -79,16 +79,31 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { error: dbError } = await supabase.from('store_integrations').upsert({
+    const nowIso = new Date().toISOString();
+    const ttl = longLivedData.access_token ? Number(longLivedData.expires_in ?? 5184000) : 3600;
+    const expIso = new Date(Date.now() + ttl * 1000).toISOString();
+
+    const { data: integ, error: dbError } = await supabase.from('store_integrations').upsert({
       store_id: store_id,
       platform: 'instagram',
-      access_token: finalAccessToken,
+      access_token: null,
       account_id: String(instagramUserId || profileData.id || ''),
       account_username: profileData.username || 'instagram_user',
-      updated_at: new Date().toISOString(),
-    });
-
+      display_name: profileData.username || null,
+      status: 'active',
+      token_expires_at: expIso,
+      connected_at: nowIso,
+      updated_at: nowIso,
+    }, { onConflict: 'store_id,platform' }).select('id').single();
     if (dbError) throw dbError;
+
+    const { error: secErr } = await supabase.from('store_integration_secrets').upsert({
+      integration_id: integ.id,
+      access_token: finalAccessToken,
+      token_expires_at: expIso,
+      updated_at: nowIso,
+    }, { onConflict: 'integration_id' });
+    if (secErr) throw secErr;
 
     return new Response(
       JSON.stringify({

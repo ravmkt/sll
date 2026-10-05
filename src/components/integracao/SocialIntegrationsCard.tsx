@@ -74,9 +74,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
       }).then(({ error }) => {
         if (error) {
           Promise.resolve((error as any)?.context?.json?.()).then((b: any) => alert("Erro ao conectar: " + (b?.error || error.message))).catch(() => alert("Erro ao conectar: " + error.message));
-        } else {
-          fetchIntegrations();
-        }
+        } else { const back = sessionStorage.getItem('ig_return'); if (back) { sessionStorage.removeItem('ig_return'); window.location.href = back; } else { fetchIntegrations(); } }
       }).catch(err => {
         console.error("Erro fatal:", err);
       }).finally(() => {
