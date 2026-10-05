@@ -167,7 +167,7 @@ function ensureModalStylesInLightDOM(appearance) {
     // TikTok
     else if (sourceType === 'tiktok' || sourceType === 'tt') {
       var tkId = extractTikTokId(videoUrl);
-      fsPlayerContainer.innerHTML = '<iframe src="' + ((videoUrl.indexOf('/player/v1/') !== -1) ? videoUrl : 'https://www.tiktok.com/embed/v2/' + tkId) + '" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+      fsPlayerContainer.innerHTML = '<iframe src="' + buildTikTokSrc(tkId, videoUrl) + '" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>';
     }
     // Upload direto (MP4, WebM, etc.)
     else if (sourceType === 'upload' || isDirectVideoUrl(videoUrl)) {
@@ -2312,7 +2312,11 @@ function getVideoUrl(video) {
   }
 
   // 🆕 EXTRAIR ID DO TIKTOK
-  function extractTikTokId(url) {
+  function buildTikTokSrc(id, fallbackUrl) {
+    if (!id) return fallbackUrl || '';
+    return 'https://www.tiktok.com/player/v1/' + id + '?controls=0&music_info=0&description=0&rel=0&loop=1&autoplay=1&native_context_menu=0&closed_caption=0&timestamp=0';
+  }
+    function extractTikTokId(url) {
     if (!url) return '';
     try {
       var u = String(url).trim();
@@ -2890,7 +2894,7 @@ var payload = {
     // 2.1. TikTok Embed Oficial (evita erro NotSupportedError em URLs de compartilhamento/página)
     if (sourceType === 'tiktok' || (tkId && url.indexOf('tiktok.com') !== -1)) {
       var tkIframe = createEl('iframe');
-      tkIframe.src = (url.indexOf('/player/v1/') !== -1) ? url : 'https://www.tiktok.com/embed/v2/' + tkId;
+      tkIframe.src = buildTikTokSrc(tkId, url);
       tkIframe.allow = 'autoplay; fullscreen';
       tkIframe.setAttribute('allowfullscreen', '');
       tkIframe.style.cssText = 'width:100% !important;height:100% !important;border:none !important;';
