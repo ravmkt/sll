@@ -1,9 +1,26 @@
 import { supabase } from '@/lib/supabase';
-import { ImportItem, parsePrice } from '@/services/productsService';
+import { ImportItem, parsePrice, categoryLeaf, normCat } from '@/services/productsService';
 
 const sb: any = supabase;
 const fieldName = (n: string) => n.replace(/^.*:/, '').trim().toLowerCase();
 const stripHtml = (v: string) => v.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+export const decodeEntities = (v: string): string => {
+  if (!v || !v.includes('&')) return v;
+  const t = document.createElement('textarea');
+  t.innerHTML = v;
+  return t.value;
+};
+
+export const CATEGORY_FIELDS = ['category', 'categoria', 'categories', 'google_product_category', 'product_type'];
+
+const fieldKey = (storeId: string) => `sll:xml-category-field:${storeId}`;
+export function getSavedCategoryField(storeId: string): string | undefined {
+  try { return localStorage.getItem(fieldKey(storeId)) || undefined; } catch { return undefined; }
+}
+export function saveCategoryField(storeId: string, field: string): void {
+  try { localStorage.setItem(fieldKey(storeId), field); } catch { /* storage indisponivel */ }
+}
 
 export async function fetchFeedText(url: string): Promise<string> {
   const { data } = await sb.auth.getSession();
@@ -29,7 +46,7 @@ export async function fetchFeedText(url: string): Promise<string> {
   return text;
 }
 
-export function parseXmlFeed(rawText: string): ImportItem[] {
+function readFeedMaps(rawText: string): Map<string, string>[] {
   const xml = rawText.replace(/^\uFEFF/, '').trimStart();
   if (!xml) throw new Error('A resposta do XML está vazia.');
 
@@ -70,24 +87,49 @@ export function parseXmlFeed(rawText: string): ImportItem[] {
     walk(item, []);
     return map;
   };
-  const pick = (m: Map<string, string>, aliases: string[]) => {
-    for (const a of aliases) { const v = m.get(a); if (v) return v; }
-    return '';
-  };
+  return nodes.map(collect);
+}
 
-  return nodes
-    .map(node => {
-      const m = collect(node);
-      return {
-        name: pick(m, ['title', 'name', 'nome', 'product_name']),
-        price: parsePrice(pick(m, ['price', 'sale_price', 'valor', 'preco', 'price_with_tax'])),
-        product_url: pick(m, ['link', 'url', 'product_url']),
-        image_url: pick(m, ['image_link', 'image', 'imagem', 'picture', 'additional_image_link']),
-        category: pick(m, ['product_type', 'google_product_category', 'category', 'categoria']),
-        sku: pick(m, ['mpn']),
-        externalId: pick(m, ['id']),
-        description: stripHtml(pick(m, ['description', 'descricao', 'summary', 'content'])),
-      };
-    })
+const pick = (m: Map<string, string>, aliases: string[]) => {
+  for (const a of aliases) { const v = m.get(a); if (v) return v; }
+  return '';
+};
+
+export function parseXmlFeed(rawText: string, categoryField?: string): ImportItem[] {
+  const fields = categoryField ? [categoryField] : CATEGORY_FIELDS;
+  return readFeedMaps(rawText)
+    .map(m => ({
+      name: decodeEntities(pick(m, ['title', 'name', 'nome', 'product_name'])),
+      price: parsePrice(pick(m, ['price', 'sale_price', 'valor', 'preco', 'price_with_tax'])),
+      product_url: pick(m, ['link', 'url', 'product_url']),
+      image_url: pick(m, ['image_link', 'image', 'imagem', 'picture', 'additional_image_link']),
+      category: decodeEntities(pick(m, fields)),
+      sku: pick(m, ['mpn']),
+      externalId: pick(m, ['id']),
+      description: stripHtml(pick(m, ['description', 'descricao', 'summary', 'content'])),
+    }))
     .filter(p => p.name);
+}
+
+export interface CategoryFieldInfo { field: string; distinct: number; sample: string[] }
+
+export function scanCategoryFields(rawText: string): CategoryFieldInfo[] {
+  const maps = readFeedMaps(rawText);
+  return CATEGORY_FIELDS.map(field => {
+    const vals = new Set<string>();
+    maps.forEach(m => { const v = decodeEntities(m.get(field) || ''); if (v) vals.add(v); });
+    return { field, distinct: vals.size, sample: Array.from(vals).slice(0, 3) };
+  }).filter(f => f.distinct > 0);
+}
+
+export function listFeedCategories(items: ImportItem[]): { name: string; count: number }[] {
+  const map = new Map<string, { name: string; count: number }>();
+  for (const it of items) {
+    const name = categoryLeaf(it.category || '');
+    if (!name) continue;
+    const k = normCat(name);
+    const cur = map.get(k);
+    if (cur) cur.count++; else map.set(k, { name, count: 1 });
+  }
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 }

@@ -150,6 +150,8 @@ export async function importProducts(
   const existingRows = await fetchAll<{ sku: string | null }>((a, b) =>
     sb.from('products').select('sku').eq('store_id', storeId).not('sku', 'is', null).range(a, b));
   const existing = new Set(existingRows.map(r => (r.sku || '').trim().toLowerCase()).filter(Boolean));
+  const cats = await listCategories(storeId);
+  const catMap = new Map<string, string>(cats.map(c => [normCat(c.name), c.name] as [string, string]));
 
   const now = new Date().toISOString();
   const seen = new Set<string>();
@@ -170,7 +172,7 @@ export async function importProducts(
       product_url: it.product_url,
       image_url: it.image_url || '',
       images: it.image_url ? [it.image_url] : [],
-      category: it.category || null,
+      category: matchCategory(it.category, catMap),
       sku,
       external_id: it.externalId || null,
       xml_id: it.externalId || null,
@@ -199,6 +201,19 @@ export async function importProducts(
     onProgress?.(Math.min(i + 100, rows.length), rows.length);
   }
 
-  await ensureCategories(storeId, rows.map(r => r.category || ''));
   return { imported, discarded };
+}
+
+export function normCat(v: string): string {
+  return (v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+export function categoryLeaf(v: string): string {
+  const parts = (v || '').split('>').map(s => s.trim()).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : '';
+}
+
+export function matchCategory(raw: string | null | undefined, map: Map<string, string>): string | null {
+  if (!raw) return null;
+  return map.get(normCat(raw)) ?? map.get(normCat(categoryLeaf(raw))) ?? null;
 }

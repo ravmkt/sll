@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CheckCircle2, FileText, Link as LinkIcon, Loader2, Upload } from 'lucide-react';
 import { ImportItem, ImportSummary, importProducts, normalizeSku } from '@/services/productsService';
-import { fetchFeedText, parseXmlFeed } from '@/lib/products/xmlFeed';
+import { fetchFeedText, getSavedCategoryField, parseXmlFeed } from '@/lib/products/xmlFeed';
 import { SHEET_TEMPLATE_CSV, parseSheet } from '@/lib/products/sheet';
 import { showError, showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
@@ -53,7 +53,7 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
       if (tab === 'xml') {
         if (!url.trim() && !xmlFile) throw new Error('Informe a URL do feed ou escolha um arquivo XML.');
         setMsg('Lendo e interpretando o XML...');
-        list = parseXmlFeed(xmlFile ? await xmlFile.text() : await fetchFeedText(url.trim()));
+        list = parseXmlFeed(xmlFile ? await xmlFile.text() : await fetchFeedText(url.trim()), getSavedCategoryField(storeId));
       } else {
         if (!sheetFile) throw new Error('Escolha um arquivo CSV ou XLSX.');
         setMsg('Lendo a planilha...');
