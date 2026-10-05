@@ -5,6 +5,7 @@ import { fetchFeedText, getSavedCategoryField, listFeedCategories, parseXmlFeed,
 import { SHEET_TEMPLATE_CSV, parseSheet } from '@/lib/products/sheet';
 import { showError, showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
+import YampiImport from './YampiImport';
 import { Modal, errMsg, fileCls, ghostBtn, inputCls, labelCls, primaryBtn } from './Modal';
 
 type Props = { storeId: string; onClose: () => void; onImported: () => void };
@@ -26,7 +27,7 @@ const tabCls = (on: boolean) =>
     on ? 'border-b-2 border-[#0094eb] text-[#0094eb]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300');
 
 export default function ImportModal({ storeId, onClose, onImported }: Props) {
-  const [tab, setTab] = useState<'xml' | 'sheet'>('xml');
+  const [tab, setTab] = useState<'xml' | 'sheet' | 'yampi'>('xml');
   const [stage, setStage] = useState<'input' | 'preview' | 'report'>('input');
   const [url, setUrl] = useState('');
   const [xmlFile, setXmlFile] = useState<File | null>(null);
@@ -139,8 +140,9 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
           <div className="flex border-b border-slate-200 dark:border-slate-800">
             <button type="button" onClick={() => setTab('xml')} className={tabCls(tab === 'xml')}><FileText size={14} /> XML</button>
             <button type="button" onClick={() => setTab('sheet')} className={tabCls(tab === 'sheet')}><Upload size={14} /> Planilha</button>
+            <button type="button" onClick={() => setTab('yampi')} className={tabCls(tab === 'yampi')}><LinkIcon size={14} /> Yampi</button>
           </div>
-          {tab === 'xml' ? (
+          {tab === 'yampi' ? (<YampiImport storeId={storeId} onClose={onClose} onImported={onImported} />) : tab === 'xml' ? (
             <div className="p-6 space-y-5">
               <div>
                 <label className={labelCls}>URL do feed XML</label>
