@@ -126,7 +126,7 @@ export const LiveCommerceDatabaseService = {
   // ==========================================
   async getLiveSettings(storeId: string) {
     const { data, error } = await supabaseLiveCommerce
-      .from('live_settings')
+      .from('store_settings')
       .select('widget_divulgacao, widget_aovivo, player_settings')
       .eq('store_id', storeId)
       .maybeSingle();
@@ -144,7 +144,7 @@ export const LiveCommerceDatabaseService = {
     player_settings?: any;
   }) {
     const { data, error } = await supabaseLiveCommerce
-      .from('live_settings')
+      .from('store_settings')
       .upsert(
         {
           store_id: storeId,
