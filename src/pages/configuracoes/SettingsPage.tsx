@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import PlatformConnectCard from '@/components/configuracoes/PlatformConnectCard';
+import SocialConnectCard from '@/components/configuracoes/SocialConnectCard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 const LOGO_BUCKET = 'store-assets';
@@ -466,6 +467,8 @@ const SettingsPage: React.FC = () => {
         {/* 2. PLATAFORMA */}
         <PlatformConnectCard storeId={storeId || ''} platform={form.platform} platforms={PLATAFORMAS} onChangePlatform={(p) => setForm((prev) => ({ ...prev, platform: p }))} />
 
+        <SocialConnectCard storeId={storeId || ''} />
+
         {/* 3. WHATSAPP */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -573,3 +576,4 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
+

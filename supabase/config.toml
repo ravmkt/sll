@@ -1,0 +1,3 @@
+
+[functions.tiktok-oauth-callback]
+verify_jwt = false
