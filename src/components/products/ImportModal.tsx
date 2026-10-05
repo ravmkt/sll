@@ -34,6 +34,7 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
   const [field, setField] = useState('');
   const [existingCats, setExistingCats] = useState<string[]>([]);
   const [skipCats, setSkipCats] = useState<Set<string>>(new Set());
+  const [catsOpen, setCatsOpen] = useState(false);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -44,6 +45,9 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
   const cats = useMemo(() => Array.from(new Set(items.map((i) => i.category || 'Sem categoria'))).sort(), [items]);
   const feedCats = useMemo(() => listFeedCategories(items), [items]);
   const existingSet = useMemo(() => new Set(existingCats.map(normCat)), [existingCats]);
+  const nExist = feedCats.filter((c) => existingSet.has(normCat(c.name))).length;
+  const nSkip = feedCats.filter((c) => !existingSet.has(normCat(c.name)) && skipCats.has(normCat(c.name))).length;
+  const nCreate = feedCats.length - nExist - nSkip;
   const pages = Math.max(1, Math.ceil(rows.length / size));
   const safePage = Math.min(page, pages);
   const pageRows = rows.slice((safePage - 1) * size, safePage * size);
@@ -199,34 +203,41 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
                   </select>
                 </div>
               )}
-              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#111524] p-3">
-                <p className="mb-2 text-xs font-semibold text-slate-700 dark:text-white">Categorias encontradas ({feedCats.length})</p>
-                <div className="max-h-36 space-y-1 overflow-y-auto">
-                  {feedCats.map((c) => {
-                    const k = normCat(c.name);
-                    const exists = existingSet.has(k);
-                    const skip = skipCats.has(k);
-                    return (
-                      <div key={k} className="flex items-center gap-2 text-xs">
-                        <span className="font-semibold text-slate-700 dark:text-slate-200">{c.name}</span>
-                        <span className="text-slate-400">{c.count} produto(s)</span>
-                        <span className={cn('ml-auto font-semibold', exists ? 'text-slate-400' : skip ? 'text-amber-600' : 'text-[#0094eb]')}>
-                          {exists ? 'Já existe' : skip ? 'Sem categoria' : 'Será criada'}
-                        </span>
-                        {!exists && (
-                          <button
-                            type="button"
-                            onClick={() => setSkipCats((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; })}
-                            className="text-[#0094eb] underline cursor-pointer"
-                          >
-                            {skip ? 'Criar' : 'Ignorar'}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {feedCats.length === 0 && <p className="text-xs text-slate-400">Nenhuma categoria no arquivo. Os produtos entram sem categoria.</p>}
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#111524] px-3 py-2">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  <span className="font-semibold text-slate-700 dark:text-white">Categorias: {feedCats.length}</span>
+                  <span className="text-slate-400">{nExist} já existem · {nCreate} serão criadas · {nSkip} ignoradas</span>
+                  <button type="button" onClick={() => setCatsOpen((o) => !o)} className="ml-auto font-semibold text-[#0094eb] cursor-pointer">{catsOpen ? 'Ocultar' : 'Revisar'}</button>
                 </div>
+                {catsOpen && (
+                  <div className="mt-2 space-y-2">
+                    <div className="flex flex-wrap gap-3 text-[11px] font-semibold">
+                      <button type="button" onClick={() => setSkipCats(new Set(feedCats.filter((c) => !existingSet.has(normCat(c.name))).map((c) => normCat(c.name))))} className="text-amber-600 underline cursor-pointer">Ignorar novas</button>
+                      <button type="button" onClick={() => setSkipCats(new Set())} className="text-[#0094eb] underline cursor-pointer">Criar novas</button>
+                      <span className="ml-auto font-normal text-slate-400">Azul: criar · Cinza: já existe · Riscada: ignorada</span>
+                    </div>
+                    <div className="flex max-h-16 flex-wrap gap-1.5 overflow-y-auto">
+                      {feedCats.map((c) => {
+                        const k = normCat(c.name);
+                        const exists = existingSet.has(k);
+                        const skip = skipCats.has(k);
+                        return (
+                          <button
+                            key={k}
+                            type="button"
+                            disabled={exists}
+                            onClick={() => setSkipCats((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; })}
+                            className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+                              exists ? 'border-slate-200 text-slate-400' : skip ? 'border-amber-300 text-amber-600 line-through cursor-pointer' : 'border-[#0094eb]/40 text-[#0094eb] cursor-pointer')}
+                          >
+                            {c.name} · {c.count}
+                          </button>
+                        );
+                      })}
+                      {feedCats.length === 0 && <span className="text-xs text-slate-400">Nenhuma categoria no arquivo. Os produtos entram sem categoria.</span>}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
             <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-pointer">
