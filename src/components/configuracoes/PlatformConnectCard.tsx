@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, Link2, Loader2, Repeat, X } from 'lucide-react';
+import { CheckCircle2, Link2, Loader2, RefreshCw, Repeat, X } from 'lucide-react';
 import { getYampiStatus, saveYampiCredentials } from '@/services/yampiService';
+import { getYampiSyncInfo, registerYampiWebhook, syncYampi, type SyncInfo } from '@/services/yampiSyncService';
 import { showError, showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { errMsg, ghostBtn, inputCls, labelCls } from '@/components/products/Modal';
@@ -30,6 +31,8 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
   const [changing, setChanging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [logoIdx, setLogoIdx] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const [info, setInfo] = useState<SyncInfo | null>(null);
 
   useEffect(() => { setLogoIdx(0); }, [key]);
 
@@ -39,7 +42,7 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
     if (storeId && key === 'yampi') {
       setChecking(true);
       getYampiStatus(storeId)
-        .then((s) => { if (!alive) return; setConnected(!!s.connected); if (s.alias) setAlias(s.alias); })
+        .then((s) => { if (!alive) return; setConnected(!!s.connected); if (s.alias) setAlias(s.alias); if (s.connected) getYampiSyncInfo(storeId).then((i) => { if (alive) setInfo(i); }).catch(() => { /* sem info */ }); })
         .catch(() => { /* sem conexao salva */ })
         .finally(() => { if (alive) setChecking(false); });
     }
@@ -56,10 +59,24 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
       setToken('');
       setSecret('');
       showSuccess('Yampi conectada.');
+      registerYampiWebhook(storeId).then((r) => setInfo((i) => ({ last_sync_at: i?.last_sync_at ?? null, webhook_status: r.status }))).catch(() => { /* cron cobre */ });
     } catch (e) {
       showError(errMsg(e));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const doSync = async () => {
+    setSyncing(true);
+    try {
+      const r = await syncYampi(storeId);
+      getYampiSyncInfo(storeId).then(setInfo).catch(() => { /* sem info */ });
+      showSuccess(`Sincronizado: ${r.variants_updated} variação(ões) e ${r.prices_updated} preço(s) atualizados${r.variants_added ? `, ${r.variants_added} nova(s)` : ''}.`);
+    } catch (e) {
+      showError(errMsg(e));
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -103,6 +120,11 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
         </div>
 
         <div className="flex items-center gap-2">
+          {supported && connected && (
+            <button type="button" onClick={doSync} disabled={syncing} className="inline-flex items-center gap-2 rounded-xl border border-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#0094eb] hover:bg-[#0094eb]/10 disabled:opacity-50 cursor-pointer">
+              {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Sincronizar agora
+            </button>
+          )}
           {supported && (
             <button
               type="button"
@@ -121,6 +143,14 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
           </button>
         </div>
       </div>
+
+      {supported && connected && info && (
+        <p className="text-[11px] text-slate-400">
+          {info.last_sync_at ? `Última sincronização: ${new Date(info.last_sync_at).toLocaleString('pt-BR')}` : 'Ainda não sincronizado.'}
+          {' · '}
+          {info.webhook_status === 'ok' ? 'Tempo real ativo' : info.webhook_status ? 'Tempo real indisponível (confere a cada 30 min)' : 'Tempo real não configurado'}
+        </p>
+      )}
 
       {changing && (
         <div className="space-y-2">
