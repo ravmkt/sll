@@ -173,7 +173,7 @@ export const LiveCommerceDatabaseService = {
   async getProducts(storeId: string) {
     const { data, error } = await supabasePublic
       .from('products')
-      .select('id, name, price, promotional_price, image_url, permalink, category')
+      .select('id, name, price, promotional_price:sale_price, image_url, permalink:product_url, category')
       .eq('store_id', storeId)
       .order('name', { ascending: true });
     if (error) throw error;
