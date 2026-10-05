@@ -6,11 +6,23 @@ import {
   PanelLeftOpen,
   ArrowLeft,
   LogOut,
+  LayoutDashboard,
+  BarChart3,
+  Users,
+  MessageSquare,
+  GraduationCap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type LiveTab = 'lives' | 'aparencia';
+export type LiveTab =
+  | 'visao-geral'
+  | 'resultados'
+  | 'lives'
+  | 'audiencia'
+  | 'comentarios'
+  | 'aparencia'
+  | 'treinamento';
 
 interface LiveSidebarProps {
   activeTab: LiveTab;
@@ -19,19 +31,39 @@ interface LiveSidebarProps {
   onToggle: () => void;
 }
 
+const MENU_GROUPS: { title: string; items: { id: LiveTab; label: string; icon: React.ElementType }[] }[] = [
+  {
+    title: 'Métricas',
+    items: [
+      { id: 'visao-geral', label: 'Visão Geral', icon: LayoutDashboard },
+      { id: 'resultados', label: 'Resultados', icon: BarChart3 },
+    ],
+  },
+  {
+    title: 'Operação',
+    items: [
+      { id: 'lives', label: 'Lives', icon: Radio },
+      { id: 'audiencia', label: 'Audiência', icon: Users },
+      { id: 'comentarios', label: 'Comentários', icon: MessageSquare },
+    ],
+  },
+  {
+    title: 'Ajustes',
+    items: [
+      { id: 'aparencia', label: 'Aparência', icon: Palette },
+      { id: 'treinamento', label: 'Treinamento', icon: GraduationCap },
+    ],
+  },
+];
+
 export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: LiveSidebarProps) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const isExpanded = !isCollapsed;
 
-  const menuItems: { id: LiveTab; label: string; icon: React.ElementType }[] = [
-    { id: 'lives', label: 'Minhas Lives', icon: Radio },
-    { id: 'aparencia', label: 'Aparência', icon: Palette },
-  ];
-
   return (
     <aside
-      className={`h-screen sticky top-0 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] transition-all duration-300 ease-in-out flex flex-col z-20 ${
+      className={`h-screen sticky top-0 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] transition-all duration-300 ease-in-out flex flex-col z-30 ${
         isExpanded ? 'w-64' : 'w-20'
       }`}
     >
@@ -70,34 +102,42 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
         </button>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden">
-        {isExpanded && (
-          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
-            Live Commerce
-          </p>
-        )}
-        {menuItems.map((item) => {
-          const isActive = activeTab === item.id;
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onTabChange(item.id)}
-              title={!isExpanded ? item.label : undefined}
-              className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                !isExpanded ? 'justify-center' : ''
-              } ${
-                isActive
-                  ? 'bg-[#0094eb] text-white font-medium shadow-md shadow-[#0094eb]/20'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb]'
-              }`}
-            >
-              <Icon size={20} className="shrink-0" />
-              {isExpanded && <span className="whitespace-nowrap">{item.label}</span>}
-            </button>
-          );
-        })}
+      <nav className="flex-1 px-4 py-4 overflow-y-auto [&::-webkit-scrollbar]:hidden">
+        {MENU_GROUPS.map((group, gi) => (
+          <div key={group.title} className={gi > 0 ? 'mt-5' : ''}>
+            {isExpanded ? (
+              <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                {group.title}
+              </p>
+            ) : (
+              gi > 0 && <div className="border-t border-slate-200 dark:border-slate-800 mb-3" />
+            )}
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const isActive = activeTab === item.id;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => onTabChange(item.id)}
+                    title={!isExpanded ? item.label : undefined}
+                    className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                      !isExpanded ? 'justify-center' : ''
+                    } ${
+                      isActive
+                        ? 'bg-[#0094eb] text-white font-medium shadow-md shadow-[#0094eb]/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb]'
+                    }`}
+                  >
+                    <Icon size={20} className="shrink-0" />
+                    {isExpanded && <span className="whitespace-nowrap">{item.label}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
@@ -105,7 +145,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
           type="button"
           onClick={() => navigate('/dashboard')}
           title={!isExpanded ? 'Voltar ao Dashboard SLL' : undefined}
-          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb] transition-colors cursor-pointer ${
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb] transition-all duration-200 cursor-pointer ${
             !isExpanded ? 'justify-center' : ''
           }`}
         >
@@ -116,7 +156,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
           type="button"
           onClick={() => signOut()}
           title={!isExpanded ? 'Sair da Plataforma' : undefined}
-          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 transition-colors cursor-pointer ${
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer ${
             !isExpanded ? 'justify-center' : ''
           }`}
         >

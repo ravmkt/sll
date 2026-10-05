@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { StoreBrand } from "@/components/layout/StoreBrand";
 import { ModuleSwitcher } from "@/components/layout/ModuleSwitcher";
-import { LiveSidebar } from "@/components/live/LiveSidebar";
+import { LiveSidebar, LiveTab } from "@/components/live/LiveSidebar";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { LiveFormDialog } from "@/components/live/LiveFormDialog";
 import { ShareLiveModal } from "@/components/live/ShareLiveModal";
@@ -426,18 +426,36 @@ function LiveCommerceContent() {
   );
 }
 
+const TAB_TITLES: Record<LiveTab, string> = {
+  "visao-geral": "Visão Geral",
+  resultados: "Resultados",
+  lives: "Lives",
+  audiencia: "Audiência",
+  comentarios: "Comentários",
+  aparencia: "Aparência",
+  treinamento: "Treinamento",
+};
+
 export function LiveCommerce() {
   const [collapsed, setCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<LiveTab>("lives");
+
+  const handleTabChange = (tab: LiveTab) => {
+    if (tab === "aparencia") {
+      setActiveTab("lives");
+      setTimeout(() => window.dispatchEvent(new Event("live:open-appearance")), 60);
+      return;
+    }
+    setActiveTab(tab);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex font-sans">
       <LiveSidebar
-        activeTab="lives"
+        activeTab={activeTab}
         isCollapsed={collapsed}
         onToggle={() => setCollapsed((v) => !v)}
-        onTabChange={(tab) => {
-          if (tab === "aparencia") window.dispatchEvent(new Event("live:open-appearance"));
-        }}
+        onTabChange={handleTabChange}
       />
 
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
@@ -447,7 +465,19 @@ export function LiveCommerce() {
         </header>
 
         <div className="flex-1">
-          <LiveCommerceContent />
+          {activeTab === "lives" ? (
+            <LiveCommerceContent />
+          ) : (
+            <div className="p-6 max-w-6xl mx-auto">
+              <Card className="border-dashed">
+                <CardContent className="py-16 text-center text-muted-foreground">
+                  <Clock className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <h2 className="text-lg font-semibold text-slate-800">{TAB_TITLES[activeTab]}</h2>
+                  <p className="text-sm mt-1">Esta seção está em construção.</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
 
         <AppFooter />
