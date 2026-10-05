@@ -186,17 +186,30 @@ async function syncStore(storeId: string, onlyProduct?: string) {
   }
 }
 
+async function hmacOk(raw: string, secret: string, header: string | null) {
+  if (!header) return false;
+  const enc = new TextEncoder();
+  const k = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(raw)));
+  const b64 = btoa(String.fromCharCode(...sig));
+  const hex = [...sig].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return header === b64 || header.toLowerCase() === hex;
+}
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const hook = new URL(req.url).searchParams.get('s');
     if (hook) {
-      const { data: c } = await admin.from('yampi_connections').select('store_id').eq('webhook_secret', hook).maybeSingle();
-      if (!c) return json({ error: 'invalid' }, 401);
-      await admin.from('yampi_connections').update({ dirty_at: new Date().toISOString() }).eq('store_id', c.store_id);
-      EdgeRuntime.waitUntil(syncStore(c.store_id).catch(() => null));
-      return json({ ok: true });
-    }
+          const raw = await req.text();
+          const { data: c } = await admin.from('yampi_connections').select('store_id,user_secret').eq('webhook_secret', hook).maybeSingle();
+          if (!c) return json({ error: 'invalid' }, 401);
+          const hdr = req.headers.get('x-yampi-hmac-sha256');
+          const ok = await hmacOk(raw, c.user_secret, hdr);
+          console.log('yampi-hmac', JSON.stringify({ store: c.store_id, header: !!hdr, ok }));
+          await admin.from('yampi_connections').update({ dirty_at: new Date().toISOString() }).eq('store_id', c.store_id);
+          EdgeRuntime.waitUntil(syncStore(c.store_id).catch(() => null));
+          return json({ ok: true });
+        }
 
     const body = await req.json().catch(() => ({}));
     const key = Deno.env.get('CRON_KEY');
