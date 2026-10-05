@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ElementType } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Check, ChevronDown, Layers, LayoutDashboard, Radio } from 'lucide-react';
+import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, Radio } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { getActiveSubscriptions } from '@/services/subscriptions/getStoreSubscriptions';
 
-type Item = { key: string; name: string; category: string; path: string; icon: ElementType };
+type Item = { key: string; name: string; category: string; path: string; icon: ElementType; soon?: boolean };
 
 // Modulo novo = uma linha aqui. "key" deve ser igual ao module_key / plans.modules.
 const SWITCHER_MODULES: Item[] = [
   { key: 'vidlytics', name: 'Vidlytics Stories', category: 'Vídeos Interativos', path: '/dashboard/modules/vidlytics', icon: Layers },
-  { key: 'live_commerce', name: 'Live E-commerce', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/live-commerce', icon: Radio },
+  { key: 'live_commerce', name: 'Live Commerce', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/live-commerce', icon: Radio },
+  { key: 'gamification', name: 'Gamificação', category: 'Engajamento & Prêmios', path: '/dashboard/modules/gamificacao', icon: Gamepad2, soon: true },
 ];
 
-const HOME: Item = { key: 'home', name: 'Dashboard SLL', category: 'Visão geral da loja', path: '/dashboard', icon: LayoutDashboard };
+const HOME: Item = { key: 'home', name: 'SLL Hub', category: 'Visão geral da loja', path: '/dashboard', icon: LayoutDashboard };
 
 const cache = new Map<string, string[]>();
 
@@ -83,7 +84,7 @@ export function ModuleSwitcher() {
                 <button
                   key={m.key}
                   type="button"
-                  onClick={() => { setOpen(false); if (!isCurrent) navigate(m.path); }}
+                  onClick={() => { setOpen(false); if (!isCurrent && !m.soon) navigate(m.path); }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer ${isCurrent ? 'bg-blue-50/80 text-[#0094eb]' : 'hover:bg-slate-50 text-slate-700'}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -96,6 +97,7 @@ export function ModuleSwitcher() {
                     </div>
                   </div>
                   {isCurrent && <Check className="w-4 h-4 text-[#0094eb] shrink-0 ml-2" />}
+                  {m.soon && <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0 ml-2">Em breve</span>}
                 </button>
               );
             })}
