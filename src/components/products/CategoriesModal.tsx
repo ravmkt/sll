@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Check, Edit3, Plus, Trash2 } from 'lucide-react';
+import { Check, Download, Edit3, Plus, Trash2 } from 'lucide-react';
 import { CatalogCategory, addCategory, deleteCategory, renameCategory } from '@/services/productsService';
 import { showError } from '@/utils/toast';
-import { Modal, errMsg, inputCls, primaryBtn } from './Modal';
+$1
+import ImportCategoriesModal from './ImportCategoriesModal';
 
 type Props = {
   storeId: string;
@@ -16,6 +17,7 @@ export default function CategoriesModal({ storeId, categories, onChanged, onClos
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [xmlOpen, setXmlOpen] = useState(false);
 
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -36,6 +38,7 @@ export default function CategoriesModal({ storeId, categories, onChanged, onClos
   };
 
   return (
+    <>
     <Modal title="Categorias" onClose={onClose}>
       <div className="p-6 space-y-4">
         <div className="flex gap-2">
@@ -62,10 +65,15 @@ export default function CategoriesModal({ storeId, categories, onChanged, onClos
           ))}
           {categories.length === 0 && <p className="py-4 text-center text-sm text-slate-400">Nenhuma categoria cadastrada.</p>}
         </div>
-        <div className="flex justify-end pt-2">
+        <div className="flex items-center justify-between pt-2">
+              <button type="button" onClick={() => setXmlOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"><Download size={15} /> Importar do XML</button>
           <button type="button" onClick={onClose} className={primaryBtn}>Concluído</button>
         </div>
       </div>
     </Modal>
+    {xmlOpen && (
+      <ImportCategoriesModal storeId={storeId} existingNames={categories.map((c) => c.name)} onChanged={onChanged} onClose={() => setXmlOpen(false)} />
+    )}
+    </>
   );
 }
