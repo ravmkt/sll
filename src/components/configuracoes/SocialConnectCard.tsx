@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CheckCircle2, Link2, Loader2, Unlink } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
+import TikTokVideosPanel from './TikTokVideosPanel';
 import {
   disconnectIntegration,
   getSocialIntegration,
@@ -115,6 +116,8 @@ export default function SocialConnectCard({ storeId }: { storeId: string }) {
           {Number(tiktok.profile.follower_count).toLocaleString('pt-BR')} seguidores · {Number(tiktok.profile.video_count ?? 0).toLocaleString('pt-BR')} vídeos
         </p>
       )}
+      {tiktok && <TikTokVideosPanel storeId={storeId} />}
     </div>
   );
 }
+
