@@ -19,6 +19,6 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
-export const syncYampi = (storeId: string) => call<SyncResult>({ action: 'sync', store_id: storeId });
+export const syncYampi = (storeId: string, productId?: string) => call<SyncResult>({ action: 'sync', store_id: storeId, product_id: productId });
 export const registerYampiWebhook = (storeId: string) => call<{ status: string }>({ action: 'register_webhook', store_id: storeId });
 export const getYampiSyncInfo = (storeId: string) => call<SyncInfo>({ action: 'info', store_id: storeId });

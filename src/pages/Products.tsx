@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, Edit3, Loader2, Package, Plus, Search, Tag, Trash2, Upload } from 'lucide-react';
+import { ChevronDown, ChevronUp, Edit3, Loader2, Package, Plus, RefreshCw, Search, Tag, Trash2, Upload } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { useLoja } from '@/contexts/LojaContext';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog';
@@ -17,6 +17,9 @@ import ProductFormModal from '@/components/products/ProductFormModal';
 import CategoriesModal from '@/components/products/CategoriesModal';
 import ImportModal from '@/components/products/ImportModal';
 import { inputCls } from '@/components/products/Modal';
+import ProductVariantsModal from '@/components/products/ProductVariants';
+import { listStock } from '@/services/productVariantsService';
+import { syncYampi } from '@/services/yampiSyncService';
 
 type SortKey = 'name' | 'price' | 'category' | 'origin' | 'active';
 const ORIGIN: Record<string, string> = { manual: 'Manual', xml: 'XML', planilha: 'Planilha', yampi: 'Yampi' };
@@ -44,13 +47,17 @@ export default function Products() {
   const [catsOpen, setCatsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [del, setDel] = useState<{ ids: string[]; label: string } | null>(null);
+  const [stock, setStock] = useState<Map<string, number>>(new Map());
+  const [varProduct, setVarProduct] = useState<CatalogProduct | null>(null);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
     try {
-      const [p, c] = await Promise.all([listProducts(storeId), listCategories(storeId)]);
+      const [p, c, st] = await Promise.all([listProducts(storeId), listCategories(storeId), listStock(storeId).catch(() => new Map<string, number>())]);
       setProducts(p);
       setCategories(c);
+      setStock(st);
     } catch (e) {
       console.error('Erro ao carregar produtos:', e);
       showError('Erro ao carregar produtos.');
@@ -126,6 +133,20 @@ export default function Products() {
       showError('Erro ao remover produto(s).');
     } finally {
       setDel(null);
+    }
+  };
+
+  const syncOne = async (p: CatalogProduct) => {
+    if (!storeId) return;
+    setSyncingId(p.id);
+    try {
+      const r = await syncYampi(storeId, p.id);
+      await reload();
+      showSuccess(r.variants_updated || r.prices_updated ? 'Produto sincronizado com a Yampi.' : 'Produto já estava atualizado.');
+    } catch (e) {
+      showError(e instanceof Error ? e.message : 'Erro ao sincronizar.');
+    } finally {
+      setSyncingId(null);
     }
   };
 
@@ -222,6 +243,7 @@ export default function Products() {
                     <th className="w-12 px-4 py-3 text-center"><input type="checkbox" checked={allOnPage} onChange={togglePage} className="h-4 w-4 cursor-pointer" /></th>
                     <th className="w-20 px-4 py-3 text-center">Foto</th>
                     <Th k="name" label="Produto" />
+                    <th className="px-4 py-3 text-center">Estoque</th>
                     <Th k="price" label="Preço" cls="text-center" />
                     <Th k="category" label="Categoria" cls="text-center" />
                     <Th k="origin" label="Origem" cls="text-center" />
@@ -242,6 +264,11 @@ export default function Products() {
                         <p className="max-w-xs truncate text-sm font-semibold text-slate-800 dark:text-white" title={p.name}>{p.name}</p>
                         {p.sku && <p className="text-[11px] text-slate-400">SKU {p.sku}</p>}
                       </td>
+                      <td className="px-4 py-3 text-center">
+                        {stock.has(p.id) ? (
+                          <button type="button" onClick={() => setVarProduct(p)} title="Ver variações e estoque" className={cn('cursor-pointer rounded-lg px-2.5 py-1 font-mono text-xs font-bold', (stock.get(p.id) || 0) > 0 ? 'bg-slate-100 dark:bg-[#111524] text-slate-700 dark:text-white' : 'bg-rose-50 text-rose-600')}>{stock.get(p.id)}</button>
+                        ) : <span className="text-xs text-slate-300">—</span>}
+                      </td>
                       <td className="px-4 py-3 text-center font-mono text-xs font-bold text-slate-800 dark:text-white">{brl(p.price)}</td>
                       <td className="px-4 py-3 text-center">
                         <span className="inline-flex max-w-[140px] items-center gap-1 truncate rounded-lg bg-slate-100 dark:bg-[#111524] px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
@@ -259,7 +286,12 @@ export default function Products() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button type="button" title="Editar" onClick={() => { setEditing(p); setFormOpen(true); }} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>
+                          {p.origin === 'yampi' && (
+                          <button type="button" onClick={() => syncOne(p)} disabled={syncingId === p.id} title="Sincronizar este produto" className="mr-1 cursor-pointer text-slate-400 hover:text-[#0094eb] disabled:opacity-50">
+                            {syncingId === p.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                          </button>
+                        )}
+                        <button type="button" title="Editar" onClick={() => { setEditing(p); setFormOpen(true); }} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>
                           <button type="button" title="Excluir" onClick={() => setDel({ ids: [p.id], label: `"${p.name}"` })} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/40 cursor-pointer"><Trash2 size={15} /></button>
                         </div>
                       </td>
@@ -307,6 +339,7 @@ export default function Products() {
         onConfirm={confirmDelete}
         onCancel={() => setDel(null)}
       />
+    {varProduct && <ProductVariantsModal product={varProduct} storeId={storeId || ''} onChanged={reload} onClose={() => setVarProduct(null)} />}
     </DashboardLayout>
   );
 }
