@@ -7417,7 +7417,39 @@ function renderOneFloatingWidget(story, hostId) {
     : '';
   var isImageItem = !rawVideoUrl;
 
-  if (cfg.autoplayVideos && rawVideoUrl && !isImageItem) {
+  if (cfg.autoplayVideos && rawVideoUrl && /tiktok\.com/i.test(rawVideoUrl)) {
+    if (thumbUrl) {
+      cardInner.style.backgroundImage = 'url("' + thumbUrl + '")';
+      cardInner.style.backgroundSize = 'cover';
+      cardInner.style.backgroundPosition = 'center';
+    }
+    var floatTtIf = createEl('iframe');
+    floatTtIf.src = buildTikTokSrc(extractTikTokId(rawVideoUrl), rawVideoUrl);
+    floatTtIf.allow = 'autoplay; fullscreen';
+    floatTtIf.setAttribute('tabindex', '-1');
+    floatTtIf.setAttribute('scrolling', 'no');
+    var floatTtW = parseFloat(cfg.width) || 120;
+    var floatTtH = parseFloat(cfg.height) || 180;
+    var floatTtScale = Math.max(floatTtW / 270, floatTtH / 480);
+    floatTtIf.style.cssText = 'position:absolute !important;left:50% !important;top:50% !important;width:270px !important;height:480px !important;max-width:none !important;border:0 !important;pointer-events:none !important;transform-origin:center center !important;transform:translate(-50%,-50%) scale(' + floatTtScale + ') !important;';
+    var floatTtCmd = function (ty) {
+      try { if (floatTtIf.contentWindow) floatTtIf.contentWindow.postMessage({ type: ty, 'x-tiktok-player': true }, '*'); } catch (e) {}
+    };
+    var floatTtOnMsg = function (ev) {
+      if (!floatTtIf.isConnected && floatTtIf.getAttribute('data-seen')) { window.removeEventListener('message', floatTtOnMsg); return; }
+      if (!floatTtIf.contentWindow || ev.source !== floatTtIf.contentWindow) return;
+      floatTtIf.setAttribute('data-seen', '1');
+      floatTtCmd('mute');
+      floatTtCmd('play');
+    };
+    window.addEventListener('message', floatTtOnMsg);
+    floatTtIf.addEventListener('load', function () {
+      [300, 1000, 2500].forEach(function (ms) {
+        setTimeout(function () { floatTtCmd('mute'); floatTtCmd('play'); }, ms);
+      });
+    });
+    cardInner.appendChild(floatTtIf);
+  } else if (cfg.autoplayVideos && rawVideoUrl && !isImageItem) {
     var video = createEl('video');
     video.src = rawVideoUrl;
     video.muted = true;
