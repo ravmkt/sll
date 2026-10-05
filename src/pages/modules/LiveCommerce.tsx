@@ -15,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 import { StoreBrand } from "@/components/layout/StoreBrand";
 import { ModuleSwitcher } from "@/components/layout/ModuleSwitcher";
 import { LiveSidebar, LiveTab } from "@/components/live/LiveSidebar";
+import { LiveOverview } from "@/components/live/LiveOverview";
+import type { CommercialDateOccurrence } from "@/lib/commercialDates";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { LiveFormDialog } from "@/components/live/LiveFormDialog";
 import { ShareLiveModal } from "@/components/live/ShareLiveModal";
@@ -438,7 +440,12 @@ const TAB_TITLES: Record<LiveTab, string> = {
 
 export function LiveCommerce() {
   const [collapsed, setCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<LiveTab>("lives");
+  const [activeTab, setActiveTab] = useState<LiveTab>("visao-geral");
+
+  const handleCreateLive = (occ: CommercialDateOccurrence) => {
+    setActiveTab("lives");
+    setTimeout(() => window.dispatchEvent(new CustomEvent("live:create-from-date", { detail: { title: "Live " + occ.name, date: occ.date.toISOString() } })), 60);
+  };
 
   const handleTabChange = (tab: LiveTab) => {
     if (tab === "aparencia") {
@@ -465,7 +472,7 @@ export function LiveCommerce() {
         </header>
 
         <div className="flex-1">
-          {activeTab === "lives" ? (
+          {activeTab === "visao-geral" ? (<LiveOverview onCreateLive={handleCreateLive} />) : activeTab === "lives" ? (
             <LiveCommerceContent />
           ) : (
             <div className="p-6 max-w-6xl mx-auto">

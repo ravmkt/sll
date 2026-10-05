@@ -1,4 +1,4 @@
-import { supabasePublic } from "./supabaseClients";
+import { supabase as supabasePublic } from "@/lib/supabase";
 import type { CommercialDate } from "@/lib/commercialDates";
 
 export const CommercialDatesService = {
