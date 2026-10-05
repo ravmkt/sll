@@ -758,6 +758,14 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                   />
                 ) : isImg ? (
                   <img src={editVideoUrl} alt="" className="w-full h-full object-cover" />
+                ) : (editSourceType === "tiktok" || /tiktok\.com\/(player|embed)/i.test(editVideoUrl)) ? (
+                  <iframe
+                    src={editVideoUrl}
+                    title={editTitle}
+                    className="w-full h-full border-0"
+                    allow="autoplay; fullscreen; encrypted-media"
+                    allowFullScreen
+                  />
                 ) : (
                   <video
                     src={editVideoUrl}
@@ -1285,6 +1293,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       {previewMedia && (() => {
         const ytId = extractYouTubeId(previewMedia.video_url);
         const isImg = isImageFile(previewMedia.video_url);
+        const isTT = previewMedia.video_source_type === "tiktok" || /tiktok\.com\/(player|embed)/i.test(previewMedia.video_url || "");
 
         return (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1326,6 +1335,14 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                     src={previewMedia.video_url}
                     alt={previewMedia.title}
                     className="w-full h-full object-cover"
+                  />
+                ) : isTT ? (
+                  <iframe
+                    src={previewMedia.video_url}
+                    title={previewMedia.title}
+                    className="w-full h-full border-0 rounded-[24px]"
+                    allow="autoplay; fullscreen; encrypted-media"
+                    allowFullScreen
                   />
                 ) : (
                   <video
