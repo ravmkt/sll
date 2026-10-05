@@ -85,7 +85,7 @@ export async function importYampiProducts(
       external_id: p.id,
       active: p.active,
       is_active: p.active,
-      origin: 'xml',
+      origin: 'yampi',
       import_source: 'xml',
       source_platform: 'yampi',
       last_imported_at: now,

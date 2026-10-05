@@ -19,7 +19,7 @@ import ImportModal from '@/components/products/ImportModal';
 import { inputCls } from '@/components/products/Modal';
 
 type SortKey = 'name' | 'price' | 'category' | 'origin' | 'active';
-const ORIGIN: Record<string, string> = { manual: 'Manual', xml: 'XML', planilha: 'Planilha' };
+const ORIGIN: Record<string, string> = { manual: 'Manual', xml: 'XML', planilha: 'Planilha', yampi: 'Yampi' };
 const brl = (n: number | null) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const selectCls = cn(inputCls, '!w-auto !py-2.5 cursor-pointer');
 
@@ -179,6 +179,7 @@ export default function Products() {
                 <option value="all">Todas origens</option>
                 <option value="manual">Manual</option>
                 <option value="xml">XML</option>
+          <option value="yampi">Yampi</option>
                 <option value="planilha">Planilha</option>
               </select>
             </div>

@@ -9,6 +9,7 @@ import {
   Loader2, Save, Image as ImageIcon, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import PlatformConnectCard from '@/components/configuracoes/PlatformConnectCard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 const LOGO_BUCKET = 'store-assets';
@@ -371,20 +372,7 @@ const SettingsPage: React.FC = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Plataforma de E-commerce
-              </label>
-              <select
-                value={form.platform}
-                onChange={(e) => setForm((p) => ({ ...p, platform: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              >
-                {PLATAFORMAS.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </div>
+            
 
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -475,12 +463,15 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. WHATSAPP */}
+        {/* 2. PLATAFORMA */}
+        <PlatformConnectCard storeId={storeId || ''} platform={form.platform} platforms={PLATAFORMAS} onChangePlatform={(p) => setForm((prev) => ({ ...prev, platform: p }))} />
+
+        {/* 3. WHATSAPP */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
             <div>
               <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                2. Integração WhatsApp
+                3. Integração WhatsApp
               </h2>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                 Número receptor e mensagem automática enviada pelos clientes nos vídeos.
@@ -533,7 +524,7 @@ const SettingsPage: React.FC = () => {
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-5">
           <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
             <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-              3. Métricas
+              4. Métricas
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
               Monitore o comportamento do cliente final e as interações com seus vídeos.
