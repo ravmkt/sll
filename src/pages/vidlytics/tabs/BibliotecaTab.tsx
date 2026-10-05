@@ -216,6 +216,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const [editTitle, setEditTitle] = useState<string>("");
   const [editSourceType, setEditSourceType] = useState<string>("upload");
   const [editVideoUrl, setEditVideoUrl] = useState<string>("");
+  const [editFileSize, setEditFileSize] = useState<number | null>(null);
   const [editThumbnailUrl, setEditThumbnailUrl] = useState<string>("");
   const [editProductId, setEditProductId] = useState<string>("");
   const [editModelId, setEditModelId] = useState<string>("");
@@ -514,6 +515,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     setEditTitle(video.title || "");
     setEditSourceType(video.video_source_type || "upload");
     setEditVideoUrl(video.video_url || "");
+    setEditFileSize(null);
 
     const ytId = extractYouTubeId(video.video_url);
     const fallbackThumb = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : "";
@@ -547,6 +549,8 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
       const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
       setEditVideoUrl(urlData.publicUrl);
+      setEditSourceType("upload");
+      setEditFileSize(file.size);
 
       // Gerar nova thumb
       try {
@@ -618,6 +622,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         updated_at: new Date().toISOString()
       };
 
+      if (editFileSize !== null) payload.file_size_bytes = editFileSize;
       const { error } = await vidlyticsDb.from("vid_videos").update(payload).eq("id", editingVideo.id);
       if (error) throw new Error(error.message);
 
@@ -704,6 +709,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
               <option value="upload">Upload de vídeo</option>
               <option value="youtube">YouTube / YouTube Shorts</option>
               <option value="external">URL Externa</option>
+              {editSourceType === "tiktok" && <option value="tiktok">TikTok (embed)</option>}
             </select>
           </div>
 
@@ -712,6 +718,11 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             <label className="block text-[11px] font-extrabold text-slate-400 mb-2 uppercase tracking-wider">
               ARQUIVO DE VÍDEO / URL
             </label>
+            {editSourceType === "tiktok" && (
+              <div className="p-3.5 bg-sky-50/70 border border-sky-200/70 rounded-2xl text-xs text-sky-900 mb-4">
+                Este vídeo usa o player do TikTok (com ícones nativos). Para o nosso player limpo, baixe o vídeo no app do TikTok (Salvar vídeo) e envie o MP4 em <strong>Escolher arquivo</strong>.
+              </div>
+            )}
 
             {!ytId && (
               <div className="p-3.5 bg-amber-50/70 border border-amber-200/70 rounded-2xl flex items-center gap-2.5 text-xs text-amber-900 mb-4">
