@@ -13,6 +13,7 @@ const Vidlytics = lazy(() => import('./pages/modules/Vidlytics'));
 const LiveCommerce = lazy(() => import('./pages/modules/LiveCommerce'));
 const LiveAdminPage = lazy(() => import('./pages/modules/LiveAdminPage'));
 const Products = lazy(() => import('./pages/Products'));
+const Medidas = lazy(() => import('./pages/Medidas'));
 const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
 const SettingsPage = lazy(() => import('./pages/configuracoes/SettingsPage'));
 const Assinaturas = lazy(() => import('./pages/assinaturas/Assinaturas'));
@@ -121,6 +122,18 @@ function AppRoutes() {
             user ? (
               <SubscriptionGate>
                 <Products />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
+        <Route
+          path="/dashboard/medidas"
+          element={
+            user ? (
+              <SubscriptionGate>
+                <Medidas />
               </SubscriptionGate>
             ) : (
               <Navigate to="/auth" replace />

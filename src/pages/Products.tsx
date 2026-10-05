@@ -14,6 +14,7 @@ import {
   setProductActive,
 } from '@/services/productsService';
 import ProductFormModal from '@/components/products/ProductFormModal';
+import ProductsTabs from '@/components/products/ProductsTabs';
 import CategoriesModal from '@/components/products/CategoriesModal';
 import ImportModal from '@/components/products/ImportModal';
 import { inputCls } from '@/components/products/Modal';
@@ -162,6 +163,7 @@ export default function Products() {
   return (
     <DashboardLayout>
       <div className="space-y-6 pb-20">
+        <ProductsTabs />
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Catálogo de Produtos</h1>
