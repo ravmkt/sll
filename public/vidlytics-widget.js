@@ -5059,7 +5059,7 @@ function cloneItemDeeply(original, index, isClone) {
 
       var firstVideo = (item.videos && item.videos[0]) || {};
       var video = document.createElement('video');
-      var _dcUrl = firstVideo.video_url || firstVideo.videoUrl || item.video_url || item.videoUrl || item.url || ''; var _dcYt = extractYouTubeId(_dcUrl); if (!_dcYt) { video.src = _dcUrl; } else { video.setAttribute('data-yt-id', _dcYt); }
+      var _dcUrl = firstVideo.video_url || firstVideo.videoUrl || item.video_url || item.videoUrl || item.url || ''; var _dcYt = extractYouTubeId(_dcUrl); var _dcTT = /tiktok\.com\/(player|embed)/i.test(_dcUrl); if (_dcYt) { video.setAttribute('data-yt-id', _dcYt); } else if (!_dcTT) { video.src = _dcUrl; }
       var posterUrl = firstVideo.thumbnail_url || firstVideo.thumbnailUrl || item.thumbnail_url || item.thumbnailUrl || item.thumb || ''; if (!posterUrl && _dcYt) { posterUrl = getYouTubeThumbnail(_dcUrl); }
       if (posterUrl) {
         video.poster = posterUrl;
