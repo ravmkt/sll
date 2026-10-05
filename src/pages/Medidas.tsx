@@ -10,9 +10,9 @@ import { logPanelActivity } from '@/lib/activityLog';
 import { MeasureModel, ModelMeasure, ModelType, deleteModel, listModels, saveModel } from '@/services/sizingModelsService';
 
 type Extra = { id: string; name: string; value: string };
-type FormState = { type: ModelType; name: string; height: string; width: string; length: string; weight: string; extras: Extra[] };
+type FormState = { type: ModelType; name: string; title: string; height: string; width: string; length: string; weight: string; extras: Extra[] };
 
-const EMPTY: FormState = { type: 'humano', name: '', height: '', width: '', length: '', weight: '', extras: [] };
+const EMPTY: FormState = { type: 'humano', name: '', title: '', height: '', width: '', length: '', weight: '', extras: [] };
 const BASE = ['altura', 'largura', 'comprimento', 'peso'];
 const uid = () => crypto.randomUUID();
 
@@ -73,6 +73,7 @@ export default function Medidas() {
       width: get('largura'),
       length: get('comprimento'),
       weight: get('peso'),
+      title: m.title || '',
       extras: m.measures
         .filter((x) => !base.includes(String(x.name).toLowerCase()))
         .map((x) => ({ id: uid(), name: x.name, value: String(x.value) })),
@@ -101,7 +102,7 @@ export default function Medidas() {
 
     try {
       setSaving(true);
-      await saveModel({ id: editing?.id, store_id: storeId, name: form.name.trim(), type: form.type, measures });
+      await saveModel({ id: editing?.id, store_id: storeId, name: form.name.trim(), title: form.title.trim(), type: form.type, measures });
       logPanelActivity(editing ? 'model.updated' : 'model.created', form.name.trim(), storeId);
       showSuccess(editing ? 'Medida atualizada com sucesso!' : 'Medida criada com sucesso!');
       closeForm();
@@ -230,7 +231,10 @@ export default function Medidas() {
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={isObj ? 'Ex: Caneca Cerâmica 350ml' : 'Ex: Modelo Padrão Feminino'} className={inputCls} />
             </div>
 
-            {isObj ? (
+            <div className="space-y-2">
+                <label className={labelCls}>Título <span className="text-xs font-normal text-slate-400">(opcional)</span></label>
+                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={isObj ? 'Ex: Medidas do produto' : 'Ex: Medidas da modelo'} className={inputCls} />
+              </div>{isObj ? (
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-2"><label className={labelCls}>Altura</label>{unitInput(form.height, (v) => setForm({ ...form, height: v }), 'Ex: 50')}</div>
                 <div className="space-y-2"><label className={labelCls}>Largura</label>{unitInput(form.width, (v) => setForm({ ...form, width: v }), 'Ex: 30')}</div>

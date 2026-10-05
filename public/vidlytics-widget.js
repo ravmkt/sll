@@ -3342,7 +3342,7 @@ media.addEventListener('ended', function () {
     ].join('');
 
     var panelTitle = createEl('span');
-    panelTitle.textContent = 'Medidas da modelo';
+    panelTitle.textContent = String((model && model.title) || '').trim() || 'Medidas';
     panelTitle.style.cssText = [
       'font-size:11px;',
       'font-weight:900;',

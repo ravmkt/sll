@@ -8,6 +8,7 @@ export interface MeasureModel {
   id: string;
   store_id: string;
   name: string;
+  title?: string | null;
   type: ModelType;
   measures: ModelMeasure[];
   created_at: string | null;
@@ -17,6 +18,7 @@ export interface ModelInput {
   id?: string;
   store_id: string;
   name: string;
+  title?: string | null;
   type: ModelType;
   measures: ModelMeasure[];
 }
@@ -30,6 +32,7 @@ function normalize(r: any): MeasureModel {
     id: r.id,
     store_id: r.store_id,
     name: r.name || '',
+    title: r.title || '',
     type: r.type === 'objeto' || r.type === 'humano' ? r.type : inferred,
     measures,
     created_at: r.created_at ?? null,
@@ -49,7 +52,7 @@ export async function listModels(storeId: string): Promise<MeasureModel[]> {
 
 export async function saveModel(input: ModelInput): Promise<void> {
   const now = new Date().toISOString();
-  const row = { store_id: input.store_id, name: input.name, type: input.type, measures: input.measures, updated_at: now };
+  const row = { store_id: input.store_id, name: input.name, title: (input.title || '').trim() || null, type: input.type, measures: input.measures, updated_at: now };
   if (input.id) {
     const { error } = await sb.from('sizing_models').update(row).eq('id', input.id).eq('store_id', input.store_id);
     if (error) throw new Error(error.message);
