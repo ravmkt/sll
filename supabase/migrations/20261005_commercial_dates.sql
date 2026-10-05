@@ -1,0 +1,1 @@
+-- Copie aqui o SQL da migration commercial_dates (executado no SQL Editor)
