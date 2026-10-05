@@ -24,3 +24,9 @@ export async function fetchTikTokVideos(storeId: string, cursor?: number | null)
     hasMore: !!data.has_more,
   };
 }
+
+export async function importTikTokVideo(storeId: string, videoId: string) {
+  const { data, error } = await supabase.functions.invoke('import-tiktok-video', { body: { storeId, videoId } });
+  if (error || !data?.success) throw new Error(data?.error || error?.message || 'Erro ao importar vídeo.');
+  return { videoId: data.videoId as string, duplicate: !!data.duplicate };
+}

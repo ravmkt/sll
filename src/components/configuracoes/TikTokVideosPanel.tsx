@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Eye, Heart, Loader2 } from 'lucide-react';
-import { showError } from '@/utils/toast';
-import { fetchTikTokVideos, type TikTokVideo } from '@/services/tiktokMediaService';
+import { Check, Download, Eye, Heart, Loader2 } from 'lucide-react';
+import { showError, showSuccess } from '@/utils/toast';
+import { fetchTikTokVideos, importTikTokVideo, type TikTokVideo } from '@/services/tiktokMediaService';
 
 export default function TikTokVideosPanel({ storeId }: { storeId: string }) {
   const [videos, setVideos] = useState<TikTokVideo[]>([]);
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState<string | null>(null);
+  const [imported, setImported] = useState<Set<string>>(new Set());
 
   const load = useCallback(async (next?: number | null) => {
     setLoading(true);
@@ -25,6 +27,19 @@ export default function TikTokVideosPanel({ storeId }: { storeId: string }) {
 
   useEffect(() => { load(); }, [load]);
 
+  const handleImport = async (v: TikTokVideo) => {
+    setImporting(v.id);
+    try {
+      const r = await importTikTokVideo(storeId, v.id);
+      setImported((prev) => new Set(prev).add(v.id));
+      showSuccess(r.duplicate ? 'Este vídeo já estava na sua biblioteca.' : 'Vídeo importado para a Biblioteca!');
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setImporting(null);
+    }
+  };
+
   return (
     <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
       <div className="flex items-center justify-between">
@@ -38,23 +53,32 @@ export default function TikTokVideosPanel({ storeId }: { storeId: string }) {
         <p className="text-xs font-bold text-slate-500">Nenhum vídeo público encontrado nesta conta.</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {videos.map((v) => (
-            <a
-              key={v.id}
-              href={v.share_url}
-              target="_blank"
-              rel="noreferrer"
-              className="group relative block aspect-[9/16] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-900"
-            >
-              {v.cover_image_url && (
-                <img src={v.cover_image_url} alt={v.title || 'Vídeo do TikTok'} referrerPolicy="no-referrer" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-              )}
-              <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/80 to-transparent p-2 text-[10px] font-bold text-white">
-                <span className="inline-flex items-center gap-1"><Eye size={11} />{Number(v.view_count ?? 0).toLocaleString('pt-BR')}</span>
-                <span className="inline-flex items-center gap-1"><Heart size={11} />{Number(v.like_count ?? 0).toLocaleString('pt-BR')}</span>
+          {videos.map((v) => {
+            const done = imported.has(v.id);
+            const busy = importing === v.id;
+            return (
+              <div key={v.id} className="relative aspect-[9/16] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-900">
+                {v.cover_image_url && (
+                  <img src={v.cover_image_url} alt={v.title || 'Vídeo do TikTok'} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                )}
+                <div className="absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/90 to-transparent p-2">
+                  <div className="flex items-center gap-3 text-[10px] font-bold text-white">
+                    <span className="inline-flex items-center gap-1"><Eye size={11} />{Number(v.view_count ?? 0).toLocaleString('pt-BR')}</span>
+                    <span className="inline-flex items-center gap-1"><Heart size={11} />{Number(v.like_count ?? 0).toLocaleString('pt-BR')}</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busy || done}
+                    onClick={() => handleImport(v)}
+                    className={`flex w-full items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-black text-white cursor-pointer disabled:cursor-default ${done ? 'bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60'}`}
+                  >
+                    {busy ? <Loader2 size={12} className="animate-spin" /> : done ? <Check size={12} /> : <Download size={12} />}
+                    {done ? 'Importado' : busy ? 'Importando...' : 'Importar'}
+                  </button>
+                </div>
               </div>
-            </a>
-          ))}
+            );
+          })}
         </div>
       )}
 
