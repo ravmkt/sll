@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { StoreBrand } from "@/components/layout/StoreBrand";
+import { ModuleSwitcher } from "@/components/layout/ModuleSwitcher";
 import { LiveFormDialog } from "@/components/live/LiveFormDialog";
 import { ShareLiveModal } from "@/components/live/ShareLiveModal";
 import { LiveMetricsModal } from "@/components/live/LiveMetricsModal";
@@ -182,7 +184,7 @@ const LiveCardItem = React.memo(function LiveCardItem({
   );
 });
 
-export function LiveCommerce() {
+function LiveCommerceContent() {
   const { store: currentStore, storeId: tenantStoreId } = useLoja();
   const activeStoreId = currentStore?.id || tenantStoreId;
   const navigate = useNavigate();
@@ -522,6 +524,18 @@ export function LiveCommerce() {
   );
 }
 
+
+export function LiveCommerce() {
+  return (
+    <>
+      <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-20">
+        <StoreBrand />
+        <ModuleSwitcher />
+      </header>
+      <LiveCommerceContent />
+    </>
+  );
+}
 
 export default LiveCommerce;
 

@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { StoreBrand } from '../../components/layout/StoreBrand';
 import { VidlyticsSidebar, VidlyticsTab } from '../vidlytics/components/VidlyticsSidebar';
-import { ModuleSelectorDropdown } from '../vidlytics/components/ModuleSelectorDropdown';
+import { ModuleSwitcher } from '../../components/layout/ModuleSwitcher';
 import VisaoGeralTab from '../vidlytics/tabs/VisaoGeralTab';
 import ResultadosTab from '../vidlytics/tabs/ResultadosTab';
 import StoriesTab from '../vidlytics/tabs/StoriesTab';
@@ -64,7 +64,7 @@ export default function Vidlytics() {
         {/* TOPBAR LIMPA: SELETOR DE MÓDULOS ALINHADO À DIREITA */}
         <header className="bg-white border-b border-slate-200/80 px-6 py-2.5 flex items-center justify-between sticky top-0 z-20">
           <StoreBrand />
-          <ModuleSelectorDropdown />
+          <ModuleSwitcher />
         </header>
 
         {/* CONTEÚDO DA PÁGINA */}
