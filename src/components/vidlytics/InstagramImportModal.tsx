@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Download, Loader2, X } from 'lucide-react';
-import { showError, showSuccess } from '@/utils/toast';
+import { toast } from 'sonner';
+import { showError } from '@/utils/toast';
 import { getSocialIntegration, type SocialIntegration } from '@/services/socialIntegrationsService';
 import { fetchInstagramVideos, importInstagramVideo, type InstagramVideo } from '@/services/instagramMediaService';
 
@@ -34,7 +35,7 @@ function VideosPanel({ storeId }: { storeId: string }) {
     try {
       const r = await importInstagramVideo(storeId, v.id);
       setImported((prev) => new Set(prev).add(v.id));
-      showSuccess(r.duplicate ? 'Este vídeo já estava na sua biblioteca.' : 'Vídeo importado para a Biblioteca!');
+      toast(r.duplicate ? 'Este vídeo já estava na sua biblioteca.' : 'Vídeo importado para a Biblioteca!', { icon: <Check size={16} color="#0094eb" />, style: { color: '#0094eb', border: '1px solid #0094eb' } });
     } catch (e) {
       showError((e as Error).message);
     } finally {
@@ -71,7 +72,7 @@ function VideosPanel({ storeId }: { storeId: string }) {
                     type="button"
                     disabled={busy || done}
                     onClick={() => handleImport(v)}
-                    className={`flex w-full items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-black text-white cursor-pointer disabled:cursor-default ${done ? 'bg-emerald-600' : 'bg-[#0094eb]'}`}
+                    className={`flex w-full items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-black text-white cursor-pointer disabled:cursor-default ${done ? 'bg-[#0070f3]' : 'bg-[#0094eb]'}`}
                   >
                     {busy ? <Loader2 size={12} className="animate-spin" /> : done ? <Check size={12} /> : <Download size={12} />}
                     {done ? 'Importado' : busy ? 'Importando...' : 'Importar'}
@@ -124,9 +125,9 @@ export default function InstagramImportModal({ storeId, onClose }: { storeId: st
               <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
                 {integration ? 'Sessão do Instagram expirada.' : 'Instagram não conectado.'}
               </p>
-              <p className="mt-1 text-xs text-slate-500">Conecte sua conta em Configurações para importar vídeos.</p>
-              <Link to="/dashboard/settings" onClick={onClose} className="mt-4 inline-block rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white">
-                Ir para Configurações
+              <p className="mt-1 text-xs text-slate-500">Conecte sua conta em Integração para importar vídeos.</p>
+              <Link to="/dashboard/integracao" onClick={onClose} className="mt-4 inline-block rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white">
+                Ir para Integração
               </Link>
             </div>
           )}
