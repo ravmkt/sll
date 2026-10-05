@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CheckCircle2, FileText, Link as LinkIcon, Loader2, Upload } from 'lucide-react';
-import { ImportItem, ImportSummary, importProducts, normalizeSku } from '@/services/productsService';
-import { fetchFeedText, getSavedCategoryField, parseXmlFeed } from '@/lib/products/xmlFeed';
+import { ImportItem, ImportSummary, addCategory, categoryLeaf, importProducts, listCategories, normCat, normalizeSku } from '@/services/productsService';
+import { fetchFeedText, getSavedCategoryField, listFeedCategories, parseXmlFeed, saveCategoryField, scanCategoryFields, type CategoryFieldInfo } from '@/lib/products/xmlFeed';
 import { SHEET_TEMPLATE_CSV, parseSheet } from '@/lib/products/sheet';
 import { showError, showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,11 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
   const [size, setSize] = useState(10);
   const [page, setPage] = useState(1);
   const [report, setReport] = useState<ImportSummary | null>(null);
+  const [raw, setRaw] = useState('');
+  const [fields, setFields] = useState<CategoryFieldInfo[]>([]);
+  const [field, setField] = useState('');
+  const [existingCats, setExistingCats] = useState<string[]>([]);
+  const [skipCats, setSkipCats] = useState<Set<string>>(new Set());
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -37,6 +42,8 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
       .filter((r) => (cat === 'all' || (r.it.category || 'Sem categoria') === cat) && (!q || r.it.name.toLowerCase().includes(q) || r.sku.toLowerCase().includes(q)));
   }, [items, search, cat]);
   const cats = useMemo(() => Array.from(new Set(items.map((i) => i.category || 'Sem categoria'))).sort(), [items]);
+  const feedCats = useMemo(() => listFeedCategories(items), [items]);
+  const existingSet = useMemo(() => new Set(existingCats.map(normCat)), [existingCats]);
   const pages = Math.max(1, Math.ceil(rows.length / size));
   const safePage = Math.min(page, pages);
   const pageRows = rows.slice((safePage - 1) * size, safePage * size);
@@ -53,14 +60,19 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
       if (tab === 'xml') {
         if (!url.trim() && !xmlFile) throw new Error('Informe a URL do feed ou escolha um arquivo XML.');
         setMsg('Lendo e interpretando o XML...');
-        list = parseXmlFeed(xmlFile ? await xmlFile.text() : await fetchFeedText(url.trim()), getSavedCategoryField(storeId));
+        const text = xmlFile ? await xmlFile.text() : await fetchFeedText(url.trim());
+            const found = scanCategoryFields(text);
+            const saved = getSavedCategoryField(storeId);
+            const chosenField = found.find((x) => x.field === saved)?.field || found[0]?.field || '';
+            setRaw(text); setFields(found); setField(chosenField);
+            list = parseXmlFeed(text, chosenField || undefined);
       } else {
         if (!sheetFile) throw new Error('Escolha um arquivo CSV ou XLSX.');
         setMsg('Lendo a planilha...');
         list = await parseSheet(sheetFile);
       }
       if (!list.length) throw new Error('Nenhum produto foi reconhecido.');
-      setItems(list); setSelected(new Set()); setSearch(''); setCat('all'); setPage(1);
+      setExistingCats((await listCategories(storeId)).map((c) => c.name)); setSkipCats(new Set()); setItems(list); setSelected(new Set()); setSearch(''); setCat('all'); setPage(1);
       setStage('preview');
       showSuccess(`${list.length} produtos encontrados.`);
     } catch (e) {
@@ -71,11 +83,20 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
   };
 
   const run = async () => {
-    const chosen = items.filter((_, i) => selected.has(i));
+    const chosen = items
+      .filter((_, i) => selected.has(i))
+      .map((it) => (skipCats.has(normCat(categoryLeaf(it.category || ''))) ? { ...it, category: '' } : it));
     if (!chosen.length) return showError('Selecione ao menos um produto.');
     setBusy(true);
     try {
-      const summary = await importProducts(storeId, chosen, tab === 'xml' ? 'xml' : 'planilha', (d, t) => setMsg(`Importando ${d} de ${t}...`));
+      const toCreate = new Map<string, string>();
+          chosen.forEach((it) => {
+            const n = categoryLeaf(it.category || '');
+            if (n && !existingSet.has(normCat(n))) toCreate.set(normCat(n), n);
+          });
+          for (const n of toCreate.values()) { try { await addCategory(storeId, n); } catch { /* ja existe */ } }
+          if (tab === 'xml' && field) saveCategoryField(storeId, field);
+          const summary = await importProducts(storeId, chosen, tab === 'xml' ? 'xml' : 'planilha', (d, t) => setMsg(`Importando ${d} de ${t}...`));
       setReport(summary);
       setStage('report');
       if (summary.imported > 0) showSuccess(`${summary.imported} produto(s) importado(s).`);
@@ -166,7 +187,48 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
               </select>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
+          {tab === 'xml' && fields.length > 1 && (
+                <div>
+                  <label className={labelCls}>Campo do XML usado como categoria</label>
+                  <select
+                    value={field}
+                    onChange={(e) => { setField(e.target.value); setItems(parseXmlFeed(raw, e.target.value)); setSkipCats(new Set()); setCat('all'); setPage(1); }}
+                    className={cn(inputCls, 'mt-2 !py-1.5 !text-xs cursor-pointer')}
+                  >
+                    {fields.map((f) => <option key={f.field} value={f.field}>{f.field} ({f.distinct}) - ex.: {f.sample.join(' | ').slice(0, 60)}</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#111524] p-3">
+                <p className="mb-2 text-xs font-semibold text-slate-700 dark:text-white">Categorias encontradas ({feedCats.length})</p>
+                <div className="max-h-36 space-y-1 overflow-y-auto">
+                  {feedCats.map((c) => {
+                    const k = normCat(c.name);
+                    const exists = existingSet.has(k);
+                    const skip = skipCats.has(k);
+                    return (
+                      <div key={k} className="flex items-center gap-2 text-xs">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">{c.name}</span>
+                        <span className="text-slate-400">{c.count} produto(s)</span>
+                        <span className={cn('ml-auto font-semibold', exists ? 'text-slate-400' : skip ? 'text-amber-600' : 'text-[#0094eb]')}>
+                          {exists ? 'Já existe' : skip ? 'Sem categoria' : 'Será criada'}
+                        </span>
+                        {!exists && (
+                          <button
+                            type="button"
+                            onClick={() => setSkipCats((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; })}
+                            className="text-[#0094eb] underline cursor-pointer"
+                          >
+                            {skip ? 'Criar' : 'Ignorar'}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {feedCats.length === 0 && <p className="text-xs text-slate-400">Nenhuma categoria no arquivo. Os produtos entram sem categoria.</p>}
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
             <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-pointer">
               <input type="checkbox" checked={allVisible} onChange={(e) => setMany(pageRows.filter((r) => r.sku).map((r) => r.i), e.target.checked)} className="h-3.5 w-3.5" />
               Selecionar visíveis
@@ -194,7 +256,7 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
                     <td className="max-w-[260px] truncate px-3 py-2 font-semibold text-slate-700 dark:text-white">{r.it.name}</td>
                     <td className="px-3 py-2 text-slate-500 dark:text-slate-400">{r.sku || <span className="font-semibold text-rose-500">sem SKU</span>}</td>
                     <td className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">{brl(r.it.price)}</td>
-                    <td className="px-3 py-2 text-slate-500 dark:text-slate-400">{r.it.category || 'Sem categoria'}</td>
+                    <td className="px-3 py-2 text-slate-500 dark:text-slate-400">{categoryLeaf(r.it.category || '') || 'Sem categoria'}</td>
                   </tr>
                 ))}
                 {pageRows.length === 0 && <tr><td colSpan={5} className="px-3 py-8 text-center text-slate-400">Nenhum produto com esses filtros.</td></tr>}
