@@ -14,10 +14,10 @@ const BASE = Deno.env.get('SUPABASE_URL')!;
 const SELF = `${BASE}/functions/v1/yampi-sync`;
 const API = 'https://api.dooki.com.br/v2';
 const EVENTS = ['product.inventory.updated', 'product.updated', 'order.paid'];
-const COLS = 'store_id,alias,user_token,user_secret,webhook_secret,webhook_status';
+const COLS = 'store_id,alias,user_token,user_secret,webhook_secret,webhook_status,webhook_hmac_key';
 const admin = createClient(BASE, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
-type Conn = { store_id: string; alias: string; user_token: string; user_secret: string; webhook_secret: string; webhook_status: string | null };
+type Conn = { store_id: string; alias: string; user_token: string; user_secret: string; webhook_secret: string; webhook_status: string | null; webhook_hmac_key: string | null };
 
 async function yampi(c: Conn, path: string, init: RequestInit = {}) {
   const r = await fetch(`${API}/${encodeURIComponent(c.alias)}/${path}`, {
@@ -29,7 +29,8 @@ async function yampi(c: Conn, path: string, init: RequestInit = {}) {
     const d = (await r.text().catch(() => '')).slice(0, 300);
     throw new Error(`Erro ${r.status} na API da Yampi: ${d}`);
   }
-  return r.json();
+  const t = await r.text();
+  return t ? JSON.parse(t) : {};
 }
 
 async function fetchProducts(c: Conn) {
@@ -72,22 +73,59 @@ async function pageAll<T>(q: (a: number, b: number) => PromiseLike<{ data: T[] |
 const getConn = async (id: string) =>
   ((await admin.from('yampi_connections').select(COLS).eq('store_id', id).maybeSingle()).data ?? null) as Conn | null;
 
+function findSecret(o: unknown): string | null {
+  if (typeof o === 'string') return o.startsWith('wh_') ? o : null;
+  if (o && typeof o === 'object') {
+    for (const v of Object.values(o as Record<string, unknown>)) {
+      const r = findSecret(v);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
 async function registerWebhook(c: Conn) {
   let status = 'ok';
+  let key = c.webhook_hmac_key;
   try {
     const list = await yampi(c, 'webhooks?limit=100');
-    const has = (list.data || []).some((w: any) => String(w.url || '').startsWith(SELF));
-    if (!has) {
-      await yampi(c, 'webhooks', {
+    const mine: any[] = (list.data || []).filter((w: any) => String(w.url || '').startsWith(SELF));
+    if (mine.length && !key) {
+      key = findSecret(mine);
+      if (!key) {
+        try { key = findSecret(await yampi(c, `webhooks/${mine[0].id}`)); } catch { /* segue */ }
+      }
+      if (!key) {
+        for (const w of mine) await yampi(c, `webhooks/${w.id}`, { method: 'DELETE' });
+        mine.length = 0;
+      }
+    }
+    if (!mine.length) {
+      const created = await yampi(c, 'webhooks', {
         method: 'POST',
         body: JSON.stringify({ name: 'SLL - sincronismo', url: `${SELF}?s=${c.webhook_secret}`, events: EVENTS }),
       });
+      key = findSecret(created) ?? key;
+      if (!key) console.warn('yampi-hmac: chave wh_ nao encontrada na resposta', JSON.stringify(created).slice(0, 500));
     }
   } catch (e) {
     status = `erro: ${e instanceof Error ? e.message : String(e)}`.slice(0, 400);
   }
-  await admin.from('yampi_connections').update({ webhook_status: status }).eq('store_id', c.store_id);
+  await admin.from('yampi_connections').update({ webhook_status: status, webhook_hmac_key: key }).eq('store_id', c.store_id);
   return status;
+}
+
+async function hmacKind(raw: string, key: string | null, header: string | null) {
+  if (!key || !header) return null;
+  const enc = new TextEncoder();
+  const k = await crypto.subtle.importKey('raw', enc.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(raw)));
+  const hex = [...sig].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const strip = (s: string) => s.replace(/=+$/, '');
+  const h = strip(header.trim());
+  if (h === strip(btoa(String.fromCharCode(...sig)))) return 'b64_binario';
+  if (h === strip(btoa(hex))) return 'b64_hex';
+  return null;
 }
 
 async function syncStore(storeId: string, onlyProduct?: string) {
@@ -186,30 +224,22 @@ async function syncStore(storeId: string, onlyProduct?: string) {
   }
 }
 
-async function hmacOk(raw: string, secret: string, header: string | null) {
-  if (!header) return false;
-  const enc = new TextEncoder();
-  const k = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(raw)));
-  const b64 = btoa(String.fromCharCode(...sig));
-  const hex = [...sig].map((b) => b.toString(16).padStart(2, '0')).join('');
-  return header === b64 || header.toLowerCase() === hex;
-}
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const hook = new URL(req.url).searchParams.get('s');
     if (hook) {
-          const raw = await req.text();
-          const { data: c } = await admin.from('yampi_connections').select('store_id,user_secret').eq('webhook_secret', hook).maybeSingle();
-          if (!c) return json({ error: 'invalid' }, 401);
-          const hdr = req.headers.get('x-yampi-hmac-sha256');
-          const ok = await hmacOk(raw, c.user_secret, hdr);
-          console.log('yampi-hmac', JSON.stringify({ store: c.store_id, header: !!hdr, ok }));
-          await admin.from('yampi_connections').update({ dirty_at: new Date().toISOString() }).eq('store_id', c.store_id);
-          EdgeRuntime.waitUntil(syncStore(c.store_id).catch(() => null));
-          return json({ ok: true });
-        }
+      const raw = await req.text();
+      const { data: c } = await admin.from('yampi_connections').select('store_id,webhook_hmac_key').eq('webhook_secret', hook).maybeSingle();
+      if (!c) return json({ error: 'invalid' }, 401);
+      const hdr = req.headers.get('x-yampi-hmac-sha256');
+      const kind = await hmacKind(raw, c.webhook_hmac_key, hdr);
+      console.log('yampi-hmac', JSON.stringify({ store: c.store_id, key: !!c.webhook_hmac_key, header: !!hdr, ok: kind }));
+      if (Deno.env.get('YAMPI_HMAC_ENFORCE') === 'true' && c.webhook_hmac_key && !kind) return json({ error: 'invalid signature' }, 401);
+      await admin.from('yampi_connections').update({ dirty_at: new Date().toISOString() }).eq('store_id', c.store_id);
+      EdgeRuntime.waitUntil(syncStore(c.store_id).catch(() => null));
+      return json({ ok: true });
+    }
 
     const body = await req.json().catch(() => ({}));
     const key = Deno.env.get('CRON_KEY');
