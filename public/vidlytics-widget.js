@@ -7438,7 +7438,7 @@ function renderOneFloatingWidget(story, hostId) {
     var floatTtOnMsg = function (ev) {
       if (!floatTtIf.isConnected && floatTtIf.getAttribute('data-seen')) { window.removeEventListener('message', floatTtOnMsg); return; }
       if (!floatTtIf.contentWindow || ev.source !== floatTtIf.contentWindow) return;
-      floatTtIf.setAttribute('data-seen', '1');
+      floatTtIf.setAttribute('data-seen', '1'); try { var _ftd = (typeof ev.data === 'string') ? JSON.parse(ev.data) : ev.data; if (_ftd && ((_ftd.type === 'onStateChange' && _ftd.value === 1) || (_ftd.type === 'onCurrentTime' && _ftd.value && _ftd.value.currentTime > 0))) { if (typeof floatTtReveal === 'function') floatTtReveal(); } } catch (e) {}
       floatTtCmd('mute');
       floatTtCmd('play');
     };
@@ -7448,7 +7448,7 @@ function renderOneFloatingWidget(story, hostId) {
         setTimeout(function () { floatTtCmd('mute'); floatTtCmd('play'); }, ms);
       });
     });
-    cardInner.appendChild(floatTtIf);
+    floatTtIf.style.setProperty('opacity', '0', 'important'); floatTtIf.style.setProperty('transition', 'opacity .3s ease', 'important'); var floatTtShown = false; var floatTtReveal = function () { if (floatTtShown) return; floatTtShown = true; floatTtIf.style.setProperty('opacity', '1', 'important'); }; setTimeout(floatTtReveal, 6000); cardInner.appendChild(floatTtIf);
   } else if (cfg.autoplayVideos && rawVideoUrl && !isImageItem) {
     var video = createEl('video');
     video.src = rawVideoUrl;
