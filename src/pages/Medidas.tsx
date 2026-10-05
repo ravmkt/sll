@@ -63,7 +63,7 @@ export default function Medidas() {
   const pick = (type: ModelType) => { setForm({ ...EMPTY, type }); setPickOpen(false); setFormOpen(true); };
 
   const openEdit = (m: MeasureModel) => {
-    const get = (n: string) => String(m.measures.find((x) => String(x.name).toLowerCase() === n)?.value ?? '');
+    const get = (n: string) => { const raw = String(m.measures.find((x) => String(x.name).toLowerCase() === n)?.value ?? '').trim(); return raw !== '' && !isNaN(Number(raw)) ? raw : ''; };
     const base = m.type === 'objeto' ? BASE : ['altura', 'peso'];
     setEditing(m);
     setForm({
