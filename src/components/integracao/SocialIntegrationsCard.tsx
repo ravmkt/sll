@@ -92,7 +92,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     localStorage.setItem("sll_oauth_store_id", storeId);
 
     // App ID homologado da Meta e Redirect URI apontando para o callback do app
-    const appId = "28436857449312028";
+    const appId = "1735532341065265";
     const redirectUri = `${window.location.origin}/dashboard/integracao`;
     sessionStorage.setItem("ig_redirect_uri", redirectUri);
 

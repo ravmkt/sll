@@ -3,7 +3,7 @@ import { CheckCircle2, Link2, Loader2, Unlink } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { disconnectIntegration, getSocialIntegration, type SocialIntegration } from '@/services/socialIntegrationsService';
 
-const APP_ID = '28436857449312028';
+const APP_ID = '1735532341065265';
 
 export default function InstagramConnectRow({ storeId }: { storeId: string }) {
   const [ig, setIg] = useState<SocialIntegration | null>(null);
