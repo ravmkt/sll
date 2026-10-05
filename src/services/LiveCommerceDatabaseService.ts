@@ -122,11 +122,11 @@ export const LiveCommerceDatabaseService = {
   },
 
   // ==========================================
-  // --- CONFIGURAÇÕES DE APARÊNCIA (live_commerce.live_settings) ---
+  // --- CONFIGURAÇÕES DE APARÊNCIA (live_commerce.appearance_settings) ---
   // ==========================================
   async getLiveSettings(storeId: string) {
     const { data, error } = await supabaseLiveCommerce
-      .from('store_settings')
+      .from('appearance_settings')
       .select('widget_divulgacao, widget_aovivo, player_settings')
       .eq('store_id', storeId)
       .maybeSingle();
@@ -144,7 +144,7 @@ export const LiveCommerceDatabaseService = {
     player_settings?: any;
   }) {
     const { data, error } = await supabaseLiveCommerce
-      .from('store_settings')
+      .from('appearance_settings')
       .upsert(
         {
           store_id: storeId,
