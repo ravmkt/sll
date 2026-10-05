@@ -45,6 +45,19 @@ async function fetchProducts(c: Conn) {
   return out;
 }
 
+async function fetchRemote(c: Conn, storeId: string, onlyProduct?: string) {
+  if (onlyProduct) {
+    const { data } = await admin.from('products').select('external_id').eq('id', onlyProduct).eq('store_id', storeId).maybeSingle();
+    if (data?.external_id) {
+      try {
+        const j = await yampi(c, `catalog/products/${encodeURIComponent(String(data.external_id))}?include=skus`);
+        if (j?.data?.id) return new Map<string, any>([[String(j.data.id), j.data]]);
+      } catch { /* cai para a listagem completa */ }
+    }
+  }
+  return fetchProducts(c);
+}
+
 async function pageAll<T>(q: (a: number, b: number) => PromiseLike<{ data: T[] | null; error: any }>): Promise<T[]> {
   const out: T[] = [];
   for (let from = 0; ; from += 1000) {
@@ -77,7 +90,7 @@ async function registerWebhook(c: Conn) {
   return status;
 }
 
-async function syncStore(storeId: string) {
+async function syncStore(storeId: string, onlyProduct?: string) {
   const started = new Date();
   const { data: claimed } = await admin.from('yampi_connections')
     .update({ syncing_until: new Date(Date.now() + 5 * 60000).toISOString() })
@@ -88,7 +101,7 @@ async function syncStore(storeId: string) {
   if (!c) return null;
   const s = { products: 0, variants_updated: 0, variants_added: 0, prices_updated: 0, not_found: 0, failed: 0 };
   try {
-    const remote = await fetchProducts(c);
+    const remote = await fetchRemote(c, storeId, onlyProduct);
     const prods = await pageAll<any>((a, b) =>
       admin.from('products').select('id,external_id,price').eq('store_id', storeId).eq('source_platform', 'yampi').order('id').range(a, b));
     const vars = await pageAll<any>((a, b) =>
@@ -98,7 +111,7 @@ async function syncStore(storeId: string) {
 
     const now = new Date().toISOString();
     const jobs: (() => Promise<void>)[] = [];
-    for (const p of prods) {
+    for (const p of onlyProduct ? prods.filter((x) => x.id === onlyProduct) : prods) {
       const y = remote.get(String(p.external_id));
       if (!y) { s.not_found++; continue; }
       const skus: any[] = y.skus?.data ?? [];
@@ -156,9 +169,13 @@ async function syncStore(storeId: string) {
       }
     }
     for (let i = 0; i < jobs.length; i += 10) await Promise.all(jobs.slice(i, i + 10).map((j) => j()));
-    await admin.from('products').update({ last_synced_at: now }).eq('store_id', storeId).eq('source_platform', 'yampi');
-    await admin.from('yampi_connections').update({ last_sync_at: now, last_sync_summary: s }).eq('store_id', storeId);
-    await admin.from('yampi_connections').update({ dirty_at: null }).eq('store_id', storeId).lte('dirty_at', started.toISOString());
+    let mark = admin.from('products').update({ last_synced_at: now }).eq('store_id', storeId).eq('source_platform', 'yampi');
+    if (onlyProduct) mark = mark.eq('id', onlyProduct);
+    await mark;
+    if (!onlyProduct) {
+      await admin.from('yampi_connections').update({ last_sync_at: now, last_sync_summary: s }).eq('store_id', storeId);
+      await admin.from('yampi_connections').update({ dirty_at: null }).eq('store_id', storeId).lte('dirty_at', started.toISOString());
+    }
     return s;
   } catch (e) {
     await admin.from('yampi_connections')
@@ -208,8 +225,8 @@ Deno.serve(async (req) => {
     }
     if (body.action === 'register_webhook') return json({ status: await registerWebhook(c) });
     if (body.action === 'sync') {
-      if (c.webhook_status !== 'ok') await registerWebhook(c);
-      const r = await syncStore(c.store_id);
+      if (!body.product_id && c.webhook_status !== 'ok') await registerWebhook(c);
+      const r = await syncStore(c.store_id, body.product_id ? String(body.product_id) : undefined);
       if (!r) return json({ error: 'Já existe uma sincronização em andamento. Tente em instantes.' }, 400);
       return json(r);
     }
