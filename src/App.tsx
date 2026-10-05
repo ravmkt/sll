@@ -1,3 +1,5 @@
+import PrivacyPage from "@/pages/legal/PrivacyPage";
+import TermsPage from "@/pages/legal/TermsPage";
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -46,6 +48,8 @@ function AppRoutes() {
       {user && <OnboardingModal />}
 
       <Routes>
+        <Route path="/privacidade" element={<PrivacyPage />} />
+        <Route path="/termos" element={<TermsPage />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard/products" element={<Navigate to="/dashboard/produtos" replace />} />
         <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
