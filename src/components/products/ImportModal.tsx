@@ -9,6 +9,17 @@ import { Modal, errMsg, fileCls, ghostBtn, inputCls, labelCls, primaryBtn } from
 
 type Props = { storeId: string; onClose: () => void; onImported: () => void };
 
+// Feed misto (Pai > Filho + nomes soltos): os nomes soltos sao colecoes, nao categorias.
+const defaultSkip = (list: ImportItem[]): Set<string> => {
+  const hasTree = list.some((i) => (i.category || '').includes('>'));
+  if (!hasTree) return new Set();
+  const tree = new Set(list.filter((i) => (i.category || '').includes('>')).map((i) => normCat(categoryLeaf(i.category || ''))));
+  const flat = list
+    .filter((i) => i.category && !i.category.includes('>'))
+    .map((i) => normCat(categoryLeaf(i.category || '')))
+    .filter((k) => k && !tree.has(k));
+  return new Set(flat);
+};
 const brl = (n: number) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const tabCls = (on: boolean) =>
   cn('flex-1 py-3 text-sm font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer transition',
@@ -76,7 +87,7 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
         list = await parseSheet(sheetFile);
       }
       if (!list.length) throw new Error('Nenhum produto foi reconhecido.');
-      setExistingCats((await listCategories(storeId)).map((c) => c.name)); setSkipCats(new Set()); setItems(list); setSelected(new Set()); setSearch(''); setCat('all'); setPage(1);
+      setExistingCats((await listCategories(storeId)).map((c) => c.name)); setSkipCats(defaultSkip(list)); setItems(list); setSelected(new Set()); setSearch(''); setCat('all'); setPage(1);
       setStage('preview');
       showSuccess(`${list.length} produtos encontrados.`);
     } catch (e) {
@@ -196,7 +207,7 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
                   <label className={labelCls}>Campo do XML usado como categoria</label>
                   <select
                     value={field}
-                    onChange={(e) => { setField(e.target.value); setItems(parseXmlFeed(raw, e.target.value)); setSkipCats(new Set()); setCat('all'); setPage(1); }}
+                    onChange={(e) => { setField(e.target.value); { const l = parseXmlFeed(raw, e.target.value); setItems(l); setSkipCats(defaultSkip(l)); } setCat('all'); setPage(1); }}
                     className={cn(inputCls, 'mt-2 !py-1.5 !text-xs cursor-pointer')}
                   >
                     {fields.map((f) => <option key={f.field} value={f.field}>{f.field} ({f.distinct}) - ex.: {f.sample.join(' | ').slice(0, 60)}</option>)}
