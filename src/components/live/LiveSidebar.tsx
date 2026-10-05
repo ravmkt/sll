@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Radio,
-  TrendingUp,
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
@@ -11,7 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type LiveTab = 'lives' | 'resultados' | 'aparencia';
+export type LiveTab = 'lives' | 'aparencia';
 
 interface LiveSidebarProps {
   activeTab: LiveTab;
@@ -27,7 +26,6 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
 
   const menuItems: { id: LiveTab; label: string; icon: React.ElementType }[] = [
     { id: 'lives', label: 'Minhas Lives', icon: Radio },
-    { id: 'resultados', label: 'Resultados & Métricas', icon: TrendingUp },
     { id: 'aparencia', label: 'Aparência', icon: Palette },
   ];
 

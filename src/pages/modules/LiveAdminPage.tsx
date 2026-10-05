@@ -29,7 +29,8 @@ interface Advantage {
 }
 
 export default function LiveAdmin() {
-  const { liveId } = useParams<{ liveId: string }>();
+  const { id: routeId, liveId: routeLiveId } = useParams<{ id: string; liveId: string }>();
+  const liveId = routeLiveId ?? routeId;
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);

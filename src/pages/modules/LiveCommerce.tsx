@@ -24,6 +24,8 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { StoreBrand } from "@/components/layout/StoreBrand";
 import { ModuleSwitcher } from "@/components/layout/ModuleSwitcher";
+import { LiveSidebar } from "@/components/live/LiveSidebar";
+import { AppFooter } from "@/components/layout/AppFooter";
 import { LiveFormDialog } from "@/components/live/LiveFormDialog";
 import { ShareLiveModal } from "@/components/live/ShareLiveModal";
 import { LiveMetricsModal } from "@/components/live/LiveMetricsModal";
@@ -342,12 +344,18 @@ function LiveCommerceContent() {
   }, []);
 
   const handleOpenAdminPanel = useCallback((liveId: string) => {
-    navigate(`/app/live-admin/${liveId}`);
+    navigate(`/dashboard/modules/live-commerce/admin/${liveId}`);
   }, [navigate]);
 
   const handleLiveFormSaved = useCallback(() => {
     if (storeId) loadLives(storeId);
   }, [storeId, loadLives]);
+
+  useEffect(() => {
+    const open = () => setAppearanceOpen(true);
+    window.addEventListener("live:open-appearance", open);
+    return () => window.removeEventListener("live:open-appearance", open);
+  }, []);
 
   if (loading) {
     return (
@@ -526,14 +534,32 @@ function LiveCommerceContent() {
 
 
 export function LiveCommerce() {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <>
-      <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-20">
-        <StoreBrand />
-        <ModuleSwitcher />
-      </header>
-      <LiveCommerceContent />
-    </>
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex font-sans">
+      <LiveSidebar
+        activeTab="lives"
+        isCollapsed={collapsed}
+        onToggle={() => setCollapsed((v) => !v)}
+        onTabChange={(tab) => {
+          if (tab === "aparencia") window.dispatchEvent(new Event("live:open-appearance"));
+        }}
+      />
+
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        <header className="bg-white border-b border-slate-200/80 px-6 py-2.5 flex items-center justify-between sticky top-0 z-20">
+          <StoreBrand />
+          <ModuleSwitcher />
+        </header>
+
+        <div className="flex-1">
+          <LiveCommerceContent />
+        </div>
+
+        <AppFooter />
+      </div>
+    </div>
   );
 }
 
