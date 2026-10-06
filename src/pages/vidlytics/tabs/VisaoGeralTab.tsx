@@ -47,6 +47,18 @@ export default function VisaoGeralTab() {
       .finally(() => setAppLoading(false));
   }, [storeId]);
 
+  const [replyName, setReplyName] = useState('');
+
+  useEffect(() => {
+    if (!storeId) return;
+    supabase
+      .from('store_settings')
+      .select('reply_display_name')
+      .eq('store_id', storeId)
+      .maybeSingle()
+      .then(({ data }) => setReplyName((((data as any)?.reply_display_name as string) || '').trim()));
+  }, [storeId]);
+
   const handleToggleApp = async () => {
     if (!storeId || appSaving || appLoading) return;
     const next = !appEnabled;
@@ -82,44 +94,34 @@ export default function VisaoGeralTab() {
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-300">
       
-      {/* 1. Header de Boas-Vindas e Status do App */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-[#0094eb]/10 text-[#0094eb] uppercase tracking-wide">
-              Plano Scale
-            </span>
-            <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-pink-100 text-pink-600 uppercase tracking-wide">
-              {store?.subscription_status === 'lifetime'
-                ? 'Acesso Vitalício'
-                : store?.subscription_status === 'trialing'
-                ? 'Período de Teste'
-                : 'Acesso Ativo'}
-            </span>
-          </div>
+      {/* 1. Header: boas-vindas, plano e status do app */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white px-5 py-3 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-semibold text-slate-700 truncate">
+            Bem-vindo(a){replyName ? ` ${replyName}` : ''}
+          </p>
+          <span className="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-[#0094eb]/10 text-[#0094eb] uppercase tracking-wide">
+            Plano Scale
+          </span>
         </div>
 
         {/* Seletor do Aplicativo */}
         <div
-          className={`rounded-xl p-4 flex items-center gap-4 max-w-md border transition-colors ${
+          className={`rounded-lg px-3 py-2 flex items-center gap-3 border transition-colors ${
             appEnabled ? 'bg-emerald-50/70 border-emerald-200/80' : 'bg-rose-50/70 border-rose-200/80'
           }`}
         >
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0">
             <h4
               className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
                 appEnabled ? 'text-emerald-900' : 'text-rose-900'
               }`}
             >
-              <span className={`w-2.5 h-2.5 rounded-full ${appEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+              <span className={`w-2 h-2 rounded-full ${appEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
               {appEnabled ? 'Aplicativo Ativado' : 'Aplicativo Desativado'}
             </h4>
-            <p className={`text-xs mt-0.5 leading-relaxed ${appEnabled ? 'text-emerald-700' : 'text-rose-700'}`}>
-              {appError
-                ? appError
-                : appEnabled
-                ? 'Seus vídeos estão online e sendo transmitidos publicamente no seu e-commerce.'
-                : 'Seus vídeos estão ocultos. Nada é exibido no seu e-commerce.'}
+            <p className={`text-[11px] mt-0.5 truncate ${appEnabled ? 'text-emerald-700' : 'text-rose-700'}`}>
+              {appError ? appError : appEnabled ? 'Vídeos online na sua loja.' : 'Vídeos ocultos na sua loja.'}
             </p>
           </div>
           <button
@@ -129,12 +131,12 @@ export default function VisaoGeralTab() {
             aria-label="Ativar ou desativar o aplicativo"
             disabled={appLoading || appSaving}
             onClick={handleToggleApp}
-            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-wait ${
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-wait ${
               appEnabled ? 'bg-emerald-500' : 'bg-slate-300'
             }`}
           >
             <span
-              className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
                 appEnabled ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
