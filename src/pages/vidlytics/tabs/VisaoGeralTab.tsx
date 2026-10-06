@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLoja } from '../../../contexts/LojaContext';
+import { supabase } from '@/lib/supabase';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
 import { 
   CheckCircle2, 
@@ -27,6 +28,43 @@ export default function VisaoGeralTab() {
   const { storeId, store } = useLoja();
   const [affiliateSummary, setAffiliateSummary] = useState<AffiliateSummary | null>(null);
 
+  const [appEnabled, setAppEnabled] = useState(true);
+  const [appLoading, setAppLoading] = useState(true);
+  const [appSaving, setAppSaving] = useState(false);
+  const [appError, setAppError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!storeId) return;
+    setAppLoading(true);
+    supabase
+      .from('store_settings')
+      .select('app_enabled, widget_enabled')
+      .eq('store_id', storeId)
+      .maybeSingle()
+      .then(({ data }) => {
+        setAppEnabled(data ? data.app_enabled !== false && data.widget_enabled !== false : true);
+      })
+      .finally(() => setAppLoading(false));
+  }, [storeId]);
+
+  const handleToggleApp = async () => {
+    if (!storeId || appSaving || appLoading) return;
+    const next = !appEnabled;
+    setAppEnabled(next);
+    setAppSaving(true);
+    setAppError(null);
+    const { data, error } = await supabase
+      .from('store_settings')
+      .update({ app_enabled: next, widget_enabled: next })
+      .eq('store_id', storeId)
+      .select('store_id');
+    if (error || !data || data.length === 0) {
+      setAppEnabled(!next);
+      setAppError('Não foi possível salvar. Tente novamente.');
+    }
+    setAppSaving(false);
+  };
+
   useEffect(() => {
     if (!storeId) return;
     AffiliateDatabaseService.getSummary(storeId).then(setAffiliateSummary);
@@ -47,9 +85,6 @@ export default function VisaoGeralTab() {
       {/* 1. Header de Boas-Vindas e Status do App */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <div className="space-y-2">
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
-            {store?.name || 'Sua Loja'}
-          </h1>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-[#0094eb]/10 text-[#0094eb] uppercase tracking-wide">
               Plano Scale
@@ -64,17 +99,46 @@ export default function VisaoGeralTab() {
           </div>
         </div>
 
-        {/* Card Aplicativo Ativado */}
-        <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-4 flex items-start gap-3 max-w-md">
-          <div className="w-3 h-3 rounded-full bg-emerald-500 mt-1 flex-shrink-0 animate-pulse" />
-          <div>
-            <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
-              Aplicativo Ativado
+        {/* Seletor do Aplicativo */}
+        <div
+          className={`rounded-xl p-4 flex items-center gap-4 max-w-md border transition-colors ${
+            appEnabled ? 'bg-emerald-50/70 border-emerald-200/80' : 'bg-rose-50/70 border-rose-200/80'
+          }`}
+        >
+          <div className="min-w-0 flex-1">
+            <h4
+              className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
+                appEnabled ? 'text-emerald-900' : 'text-rose-900'
+              }`}
+            >
+              <span className={`w-2.5 h-2.5 rounded-full ${appEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+              {appEnabled ? 'Aplicativo Ativado' : 'Aplicativo Desativado'}
             </h4>
-            <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">
-              Seus vídeos estão online e sendo transmitidos publicamente no seu e-commerce.
+            <p className={`text-xs mt-0.5 leading-relaxed ${appEnabled ? 'text-emerald-700' : 'text-rose-700'}`}>
+              {appError
+                ? appError
+                : appEnabled
+                ? 'Seus vídeos estão online e sendo transmitidos publicamente no seu e-commerce.'
+                : 'Seus vídeos estão ocultos. Nada é exibido no seu e-commerce.'}
             </p>
           </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={appEnabled}
+            aria-label="Ativar ou desativar o aplicativo"
+            disabled={appLoading || appSaving}
+            onClick={handleToggleApp}
+            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-wait ${
+              appEnabled ? 'bg-emerald-500' : 'bg-slate-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                appEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
       </div>
 
