@@ -111,6 +111,7 @@ export default function ResultadosTab() {
   const [selectedVideo, setSelectedVideo] = useState('');
   const [filtroFinanceiro, setFiltroFinanceiro] = useState('Todas Juntas');
   const [filtroEngajamento, setFiltroEngajamento] = useState('Todas Juntas');
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const [metrics, setMetrics] = useState<VidlyticsOverviewMetrics>(emptyMetrics);
   const [loading, setLoading] = useState(false);
@@ -238,11 +239,17 @@ export default function ResultadosTab() {
     }
     return out;
   })();
-  const maxViews = Math.max(1, ...series.map((d) => d.views));
-  const maxClicks = Math.max(1, ...series.map((d) => d.clicks));
-  const maxLikes = Math.max(1, ...series.map((d) => d.likes));
+  const showViews = filtroEngajamento === 'Todas Juntas' || filtroEngajamento === 'Visualizações';
+  const showClicks = filtroEngajamento === 'Todas Juntas' || filtroEngajamento === 'Cliques CTA';
+  const showLikes = filtroEngajamento === 'Todas Juntas' || filtroEngajamento === 'Curtidas';
+  const peak = Math.max(
+    0,
+    ...series.map((d) => Math.max(showViews ? d.views : 0, showClicks ? d.clicks : 0, showLikes ? d.likes : 0))
+  );
+  const yMax = Math.max(3, Math.ceil(peak / 3) * 3);
+  const yTicks = [0, 1, 2, 3].map((i) => ({ v: (yMax / 3) * i, y: 135 - ((135 - 20) * i) / 3 }));
 
-  const buildPath = (values: number[], max: number, width = 900, height = 140, top = 20, bottom = 135) => {
+  const buildPath = (values: number[], max: number, top = 20, bottom = 135) => {
     if (values.length === 0) return `M 50 ${bottom} L 870 ${bottom}`;
     const step = (870 - 50) / Math.max(1, values.length - 1);
     const points = values.map((v, i) => {
@@ -253,9 +260,9 @@ export default function ResultadosTab() {
     return `M ${points.join(' L ')}`;
   };
 
-  const viewsPath = buildPath(series.map((d) => d.views), maxViews);
-  const clicksPath = buildPath(series.map((d) => d.clicks), maxClicks);
-  const likesPath = buildPath(series.map((d) => d.likes), maxLikes);
+  const viewsPath = buildPath(series.map((d) => d.views), yMax);
+  const clicksPath = buildPath(series.map((d) => d.clicks), yMax);
+  const likesPath = buildPath(series.map((d) => d.likes), yMax);
 
   const PeriodoSelector = () => (
     <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -544,23 +551,69 @@ export default function ResultadosTab() {
               </div>
             ) : (
               <div className="w-full h-44 relative pt-4">
+                <div
+                className="relative w-full h-full"
+                onMouseLeave={() => setHoverIdx(null)}
+                onMouseMove={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  const px = ((e.clientX - r.left) / r.width) * 900;
+                  const stepX = (870 - 50) / Math.max(1, series.length - 1);
+                  setHoverIdx(Math.max(0, Math.min(series.length - 1, Math.round((px - 50) / stepX))));
+                }}
+              >
                 <svg className="w-full h-full overflow-visible" viewBox="0 0 900 140" preserveAspectRatio="none">
-                  <line x1="40" y1="20" x2="880" y2="20" stroke="#f1f5f9" strokeWidth="1" />
-                  <line x1="40" y1="55" x2="880" y2="55" stroke="#f1f5f9" strokeWidth="1" />
-                  <line x1="40" y1="90" x2="880" y2="90" stroke="#f1f5f9" strokeWidth="1" />
-                  <line x1="40" y1="125" x2="880" y2="125" stroke="#f1f5f9" strokeWidth="1" />
-                  <line x1="40" y1="135" x2="880" y2="135" stroke="#e2e8f0" strokeWidth="1" />
-
-                  {(filtroEngajamento === 'Todas Juntas' || filtroEngajamento === 'Visualizações') && (
-                    <path d={viewsPath} fill="none" stroke="#0094eb" strokeWidth="2" />
-                  )}
-                  {(filtroEngajamento === 'Todas Juntas' || filtroEngajamento === 'Cliques CTA') && (
-                    <path d={clicksPath} fill="none" stroke="#fd8539" strokeWidth="2" />
-                  )}
-                  {(filtroEngajamento === 'Todas Juntas' || filtroEngajamento === 'Curtidas') && (
-                    <path d={likesPath} fill="none" stroke="#f43f5e" strokeWidth="2" />
-                  )}
+                  {yTicks.map((tk) => (
+                    <line key={tk.y} x1="40" y1={tk.y} x2="880" y2={tk.y} stroke={tk.v === 0 ? '#e2e8f0' : '#f1f5f9'} strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                  ))}
+                  {showViews && <path d={viewsPath} fill="none" stroke="#0094eb" strokeWidth="2" vectorEffect="non-scaling-stroke" />}
+                  {showClicks && <path d={clicksPath} fill="none" stroke="#fd8539" strokeWidth="2" vectorEffect="non-scaling-stroke" />}
+                  {showLikes && <path d={likesPath} fill="none" stroke="#f43f5e" strokeWidth="2" vectorEffect="non-scaling-stroke" />}
                 </svg>
+
+                {yTicks.map((tk) => (
+                  <span
+                    key={`y${tk.v}`}
+                    className="absolute left-0 w-[4.4%] pr-1 text-right text-[9px] font-mono text-slate-400 pointer-events-none"
+                    style={{ top: `${(tk.y / 140) * 100}%`, transform: 'translateY(-50%)' }}
+                  >
+                    {tk.v}
+                  </span>
+                ))}
+
+                {hoverIdx !== null && series[hoverIdx] && (() => {
+                  const d = series[hoverIdx];
+                  const lx = ((50 + hoverIdx * ((870 - 50) / Math.max(1, series.length - 1))) / 900) * 100;
+                  const items = [
+                    { show: showViews, val: d.views, color: '#0094eb', label: 'Visualizações' },
+                    { show: showClicks, val: d.clicks, color: '#fd8539', label: 'Cliques em CTA' },
+                    { show: showLikes, val: d.likes, color: '#f43f5e', label: 'Curtidas' },
+                  ].filter((s) => s.show);
+                  return (
+                    <>
+                      <div className="absolute top-0 bottom-0 w-px bg-slate-200 pointer-events-none" style={{ left: `${lx}%` }} />
+                      {items.map((s) => (
+                        <span
+                          key={s.label}
+                          className="absolute w-2.5 h-2.5 rounded-full border-2 border-white pointer-events-none"
+                          style={{ left: `${lx}%`, top: `${((135 - (s.val / yMax) * 115) / 140) * 100}%`, background: s.color, transform: 'translate(-50%, -50%)' }}
+                        />
+                      ))}
+                      <div
+                        className="absolute z-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] shadow-md pointer-events-none"
+                        style={{ left: `${lx}%`, top: 0, transform: lx > 60 ? 'translateX(calc(-100% - 12px))' : 'translateX(12px)' }}
+                      >
+                        <p className="mb-1 font-bold text-slate-700">{d.date.slice(8, 10)}/{d.date.slice(5, 7)}</p>
+                        {items.map((s) => (
+                          <p key={s.label} className="flex items-center gap-1.5 text-slate-600">
+                            <span className="inline-block h-2 w-2 rounded-full" style={{ background: s.color }} />
+                            {s.label}: <strong>{s.val}</strong>
+                          </p>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
 
                 <div className="flex justify-between text-[9px] text-slate-400 font-mono mt-2 px-10">
                   {series.map((d, i) => (
