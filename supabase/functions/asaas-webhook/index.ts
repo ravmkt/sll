@@ -184,6 +184,12 @@ Deno.serve(async (req: Request) => {
       if (refErr) console.error("Erro ao registrar comissao:", refErr);
     }
   }
+  if ((eventType === "PAYMENT_REFUNDED" || eventType === "PAYMENT_DELETED") && asaasPaymentId) {
+    const { error: cancelRefErr } = await supabase.rpc("cancel_referral_reward_by_payment", {
+      p_payment_id: asaasPaymentId,
+    });
+    if (cancelRefErr) console.error("Erro ao cancelar comissao:", cancelRefErr);
+  }
   try {
     await supabase.from("admin_audit_logs").insert({
       action: `asaas_webhook:${eventId ?? "no-id"}`,
