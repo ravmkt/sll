@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLoja } from '../../../contexts/LojaContext';
 import { supabase } from '@/lib/supabase';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
+import { VidlyticsDatabaseService } from '../../../services/vidlytics/VidlyticsDatabaseService';
 import { 
   CheckCircle2, 
   Hourglass, 
@@ -21,6 +22,25 @@ import {
   Radio,
   ArrowRight
 } from 'lucide-react';
+
+type Periodo = 'today' | '7' | '30' | 'custom';
+
+const PERIODOS: { key: Periodo; label: string }[] = [
+  { key: 'today', label: 'Hoje' },
+  { key: '7', label: '7 dias' },
+  { key: '30', label: '30 dias' },
+  { key: 'custom', label: 'Personalizado' },
+];
+
+const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+function getRange(p: Periodo, customStart: string, customEnd: string) {
+  if (p === 'custom') return { start: customStart, end: customEnd };
+  const start = new Date();
+  if (p !== 'today') start.setDate(start.getDate() - (Number(p) - 1));
+  return { start: ymd(start), end: ymd(new Date()) };
+}
 
 export default function VisaoGeralTab() {
   const [copied, setCopied] = useState(false);
@@ -81,6 +101,25 @@ export default function VisaoGeralTab() {
     if (!storeId) return;
     AffiliateDatabaseService.getSummary(storeId).then(setAffiliateSummary);
   }, [storeId]);
+
+  const [periodo, setPeriodo] = useState<Periodo>('30');
+  const [customStart, setCustomStart] = useState(() => ymd(new Date(Date.now() - 29 * 86400000)));
+  const [customEnd, setCustomEnd] = useState(() => ymd(new Date()));
+  const [paid, setPaid] = useState({ revenue: 0, orders: 0 });
+  const [paidLoading, setPaidLoading] = useState(false);
+
+  useEffect(() => {
+    if (!storeId) return;
+    const { start, end } = getRange(periodo, customStart, customEnd);
+    if (!start || !end || start > end) return;
+    let alive = true;
+    setPaidLoading(true);
+    VidlyticsDatabaseService.getOverviewMetrics(storeId, start, end)
+      .then((m) => { if (alive) setPaid({ revenue: m.totalRevenue || 0, orders: m.totalConversions || 0 }); })
+      .catch(() => { if (alive) setPaid({ revenue: 0, orders: 0 }); })
+      .finally(() => { if (alive) setPaidLoading(false); });
+    return () => { alive = false; };
+  }, [storeId, periodo, customStart, customEnd]);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
@@ -144,11 +183,46 @@ export default function VisaoGeralTab() {
         </div>
       </div>
 
-      {/* 2. Resultados de Vendas Vindas dos Vídeos */}
+      {/* 2. Faturamento */}
       <div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 px-1">
-          Resultados de Vendas Vindas dos Vídeos
-        </h3>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3 px-1">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Faturamento</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            {periodo === 'custom' && (
+              <>
+                <input
+                  type="date"
+                  value={customStart}
+                  max={customEnd}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="h-8 px-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700"
+                />
+                <span className="text-xs text-slate-400">até</span>
+                <input
+                  type="date"
+                  value={customEnd}
+                  min={customStart}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="h-8 px-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700"
+                />
+              </>
+            )}
+            <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5">
+              {PERIODOS.map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => setPeriodo(p.key)}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+                    periodo === p.key ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-500 hover:text-[#0094eb]'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           
           {/* Card: Vendas Pagas */}
@@ -156,11 +230,9 @@ export default function VisaoGeralTab() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase text-slate-400">Vendas Pagas</span>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700">
-                  0 Pedidos
-                </span>
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700">{paid.orders} {paid.orders === 1 ? 'Pedido' : 'Pedidos'}</span>
               </div>
-              <p className="text-2xl font-black text-slate-800">R$ 0,00</p>
+              <p className={`text-2xl font-black text-slate-800 ${paidLoading ? 'opacity-50' : ''}`}>{formatCurrency(paid.revenue)}</p>
               <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
                 Faturamento confirmado →
               </span>
@@ -333,7 +405,7 @@ export default function VisaoGeralTab() {
               <div>
                 <h4 className="text-xs font-bold text-slate-800">Vincular os produtos</h4>
                 <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                  Vincule produtos com preço para permitir compra direta através dos vídeos.
+                  Importe ou cadastre produtos para permitir compra direta através dos vídeos.
                 </p>
               </div>
             </div>
@@ -344,7 +416,7 @@ export default function VisaoGeralTab() {
               <div>
                 <h4 className="text-xs font-bold text-slate-800">Subir vídeos</h4>
                 <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                  Suba seus vídeos verticais ou importe do Instagram/TikTok.
+                  Suba seus vídeos verticais ou importe do Youtube/Instagram/TikTok.
                 </p>
               </div>
             </div>
@@ -353,7 +425,7 @@ export default function VisaoGeralTab() {
             <div className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors">
               <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-bold text-slate-800">Criar coleção de Stories</h4>
+                <h4 className="text-xs font-bold text-slate-800">Criar Stories</h4>
                 <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
                   Agrupe seus vídeos em coleções interativas.
                 </p>
@@ -491,7 +563,7 @@ export default function VisaoGeralTab() {
           </div>
 
           <p className="text-xs text-slate-500 leading-relaxed">
-            Receba comissões e desbloqueie meses gratuitos ao indicar o Vidlytics para outros lojistas.
+            Receba comissões e benefícios ao indicar o Vidlytics para outros lojistas.
           </p>
 
           <div className="space-y-2">
