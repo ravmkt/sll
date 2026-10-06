@@ -41,6 +41,9 @@ export default function StoriesTab() {
   const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
   const [storyToDelete, setStoryToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const loadStories = useCallback(async () => {
     if (!storeId) return;
@@ -117,6 +120,45 @@ export default function StoriesTab() {
     return matchBusca && matchStatus;
   });
 
+  const selectedCount = stories.filter((s) => selectedIds.has(s.id)).length;
+  const allSelected = filtered.length > 0 && filtered.every((s) => selectedIds.has(s.id));
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const toggleSelectAll = () =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (filtered.length > 0 && filtered.every((s) => next.has(s.id))) filtered.forEach((s) => next.delete(s.id));
+      else filtered.forEach((s) => next.add(s.id));
+      return next;
+    });
+
+  const handleConfirmBulkDelete = async () => {
+    const ids = stories.filter((s) => selectedIds.has(s.id)).map((s) => s.id);
+    if (ids.length === 0) return;
+    setIsBulkDeleting(true);
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await VidlyticsDatabaseService.deleteStory(storeId, id);
+      } catch (err) {
+        failed++;
+        console.error('Erro ao excluir story:', err);
+      }
+    }
+    setSelectedIds(new Set());
+    setBulkDeleteOpen(false);
+    await loadStories();
+    setIsBulkDeleting(false);
+    if (failed > 0) alert(`${failed} story(s) não puderam ser excluídos.`);
+  };
+
   // Se o usuário clicou em Novo Story ou Editar, exibe a tela idêntica ao Print 1
   if (isDetailsOpen) {
     return (
@@ -182,7 +224,8 @@ export default function StoriesTab() {
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="border-b border-slate-100 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-6 py-4">Story</th>
+                <th className="w-10 px-4 py-4"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="h-4 w-4 cursor-pointer accent-[#0094eb]" title="Selecionar todos" /></th>
+                  <th className="px-6 py-4">Story</th>
                 <th className="px-6 py-4">Layout</th>
                 <th className="px-6 py-4">Vídeos</th>
                 <th className="px-6 py-4">Seletor CSS</th>
@@ -190,7 +233,19 @@ export default function StoriesTab() {
                 <th className="px-6 py-4 text-center">Visualizações</th>
                 <th className="px-6 py-4 text-center">CTR / Cliques</th>
                 <th className="px-6 py-4 text-center">Status</th>
-                <th className="px-6 py-4 text-right">Ações</th>
+                <th className="px-6 py-4 text-right">
+                    {selectedCount > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setBulkDeleteOpen(true)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1 text-xs font-bold normal-case tracking-normal text-white hover:bg-rose-700 cursor-pointer"
+                      >
+                        <Trash2 size={13} /> Excluir selecionados ({selectedCount})
+                      </button>
+                    ) : (
+                      'Ações'
+                    )}
+                  </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -209,6 +264,7 @@ export default function StoriesTab() {
               ) : (
                 filtered.map((story) => (
                   <tr key={story.id} className="hover:bg-slate-50/50 transition">
+                  <td className="w-10 px-4 py-4"><input type="checkbox" checked={selectedIds.has(story.id)} onChange={() => toggleSelect(story.id)} className="h-4 w-4 cursor-pointer accent-[#0094eb]" /></td>
                     <td className="px-6 py-4 font-semibold text-slate-800">{story.name}</td>
                     <td className="px-6 py-4">
                       <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
@@ -264,6 +320,14 @@ export default function StoriesTab() {
         </div>
       </div>
           <ConfirmDeleteModal
+        isOpen={bulkDeleteOpen}
+        onClose={() => { if (!isBulkDeleting) setBulkDeleteOpen(false); }}
+        onConfirm={handleConfirmBulkDelete}
+        title="EXCLUIR STORIES SELECIONADOS"
+        itemName={`${selectedCount} ${selectedCount === 1 ? 'story selecionado' : 'stories selecionados'}`}
+        isDeleting={isBulkDeleting}
+      />
+      <ConfirmDeleteModal
             isOpen={!!storyToDelete}
             onClose={() => { if (!isDeleting) setStoryToDelete(null); }}
             onConfirm={handleConfirmDelete}
