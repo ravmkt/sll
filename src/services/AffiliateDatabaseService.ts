@@ -19,6 +19,10 @@ export type ReferralStatus = "trial" | "trial_expired" | "paid" | "past_due" | "
 
 export interface ReferralDetail {
   store_id: string;
+  subscription_id: string | null;
+  product_key: string | null;
+  product_name: string | null;
+  plan_name: string | null;
   store_name: string;
   joined_at: string;
   trial_ends_at: string | null;
@@ -54,7 +58,7 @@ export class AffiliateDatabaseService {
 
     const referredStores = new Set((rewards || []).map((r) => r.referred_store_id));
 
-    const referredCount = (await AffiliateDatabaseService.getReferralDetails(storeId)).length;
+    const referredCount = new Set((await AffiliateDatabaseService.getReferralDetails(storeId)).map((d) => d.store_id)).size;
 
     const { data: withdrawals, error: withdrawalsError } = await supabase
       .from("affiliate_withdrawals")
@@ -113,6 +117,10 @@ export class AffiliateDatabaseService {
     }
     return ((data as any[]) || []).map((r) => ({
       store_id: r.store_id,
+      subscription_id: r.subscription_id ?? null,
+      product_key: r.product_key ?? null,
+      product_name: r.product_name ?? null,
+      plan_name: r.plan_name ?? null,
       store_name: r.store_name || "Loja indicada",
       joined_at: r.joined_at,
       trial_ends_at: r.trial_ends_at ?? null,

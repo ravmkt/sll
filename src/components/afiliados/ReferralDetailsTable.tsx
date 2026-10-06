@@ -15,6 +15,12 @@ const STATUS: Record<ReferralStatus, { label: string; cls: string }> = {
   other: { label: "Ativo", cls: "bg-slate-100 text-slate-500" },
 };
 
+const PRODUCT_CLS: Record<string, string> = {
+  vidlytics: "bg-sky-50 text-[#0094eb]",
+  livecommerce: "bg-orange-50 text-[#fd8539]",
+  live: "bg-orange-50 text-[#fd8539]",
+};
+
 export function ReferralDetailsTable({ rows }: { rows: ReferralDetail[] }) {
   const toRelease = rows.reduce((sum, r) => sum + r.commission_pending, 0);
 
@@ -31,6 +37,8 @@ export function ReferralDetailsTable({ rows }: { rows: ReferralDetail[] }) {
           <thead>
             <tr className="text-left text-slate-400 text-[11px] uppercase border-b border-slate-100">
               <th className="px-4 py-3">Loja</th>
+              <th className="px-4 py-3">Produto</th>
+              <th className="px-4 py-3">Plano</th>
               <th className="px-4 py-3">Entrou em</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Comissão</th>
@@ -39,16 +47,25 @@ export function ReferralDetailsTable({ rows }: { rows: ReferralDetail[] }) {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
                   Você ainda não indicou nenhuma loja.
                 </td>
               </tr>
             ) : (
               rows.map((r) => {
                 const st = STATUS[r.status] ?? STATUS.other;
+                const prodCls = PRODUCT_CLS[(r.product_key || "").toLowerCase()] ?? "bg-slate-100 text-slate-600";
                 return (
-                  <tr key={r.store_id} className="border-b border-slate-50 align-top hover:bg-slate-50/50">
+                  <tr key={r.subscription_id ?? r.store_id} className="border-b border-slate-50 align-top hover:bg-slate-50/50">
                     <td className="px-4 py-3 font-medium text-slate-700">{r.store_name}</td>
+                    <td className="px-4 py-3">
+                      {r.product_name ? (
+                        <span className={`px-2 py-1 rounded-full text-[11px] font-bold ${prodCls}`}>{r.product_name}</span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{r.plan_name || (r.status === "trial" ? "Período de teste" : "—")}</td>
                     <td className="px-4 py-3 text-slate-500">{dt(r.joined_at)}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>{st.label}</span>
