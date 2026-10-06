@@ -181,7 +181,7 @@ export class VidlyticsDatabaseService {
 
     const [likesRes, commentsRes] = await Promise.all([
       supabase.from('video_likes').select('video_id').eq('store_id', storeId).in('video_id', ids).gte('created_at', startDate).lte('created_at', endTs),
-      supabase.from('comments').select('video_id').eq('store_id', storeId).in('video_id', ids).gte('created_at', startDate).lte('created_at', endTs),
+      supabase.from('comments').select('video_id').is('parent_id', null).not('status', 'in', '(rejected,reprovado)').eq('store_id', storeId).in('video_id', ids).gte('created_at', startDate).lte('created_at', endTs),
     ]);
     if (likesRes.error) throw likesRes.error;
     if (commentsRes.error) throw commentsRes.error;
@@ -304,7 +304,7 @@ export class VidlyticsDatabaseService {
 
       const { data: commentsData, error: commentsError } = await supabase
         .from('comments')
-        .select('created_at, video_id')
+        .select('created_at, video_id').is('parent_id', null).not('status', 'in', '(rejected,reprovado)')
         .in('video_id', videoIds)
         .gte('created_at', startDate)
         .lte('created_at', endTs);

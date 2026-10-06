@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
 import { useLoja } from '../../../contexts/LojaContext';
@@ -66,7 +67,7 @@ const emptyMetrics: VidlyticsOverviewMetrics = {
 };
 
 export default function ResultadosTab() {
-  const { storeId, store } = useLoja();
+  const { storeId } = useLoja();
   const navigate = useNavigate();
   const [affiliateSummary, setAffiliateSummary] = useState<AffiliateSummary | null>(null);
 
@@ -78,7 +79,26 @@ export default function ResultadosTab() {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
   const [subTab, setSubTab] = useState<SubTab>('visao-geral');
-  const nicho = String((store as any)?.niche || (store as any)?.nicho || (store as any)?.category || (store as any)?.segment || '').trim() || 'e-commerce';
+  const [nicho, setNicho] = useState('e-commerce');
+  useEffect(() => {
+    if (!storeId) return;
+    let active = true;
+    (async () => {
+      try {
+        const db: any = supabase;
+        const { data } = await db.from('stores').select('sector, sector_id').eq('id', storeId).maybeSingle();
+        let nome = String(data?.sector || '').trim();
+        if (!nome && data?.sector_id) {
+          const { data: s } = await db.from('sectors').select('name').eq('id', data.sector_id).maybeSingle();
+          nome = String(s?.name || '').trim();
+        }
+        if (active && nome) setNicho(nome);
+      } catch (err) {
+        console.warn('Setor da loja indisponivel:', err);
+      }
+    })();
+    return () => { active = false; };
+  }, [storeId]);
   const [periodo, setPeriodo] = useState<PeriodoKey>('30');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
