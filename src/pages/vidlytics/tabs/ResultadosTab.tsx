@@ -245,7 +245,7 @@ export default function ResultadosTab() {
     const step = (870 - 50) / Math.max(1, values.length - 1);
     const points = values.map((v, i) => {
       const x = 50 + i * step;
-      const y = bottom - (v / max) * (bottom - top);
+      const y = bottom - (v / (max > 0 ? max : 1)) * (bottom - top);
       return `${x} ${y}`;
     });
     return `M ${points.join(' L ')}`;
@@ -420,7 +420,7 @@ export default function ResultadosTab() {
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Total Gerado</span>
                     <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
-                  <p className="text-2xl font-bold text-[#0094eb]">{formatCurrency(metrics.totalRevenue + (affiliateSummary?.available_balance || 0))}</p>
+                  <p className="text-2xl font-bold text-[#0094eb]">{formatCurrency(metrics.totalRevenue + (affiliateSummary?.total_generated || 0))}</p>
                   <p className="text-xs text-slate-400">Vendas Pagas + Indicações</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-[#0094eb] text-white flex items-center justify-center shadow-xs flex-shrink-0">

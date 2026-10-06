@@ -29,6 +29,12 @@ export interface VidlyticsAppearance {
   updated_at?: string;
 }
 
+const localDay = (iso: string): string => {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return String(iso).slice(0, 10);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
 export interface VidlyticsOverviewMetrics {
   totalViews: number;
   totalClicks: number;
@@ -238,9 +244,9 @@ export class VidlyticsDatabaseService {
     const series = new Map<string, any>();
     base.dailySeries.forEach((p: any) => series.set(p.date, { ...p, views: 0, clicks: 0 }));
     events.forEach((e) => {
-      const d = String(e.created_at).slice(0, 10);
+      const d = localDay(e.created_at);
       const p = series.get(d) || { date: d, views: 0, clicks: 0, likes: 0, ctr: 0 };
-      if (e.event_type === 'video_view') { p.views += 1; totalViews += 1; } else { p.clicks += 1; totalClicks += 1; }
+      if (e.event_type === 'video_view') { p.views += 1; totalViews += 1; } else if (/click/i.test(String(e.event_type))) { p.clicks += 1; totalClicks += 1; }
       series.set(d, p);
     });
     const dailySeries = Array.from(series.values())
@@ -329,7 +335,7 @@ export class VidlyticsDatabaseService {
       seriesMap.set(key, entry);
     });
     likes.forEach((l: any) => {
-      const key = String(l.created_at).slice(0, 10);
+      const key = localDay(l.created_at);
       const entry = seriesMap.get(key) || { views: 0, clicks: 0, likes: 0 };
       entry.likes += 1;
       seriesMap.set(key, entry);
