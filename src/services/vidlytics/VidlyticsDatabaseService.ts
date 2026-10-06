@@ -236,6 +236,22 @@ export class VidlyticsDatabaseService {
     return out;
   }
 
+  static async getVideoRetentionCurve(
+    storeId: string,
+    videoId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<Array<{ max_second: number; completed: boolean; sessions: number }>> {
+    const endTs = endDate.length <= 10 ? endDate + 'T23:59:59.999Z' : endDate;
+    const { data, error } = await supabase.rpc('get_video_retention_curve', {
+      p_store_id: storeId,
+      p_video_id: videoId,
+      p_start: startDate,
+      p_end: endTs,
+    });
+    if (error) throw error;
+    return (data || []) as Array<{ max_second: number; completed: boolean; sessions: number }>;
+  }
   static async getOverviewMetrics(storeId: string, startDate: string, endDate: string): Promise<VidlyticsOverviewMetrics> {
     const base = await VidlyticsDatabaseService.getOverviewMetricsBase(storeId, startDate, endDate);
     const events = await VidlyticsDatabaseService.fetchActivityEvents(storeId, startDate, endDate);
