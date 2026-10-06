@@ -13,41 +13,17 @@ import ComentariosTab from '../vidlytics/tabs/ComentariosTab';
 import AparenciaTab from '../vidlytics/tabs/AparenciaTab';
 
 export default function Vidlytics() {
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  // Obter aba inicial da URL, LocalStorage ou padrão 'visao-geral'
-  const getInitialTab = (): VidlyticsTab => {
-    const tabParam = searchParams.get('tab') as VidlyticsTab;
-    const validTabs: VidlyticsTab[] = ['visao-geral', 'resultados', 'stories', 'biblioteca', 'comentarios', 'aparencia'];
-    if (tabParam && validTabs.includes(tabParam)) {
-      return tabParam;
-    }
-    const saved = localStorage.getItem('sll_vidlytics_active_tab') as VidlyticsTab;
-    if (saved && validTabs.includes(saved)) {
-      return saved;
-    }
-    return 'visao-geral';
-  };
-
-  const [activeTab, setActiveTab] = useState<VidlyticsTab>(getInitialTab);
+  // Regra SLL: todo acesso ao modulo abre na Visao Geral (ignora URL e localStorage)
+  const [activeTab, setActiveTab] = useState<VidlyticsTab>('visao-geral');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Mudar aba persistindo na URL e no LocalStorage
+  useEffect(() => {
+    localStorage.removeItem('sll_vidlytics_active_tab');
+  }, []);
+
   const handleTabChange = (newTab: VidlyticsTab) => {
     setActiveTab(newTab);
-    setSearchParams({ tab: newTab }, { replace: true });
-    localStorage.setItem('sll_vidlytics_active_tab', newTab);
   };
-
-  // Escutar caso a URL mude
-  useEffect(() => {
-    const tabParam = searchParams.get('tab') as VidlyticsTab;
-    const validTabs: VidlyticsTab[] = ['visao-geral', 'resultados', 'stories', 'biblioteca', 'comentarios', 'aparencia'];
-    if (tabParam && validTabs.includes(tabParam) && tabParam !== activeTab) {
-      setActiveTab(tabParam);
-      localStorage.setItem('sll_vidlytics_active_tab', tabParam);
-    }
-  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex font-sans">
