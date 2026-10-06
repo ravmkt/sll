@@ -218,34 +218,31 @@ export default function StoriesTab() {
         </div>
       </div>
 
+      {selectedCount > 0 && (
+        <div className="flex items-center justify-between rounded-2xl border border-rose-100 bg-rose-50 px-4 py-2.5">
+          <span className="text-sm font-semibold text-rose-700">{selectedCount} {selectedCount === 1 ? 'selecionado' : 'selecionados'}</span>
+          <button type="button" onClick={() => setBulkDeleteOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-700 cursor-pointer">
+            <Trash2 size={14} /> Excluir selecionados
+          </button>
+        </div>
+      )}
+
       {/* Tabela de Stories */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
-        <div className="overflow-x-auto">
+        <div>
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="border-b border-slate-100 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="w-10 px-4 py-4"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="h-4 w-4 cursor-pointer accent-[#0094eb]" title="Selecionar todos" /></th>
-                  <th className="px-6 py-4">Story</th>
-                <th className="px-6 py-4">Layout</th>
-                <th className="px-6 py-4">Vídeos</th>
-                <th className="px-6 py-4">Seletor CSS</th>
-                <th className="px-6 py-4">Páginas</th>
-                <th className="px-6 py-4 text-center">Visualizações</th>
-                <th className="px-6 py-4 text-center">CTR / Cliques</th>
-                <th className="px-6 py-4 text-center">Status</th>
-                <th className="px-6 py-4 text-right">
-                    {selectedCount > 0 ? (
-                      <button
-                        type="button"
-                        onClick={() => setBulkDeleteOpen(true)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1 text-xs font-bold normal-case tracking-normal text-white hover:bg-rose-700 cursor-pointer"
-                      >
-                        <Trash2 size={13} /> Excluir selecionados ({selectedCount})
-                      </button>
-                    ) : (
-                      'Ações'
-                    )}
-                  </th>
+                <th className="w-8 px-3 py-4"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="h-4 w-4 cursor-pointer accent-[#0094eb]" title="Selecionar todos" /></th>
+                  <th className="px-3 py-4">Story</th>
+                <th className="px-3 py-4">Layout</th>
+                <th className="px-3 py-4">Vídeos</th>
+                <th className="px-3 py-4">Seletor CSS</th>
+                <th className="px-3 py-4">Páginas</th>
+                <th className="px-3 py-4 text-center">Visualizações</th>
+                <th className="px-3 py-4 text-center">CTR / Cliques</th>
+                <th className="px-3 py-4 text-center">Status</th>
+                <th className="px-3 py-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -264,26 +261,26 @@ export default function StoriesTab() {
               ) : (
                 filtered.map((story) => (
                   <tr key={story.id} className="hover:bg-slate-50/50 transition">
-                  <td className="w-10 px-4 py-4"><input type="checkbox" checked={selectedIds.has(story.id)} onChange={() => toggleSelect(story.id)} className="h-4 w-4 cursor-pointer accent-[#0094eb]" /></td>
-                    <td className="px-6 py-4 font-semibold text-slate-800">{story.name}</td>
-                    <td className="px-6 py-4">
+                  <td className="w-8 px-3 py-4"><input type="checkbox" checked={selectedIds.has(story.id)} onChange={() => toggleSelect(story.id)} className="h-4 w-4 cursor-pointer accent-[#0094eb]" /></td>
+                    <td className="px-3 py-4 font-semibold text-slate-800">{story.name}</td>
+                    <td className="px-3 py-4">
                       <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
                         {story.layout}
                       </span>
                     </td>
-                    <td className="px-6 py-4">{story.videosCount} vídeos</td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-500">
+                    <td className="px-3 py-4">{story.videosCount} vídeos</td>
+                    <td className="px-3 py-4 font-mono text-xs text-slate-500 break-all">
                       {story.cssSelector}
                     </td>
-                    <td className="px-6 py-4 text-xs">
+                    <td className="px-3 py-4 text-xs">
                       {story.pages.length > 0 ? story.pages.join(', ') : 'Todas as páginas'}
                     </td>
-                    <td className="px-6 py-4 text-center font-medium">{story.views}</td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-3 py-4 text-center font-medium">{story.views}</td>
+                    <td className="px-3 py-4 text-center">
                       <span className="font-semibold text-slate-800">{story.ctr}%</span>
                       <span className="text-xs text-slate-400"> ({story.clicks})</span>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-3 py-4 text-center">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                           story.status === 'ATIVO'
@@ -294,7 +291,7 @@ export default function StoriesTab() {
                         {story.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-3 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleEdit(story.id)}
