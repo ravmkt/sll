@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Calculator } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export const REF_RATE = 0.1;
 export const REF_PLANS = [
@@ -12,12 +13,61 @@ export const REF_PLANS = [
 export const brl = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
+type SimPlan = { id: string; name: string; price: number; module: string };
+
+const MODULE_LABELS: Record<string, string> = {
+  vidlytics: "Vidlytics",
+  live: "Live Commerce",
+  livecommerce: "Live Commerce",
+  live_commerce: "Live Commerce",
+  bundle: "Pacote completo",
+};
+
+const moduleLabel = (key: string) =>
+  MODULE_LABELS[key] ?? key.charAt(0).toUpperCase() + key.slice(1).replace(/[_-]/g, " ");
+
+const FALLBACK_PLANS: SimPlan[] = REF_PLANS.map((p) => ({
+  id: p.key,
+  name: `Vidlytics ${p.name}`,
+  price: p.price,
+  module: "vidlytics",
+}));
+
 export function ReferralSimulator() {
   const [count, setCount] = useState(5);
-  const [planKey, setPlanKey] = useState("pro");
-  const plan = REF_PLANS.find((p) => p.key === planKey) ?? REF_PLANS[1];
+  const [plans, setPlans] = useState<SimPlan[]>(FALLBACK_PLANS);
+  const [moduleKey, setModuleKey] = useState<string | null>(null);
+  const [planId, setPlanId] = useState<string | null>(null);
 
-  const monthly = count * plan.price * REF_RATE;
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from("plans")
+        .select("id, name, price_cents, modules, sort_order")
+        .eq("is_active", true)
+        .gt("price_cents", 0)
+        .order("sort_order", { ascending: true });
+      if (!alive || error || !data || data.length === 0) return;
+      setPlans(
+        data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price_cents) / 100,
+          module: Array.isArray(p.modules) && p.modules.length === 1 ? String(p.modules[0]) : "bundle",
+        }))
+      );
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const modules = useMemo(() => Array.from(new Set(plans.map((p) => p.module))), [plans]);
+  const modulePlans = plans.filter((p) => p.module === moduleKey);
+  const plan = modulePlans.find((p) => p.id === planId) ?? null;
+
+  const monthly = plan ? count * plan.price * REF_RATE : 0;
   const data = useMemo(
     () => Array.from({ length: 12 }, (_, i) => ({ mes: `Mês ${i + 1}`, total: monthly * (i + 1) })),
     [monthly]
@@ -35,6 +85,55 @@ export function ReferralSimulator() {
         </div>
       </div>
 
+      <div className="space-y-4">
+        <div>
+          <label className="text-xs font-bold text-slate-500 uppercase block mb-2">1. Escolha o módulo indicado</label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {modules.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => {
+                  setModuleKey(m);
+                  setPlanId(null);
+                }}
+                className={`rounded-xl border px-3 py-3 text-sm font-bold transition-colors ${
+                  moduleKey === m
+                    ? "bg-[#fd8539] border-[#fd8539] text-white"
+                    : "bg-white border-slate-200 text-slate-600 hover:border-[#fd8539]"
+                }`}
+              >
+                {moduleLabel(m)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {moduleKey && (
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase block mb-2">2. Escolha o plano</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {modulePlans.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPlanId(p.id)}
+                  className={`rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${
+                    planId === p.id
+                      ? "bg-[#0094eb] border-[#0094eb] text-white"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-[#0094eb]"
+                  }`}
+                >
+                  {p.name}
+                  <span className="block text-[10px] font-medium opacity-80">{brl(p.price)}/mês</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {plan ? (
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-2 space-y-5">
           <div>
@@ -54,27 +153,6 @@ export function ReferralSimulator() {
               <span>1</span>
               <span>25</span>
               <span>50</span>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Plano das lojas indicadas</label>
-            <div className="grid grid-cols-3 gap-2">
-              {REF_PLANS.map((p) => (
-                <button
-                  key={p.key}
-                  type="button"
-                  onClick={() => setPlanKey(p.key)}
-                  className={`rounded-xl border px-2 py-2 text-xs font-bold transition-colors ${
-                    planKey === p.key
-                      ? "bg-[#0094eb] border-[#0094eb] text-white"
-                      : "bg-white border-slate-200 text-slate-600 hover:border-[#0094eb]"
-                  }`}
-                >
-                  {p.name}
-                  <span className="block text-[10px] font-medium opacity-80">{brl(p.price)}/mês</span>
-                </button>
-              ))}
             </div>
           </div>
 
@@ -118,9 +196,14 @@ export function ReferralSimulator() {
           </ResponsiveContainer>
         </div>
       </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+          {moduleKey ? "Escolha um plano para ver a simulação." : "Escolha um módulo para começar."}
+        </div>
+      )}
 
       <p className="text-[11px] text-slate-400">
-        Simulação com os preços de referência dos planos e 10% de comissão recorrente, liberada 15 dias após cada
+        Simulação com os preços dos planos ativos e 10% de comissão recorrente, liberada 15 dias após cada
         pagamento confirmado. Não é garantia de ganhos.
       </p>
     </div>

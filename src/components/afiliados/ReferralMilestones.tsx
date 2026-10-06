@@ -2,10 +2,10 @@ import React from "react";
 import { Check, Trophy } from "lucide-react";
 
 const LEVELS = [
-  { n: 1, label: "Primeira indicação" },
-  { n: 5, label: "Parceiro Prata" },
-  { n: 10, label: "Parceiro Ouro" },
-  { n: 25, label: "Parceiro Diamante" },
+  { n: 10, label: "Parceiro Prata" },
+  { n: 25, label: "Parceiro Ouro" },
+  { n: 50, label: "Parceiro Diamante" },
+  { n: 100, label: "Parceiro Platinum" },
 ];
 
 export function ReferralMilestones({ count }: { count: number }) {

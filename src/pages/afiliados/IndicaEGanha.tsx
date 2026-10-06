@@ -53,7 +53,7 @@ const IndicaEGanha: React.FC = () => {
 
   const handleWhatsApp = () => {
     if (!referralLink) return;
-    const text = `Conheci uma ferramenta que aumenta as vendas da loja com vídeos interativos. Teste pelo meu link: ${referralLink}`;
+    const text = `Conheci o SLL Hub, uma plataforma com ferramentas para aumentar as vendas da sua loja virtual. Conheça pelo meu link: ${referralLink}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
   };
 
@@ -105,18 +105,24 @@ const IndicaEGanha: React.FC = () => {
     <DashboardLayout>
       <div className="p-6 space-y-6">
         {/* Banner */}
-        <div className="rounded-3xl bg-gradient-to-br from-[#0094eb] to-[#0068a8] p-6 md:p-8 text-white shadow-lg relative overflow-hidden">
-          <div className="absolute -right-10 -top-10 w-56 h-56 rounded-full bg-[#fd8539]/30 blur-2xl" />
+        <div className="rounded-3xl bg-gradient-to-br from-[#0a84ff] via-[#0057d9] to-[#0b2a8a] p-6 md:p-8 text-white shadow-xl shadow-blue-700/30 relative overflow-hidden">
+          <div className="absolute -right-10 -top-10 w-64 h-64 rounded-full bg-[#fd8539]/40 blur-3xl" />
+          <div className="absolute -left-16 -bottom-20 w-64 h-64 rounded-full bg-cyan-300/20 blur-3xl" />
           <div className="relative space-y-4 max-w-3xl">
             <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider bg-white/15 px-3 py-1 rounded-full">
               <Sparkles className="w-3.5 h-3.5" /> Indica & Ganha
             </span>
             <h1 className="text-2xl md:text-3xl font-black leading-tight">
-              Cada loja que você indica vira renda todo mês.
+              Cada loja que você indica te paga <span className="text-amber-300">todo mês.</span>
             </h1>
             <p className="text-sm md:text-base text-white/90">
               Receba 10% de comissão recorrente enquanto a loja indicada continuar assinando. Sem limite de indicações.
             </p>
+            <div className="flex flex-wrap gap-2 text-xs font-bold">
+              <span className="px-3 py-1 rounded-full bg-white/15 border border-white/20">10% recorrente</span>
+              <span className="px-3 py-1 rounded-full bg-white/15 border border-white/20">Sem limite de indicações</span>
+              <span className="px-3 py-1 rounded-full bg-white/15 border border-white/20">Saque via PIX</span>
+            </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1 min-w-0 bg-white/15 border border-white/25 rounded-xl px-3 py-2.5 text-xs md:text-sm truncate">
                 {referralLink || "Gerando seu link..."}
@@ -189,7 +195,7 @@ const IndicaEGanha: React.FC = () => {
               <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Lojas indicadas</span>
               <p className="text-2xl font-bold text-[#fd8539]">{referredCount}</p>
               <p className="text-[11px] text-slate-500">
-                {referredCount === 0 ? "Indique a primeira e comece agora" : "Continue crescendo sua renda"}
+                {referredCount === 0 ? "Indique a primeira e comece agora" : "Continue indicando e ganhe mais"}
               </p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#fd8539] flex items-center justify-center border border-orange-100 shrink-0">
