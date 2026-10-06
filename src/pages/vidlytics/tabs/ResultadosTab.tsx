@@ -687,13 +687,13 @@ export default function ResultadosTab() {
                   <thead>
                     <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold">
                       <th className="text-left px-4 py-3">Vídeo</th>
-                      <th className="text-right px-4 py-3">Views</th>
-                      <th className="text-right px-4 py-3">Cliques</th>
-                      <th className="text-right px-4 py-3">CTR</th>
-                      <th className="text-right px-4 py-3">Curtidas</th>
-                      <th className="text-right px-4 py-3">Comentários</th>
-                      <th className="text-right px-4 py-3">Conversões</th>
-                      <th className="text-right px-4 py-3">Receita</th>
+                      <th className="text-center px-4 py-3">Views</th>
+                      <th className="text-center px-4 py-3">Cliques</th>
+                      <th className="text-center px-4 py-3">CTR</th>
+                      <th className="text-center px-4 py-3">Curtidas</th>
+                      <th className="text-center px-4 py-3">Comentários</th>
+                      <th className="text-center px-4 py-3">Conversões</th>
+                      <th className="text-center px-4 py-3">Receita</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -709,13 +709,13 @@ export default function ResultadosTab() {
                           )}
                           <span className="font-semibold text-slate-700 truncate max-w-[160px]">{v.title}</span>
                         </td>
-                        <td className="text-right px-4 py-3 text-slate-600">{v.views.toLocaleString('pt-BR')}</td>
-                        <td className="text-right px-4 py-3 text-slate-600">{v.clicks.toLocaleString('pt-BR')}</td>
-                        <td className="text-right px-4 py-3 text-slate-600">{v.ctr.toFixed(1)}%</td>
-                        <td className="text-right px-4 py-3 text-rose-500 font-semibold">{v.likes}</td>
-                        <td className="text-right px-4 py-3 text-[#0094eb] font-semibold">{v.comments}</td>
-                        <td className="text-right px-4 py-3 text-emerald-600 font-semibold">{v.conversions}</td>
-                        <td className="text-right px-4 py-3 text-slate-700 font-bold">
+                        <td className="text-center px-4 py-3 text-slate-600">{v.views.toLocaleString('pt-BR')}</td>
+                        <td className="text-center px-4 py-3 text-slate-600">{v.clicks.toLocaleString('pt-BR')}</td>
+                        <td className="text-center px-4 py-3 text-slate-600">{v.ctr.toFixed(1)}%</td>
+                        <td className="text-center px-4 py-3 text-rose-500 font-semibold">{v.likes}</td>
+                        <td className="text-center px-4 py-3 text-[#0094eb] font-semibold">{v.comments}</td>
+                        <td className="text-center px-4 py-3 text-emerald-600 font-semibold">{v.conversions}</td>
+                        <td className="text-center px-4 py-3 text-slate-700 font-bold">
                           {v.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </td>
                       </tr>
@@ -755,12 +755,12 @@ export default function ResultadosTab() {
                   <thead>
                     <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold">
                       <th className="text-left px-4 py-3">Vídeo</th>
-                      <th className="text-right px-4 py-3">Views</th>
-                      <th className="text-right px-4 py-3">Cliques</th>
-                      <th className="text-right px-4 py-3">Queda até o Clique</th>
-                      <th className="text-right px-4 py-3">Conversões</th>
-                      <th className="text-right px-4 py-3">Queda até a Conversão</th>
-                      <th className="text-right px-4 py-3">Ações</th>
+                      <th className="text-center px-4 py-3">Views</th>
+                      <th className="text-center px-4 py-3">Cliques</th>
+                      <th className="text-center px-4 py-3">Queda até o Clique</th>
+                      <th className="text-center px-4 py-3">Conversões</th>
+                      <th className="text-center px-4 py-3">Queda até a Conversão</th>
+                      <th className="text-center px-4 py-3">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -776,12 +776,12 @@ export default function ResultadosTab() {
                           )}
                           <span className="font-semibold text-slate-700 truncate max-w-[160px]">{r.title}</span>
                         </td>
-                        <td className="text-right px-4 py-3 text-slate-600">{r.views.toLocaleString('pt-BR')}</td>
-                        <td className="text-right px-4 py-3 text-slate-600">{r.clicks.toLocaleString('pt-BR')}</td>
-                        <td className="text-right px-4 py-3 text-rose-500 font-semibold">{r.clickDropRate.toFixed(1)}%</td>
-                        <td className="text-right px-4 py-3 text-emerald-600 font-semibold">{r.conversions.toLocaleString('pt-BR')}</td>
-                        <td className="text-right px-4 py-3 text-rose-500 font-semibold">{r.conversionDropRate.toFixed(1)}%</td>
-                        <td className="text-right px-4 py-3">
+                        <td className="text-center px-4 py-3 text-slate-600">{r.views.toLocaleString('pt-BR')}</td>
+                        <td className="text-center px-4 py-3 text-slate-600">{r.clicks.toLocaleString('pt-BR')}</td>
+                        <td className="text-center px-4 py-3 text-rose-500 font-semibold">{r.clickDropRate.toFixed(1)}%</td>
+                        <td className="text-center px-4 py-3 text-emerald-600 font-semibold">{r.conversions.toLocaleString('pt-BR')}</td>
+                        <td className="text-center px-4 py-3 text-rose-500 font-semibold">{r.conversionDropRate.toFixed(1)}%</td>
+                        <td className="text-center px-4 py-3">
                           <button
                             type="button"
                             onClick={() => setRetentionVideo({ id: r.id, title: r.title })}
