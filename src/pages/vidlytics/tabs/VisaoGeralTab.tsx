@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLoja } from '../../../contexts/LojaContext';
+import VidlyticsAcademy from '../../../components/vidlytics/VidlyticsAcademy';
 import { supabase } from '@/lib/supabase';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
 import { VidlyticsDatabaseService } from '../../../services/vidlytics/VidlyticsDatabaseService';
@@ -12,14 +13,12 @@ import {
   HardDrive, 
   FileText, 
   Clock, 
-  Play, 
   Share2, 
   Link2, 
   Check, 
   Settings, 
   Palette, 
   Edit3, 
-  Radio,
   ArrowRight
 } from 'lucide-react';
 
@@ -447,6 +446,7 @@ export default function VisaoGeralTab() {
         </div>
 
         {/* Coluna Direita: Atividade Recente (Log do Painel) */}
+        <div className="space-y-6">
         <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="border-b border-slate-100 pb-4 mb-4">
@@ -525,34 +525,7 @@ export default function VisaoGeralTab() {
             </div>
           </div>
         </div>
-
-      </div>
-
-      {/* 5. Duas Colunas Inferiores: Vidlytics Academy + Indique e Ganhe */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Card Vidlytics Academy */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex flex-col sm:flex-row items-center gap-5 hover:border-slate-300 transition-all">
-          <div className="relative w-full sm:w-44 h-28 rounded-xl overflow-hidden bg-gradient-to-tr from-sky-500 via-indigo-500 to-amber-400 flex items-center justify-center flex-shrink-0 group cursor-pointer shadow-inner">
-            <div className="w-11 h-11 rounded-full bg-white/95 shadow-md flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Play className="w-5 h-5 text-[#0094eb] fill-[#0094eb] ml-0.5" />
-            </div>
-          </div>
-
-          <div className="space-y-2 text-center sm:text-left flex-1">
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold rounded-md bg-sky-50 text-[#0094eb] uppercase tracking-wider">
-              <Radio className="w-3 h-3" /> Vidlytics Academy
-            </span>
-            <h4 className="text-sm font-bold text-slate-800 leading-snug">
-              Como dobrar suas conversões com vídeos em 3 passos
-            </h4>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Aprenda as melhores práticas de posicionamento e gatilhos de CTA para aumentar as vendas da sua loja.
-            </p>
-          </div>
-        </div>
-
-        {/* Card Indique e Ganhe */}
+          {/* Card Indique e Ganhe */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-slate-800">
@@ -596,11 +569,13 @@ export default function VisaoGeralTab() {
           </div>
         </div>
 
+        </div>
+
       </div>
+
+      {/* 5. Vidlytics Academy */}
+      <VidlyticsAcademy />
 
     </div>
   );
 }
-
-
-
