@@ -219,8 +219,8 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
                 { l: 'Duração média assistida', v: fmt(model.avgSec) },
                 { l: '% média assistida', v: `${Math.round((model.avgSec / model.duration) * 100)}%` },
                 { l: 'Assistiram até o fim', v: `${Math.round((model.completed / model.total) * 100)}%` },
-                { l: 'Cliques em Ver produto', v: String(productClicks) },
-                { l: 'Cliques no WhatsApp', v: String(waClicks) },
+                { l: 'Cliques em Ver produto', v: (<span className="inline-flex items-center gap-2 text-amber-600"><span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />{productClicks}</span>) },
+                { l: 'Cliques no WhatsApp', v: (<span className="inline-flex items-center gap-2 text-green-600"><span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" />{waClicks}</span>) },
                 { l: 'Conversões pagas', v: `${paidQty} · ${brl(paidRev)}` },
                 { l: 'Conversões pendentes', v: `${pendQty} · ${brl(pendRev)}` },
               ].map((k) => (
@@ -273,7 +273,17 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
                   </g>
                 )}
               </svg>
-              <p className="mt-1 text-[11px] font-semibold text-slate-500">A faixa vermelha marca o maior abandono. Pontos laranja: cliques em Ver produto. Pontos verdes: cliques no WhatsApp.</p>
+              <p className="mt-1 text-[11px] font-semibold text-slate-500">A faixa vermelha marca o maior abandono.
+                <span className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />
+                    Ponto laranja: clique em Ver produto
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" />
+                    Ponto verde: clique no WhatsApp
+                  </span>
+                </span></p>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
