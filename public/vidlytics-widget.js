@@ -2747,12 +2747,22 @@ function sendAnalyticsEvent(eventType, videoId, productId, extraData) {
   try {
     // Vidlytics: Atribuição entre subdomínios (ex: useanny.com -> seguro.useanny.com)
     try {
-      var hName = window.location.hostname || '';
       var rootDom = '';
-        if (hName && hName !== 'localhost' && !/^(\d{1,3}\.){3}\d{1,3}$/.test(hName)) {
-          var hParts = hName.split('.');
-          if (hParts.length >= 2) rootDom = '; domain=.' + hParts.slice(-2).join('.');
-        }
+        try {
+          var hName = window.location.hostname || '';
+          if (hName && hName !== 'localhost' && !/^(\d{1,3}\.){3}\d{1,3}$/.test(hName)) {
+            var hParts = hName.split('.');
+            for (var hi = hParts.length - 2; hi >= 0; hi--) {
+              var cand = hParts.slice(hi).join('.');
+              document.cookie = 'vly_probe=1; path=/; domain=.' + cand + '; SameSite=Lax';
+              if (document.cookie.indexOf('vly_probe=1') !== -1) {
+                document.cookie = 'vly_probe=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.' + cand + '; SameSite=Lax';
+                rootDom = '; domain=.' + cand;
+                break;
+              }
+            }
+          }
+        } catch (_) {}
         var expDays = 30;
         var expDate = new Date();
         expDate.setTime(expDate.getTime() + (expDays * 864e5));
