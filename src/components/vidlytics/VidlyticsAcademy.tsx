@@ -58,9 +58,12 @@ export default function VidlyticsAcademy() {
   return (
     <section className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-3">
       <div className="flex items-center justify-between">
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold rounded-md bg-sky-50 text-[#0094eb] uppercase tracking-wider">
-          <YoutubeIcon className="w-3 h-3" /> Vidlytics Academy
-        </span>
+        <div className="flex items-center gap-2.5">
+  <div className="w-8 h-8 rounded-lg bg-[#0094eb]/10 flex items-center justify-center shrink-0">
+    <YoutubeIcon className="w-4 h-4 text-[#0094eb]" />
+  </div>
+  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Vidlytics Academy</h3>
+</div>
         <a
           href={CHANNEL_URL}
           target="_blank"
