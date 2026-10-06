@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 
 type Row = { max_second: number; completed: boolean; sessions: number };
+type ClickRow = { kind: string; sec: number | null; qty: number; revenue: number };
 
 type Props = {
   open: boolean;
@@ -49,6 +50,7 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hover, setHover] = useState<number | null>(null);
+  const [stats, setStats] = useState<ClickRow[]>([]);
 
   useEffect(() => {
     if (!open || !video || !storeId) return;
@@ -63,6 +65,16 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
         if (active) setError('Não foi possível carregar a retenção deste vídeo.');
       })
       .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [open, video?.id, storeId, start, end]);
+
+  useEffect(() => {
+    if (!open || !video || !storeId) return;
+    let active = true;
+    setStats([]);
+    VidlyticsDatabaseService.getVideoClickStats(storeId, video.id, start, end)
+      .then((d) => { if (active) setStats(d); })
+      .catch((e) => console.error('Erro ao buscar cliques e conversões:', e));
     return () => { active = false; };
   }, [open, video?.id, storeId, start, end]);
 
@@ -114,6 +126,44 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
   };
 
   const hp = model && hover !== null ? model.points[hover] : null;
+
+  const isClick = (k: string) => k === 'product_click' || k === 'whatsapp_click';
+  const sumBy = (kinds: string[], f: 'qty' | 'revenue') =>
+    stats.filter((s) => kinds.includes(s.kind)).reduce((a, s) => a + Number(s[f] || 0), 0);
+  const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const productClicks = sumBy(['product_click'], 'qty');
+  const waClicks = sumBy(['whatsapp_click'], 'qty');
+  const paidKinds = ['conv_paid', 'conv_approved', 'conv_confirmed'];
+  const paidQty = sumBy(paidKinds, 'qty');
+  const paidRev = sumBy(paidKinds, 'revenue');
+  const pendQty = sumBy(['conv_pending'], 'qty');
+  const pendRev = sumBy(['conv_pending'], 'revenue');
+
+  const clickMarks = model
+    ? stats
+        .filter((s) => isClick(s.kind) && s.sec !== null)
+        .map((s) => {
+          const at = Math.min(Number(s.sec), model.duration);
+          const pt = [...model.points].reverse().find((p) => p.sec <= at) || model.points[0];
+          return {
+            kind: s.kind,
+            qty: s.qty,
+            at,
+            cx: x(at, model.duration),
+            cy: y(pt.pct),
+            color: s.kind === 'whatsapp_click' ? '#22c55e' : '#f59e0b',
+            label: s.kind === 'whatsapp_click' ? 'WhatsApp' : 'Ver produto',
+          };
+        })
+    : [];
+
+  const buckets = new Map<number, number>();
+  stats.filter((s) => isClick(s.kind) && s.sec !== null).forEach((s) => {
+    const b = Math.floor(Number(s.sec) / 5) * 5;
+    buckets.set(b, (buckets.get(b) || 0) + s.qty);
+  });
+  const topBucket = Array.from(buckets.entries()).sort((a, b) => b[1] - a[1])[0];
+  const untimedClicks = stats.filter((s) => isClick(s.kind) && s.sec === null).reduce((a, s) => a + s.qty, 0);
   const worst = model?.topDrops[0];
 
   return (
@@ -169,6 +219,10 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
                 { l: 'Duração média assistida', v: fmt(model.avgSec) },
                 { l: '% média assistida', v: `${Math.round((model.avgSec / model.duration) * 100)}%` },
                 { l: 'Assistiram até o fim', v: `${Math.round((model.completed / model.total) * 100)}%` },
+                { l: 'Cliques em Ver produto', v: String(productClicks) },
+                { l: 'Cliques no WhatsApp', v: String(waClicks) },
+                { l: 'Conversões pagas', v: `${paidQty} · ${brl(paidRev)}` },
+                { l: 'Conversões pendentes', v: `${pendQty} · ${brl(pendRev)}` },
               ].map((k) => (
                 <div key={k.l} className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
                   <p className="text-[11px] font-semibold text-slate-500">{k.l}</p>
@@ -206,6 +260,12 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
                 )}
                 <path d={area} fill="#0ea5e9" opacity={0.15} />
                 <path d={line} fill="none" stroke="#0ea5e9" strokeWidth={2.5} strokeLinejoin="round" />
+                {clickMarks.map((c, i) => (
+                  <g key={`${c.kind}-${c.at}-${i}`}>
+                    <circle cx={c.cx} cy={c.cy} r={Math.min(4 + c.qty, 9)} fill={c.color} stroke="#fff" strokeWidth={2} />
+                    <title>{`${c.label} em ${fmt(c.at)}: ${c.qty} clique(s)`}</title>
+                  </g>
+                ))}
                 {hp && (
                   <g>
                     <line x1={x(hp.sec, model.duration)} x2={x(hp.sec, model.duration)} y1={PT} y2={H - PB} stroke="#94a3b8" strokeDasharray="4 3" />
@@ -213,7 +273,7 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
                   </g>
                 )}
               </svg>
-              <p className="mt-1 text-[11px] font-semibold text-slate-500">A faixa vermelha marca o trecho com maior abandono.</p>
+              <p className="mt-1 text-[11px] font-semibold text-slate-500">A faixa vermelha marca o maior abandono. Pontos laranja: cliques em Ver produto. Pontos verdes: cliques no WhatsApp.</p>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
@@ -255,6 +315,8 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
                   </li>
                 ))}
                 {model.topDrops.length === 0 && <li>Nenhuma queda relevante: o público assiste até o fim.</li>}
+                {topBucket && <li>Cliques concentrados entre {fmt(topBucket[0])} e {fmt(topBucket[0] + 5)}: {topBucket[1]} clique(s) em produto ou WhatsApp.</li>}
+                {untimedClicks > 0 && <li>{untimedClicks} clique(s) antigos sem o segundo registrado. Os novos já trazem o momento do clique.</li>}
               </ul>
             </div>
           </div>

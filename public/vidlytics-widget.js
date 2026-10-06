@@ -2807,7 +2807,7 @@ var payload = {
   deviceType: resolvedDevice,
   pagePath: resolvedPath,
   sessionId: (extraData && extraData.sessionId) || null,
-  watchSecond: (extraData && typeof extraData.watchSecond === 'number') ? extraData.watchSecond : null
+  watchSecond: (extraData && typeof extraData.watchSecond === 'number') ? extraData.watchSecond : vlClickSecond(String(eventType).trim(), cleanVideoId)
 };
 
       var endpoint = supabaseUrl.replace(/\/rest\/v1.*/, '').replace(/\/+$/, '') + '/functions/v1/track-event';
@@ -2825,6 +2825,13 @@ var payload = {
         keepalive: true
       }).catch(function () {});
     } catch (_) {}
+  }
+
+  function vlClickSecond(eventType, videoId) {
+    if (eventType !== 'product_click' && eventType !== 'whatsapp_click') return null;
+    var w = window.__vlWatch;
+    if (!w || !videoId || String(w.v) !== String(videoId)) return null;
+    return w.s;
   }
 
   function trackMetric(data) {
@@ -2930,7 +2937,7 @@ var payload = {
         if (ttDuration > 0 && ttLastTime - t > 1 && ttMaxTime >= ttDuration * 0.8) { ttComplete(); return; }
         ttLastTime = t;
         if (t > ttMaxTime) ttMaxTime = t;
-        var sec = Math.floor(t);
+        var sec = Math.floor(t); window.__vlWatch = { v: video ? video.id : null, s: sec };
         if (sec !== ttLastSecond && sec % 5 === 0) {
           ttLastSecond = sec;
           sendAnalyticsEvent('progress', video ? video.id : null, null, { sessionId: ttSessionId, watchSecond: sec });
@@ -2997,7 +3004,7 @@ media.addEventListener('play', function () {
 });
 
 media.addEventListener('timeupdate', function () {
-  var currentSecond = Math.floor(media.currentTime || 0);
+  var currentSecond = Math.floor(media.currentTime || 0); window.__vlWatch = { v: video ? video.id : null, s: currentSecond };
   if (currentSecond !== lastProgressSecond && currentSecond >= 0 && currentSecond % 5 === 0) {
     lastProgressSecond = currentSecond;
     sendAnalyticsEvent('progress', video ? video.id : null, null, {
