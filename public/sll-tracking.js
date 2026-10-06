@@ -37,6 +37,7 @@
   }
 
   var alreadySent = false;
+  console.log("[SLL-Tracking] ativo em", window.location.pathname);
 
   function getCookie(n) {
     try {
@@ -84,7 +85,8 @@
         p_order_id: String(order.order_id),
         p_total: order.total != null ? Number(order.total) : null,
         p_module: attribution.module,
-        p_source_id: attribution.source_id
+        p_source_id: attribution.source_id,
+        p_status: order.status || "paid"
       })
     })
     .then(function(res) {
@@ -113,6 +115,23 @@
     return;
   }
 
+  // 1b. Yampi: pedido no caminho da URL (/checkout/finalization/ID)
+  var pathM = window.location.pathname.match(/\/finalization\/(\d+)/i);
+  if (pathM) {
+    var pmth = (params.get("payment_method") || "").toLowerCase();
+    var yStatus = (pmth === "pix" || pmth === "billet" || pmth === "boleto") ? "pending" : "paid";
+    var tries = 0;
+    (function readTotal() {
+      var txt = (document.body && document.body.innerText) || "";
+      var m = txt.match(/Valor do Pix:?\s*R\$\s*([\d.]+,\d{2})/i) || txt.match(/R\$\s*([\d.]+,\d{2})/);
+      if (m || ++tries >= 10) {
+        sendConversion({ order_id: pathM[1], total: m ? m[1].replace(/\./g, "").replace(",", ".") : null, status: yStatus });
+      } else {
+        setTimeout(readTotal, 1000);
+      }
+    })();
+    return;
+  }
   // 2. Yampi Checkout
   if (window.yampi && (window.yampi.order || window.yampi.checkout)) {
     var yo = window.yampi.order || window.yampi.checkout;
