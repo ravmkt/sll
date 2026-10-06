@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLoja } from '../../../contexts/LojaContext';
 import VidlyticsAcademy from '../../../components/vidlytics/VidlyticsAcademy';
+import ProximasDatasComerciais from '../../../components/vidlytics/ProximasDatasComerciais';
 import { supabase } from '@/lib/supabase';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
 import { VidlyticsDatabaseService } from '../../../services/vidlytics/VidlyticsDatabaseService';
@@ -459,84 +460,7 @@ export default function VisaoGeralTab() {
 
         {/* Coluna Direita: Atividade Recente (Log do Painel) */}
         <div className="space-y-6">
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="border-b border-slate-100 pb-4 mb-4">
-              <CardTitle icon={Activity}>Atividade Recente (Log do Painel)</CardTitle>
-              <p className="text-xs text-slate-400 mt-0.5">Histórico em tempo real de alterações e atividades do usuário.</p>
-            </div>
-
-            <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
-              
-              {/* Log 1 */}
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Edit3 className="w-3.5 h-3.5 text-purple-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800 truncate">Coleção de stories atualizada: <span className="font-bold">TESTE</span></p>
-                  <p className="text-[10px] text-slate-400">16 de set. às 16:29</p>
-                </div>
-              </div>
-
-              {/* Log 2 */}
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Settings className="w-3.5 h-3.5 text-amber-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800 truncate">Configurações da loja salvas: <span className="font-bold">Use Anny Moda Feminina</span></p>
-                  <p className="text-[10px] text-slate-400">15 de set. às 13:57</p>
-                </div>
-              </div>
-
-              {/* Log 3 */}
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Settings className="w-3.5 h-3.5 text-amber-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800 truncate">Configurações da loja salvas: <span className="font-bold">Use Anny Moda Feminina</span></p>
-                  <p className="text-[10px] text-slate-400">15 de set. às 10:52</p>
-                </div>
-              </div>
-
-              {/* Log 4 */}
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Settings className="w-3.5 h-3.5 text-amber-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800 truncate">Configurações da loja salvas: <span className="font-bold">Use Anny Moda Feminina</span></p>
-                  <p className="text-[10px] text-slate-400">10 de set. às 08:30</p>
-                </div>
-              </div>
-
-              {/* Log 5 */}
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Edit3 className="w-3.5 h-3.5 text-purple-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800 truncate">Coleção de stories atualizada: <span className="font-bold">TESTE</span></p>
-                  <p className="text-[10px] text-slate-400">09 de set. às 16:50</p>
-                </div>
-              </div>
-
-              {/* Log 6 */}
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Palette className="w-3.5 h-3.5 text-[#0094eb]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800 truncate">Aparência do player atualizada: <span className="font-bold">USEANNY</span></p>
-                  <p className="text-[10px] text-slate-400">09 de set. às 16:23</p>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
+        <ProximasDatasComerciais />
           {/* Card Indique e Ganhe */}
         <div className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
