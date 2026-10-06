@@ -256,8 +256,8 @@ export class VidlyticsDatabaseService {
     const endTsC = endDate.length <= 10 ? endDate + 'T23:59:59.999Z' : endDate;
     const { data: convRows, error: convErr } = await supabase
       .from('sll_conversions')
-      .eq('status', 'paid')
       .select('total, source_id, created_at')
+      .eq('status', 'paid')
       .eq('store_id', storeId)
       .eq('module', 'vidlytics')
       .gte('created_at', startDate)
