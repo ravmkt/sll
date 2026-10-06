@@ -21,6 +21,7 @@ import {
   Edit3, 
   ArrowRight
 } from 'lucide-react';
+import { ListChecks, Activity } from 'lucide-react';
 
 type Periodo = 'today' | '7' | '30' | 'custom';
 
@@ -39,6 +40,17 @@ function getRange(p: Periodo, customStart: string, customEnd: string) {
   const start = new Date();
   if (p !== 'today') start.setDate(start.getDate() - (Number(p) - 1));
   return { start: ymd(start), end: ymd(new Date()) };
+}
+
+function CardTitle({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="w-8 h-8 rounded-lg bg-[#0094eb]/10 flex items-center justify-center shrink-0">
+        <Icon className="w-4 h-4 text-[#0094eb]" />
+      </div>
+      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">{children}</h3>
+    </div>
+  );
 }
 
 export default function VisaoGeralTab() {
@@ -363,7 +375,7 @@ export default function VisaoGeralTab() {
         <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
-              <h3 className="text-base font-bold text-slate-800">Checklist da Ativação da Loja</h3>
+              <CardTitle icon={ListChecks}>Checklist da Ativação da Loja</CardTitle>
               <p className="text-xs text-slate-400 mt-0.5">Conclua os passos para publicar seus stories.</p>
             </div>
             <div className="flex items-center gap-2">
@@ -450,7 +462,7 @@ export default function VisaoGeralTab() {
         <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="border-b border-slate-100 pb-4 mb-4">
-              <h3 className="text-base font-bold text-slate-800">Atividade Recente (Log do Painel)</h3>
+              <CardTitle icon={Activity}>Atividade Recente (Log do Painel)</CardTitle>
               <p className="text-xs text-slate-400 mt-0.5">Histórico em tempo real de alterações e atividades do usuário.</p>
             </div>
 
@@ -526,12 +538,9 @@ export default function VisaoGeralTab() {
           </div>
         </div>
           {/* Card Indique e Ganhe */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all space-y-4">
+        <div className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-slate-800">
-              <DollarSign className="w-4 h-4 text-[#0094eb]" />
-              <h4 className="text-sm font-bold">Indique e Ganhe</h4>
-            </div>
+            <CardTitle icon={DollarSign}>Indique e Ganhe</CardTitle>
             <Share2 className="w-4 h-4 text-slate-400" />
           </div>
 
@@ -542,7 +551,7 @@ export default function VisaoGeralTab() {
           <div className="space-y-2">
             <button
               onClick={handleCopyLink}
-              className="w-full py-2.5 px-4 rounded-xl bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-sm active:scale-[0.99]"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#fd8539] hover:bg-[#e07128] text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-sm active:scale-[0.99]"
             >
               {copied ? (
                 <>
@@ -561,7 +570,7 @@ export default function VisaoGeralTab() {
               <a 
                 href="/dashboard/afiliados"
                 onClick={(e) => { e.preventDefault(); navigate('/dashboard/afiliados'); }}
-                className="text-[11px] font-semibold text-slate-500 hover:text-[#0094eb] transition-colors inline-flex items-center gap-1"
+                className="text-[11px] font-semibold text-slate-500 hover:text-[#fd8539] transition-colors inline-flex items-center gap-1"
               >
                 Acessar painel de indicações →
               </a>
