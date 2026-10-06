@@ -1,3 +1,4 @@
+import MarketStudyModal from '@/components/vidlytics/MarketStudyModal';
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
@@ -89,6 +90,7 @@ export default function ResultadosTab() {
     return () => { alive = false; };
   }, [storeId]);
   const nicho = sectorName || 'e-commerce';
+  const [studyOpen, setStudyOpen] = useState(false);
   const navigate = useNavigate();
   const [affiliateSummary, setAffiliateSummary] = useState<AffiliateSummary | null>(null);
 
@@ -596,9 +598,8 @@ export default function ResultadosTab() {
               </div>
             </div>
 
-            <button className="bg-[#0094eb] hover:bg-sky-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex-shrink-0">
-              Ver Estudo de Mercado
-            </button>
+            <button type="button" onClick={() => setStudyOpen(true)} className="bg-[#0094eb] hover:bg-sky-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex-shrink-0">Ver Estudo de Mercado</button>
+<MarketStudyModal open={studyOpen} onClose={() => setStudyOpen(false)} sector={nicho} />
           </div>
 
         </div>
