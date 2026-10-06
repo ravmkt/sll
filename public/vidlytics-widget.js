@@ -2931,7 +2931,7 @@ var payload = {
         ttLastTime = t;
         if (t > ttMaxTime) ttMaxTime = t;
         var sec = Math.floor(t);
-        if (sec !== ttLastSecond) {
+        if (sec !== ttLastSecond && sec % 5 === 0) {
           ttLastSecond = sec;
           sendAnalyticsEvent('progress', video ? video.id : null, null, { sessionId: ttSessionId, watchSecond: sec });
         }
@@ -2998,7 +2998,7 @@ media.addEventListener('play', function () {
 
 media.addEventListener('timeupdate', function () {
   var currentSecond = Math.floor(media.currentTime || 0);
-  if (currentSecond !== lastProgressSecond && currentSecond >= 0) {
+  if (currentSecond !== lastProgressSecond && currentSecond >= 0 && currentSecond % 5 === 0) {
     lastProgressSecond = currentSecond;
     sendAnalyticsEvent('progress', video ? video.id : null, null, {
       sessionId: thisPlaybackSessionId,

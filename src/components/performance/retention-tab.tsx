@@ -212,21 +212,23 @@ let isRealData = false;
 
 if (progressEvents.length > 0) {
   // Curva real: para cada segundo, conta quantas sessões distintas chegaram até ali
-  const sessionsBySecond = new Map<number, Set<string>>();
-  progressEvents.forEach((ev) => {
+  // Curva real: maior segundo alcancado por sessao (progress, video_close, story_complete)
+  const maxBySession = new Map<string, number>();
+  (eventsData || []).forEach((ev) => {
+    if (!ev.session_id) return;
+    if (ev.event_type === 'story_complete') {
+      maxBySession.set(ev.session_id, duration);
+      return;
+    }
+    if (ev.event_type !== 'progress' && ev.event_type !== 'video_close') return;
     const sec = ev.watch_second ?? 0;
-    const sid = ev.session_id ?? 'unknown';
-    if (!sessionsBySecond.has(sec)) sessionsBySecond.set(sec, new Set());
-    sessionsBySecond.get(sec)!.add(sid);
+    if (sec > (maxBySession.get(ev.session_id) ?? -1)) maxBySession.set(ev.session_id, sec);
   });
-
-  const totalSessions = new Set(progressEvents.map((e) => e.session_id)).size || 1;
+  const maxList = Array.from(maxBySession.values());
+  const totalSessions = maxList.length || 1;
 
   for (let sec = 0; sec <= duration; sec++) {
-    let reached = 0;
-    sessionsBySecond.forEach((set, s) => {
-      if (s >= sec) reached += set.size; // aproximação; refinar se necessário
-    });
+    const reached = maxList.filter((m) => m >= sec).length;
     const retention = Math.round((reached / totalSessions) * 100);
     finalCurve.push({ second: sec, retention: Math.max(0, Math.min(100, retention)) });
   }
