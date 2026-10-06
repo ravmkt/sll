@@ -15,6 +15,20 @@ export interface AffiliateReferredDetail {
   created_at: string;
 }
 
+export type ReferralStatus = "trial" | "trial_expired" | "paid" | "past_due" | "canceled" | "other";
+
+export interface ReferralDetail {
+  store_id: string;
+  store_name: string;
+  joined_at: string;
+  trial_ends_at: string | null;
+  canceled_at: string | null;
+  status: ReferralStatus;
+  commission_pending: number;
+  commission_released: number;
+  commission_canceled: number;
+  next_release_at: string | null;
+}
 export interface RequestWithdrawalParams {
   storeId: string;
   amount: number;
@@ -40,6 +54,8 @@ export class AffiliateDatabaseService {
 
     const referredStores = new Set((rewards || []).map((r) => r.referred_store_id));
 
+    const referredCount = (await AffiliateDatabaseService.getReferralDetails(storeId)).length;
+
     const { data: withdrawals, error: withdrawalsError } = await supabase
       .from("affiliate_withdrawals")
       .select("amount, status")
@@ -56,7 +72,7 @@ export class AffiliateDatabaseService {
     return {
       total_generated: totalGenerated,
       available_balance: Math.max(totalGenerated - totalWithdrawn, 0),
-      total_referred_stores: referredStores.size,
+      total_referred_stores: referredCount,
     };
   }
 
@@ -89,6 +105,25 @@ export class AffiliateDatabaseService {
     }));
   }
 
+  static async getReferralDetails(_storeId: string): Promise<ReferralDetail[]> {
+    const { data, error } = await supabase.rpc("get_my_referral_details");
+    if (error) {
+      console.error("Erro ao buscar indicados:", error);
+      return [];
+    }
+    return ((data as any[]) || []).map((r) => ({
+      store_id: r.store_id,
+      store_name: r.store_name || "Loja indicada",
+      joined_at: r.joined_at,
+      trial_ends_at: r.trial_ends_at ?? null,
+      canceled_at: r.canceled_at ?? null,
+      status: r.status,
+      commission_pending: Number(r.commission_pending || 0),
+      commission_released: Number(r.commission_released || 0),
+      commission_canceled: Number(r.commission_canceled || 0),
+      next_release_at: r.next_release_at ?? null,
+    }));
+  }
   static async requestWithdrawal(params: RequestWithdrawalParams): Promise<void> {
     const { storeId, amount, pixKey, pixKeyType } = params;
 

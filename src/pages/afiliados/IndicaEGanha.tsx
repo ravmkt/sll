@@ -3,17 +3,18 @@ import { useLoja } from "@/contexts/LojaContext";
 import {
   AffiliateDatabaseService,
   AffiliateSummary,
-  AffiliateReferredDetail,
+  ReferralDetail,
 } from "@/services/AffiliateDatabaseService";
 import { DollarSign, Users, Wallet, Copy, Share2 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { ReferralDetailsTable } from "@/components/afiliados/ReferralDetailsTable";
 
 const IndicaEGanha: React.FC = () => {
   const { storeId, store } = useLoja();
 
   const [summary, setSummary] = useState<AffiliateSummary | null>(null);
-  const [referred, setReferred] = useState<AffiliateReferredDetail[]>([]);
+  const [details, setDetails] = useState<ReferralDetail[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -27,10 +28,10 @@ const IndicaEGanha: React.FC = () => {
     setLoading(true);
     const [summaryData, referredData] = await Promise.all([
       AffiliateDatabaseService.getSummary(storeId),
-      AffiliateDatabaseService.getReferredDetails(storeId),
+      AffiliateDatabaseService.getReferralDetails(storeId),
     ]);
     setSummary(summaryData);
-    setReferred(referredData);
+    setDetails(referredData);
     setLoading(false);
   };
 
@@ -155,54 +156,7 @@ const IndicaEGanha: React.FC = () => {
         Solicitar Saque
       </button>
 
-      {/* Tabela de indicados */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100">
-          <h3 className="font-bold text-slate-800">Suas Indicações</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-slate-400 text-[11px] uppercase border-b border-slate-100">
-                <th className="px-4 py-3">Loja</th>
-                <th className="px-4 py-3">Plano</th>
-                <th className="px-4 py-3">Período</th>
-                <th className="px-4 py-3">Comissão</th>
-                <th className="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {referred.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
-                    Você ainda não indicou nenhuma loja.
-                  </td>
-                </tr>
-              ) : (
-                referred.map((r, idx) => (
-                  <tr key={idx} className="border-b border-slate-50 hover:bg-slate-50/50">
-                    <td className="px-4 py-3 font-medium text-slate-700">{r.referred_store_name}</td>
-                    <td className="px-4 py-3 text-slate-500">{r.plan_price_cents ? formatCurrency(r.plan_price_cents / 100) : "-"}</td>
-                    <td className="px-4 py-3 text-slate-500">{r.period_reference}</td>
-                    <td className="px-4 py-3 font-bold text-green-600">{formatCurrency(r.commission_amount)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-[11px] font-bold ${
-                        r.status === "paid"
-                          ? "bg-green-50 text-green-600"
-                          : r.status === "pending"
-                          ? "bg-amber-50 text-amber-600"
-                          : "bg-slate-100 text-slate-500"
-                      }`}>
-                        {r.status === "paid" ? "Pago" : r.status === "pending" ? "Pendente" : r.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <ReferralDetailsTable rows={details} />
 
       {/* Modal de Saque */}
       {showWithdrawModal && (
