@@ -28,7 +28,8 @@ function TrendBadge({ value, isPositive = true }: { value: string; isPositive?: 
 
 function getDateRange(periodo: PeriodoKey, customStart?: string, customEnd?: string): { start: string; end: string } {
   const today = new Date();
-  const end = today.toISOString().slice(0, 10);
+  const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const end = ymd(today);
 
   if (periodo === 'custom' && customStart && customEnd) {
     return { start: customStart, end: customEnd };
@@ -42,7 +43,7 @@ function getDateRange(periodo: PeriodoKey, customStart?: string, customEnd?: str
 
   const startDate = new Date(today);
   startDate.setDate(startDate.getDate() - days);
-  const start = startDate.toISOString().slice(0, 10);
+  const start = ymd(startDate);
 
   return { start, end };
 }
@@ -65,7 +66,7 @@ const emptyMetrics: VidlyticsOverviewMetrics = {
 };
 
 export default function ResultadosTab() {
-  const { storeId } = useLoja();
+  const { storeId, store } = useLoja();
   const navigate = useNavigate();
   const [affiliateSummary, setAffiliateSummary] = useState<AffiliateSummary | null>(null);
 
@@ -77,11 +78,12 @@ export default function ResultadosTab() {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
   const [subTab, setSubTab] = useState<SubTab>('visao-geral');
+  const nicho = String((store as any)?.niche || (store as any)?.nicho || (store as any)?.category || (store as any)?.segment || '').trim() || 'e-commerce';
   const [periodo, setPeriodo] = useState<PeriodoKey>('30');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [searchVideo, setSearchVideo] = useState('');
-  const [selectedVideo, setSelectedVideo] = useState('oculos-de-sol.mp4');
+  const [selectedVideo, setSelectedVideo] = useState('');
   const [filtroFinanceiro, setFiltroFinanceiro] = useState('Todas Juntas');
   const [filtroEngajamento, setFiltroEngajamento] = useState('Todas Juntas');
 
@@ -198,9 +200,22 @@ export default function ResultadosTab() {
   const ctrFormatted = metrics.ctr.toFixed(1).replace('.', ',');
   const revenueFormatted = metrics.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const maxViews = Math.max(1, ...metrics.dailySeries.map((d) => d.views));
-  const maxClicks = Math.max(1, ...metrics.dailySeries.map((d) => d.clicks));
-  const maxLikes = Math.max(1, ...metrics.dailySeries.map((d) => d.likes));
+  const series = (() => {
+    const byDate = new Map<string, VidlyticsOverviewMetrics['dailySeries'][number]>();
+    metrics.dailySeries.forEach((d) => byDate.set(d.date, d));
+    const out: VidlyticsOverviewMetrics['dailySeries'] = [];
+    const [sy, sm, sd] = start.split('-').map(Number);
+    const [ey, em, ed] = end.split('-').map(Number);
+    const last = new Date(ey, em - 1, ed);
+    for (let d = new Date(sy, sm - 1, sd); d <= last; d.setDate(d.getDate() + 1)) {
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      out.push(byDate.get(k) || { date: k, views: 0, clicks: 0, likes: 0, ctr: 0 });
+    }
+    return out;
+  })();
+  const maxViews = Math.max(1, ...series.map((d) => d.views));
+  const maxClicks = Math.max(1, ...series.map((d) => d.clicks));
+  const maxLikes = Math.max(1, ...series.map((d) => d.likes));
 
   const buildPath = (values: number[], max: number, width = 900, height = 140, top = 20, bottom = 135) => {
     if (values.length === 0) return `M 50 ${bottom} L 870 ${bottom}`;
@@ -213,9 +228,9 @@ export default function ResultadosTab() {
     return `M ${points.join(' L ')}`;
   };
 
-  const viewsPath = buildPath(metrics.dailySeries.map((d) => d.views), maxViews);
-  const clicksPath = buildPath(metrics.dailySeries.map((d) => d.clicks), maxClicks);
-  const likesPath = buildPath(metrics.dailySeries.map((d) => d.likes), maxLikes);
+  const viewsPath = buildPath(series.map((d) => d.views), maxViews);
+  const clicksPath = buildPath(series.map((d) => d.clicks), maxClicks);
+  const likesPath = buildPath(series.map((d) => d.likes), maxLikes);
 
   const PeriodoSelector = () => (
     <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -262,7 +277,7 @@ export default function ResultadosTab() {
         <div>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Resultados</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Métricas reais de <strong className="text-[#0094eb] font-semibold">Joias e Semijoias</strong> comparadas aos benchmarks nacionais de 2026.
+            Métricas reais de <strong className="text-[#0094eb] font-semibold">{nicho}</strong> comparadas aos benchmarks nacionais de 2026.
           </p>
         </div>
 
@@ -340,8 +355,8 @@ export default function ResultadosTab() {
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Aguardando Pagamento</span>
                     <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
-                  <p className="text-2xl font-bold text-amber-500">R$ 378,39</p>
-                  <p className="text-xs text-slate-400">3 pedidos em aberto</p>
+                  <p className="text-2xl font-bold text-amber-500">—</p>
+                  <p className="text-xs text-slate-400">Sem integração de pedidos</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100 flex-shrink-0">
                   <Hourglass className="w-4 h-4" />
@@ -354,8 +369,8 @@ export default function ResultadosTab() {
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Vendas Pagas</span>
                     <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
-                  <p className="text-2xl font-bold text-emerald-500">R$ 0,00</p>
-                  <p className="text-xs text-slate-400">0 pedidos confirmados</p>
+                  <p className="text-2xl font-bold text-emerald-500">{formatCurrency(metrics.totalRevenue)}</p>
+                  <p className="text-xs text-slate-400">{metrics.totalConversions} {metrics.totalConversions === 1 ? 'pedido confirmado' : 'pedidos confirmados'}</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100 flex-shrink-0">
                   <CheckCircle2 className="w-4 h-4" />
@@ -382,7 +397,7 @@ export default function ResultadosTab() {
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Total Gerado</span>
                     <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
-                  <p className="text-2xl font-bold text-[#0094eb]">R$ 0,00</p>
+                  <p className="text-2xl font-bold text-[#0094eb]">{formatCurrency(metrics.totalRevenue + (affiliateSummary?.available_balance || 0))}</p>
                   <p className="text-xs text-slate-400">Vendas Pagas + Indicações</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-[#0094eb] text-white flex items-center justify-center shadow-xs flex-shrink-0">
@@ -523,8 +538,8 @@ export default function ResultadosTab() {
                 </svg>
 
                 <div className="flex justify-between text-[9px] text-slate-400 font-mono mt-2 px-10">
-                  {metrics.dailySeries.map((d) => (
-                    <span key={d.date}>{d.date.slice(5).split('-').reverse().join('/')}</span>
+                  {series.map((d, i) => (
+                    <span key={d.date} className={i % Math.ceil(series.length / 8) === 0 ? '' : 'invisible'}>{d.date.slice(5).split('-').reverse().join('/')}</span>
                   ))}
                 </div>
               </div>
@@ -555,7 +570,7 @@ export default function ResultadosTab() {
               <div>
                 <h5 className="text-xs font-bold text-slate-800">Como funciona o benchmark do setor?</h5>
                 <p className="text-xs text-slate-400 mt-0.5 max-w-2xl leading-relaxed">
-                  As metas de comparação do setor de <strong>Joias e Semijoias</strong> são baseadas em pesquisas consolidadas de mercado nacional de 2026 (Ebit/Nielsen, Neotrust e Social Commerce global).
+                  As metas de comparação do setor de <strong>{nicho}</strong> são baseadas em pesquisas consolidadas de mercado nacional de 2026 (Ebit/Nielsen, Neotrust e Social Commerce global).
                 </p>
               </div>
             </div>
