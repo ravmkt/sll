@@ -44,11 +44,13 @@ function occurrence(d: CommercialDate, year: number): Date | null {
   }
   if (!d.month) return null;
   if (d.rule_type === 'fixed') return d.day ? new Date(year, d.month - 1, d.day) : null;
-  if (d.rule_type === 'nth_weekday' && d.weekday !== null && d.nth) {
+  if ((d.rule_type === 'nth_weekday' || d.rule_type === 'thanksgiving_offset') && d.weekday !== null && d.nth) {
     const first = new Date(year, d.month - 1, 1);
     const offset = (d.weekday - first.getDay() + 7) % 7;
     const dt = new Date(year, d.month - 1, 1 + offset + (d.nth - 1) * 7);
-    return dt.getMonth() === d.month - 1 ? dt : null;
+    if (dt.getMonth() !== d.month - 1) return null;
+    if (d.rule_type === 'thanksgiving_offset') dt.setDate(dt.getDate() + (d.day ?? 0));
+    return dt;
   }
   return null;
 }
