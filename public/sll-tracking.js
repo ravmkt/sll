@@ -140,21 +140,29 @@
     return;
   }
 
-  // 5. Escuta de dataLayer (GTM / Eventos assíncronos de compra)
-  if (window.dataLayer && Array.isArray(window.dataLayer)) {
-    for (var i = 0; i < window.dataLayer.length; i++) {
-      var item = window.dataLayer[i];
-      if (item && (item.event === "purchase" || item.event === "checkout_finished" || item.event === "yampi:order_created")) {
-        var tx = item.transactionId || (item.ecommerce && item.ecommerce.transaction_id) || item.order_id;
-        var val = item.value || (item.ecommerce && item.ecommerce.value);
-        if (tx) {
-          sendConversion({ order_id: tx, total: val });
-          return;
-        }
-      }
+  // 5. dataLayer (eventos ja existentes e futuros)
+  function fromDataLayer(item) {
+    if (!item || typeof item !== "object") return false;
+    if (item.event === "purchase" || item.event === "checkout_finished" || item.event === "yampi:order_created") {
+      var tx = item.transactionId || (item.ecommerce && item.ecommerce.transaction_id) || item.order_id;
+      var val = item.value || (item.ecommerce && item.ecommerce.value);
+      if (tx) { sendConversion({ order_id: tx, total: val }); return true; }
     }
+    return false;
   }
 
+  window.dataLayer = window.dataLayer || [];
+  if (Array.isArray(window.dataLayer)) {
+    for (var di = 0; di < window.dataLayer.length; di++) {
+      if (fromDataLayer(window.dataLayer[di])) return;
+    }
+    var origPush = window.dataLayer.push;
+    window.dataLayer.push = function () {
+      var r = origPush.apply(this, arguments);
+      for (var dj = 0; dj < arguments.length; dj++) fromDataLayer(arguments[dj]);
+      return r;
+    };
+  }
   // 6. Fallback via DOM na página de confirmação
   setTimeout(function() {
     if (alreadySent) return;
