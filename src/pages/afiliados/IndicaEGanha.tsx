@@ -151,7 +151,7 @@ const IndicaEGanha: React.FC = () => {
       <button
         onClick={() => setShowWithdrawModal(true)}
         disabled={!summary || summary.available_balance <= 0}
-        className="px-5 py-2.5 rounded-xl bg-[#fd8539] hover:bg-[#e5762f] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors"
+        className="px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors"
       >
         Solicitar Saque
       </button>
