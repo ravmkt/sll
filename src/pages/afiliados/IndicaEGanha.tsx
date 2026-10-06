@@ -110,7 +110,7 @@ const IndicaEGanha: React.FC = () => {
           <div className="absolute -left-16 -bottom-20 w-64 h-64 rounded-full bg-cyan-300/20 blur-3xl" />
           <div className="relative space-y-4 max-w-3xl">
             <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider bg-white/15 px-3 py-1 rounded-full">
-              <Sparkles className="w-3.5 h-3.5" /> Indica & Ganha
+              <Sparkles className="w-3.5 h-3.5" /> Clube SLL
             </span>
             <h1 className="text-2xl md:text-3xl font-black leading-tight">
               Cada loja que você indica te paga <span className="text-amber-300">todo mês.</span>
