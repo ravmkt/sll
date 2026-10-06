@@ -242,6 +242,9 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [tiktokOpen, setTiktokOpen] = useState<boolean>(false);
   const [instagramOpen, setInstagramOpen] = useState<boolean>(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState<boolean>(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState<boolean>(false);
 
   // Resolver store_id
   useEffect(() => {
@@ -508,6 +511,53 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       setErrorMsg(err.message || "Erro ao excluir arquivo.");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Selecao multipla
+  const selectedCount = videos.filter((v) => selectedIds.has(v.id)).length;
+
+  const isAllSelected = () => filteredVideos.length > 0 && filteredVideos.every((v) => selectedIds.has(v.id));
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const toggleSelectAll = () =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (filteredVideos.length > 0 && filteredVideos.every((v) => next.has(v.id))) {
+        filteredVideos.forEach((v) => next.delete(v.id));
+      } else {
+        filteredVideos.forEach((v) => next.add(v.id));
+      }
+      return next;
+    });
+
+  const handleConfirmBulkDelete = async () => {
+    const ids = videos.filter((v) => selectedIds.has(v.id)).map((v) => v.id);
+    if (ids.length === 0) return;
+    try {
+      setIsBulkDeleting(true);
+      setErrorMsg(null);
+      for (let i = 0; i < ids.length; i += 100) {
+        const { error } = await vidlyticsDb.from("vid_videos").delete().in("id", ids.slice(i, i + 100));
+        if (error) throw new Error(error.message);
+      }
+      setVideos((prev) => prev.filter((v) => !ids.includes(v.id)));
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      setSuccessMsg(`${ids.length} ${ids.length === 1 ? 'arquivo excluído' : 'arquivos excluídos'} com sucesso!`);
+    } catch (err: any) {
+      console.error("[BibliotecaTab] Erro ao excluir em massa:", err);
+      setErrorMsg(err.message || "Erro ao excluir arquivos.");
+      fetchVideos();
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -1103,6 +1153,19 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
             {filteredVideos.length} MÍDIAS LISTADAS
+                <label className="ml-4 inline-flex items-center gap-2 cursor-pointer normal-case font-semibold">
+                  <input type="checkbox" checked={isAllSelected()} onChange={toggleSelectAll} className="h-4 w-4 cursor-pointer accent-[#0094eb]" />
+                  Selecionar todos
+                </label>
+                {selectedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setBulkDeleteOpen(true)}
+                    className="ml-3 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1 text-xs font-bold normal-case text-white hover:bg-rose-700 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Excluir selecionados ({selectedCount})
+                  </button>
+                )}
           </span>
           <button
             onClick={fetchVideos}
@@ -1132,6 +1195,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50/60 border-b border-slate-100 text-slate-400 font-extrabold uppercase tracking-wider">
                 <tr>
+                  <th className="py-3 pl-6 pr-0 w-8"><input type="checkbox" checked={isAllSelected()} onChange={toggleSelectAll} className="h-4 w-4 cursor-pointer accent-[#0094eb]" /></th>
                   <th className="py-3.5 px-6">MÍDIA</th>
                   <th className="py-3.5 px-6">NOME DO ARQUIVO</th>
                   <th className="py-3.5 px-6">PRODUTO</th>
@@ -1155,6 +1219,9 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
                   return (
                     <tr key={video.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3.5 pl-6 pr-0 w-8">
+                        <input type="checkbox" checked={selectedIds.has(video.id)} onChange={() => toggleSelect(video.id)} className="h-4 w-4 cursor-pointer accent-[#0094eb]" />
+                      </td>
                       {/* Thumbnail Mídia */}
                       <td className="py-3.5 px-6">
                         <div className="w-12 h-12 rounded-xl bg-slate-900 overflow-hidden relative flex items-center justify-center border border-slate-200/60 flex-shrink-0">
@@ -1487,6 +1554,15 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           </div>
         </div>
       )}
+
+      <ConfirmDeleteModal
+        isOpen={bulkDeleteOpen}
+        onClose={() => { if (!isBulkDeleting) setBulkDeleteOpen(false); }}
+        onConfirm={handleConfirmBulkDelete}
+        title="EXCLUIR ARQUIVOS SELECIONADOS"
+        itemName={`${selectedCount} ${selectedCount === 1 ? 'arquivo selecionado' : 'arquivos selecionados'}`}
+        isDeleting={isBulkDeleting}
+      />
 
       {/* MODAL GLOBAL DE EXCLUSÃO */}
       <ConfirmDeleteModal
