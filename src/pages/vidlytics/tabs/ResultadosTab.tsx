@@ -123,6 +123,39 @@ export default function ResultadosTab() {
   const [retentionLoading, setRetentionLoading] = useState(false);
   const [insightsList, setInsightsList] = useState<VidlyticsInsightRow[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  type SortState = { key: string; dir: 'asc' | 'desc' } | null;
+  const [sortVid, setSortVid] = useState<SortState>(null);
+  const [sortRet, setSortRet] = useState<SortState>(null);
+
+  const sortRows = <T,>(rows: T[], s: SortState): T[] => {
+    if (!s) return rows;
+    const k = s.key;
+    return [...rows].sort((a: any, b: any) => {
+      const x = a[k];
+      const y = b[k];
+      const r = typeof x === 'string' ? x.localeCompare(String(y ?? ''), 'pt-BR') : (Number(x) || 0) - (Number(y) || 0);
+      return s.dir === 'asc' ? r : -r;
+    });
+  };
+  const sortedVideos = useMemo(() => sortRows(videosList, sortVid), [videosList, sortVid]);
+  const sortedRetention = useMemo(() => sortRows(retentionList, sortRet), [retentionList, sortRet]);
+
+  const sortTh = (label: string, key: string, cur: SortState, set: (s: SortState) => void, left = false) => {
+    const on = cur?.key === key;
+    const first: 'asc' | 'desc' = key === 'title' ? 'asc' : 'desc';
+    return (
+      <th className={`${left ? 'text-left' : 'text-center'} px-4 py-3`}>
+        <button
+          type="button"
+          onClick={() => set({ key, dir: on ? (cur!.dir === 'asc' ? 'desc' : 'asc') : first })}
+          className={`inline-flex items-center gap-1 uppercase text-[10px] font-bold cursor-pointer hover:text-[#0094eb] ${on ? 'text-[#0094eb]' : ''}`}
+        >
+          {label}
+          <span className="text-[9px]">{on ? (cur!.dir === 'asc' ? '\u25B2' : '\u25BC') : '\u2195'}</span>
+        </button>
+      </th>
+    );
+  };
 
   const { start, end } = useMemo(
     () => getDateRange(periodo, customStart, customEnd),
@@ -686,18 +719,18 @@ export default function ResultadosTab() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold">
-                      <th className="text-left px-4 py-3">Vídeo</th>
-                      <th className="text-center px-4 py-3">Views</th>
-                      <th className="text-center px-4 py-3">Cliques</th>
-                      <th className="text-center px-4 py-3">CTR</th>
-                      <th className="text-center px-4 py-3">Curtidas</th>
-                      <th className="text-center px-4 py-3">Comentários</th>
-                      <th className="text-center px-4 py-3">Conversões</th>
-                      <th className="text-center px-4 py-3">Receita</th>
-                    </tr>
+{sortTh('Vídeo', 'title', sortVid, setSortVid, true)}
+{sortTh('Views', 'views', sortVid, setSortVid)}
+{sortTh('Cliques', 'clicks', sortVid, setSortVid)}
+{sortTh('CTR', 'ctr', sortVid, setSortVid)}
+{sortTh('Curtidas', 'likes', sortVid, setSortVid)}
+{sortTh('Comentários', 'comments', sortVid, setSortVid)}
+{sortTh('Conversões', 'conversions', sortVid, setSortVid)}
+{sortTh('Receita', 'revenue', sortVid, setSortVid)}
+</tr>
                   </thead>
                   <tbody>
-                    {videosList.map((v) => (
+                    {sortedVideos.map((v) => (
                       <tr key={v.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="px-4 py-3 flex items-center gap-2">
                           {v.thumbnailUrl ? (
@@ -754,17 +787,17 @@ export default function ResultadosTab() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold">
-                      <th className="text-left px-4 py-3">Vídeo</th>
-                      <th className="text-center px-4 py-3">Views</th>
-                      <th className="text-center px-4 py-3">Cliques</th>
-                      <th className="text-center px-4 py-3">Queda até o Clique</th>
-                      <th className="text-center px-4 py-3">Conversões</th>
-                      <th className="text-center px-4 py-3">Queda até a Conversão</th>
-                      <th className="text-center px-4 py-3">Ações</th>
-                    </tr>
+{sortTh('Vídeo', 'title', sortRet, setSortRet, true)}
+{sortTh('Views', 'views', sortRet, setSortRet)}
+{sortTh('Cliques', 'clicks', sortRet, setSortRet)}
+{sortTh('Queda até o Clique', 'clickDropRate', sortRet, setSortRet)}
+{sortTh('Conversões', 'conversions', sortRet, setSortRet)}
+{sortTh('Queda até a Conversão', 'conversionDropRate', sortRet, setSortRet)}
+<th className="text-center px-4 py-3">Ações</th>
+</tr>
                   </thead>
                   <tbody>
-                    {retentionList.map((r) => (
+                    {sortedRetention.map((r) => (
                       <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="px-4 py-3 flex items-center gap-2">
                           {r.thumbnailUrl ? (
