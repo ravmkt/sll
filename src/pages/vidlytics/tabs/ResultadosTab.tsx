@@ -2,7 +2,7 @@ import MarketStudyModal from '@/components/vidlytics/MarketStudyModal';
 import VideoRetentionModal from '@/components/vidlytics/VideoRetentionModal';
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useMemo } from 'react';
-import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
+import { BarChart3, Film, CheckSquare, Sparkles, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
 import { useLoja } from '../../../contexts/LojaContext';
 import { VidlyticsDatabaseService, VidlyticsOverviewMetrics, VidlyticsVideoRow, VidlyticsRetentionRow, VidlyticsInsightRow } from '../../../services/vidlytics/VidlyticsDatabaseService';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
@@ -68,8 +68,38 @@ const emptyMetrics: VidlyticsOverviewMetrics = {
   dailySeries: [],
 };
 
+function useCardTip() {
+  useEffect(() => {
+    const tip = document.createElement('div');
+    tip.style.cssText = 'position:fixed;z-index:99999;max-width:260px;padding:8px 10px;border-radius:8px;background:#0f172a;color:#fff;font-size:11px;line-height:1.4;font-weight:500;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.25);display:none;';
+    document.body.appendChild(tip);
+    const move = (e: MouseEvent) => {
+      const el = e.target instanceof Element ? (e.target.closest('[data-card-tip]') as HTMLElement | null) : null;
+      if (!el) { tip.style.display = 'none'; return; }
+      tip.textContent = el.getAttribute('data-card-tip') || '';
+      tip.style.display = 'block';
+      const w = tip.offsetWidth;
+      const h = tip.offsetHeight;
+      let x = e.clientX + 14;
+      let y = e.clientY + 16;
+      if (x + w > window.innerWidth - 8) x = e.clientX - w - 14;
+      if (y + h > window.innerHeight - 8) y = e.clientY - h - 12;
+      tip.style.left = Math.max(8, x) + 'px';
+      tip.style.top = Math.max(8, y) + 'px';
+    };
+    const hide = () => { tip.style.display = 'none'; };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseleave', hide);
+    return () => {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseleave', hide);
+      tip.remove();
+    };
+  }, []);
+}
 export default function ResultadosTab() {
   const { storeId } = useLoja();
+  useCardTip();
   const [sectorName, setSectorName] = useState('');
   const [retentionVideo, setRetentionVideo] = useState<{ id: string; title?: string | null; duration?: number | null } | null>(null);
   useEffect(() => {
@@ -443,11 +473,10 @@ export default function ResultadosTab() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div data-card-tip="Pedidos iniciados a partir dos seus vídeos que ainda não tiveram o pagamento confirmado. Exige integração de pedidos." className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Aguardando Pagamento</span>
-                    <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
                   <p className="text-2xl font-bold text-amber-500">—</p>
                   <p className="text-xs text-slate-400">Sem integração de pedidos</p>
@@ -457,11 +486,10 @@ export default function ResultadosTab() {
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div data-card-tip="Soma dos pedidos com pagamento confirmado e atribuídos aos seus vídeos no período." className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Vendas Pagas</span>
-                    <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
                   <p className="text-2xl font-bold text-emerald-500">{formatCurrency(metrics.totalRevenue)}</p>
                   <p className="text-xs text-slate-400">{metrics.totalConversions} {metrics.totalConversions === 1 ? 'pedido confirmado' : 'pedidos confirmados'}</p>
@@ -471,11 +499,10 @@ export default function ResultadosTab() {
                 </div>
               </div>
 
-              <div onClick={() => navigate('/dashboard/afiliados')} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between cursor-pointer hover:border-purple-300 transition-colors">
+              <div data-card-tip="Comissões disponíveis das lojas que você indicou. Clique para ver os detalhes." onClick={() => navigate('/dashboard/afiliados')} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between cursor-pointer hover:border-purple-300 transition-colors">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Indicações</span>
-                    <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
                   <p className="text-2xl font-bold text-purple-600">{formatCurrency(affiliateSummary?.available_balance || 0)}</p>
                   <p className="text-xs text-slate-400">Comissões disponíveis</p>
@@ -485,11 +512,10 @@ export default function ResultadosTab() {
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div data-card-tip="Vendas pagas somadas às comissões de indicações no período." className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Total Gerado</span>
-                    <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
                   <p className="text-2xl font-bold text-[#0094eb]">{formatCurrency(metrics.totalRevenue + (affiliateSummary?.total_generated || 0))}</p>
                   <p className="text-xs text-slate-400">Vendas Pagas + Indicações</p>
@@ -512,11 +538,10 @@ export default function ResultadosTab() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Visualizações */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div data-card-tip="Quantas vezes os seus vídeos foram abertos e assistidos no período." className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Visualizações</span>
-                    <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
                   <p className="text-2xl font-bold text-slate-800">{metrics.totalViews.toLocaleString('pt-BR')}</p>
                   <p className="text-xs text-slate-400">Sessões de stories abertas</p>
@@ -527,11 +552,10 @@ export default function ResultadosTab() {
               </div>
 
               {/* Cliques em CTA */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div data-card-tip="Cliques no botão ou card de produto dentro dos vídeos." className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Cliques em CTA</span>
-                    <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
                   <p className="text-2xl font-bold text-slate-800">{metrics.totalClicks.toLocaleString('pt-BR')}</p>
                   <p className="text-xs text-slate-400">Cliques no card/botão de compra</p>
@@ -542,11 +566,10 @@ export default function ResultadosTab() {
               </div>
 
               {/* Engajamento Social */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div data-card-tip="Curtidas e comentários recebidos nos vídeos no período." className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Engajamento Social</span>
-                    <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
                   <div className="flex items-center gap-4 pt-0.5">
                     <div>
@@ -565,11 +588,10 @@ export default function ResultadosTab() {
               </div>
 
               {/* CTR (Taxa de Cliques) */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div data-card-tip="Cliques em CTA divididos pelas visualizações. Mostra quanto do público clica no produto." className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">CTR (Taxa de Cliques)</span>
-                    <HelpCircle className="w-3 h-3 text-slate-300 cursor-help" />
                   </div>
                   <p className="text-2xl font-bold text-slate-800">{ctrFormatted}%</p>
                   <p className="text-xs text-slate-400">Cliques sobre visualizações</p>
