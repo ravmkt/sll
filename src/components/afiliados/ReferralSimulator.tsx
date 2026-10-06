@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Calculator } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { CARD, GOLD_TEXT, LABEL } from "./clubeStyles";
+import { CARD, ICON_BOX, LABEL, MUTED, TITLE } from "./clubeStyles";
 
 export const REF_RATE = 0.1;
 export const REF_PLANS = [
@@ -35,11 +35,13 @@ const FALLBACK_PLANS: SimPlan[] = REF_PLANS.map((p) => ({
 }));
 
 const choice = (on: boolean) =>
-  `rounded-xl border px-3 py-3 text-sm font-bold transition-colors ${
+  `rounded-xl border px-3 py-2.5 text-sm font-bold transition-colors cursor-pointer ${
     on
-      ? "border-[#D4AF37] bg-[#D4AF37]/10 text-[#F3E2A9]"
-      : "border-[#D4AF37]/20 bg-[#111111] text-white/70 hover:border-[#D4AF37]/60"
+      ? "border-[#0094eb] bg-[#0094eb]/10 text-[#0094eb]"
+      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-transparent text-slate-600 dark:text-slate-300 hover:border-[#0094eb]/60"
   }`;
+
+const BOX = "rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-slate-800 p-3 text-center";
 
 export function ReferralSimulator() {
   const [count, setCount] = useState(5);
@@ -78,21 +80,21 @@ export function ReferralSimulator() {
   const monthly = plan ? count * plan.price * REF_RATE : 0;
 
   return (
-    <div className={`${CARD} p-5 space-y-5`}>
+    <div className={`${CARD} p-5 space-y-4`}>
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center border border-[#D4AF37]/20">
+        <div className={ICON_BOX}>
           <Calculator className="w-4 h-4" />
         </div>
         <div>
-          <h3 className="font-bold text-white">Simule seus ganhos</h3>
-          <p className="text-xs text-white/60">Veja quanto você pode receber todo mês indicando mais lojas.</p>
+          <h3 className={TITLE}>Simule seus ganhos</h3>
+          <p className={`text-xs ${MUTED}`}>Veja quanto pode receber por mês indicando mais lojas.</p>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
           <label className={`${LABEL} block mb-2`}>1. Escolha o módulo indicado</label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {modules.map((m) => (
               <button
                 key={m}
@@ -112,7 +114,7 @@ export function ReferralSimulator() {
         {moduleKey && (
           <div>
             <label className={`${LABEL} block mb-2`}>2. Escolha o plano</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {modulePlans.map((p) => (
                 <button key={p.id} type="button" onClick={() => setPlanId(p.id)} className={`${choice(planId === p.id)} !py-2 !text-xs`}>
                   {p.name}
@@ -125,11 +127,11 @@ export function ReferralSimulator() {
       </div>
 
       {plan ? (
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1">
               <label className={LABEL}>Lojas indicadas</label>
-              <span className={`text-2xl font-black ${GOLD_TEXT}`}>{count}</span>
+              <span className="text-2xl font-black text-[#0094eb]">{count}</span>
             </div>
             <input
               type="range"
@@ -137,37 +139,37 @@ export function ReferralSimulator() {
               max={50}
               value={count}
               onChange={(e) => setCount(Number(e.target.value))}
-              className="w-full accent-[#D4AF37]"
+              className="w-full accent-[#0094eb]"
             />
-            <div className="flex justify-between text-[10px] text-white/40 mt-1">
+            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
               <span>1</span>
               <span>25</span>
               <span>50</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-xl bg-black/40 border border-[#D4AF37]/20 p-4 text-center">
+          <div className="grid grid-cols-3 gap-2">
+            <div className={BOX}>
               <p className={LABEL}>Por mês</p>
-              <p className={`mt-1 text-xl font-black ${GOLD_TEXT}`}>{brl(monthly)}</p>
+              <p className="mt-1 text-base font-black text-[#0094eb]">{brl(monthly)}</p>
             </div>
-            <div className="rounded-xl bg-black/40 border border-[#D4AF37]/20 p-4 text-center">
+            <div className={BOX}>
               <p className={LABEL}>12 meses</p>
-              <p className={`mt-1 text-xl font-black ${GOLD_TEXT}`}>{brl(monthly * 12)}</p>
+              <p className="mt-1 text-base font-black text-[#0094eb]">{brl(monthly * 12)}</p>
             </div>
-            <div className="rounded-xl bg-black/40 border border-[#D4AF37]/20 p-4 text-center">
+            <div className={BOX}>
               <p className={LABEL}>24 meses</p>
-              <p className="mt-1 text-xl font-black text-[#FF6A1A]">{brl(monthly * 24)}</p>
+              <p className="mt-1 text-base font-black text-[#fd8539]">{brl(monthly * 24)}</p>
             </div>
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-[#D4AF37]/20 p-6 text-center text-sm text-white/60">
+        <div className={`rounded-xl border border-dashed border-slate-200 dark:border-slate-700 p-5 text-center text-sm ${MUTED}`}>
           {moduleKey ? "Escolha um plano para ver a simulação." : "Escolha um módulo para começar."}
         </div>
       )}
 
-      <p className="text-[11px] text-white/40">
+      <p className="text-[11px] text-slate-400">
         Simulação com os preços dos planos ativos e 10% de comissão recorrente, liberada 15 dias após cada
         pagamento confirmado. Não é garantia de ganhos.
       </p>

@@ -3,7 +3,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { LineChart } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { brl } from "./ReferralSimulator";
-import { CARD, GOLD_BG, GOLD_TEXT, LABEL } from "./clubeStyles";
+import { CARD, ICON_BOX, LABEL, MUTED, TITLE } from "./clubeStyles";
 
 type Row = { amount: number; created_at: string };
 
@@ -87,15 +87,15 @@ export function ReferralEarningsChart({ storeId }: { storeId: string | null | un
   }, [rows, period]);
 
   return (
-    <div className={`${CARD} p-5 space-y-5`}>
+    <div className={`${CARD} p-5 space-y-4`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center border border-[#D4AF37]/20">
+          <div className={ICON_BOX}>
             <LineChart className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-bold text-white">Seus ganhos</h3>
-            <p className="text-xs text-white/60">Comissões geradas no período escolhido.</p>
+            <h3 className={TITLE}>Seus ganhos</h3>
+            <p className={`text-xs ${MUTED}`}>Comissões geradas no período escolhido.</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -104,10 +104,10 @@ export function ReferralEarningsChart({ storeId }: { storeId: string | null | un
               key={p.key}
               type="button"
               onClick={() => setPeriod(p.key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
                 period === p.key
-                  ? `${GOLD_BG} text-black border-transparent`
-                  : "bg-[#111111] border-[#D4AF37]/20 text-white/70 hover:border-[#D4AF37]/60"
+                  ? "bg-[#0094eb] border-[#0094eb] text-white"
+                  : "bg-white dark:bg-transparent border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-[#0094eb]"
               }`}
             >
               {p.label}
@@ -118,42 +118,36 @@ export function ReferralEarningsChart({ storeId }: { storeId: string | null | un
 
       <div>
         <p className={LABEL}>Total no período</p>
-        <p className={`text-3xl font-black ${GOLD_TEXT}`}>{brl(total)}</p>
+        <p className="text-3xl font-black text-[#0094eb]">{brl(total)}</p>
       </div>
 
-      <div className="h-64">
+      <div className="h-56">
         {loading ? (
-          <div className="h-full flex items-center justify-center text-sm text-white/50">Carregando ganhos...</div>
+          <div className={`h-full flex items-center justify-center text-sm ${MUTED}`}>Carregando ganhos...</div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={series} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="clubeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.45} />
-                  <stop offset="95%" stopColor="#D4AF37" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor="#0094eb" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#0094eb" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.08)" />
-              <XAxis
-                dataKey="label"
-                tickLine={false}
-                axisLine={false}
-                minTickGap={24}
-                tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 10 }}
-              />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148,163,184,0.25)" />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} tick={{ fill: "#94a3b8", fontSize: 10 }} />
               <YAxis
                 tickLine={false}
                 axisLine={false}
                 width={70}
-                tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 10 }}
+                tick={{ fill: "#94a3b8", fontSize: 10 }}
                 tickFormatter={(v) => `R$ ${Math.round(Number(v))}`}
               />
               <Tooltip
                 formatter={(v: any) => [brl(Number(v)), "Ganhos"]}
-                contentStyle={{ background: "#111111", border: "1px solid rgba(212,175,55,0.3)", borderRadius: 12, color: "#F3E2A9" }}
-                labelStyle={{ color: "rgba(255,255,255,0.6)" }}
+                contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, color: "#0f172a" }}
+                labelStyle={{ color: "#64748b" }}
               />
-              <Area type="monotone" dataKey="valor" stroke="#D4AF37" strokeWidth={3} fill="url(#clubeGrad)" />
+              <Area type="monotone" dataKey="valor" stroke="#0094eb" strokeWidth={3} fill="url(#clubeGrad)" />
             </AreaChart>
           </ResponsiveContainer>
         )}
