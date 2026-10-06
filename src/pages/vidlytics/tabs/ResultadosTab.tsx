@@ -1,4 +1,5 @@
 import MarketStudyModal from '@/components/vidlytics/MarketStudyModal';
+import VideoRetentionModal from '@/components/vidlytics/VideoRetentionModal';
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart3, Film, CheckSquare, Sparkles, HelpCircle, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
@@ -70,6 +71,7 @@ const emptyMetrics: VidlyticsOverviewMetrics = {
 export default function ResultadosTab() {
   const { storeId } = useLoja();
   const [sectorName, setSectorName] = useState('');
+  const [retentionVideo, setRetentionVideo] = useState<{ id: string; title?: string | null; duration?: number | null } | null>(null);
   useEffect(() => {
     if (!storeId) return;
     let alive = true;
@@ -709,7 +711,7 @@ export default function ResultadosTab() {
                   </thead>
                   <tbody>
                     {retentionList.map((r) => (
-                      <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <tr key={r.id} onClick={() => setRetentionVideo({ id: r.id, title: r.title })} title="Ver retenção de público" className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer">
                         <td className="px-4 py-3 flex items-center gap-2">
                           {r.thumbnailUrl ? (
                             <img src={r.thumbnailUrl} alt={r.title} className="w-8 h-12 object-cover rounded-md" />
@@ -738,6 +740,17 @@ export default function ResultadosTab() {
       {/* ========================================================= */}
       {/* 4. SUB-ABA: INSIGHTS */}
       {/* ========================================================= */}
+      {retentionVideo && (
+        <VideoRetentionModal
+          open={!!retentionVideo}
+          onOpenChange={(o) => { if (!o) setRetentionVideo(null); }}
+          storeId={storeId || ''}
+          video={retentionVideo}
+          start={start}
+          end={end}
+        />
+      )}
+
       {subTab === 'insights' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
