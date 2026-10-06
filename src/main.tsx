@@ -1,3 +1,4 @@
+import { getActiveReferralCode } from '@/lib/auth';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
@@ -11,3 +12,6 @@ createRoot(document.getElementById('root')!).render(
     </AuthProvider>
   </StrictMode>,
 );
+
+// Guarda o codigo de indicacao (?ref=) assim que o app abre, antes de cadastro/login/OAuth
+getActiveReferralCode();
