@@ -78,6 +78,7 @@ Deno.serve(async (req: Request) => {
   const asaasPaymentId: string | undefined = body?.payment?.id;
 
   let subscriptionUpdated = false;
+  let currentSub: { id: string; store_id: string | null } | null = null;
   if (newSubStatus && asaasSubscriptionId) {
     const { data: sub, error: findError } = await supabase
       .from("subscriptions")
@@ -90,6 +91,7 @@ Deno.serve(async (req: Request) => {
 
     if (sub) {
       subscriptionUpdated = true;
+          currentSub = sub;
       if (sub.status !== newSubStatus) {
         const { error: updateError } = await supabase
           .from("subscriptions")
@@ -148,6 +150,40 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && asaasPaymentId && currentSub) {
+    const paidValue = Number(body?.payment?.value ?? 0);
+    if (paidValue > 0) {
+      const { data: inv } = await supabase
+        .from("invoices")
+        .select("id")
+        .eq("asaas_payment_id", asaasPaymentId)
+        .maybeSingle();
+
+      if (!inv && currentSub.store_id) {
+        const { error: invInsErr } = await supabase.from("invoices").insert({
+          store_id: currentSub.store_id,
+          subscription_id: currentSub.id,
+          amount_cents: Math.round(paidValue * 100),
+          currency: "BRL",
+          status: "paid",
+          description: `Pagamento Asaas - ${asaasPaymentId}`,
+          gateway_provider: "asaas",
+          asaas_payment_id: asaasPaymentId,
+          paid_at: new Date().toISOString(),
+        });
+        if (invInsErr) console.error("Erro ao criar invoice:", invInsErr);
+      }
+
+      const period = String(body?.payment?.dueDate ?? new Date().toISOString()).slice(0, 7);
+      const { error: refErr } = await supabase.rpc("record_referral_commission", {
+        p_subscription_id: currentSub.id,
+        p_payment_id: asaasPaymentId,
+        p_value: paidValue,
+        p_period: period,
+      });
+      if (refErr) console.error("Erro ao registrar comissao:", refErr);
+    }
+  }
   try {
     await supabase.from("admin_audit_logs").insert({
       action: `asaas_webhook:${eventId ?? "no-id"}`,
