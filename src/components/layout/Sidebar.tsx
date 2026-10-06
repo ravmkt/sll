@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Settings, Video, LogOut, Gift, PanelLeftClose, PanelLeftOpen, Plug, Package, Ruler } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Settings, Video, LogOut, PanelLeftClose, PanelLeftOpen, Plug, Package, Ruler, Crown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
@@ -18,7 +18,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     { name: 'Produtos', icon: Package, path: '/dashboard/produtos' },
     { name: 'Medidas', icon: Ruler, path: '/dashboard/medidas' },
     { name: 'Assinatura', icon: ShoppingCart, path: '/dashboard/assinaturas' },
-    { name: 'Indica & Ganha', icon: Gift, path: '/dashboard/afiliados' },
+    { name: 'Clube SLL', icon: Crown, path: '/dashboard/afiliados' },
     { name: 'Instalação', icon: Plug, path: '/dashboard/integracao' },
     { name: 'Configurações', icon: Settings, path: '/dashboard/settings' },
   ];
