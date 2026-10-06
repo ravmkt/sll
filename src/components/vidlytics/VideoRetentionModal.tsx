@@ -134,9 +134,7 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
   const productClicks = sumBy(['product_click'], 'qty');
   const waClicks = sumBy(['whatsapp_click'], 'qty');
   const paidKinds = ['conv_paid', 'conv_approved', 'conv_confirmed'];
-  const paidQty = sumBy(paidKinds, 'qty');
   const paidRev = sumBy(paidKinds, 'revenue');
-  const pendQty = sumBy(['conv_pending'], 'qty');
   const pendRev = sumBy(['conv_pending'], 'revenue');
 
   const clickMarks = model
@@ -221,8 +219,8 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
                 { l: 'Assistiram até o fim', v: `${Math.round((model.completed / model.total) * 100)}%` },
                 { l: 'Cliques em Ver produto', v: (<span className="inline-flex items-center gap-2 text-amber-600"><span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />{productClicks}</span>) },
                 { l: 'Cliques no WhatsApp', v: (<span className="inline-flex items-center gap-2 text-green-600"><span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" />{waClicks}</span>) },
-                { l: 'Conversões pagas', v: `${paidQty} · ${brl(paidRev)}` },
-                { l: 'Conversões pendentes', v: `${pendQty} · ${brl(pendRev)}` },
+                { l: 'Conversões pagas', v: `${brl(paidRev)}` },
+                { l: 'Conversões pendentes', v: `${brl(pendRev)}` },
               ].map((k) => (
                 <div key={k.l} className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
                   <p className="text-[11px] font-semibold text-slate-500">{k.l}</p>
