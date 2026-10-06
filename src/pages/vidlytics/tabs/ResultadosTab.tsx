@@ -123,6 +123,34 @@ export default function ResultadosTab() {
   const [retentionLoading, setRetentionLoading] = useState(false);
   const [insightsList, setInsightsList] = useState<VidlyticsInsightRow[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  const HEAD_TIPS: Record<string, string> = {
+    'Vídeo': 'Vídeo publicado na sua loja.',
+    'Views': 'Quantas vezes o vídeo foi visualizado no período.',
+    'Cliques': 'Cliques no botão de produto ou WhatsApp feitos a partir do vídeo.',
+    'CTR': 'Cliques divididos por views. Mostra o quanto o vídeo leva o visitante a agir.',
+    'Curtidas': 'Curtidas que o vídeo recebeu no período.',
+    'Comentários': 'Comentários deixados no vídeo no período.',
+    'Conversões': 'Vendas atribuídas ao vídeo no período.',
+    'Receita': 'Valor total das vendas atribuídas ao vídeo.',
+    'Queda até o Clique': 'Percentual de views que não chegaram a clicar. Quanto menor, melhor.',
+    'Queda até a Conversão': 'Percentual de views que não terminaram em venda. Quanto menor, melhor.',
+    'Ações': 'Abre o detalhe do vídeo: cliques, conversões e retenção segundo a segundo.',
+  };
+  const [tip, setTip] = useState<{ label: string; x: number; y: number } | null>(null);
+  const showTip = (label: string, e: React.MouseEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setTip({ label, x: Math.min(Math.max(r.left + r.width / 2, 120), window.innerWidth - 120), y: r.bottom + 6 });
+  };
+  const tipBox = (label: string) =>
+    tip && tip.label === label && HEAD_TIPS[label] ? (
+      <span
+        style={{ left: tip.x, top: tip.y }}
+        className="fixed z-50 w-56 -translate-x-1/2 rounded-lg bg-slate-900 px-3 py-2 text-left text-[11px] font-medium normal-case leading-snug tracking-normal text-white shadow-lg pointer-events-none"
+      >
+        {HEAD_TIPS[label]}
+      </span>
+    ) : null;
+
   type SortState = { key: string; dir: 'asc' | 'desc' } | null;
   const [sortVid, setSortVid] = useState<SortState>(null);
   const [sortRet, setSortRet] = useState<SortState>(null);
@@ -144,7 +172,7 @@ export default function ResultadosTab() {
     const on = cur?.key === key;
     const first: 'asc' | 'desc' = key === 'title' ? 'asc' : 'desc';
     return (
-      <th className={`${left ? 'text-left' : 'text-center'} px-4 py-3`}>
+      <th className={`${left ? 'text-left' : 'text-center'} px-4 py-3`} onMouseEnter={(e) => showTip(label, e)} onMouseLeave={() => setTip(null)}>
         <button
           type="button"
           onClick={() => set({ key, dir: on ? (cur!.dir === 'asc' ? 'desc' : 'asc') : first })}
@@ -153,6 +181,7 @@ export default function ResultadosTab() {
           {label}
           <span className="text-[9px]">{on ? (cur!.dir === 'asc' ? '\u25B2' : '\u25BC') : '\u2195'}</span>
         </button>
+        {tipBox(label)}
       </th>
     );
   };
@@ -793,7 +822,7 @@ export default function ResultadosTab() {
 {sortTh('Queda até o Clique', 'clickDropRate', sortRet, setSortRet)}
 {sortTh('Conversões', 'conversions', sortRet, setSortRet)}
 {sortTh('Queda até a Conversão', 'conversionDropRate', sortRet, setSortRet)}
-<th className="text-center px-4 py-3">Ações</th>
+<th className="text-center px-4 py-3" onMouseEnter={(e) => showTip('Ações', e)} onMouseLeave={() => setTip(null)}>Ações{tipBox('Ações')}</th>
 </tr>
                   </thead>
                   <tbody>
