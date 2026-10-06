@@ -140,7 +140,7 @@ export default function ProximasDatasComerciais() {
       })
       .filter((x): x is Item => !!x)
       .sort((a, b) => a.left - b.left)
-      .slice(0, 6);
+      .filter((x) => x.left <= 60);
   }, [dates]);
 
   const selTip = selected ? tips[selected.d.id] : undefined;
