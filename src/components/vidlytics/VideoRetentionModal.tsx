@@ -101,16 +101,17 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Retenção de público</DialogTitle>
-          <DialogDescription>{video?.title || 'Vídeo'} · período selecionado</DialogDescription>
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-2xl">
+        <DialogHeader className="px-6 py-4 border-b border-slate-200 bg-white text-left space-y-1">
+          <DialogTitle className="text-lg font-extrabold text-slate-900">Retenção de público</DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">{video?.title || 'Vídeo'} · período selecionado</DialogDescription>
         </DialogHeader>
+        <div className="flex-1 overflow-y-auto bg-slate-50 px-6 py-5">
 
-        {loading && <p className="py-10 text-center text-sm text-muted-foreground">Carregando retenção...</p>}
+        {loading && <p className="py-10 text-center text-sm text-slate-500">Carregando retenção...</p>}
         {!loading && error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
         {!loading && !error && !model && (
-          <p className="py-10 text-center text-sm text-muted-foreground">
+          <p className="py-10 text-center text-sm text-slate-500">
             Sem sessões com dados de reprodução neste período.
           </p>
         )}
@@ -124,16 +125,16 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
                 { l: '% média assistida', v: `${Math.round((model.avgSec / model.duration) * 100)}%` },
                 { l: 'Assistiram até o fim', v: `${Math.round((model.completed / model.total) * 100)}%` },
               ].map((k) => (
-                <div key={k.l} className="rounded-lg border bg-white p-3">
-                  <p className="text-xs text-muted-foreground">{k.l}</p>
-                  <p className="text-lg font-semibold">{k.v}</p>
+                <div key={k.l} className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+                  <p className="text-[11px] font-semibold text-slate-500">{k.l}</p>
+                  <p className="text-lg font-extrabold text-slate-900">{k.v}</p>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-lg border bg-white p-3">
-              <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Retenção ao longo do vídeo</span>
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+              <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                <span className="font-medium text-slate-800">Retenção ao longo do vídeo</span>
                 <span>{hp ? `${fmt(hp.sec)} · ${hp.pct.toFixed(0)}% (${hp.reached} de ${model.total} sessões)` : 'Passe o mouse no gráfico'}</span>
               </div>
               <svg viewBox={`0 0 ${W} ${H}`} className="w-full" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
@@ -167,11 +168,11 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
                   </g>
                 )}
               </svg>
-              <p className="mt-1 text-xs text-muted-foreground">A faixa vermelha marca o trecho com maior abandono.</p>
+              <p className="mt-1 text-[11px] font-semibold text-slate-500">A faixa vermelha marca o trecho com maior abandono.</p>
             </div>
 
-            <div className="rounded-lg border bg-white p-3">
-              <p className="mb-1 text-xs font-medium">Espectadores perdidos a cada {STEP}s</p>
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+              <p className="mb-1 text-xs font-bold text-slate-800">Espectadores perdidos a cada {STEP}s</p>
               <svg viewBox={`0 0 ${W} 120`} className="w-full">
                 {model.drops.map((d) => {
                   const bw = (W - PL - PR) / model.drops.length;
@@ -194,7 +195,7 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
               </svg>
             </div>
 
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-slate-700">
               <p className="mb-1 font-medium">Insights</p>
               <ul className="list-disc space-y-1 pl-5">
                 <li>
@@ -213,6 +214,7 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
             </div>
           </div>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );
