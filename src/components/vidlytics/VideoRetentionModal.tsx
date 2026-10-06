@@ -27,7 +27,24 @@ const fmt = (s: number) => {
   return `${m}:${String(r).padStart(2, '0')}`;
 };
 
-export default function VideoRetentionModal({ open, onOpenChange, storeId, video, start, end }: Props) {
+export default function VideoRetentionModal({ open, onOpenChange, storeId, video, start: initStart, end: initEnd }: Props) {
+  const [start, setStart] = useState(initStart);
+  const [end, setEnd] = useState(initEnd);
+  const [preset, setPreset] = useState<number | 'custom'>(30);
+
+  useEffect(() => {
+    if (open) { setStart(initStart); setEnd(initEnd); setPreset('custom'); }
+  }, [open, initStart, initEnd]);
+
+  const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const applyPreset = (n: number) => {
+    const e = new Date();
+    const s = new Date();
+    s.setDate(e.getDate() - (n - 1));
+    setPreset(n);
+    setStart(isoDay(s));
+    setEnd(isoDay(e));
+  };
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -101,12 +118,40 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-2xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden [&>button.absolute]:hidden bg-white rounded-2xl border border-slate-200 shadow-2xl">
         <DialogHeader className="px-6 py-4 border-b border-slate-200 bg-white text-left space-y-1">
           <DialogTitle className="text-lg font-extrabold text-slate-900">Retenção de público</DialogTitle>
-          <DialogDescription className="text-xs text-slate-500">{video?.title || 'Vídeo'} · período selecionado</DialogDescription>
+          <DialogDescription className="text-xs text-slate-500">{video?.title || 'Vídeo'}</DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto bg-slate-50 px-6 py-5">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Período</span>
+            {[7, 30, 90].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => applyPreset(n)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold ${preset === n ? 'bg-sky-500 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'}`}
+              >
+                {n} dias
+              </button>
+            ))}
+            <input
+              type="date"
+              value={start}
+              max={end}
+              onChange={(e) => { setPreset('custom'); setStart(e.target.value); }}
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+            />
+            <span className="text-xs text-slate-400">até</span>
+            <input
+              type="date"
+              value={end}
+              min={start}
+              onChange={(e) => { setPreset('custom'); setEnd(e.target.value); }}
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+            />
+          </div>
 
         {loading && <p className="py-10 text-center text-sm text-slate-500">Carregando retenção...</p>}
         {!loading && error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
@@ -214,6 +259,15 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
             </div>
           </div>
         )}
+        </div>
+      <div className="flex justify-end border-t border-slate-200 bg-white px-6 py-3">
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="rounded-xl bg-sky-500 px-6 py-2 text-sm font-bold text-white shadow-sm hover:bg-sky-600"
+          >
+            Sair
+          </button>
         </div>
       </DialogContent>
     </Dialog>

@@ -707,11 +707,12 @@ export default function ResultadosTab() {
                       <th className="text-right px-4 py-3">Queda até o Clique</th>
                       <th className="text-right px-4 py-3">Conversões</th>
                       <th className="text-right px-4 py-3">Queda até a Conversão</th>
+                      <th className="text-right px-4 py-3">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {retentionList.map((r) => (
-                      <tr key={r.id} onClick={() => setRetentionVideo({ id: r.id, title: r.title })} title="Ver retenção de público" className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer">
+                      <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="px-4 py-3 flex items-center gap-2">
                           {r.thumbnailUrl ? (
                             <img src={r.thumbnailUrl} alt={r.title} className="w-8 h-12 object-cover rounded-md" />
@@ -727,6 +728,16 @@ export default function ResultadosTab() {
                         <td className="text-right px-4 py-3 text-rose-500 font-semibold">{r.clickDropRate.toFixed(1)}%</td>
                         <td className="text-right px-4 py-3 text-emerald-600 font-semibold">{r.conversions.toLocaleString('pt-BR')}</td>
                         <td className="text-right px-4 py-3 text-rose-500 font-semibold">{r.conversionDropRate.toFixed(1)}%</td>
+                        <td className="text-right px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => setRetentionVideo({ id: r.id, title: r.title })}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 px-3 py-1.5 text-[11px] font-bold text-sky-600 hover:bg-sky-100"
+                          >
+                            <BarChart3 className="w-3.5 h-3.5" />
+                            Métricas
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
