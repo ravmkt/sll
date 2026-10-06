@@ -1,4 +1,5 @@
 import MarketStudyModal from '@/components/vidlytics/MarketStudyModal';
+import InsightsPanel from '@/components/vidlytics/InsightsPanel';
 import VideoRetentionModal from '@/components/vidlytics/VideoRetentionModal';
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useMemo } from 'react';
@@ -900,43 +901,15 @@ export default function ResultadosTab() {
       )}
 
       {subTab === 'insights' && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-              Insights de IA
-            </h3>
-            <span className="text-[11px] text-slate-400 font-medium">Período: {formatDateBR(start)} a {formatDateBR(end)}</span>
-          </div>
-
-          {insightsLoading ? (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center text-xs text-slate-400">
-              Carregando insights...
-            </div>
-          ) : insightsList.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-16 text-center space-y-3">
-              <Sparkles className="w-8 h-8 text-slate-300 mx-auto" />
-              <h4 className="text-sm font-bold text-slate-700">Nenhum insight gerado</h4>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">Ainda não há insights de IA para este período.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {insightsList.map((insight) => (
-                <div key={insight.id} className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-pink-400 shrink-0" />
-                    {insight.videoTitle && (
-                      <span className="text-[10px] font-bold text-slate-400 uppercase truncate">{insight.videoTitle}</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-slate-700 leading-relaxed">{insight.insightText}</p>
-                  <p className="text-[10px] text-slate-400">
-                    {new Date(insight.createdAt).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <InsightsPanel
+          storeId={storeId || ''}
+          start={start}
+          end={end}
+          nicho={nicho}
+          dailySeries={metrics.dailySeries}
+          insights={insightsList}
+          insightsLoading={insightsLoading}
+        />
       )}
 
     </div>
