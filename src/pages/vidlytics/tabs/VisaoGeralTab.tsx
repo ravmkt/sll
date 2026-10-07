@@ -297,35 +297,23 @@ export default function VisaoGeralTab() {
     return () => { alive = false; };
   }, [storeId]);
 
+  const [pagesLimit, setPagesLimit] = useState<number | null>(null);
+
   useEffect(() => {
     if (!storeId) return;
     let alive = true;
-    (async () => {
-      const since = ymd(addDays(new Date(), -29));
-      const paths = new Set<string>();
-      for (const col of ['page_path', 'page_url']) {
-        paths.clear();
-        let failed = false;
-        for (let p = 0; p < 5; p++) {
-          const { data, error } = await (supabase as any)
-            .from('store_activity_events')
-            .select(col)
-            .eq('store_id', storeId)
-            .eq('event_type', 'video_view')
-            .gte('created_at', since)
-            .range(p * 1000, p * 1000 + 999);
-          if (error) { failed = true; break; }
-          (data || []).forEach((r: any) => {
-            const raw = String(r[col] || '').split('?')[0].split('#')[0];
-            if (!raw) return;
-            try { paths.add(raw.startsWith('http') ? new URL(raw).pathname : raw); } catch { paths.add(raw); }
-          });
-          if (!data || data.length < 1000) break;
+    (supabase as any)
+      .rpc('get_store_video_pages', { p_store_id: storeId })
+      .then(({ data, error }: any) => {
+        if (!alive) return;
+        if (error) {
+          console.error('Erro ao contar paginas com videos:', error);
+          setPageCount(0);
+          return;
         }
-        if (!failed) break;
-      }
-      if (alive) setPageCount(paths.size);
-    })();
+        setPageCount(Number(data?.pages) || 0);
+        setPagesLimit(data?.limit != null ? Number(data.limit) : null);
+      });
     return () => { alive = false; };
   }, [storeId]);
 
@@ -537,18 +525,18 @@ export default function VisaoGeralTab() {
           </div>
 
           {/* Páginas com Vídeos */}
-          <div data-card-tip="Páginas da sua loja onde os vídeos estão sendo exibidos, em relação ao limite do plano." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
+          <div data-card-tip="Páginas diferentes da sua loja com vídeo exibido nos últimos 90 dias, em relação ao limite de páginas do seu plano." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[11px] font-bold uppercase">Páginas com Vídeos</span>
               <FileText className="w-4 h-4 text-[#0094eb]" />
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-black text-slate-800">{fmtInt(pageCount ?? 0)}</span>
-              <span className="text-xs text-slate-400 font-medium">com visualização em 30 dias</span>
+              <span className="text-xs text-slate-400 font-medium">de {pagesLimit != null ? fmtInt(pagesLimit) : '—'}</span>
             </div>
             <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-              <span>Locais de exibição</span>
-              <span className="font-semibold text-slate-700">30 dias</span>
+              <span>Uso do plano</span>
+              <span className="font-semibold text-slate-700">{pagesLimit ? `${Math.min(100, Math.round(((pageCount ?? 0) / pagesLimit) * 100))}%` : '—'}</span>
             </div>
           </div>
 
