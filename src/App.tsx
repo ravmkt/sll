@@ -190,11 +190,21 @@ function AppRoutes() {
             )
           }
         />
-<Routes>
-  {/* ...suas rotas atuais... */}
-  <Route path="/admin-master" element={<AdminGuard><AdminMasterPage /></AdminGuard>} />
-  <Route path="*" element={<NotFound />} />
-</Routes>
+
+        {/* SLL Master (SuperAdmin): protegido pelo AdminGuard, fora do SubscriptionGate */}
+        <Route
+          path="/admin-master"
+          element={
+            user ? (
+              <AdminGuard>
+                <AdminMasterPage />
+              </AdminGuard>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
+
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     </Suspense>
