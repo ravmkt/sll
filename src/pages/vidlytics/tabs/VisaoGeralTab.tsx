@@ -442,7 +442,7 @@ export default function VisaoGeralTab() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           
           {/* Card: Vendas Pagas */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
+          <div data-card-tip="Soma dos pedidos com pagamento confirmado e atribuídos aos seus vídeos no período selecionado." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase text-slate-400">Vendas Pagas</span>
@@ -459,7 +459,7 @@ export default function VisaoGeralTab() {
           </div>
 
           {/* Card: Aguardando Pagamento */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
+          <div data-card-tip="Pedidos iniciados a partir dos seus vídeos que ainda não tiveram o pagamento confirmado." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase text-slate-400">Aguardando Pagamento</span>
@@ -476,7 +476,7 @@ export default function VisaoGeralTab() {
           </div>
 
           {/* Card: Faturamento Indicações */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
+          <div data-card-tip="Comissões disponíveis das lojas que você indicou. Veja os detalhes em Indica & Ganha." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase text-slate-400">Faturamento Indicações</span>
@@ -505,7 +505,7 @@ export default function VisaoGeralTab() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Visualizações */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
+          <div data-card-tip="Visualizações dos seus vídeos no mês atual em relação à cota do seu plano." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[11px] font-bold uppercase">Visualizações</span>
               <Eye className="w-4 h-4 text-[#0094eb]" />
@@ -521,7 +521,7 @@ export default function VisaoGeralTab() {
           </div>
 
           {/* Armazenamento */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
+          <div data-card-tip="Espaço ocupado pelos vídeos hospedados na sua conta em relação ao limite do plano." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[11px] font-bold uppercase">Armazenamento</span>
               <HardDrive className="w-4 h-4 text-[#0094eb]" />
@@ -537,7 +537,7 @@ export default function VisaoGeralTab() {
           </div>
 
           {/* Páginas com Vídeos */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
+          <div data-card-tip="Páginas da sua loja onde os vídeos estão sendo exibidos, em relação ao limite do plano." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[11px] font-bold uppercase">Páginas com Vídeos</span>
               <FileText className="w-4 h-4 text-[#0094eb]" />
@@ -553,7 +553,7 @@ export default function VisaoGeralTab() {
           </div>
 
           {/* Ciclo da Conta */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
+          <div data-card-tip="Situação da sua assinatura e data da próxima renovação." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[11px] font-bold uppercase">Ciclo da Conta</span>
               <Clock className="w-4 h-4 text-[#0094eb]" />
@@ -584,17 +584,17 @@ export default function VisaoGeralTab() {
                 </button>
               </div>
               <div className={`flex-1 content-center grid grid-cols-1 sm:grid-cols-3 gap-3 ${perfLoading ? 'opacity-50' : ''}`}>
-                <div className="rounded-xl border border-slate-100 p-3 space-y-1">
+                <div data-card-tip="Total de visualizações dos vídeos no período, comparado ao período anterior de mesma duração." className="rounded-xl border border-slate-100 p-3 space-y-1">
                   <span className="text-[11px] font-bold uppercase text-slate-400">Visualizações</span>
                   <p className="text-xl font-black text-slate-800">{fmtInt(tc.views)}</p>
                   <Delta cur={tc.views} prev={tp.views} />
                 </div>
-                <div className="rounded-xl border border-slate-100 p-3 space-y-1">
+                <div data-card-tip="Cliques nos botões e produtos dentro dos vídeos no período, comparado ao período anterior." className="rounded-xl border border-slate-100 p-3 space-y-1">
                   <span className="text-[11px] font-bold uppercase text-slate-400">Cliques</span>
                   <p className="text-xl font-black text-slate-800">{fmtInt(tc.clicks)}</p>
                   <Delta cur={tc.clicks} prev={tp.clicks} />
                 </div>
-                <div className="rounded-xl border border-slate-100 p-3 space-y-1">
+                <div data-card-tip="Cliques divididos por visualizações. Mostra quantos espectadores agem depois de assistir." className="rounded-xl border border-slate-100 p-3 space-y-1">
                   <span className="text-[11px] font-bold uppercase text-slate-400">CTR</span>
                   <p className="text-xl font-black text-slate-800">{fmtPct(tc.ctr)}</p>
                   <Delta cur={tc.ctr} prev={tp.ctr} />
