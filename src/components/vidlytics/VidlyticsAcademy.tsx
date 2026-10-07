@@ -102,14 +102,13 @@ export default function VidlyticsAcademy() {
               href={SUBSCRIBE_URL}
               target="_blank"
               rel="noreferrer"
-              className="snap-start shrink-0 w-56 rounded-xl p-4 flex flex-col items-center justify-center text-center gap-2 bg-gradient-to-br from-[#ff0000] to-[#a80000] text-white shadow-lg ring-2 ring-[#ff0000]/30 hover:scale-[1.03] transition-transform"
+              className="snap-start shrink-0 w-56 group block"
             >
-              <svg viewBox="0 0 24 24" className="w-9 h-9" fill="currentColor" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.6 15.6V8.4l6.2 3.6-6.2 3.6z"/></svg>
-              <p className="text-sm font-black leading-tight">Tem muito mais no nosso canal!</p>
-              <p className="text-[11px] leading-snug text-white/90">Aulas e novidades para vender mais com vídeo.</p>
-              <span className="mt-1 px-3 py-1.5 rounded-full bg-white text-[#d90000] text-[11px] font-black uppercase tracking-wide">
-                Assistir e se inscrever →
-              </span>
+              <div className="aspect-video rounded-xl border border-slate-200 bg-slate-50 group-hover:border-[#0094eb]/40 group-hover:bg-white transition-colors flex flex-col items-center justify-center gap-2 px-4 text-center">
+                <img src="/assets/sll-academy.png" alt="SLL Academy" className="h-7 w-auto object-contain" />
+                <p className="text-xs font-semibold text-slate-600 leading-snug">Assista a todos os conteúdos</p>
+              </div>
+              <p className="mt-2 text-xs font-semibold text-[#0094eb] group-hover:underline">Assistir e se inscrever →</p>
             </a>
           </div>
           <button
