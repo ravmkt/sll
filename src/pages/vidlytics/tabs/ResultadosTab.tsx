@@ -479,8 +479,8 @@ export default function ResultadosTab() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Aguardando Pagamento</span>
                   </div>
-                  <p className="text-2xl font-bold text-amber-500">—</p>
-                  <p className="text-xs text-slate-400">Sem integração de pedidos</p>
+                  <p className="text-2xl font-bold text-amber-500">{formatCurrency(0)}</p>
+                  <p className="text-xs text-slate-400">0 pedidos em aberto</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100 flex-shrink-0">
                   <Hourglass className="w-4 h-4" />
