@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLoja } from '../../../contexts/LojaContext';
+import { useLoja } from '../../../contexts/LojaContext';
+import { useCardTip } from '@/hooks/useCardTip';
 import VidlyticsAcademy from '../../../components/vidlytics/VidlyticsAcademy';
 import ProximasDatasComerciais from '../../../components/vidlytics/ProximasDatasComerciais';
 import { supabase } from '@/lib/supabase';
@@ -111,6 +112,7 @@ function CardTitle({ icon: Icon, children }: { icon: React.ElementType; children
 export default function VisaoGeralTab() {
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
+  useCardTip();
   const { storeId, store } = useLoja();
   const [affiliateSummary, setAffiliateSummary] = useState<AffiliateSummary | null>(null);
 
