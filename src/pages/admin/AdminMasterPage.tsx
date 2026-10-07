@@ -11,6 +11,7 @@ import {
 } from '@/services/admin/adminMaster';
 import ModuleAccessPanel from '@/components/admin/ModuleAccessPanel';
 import PlansManager from '@/components/admin/PlansManager';
+import CouponsManager from '@/components/admin/CouponsManager';
 
 const PAGE = 25;
 const FILTERS = [
@@ -270,7 +271,7 @@ function StoresTab() {
 }
 
 export default function AdminMasterPage() {
-  const [tab, setTab] = useState<'stores' | 'plans'>('stores');
+  const [tab, setTab] = useState<'stores' | 'plans' | 'coupons'>('stores');
   const base = 'rounded-lg px-4 py-2 text-sm font-medium';
   const on = 'bg-sky-600 text-white';
   const off = 'bg-slate-100 text-slate-700';
@@ -279,8 +280,9 @@ export default function AdminMasterPage() {
       <div className="mx-auto flex max-w-6xl gap-2 px-6 pt-6">
         <button type="button" onClick={() => setTab('stores')} className={`${base} ${tab === 'stores' ? on : off}`}>Lojistas</button>
         <button type="button" onClick={() => setTab('plans')} className={`${base} ${tab === 'plans' ? on : off}`}>Planos</button>
+        <button type="button" onClick={() => setTab('coupons')} className={`${base} ${tab === 'coupons' ? on : off}`}>Cupons</button>
       </div>
-      {tab === 'stores' ? <StoresTab /> : <PlansManager />}
+      {tab === 'stores' ? <StoresTab /> : tab === 'plans' ? <PlansManager /> : <CouponsManager />}
     </>
   );
 }
