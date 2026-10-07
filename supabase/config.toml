@@ -4,3 +4,6 @@ verify_jwt = false
 
 [functions.youtube-playlist]
 verify_jwt = false
+
+[functions.asaas-webhook]
+verify_jwt = false
