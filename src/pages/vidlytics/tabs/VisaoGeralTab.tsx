@@ -22,7 +22,7 @@ import {
   Edit3, 
   ArrowRight
 } from 'lucide-react';
-import { ListChecks, Activity, TrendingUp, TrendingDown, Lightbulb, Trophy, AlertTriangle, GraduationCap } from 'lucide-react';
+import { ListChecks, Activity, TrendingUp, TrendingDown, Trophy, AlertTriangle, GraduationCap } from 'lucide-react';
 
 type Periodo = 'today' | '7' | '30' | 'custom';
 
@@ -44,11 +44,9 @@ function getRange(p: Periodo, customStart: string, customEnd: string) {
 }
 
 type PerfRow = Awaited<ReturnType<typeof VidlyticsDatabaseService.getVideosPerformance>>[number];
-type InsightRow = Awaited<ReturnType<typeof VidlyticsDatabaseService.getAiInsights>>[number];
 
 const VIEWS_LIMIT = 60000;
 const CHANNEL_URL = (import.meta.env.VITE_ACADEMY_CHANNEL_URL as string | undefined) || 'https://www.youtube.com';
-const KIND_ORDER = ['low_ctr', 'best_ctr', 'engagement'];
 
 const ACADEMY_TIPS: Record<number, { title: string; text: string }> = {
   0: { title: 'Volta às aulas e liquidação', text: 'Use vídeos curtos de "look pronto" e destaque o produto com maior CTR nas páginas de liquidação.' },
@@ -68,7 +66,6 @@ const ACADEMY_TIPS: Record<number, { title: string; text: string }> = {
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 const fmtInt = (n: number) => (n || 0).toLocaleString('pt-BR');
 const fmtPct = (n: number) => `${(n || 0).toFixed(1).replace('.', ',')}%`;
-const kindOf = (i: InsightRow) => String((i as any).metadata?.kind || '');
 
 const totals = (rows: PerfRow[]) => {
   const views = rows.reduce((s, r) => s + r.views, 0);
@@ -198,7 +195,6 @@ export default function VisaoGeralTab() {
   const [series, setSeries] = useState<{ date: string; views: number; clicks: number; ctr: number }[]>([]);
   const [curRows, setCurRows] = useState<PerfRow[]>([]);
   const [prevRows, setPrevRows] = useState<PerfRow[]>([]);
-  const [insights, setInsights] = useState<InsightRow[]>([]);
   const [perfLoading, setPerfLoading] = useState(false);
   const [health, setHealth] = useState<{ videos: number; views30: number; views7: number; month: number; idle: number } | null>(null);
   const [productCount, setProductCount] = useState<number | null>(null);
@@ -217,10 +213,9 @@ export default function VisaoGeralTab() {
     Promise.all([
       VidlyticsDatabaseService.getVideosPerformance(storeId, start, end),
       VidlyticsDatabaseService.getVideosPerformance(storeId, pStart, pEnd),
-      VidlyticsDatabaseService.getAiInsights(storeId, start, end),
     ])
-      .then(([c, p, i]) => { if (!alive) return; setCurRows(c); setPrevRows(p); setInsights(i); })
-      .catch(() => { if (!alive) return; setCurRows([]); setPrevRows([]); setInsights([]); })
+      .then(([c, p]) => { if (!alive) return; setCurRows(c); setPrevRows(p); })
+      .catch(() => { if (!alive) return; setCurRows([]); setPrevRows([]); })
       .finally(() => { if (alive) setPerfLoading(false); });
     return () => { alive = false; };
   }, [storeId, periodo, customStart, customEnd]);
@@ -257,10 +252,6 @@ export default function VisaoGeralTab() {
   const tc = totals(curRows);
   const tp = totals(prevRows);
   const top3 = [...curRows].filter((r) => r.views > 0).sort((a, b) => b.views - a.views).slice(0, 3);
-  const actions = insights
-    .filter((i) => KIND_ORDER.includes(kindOf(i)))
-    .sort((a, b) => KIND_ORDER.indexOf(kindOf(a)) - KIND_ORDER.indexOf(kindOf(b)))
-    .slice(0, 3);
 
   const steps = [
     { key: 'products', done: productCount === null ? true : productCount > 0, title: 'Vincular os produtos', desc: 'Importe ou cadastre produtos para permitir compra direta pelos vídeos.', onClick: () => navigate('/dashboard/produtos'), cta: 'Ir para Produtos' },
@@ -271,9 +262,9 @@ export default function VisaoGeralTab() {
 
   const alerts: { tone: 'warn' | 'danger'; text: string }[] = [];
   if (!appEnabled) alerts.push({ tone: 'danger', text: 'O aplicativo está desativado: seus vídeos estão ocultos na loja.' });
-  if (appEnabled && health && health.videos > 0 && health.views7 === 0) alerts.push({ tone: 'warn', text: 'Nenhuma visualização nos últimos 7 dias. Confira se o script está instalado e atualizado na loja.' });
-  if (health && health.idle > 0) alerts.push({ tone: 'warn', text: `${health.idle} ${health.idle === 1 ? 'vídeo ativo sem visualizações' : 'vídeos ativos sem visualizações'} em 30 dias. Revise a posição na loja ou troque o vídeo.` });
-  if (health && health.month >= VIEWS_LIMIT * 0.8) alerts.push({ tone: 'danger', text: `Você já usou ${Math.round((health.month / VIEWS_LIMIT) * 100)}% da cota mensal de visualizações. Fale com o suporte para ampliar seu plano.` });
+  if (appEnabled && health && health.videos > 0 && health.views7 === 0) alerts.push({ tone: 'warn', text: 'Sem visualizações nos últimos 7 dias. Confira se o script está instalado na loja.' });
+  if (health && health.idle > 0) alerts.push({ tone: 'warn', text: `${health.idle} ${health.idle === 1 ? 'vídeo ativo sem visualizações' : 'vídeos ativos sem visualizações'} em 30 dias.` });
+  if (health && health.month >= VIEWS_LIMIT * 0.8) alerts.push({ tone: 'danger', text: `Você usou ${Math.round((health.month / VIEWS_LIMIT) * 100)}% da cota mensal de visualizações. Fale com o suporte para ampliar o plano.` });
 
   const academyTip = ACADEMY_TIPS[new Date().getMonth()];
 
@@ -295,6 +286,16 @@ export default function VisaoGeralTab() {
           <span className="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-[#0094eb]/10 text-[#0094eb] uppercase tracking-wide">
             Plano Scale
           </span>
+          {alerts.length > 0 && (
+            <div className="space-y-0.5 pt-0.5">
+              {alerts.map((a, i) => (
+                <p key={i} className={`flex items-start gap-1.5 text-[11px] leading-snug ${a.tone === 'danger' ? 'text-rose-600' : 'text-amber-600'}`}>
+                  <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+                  <span>{a.text}</span>
+                </p>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Seletor do Aplicativo */}
@@ -571,30 +572,6 @@ export default function VisaoGeralTab() {
             </div>
           </div>
 
-          {/* Proxima melhor acao */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <CardTitle icon={Lightbulb}>Próxima melhor ação</CardTitle>
-              <button type="button" onClick={() => goTab('resultados')} className="text-[11px] font-semibold text-slate-500 hover:text-[#0094eb] transition-colors cursor-pointer">
-                Ver todos os insights →
-              </button>
-            </div>
-            {perfLoading ? (
-              <p className="text-xs text-slate-400">Analisando seus vídeos...</p>
-            ) : actions.length === 0 ? (
-              <p className="text-xs text-slate-500">Sem recomendações por enquanto. Publique mais vídeos ou aguarde mais visualizações no período.</p>
-            ) : (
-              <div className="space-y-2">
-                {actions.map((a) => (
-                  <div key={a.id} className="p-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors">
-                    {a.videoTitle && <p className="text-[11px] font-bold text-[#0094eb] truncate">{a.videoTitle}</p>}
-                    <p className="text-xs text-slate-700 leading-snug mt-0.5">{a.insightText}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Top 3 videos */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
             <CardTitle icon={Trophy}>Vídeos mais vistos</CardTitle>
@@ -620,37 +597,23 @@ export default function VisaoGeralTab() {
               </div>
             )}
           </div>
+
+          {/* Dica da Academy */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-3">
+            <CardTitle icon={GraduationCap}>Dica da Academy</CardTitle>
+            <div>
+              <p className="text-xs font-bold text-slate-800">{academyTip.title}</p>
+              <p className="text-xs text-slate-500 leading-relaxed mt-1">{academyTip.text}</p>
+            </div>
+            <a href={CHANNEL_URL} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-[#0094eb] hover:underline inline-flex items-center gap-1">
+              Ver aulas no canal →
+            </a>
+          </div>
         </div>
 
         {/* Coluna Direita: Atividade Recente (Log do Painel) */}
         <div className="space-y-6">
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
-          <CardTitle icon={AlertTriangle}>Alertas</CardTitle>
-          {alerts.length === 0 ? (
-            <p className="text-xs text-emerald-700 bg-emerald-50/70 border border-emerald-200/80 rounded-xl px-3 py-2">Tudo certo com a sua loja.</p>
-          ) : (
-            <div className="space-y-2">
-              {alerts.map((a, i) => (
-                <p key={i} className={`text-xs leading-snug rounded-xl px-3 py-2 border ${a.tone === 'danger' ? 'bg-rose-50/70 border-rose-200/80 text-rose-800' : 'bg-amber-50/70 border-amber-200/80 text-amber-800'}`}>
-                  {a.text}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
-
         <ProximasDatasComerciais />
-
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
-          <CardTitle icon={GraduationCap}>Dica da Academy</CardTitle>
-          <div>
-            <p className="text-xs font-bold text-slate-800">{academyTip.title}</p>
-            <p className="text-xs text-slate-500 leading-relaxed mt-1">{academyTip.text}</p>
-          </div>
-          <a href={CHANNEL_URL} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-[#0094eb] hover:underline inline-flex items-center gap-1">
-            Ver aulas no canal →
-          </a>
-        </div>
           {/* Card Indique e Ganhe */}
         <div className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
