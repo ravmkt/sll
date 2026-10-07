@@ -6,6 +6,7 @@ import ProximasDatasComerciais from '../../../components/vidlytics/ProximasDatas
 import { supabase } from '@/lib/supabase';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
 import { VidlyticsDatabaseService } from '../../../services/vidlytics/VidlyticsDatabaseService';
+import { getActiveSubscriptions } from '../../../services/subscriptions/getStoreSubscriptions';
 import { 
   CheckCircle2, 
   Hourglass, 
@@ -46,6 +47,14 @@ function getRange(p: Periodo, customStart: string, customEnd: string) {
 type PerfRow = Awaited<ReturnType<typeof VidlyticsDatabaseService.getVideosPerformance>>[number];
 
 const VIEWS_LIMIT = 60000;
+const STORAGE_LIMIT_DEFAULT = 50 * 1024 * 1024 * 1024;
+
+const fmtBytes = (b: number) => {
+  if (!b) return '0 MB';
+  const mb = b / 1048576;
+  if (mb < 1024) return `${mb.toFixed(1).replace('.', ',')} MB`;
+  return `${(mb / 1024).toFixed(1).replace('.', ',')} GB`;
+};
 const CHANNEL_URL = (import.meta.env.VITE_ACADEMY_CHANNEL_URL as string | undefined) || 'https://www.youtube.com';
 
 const ACADEMY_TIPS: Record<number, { title: string; text: string }> = {
@@ -235,6 +244,91 @@ export default function VisaoGeralTab() {
     return () => { alive = false; };
   }, [storeId]);
 
+  const [planName, setPlanName] = useState('');
+  const [cycle, setCycle] = useState<{ status: string; label: string; date: string } | null>(null);
+  const [storageBytes, setStorageBytes] = useState<number | null>(null);
+  const [pageCount, setPageCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!storeId) return;
+    let alive = true;
+    const st = store as any;
+    getActiveSubscriptions(storeId)
+      .then((subs: any[]) => {
+        if (!alive) return;
+        const sub = (subs || []).find((s) => s.module_key === 'vidlytics' || (s.plan?.modules ?? []).includes('vidlytics')) ?? (subs || [])[0];
+        if (sub) {
+          const map: Record<string, string> = { active: 'Ativo', trialing: 'Período de teste', past_due: 'Em atraso', canceled: 'Cancelado' };
+          setPlanName(String(sub.plan?.name || 'Plano ativo'));
+          setCycle({
+            status: map[String(sub.status)] || 'Ativo',
+            label: 'Renovação:',
+            date: sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString('pt-BR') : '—',
+          });
+          return;
+        }
+        const trialEnd = st?.trial_ends_at ? new Date(st.trial_ends_at) : null;
+        if (trialEnd && trialEnd.getTime() > Date.now()) {
+          setPlanName('Período de teste');
+          setCycle({ status: 'Período de teste', label: 'Teste até:', date: trialEnd.toLocaleDateString('pt-BR') });
+        } else {
+          setPlanName('');
+          setCycle({ status: 'Sem assinatura ativa', label: 'Renovação:', date: '—' });
+        }
+      })
+      .catch(() => { if (alive) setCycle({ status: '—', label: 'Renovação:', date: '—' }); });
+    return () => { alive = false; };
+  }, [storeId, store]);
+
+  useEffect(() => {
+    if (!storeId) return;
+    let alive = true;
+    VidlyticsDatabaseService.getVideos(storeId)
+      .then((rows: any[]) => {
+        if (!alive) return;
+        const bytes = (rows || [])
+          .filter((v) => v.store_id === storeId)
+          .reduce((s, v) => s + (Number(v.file_size_bytes ?? v.file_size) || 0), 0);
+        setStorageBytes(bytes);
+      })
+      .catch(() => { if (alive) setStorageBytes(0); });
+    return () => { alive = false; };
+  }, [storeId]);
+
+  useEffect(() => {
+    if (!storeId) return;
+    let alive = true;
+    (async () => {
+      const since = ymd(addDays(new Date(), -29));
+      const paths = new Set<string>();
+      for (const col of ['page_path', 'page_url']) {
+        paths.clear();
+        let failed = false;
+        for (let p = 0; p < 5; p++) {
+          const { data, error } = await (supabase as any)
+            .from('store_activity_events')
+            .select(col)
+            .eq('store_id', storeId)
+            .eq('event_type', 'video_view')
+            .gte('created_at', since)
+            .range(p * 1000, p * 1000 + 999);
+          if (error) { failed = true; break; }
+          (data || []).forEach((r: any) => {
+            const raw = String(r[col] || '').split('?')[0].split('#')[0];
+            if (!raw) return;
+            try { paths.add(raw.startsWith('http') ? new URL(raw).pathname : raw); } catch { paths.add(raw); }
+          });
+          if (!data || data.length < 1000) break;
+        }
+        if (!failed) break;
+      }
+      if (alive) setPageCount(paths.size);
+    })();
+    return () => { alive = false; };
+  }, [storeId]);
+
+  const storageLimit = Number((store as any)?.storage_limit_bytes) > 0 ? Number((store as any).storage_limit_bytes) : STORAGE_LIMIT_DEFAULT;
+
   const tc = totals(curRows);
   const tp = totals(prevRows);
   const top3 = [...curRows].filter((r) => r.views > 0).sort((a, b) => b.views - a.views).slice(0, 3);
@@ -263,9 +357,7 @@ export default function VisaoGeralTab() {
           <p className="text-sm font-semibold text-slate-700 truncate">
             Bem-vindo(a){replyName ? ` ${replyName}` : ''}
           </p>
-          <span className="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-[#0094eb]/10 text-[#0094eb] uppercase tracking-wide">
-            Plano Scale
-          </span>
+          <span className="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-[#0094eb]/10 text-[#0094eb] uppercase tracking-wide">{planName || 'Sem plano ativo'}</span>
         </div>
 
         {/* Seletor do Aplicativo */}
@@ -371,11 +463,9 @@ export default function VisaoGeralTab() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase text-slate-400">Aguardando Pagamento</span>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700">
-                  3 Pedidos
-                </span>
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700">0 Pedidos</span>
               </div>
-              <p className="text-2xl font-black text-slate-800">R$ 378,39</p>
+              <p className="text-2xl font-black text-slate-800">{formatCurrency(0)}</p>
               <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
                 Pix / Boleto pendente →
               </span>
@@ -422,7 +512,7 @@ export default function VisaoGeralTab() {
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-black text-slate-800">{fmtInt(health?.month ?? 0)}</span>
-              <span className="text-xs text-slate-400 font-medium">de 60.000</span>
+              <span className="text-xs text-slate-400 font-medium">de {fmtInt(VIEWS_LIMIT)}</span>
             </div>
             <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
               <span>Quota do mês</span>
@@ -437,12 +527,12 @@ export default function VisaoGeralTab() {
               <HardDrive className="w-4 h-4 text-[#0094eb]" />
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black text-slate-800">10.3 MB</span>
-              <span className="text-xs text-slate-400 font-medium">de 50 GB</span>
+              <span className="text-2xl font-black text-slate-800">{fmtBytes(storageBytes ?? 0)}</span>
+              <span className="text-xs text-slate-400 font-medium">de {fmtBytes(storageLimit)}</span>
             </div>
             <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
               <span>Vídeos na nuvem</span>
-              <span className="font-semibold text-slate-700">0%</span>
+              <span className="font-semibold text-slate-700">{Math.min(100, Math.round(((storageBytes ?? 0) / storageLimit) * 100))}%</span>
             </div>
           </div>
 
@@ -453,12 +543,12 @@ export default function VisaoGeralTab() {
               <FileText className="w-4 h-4 text-[#0094eb]" />
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black text-slate-800">1</span>
-              <span className="text-xs text-slate-400 font-medium">de 9999 ativas</span>
+              <span className="text-2xl font-black text-slate-800">{fmtInt(pageCount ?? 0)}</span>
+              <span className="text-xs text-slate-400 font-medium">com visualização em 30 dias</span>
             </div>
             <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
               <span>Locais de exibição</span>
-              <span className="font-semibold text-slate-700">0%</span>
+              <span className="font-semibold text-slate-700">30 dias</span>
             </div>
           </div>
 
@@ -470,11 +560,11 @@ export default function VisaoGeralTab() {
             </div>
             <div>
               <span className="text-[10px] text-slate-400 uppercase font-bold block">Status</span>
-              <span className="text-xl font-black text-slate-800">Vitalício</span>
+              <span className="text-xl font-black text-slate-800">{cycle?.status ?? '...'}</span>
             </div>
             <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-              <span>Renovação:</span>
-              <span className="font-medium text-slate-600">— (sem vencimento)</span>
+              <span>{cycle?.label ?? 'Renovação:'}</span>
+              <span className="font-medium text-slate-600">{cycle?.date ?? '—'}</span>
             </div>
           </div>
 
