@@ -98,6 +98,19 @@ export default function VidlyticsAcademy() {
                 <p className="mt-1.5 text-xs font-semibold text-slate-800 leading-snug line-clamp-2">{v.title}</p>
               </button>
             ))}
+            <a
+              href={SUBSCRIBE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="snap-start shrink-0 w-56 rounded-xl p-4 flex flex-col items-center justify-center text-center gap-2 bg-gradient-to-br from-[#ff0000] to-[#a80000] text-white shadow-lg ring-2 ring-[#ff0000]/30 hover:scale-[1.03] transition-transform"
+            >
+              <Youtube className="w-9 h-9" />
+              <p className="text-sm font-black leading-tight">Tem muito mais no nosso canal!</p>
+              <p className="text-[11px] leading-snug text-white/90">Aulas e novidades para vender mais com vídeo.</p>
+              <span className="mt-1 px-3 py-1.5 rounded-full bg-white text-[#d90000] text-[11px] font-black uppercase tracking-wide">
+                Assistir e se inscrever →
+              </span>
+            </a>
           </div>
           <button
             type="button"

@@ -88,17 +88,6 @@ function Delta({ cur, prev }: { cur: number; prev: number }) {
   );
 }
 
-function Spark({ values, color }: { values: number[]; color: string }) {
-  if (values.length < 2) return <div className="h-8" />;
-  const max = Math.max(1, ...values);
-  const pts = values.map((v, i) => `${(i / (values.length - 1)) * 100},${28 - (v / max) * 26}`).join(' ');
-  return (
-    <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-8">
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
-    </svg>
-  );
-}
-
 function CardTitle({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2.5">
@@ -192,7 +181,7 @@ export default function VisaoGeralTab() {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
 
-  const [series, setSeries] = useState<{ date: string; views: number; clicks: number; ctr: number }[]>([]);
+  const [, setSeries] = useState<{ date: string; views: number; clicks: number; ctr: number }[]>([]);
   const [curRows, setCurRows] = useState<PerfRow[]>([]);
   const [prevRows, setPrevRows] = useState<PerfRow[]>([]);
   const [perfLoading, setPerfLoading] = useState(false);
@@ -497,38 +486,35 @@ export default function VisaoGeralTab() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-6">
             {/* Desempenho dos videos */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4 flex flex-col">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle icon={Activity}>Desempenho dos vídeos</CardTitle>
                 <button type="button" onClick={() => goTab('resultados', 'videos')} className="text-[11px] font-semibold text-[#0094eb] hover:underline cursor-pointer whitespace-nowrap">
                   Ver mais métricas →
                 </button>
               </div>
-              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 ${perfLoading ? 'opacity-50' : ''}`}>
+              <div className={`flex-1 content-center grid grid-cols-1 sm:grid-cols-3 gap-3 ${perfLoading ? 'opacity-50' : ''}`}>
                 <div className="rounded-xl border border-slate-100 p-3 space-y-1">
                   <span className="text-[11px] font-bold uppercase text-slate-400">Visualizações</span>
                   <p className="text-xl font-black text-slate-800">{fmtInt(tc.views)}</p>
                   <Delta cur={tc.views} prev={tp.views} />
-                  <Spark values={series.map((d) => d.views)} color="#0094eb" />
                 </div>
                 <div className="rounded-xl border border-slate-100 p-3 space-y-1">
                   <span className="text-[11px] font-bold uppercase text-slate-400">Cliques</span>
                   <p className="text-xl font-black text-slate-800">{fmtInt(tc.clicks)}</p>
                   <Delta cur={tc.clicks} prev={tp.clicks} />
-                  <Spark values={series.map((d) => d.clicks)} color="#fd8539" />
                 </div>
                 <div className="rounded-xl border border-slate-100 p-3 space-y-1">
                   <span className="text-[11px] font-bold uppercase text-slate-400">CTR</span>
                   <p className="text-xl font-black text-slate-800">{fmtPct(tc.ctr)}</p>
                   <Delta cur={tc.ctr} prev={tp.ctr} />
-                  <Spark values={series.map((d) => d.ctr)} color="#10b981" />
                 </div>
               </div>
             </div>
 
             {/* Videos mais vistos */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
-              <CardTitle icon={Trophy}>Vídeos mais vistos</CardTitle>
+              <CardTitle icon={Trophy}>Vídeos mais assistidos</CardTitle>
               {top3.length === 0 ? (
                 <p className="text-xs text-slate-500">{perfLoading ? 'Carregando...' : 'Nenhuma visualização no período selecionado.'}</p>
               ) : (
@@ -565,7 +551,7 @@ export default function VisaoGeralTab() {
           {/* Dica da Academy */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm h-full flex flex-col justify-between gap-4">
             <CardTitle icon={GraduationCap}>Dica da Academy</CardTitle>
-            <div>
+            <div className="flex-1 flex flex-col justify-center">
               <p className="text-xs font-bold text-slate-800">{academyTip.title}</p>
               <p className="text-xs text-slate-500 leading-relaxed mt-1">{academyTip.text}</p>
             </div>
