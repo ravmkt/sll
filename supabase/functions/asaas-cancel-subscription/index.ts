@@ -1,7 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ASAAS_API_URL = Deno.env.get("ASAAS_API_URL") ?? "https://api-sandbox.asaas.com/v3";
-const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY")!;
+const ASAAS_ENV = Deno.env.get("ASAAS_ENV") ?? "sandbox";
+const IS_PROD = ASAAS_ENV === "production";
+const ASAAS_API_URL = IS_PROD
+  ? "https://api.asaas.com/v3"
+  : "https://api-sandbox.asaas.com/v3";
+const ASAAS_API_KEY = (IS_PROD
+  ? Deno.env.get("ASAAS_API_KEY")
+  : Deno.env.get("ASAAS_API_KEY_SANDBOX"))!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
