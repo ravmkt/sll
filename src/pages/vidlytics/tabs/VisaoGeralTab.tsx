@@ -22,7 +22,7 @@ import {
   Edit3, 
   ArrowRight
 } from 'lucide-react';
-import { ListChecks, Activity } from 'lucide-react';
+import { ListChecks, Activity, TrendingUp, TrendingDown, Lightbulb, Trophy, AlertTriangle, GraduationCap } from 'lucide-react';
 
 type Periodo = 'today' | '7' | '30' | 'custom';
 
@@ -41,6 +41,65 @@ function getRange(p: Periodo, customStart: string, customEnd: string) {
   const start = new Date();
   if (p !== 'today') start.setDate(start.getDate() - (Number(p) - 1));
   return { start: ymd(start), end: ymd(new Date()) };
+}
+
+type PerfRow = Awaited<ReturnType<typeof VidlyticsDatabaseService.getVideosPerformance>>[number];
+type InsightRow = Awaited<ReturnType<typeof VidlyticsDatabaseService.getAiInsights>>[number];
+
+const VIEWS_LIMIT = 60000;
+const CHANNEL_URL = (import.meta.env.VITE_ACADEMY_CHANNEL_URL as string | undefined) || 'https://www.youtube.com';
+const KIND_ORDER = ['low_ctr', 'best_ctr', 'engagement'];
+
+const ACADEMY_TIPS: Record<number, { title: string; text: string }> = {
+  0: { title: 'Volta às aulas e liquidação', text: 'Use vídeos curtos de "look pronto" e destaque o produto com maior CTR nas páginas de liquidação.' },
+  1: { title: 'Carnaval e Dia da Mulher', text: 'Monte um Story com os produtos de festa e outro de presente para o Dia da Mulher.' },
+  2: { title: 'Dia da Mulher e Páscoa', text: 'Crie Stories de presente com preço visível e botão direto para o produto.' },
+  3: { title: 'Páscoa e Dia das Mães', text: 'Comece a aquecer o Dia das Mães: vídeos de presente por faixa de preço convertem melhor.' },
+  4: { title: 'Dia das Mães e Namorados', text: 'Mostre o produto em uso e coloque o WhatsApp como CTA para tirar dúvidas de presente.' },
+  5: { title: 'Dia dos Namorados', text: 'Kits para casais e vídeos de 15 segundos funcionam bem. Teste o flutuante na home.' },
+  6: { title: 'Preparação para o Dia dos Pais', text: 'Crie uma coleção de presentes para pais e revise os vídeos com CTR abaixo de 2%.' },
+  7: { title: 'Dia dos Pais', text: 'Fixe o Story de presentes no topo da home e acompanhe o CTR dia a dia.' },
+  8: { title: 'Dia do Cliente e Dia das Crianças', text: 'Aproveite o Dia do Cliente para recompra e já prepare os vídeos do Dia das Crianças.' },
+  9: { title: 'Dia das Crianças e Black Friday', text: 'Destaque os vídeos de maior CTR nos produtos mais vendidos e comece a aquecer a Black Friday.' },
+  10: { title: 'Black Friday', text: 'Poucos vídeos, ofertas claras e CTA direto. Troque os vídeos sem clique antes da data.' },
+  11: { title: 'Natal e Réveillon', text: 'Mostre prazos de entrega nos vídeos e priorize produtos de pronta-entrega.' },
+};
+
+const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const fmtInt = (n: number) => (n || 0).toLocaleString('pt-BR');
+const fmtPct = (n: number) => `${(n || 0).toFixed(1).replace('.', ',')}%`;
+const kindOf = (i: InsightRow) => String((i as any).metadata?.kind || '');
+
+const totals = (rows: PerfRow[]) => {
+  const views = rows.reduce((s, r) => s + r.views, 0);
+  const clicks = rows.reduce((s, r) => s + r.clicks, 0);
+  return { views, clicks, ctr: views > 0 ? (clicks / views) * 100 : 0 };
+};
+
+const goTab = (tab: string) => window.dispatchEvent(new CustomEvent('vidlytics:goto-tab', { detail: tab }));
+
+function Delta({ cur, prev }: { cur: number; prev: number }) {
+  if (prev <= 0) return <span className="text-[11px] text-slate-400">{cur > 0 ? 'Novo no período' : 'Sem dados anteriores'}</span>;
+  const v = ((cur - prev) / prev) * 100;
+  const up = v >= 0;
+  const Icon = up ? TrendingUp : TrendingDown;
+  return (
+    <span className={`inline-flex items-center gap-1 text-[11px] font-bold ${up ? 'text-emerald-600' : 'text-rose-600'}`}>
+      <Icon className="w-3 h-3" />
+      {up ? '+' : ''}{v.toFixed(1).replace('.', ',')}% vs. anterior
+    </span>
+  );
+}
+
+function Spark({ values, color }: { values: number[]; color: string }) {
+  if (values.length < 2) return <div className="h-8" />;
+  const max = Math.max(1, ...values);
+  const pts = values.map((v, i) => `${(i / (values.length - 1)) * 100},${28 - (v / max) * 26}`).join(' ');
+  return (
+    <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-8">
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
 }
 
 function CardTitle({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
@@ -127,7 +186,7 @@ export default function VisaoGeralTab() {
     let alive = true;
     setPaidLoading(true);
     VidlyticsDatabaseService.getOverviewMetrics(storeId, start, end)
-      .then((m) => { if (alive) setPaid({ revenue: m.totalRevenue || 0, orders: m.totalConversions || 0 }); })
+      .then((m) => { if (!alive) return; setPaid({ revenue: m.totalRevenue || 0, orders: m.totalConversions || 0 }); setSeries((m.dailySeries || []).map((d) => ({ date: d.date, views: d.views, clicks: d.clicks, ctr: d.ctr }))); })
       .catch(() => { if (alive) setPaid({ revenue: 0, orders: 0 }); })
       .finally(() => { if (alive) setPaidLoading(false); });
     return () => { alive = false; };
@@ -135,6 +194,88 @@ export default function VisaoGeralTab() {
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+
+  const [series, setSeries] = useState<{ date: string; views: number; clicks: number; ctr: number }[]>([]);
+  const [curRows, setCurRows] = useState<PerfRow[]>([]);
+  const [prevRows, setPrevRows] = useState<PerfRow[]>([]);
+  const [insights, setInsights] = useState<InsightRow[]>([]);
+  const [perfLoading, setPerfLoading] = useState(false);
+  const [health, setHealth] = useState<{ videos: number; views30: number; views7: number; month: number; idle: number } | null>(null);
+  const [productCount, setProductCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!storeId) return;
+    const { start, end } = getRange(periodo, customStart, customEnd);
+    if (!start || !end || start > end) return;
+    const s = new Date(start + 'T00:00:00');
+    const e = new Date(end + 'T00:00:00');
+    const days = Math.round((e.getTime() - s.getTime()) / 86400000) + 1;
+    const pEnd = ymd(addDays(s, -1));
+    const pStart = ymd(addDays(s, -days));
+    let alive = true;
+    setPerfLoading(true);
+    Promise.all([
+      VidlyticsDatabaseService.getVideosPerformance(storeId, start, end),
+      VidlyticsDatabaseService.getVideosPerformance(storeId, pStart, pEnd),
+      VidlyticsDatabaseService.getAiInsights(storeId, start, end),
+    ])
+      .then(([c, p, i]) => { if (!alive) return; setCurRows(c); setPrevRows(p); setInsights(i); })
+      .catch(() => { if (!alive) return; setCurRows([]); setPrevRows([]); setInsights([]); })
+      .finally(() => { if (alive) setPerfLoading(false); });
+    return () => { alive = false; };
+  }, [storeId, periodo, customStart, customEnd]);
+
+  useEffect(() => {
+    if (!storeId) return;
+    const now = new Date();
+    const today = ymd(now);
+    const d7 = ymd(addDays(now, -6));
+    const d30 = ymd(addDays(now, -29));
+    const m1 = ymd(new Date(now.getFullYear(), now.getMonth(), 1));
+    let alive = true;
+    Promise.all([
+      VidlyticsDatabaseService.getVideosPerformance(storeId, d30, today),
+      VidlyticsDatabaseService.getVideosPerformance(storeId, d7, today),
+      VidlyticsDatabaseService.getVideosPerformance(storeId, m1, today),
+      (supabase as any).from('products').select('id', { count: 'exact', head: true }).eq('store_id', storeId),
+    ])
+      .then(([r30, r7, rm, prod]) => {
+        if (!alive) return;
+        setHealth({
+          videos: r30.length,
+          views30: totals(r30).views,
+          views7: totals(r7).views,
+          month: totals(rm).views,
+          idle: r30.filter((v) => v.status === 'active' && v.views === 0).length,
+        });
+        setProductCount(prod?.count ?? 0);
+      })
+      .catch(() => { /* mantem sem alertas se a consulta falhar */ });
+    return () => { alive = false; };
+  }, [storeId]);
+
+  const tc = totals(curRows);
+  const tp = totals(prevRows);
+  const top3 = [...curRows].filter((r) => r.views > 0).sort((a, b) => b.views - a.views).slice(0, 3);
+  const actions = insights
+    .filter((i) => KIND_ORDER.includes(kindOf(i)))
+    .sort((a, b) => KIND_ORDER.indexOf(kindOf(a)) - KIND_ORDER.indexOf(kindOf(b)))
+    .slice(0, 3);
+
+  const steps = [
+    { key: 'products', done: productCount === null ? true : productCount > 0, title: 'Vincular os produtos', desc: 'Importe ou cadastre produtos para permitir compra direta pelos vídeos.', onClick: () => navigate('/dashboard/produtos'), cta: 'Ir para Produtos' },
+    { key: 'videos', done: health ? health.videos > 0 : true, title: 'Subir vídeos', desc: 'Suba seus vídeos verticais ou importe do Youtube/Instagram/TikTok.', onClick: () => goTab('biblioteca'), cta: 'Abrir Biblioteca' },
+    { key: 'script', done: health ? health.views30 > 0 : true, title: 'Instalação do script', desc: 'Nenhuma visualização recebida em 30 dias. Instale o script na loja ou via GTM.', onClick: () => navigate('/dashboard/integracao'), cta: 'Ver instalação' },
+  ];
+  const pending = steps.filter((s) => !s.done);
+
+  const alerts: { tone: 'warn' | 'danger'; text: string }[] = [];
+  if (!appEnabled) alerts.push({ tone: 'danger', text: 'O aplicativo está desativado: seus vídeos estão ocultos na loja.' });
+  if (appEnabled && health && health.videos > 0 && health.views7 === 0) alerts.push({ tone: 'warn', text: 'Nenhuma visualização nos últimos 7 dias. Confira se o script está instalado e atualizado na loja.' });
+  if (health && health.idle > 0) alerts.push({ tone: 'warn', text: `${health.idle} ${health.idle === 1 ? 'vídeo ativo sem visualizações' : 'vídeos ativos sem visualizações'} em 30 dias. Revise a posição na loja ou troque o vídeo.` });
+  if (health && health.month >= VIEWS_LIMIT * 0.8) alerts.push({ tone: 'danger', text: `Você já usou ${Math.round((health.month / VIEWS_LIMIT) * 100)}% da cota mensal de visualizações. Fale com o suporte para ampliar seu plano.` });
+
+  const academyTip = ACADEMY_TIPS[new Date().getMonth()];
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(store?.referral_code ? (window.location.origin + '/?ref=' + store.referral_code) : 'https://vidlytics.com.br/indica/useanny');
@@ -309,12 +450,12 @@ export default function VisaoGeralTab() {
               <Eye className="w-4 h-4 text-[#0094eb]" />
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black text-slate-800">57</span>
+              <span className="text-2xl font-black text-slate-800">{fmtInt(health?.month ?? 0)}</span>
               <span className="text-xs text-slate-400 font-medium">de 60.000</span>
             </div>
             <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
               <span>Quota do mês</span>
-              <span className="font-semibold text-slate-700">0%</span>
+              <span className="font-semibold text-slate-700">{Math.round(((health?.month ?? 0) / VIEWS_LIMIT) * 100)}%</span>
             </div>
           </div>
 
@@ -372,95 +513,144 @@ export default function VisaoGeralTab() {
       {/* 4. Duas Colunas: Checklist da Ativação + Atividade Recente */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Coluna Esquerda: Checklist da Ativação da Loja */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div>
-              <CardTitle icon={ListChecks}>Checklist da Ativação da Loja</CardTitle>
-              <p className="text-xs text-slate-400 mt-0.5">Conclua os passos para publicar seus stories.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-20 bg-emerald-100 h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-500 h-full w-full rounded-full" />
+        {/* Coluna Esquerda: ativação, desempenho, ação e top vídeos */}
+        <div className="space-y-6">
+
+          {health !== null && (pending.length > 0 ? (
+            <div className="bg-white rounded-2xl border border-amber-200/80 p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <CardTitle icon={ListChecks}>Falta pouco para ativar</CardTitle>
+                  <p className="text-xs text-slate-400 mt-0.5">{pending.length} {pending.length === 1 ? 'etapa pendente' : 'etapas pendentes'}.</p>
+                </div>
               </div>
-              <span className="text-xs font-bold text-emerald-600">100%</span>
+              <div className="space-y-3">
+                {pending.map((s) => (
+                  <div key={s.key} className="flex items-start justify-between gap-3 p-3 rounded-xl border border-amber-100 bg-amber-50/40">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-800">{s.title}</h4>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{s.desc}</p>
+                    </div>
+                    <button type="button" onClick={s.onClick} className="shrink-0 px-3 py-1.5 rounded-lg bg-[#0094eb] hover:bg-[#0082cf] text-white text-[11px] font-bold cursor-pointer">
+                      {s.cta}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl px-5 py-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+              <p className="text-sm font-semibold text-emerald-800">Loja 100% ativa</p>
+              <span className="text-xs text-emerald-700">Produtos, vídeos e script funcionando.</span>
+            </div>
+          ))}
+
+          {/* Desempenho dos videos */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+            <CardTitle icon={Activity}>Desempenho dos vídeos</CardTitle>
+            <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 ${perfLoading ? 'opacity-50' : ''}`}>
+              <div className="rounded-xl border border-slate-100 p-3 space-y-1">
+                <span className="text-[11px] font-bold uppercase text-slate-400">Visualizações</span>
+                <p className="text-xl font-black text-slate-800">{fmtInt(tc.views)}</p>
+                <Delta cur={tc.views} prev={tp.views} />
+                <Spark values={series.map((d) => d.views)} color="#0094eb" />
+              </div>
+              <div className="rounded-xl border border-slate-100 p-3 space-y-1">
+                <span className="text-[11px] font-bold uppercase text-slate-400">Cliques</span>
+                <p className="text-xl font-black text-slate-800">{fmtInt(tc.clicks)}</p>
+                <Delta cur={tc.clicks} prev={tp.clicks} />
+                <Spark values={series.map((d) => d.clicks)} color="#fd8539" />
+              </div>
+              <div className="rounded-xl border border-slate-100 p-3 space-y-1">
+                <span className="text-[11px] font-bold uppercase text-slate-400">CTR</span>
+                <p className="text-xl font-black text-slate-800">{fmtPct(tc.ctr)}</p>
+                <Delta cur={tc.ctr} prev={tp.ctr} />
+                <Spark values={series.map((d) => d.ctr)} color="#10b981" />
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            
-            {/* Item 1 */}
-            <div className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-800">Configurações da loja</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                  Preencha os dados cadastrais, e-mail e integre seu canal de WhatsApp.
-                </p>
-              </div>
+          {/* Proxima melhor acao */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <CardTitle icon={Lightbulb}>Próxima melhor ação</CardTitle>
+              <button type="button" onClick={() => goTab('resultados')} className="text-[11px] font-semibold text-slate-500 hover:text-[#0094eb] transition-colors cursor-pointer">
+                Ver todos os insights →
+              </button>
             </div>
-
-            {/* Item 2 */}
-            <div className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-800">Instalação do script</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                  Copie e instale o script de embed nas plataformas ou via GTM.
-                </p>
+            {perfLoading ? (
+              <p className="text-xs text-slate-400">Analisando seus vídeos...</p>
+            ) : actions.length === 0 ? (
+              <p className="text-xs text-slate-500">Sem recomendações por enquanto. Publique mais vídeos ou aguarde mais visualizações no período.</p>
+            ) : (
+              <div className="space-y-2">
+                {actions.map((a) => (
+                  <div key={a.id} className="p-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors">
+                    {a.videoTitle && <p className="text-[11px] font-bold text-[#0094eb] truncate">{a.videoTitle}</p>}
+                    <p className="text-xs text-slate-700 leading-snug mt-0.5">{a.insightText}</p>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Item 3 */}
-            <div className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-800">Vincular os produtos</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                  Importe ou cadastre produtos para permitir compra direta através dos vídeos.
-                </p>
+          {/* Top 3 videos */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+            <CardTitle icon={Trophy}>Vídeos mais vistos</CardTitle>
+            {top3.length === 0 ? (
+              <p className="text-xs text-slate-500">{perfLoading ? 'Carregando...' : 'Nenhuma visualização no período selecionado.'}</p>
+            ) : (
+              <div className="space-y-2">
+                {top3.map((v, idx) => (
+                  <div key={v.id} className="flex items-center gap-3 p-2 rounded-xl border border-slate-100">
+                    <span className="w-5 text-center text-xs font-black text-slate-400">{idx + 1}</span>
+                    {v.thumbnailUrl ? (
+                      <img src={v.thumbnailUrl} alt="" className="w-10 h-14 rounded-lg object-cover bg-slate-100 shrink-0" />
+                    ) : (
+                      <div className="w-10 h-14 rounded-lg bg-slate-100 shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-slate-800 truncate">{v.title}</p>
+                      <p className="text-[11px] text-slate-500">{fmtInt(v.views)} views · {fmtInt(v.clicks)} cliques</p>
+                    </div>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700">CTR {fmtPct(v.ctr)}</span>
+                  </div>
+                ))}
               </div>
-            </div>
-
-            {/* Item 4 */}
-            <div className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-800">Subir vídeos</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                  Suba seus vídeos verticais ou importe do Youtube/Instagram/TikTok.
-                </p>
-              </div>
-            </div>
-
-            {/* Item 5 */}
-            <div className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-800">Criar Stories</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                  Agrupe seus vídeos em coleções interativas.
-                </p>
-              </div>
-            </div>
-
-            {/* Item 6 */}
-            <div className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-800">Configurar a aparência</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                  Personalize cores, fontes, bordas e botões do player de stories.
-                </p>
-              </div>
-            </div>
-
+            )}
           </div>
         </div>
 
         {/* Coluna Direita: Atividade Recente (Log do Painel) */}
         <div className="space-y-6">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+          <CardTitle icon={AlertTriangle}>Alertas</CardTitle>
+          {alerts.length === 0 ? (
+            <p className="text-xs text-emerald-700 bg-emerald-50/70 border border-emerald-200/80 rounded-xl px-3 py-2">Tudo certo com a sua loja.</p>
+          ) : (
+            <div className="space-y-2">
+              {alerts.map((a, i) => (
+                <p key={i} className={`text-xs leading-snug rounded-xl px-3 py-2 border ${a.tone === 'danger' ? 'bg-rose-50/70 border-rose-200/80 text-rose-800' : 'bg-amber-50/70 border-amber-200/80 text-amber-800'}`}>
+                  {a.text}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+
         <ProximasDatasComerciais />
+
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+          <CardTitle icon={GraduationCap}>Dica da Academy</CardTitle>
+          <div>
+            <p className="text-xs font-bold text-slate-800">{academyTip.title}</p>
+            <p className="text-xs text-slate-500 leading-relaxed mt-1">{academyTip.text}</p>
+          </div>
+          <a href={CHANNEL_URL} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-[#0094eb] hover:underline inline-flex items-center gap-1">
+            Ver aulas no canal →
+          </a>
+        </div>
           {/* Card Indique e Ganhe */}
         <div className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
