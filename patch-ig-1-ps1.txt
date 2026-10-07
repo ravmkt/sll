@@ -1,0 +1,628 @@
+$ErrorActionPreference = 'Stop'
+Set-Location "F:\RODRIGO VICENTE\DYAD\sll-hub"
+$root = (Get-Location).Path
+$enc = New-Object Text.UTF8Encoding($false)
+if (-not (Test-Path 'src\lib\supabase.ts')) { throw "Projeto errado." }
+if (Test-Path 'supabase\functions\_shared\instagram-token.ts') { throw "Patch ja aplicado." }
+
+function Rd($rel) { [IO.File]::ReadAllText((Resolve-Path (Join-Path $root $rel)).Path) }
+function Cnt($t, $s) { $t.Split([string[]]@($s), [StringSplitOptions]::None).Count - 1 }
+function Rep($t, $label, $old, $new) {
+  if ((Cnt $t $old) -ne 1) { throw "${label}: esperava 1, achou $(Cnt $t $old). Nada gravado." }
+  return $t.Replace($old, $new)
+}
+function RepRx($t, $label, $rx, $new) {
+  if ([regex]::Matches($t, $rx).Count -ne 1) { throw "${label}: esperava 1. Nada gravado." }
+  return [regex]::Replace($t, $rx, { param($m) $new })
+}
+function W($rel, $txt) {
+  $p = Join-Path $root $rel
+  New-Item -ItemType Directory -Force -Path (Split-Path $p) | Out-Null
+  [IO.File]::WriteAllText($p, $txt, $enc)
+}
+
+$authRel = 'supabase\functions\instagram-auth\index.ts'
+$cardRel = 'src\components\configuracoes\SocialConnectCard.tsx'
+$intRel  = 'src\components\integracao\SocialIntegrationsCard.tsx'
+$bibRel  = 'src\pages\vidlytics\tabs\BibliotecaTab.tsx'
+$impRel  = 'supabase\functions\import-instagram-video\index.ts'
+$oldSvc  = 'src\services\instagram.ts'
+
+# ---- validacao (nada gravado ainda) ----
+$auth = Rd $authRel
+$auth = RepRx $auth 'log do token' "console\.log\('RESPOSTA LONG-LIVED:', JSON\.stringify\(longLivedData\)\);" "console.log('RESPOSTA LONG-LIVED:', JSON.stringify({ ok: !!longLivedData.access_token, expires_in: longLivedData.expires_in ?? null, error: longLivedData.error ?? null }));"
+$blocoAuth = @'
+const nowIso = new Date().toISOString();
+    const ttl = longLivedData.access_token ? Number(longLivedData.expires_in ?? 5184000) : 3600;
+    const expIso = new Date(Date.now() + ttl * 1000).toISOString();
+
+    const { data: integ, error: dbError } = await supabase.from('store_integrations').upsert({
+      store_id: store_id,
+      platform: 'instagram',
+      access_token: null,
+      account_id: String(instagramUserId || profileData.id || ''),
+      account_username: profileData.username || 'instagram_user',
+      display_name: profileData.username || null,
+      status: 'active',
+      token_expires_at: expIso,
+      connected_at: nowIso,
+      updated_at: nowIso,
+    }, { onConflict: 'store_id,platform' }).select('id').single();
+    if (dbError) throw dbError;
+
+    const { error: secErr } = await supabase.from('store_integration_secrets').upsert({
+      integration_id: integ.id,
+      access_token: finalAccessToken,
+      token_expires_at: expIso,
+      updated_at: nowIso,
+    }, { onConflict: 'integration_id' });
+    if (secErr) throw secErr;
+'@
+$auth = RepRx $auth 'bloco upsert' "const \{ error: dbError \} = await supabase\.from\('store_integrations'\)\.upsert\(\{[\s\S]*?\}\);\s*if \(dbError\) throw dbError;" $blocoAuth.TrimEnd()
+
+$card = Rd $cardRel
+if ($card.Contains('InstagramConnectRow')) { throw "Card ja alterado." }
+$rxEnd = '(\r?\n)([ \t]*)</div>(\r?\n[ \t]*\);\r?\n\}\s*)$'
+if ([regex]::Matches($card, $rxEnd).Count -ne 1) { throw "Fim do SocialConnectCard: esperava 1. Nada gravado." }
+$card = [regex]::Replace($card, $rxEnd, { param($m) $m.Groups[1].Value + $m.Groups[2].Value + '  <InstagramConnectRow storeId={storeId} />' + $m.Groups[1].Value + $m.Groups[2].Value + '</div>' + $m.Groups[3].Value })
+$card = "import InstagramConnectRow from './InstagramConnectRow';`n" + $card
+
+$int = Rd $intRel
+$intOk = ([regex]::Matches($int, 'else \{\s*fetchIntegrations\(\);\s*\}').Count -eq 1)
+if ($intOk) {
+  $int = [regex]::Replace($int, 'else \{\s*fetchIntegrations\(\);\s*\}', { param($m) "else { const back = sessionStorage.getItem('ig_return'); if (back) { sessionStorage.removeItem('ig_return'); window.location.href = back; } else { fetchIntegrations(); } }" })
+} else { "AVISO: retorno automatico para Configuracoes nao aplicado. O restante segue." }
+
+$bib = Rd $bibRel
+$bib = Rep $bib 'import modal' 'import TikTokImportModal from "@/components/vidlytics/TikTokImportModal";' ('import TikTokImportModal from "@/components/vidlytics/TikTokImportModal";' + "`n" + 'import InstagramImportModal from "@/components/vidlytics/InstagramImportModal";')
+$bib = Rep $bib 'estado' 'const [tiktokOpen, setTiktokOpen] = useState<boolean>(false);' ('const [tiktokOpen, setTiktokOpen] = useState<boolean>(false);' + "`n" + '  const [instagramOpen, setInstagramOpen] = useState<boolean>(false);')
+$bib = Rep $bib 'botao' 'onClick={() => alert("Módulo Instagram em breve.")}' 'onClick={() => setInstagramOpen(true)}'
+$tt = '{tiktokOpen && (<TikTokImportModal storeId={storeId} onClose={() => { setTiktokOpen(false); fetchVideos(); }} />)}'
+$bib = Rep $bib 'modal' $tt ($tt + "`n" + '{instagramOpen && (<InstagramImportModal storeId={storeId} onClose={() => { setInstagramOpen(false); fetchVideos(); }} />)}')
+
+# ---- backups e gravacao ----
+foreach ($r in @($authRel, $cardRel, $intRel, $bibRel, $impRel, $oldSvc)) {
+  $p = Join-Path $root $r
+  if (Test-Path $p) { Copy-Item $p "$p.bak-ig" -Force }
+}
+W $authRel $auth
+W $cardRel $card
+if ($intOk) { W $intRel $int }
+W $bibRel $bib
+
+W 'supabase\functions\_shared\instagram-token.ts' @'
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+
+const DAY = 86_400_000;
+
+export async function getInstagramToken(admin: SupabaseClient, storeId: string): Promise<string> {
+  const { data: integ } = await admin
+    .from("store_integrations").select("id")
+    .eq("store_id", storeId).eq("platform", "instagram").maybeSingle();
+  if (!integ) throw new Error("Instagram não conectado nesta loja.");
+
+  const { data: sec } = await admin
+    .from("store_integration_secrets").select("*")
+    .eq("integration_id", integ.id).maybeSingle();
+  if (!sec?.access_token) throw new Error("Token do Instagram não encontrado. Reconecte a conta.");
+
+  const expiresAt = sec.token_expires_at ? new Date(sec.token_expires_at).getTime() : 0;
+  const left = expiresAt - Date.now();
+  if (left > 7 * DAY) return sec.access_token;
+
+  const resp = await fetch(
+    `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(sec.access_token)}`,
+  );
+  const tk = await resp.json().catch(() => ({}));
+  if (!resp.ok || tk.error || !tk.access_token) {
+    if (left > 60_000) return sec.access_token;
+    await admin.from("store_integrations")
+      .update({ status: "expired", updated_at: new Date().toISOString() }).eq("id", integ.id);
+    throw new Error("Sessão do Instagram expirada. Reconecte a conta.");
+  }
+
+  const newExp = new Date(Date.now() + Number(tk.expires_in ?? 5184000) * 1000).toISOString();
+  await admin.from("store_integration_secrets").update({
+    access_token: tk.access_token,
+    token_expires_at: newExp,
+    updated_at: new Date().toISOString(),
+  }).eq("integration_id", integ.id);
+  await admin.from("store_integrations")
+    .update({ token_expires_at: newExp, status: "active", updated_at: new Date().toISOString() }).eq("id", integ.id);
+  return tk.access_token;
+}
+'@
+
+W 'supabase\functions\get-instagram-media\index.ts' @'
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { getInstagramToken } from "../_shared/instagram-token.ts";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+const json = (body: unknown) =>
+  new Response(JSON.stringify(body), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  try {
+    const { storeId, cursor } = await req.json();
+    if (!storeId) return json({ success: false, error: "storeId é obrigatório." });
+
+    const url = Deno.env.get("SUPABASE_URL")!;
+    const asUser = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+    });
+    const { data: { user } } = await asUser.auth.getUser();
+    if (!user) return json({ success: false, error: "Não autorizado." });
+
+    const { data: own } = await asUser.from("store_integrations").select("id")
+      .eq("store_id", storeId).eq("platform", "instagram").maybeSingle();
+    if (!own) return json({ success: false, error: "Instagram não conectado nesta loja." });
+
+    const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const token = await getInstagramToken(admin, storeId);
+
+    const qs = new URLSearchParams({
+      fields: "id,caption,media_type,media_product_type,thumbnail_url,permalink,timestamp",
+      limit: "30",
+      access_token: token,
+    });
+    if (cursor) qs.set("after", String(cursor));
+
+    const res = await fetch(`https://graph.instagram.com/me/media?${qs.toString()}`);
+    const d = await res.json();
+    if (!res.ok || d.error) throw new Error(d.error?.message || "Falha ao listar mídias do Instagram.");
+
+    const videos = (d.data ?? [])
+      .filter((m: any) => m.media_type === "VIDEO")
+      .map((m: any) => ({
+        id: m.id,
+        caption: m.caption ?? "",
+        thumbnail_url: m.thumbnail_url ?? "",
+        permalink: m.permalink ?? "",
+        timestamp: m.timestamp ?? "",
+        product_type: m.media_product_type ?? "",
+      }));
+
+    return json({ success: true, videos, cursor: d.paging?.cursors?.after ?? null, has_more: !!d.paging?.next });
+  } catch (e) {
+    console.error("get-instagram-media:", (e as Error).message);
+    return json({ success: false, error: (e as Error).message });
+  }
+});
+'@
+
+W $impRel @'
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { getInstagramToken } from "../_shared/instagram-token.ts";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+const json = (body: unknown) =>
+  new Response(JSON.stringify(body), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
+
+const MAX_BYTES = 100 * 1024 * 1024;
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  try {
+    const { storeId, mediaId } = await req.json();
+    if (!storeId || !mediaId || !/^\d+$/.test(String(mediaId))) {
+      return json({ success: false, error: "Parâmetros inválidos." });
+    }
+
+    const url = Deno.env.get("SUPABASE_URL")!;
+    const asUser = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+    });
+    const { data: { user } } = await asUser.auth.getUser();
+    if (!user) return json({ success: false, error: "Não autorizado." });
+
+    const { data: own } = await asUser.from("store_integrations").select("id")
+      .eq("store_id", storeId).eq("platform", "instagram").maybeSingle();
+    if (!own) return json({ success: false, error: "Instagram não conectado nesta loja." });
+
+    const { data: dup } = await asUser.from("videos").select("id")
+      .eq("store_id", storeId).like("video_url", `%/ig_${mediaId}.mp4`).limit(1).maybeSingle();
+    if (dup) return json({ success: true, videoId: dup.id, duplicate: true });
+
+    const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const token = await getInstagramToken(admin, storeId);
+
+    const metaRes = await fetch(
+      `https://graph.instagram.com/${mediaId}?fields=id,caption,media_type,media_url,thumbnail_url&access_token=${encodeURIComponent(token)}`,
+    );
+    const meta = await metaRes.json();
+    if (!metaRes.ok || meta.error) throw new Error(meta.error?.message || "Não foi possível ler o vídeo no Instagram.");
+    if (meta.media_type !== "VIDEO" || !meta.media_url) throw new Error("Esta mídia não é um vídeo ou não está disponível para download.");
+
+    const fileRes = await fetch(meta.media_url);
+    if (!fileRes.ok) throw new Error(`Falha ao baixar o vídeo (HTTP ${fileRes.status}).`);
+    if (Number(fileRes.headers.get("content-length") ?? 0) > MAX_BYTES) throw new Error("O vídeo excede 100 MB.");
+    const buf = await fileRes.arrayBuffer();
+    if (buf.byteLength > MAX_BYTES) throw new Error("O vídeo excede 100 MB.");
+
+    const videoPath = `${storeId}/ig_${mediaId}.mp4`;
+    const { error: upErr } = await asUser.storage.from("videos")
+      .upload(videoPath, buf, { contentType: "video/mp4", cacheControl: "3600", upsert: true });
+    if (upErr) throw upErr;
+    const videoUrl = asUser.storage.from("videos").getPublicUrl(videoPath).data.publicUrl;
+
+    let thumbUrl = videoUrl;
+    let thumbSize = 120000;
+    if (meta.thumbnail_url) {
+      try {
+        const tr = await fetch(meta.thumbnail_url);
+        if (tr.ok) {
+          const tb = await tr.arrayBuffer();
+          const thumbPath = `${storeId}/ig_${mediaId}_thumb.jpg`;
+          const { error: tErr } = await asUser.storage.from("videos")
+            .upload(thumbPath, tb, { contentType: "image/jpeg", cacheControl: "3600", upsert: true });
+          if (!tErr) {
+            thumbUrl = asUser.storage.from("videos").getPublicUrl(thumbPath).data.publicUrl;
+            thumbSize = tb.byteLength;
+          }
+        }
+      } catch (_) { /* usa o fallback */ }
+    }
+
+    const caption = String(meta.caption ?? "").trim();
+    const { data: row, error: dbErr } = await asUser.from("videos").insert([{
+      store_id: storeId,
+      title: caption ? caption.slice(0, 60) : `INSTAGRAM_REELS_${String(mediaId).slice(-6)}`,
+      video_source_type: "upload",
+      source_type: "upload",
+      video_url: videoUrl,
+      thumbnail_url: thumbUrl,
+      thumbnail_source_type: "auto",
+      file_size: buf.byteLength,
+      thumbnail_file_size: thumbSize,
+      status: "active",
+      active: true,
+      created_at: new Date().toISOString(),
+    }]).select("id").single();
+    if (dbErr) throw dbErr;
+
+    return json({ success: true, videoId: row.id, duplicate: false });
+  } catch (e) {
+    console.error("import-instagram-video:", (e as any)?.message ?? e);
+    return json({ success: false, error: (e as any)?.message ?? "Erro ao importar vídeo." });
+  }
+});
+'@
+
+$ErrorActionPreference = 'Stop'
+Set-Location "F:\RODRIGO VICENTE\DYAD\sll-hub"
+$root = (Get-Location).Path
+$enc = New-Object Text.UTF8Encoding($false)
+if (-not (Test-Path 'supabase\functions\_shared\instagram-token.ts')) { throw "Rode a parte 1 primeiro." }
+if (Test-Path 'src\services\instagramMediaService.ts') { throw "Parte 2 ja aplicada." }
+
+function W($rel, $txt) {
+  $p = Join-Path $root $rel
+  New-Item -ItemType Directory -Force -Path (Split-Path $p) | Out-Null
+  [IO.File]::WriteAllText($p, $txt, $enc)
+}
+
+W 'src\services\instagramMediaService.ts' @'
+import { supabase } from '@/lib/supabase';
+
+export type InstagramVideo = {
+  id: string;
+  caption: string;
+  thumbnail_url: string;
+  permalink: string;
+  timestamp: string;
+  product_type: string;
+};
+
+export async function fetchInstagramVideos(storeId: string, cursor?: string | null) {
+  const { data, error } = await supabase.functions.invoke('get-instagram-media', { body: { storeId, cursor } });
+  if (error || !data?.success) throw new Error(data?.error || error?.message || 'Erro ao buscar vídeos do Instagram.');
+  return {
+    videos: (data.videos ?? []) as InstagramVideo[],
+    cursor: (data.cursor ?? null) as string | null,
+    hasMore: !!data.has_more,
+  };
+}
+
+export async function importInstagramVideo(storeId: string, mediaId: string) {
+  const { data, error } = await supabase.functions.invoke('import-instagram-video', { body: { storeId, mediaId } });
+  if (error || !data?.success) throw new Error(data?.error || error?.message || 'Erro ao importar vídeo.');
+  return { videoId: data.videoId as string, duplicate: !!data.duplicate };
+}
+'@
+
+W 'src\components\configuracoes\InstagramConnectRow.tsx' @'
+import { useCallback, useEffect, useState } from 'react';
+import { CheckCircle2, Link2, Loader2, Unlink } from 'lucide-react';
+import { showError, showSuccess } from '@/utils/toast';
+import { disconnectIntegration, getSocialIntegration, type SocialIntegration } from '@/services/socialIntegrationsService';
+
+const APP_ID = '28436857449312028';
+
+export default function InstagramConnectRow({ storeId }: { storeId: string }) {
+  const [ig, setIg] = useState<SocialIntegration | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!storeId) return;
+    setLoading(true);
+    try { setIg(await getSocialIntegration(storeId, 'instagram')); } catch { setIg(null); } finally { setLoading(false); }
+  }, [storeId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const connect = () => {
+    if (!storeId) return;
+    setBusy(true);
+    const redirectUri = `${window.location.origin}/dashboard/integracao`;
+    sessionStorage.setItem('ig_redirect_uri', redirectUri);
+    sessionStorage.setItem('ig_return', window.location.pathname);
+    localStorage.setItem('sll_oauth_store_id', storeId);
+    const params = new URLSearchParams({
+      client_id: APP_ID,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'instagram_business_basic',
+      state: storeId,
+    });
+    window.location.href = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+  };
+
+  const disconnect = async () => {
+    if (!ig || !window.confirm('Desconectar o Instagram desta loja?')) return;
+    setBusy(true);
+    try {
+      await disconnectIntegration(ig.id);
+      setIg(null);
+      showSuccess('Instagram desconectado.');
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const expired = ig?.status === 'expired';
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800 pt-5">
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600 text-white">
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="5" />
+            <circle cx="12" cy="12" r="4" />
+            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+          </svg>
+        </div>
+        <div>
+          <p className="text-sm font-black text-slate-900 dark:text-white">Instagram</p>
+          {loading ? (
+            <Loader2 size={14} className="animate-spin text-slate-400" />
+          ) : ig && !expired ? (
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-600">
+              <CheckCircle2 size={13} /> Conectado{ig.account_username ? ` · @${ig.account_username}` : ''}
+            </span>
+          ) : expired ? (
+            <span className="text-[11px] font-bold text-rose-600">Sessão expirada · reconecte</span>
+          ) : (
+            <span className="text-[11px] font-bold text-amber-600">Não conectado</span>
+          )}
+        </div>
+      </div>
+
+      {ig ? (
+        <div className="flex items-center gap-2">
+          <button type="button" disabled={busy} onClick={connect} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-200 cursor-pointer disabled:opacity-50">
+            <Link2 size={14} /> Reconectar
+          </button>
+          <button type="button" disabled={busy} onClick={disconnect} className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 cursor-pointer disabled:opacity-50">
+            <Unlink size={14} /> Desconectar
+          </button>
+        </div>
+      ) : (
+        <button type="button" disabled={busy || loading} onClick={connect} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white cursor-pointer disabled:opacity-50">
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />} Conectar Instagram
+        </button>
+      )}
+    </div>
+  );
+}
+'@
+
+W 'src\components\vidlytics\InstagramImportModal.tsx' @'
+import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Check, Download, Loader2, X } from 'lucide-react';
+import { showError, showSuccess } from '@/utils/toast';
+import { getSocialIntegration, type SocialIntegration } from '@/services/socialIntegrationsService';
+import { fetchInstagramVideos, importInstagramVideo, type InstagramVideo } from '@/services/instagramMediaService';
+
+function VideosPanel({ storeId }: { storeId: string }) {
+  const [videos, setVideos] = useState<InstagramVideo[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState<string | null>(null);
+  const [imported, setImported] = useState<Set<string>>(new Set());
+
+  const load = useCallback(async (next?: string | null) => {
+    setLoading(true);
+    try {
+      const r = await fetchInstagramVideos(storeId, next);
+      setVideos((prev) => (next ? [...prev, ...r.videos] : r.videos));
+      setCursor(r.cursor);
+      setHasMore(r.hasMore);
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [storeId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleImport = async (v: InstagramVideo) => {
+    setImporting(v.id);
+    try {
+      const r = await importInstagramVideo(storeId, v.id);
+      setImported((prev) => new Set(prev).add(v.id));
+      showSuccess(r.duplicate ? 'Este vídeo já estava na sua biblioteca.' : 'Vídeo importado para a Biblioteca!');
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setImporting(null);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-black text-slate-800 dark:text-white">Vídeos da sua conta do Instagram</h3>
+        <span className="text-xs font-bold text-slate-500">{videos.length} carregados</span>
+      </div>
+
+      {loading && videos.length === 0 ? (
+        <div className="flex min-h-[120px] items-center justify-center"><Loader2 size={18} className="animate-spin text-slate-400" /></div>
+      ) : videos.length === 0 ? (
+        <p className="text-xs font-bold text-slate-500">Nenhum vídeo encontrado nesta conta.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {videos.map((v) => {
+            const done = imported.has(v.id);
+            const busy = importing === v.id;
+            return (
+              <div key={v.id} className="relative aspect-[9/16] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-900">
+                {v.thumbnail_url && (
+                  <img src={v.thumbnail_url} alt={v.caption || 'Vídeo do Instagram'} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                )}
+                <div className="absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/90 to-transparent p-2">
+                  <p className="line-clamp-2 text-[10px] font-bold text-white">
+                    {v.timestamp ? new Date(v.timestamp).toLocaleDateString('pt-BR') : ''}{v.caption ? ` · ${v.caption}` : ''}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy || done}
+                    onClick={() => handleImport(v)}
+                    className={`flex w-full items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-black text-white cursor-pointer disabled:cursor-default ${done ? 'bg-emerald-600' : 'bg-[#0094eb]'}`}
+                  >
+                    {busy ? <Loader2 size={12} className="animate-spin" /> : done ? <Check size={12} /> : <Download size={12} />}
+                    {done ? 'Importado' : busy ? 'Importando...' : 'Importar'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {hasMore && (
+        <button type="button" disabled={loading} onClick={() => load(cursor)} className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-200 cursor-pointer disabled:opacity-50">
+          {loading ? 'Carregando...' : 'Carregar mais'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default function InstagramImportModal({ storeId, onClose }: { storeId: string; onClose: () => void }) {
+  const [integration, setIntegration] = useState<SocialIntegration | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    getSocialIntegration(storeId, 'instagram')
+      .then((i) => { if (alive) setIntegration(i); })
+      .catch(() => { if (alive) setIntegration(null); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [storeId]);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#1a1f35]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+          <h3 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">Importar do Instagram</h3>
+          <button type="button" onClick={onClose} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex justify-center py-10"><Loader2 size={22} className="animate-spin text-slate-400" /></div>
+          ) : integration && integration.status !== 'expired' ? (
+            <VideosPanel storeId={storeId} />
+          ) : (
+            <div className="py-10 text-center">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                {integration ? 'Sessão do Instagram expirada.' : 'Instagram não conectado.'}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">Conecte sua conta em Configurações para importar vídeos.</p>
+              <Link to="/dashboard/settings" onClick={onClose} className="mt-4 inline-block rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white">
+                Ir para Configurações
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+'@
+
+$oldPath = Join-Path $root 'src\services\instagram.ts'
+if (Test-Path $oldPath) { Remove-Item $oldPath -Force }
+
+Set-Location "F:\RODRIGO VICENTE\DYAD\sll-hub"
+$root = (Get-Location).Path
+if (-not (Test-Path 'src\services\instagramMediaService.ts')) { "Rode a parte 2 primeiro."; return }
+
+$bak = @(
+  'supabase\functions\instagram-auth\index.ts',
+  'src\components\configuracoes\SocialConnectCard.tsx',
+  'src\components\integracao\SocialIntegrationsCard.tsx',
+  'src\pages\vidlytics\tabs\BibliotecaTab.tsx',
+  'supabase\functions\import-instagram-video\index.ts',
+  'src\services\instagram.ts'
+)
+$novos = @(
+  'supabase\functions\_shared\instagram-token.ts',
+  'supabase\functions\get-instagram-media\index.ts',
+  'src\services\instagramMediaService.ts',
+  'src\components\configuracoes\InstagramConnectRow.tsx',
+  'src\components\vidlytics\InstagramImportModal.tsx'
+)
+
+function Restore {
+  foreach ($r in $bak) { $p = Join-Path $root $r; if (Test-Path "$p.bak-ig") { Copy-Item "$p.bak-ig" $p -Force } }
+  foreach ($r in $novos) { Remove-Item (Join-Path $root $r) -Force -ErrorAction SilentlyContinue }
+}
+
+# ---- build ----
+$erros = npx tsc --noEmit -p tsconfig.app.json 2>&1 | Select-String 'Instagram|SocialConnectCard|SocialIntegrationsCard|BibliotecaTab'
+$erros
+npm run build
+if ($LASTEXITCODE -ne 0 -or $erros) { Restore; "ERRO no build: tudo restaurado, nada publicado."; return }
+
+# ---- deploy das funcoes ----
+$ref = 'flivmllysdhaydhogmhg'
+foreach ($fn in 'instagram-auth','get-instagram-media','import-instagram-video') {
+  npx supabase functions deploy $fn --project-ref $ref
+  if ($LASTEXITCODE -ne 0) { "ERRO no deploy de ${fn}: nada enviado ao Git. Rode 'npx supabase login' e tente de novo."; return }
+}
+
+# ---- git ----
+Get-ChildItem $root -Recurse -Filter '*.bak-ig' -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notmatch 'node_modules' } | Remove-Item -Force
+git add supabase/functions src/components src/services src/pages/vidlytics/tabs/BibliotecaTab.tsx
+git add -A -- src/services/instagram.ts
+git commit -m "feat(instagram): conexao em Configuracoes, token seguro com renovacao e importacao na Biblioteca"
+git push
+"OK: publicado. Agora reconecte o Instagram em Configuracoes."

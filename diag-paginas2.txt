@@ -1,0 +1,63 @@
+== codigo ANTIGO da contagem de paginas
+296:       })
+297:       .catch(() => { if (alive) setStorageBytes(0); });
+298:     return () => { alive = false; };
+299:   }, [storeId]);
+301:   useEffect(() => {
+302:     if (!storeId) return;
+303:     let alive = true;
+304:     (async () => {
+305:       const since = ymd(addDays(new Date(), -29));
+306:       const paths = new Set<string>();
+307:       for (const col of ['page_path', 'page_url']) {
+308:         paths.clear();
+309:         let failed = false;
+310:         for (let p = 0; p < 5; p++) {
+311:           const { data, error } = await (supabase as any)
+312:             .from('store_activity_events')
+313:             .select(col)
+314:             .eq('store_id', storeId)
+315:             .eq('event_type', 'video_view')
+316:             .gte('created_at', since)
+317:             .range(p * 1000, p * 1000 + 999);
+318:           if (error) { failed = true; break; }
+319:           (data || []).forEach((r: any) => {
+320:             const raw = String(r[col] || '').split('?')[0].split('#')[0];
+321:             if (!raw) return;
+322:             try { paths.add(raw.startsWith('http') ? new URL(raw).pathname : raw); } catch { paths.add(raw); }
+323:           });
+324:           if (!data || data.length < 1000) break;
+325:         }
+326:         if (!failed) break;
+327:       }
+328:       if (alive) setPageCount(paths.size);
+329:     })();
+330:     return () => { alive = false; };
+331:   }, [storeId]);
+== db.ts (colunas de eventos)
+650:     'id', 'store_id', 'story_id', 'location', 'selector',
+651:     'position', 'active', 'created_at', 'updated_at',
+652:   ],
+653:   page_rules: [
+654:     'id', 'store_id', 'story_id', 'condition_type', 'value',
+655:     'created_at', 'updated_at',
+656:   ],
+657:   comments: [
+658:     'id', 'store_id', 'story_id', 'video_id', 'author_name',
+659:     'author_email', 'content', 'status', 'active', 'reply_content',
+660:     'reply_status', 'replied_at', 'replied_by', 'created_at', 'updated_at',
+661:   ],
+662:   metrics: [
+663:     'id', 'store_id', 'story_id', 'video_id', 'product_id',
+664:     'event_type', 'page_url', 'device_type', 'browser',
+665:     'user_agent', 'referrer', 'metadata', 'created_at',
+666:   ],
+667:   sizing_models: [
+668:     'id', 'store_id', 'name', 'image_url', 'measures',
+669:     'size_name', 'created_at', 'updated_at',
+670:   ],
+671: store_settings: [
+672:   'id', 'store_id', 'store_name', 'store_url', 'logo_url',
+673:   'contact_email', 'owner_contact_email', 'whatsapp_number', 'whatsapp_default_message',
+674:   'app_enabled', 'stories_enabled', 'carousel_enabled',
+675:   'floating_widget_enabled', 'default_appearance_id',

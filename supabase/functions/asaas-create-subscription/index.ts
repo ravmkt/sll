@@ -157,6 +157,31 @@ Deno.serve(async (req) => {
     const value = (priceCents - discountCents) / 100;
     const asaasCycle = CYCLE_MAP[billing_cycle] ?? "MONTHLY";
 
+    // 4.5 Resolve o módulo pelo plano (não confia no cliente) e bloqueia duplicidade
+    const { data: planRow } = await supabaseAdmin
+      .from("plans")
+      .select("modules")
+      .eq("id", plan_id)
+      .maybeSingle();
+    const planModules: string[] = Array.isArray(planRow?.modules) ? planRow.modules : [];
+    const resolvedModuleKey: string | null =
+      planModules.length === 1 ? planModules[0] : (module_key ?? null);
+
+    if (resolvedModuleKey) {
+      const { data: dupSub } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id, status")
+        .eq("store_id", store_id)
+        .eq("module_key", resolvedModuleKey)
+        .in("status", ["active", "trialing", "past_due", "lifetime"])
+        .limit(1)
+        .maybeSingle();
+      if (dupSub) {
+        await release();
+        return jsonResponse({ error: "MODULE_ALREADY_SUBSCRIBED", module_key: resolvedModuleKey, status: dupSub.status }, 409);
+      }
+    }
+
     // 5. Reaproveita asaas_customer_id se já existir para esta loja
     const { data: existingSub } = await supabaseAdmin
       .from("subscriptions")
@@ -242,7 +267,7 @@ Deno.serve(async (req) => {
       .insert({
         store_id,
         plan_id,
-        module_key: module_key ?? null,
+        module_key: resolvedModuleKey,
         billing_cycle: billing_cycle.toLowerCase(),
         status: "incomplete",
         current_period_start: new Date().toISOString(),
