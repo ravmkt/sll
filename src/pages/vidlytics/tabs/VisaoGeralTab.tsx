@@ -277,16 +277,6 @@ export default function VisaoGeralTab() {
           <span className="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-[#0094eb]/10 text-[#0094eb] uppercase tracking-wide">
             Plano Scale
           </span>
-          {alerts.length > 0 && (
-            <div className="space-y-0.5 pt-0.5">
-              {alerts.map((a, i) => (
-                <p key={i} className={`flex items-start gap-1.5 text-[11px] leading-snug ${a.tone === 'danger' ? 'text-rose-600' : 'text-amber-600'}`}>
-                  <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
-                  <span>{a.text}</span>
-                </p>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Seletor do Aplicativo */}
@@ -508,7 +498,12 @@ export default function VisaoGeralTab() {
           <div className="space-y-6">
             {/* Desempenho dos videos */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
-              <CardTitle icon={Activity}>Desempenho dos vídeos</CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle icon={Activity}>Desempenho dos vídeos</CardTitle>
+                <button type="button" onClick={() => goTab('resultados', 'videos')} className="text-[11px] font-semibold text-[#0094eb] hover:underline cursor-pointer whitespace-nowrap">
+                  Ver mais métricas →
+                </button>
+              </div>
               <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 ${perfLoading ? 'opacity-50' : ''}`}>
                 <div className="rounded-xl border border-slate-100 p-3 space-y-1">
                   <span className="text-[11px] font-bold uppercase text-slate-400">Visualizações</span>
@@ -533,12 +528,7 @@ export default function VisaoGeralTab() {
 
             {/* Videos mais vistos */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <CardTitle icon={Trophy}>Vídeos mais vistos</CardTitle>
-                <button type="button" onClick={() => goTab('resultados', 'videos')} className="text-[11px] font-semibold text-[#0094eb] hover:underline cursor-pointer whitespace-nowrap">
-                  Ver mais métricas →
-                </button>
-              </div>
+              <CardTitle icon={Trophy}>Vídeos mais vistos</CardTitle>
               {top3.length === 0 ? (
                 <p className="text-xs text-slate-500">{perfLoading ? 'Carregando...' : 'Nenhuma visualização no período selecionado.'}</p>
               ) : (
@@ -579,14 +569,11 @@ export default function VisaoGeralTab() {
               <p className="text-xs font-bold text-slate-800">{academyTip.title}</p>
               <p className="text-xs text-slate-500 leading-relaxed mt-1">{academyTip.text}</p>
             </div>
-            <a href={CHANNEL_URL} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-[#0094eb] hover:underline inline-flex items-center gap-1">
-              Ver aulas no canal →
-            </a>
           </div>
 
           <div className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm h-full flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
-            <CardTitle icon={DollarSign}>Indique e Ganhe</CardTitle>
+            <img src="/assets/clube-sll-b.png" alt="Indique e Ganhe" className="h-8 w-auto object-contain" />
             <Share2 className="w-4 h-4 text-slate-400" />
           </div>
 
