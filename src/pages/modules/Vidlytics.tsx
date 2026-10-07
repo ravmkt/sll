@@ -15,11 +15,15 @@ import AparenciaTab from '../vidlytics/tabs/AparenciaTab';
 
 export default function Vidlytics() {
   // Regra SLL: todo acesso ao modulo abre na Visao Geral (ignora URL e localStorage)
-  const [activeTab, setActiveTab] = useState<VidlyticsTab>('visao-geral');
+  const [activeTab, setActiveTab] = useState<VidlyticsTab>(() => {
+    try { if (sessionStorage.getItem('sll_pending_tab') === 'comentarios') return 'comentarios'; } catch {}
+    return 'visao-geral';
+  });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     localStorage.removeItem('sll_vidlytics_active_tab');
+    try { sessionStorage.removeItem('sll_pending_tab'); } catch {}
   }, []);
 
   useEffectGoto(() => {

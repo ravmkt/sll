@@ -7,6 +7,7 @@ import { Toaster } from 'sonner';
 import { useAuth } from './contexts/AuthContext';
 import { LojaProvider } from './contexts/LojaContext';
 import { OnboardingModal } from './components/OnboardingModal';
+import { CommentAlertModal } from './components/alerts/CommentAlerts';
 import { SubscriptionGate } from './components/auth/SubscriptionGate';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
@@ -47,6 +48,7 @@ function AppRoutes() {
     <Suspense fallback={<PageLoader />}>
       {/* Modal de Onboarding: só aparece se needsOnboarding for true */}
       {user && <OnboardingModal />}
+      {user && <CommentAlertModal />}
 
       <Routes>
         <Route path="/sobre" element={<AboutPage />} />

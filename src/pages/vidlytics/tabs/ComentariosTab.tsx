@@ -17,6 +17,7 @@ import {
 import { useLoja } from '@/contexts/LojaContext';
 import { VidlyticsDatabaseService, VidlyticsComment, VidlyticsCommentReply } from '@/services/vidlytics/VidlyticsDatabaseService';
 import { toast } from 'sonner';
+import { CommentAlertsToggle } from '@/components/alerts/CommentAlerts';
 
 interface ToastItem {
   id: string;
@@ -331,6 +332,7 @@ export const ComentariosTab: React.FC = () => {
         <p className="text-sm text-slate-500 mt-1">
           Gerencie a interação dos clientes nos seus stories, responda dúvidas e modere comentários públicos.
         </p>
+          <CommentAlertsToggle />
       </div>
 
       {/* Cards superiores */}
