@@ -147,7 +147,7 @@ export default function ProximasDatasComerciais() {
   const selText = selected ? selTip?.tip || selected.d.tip || selected.d.description : null;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+    <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm h-full flex flex-col gap-4">
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-[#0094eb]/10 flex items-center justify-center shrink-0">
@@ -165,7 +165,7 @@ export default function ProximasDatasComerciais() {
       {loading && <p className="text-xs text-slate-400">Carregando datas...</p>}
       {!loading && upcoming.length === 0 && <p className="text-xs text-slate-400">Nenhuma data comercial encontrada.</p>}
 
-      <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
+      <div className="space-y-3 flex-1 min-h-0 max-h-[460px] lg:max-h-none overflow-y-auto pr-1">
         {upcoming.map((it) => {
           const { d, date, left } = it;
           const prepare = left <= (d.lead_days ?? 0);

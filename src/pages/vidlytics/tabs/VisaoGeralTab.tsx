@@ -22,7 +22,7 @@ import {
   Edit3, 
   ArrowRight
 } from 'lucide-react';
-import { ListChecks, Activity, TrendingUp, TrendingDown, Trophy, AlertTriangle, GraduationCap } from 'lucide-react';
+import { Activity, TrendingUp, TrendingDown, Trophy, AlertTriangle, GraduationCap } from 'lucide-react';
 
 type Periodo = 'today' | '7' | '30' | 'custom';
 
@@ -73,7 +73,7 @@ const totals = (rows: PerfRow[]) => {
   return { views, clicks, ctr: views > 0 ? (clicks / views) * 100 : 0 };
 };
 
-const goTab = (tab: string) => window.dispatchEvent(new CustomEvent('vidlytics:goto-tab', { detail: tab }));
+const goTab = (tab: string, sub?: string) => window.dispatchEvent(new CustomEvent('vidlytics:goto-tab', { detail: sub ? { tab, sub } : tab }));
 
 function Delta({ cur, prev }: { cur: number; prev: number }) {
   if (prev <= 0) return <span className="text-[11px] text-slate-400">{cur > 0 ? 'Novo no período' : 'Sem dados anteriores'}</span>;
@@ -197,7 +197,6 @@ export default function VisaoGeralTab() {
   const [prevRows, setPrevRows] = useState<PerfRow[]>([]);
   const [perfLoading, setPerfLoading] = useState(false);
   const [health, setHealth] = useState<{ videos: number; views30: number; views7: number; month: number; idle: number } | null>(null);
-  const [productCount, setProductCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!storeId) return;
@@ -232,9 +231,8 @@ export default function VisaoGeralTab() {
       VidlyticsDatabaseService.getVideosPerformance(storeId, d30, today),
       VidlyticsDatabaseService.getVideosPerformance(storeId, d7, today),
       VidlyticsDatabaseService.getVideosPerformance(storeId, m1, today),
-      (supabase as any).from('products').select('id', { count: 'exact', head: true }).eq('store_id', storeId),
     ])
-      .then(([r30, r7, rm, prod]) => {
+      .then(([r30, r7, rm]) => {
         if (!alive) return;
         setHealth({
           videos: r30.length,
@@ -243,7 +241,6 @@ export default function VisaoGeralTab() {
           month: totals(rm).views,
           idle: r30.filter((v) => v.status === 'active' && v.views === 0).length,
         });
-        setProductCount(prod?.count ?? 0);
       })
       .catch(() => { /* mantem sem alertas se a consulta falhar */ });
     return () => { alive = false; };
@@ -253,12 +250,6 @@ export default function VisaoGeralTab() {
   const tp = totals(prevRows);
   const top3 = [...curRows].filter((r) => r.views > 0).sort((a, b) => b.views - a.views).slice(0, 3);
 
-  const steps = [
-    { key: 'products', done: productCount === null ? true : productCount > 0, title: 'Vincular os produtos', desc: 'Importe ou cadastre produtos para permitir compra direta pelos vídeos.', onClick: () => navigate('/dashboard/produtos'), cta: 'Ir para Produtos' },
-    { key: 'videos', done: health ? health.videos > 0 : true, title: 'Subir vídeos', desc: 'Suba seus vídeos verticais ou importe do Youtube/Instagram/TikTok.', onClick: () => goTab('biblioteca'), cta: 'Abrir Biblioteca' },
-    { key: 'script', done: health ? health.views30 > 0 : true, title: 'Instalação do script', desc: 'Nenhuma visualização recebida em 30 dias. Instale o script na loja ou via GTM.', onClick: () => navigate('/dashboard/integracao'), cta: 'Ver instalação' },
-  ];
-  const pending = steps.filter((s) => !s.done);
 
   const alerts: { tone: 'warn' | 'danger'; text: string }[] = [];
   if (!appEnabled) alerts.push({ tone: 'danger', text: 'O aplicativo está desativado: seus vídeos estão ocultos na loja.' });
@@ -511,95 +502,78 @@ export default function VisaoGeralTab() {
         </div>
       </div>
 
-      {/* 4. Duas Colunas: Checklist da Ativação + Atividade Recente */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Coluna Esquerda: ativação, desempenho, ação e top vídeos */}
-        <div className="space-y-6">
-
-          {health !== null && (pending.length > 0 ? (
-            <div className="bg-white rounded-2xl border border-amber-200/80 p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <CardTitle icon={ListChecks}>Falta pouco para ativar</CardTitle>
-                  <p className="text-xs text-slate-400 mt-0.5">{pending.length} {pending.length === 1 ? 'etapa pendente' : 'etapas pendentes'}.</p>
+      {/* 4. Desempenho + Datas comerciais (alinhados) / Dica + Indique */}
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            {/* Desempenho dos videos */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+              <CardTitle icon={Activity}>Desempenho dos vídeos</CardTitle>
+              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 ${perfLoading ? 'opacity-50' : ''}`}>
+                <div className="rounded-xl border border-slate-100 p-3 space-y-1">
+                  <span className="text-[11px] font-bold uppercase text-slate-400">Visualizações</span>
+                  <p className="text-xl font-black text-slate-800">{fmtInt(tc.views)}</p>
+                  <Delta cur={tc.views} prev={tp.views} />
+                  <Spark values={series.map((d) => d.views)} color="#0094eb" />
+                </div>
+                <div className="rounded-xl border border-slate-100 p-3 space-y-1">
+                  <span className="text-[11px] font-bold uppercase text-slate-400">Cliques</span>
+                  <p className="text-xl font-black text-slate-800">{fmtInt(tc.clicks)}</p>
+                  <Delta cur={tc.clicks} prev={tp.clicks} />
+                  <Spark values={series.map((d) => d.clicks)} color="#fd8539" />
+                </div>
+                <div className="rounded-xl border border-slate-100 p-3 space-y-1">
+                  <span className="text-[11px] font-bold uppercase text-slate-400">CTR</span>
+                  <p className="text-xl font-black text-slate-800">{fmtPct(tc.ctr)}</p>
+                  <Delta cur={tc.ctr} prev={tp.ctr} />
+                  <Spark values={series.map((d) => d.ctr)} color="#10b981" />
                 </div>
               </div>
-              <div className="space-y-3">
-                {pending.map((s) => (
-                  <div key={s.key} className="flex items-start justify-between gap-3 p-3 rounded-xl border border-amber-100 bg-amber-50/40">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-800">{s.title}</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{s.desc}</p>
-                    </div>
-                    <button type="button" onClick={s.onClick} className="shrink-0 px-3 py-1.5 rounded-lg bg-[#0094eb] hover:bg-[#0082cf] text-white text-[11px] font-bold cursor-pointer">
-                      {s.cta}
-                    </button>
-                  </div>
-                ))}
-              </div>
             </div>
-          ) : (
-            <div className="flex items-center gap-3 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl px-5 py-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-              <p className="text-sm font-semibold text-emerald-800">Loja 100% ativa</p>
-              <span className="text-xs text-emerald-700">Produtos, vídeos e script funcionando.</span>
-            </div>
-          ))}
 
-          {/* Desempenho dos videos */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
-            <CardTitle icon={Activity}>Desempenho dos vídeos</CardTitle>
-            <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 ${perfLoading ? 'opacity-50' : ''}`}>
-              <div className="rounded-xl border border-slate-100 p-3 space-y-1">
-                <span className="text-[11px] font-bold uppercase text-slate-400">Visualizações</span>
-                <p className="text-xl font-black text-slate-800">{fmtInt(tc.views)}</p>
-                <Delta cur={tc.views} prev={tp.views} />
-                <Spark values={series.map((d) => d.views)} color="#0094eb" />
+            {/* Videos mais vistos */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle icon={Trophy}>Vídeos mais vistos</CardTitle>
+                <button type="button" onClick={() => goTab('resultados', 'videos')} className="text-[11px] font-semibold text-[#0094eb] hover:underline cursor-pointer whitespace-nowrap">
+                  Ver mais métricas →
+                </button>
               </div>
-              <div className="rounded-xl border border-slate-100 p-3 space-y-1">
-                <span className="text-[11px] font-bold uppercase text-slate-400">Cliques</span>
-                <p className="text-xl font-black text-slate-800">{fmtInt(tc.clicks)}</p>
-                <Delta cur={tc.clicks} prev={tp.clicks} />
-                <Spark values={series.map((d) => d.clicks)} color="#fd8539" />
-              </div>
-              <div className="rounded-xl border border-slate-100 p-3 space-y-1">
-                <span className="text-[11px] font-bold uppercase text-slate-400">CTR</span>
-                <p className="text-xl font-black text-slate-800">{fmtPct(tc.ctr)}</p>
-                <Delta cur={tc.ctr} prev={tp.ctr} />
-                <Spark values={series.map((d) => d.ctr)} color="#10b981" />
-              </div>
+              {top3.length === 0 ? (
+                <p className="text-xs text-slate-500">{perfLoading ? 'Carregando...' : 'Nenhuma visualização no período selecionado.'}</p>
+              ) : (
+                <div className="space-y-2">
+                  {top3.map((v, idx) => (
+                    <div key={v.id} className="flex items-center gap-3 p-2 rounded-xl border border-slate-100">
+                      <span className="w-5 text-center text-xs font-black text-slate-400">{idx + 1}</span>
+                      {v.thumbnailUrl ? (
+                        <img src={v.thumbnailUrl} alt="" className="w-10 h-14 rounded-lg object-cover bg-slate-100 shrink-0" />
+                      ) : (
+                        <div className="w-10 h-14 rounded-lg bg-slate-100 shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-slate-800 truncate">{v.title}</p>
+                        <p className="text-[11px] text-slate-500">{fmtInt(v.views)} views · {fmtInt(v.clicks)} cliques</p>
+                      </div>
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700">CTR {fmtPct(v.ctr)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Top 3 videos */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
-            <CardTitle icon={Trophy}>Vídeos mais vistos</CardTitle>
-            {top3.length === 0 ? (
-              <p className="text-xs text-slate-500">{perfLoading ? 'Carregando...' : 'Nenhuma visualização no período selecionado.'}</p>
-            ) : (
-              <div className="space-y-2">
-                {top3.map((v, idx) => (
-                  <div key={v.id} className="flex items-center gap-3 p-2 rounded-xl border border-slate-100">
-                    <span className="w-5 text-center text-xs font-black text-slate-400">{idx + 1}</span>
-                    {v.thumbnailUrl ? (
-                      <img src={v.thumbnailUrl} alt="" className="w-10 h-14 rounded-lg object-cover bg-slate-100 shrink-0" />
-                    ) : (
-                      <div className="w-10 h-14 rounded-lg bg-slate-100 shrink-0" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-800 truncate">{v.title}</p>
-                      <p className="text-[11px] text-slate-500">{fmtInt(v.views)} views · {fmtInt(v.clicks)} cliques</p>
-                    </div>
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700">CTR {fmtPct(v.ctr)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Datas comerciais: na altura das duas colunas da esquerda, com rolagem interna */}
+          <div className="relative">
+            <div className="lg:absolute lg:inset-0">
+              <ProximasDatasComerciais />
+            </div>
           </div>
+        </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Dica da Academy */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-3">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm h-full flex flex-col justify-between gap-4">
             <CardTitle icon={GraduationCap}>Dica da Academy</CardTitle>
             <div>
               <p className="text-xs font-bold text-slate-800">{academyTip.title}</p>
@@ -609,13 +583,8 @@ export default function VisaoGeralTab() {
               Ver aulas no canal →
             </a>
           </div>
-        </div>
 
-        {/* Coluna Direita: Atividade Recente (Log do Painel) */}
-        <div className="space-y-6">
-        <ProximasDatasComerciais />
-          {/* Card Indique e Ganhe */}
-        <div className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
+          <div className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm h-full flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
             <CardTitle icon={DollarSign}>Indique e Ganhe</CardTitle>
             <Share2 className="w-4 h-4 text-slate-400" />
@@ -654,9 +623,7 @@ export default function VisaoGeralTab() {
             </div>
           </div>
         </div>
-
         </div>
-
       </div>
 
       {/* 5. Vidlytics Academy */}
