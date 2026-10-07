@@ -17,7 +17,7 @@ import {
 import { useLoja } from '@/contexts/LojaContext';
 import { VidlyticsDatabaseService, VidlyticsComment, VidlyticsCommentReply } from '@/services/vidlytics/VidlyticsDatabaseService';
 import { toast } from 'sonner';
-import { CommentAlertsToggle } from '@/components/alerts/CommentAlerts';
+import { CommentAlertsCard } from '@/components/alerts/CommentAlerts';
 
 interface ToastItem {
   id: string;
@@ -332,12 +332,11 @@ export const ComentariosTab: React.FC = () => {
         <p className="text-sm text-slate-500 mt-1">
           Gerencie a interação dos clientes nos seus stories, responda dúvidas e modere comentários públicos.
         </p>
-          <CommentAlertsToggle />
       </div>
 
       {/* Cards superiores */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-4 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#0094eb] flex items-center justify-center shrink-0">
               <ShieldCheck size={18} />
@@ -375,8 +374,11 @@ export const ComentariosTab: React.FC = () => {
             </button>
           </div>
         </div>
+        <CommentAlertsCard />
+      </div>
 
-        <div className="lg:col-span-8 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+      {/* Filtros & Busca */}
+      <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
               Filtros & Busca
@@ -436,7 +438,6 @@ export const ComentariosTab: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Loading */}
       {loading && (

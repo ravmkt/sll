@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MessageSquare, X } from 'lucide-react';
+import { Bell, MessageSquare, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
@@ -129,7 +129,7 @@ export function CommentAlertModal() {
   );
 }
 
-export function CommentAlertsToggle() {
+export function CommentAlertsCard() {
   const { storeId } = useLoja();
   const [on, setOn] = useState(true);
 
@@ -150,17 +150,45 @@ export function CommentAlertsToggle() {
   };
 
   return (
-    <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5">
-      <span className="text-xs font-semibold text-slate-600">Alertas de comentários sem resposta</span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        onClick={toggle}
-        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${on ? 'bg-[#0094eb]' : 'bg-slate-200'}`}
-      >
-        <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-4' : 'translate-x-0.5'}`} />
-      </button>
+    <div className="lg:col-span-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#0094eb] flex items-center justify-center shrink-0">
+          <Bell size={18} />
+        </div>
+        <div>
+          <h3 className="text-xs font-bold text-slate-800 tracking-wider uppercase">
+            Alertas de Comentários
+          </h3>
+          <p className="text-[11px] text-slate-400">Lembrete de comentários sem resposta</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+        <div>
+          <p className="text-xs font-semibold text-slate-700">
+            {on ? 'Alertas ativados' : 'Alertas desativados'}
+          </p>
+          <p className="text-[10px] text-slate-400">
+            {on ? 'Aviso ao entrar no sistema' : 'Você não será lembrado'}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={on}
+          onClick={toggle}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+            on ? 'bg-[#0094eb]' : 'bg-slate-200'
+          }`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+              on ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </div>
     </div>
   );
 }
