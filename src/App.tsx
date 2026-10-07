@@ -9,6 +9,8 @@ import { LojaProvider } from './contexts/LojaContext';
 import { OnboardingModal } from './components/OnboardingModal';
 import { CommentAlertModal } from './components/alerts/CommentAlerts';
 import { SubscriptionGate } from './components/auth/SubscriptionGate';
+import { AdminGuard } from '@/components/admin/AdminGuard';
+import AdminMasterPage from '@/pages/admin/AdminMasterPage';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -188,7 +190,11 @@ function AppRoutes() {
             )
           }
         />
-
+<Routes>
+  {/* ...suas rotas atuais... */}
+  <Route path="/admin-master" element={<AdminGuard><AdminMasterPage /></AdminGuard>} />
+  <Route path="*" element={<NotFound />} />
+</Routes>
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     </Suspense>
