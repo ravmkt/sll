@@ -30,6 +30,7 @@ export const STATUS_LABEL: Record<string, string> = {
   trialing: 'Trial',
   past_due: 'Inadimplente',
   canceled: 'Cancelado',
+  lifetime: 'Vitalício',
 };
 
 export const CYCLE_LABEL: Record<string, string> = {

@@ -17,6 +17,7 @@ const FILTERS = [
   { value: 'trialing', label: 'Trial' },
   { value: 'past_due', label: 'Inadimplente' },
   { value: 'canceled', label: 'Cancelado' },
+  { value: 'lifetime', label: 'Vitalício' },
   { value: 'none', label: 'Sem assinatura' },
 ];
 const BADGE: Record<string, string> = {
@@ -24,6 +25,7 @@ const BADGE: Record<string, string> = {
   trialing: 'bg-sky-100 text-sky-700',
   past_due: 'bg-amber-100 text-amber-700',
   canceled: 'bg-red-100 text-red-700',
+  lifetime: 'bg-violet-100 text-violet-700',
 };
 
 const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString('pt-BR') : '—');
