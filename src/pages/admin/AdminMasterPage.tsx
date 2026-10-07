@@ -10,6 +10,7 @@ import {
   type AdminXray,
 } from '@/services/admin/adminMaster';
 import ModuleAccessPanel from '@/components/admin/ModuleAccessPanel';
+import PlansManager from '@/components/admin/PlansManager';
 
 const PAGE = 25;
 const FILTERS = [
@@ -155,7 +156,7 @@ function XrayDrawer({ storeId, onClose }: { storeId: string; onClose: () => void
   );
 }
 
-export default function AdminMasterPage() {
+function StoresTab() {
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
   const [status, setStatus] = useState('');
@@ -265,5 +266,21 @@ export default function AdminMasterPage() {
 
       {selected && <XrayDrawer storeId={selected} onClose={() => setSelected(null)} />}
     </div>
+  );
+}
+
+export default function AdminMasterPage() {
+  const [tab, setTab] = useState<'stores' | 'plans'>('stores');
+  const base = 'rounded-lg px-4 py-2 text-sm font-medium';
+  const on = 'bg-sky-600 text-white';
+  const off = 'bg-slate-100 text-slate-700';
+  return (
+    <>
+      <div className="mx-auto flex max-w-6xl gap-2 px-6 pt-6">
+        <button type="button" onClick={() => setTab('stores')} className={`${base} ${tab === 'stores' ? on : off}`}>Lojistas</button>
+        <button type="button" onClick={() => setTab('plans')} className={`${base} ${tab === 'plans' ? on : off}`}>Planos</button>
+      </div>
+      {tab === 'stores' ? <StoresTab /> : <PlansManager />}
+    </>
   );
 }
