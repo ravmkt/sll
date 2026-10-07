@@ -9,6 +9,7 @@ import {
   type AdminStoreRow,
   type AdminXray,
 } from '@/services/admin/adminMaster';
+import ModuleAccessPanel from '@/components/admin/ModuleAccessPanel';
 
 const PAGE = 25;
 const FILTERS = [
@@ -127,6 +128,8 @@ function XrayDrawer({ storeId, onClose }: { storeId: string; onClose: () => void
               </p>
               <p className="text-slate-600">Renovação: {fmtDate(data.store.period_end)}</p>
             </section>
+
+            <ModuleAccessPanel storeId={storeId} />
 
             <section className="space-y-3 rounded-lg border p-3">
               <p className="font-semibold text-slate-900">Consumo (Vidlytics)</p>
