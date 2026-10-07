@@ -12,6 +12,7 @@ interface RequestBody {
   plan_id: string;
   billing_cycle: "MONTHLY" | "SEMIANNUAL" | "YEARLY";
   module_key?: string | null;
+  coupon_code?: string | null;
 }
 
 const CYCLE_MAP: Record<string, string> = {
@@ -28,6 +29,12 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 Deno.serve(async (req) => {
+  let reservedCouponId: string | null = null;
+  const release = async () => {
+    if (!reservedCouponId) return;
+    await supabaseAdmin.rpc("release_coupon", { p_coupon_id: reservedCouponId });
+    reservedCouponId = null;
+  };
   try {
     if (req.method !== "POST") {
       return jsonResponse({ error: "METHOD_NOT_ALLOWED" }, 405);
@@ -46,7 +53,7 @@ Deno.serve(async (req) => {
     }
 
     const body: RequestBody = await req.json();
-    const { store_id, plan_id, billing_cycle, module_key } = body;
+    const { store_id, plan_id, billing_cycle, module_key, coupon_code } = body;
 
     if (!store_id || !plan_id || !billing_cycle) {
       return jsonResponse({ error: "CAMPOS_OBRIGATORIOS_FALTANTES" }, 400);
@@ -104,7 +111,34 @@ Deno.serve(async (req) => {
       priceCents = priceRow.price_cents;
     }
 
-    const value = priceCents / 100;
+    let discountCents = 0;
+    if (coupon_code && coupon_code.trim()) {
+      const { data: v, error: vErr } = await supabaseAdmin.rpc("validate_coupon", {
+        p_code: coupon_code.trim(),
+        p_plan_id: plan_id,
+      });
+      if (vErr || !v?.valid) {
+        return jsonResponse({ error: "CUPOM_INVALIDO", reason: v?.reason ?? "erro_validacao" }, 400);
+      }
+      discountCents =
+        v.type === "percentage"
+          ? Math.round((priceCents * Number(v.value)) / 100)
+          : Number(v.value);
+      discountCents = Math.min(Math.max(discountCents, 0), priceCents);
+      if (priceCents - discountCents < 500) {
+        return jsonResponse(
+          { error: "CUPOM_VALOR_MINIMO", message: "O valor final ficaria abaixo do mínimo de R$ 5,00." },
+          400
+        );
+      }
+      const { data: redeemed } = await supabaseAdmin.rpc("redeem_coupon", { p_coupon_id: v.coupon_id });
+      if (redeemed !== true) {
+        return jsonResponse({ error: "CUPOM_INVALIDO", reason: "exhausted" }, 400);
+      }
+      reservedCouponId = v.coupon_id;
+    }
+
+    const value = (priceCents - discountCents) / 100;
     const asaasCycle = CYCLE_MAP[billing_cycle] ?? "MONTHLY";
 
     // 5. Reaproveita asaas_customer_id se já existir para esta loja
@@ -139,6 +173,7 @@ Deno.serve(async (req) => {
 
       const customerData = await customerRes.json();
       if (!customerRes.ok) {
+        await release();
         return jsonResponse({ error: "ASAAS_CUSTOMER_ERROR", details: customerData }, 400);
       }
       asaasCustomerId = customerData.id;
@@ -164,6 +199,7 @@ Deno.serve(async (req) => {
 
     const subData = await subRes.json();
     if (!subRes.ok) {
+      await release();
       return jsonResponse({ error: "ASAAS_SUBSCRIPTION_ERROR", details: subData }, 400);
     }
 
@@ -198,17 +234,21 @@ Deno.serve(async (req) => {
         asaas_customer_id: asaasCustomerId,
         asaas_subscription_id: subData.id,
         billing_provider: "asaas",
+        coupon_id: reservedCouponId,
+        coupon_discount_cents: discountCents > 0 ? discountCents : null,
         is_current: true,
       })
       .select()
       .single();
 
     if (dbError) {
+      await release();
       return jsonResponse({ error: "DB_ERROR", details: dbError }, 500);
     }
 
-    return jsonResponse({ success: true, subscription: savedSub, invoice_url: invoiceUrl });
+    return jsonResponse({ success: true, subscription: savedSub, invoice_url: invoiceUrl, discount_cents: discountCents });
   } catch (err) {
+    await release();
     return jsonResponse({ error: "UNEXPECTED_ERROR", details: String(err) }, 500);
   }
 });
