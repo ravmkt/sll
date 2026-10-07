@@ -443,23 +443,6 @@ export default function VisaoGeralTab() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           
-          {/* Card: Vendas Pagas */}
-          <div data-card-tip="Soma dos pedidos com pagamento confirmado e atribuídos aos seus vídeos no período selecionado." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold uppercase text-slate-400">Vendas Pagas</span>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700">{paid.orders} {paid.orders === 1 ? 'Pedido' : 'Pedidos'}</span>
-              </div>
-              <p className={`text-2xl font-black text-slate-800 ${paidLoading ? 'opacity-50' : ''}`}>{formatCurrency(paid.revenue)}</p>
-              <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-                Faturamento confirmado →
-              </span>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
-              <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-            </div>
-          </div>
-
           {/* Card: Aguardando Pagamento */}
           <div data-card-tip="Pedidos iniciados a partir dos seus vídeos que ainda não tiveram o pagamento confirmado." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
             <div className="space-y-1">
@@ -469,7 +452,7 @@ export default function VisaoGeralTab() {
               </div>
               <p className="text-2xl font-black text-slate-800">{formatCurrency(0)}</p>
               <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-                Pix / Boleto pendente →
+                Pix / Boleto pendente
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0">
@@ -477,8 +460,25 @@ export default function VisaoGeralTab() {
             </div>
           </div>
 
+          {/* Card: Vendas Pagas */}
+          <div data-card-tip="Soma dos pedidos com pagamento confirmado e atribuídos aos seus vídeos no período selecionado." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase text-slate-400">Vendas Pagas</span>
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700">{paid.orders} {paid.orders === 1 ? 'Pedido' : 'Pedidos'}</span>
+              </div>
+              <p className={`text-2xl font-black text-slate-800 ${paidLoading ? 'opacity-50' : ''}`}>{formatCurrency(paid.revenue)}</p>
+              <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
+                Faturamento confirmado
+              </span>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+            </div>
+          </div>
+
           {/* Card: Faturamento Indicações */}
-          <div data-card-tip="Comissões disponíveis das lojas que você indicou. Veja os detalhes em Indica & Ganha." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
+          <div data-card-tip="Comissões disponíveis das lojas que você indicou. Veja os detalhes em Clube SLL." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase text-slate-400">Faturamento Indicações</span>
@@ -487,9 +487,7 @@ export default function VisaoGeralTab() {
                 </span>
               </div>
               <p className="text-2xl font-black text-slate-800">{formatCurrency(affiliateSummary?.available_balance || 0)}</p>
-              <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-                Ver detalhes no Indica & Ganha →
-              </span>
+              <button type="button" onClick={(e) => { e.stopPropagation(); navigate('/dashboard/afiliados'); }} className="mt-1 inline-flex items-center px-3 py-1 rounded-lg bg-[#0094eb] hover:bg-[#007acc] text-white text-[11px] font-bold transition-colors cursor-pointer">Acessar o Clube SLL</button>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
               <DollarSign className="w-6 h-6 text-[#0094eb]" />
@@ -651,7 +649,7 @@ export default function VisaoGeralTab() {
 
           <div className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm h-full flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
-            <img src="/assets/clube-sll-b.png" alt="Indique e Ganhe" className="h-8 w-auto object-contain" />
+            <img src="/assets/clube-sll-b.png" alt="Clube SLL" className="h-8 w-auto object-contain" />
             <Share2 className="w-4 h-4 text-slate-400" />
           </div>
 

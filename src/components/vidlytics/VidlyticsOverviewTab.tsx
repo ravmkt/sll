@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Eye,
   DollarSign,
@@ -583,7 +583,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
               <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#0094eb] dark:bg-[#fd8539] text-white">
                 <DollarSign size={16} className="stroke-[2.5]" />
               </div>
-              <h4 className="text-sm font-black text-slate-900 dark:text-white">Indique e Ganhe</h4>
+              <h4 className="text-sm font-black text-slate-900 dark:text-white">Clube SLL</h4>
             </div>
             <Share2 size={15} className="text-slate-400" />
           </div>
