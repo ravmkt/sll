@@ -1,3 +1,4 @@
+import { useEffect as useEffectGoto } from 'react';
 import { AppFooter } from '@/components/layout/AppFooter';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -20,6 +21,22 @@ export default function Vidlytics() {
   useEffect(() => {
     localStorage.removeItem('sll_vidlytics_active_tab');
   }, []);
+
+  useEffectGoto(() => {
+    const onGoto = (e: Event) => {
+      const d: any = (e as CustomEvent).detail;
+      const tab = typeof d === 'string' ? d : d?.tab;
+      const valid = ['visao-geral', 'resultados', 'stories', 'biblioteca', 'comentarios', 'aparencia'];
+      if (!valid.includes(tab)) return;
+      if (tab === 'resultados') {
+        try { sessionStorage.setItem('vidlytics_results_sub', (d && typeof d === 'object' && d.sub) || 'insights'); } catch {}
+      }
+      handleTabChange(tab as VidlyticsTab);
+      window.scrollTo({ top: 0 });
+    };
+    window.addEventListener('vidlytics:goto-tab', onGoto);
+    return () => window.removeEventListener('vidlytics:goto-tab', onGoto);
+  });
 
   const handleTabChange = (newTab: VidlyticsTab) => {
     setActiveTab(newTab);

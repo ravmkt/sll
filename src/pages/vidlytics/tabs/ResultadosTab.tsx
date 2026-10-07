@@ -134,7 +134,7 @@ export default function ResultadosTab() {
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
-  const [subTab, setSubTab] = useState<SubTab>('visao-geral');
+  const [subTab, setSubTab] = useState<SubTab>(() => { try { const s = sessionStorage.getItem('vidlytics_results_sub'); if (s) { sessionStorage.removeItem('vidlytics_results_sub'); if (['visao-geral','videos','retencao','insights'].includes(s)) return s as SubTab; } } catch {} return 'visao-geral'; });
   const [periodo, setPeriodo] = useState<PeriodoKey>('30');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
