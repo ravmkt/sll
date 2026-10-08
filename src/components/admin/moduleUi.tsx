@@ -27,7 +27,7 @@ export function Kpi({ label, value, tone }: { label: string; value: ReactNode; t
 export function ModuleLogo({ url, name, size = 40 }: { url: string | null; name: string; size?: number }) {
   const style = { width: size, height: size };
   return url ? (
-    <img src={url} alt={name} style={style} className="shrink-0 rounded-xl bg-white/5 object-contain" />
+    <img src={url} alt={name} style={style} className="shrink-0 rounded-xl bg-white object-contain p-1" />
   ) : (
     <div style={style} className="flex shrink-0 items-center justify-center rounded-xl bg-[#fd8539]/15 text-sm font-black text-[#fd8539]">
       {(name || '?').charAt(0).toUpperCase()}
