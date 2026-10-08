@@ -20,8 +20,8 @@ export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: 
     <div className="flex min-h-screen bg-[#0b0e1a] font-sans text-slate-200">
       <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-slate-800 bg-[#0f1322]">
         <div className="flex h-16 items-center gap-2.5 border-b border-slate-800 px-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0094eb] to-[#fd8539]">
-            <ShieldCheck className="h-5 w-5 text-white" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fd8539]/15">
+            <ShieldCheck className="h-5 w-5 text-[#fd8539]" />
           </div>
           <div>
             <p className="text-sm font-black leading-tight text-white">SLL Master</p>
@@ -42,7 +42,7 @@ export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: 
                   on ? 'bg-[#0094eb] font-semibold text-white shadow-md shadow-[#0094eb]/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Icon size={18} className="shrink-0" />
+                <Icon size={18} className="shrink-0 text-[#fd8539]" />
                 {it.label}
               </button>
             );
@@ -55,7 +55,7 @@ export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: 
             onClick={() => navigate('/dashboard')}
             className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
           >
-            <ArrowLeft size={18} className="shrink-0" />
+            <ArrowLeft size={18} className="shrink-0 text-[#fd8539]" />
             Voltar ao SLL
           </button>
         </div>

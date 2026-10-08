@@ -283,6 +283,12 @@ Deno.serve(async (req) => {
       .single();
 
     if (dbError) {
+      try {
+        await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}`, {
+          method: "DELETE",
+          headers: { access_token: ASAAS_API_KEY },
+        });
+      } catch (_) { /* melhor esforco */ }
       await release();
       return jsonResponse({ error: "DB_ERROR", details: dbError }, 500);
     }

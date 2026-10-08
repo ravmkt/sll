@@ -20,7 +20,7 @@ export default function AdminMasterPage() {
         <DashboardTab />
       ) : (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-[#111524] py-24 text-center">
-          <Construction className="mb-3 h-9 w-9 text-slate-600" />
+          <Construction className="mb-3 h-9 w-9 text-[#fd8539]" />
           <h2 className="text-lg font-bold text-white">{SOON[tab].title}</h2>
           <p className="mt-1 text-sm text-slate-500">Em construção ({SOON[tab].etapa}).</p>
         </div>

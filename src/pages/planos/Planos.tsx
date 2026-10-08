@@ -16,6 +16,11 @@ import {
 import { PlanCard } from "@/components/planos/PlanCard";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
+const ERROR_MESSAGES: Record<string, string> = {
+  MODULE_ALREADY_SUBSCRIBED: "Voc\u00ea j\u00e1 possui este m\u00f3dulo ativo na sua loja.",
+  DB_ERROR: "N\u00e3o foi poss\u00edvel registrar a assinatura. Tente novamente.",
+};
+
 type BillingCycle = "monthly" | "semiannual" | "yearly";
 type TabKey = "individual" | "objective" | "total";
 
@@ -59,7 +64,7 @@ export default function Planos() {
     setSubscribingId(null);
 
     if (result.error) {
-      toast.error(result.error === "SESSAO_EXPIRADA" ? "Sessão expirada. Faça login novamente." : result.error);
+      toast.error(result.error === "SESSAO_EXPIRADA" ? "Sessão expirada. Faça login novamente." : (ERROR_MESSAGES[result.error] ?? result.error));
       return;
     }
     if (result.invoiceUrl) {

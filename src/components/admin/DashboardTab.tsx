@@ -39,11 +39,11 @@ const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-xs
 const TOOLTIP = { background: '#0b0e1a', border: '1px solid #1e293b', borderRadius: 12, color: '#e2e8f0', fontSize: 12 };
 
 const TONES: Record<string, string> = {
-  blue: 'bg-[#0094eb]/15 text-[#0094eb]',
-  green: 'bg-emerald-500/15 text-emerald-400',
-  red: 'bg-rose-500/15 text-rose-400',
+  blue: 'bg-[#fd8539]/15 text-[#fd8539]',
+  green: 'bg-[#fd8539]/15 text-[#fd8539]',
+  red: 'bg-[#fd8539]/15 text-[#fd8539]',
   orange: 'bg-[#fd8539]/15 text-[#fd8539]',
-  slate: 'bg-slate-500/15 text-slate-300',
+  slate: 'bg-[#fd8539]/15 text-[#fd8539]',
 };
 
 function Metric({ label, value, hint, icon: Icon, tone }: { label: string; value: string; hint?: string; icon: ElementType; tone: keyof typeof TONES }) {
@@ -176,7 +176,7 @@ export default function DashboardTab() {
             <option value="">Todos os módulos</option>
             {mods.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
           </select>
-          {loading && <Loader2 className="h-4 w-4 animate-spin text-slate-500" />}
+          {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
         </div>
       </div>
 
