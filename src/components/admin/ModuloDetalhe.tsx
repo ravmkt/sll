@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Flag, ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import ModulePlansCard from '@/components/admin/ModulePlansCard';
 import {
   getModuleStores, getModulesOverview, updateHubModule, uploadModuleLogo,
   type ModuleOverview, type ModuleStoreRow,
@@ -12,8 +13,8 @@ import {
 const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
 const LABEL = 'text-[10px] font-bold uppercase tracking-wider text-slate-500';
 
-export default function ModuloDetalhe({ slug, onBack, onOpenStore }: {
-  slug: string; onBack: () => void; onOpenStore: (id: string) => void;
+export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }: {
+  slug: string; onBack: () => void; onOpenStore: (id: string) => void; onOpenPlans: (slug: string) => void;
 }) {
   const [days, setDays] = useState(30);
   const [m, setM] = useState<ModuleOverview | null>(null);
@@ -222,6 +223,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore }: {
               </button>
             </div>
 
+            <ModulePlansCard slug={slug} onManage={() => onOpenPlans(slug)} />
             <div className={`${CARD} space-y-2`}>
               <p className="flex items-center gap-2 text-sm font-bold text-white"><Flag size={14} className="text-[#fd8539]" /> Feature flags</p>
               <p className="text-xs text-slate-500">Em breve: liberar funcionalidades beta para lojas específicas antes do lançamento geral.</p>

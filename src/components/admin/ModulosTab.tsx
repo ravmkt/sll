@@ -6,7 +6,7 @@ import { CARD, SELECT, STATUS_LABEL, ModuleLogo, brl, int } from '@/components/a
 
 const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
 
-export default function ModulosTab({ onOpenStore }: { onOpenStore: (id: string) => void }) {
+export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: (id: string) => void; onOpenPlans: (slug: string) => void }) {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<ModulesData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +29,7 @@ export default function ModulosTab({ onOpenStore }: { onOpenStore: (id: string) 
         slug={selected}
         onBack={() => { setSelected(null); load(); }}
         onOpenStore={onOpenStore}
+        onOpenPlans={onOpenPlans}
       />
     );
   }
