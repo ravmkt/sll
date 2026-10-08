@@ -103,6 +103,15 @@ function Chart({ title, data, gran, color, money }: { title: string; data: Serie
   );
 }
 
+function PieTip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={TOOLTIP} className="px-3 py-2">
+      <p className="text-xs font-bold text-white">{payload[0].name}</p>
+      <p className="text-xs text-slate-300">{payload[0].value} loja(s)</p>
+    </div>
+  );
+}
 export default function DashboardTab() {
   const [periodo, setPeriodo] = useState<Periodo>('30');
   const [cs, setCs] = useState(() => ymd(addDays(new Date(), -29)));
@@ -229,7 +238,7 @@ export default function DashboardTab() {
                         <Pie data={pie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2} stroke="none">
                           {pie.map((p) => <Cell key={p.name} fill={p.color} />)}
                         </Pie>
-                        <Tooltip contentStyle={TOOLTIP} itemStyle={ITEM} labelStyle={ITEM} formatter={(v: any, n: any) => [`${v} loja(s)`, n]} />
+                        <Tooltip content={<PieTip />} />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
@@ -253,7 +262,7 @@ export default function DashboardTab() {
                         <Pie data={modPie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2} stroke="none">
                           {modPie.map((p) => <Cell key={p.name} fill={p.color} />)}
                         </Pie>
-                        <Tooltip contentStyle={TOOLTIP} itemStyle={ITEM} labelStyle={ITEM} formatter={(v: any) => [`${v} loja(s)`, 'Assinantes']} />
+                        <Tooltip content={<PieTip />} />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
