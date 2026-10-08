@@ -36,6 +36,7 @@ const bytes = (b: number) => {
 
 const CARD = 'rounded-2xl border border-slate-800 bg-[#111524] p-4';
 const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-xs text-slate-200 outline-none focus:border-[#0094eb]';
+const ITEM = { color: '#e2e8f0', fontSize: 12 };
 const TOOLTIP = { background: '#0b0e1a', border: '1px solid #1e293b', borderRadius: 12, color: '#e2e8f0', fontSize: 12 };
 
 const TONES: Record<string, string> = {
@@ -90,7 +91,7 @@ function Chart({ title, data, gran, color, money }: { title: string; data: Serie
               tickFormatter={(v) => (money ? `R$ ${Math.round(Number(v) / 100)}` : int(Number(v)))}
             />
             <Tooltip
-              contentStyle={TOOLTIP}
+              contentStyle={TOOLTIP} itemStyle={ITEM} labelStyle={ITEM}
               formatter={(v: any) => [money ? brl(Number(v)) : int(Number(v)), title]}
             />
             <Area type="monotone" dataKey="v" stroke={color} strokeWidth={2.5} fill={`url(#${gid})`} />
@@ -141,7 +142,7 @@ export default function DashboardTab() {
     getModulesDistribution().then(setModDist).catch(() => setModDist([]));
   }, []);
 
-  const MOD_COLORS = ['#fd8539', '#0094eb', '#10b981', '#a855f7', '#f43f5e', '#eab308'];
+  const MOD_COLORS = ['#fd8539', '#0094eb', '#10b981', '#a855f7', '#f43f5e', '#eab308', '#06b6d4', '#ec4899', '#84cc16', '#6366f1', '#14b8a6', '#f97316'];
   const modPie = modDist.map((m, i) => ({ name: m.name, value: m.stores, color: MOD_COLORS[i % MOD_COLORS.length] }));
 
   const s = data?.stores;
@@ -228,7 +229,7 @@ export default function DashboardTab() {
                         <Pie data={pie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2} stroke="none">
                           {pie.map((p) => <Cell key={p.name} fill={p.color} />)}
                         </Pie>
-                        <Tooltip contentStyle={TOOLTIP} />
+                        <Tooltip contentStyle={TOOLTIP} itemStyle={ITEM} labelStyle={ITEM} formatter={(v: any, n: any) => [`${v} loja(s)`, n]} />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
@@ -252,7 +253,7 @@ export default function DashboardTab() {
                         <Pie data={modPie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2} stroke="none">
                           {modPie.map((p) => <Cell key={p.name} fill={p.color} />)}
                         </Pie>
-                        <Tooltip contentStyle={TOOLTIP} formatter={(v: any) => [`${v} loja(s)`, 'Assinantes']} />
+                        <Tooltip contentStyle={TOOLTIP} itemStyle={ITEM} labelStyle={ITEM} formatter={(v: any) => [`${v} loja(s)`, 'Assinantes']} />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
