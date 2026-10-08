@@ -5,7 +5,14 @@ export type MktLocation = 'all' | 'home' | 'vidlytics' | 'live';
 export type MktAudience = 'all' | 'past_due' | 'trial';
 export type MktFrequency = 'once' | 'session' | 'daily' | 'always';
 
+export interface MktSlide {
+  image_url: string;
+  starts_at: string | null;
+  ends_at: string | null;
+}
+
 export interface MktDraft {
+  slides?: MktSlide[];
   id?: string;
   kind: MktKind;
   title: string;
@@ -64,7 +71,10 @@ export async function listItems(kind?: MktKind): Promise<MktItem[]> {
 
 export async function saveItem(d: MktDraft): Promise<string> {
   const { id, ...rest } = d;
-  const { data, error } = await supabase.rpc('admin_marketing_save', { p_id: id ?? null, p_data: rest });
+  const slides = (rest.slides ?? []).filter((s) => s.image_url);
+  const hasSlides = d.kind === 'banner' && Array.isArray(d.slides);
+  const payload = { ...rest, slides, image_url: hasSlides ? (slides[0]?.image_url ?? '') : rest.image_url };
+  const { data, error } = await supabase.rpc('admin_marketing_save', { p_id: id ?? null, p_data: payload });
   if (error) throw error;
   return data as string;
 }

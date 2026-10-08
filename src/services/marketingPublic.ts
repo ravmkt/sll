@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 export interface ActiveItem {
   id: string;
   kind: 'banner' | 'popup';
+  slide?: number;
   title: string;
   body: string | null;
   image_url: string | null;

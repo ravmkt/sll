@@ -35,8 +35,8 @@ export default function MarketingBanner({ storeId, location, onActive }: { store
   }, [total, paused]);
 
   useEffect(() => {
-    if (!item || !storeId || counted.current.has(item.id)) return;
-    counted.current.add(item.id);
+    if (!item || !storeId || counted.current.has(item.id + ':' + (item.slide ?? 0))) return;
+    counted.current.add(item.id + ':' + (item.slide ?? 0));
     track(item.id, storeId, 'impression');
   }, [item, storeId]);
 
@@ -78,7 +78,7 @@ export default function MarketingBanner({ storeId, location, onActive }: { store
           <button type="button" aria-label="Próximo banner" onClick={next} className={arrow + ' right-2'}><ChevronRight className="w-5 h-5" /></button>
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
             {items.map((b, n) => (
-              <button key={b.id} type="button" aria-label={'Banner ' + (n + 1)} onClick={() => setIdx(n)}
+              <button key={b.id + ':' + n} type="button" aria-label={'Banner ' + (n + 1)} onClick={() => setIdx(n)}
                 className={'h-1.5 rounded-full transition-all ' + (n === idx ? 'w-5 bg-white' : 'w-1.5 bg-white/50')} />
             ))}
           </div>

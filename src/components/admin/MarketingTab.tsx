@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Megaphone, Plus, Trash2, Pencil, Pause, Play, Mail, MessageCircle, Tag, X, BarChart3, Image as ImageIcon, LayoutTemplate } from 'lucide-react';
 import {
   AUDIENCE_LABEL, FREQUENCY_LABEL, LOCATION_LABEL, deleteItem, emptyDraft, getMetrics, listItems, saveItem,
-  type MktAudience, type MktCounts, type MktDraft, type MktFrequency, type MktItem, type MktKind, type MktLocation, type MktMetrics,
+  type MktAudience, type MktCounts, type MktSlide, type MktDraft, type MktFrequency, type MktItem, type MktKind, type MktLocation, type MktMetrics,
 } from '@/services/admin/marketingAdmin';
 import { saveCoupon } from '@/services/admin/couponsAdmin';
 
@@ -122,6 +122,61 @@ function DateTimeField({ label, value, onChange }: { label: string; value: strin
   );
 }
 
+const blankSlide = (): MktSlide => ({ image_url: '', starts_at: null, ends_at: null });
+
+const newDraft = (kind: MktKind): MktDraft => ({ ...emptyDraft(kind), slides: kind === 'banner' ? [blankSlide()] : [] });
+
+const editDraft = (i: MktItem): MktDraft => {
+  const slides = i.slides ?? [];
+  if (i.kind === 'banner' && slides.length === 0 && i.image_url) {
+    return { ...i, slides: [{ image_url: i.image_url, starts_at: null, ends_at: null }] };
+  }
+  return { ...i, slides };
+};
+
+function SlidesEditor({ slides, onChange }: { slides: MktSlide[]; onChange: (s: MktSlide[]) => void }) {
+  const [same, setSame] = useState(() => slides.every((s) => s.starts_at === slides[0]?.starts_at && s.ends_at === slides[0]?.ends_at));
+
+  const setImage = (idx: number, url: string) => onChange(slides.map((s, n) => (n === idx ? { ...s, image_url: url } : s)));
+  const setDates = (idx: number, p: Partial<MktSlide>) => onChange(slides.map((s, n) => (n === idx || same ? { ...s, ...p } : s)));
+  const toggleSame = (v: boolean) => {
+    setSame(v);
+    if (v && slides.length > 1) onChange(slides.map((s) => ({ ...s, starts_at: slides[0].starts_at, ends_at: slides[0].ends_at })));
+  };
+  const add = () => onChange([...slides, same && slides.length ? { image_url: '', starts_at: slides[0].starts_at, ends_at: slides[0].ends_at } : blankSlide()]);
+  const remove = (idx: number) => onChange(slides.filter((_, n) => n !== idx));
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <label className={labelCls + ' !mb-0'}>Imagens do banner</label>
+        <label className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+          <input type="checkbox" checked={same} onChange={(e) => toggleSame(e.target.checked)} /> Usar as mesmas datas em todas
+        </label>
+      </div>
+      {slides.map((s, idx) => (
+        <div key={idx} className="rounded-lg border border-slate-800 bg-slate-950/50 p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Imagem {idx + 1} de {slides.length}</p>
+            {slides.length > 1 && (
+              <button type="button" onClick={() => remove(idx)} className="text-[11px] font-semibold text-rose-400 hover:text-rose-300">Remover</button>
+            )}
+          </div>
+          <ImageUpload kind="banner" value={s.image_url} onChange={(u) => setImage(idx, u)} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <DateTimeField label="Início da imagem" value={s.starts_at} onChange={(x) => setDates(idx, { starts_at: x })} />
+            <DateTimeField label="Fim da imagem" value={s.ends_at} onChange={(x) => setDates(idx, { ends_at: x })} />
+          </div>
+        </div>
+      ))}
+      <button type="button" onClick={add} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border border-slate-700 text-slate-200 hover:bg-slate-800">
+        <Plus className="w-4 h-4" /> Adicionar imagem
+      </button>
+      <p className="text-[11px] text-slate-500">Cada imagem só aparece no carrossel dentro do período dela e do período geral do banner.</p>
+    </div>
+  );
+}
+
 function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
   draft: MktDraft; onChange: (d: MktDraft) => void; onCancel: () => void; onSave: () => void; saving: boolean;
 }) {
@@ -137,7 +192,11 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
           <input className={inputCls} value={draft.title} onChange={(e) => set('title', e.target.value)} /></div>
         <div className="md:col-span-2"><label className={labelCls}>Texto</label>
           <textarea className={inputCls} rows={2} value={draft.body} onChange={(e) => set('body', e.target.value)} /></div>
-        <ImageUpload kind={draft.kind} value={draft.image_url} onChange={(u) => set('image_url', u)} />
+        {draft.kind === 'banner' ? (
+              <div className="md:col-span-2"><SlidesEditor key={draft.id ?? 'novo'} slides={draft.slides ?? []} onChange={(s) => set('slides', s)} /></div>
+            ) : (
+              <ImageUpload kind={draft.kind} value={draft.image_url} onChange={(u) => set('image_url', u)} />
+            )}
         <div><label className={labelCls}>Cupom (opcional)</label>
           <input className={inputCls} value={draft.coupon_code} onChange={(e) => set('coupon_code', e.target.value)} placeholder="BLACK10" /></div>
         <div><label className={labelCls}>Texto do botão</label>
@@ -194,7 +253,7 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
     finally { setSaving(false); }
   };
   const toggle = async (i: MktItem) => {
-    try { await saveItem({ ...i, is_active: !i.is_active }); load(); } catch (e: any) { setErr(e?.message || 'Erro'); }
+    try { await saveItem(editDraft({ ...i, is_active: !i.is_active })); load(); } catch (e: any) { setErr(e?.message || 'Erro'); }
   };
   const remove = async (id: string) => {
     if (confirmId !== id) { setConfirmId(id); return; }
@@ -206,7 +265,7 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-100">{kind === 'banner' ? 'Banners' : 'Popups'}</h2>
         {!draft && (
-          <button type="button" onClick={() => setDraft(emptyDraft(kind))}
+          <button type="button" onClick={() => setDraft(newDraft(kind))}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 hover:bg-amber-400">
             <Plus className="w-4 h-4" /> Novo {kind === 'banner' ? 'banner' : 'popup'}
           </button>
@@ -237,7 +296,7 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
                 <button type="button" title={i.is_active ? 'Pausar' : 'Ativar'} onClick={() => toggle(i)} className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
                   {i.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                 </button>
-                <button type="button" title="Editar" onClick={() => setDraft({ ...i })} className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
+                <button type="button" title="Editar" onClick={() => setDraft(editDraft(i))} className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
                   <Pencil className="w-4 h-4" />
                 </button>
                 <button type="button" title="Excluir" onClick={() => remove(i.id)}
