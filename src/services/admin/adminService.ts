@@ -27,3 +27,11 @@ export async function listModules(): Promise<{ slug: string; name: string }[]> {
   if (error) throw error;
   return data || [];
 }
+
+export type ModuleSlice = { module: string; name: string; stores: number };
+
+export async function getModulesDistribution(): Promise<ModuleSlice[]> {
+  const { data, error } = await sb.rpc('admin_modules_distribution');
+  if (error) throw error;
+  return (data || []) as ModuleSlice[];
+}

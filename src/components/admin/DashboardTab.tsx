@@ -6,7 +6,7 @@ import {
 import {
   AlertTriangle, Banknote, Database, Eye, HardDrive, Hourglass, Loader2, Store, TrendingUp, UserCheck, Zap,
 } from 'lucide-react';
-import { getDashboard, listModules, type DashboardData, type SeriesPoint } from '@/services/admin/adminService';
+import { getDashboard, getModulesDistribution, listModules, type DashboardData, type ModuleSlice, type SeriesPoint } from '@/services/admin/adminService';
 
 type Periodo = 'today' | '7' | '30' | '90' | 'custom';
 
@@ -68,9 +68,10 @@ function Chart({ title, data, gran, color, money }: { title: string; data: Serie
   });
   const gid = `g-${color.replace('#', '')}`;
   return (
-    <div className={CARD}>
+    <div className={`${CARD} flex flex-col`}>
       <p className="mb-3 text-sm font-bold text-white">{title}</p>
-      <div className="h-56">
+      <div className="relative min-h-[14rem] flex-1">
+        <div className="absolute inset-0">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
@@ -95,6 +96,7 @@ function Chart({ title, data, gran, color, money }: { title: string; data: Serie
             <Area type="monotone" dataKey="v" stroke={color} strokeWidth={2.5} fill={`url(#${gid})`} />
           </AreaChart>
         </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
@@ -132,6 +134,15 @@ export default function DashboardTab() {
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [range.start, range.end, module]);
+
+  const [modDist, setModDist] = useState<ModuleSlice[]>([]);
+
+  useEffect(() => {
+    getModulesDistribution().then(setModDist).catch(() => setModDist([]));
+  }, []);
+
+  const MOD_COLORS = ['#fd8539', '#0094eb', '#10b981', '#a855f7', '#f43f5e', '#eab308'];
+  const modPie = modDist.map((m, i) => ({ name: m.name, value: m.stores, color: MOD_COLORS[i % MOD_COLORS.length] }));
 
   const s = data?.stores;
   const pie = s
@@ -202,8 +213,8 @@ export default function DashboardTab() {
               <Metric label="Total dos inadimplentes" value={brl(data.past_due_total)} hint="Cobrança em aberto" icon={AlertTriangle} tone="red" />
               <Metric label="Faturamento previsto" value={brl(data.forecast)} hint="Recorrência mensal das assinaturas ativas" icon={TrendingUp} tone="blue" />
             </div>
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
-              <div className="xl:col-span-2">
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
+              <div className="flex xl:col-span-2 [&>div]:flex-1">
                 <Chart title="Faturamento" data={data.revenue_series} gran={data.granularity} color="#10b981" money />
               </div>
               <div className={CARD}>
@@ -230,6 +241,30 @@ export default function DashboardTab() {
                   ))}
                 </div>
               </div>
+              <div className={CARD}>
+                <p className="mb-3 text-sm font-bold text-white">Lojas por módulo</p>
+                <div className="h-56">
+                  {modPie.length === 0 ? (
+                    <p className="pt-20 text-center text-xs text-slate-500">Sem assinaturas ativas.</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={modPie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2} stroke="none">
+                          {modPie.map((p) => <Cell key={p.name} fill={p.color} />)}
+                        </Pie>
+                        <Tooltip contentStyle={TOOLTIP} formatter={(v: any) => [`${v} loja(s)`, 'Assinantes']} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1">
+                  {modPie.map((p) => (
+                    <span key={p.name} className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
+                      <span className="h-2 w-2 rounded-full" style={{ background: p.color }} /> {p.name} ({p.value})
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 
@@ -241,7 +276,7 @@ export default function DashboardTab() {
               <Metric label="Armazenamento total" value={bytes(data.consumption.storage_bytes)} hint="Acumulado, não varia com o período" icon={HardDrive} tone="slate" />
             </div>
             <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
-              <div className="xl:col-span-2">
+              <div className="flex xl:col-span-2 [&>div]:flex-1">
                 <Chart title="Views" data={data.views_series} gran={data.granularity} color="#0094eb" />
               </div>
               <div className={CARD}>
