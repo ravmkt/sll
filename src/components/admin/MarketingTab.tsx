@@ -5,7 +5,11 @@ import {
   AUDIENCE_LABEL, FREQUENCY_LABEL, LOCATION_LABEL, deleteItem, emptyDraft, getMetrics, listItems, saveItem,
   type MktAudience, type MktCounts, type MktSlide, type MktDraft, type MktFrequency, type MktItem, type MktKind, type MktLocation, type MktMetrics,
 } from '@/services/admin/marketingAdmin';
-import { saveCoupon } from '@/services/admin/couponsAdmin';
+import { useConfirm } from '@/components/admin/ConfirmDialog';
+import {
+  deleteMktCoupon, emptyCouponDraft, listMktCoupons, saveMktCoupon, setMktCouponActive,
+  type CouponDraft, type MktCoupon,
+} from '@/services/admin/couponsMarketing';
 
 type TabKey = 'visao' | 'banner' | 'popup' | 'email' | 'whatsapp' | 'promocao';
 
@@ -309,62 +313,141 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
   );
 }
 
-function Cupom() {
-  const [code, setCode] = useState('');
-  const [pct, setPct] = useState('');
-  const [maxUses, setMaxUses] = useState('');
-  const [expires, setExpires] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+function couponStatus(c: MktCoupon): { label: string; cls: string } {
+  const now = Date.now();
+  if (!c.is_active) return { label: 'Pausado', cls: 'bg-slate-700 text-slate-200' };
+  if (c.expires_at && new Date(c.expires_at).getTime() < now) return { label: 'Expirado', cls: 'bg-rose-500/20 text-rose-300' };
+  if (c.starts_at && new Date(c.starts_at).getTime() > now) return { label: 'Agendado', cls: 'bg-sky-500/20 text-sky-300' };
+  if (c.max_uses !== null && c.times_used >= c.max_uses) return { label: 'Esgotado', cls: 'bg-amber-500/20 text-amber-300' };
+  return { label: 'Ativo', cls: 'bg-emerald-500/20 text-emerald-300' };
+}
 
-  const create = async () => {
-    setSaving(true); setMsg(null);
+const couponValue = (c: MktCoupon) =>
+  c.discount_type === 'percentage'
+    ? c.discount_value + '%'
+    : (c.discount_value / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+function Cupom() {
+  const [items, setItems] = useState<MktCoupon[]>([]);
+  const [draft, setDraft] = useState<CouponDraft | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
+
+  const load = useCallback(() => {
+    listMktCoupons().then(setItems).catch((e) => setErr(e?.message || 'Erro ao carregar cupons'));
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const set = <K extends keyof CouponDraft>(k: K, v: CouponDraft[K]) => setDraft((d) => (d ? { ...d, [k]: v } : d));
+
+  const save = async () => {
+    if (!draft) return;
+    setSaving(true); setErr(null); setOk(null);
     try {
-      const c = code.trim().toUpperCase();
-      const v = Number(pct.replace(',', '.'));
-      if (!c) throw new Error('Informe o código do cupom.');
-      if (!Number.isFinite(v) || v <= 0 || v > 100) throw new Error('O desconto deve ficar entre 1 e 100%.');
-      const mu = maxUses.trim() ? Number(maxUses) : null;
-      if (mu !== null && (!Number.isInteger(mu) || mu <= 0)) throw new Error('Limite de usos inválido.');
-      await saveCoupon(null, {
-        code: c,
-        discount_type: 'percentage',
-        discount_value: Math.round(v),
-        max_uses: mu,
-        expires_at: expires,
-        applicable_plan_ids: [],
-        is_active: true,
-      });
-      setMsg({ ok: true, text: 'Cupom ' + c + ' criado.' });
-      setCode(''); setPct(''); setMaxUses(''); setExpires(null);
+      await saveMktCoupon(draft);
+      setOk(draft.id ? 'Cupom atualizado.' : 'Cupom ' + draft.code.trim().toUpperCase() + ' criado.');
+      setDraft(null);
+      load();
     } catch (e: any) {
-      setMsg({ ok: false, text: e?.message || 'Erro ao criar cupom' });
+      setErr(e?.message || 'Erro ao salvar o cupom');
     } finally { setSaving(false); }
+  };
+
+  const toggle = async (c: MktCoupon) => {
+    setErr(null); setOk(null);
+    try { await setMktCouponActive(c.id, !c.is_active); load(); } catch (e: any) { setErr(e?.message || 'Erro'); }
+  };
+
+  const remove = async (c: MktCoupon) => {
+    if (!(await confirm({ title: 'Excluir cupom', message: 'O cupom "' + c.code + '" será apagado. Se já foi usado em assinaturas, use Pausar.', confirmLabel: 'Excluir' }))) return;
+    setErr(null); setOk(null);
+    try { await deleteMktCoupon(c.id); load(); } catch (e: any) { setErr(e?.message || 'Erro ao excluir'); }
   };
 
   return (
     <div className="space-y-4">
-      <h2 className="text-base font-bold text-slate-100">Criar cupom</h2>
-      <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 grid md:grid-cols-2 gap-3">
-        <div><label className={labelCls}>Código</label>
-          <input className={inputCls} value={code} onChange={(e) => setCode(e.target.value)} placeholder="BLACK10" /></div>
-        <div><label className={labelCls}>Desconto (%)</label>
-          <input className={inputCls} value={pct} onChange={(e) => setPct(e.target.value)} placeholder="10" /></div>
-        <div><label className={labelCls}>Limite de usos (vazio = ilimitado)</label>
-          <input className={inputCls} value={maxUses} onChange={(e) => setMaxUses(e.target.value)} placeholder="100" /></div>
-        <DateTimeField label="Validade (vazio = sem fim)" value={expires} onChange={setExpires} />
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-slate-100">Cupons</h2>
+        {!draft && (
+          <button type="button" onClick={() => { setOk(null); setDraft(emptyCouponDraft()); }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 hover:bg-amber-400">
+            <Plus className="w-4 h-4" /> Novo cupom
+          </button>
+        )}
       </div>
-      {msg && <p className={'text-sm ' + (msg.ok ? 'text-emerald-400' : 'text-rose-400')}>{msg.text}</p>}
-      <div className="flex justify-end">
-        <button type="button" disabled={saving || !code.trim() || !pct.trim()} onClick={create}
-          className="px-4 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 disabled:opacity-50">
-          {saving ? 'Criando...' : 'Criar cupom'}
-        </button>
+
+      {err && <p className="text-sm text-rose-400">{err}</p>}
+      {ok && <p className="text-sm text-emerald-400">{ok}</p>}
+
+      {draft && (
+        <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-100">{draft.id ? 'Editar cupom' : 'Novo cupom'}</h3>
+            <button type="button" onClick={() => setDraft(null)} className="text-slate-400 hover:text-slate-100"><X className="w-4 h-4" /></button>
+          </div>
+          <div className="grid md:grid-cols-3 gap-3">
+            <div><label className={labelCls}>Código</label>
+              <input className={inputCls} value={draft.code} onChange={(e) => set('code', e.target.value.toUpperCase())} placeholder="BLACK10" /></div>
+            <div><label className={labelCls}>Desconto (%)</label>
+              <input className={inputCls} value={draft.value} onChange={(e) => set('value', e.target.value)} /></div>
+            <div><label className={labelCls}>Limite de usos (vazio = ilimitado)</label>
+              <input className={inputCls} value={draft.max_uses} onChange={(e) => set('max_uses', e.target.value)} /></div>
+            <div className="md:col-span-3 grid grid-cols-2 gap-3">
+              <DateTimeField label="Início da validade" value={draft.starts_at} onChange={(x) => set('starts_at', x)} />
+              <DateTimeField label="Fim da validade" value={draft.expires_at} onChange={(x) => set('expires_at', x)} />
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500">Vale para todos os planos. Sem início, o cupom vale a partir de agora; sem fim, não expira.</p>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setDraft(null)} className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">Cancelar</button>
+            <button type="button" disabled={saving || !draft.code.trim()} onClick={save}
+              className="px-4 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 disabled:opacity-50">
+              {saving ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {items.length === 0 && !draft && <p className="text-sm text-slate-500">Nenhum cupom criado.</p>}
+
+      <div className="space-y-2">
+        {items.map((c) => {
+          const st = couponStatus(c);
+          return (
+            <div key={c.id} className="rounded-xl border border-slate-800 bg-slate-900 p-3 flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-bold text-slate-100 tracking-wider">{c.code}</p>
+                  <span className={'text-[10px] font-bold px-2 py-0.5 rounded-full ' + st.cls}>{st.label}</span>
+                </div>
+                <p className="text-xs text-slate-400">{fmtDate(c.starts_at)} → {c.expires_at ? fmtDate(c.expires_at) : 'sem fim'}</p>
+              </div>
+              <div className="text-xs text-slate-300 tabular-nums text-right">
+                <p><b className="text-amber-300">{couponValue(c)}</b> de desconto</p>
+                <p>Usado {c.times_used} / {c.max_uses ?? 'ilimitado'}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button type="button" title={c.is_active ? 'Pausar' : 'Ativar'} onClick={() => toggle(c)} className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
+                  {c.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                </button>
+                <button type="button" title="Editar" onClick={() => { setOk(null); setDraft({ id: c.id, code: c.code, value: String(c.discount_value), max_uses: c.max_uses === null ? '' : String(c.max_uses), starts_at: c.starts_at, expires_at: c.expires_at }); }}
+                  className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button type="button" title="Excluir" onClick={() => remove(c)} className="p-2 rounded-lg text-rose-400 hover:bg-slate-800">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
+      {dialog}
     </div>
   );
 }
-
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'visao', label: 'Métricas', icon: <BarChart3 className="w-4 h-4" /> },
   { key: 'banner', label: 'Banners', icon: <ImageIcon className="w-4 h-4" /> },
