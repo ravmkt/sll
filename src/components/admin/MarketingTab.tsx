@@ -1,3 +1,4 @@
+import ImageUpload from '@/components/admin/ImageUpload';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Megaphone, Plus, Trash2, Pencil, Pause, Play, Mail, MessageCircle, Tag, X, BarChart3, Image as ImageIcon, LayoutTemplate } from 'lucide-react';
 import {
@@ -115,8 +116,7 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
           <input className={inputCls} value={draft.title} onChange={(e) => set('title', e.target.value)} /></div>
         <div className="md:col-span-2"><label className={labelCls}>Texto</label>
           <textarea className={inputCls} rows={2} value={draft.body} onChange={(e) => set('body', e.target.value)} /></div>
-        <div><label className={labelCls}>Imagem (URL)</label>
-          <input className={inputCls} value={draft.image_url} onChange={(e) => set('image_url', e.target.value)} placeholder="https://..." /></div>
+        <ImageUpload kind={draft.kind} value={draft.image_url} onChange={(u) => set('image_url', u)} />
         <div><label className={labelCls}>Cupom (opcional)</label>
           <input className={inputCls} value={draft.coupon_code} onChange={(e) => set('coupon_code', e.target.value)} placeholder="BLACK10" /></div>
         <div><label className={labelCls}>Texto do botão</label>
@@ -239,6 +239,7 @@ function Promocao() {
   const [d, setD] = useState<MktDraft>(emptyDraft('banner'));
   const [asBanner, setAsBanner] = useState(true);
   const [asPopup, setAsPopup] = useState(false);
+  const [popupImage, setPopupImage] = useState('');
   const [discount, setDiscount] = useState('');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -263,9 +264,9 @@ function Promocao() {
       }
       const base = { ...d, coupon_code: code, id: undefined };
       if (asBanner) await saveItem({ ...base, kind: 'banner' });
-      if (asPopup) await saveItem({ ...base, kind: 'popup', frequency: 'daily' });
+      if (asPopup) await saveItem({ ...base, kind: 'popup', frequency: 'daily', image_url: popupImage });
       setMsg({ ok: true, text: 'Promoção publicada. Acompanhe em Banners e Popups.' });
-      setD(emptyDraft('banner'));
+      setD(emptyDraft('banner')); setPopupImage('');
     } catch (e: any) {
       setMsg({ ok: false, text: e?.message || 'Erro ao publicar' });
     } finally { setSaving(false); }
@@ -288,8 +289,8 @@ function Promocao() {
           <input className={inputCls} value={d.cta_url} onChange={(e) => set('cta_url', e.target.value)} placeholder="/precos" /></div>
         <div><label className={labelCls}>Texto do botão</label>
           <input className={inputCls} value={d.cta_label} onChange={(e) => set('cta_label', e.target.value)} placeholder="Aproveitar" /></div>
-        <div><label className={labelCls}>Imagem (URL)</label>
-          <input className={inputCls} value={d.image_url} onChange={(e) => set('image_url', e.target.value)} /></div>
+        {asBanner && <ImageUpload kind="banner" value={d.image_url} onChange={(u) => set('image_url', u)} />}
+        {asPopup && <ImageUpload kind="popup" value={popupImage} onChange={setPopupImage} />}
         <div><label className={labelCls}>Local</label>
           <select className={inputCls} value={d.location} onChange={(e) => set('location', e.target.value as MktLocation)}>
             {Object.entries(LOCATION_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}

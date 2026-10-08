@@ -78,28 +78,40 @@ export default function MarketingHost({ storeId, location }: { storeId?: string 
   return (
     <>
       {banner && (
-        <div className="fixed bottom-0 inset-x-0 z-[90] bg-slate-900 text-white shadow-2xl border-t border-slate-700">
-          <div className="mx-auto max-w-5xl flex items-center gap-3 px-4 py-2.5">
-            {banner.image_url && <img src={banner.image_url} alt="" className="h-10 w-10 rounded-md object-cover shrink-0" />}
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold truncate">{banner.title}</p>
-              {banner.body && <p className="text-xs text-slate-300 truncate">{banner.body}</p>}
+        <div className="fixed bottom-0 inset-x-0 z-[90] flex justify-center bg-slate-900 shadow-2xl border-t border-slate-700">
+          {banner.image_url ? (
+            <div className="relative w-full max-w-[1200px]">
+              <button type="button" onClick={() => go(banner)} aria-label={banner.title} className={'block w-full ' + (banner.cta_url ? 'cursor-pointer' : 'cursor-default')}>
+                <img src={banner.image_url} alt={banner.title} className="block w-full h-auto" />
+              </button>
+              <button type="button" aria-label="Fechar" onClick={() => close(banner)} className="absolute right-2 top-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80">
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            {coupon(banner)}
-            {cta(banner)}
-            <button type="button" aria-label="Fechar" onClick={() => close(banner)} className="p-1 text-slate-400 hover:text-white">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          ) : (
+            <div className="w-full max-w-5xl flex items-center gap-3 px-4 py-2.5 text-white">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold truncate">{banner.title}</p>
+                {banner.body && <p className="text-xs text-slate-300 truncate">{banner.body}</p>}
+              </div>
+              {coupon(banner)}
+              {cta(banner)}
+              <button type="button" aria-label="Fechar" onClick={() => close(banner)} className="p-1 text-slate-400 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
       {popup && (
         <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4" onClick={() => close(popup)} role="dialog" aria-modal="true" aria-label={popup.title}>
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <button type="button" aria-label="Fechar" onClick={() => close(popup)} className="absolute right-3 top-3 z-10 p-1 rounded-full bg-white/90 text-slate-500 hover:text-slate-900">
               <X className="w-4 h-4" />
             </button>
-            {popup.image_url && <img src={popup.image_url} alt="" className="w-full max-h-56 object-cover" />}
+            {popup.image_url && (
+              <img src={popup.image_url} alt="" onClick={() => go(popup)} className={'w-full object-cover ' + (popup.cta_url ? 'cursor-pointer' : '')} style={{ aspectRatio: '3 / 2' }} />
+            )}
             <div className="p-5 space-y-3 text-center">
               <h3 className="text-lg font-bold text-slate-900">{popup.title}</h3>
               {popup.body && <p className="text-sm text-slate-600">{popup.body}</p>}
