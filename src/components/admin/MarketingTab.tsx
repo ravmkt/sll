@@ -148,11 +148,11 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
           <select className={inputCls} value={draft.location} onChange={(e) => set('location', e.target.value as MktLocation)}>
             {Object.entries(LOCATION_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
-        <div><label className={labelCls}>Público</label>
+        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3"><div><label className={labelCls}>Público</label>
           <select className={inputCls} value={draft.audience} onChange={(e) => set('audience', e.target.value as MktAudience)}>
             {Object.entries(AUDIENCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
-        <div className="md:col-span-2 grid grid-cols-2 gap-3"><DateTimeField label="Início" value={draft.starts_at} onChange={(x) => set('starts_at', x)} /><DateTimeField label="Fim" value={draft.ends_at} onChange={(x) => set('ends_at', x)} /></div>
+            <DateTimeField label="Início" value={draft.starts_at} onChange={(x) => set('starts_at', x)} /><DateTimeField label="Fim" value={draft.ends_at} onChange={(x) => set('ends_at', x)} /></div>
         {draft.kind === 'popup' && (
           <div><label className={labelCls}>Frequência</label>
             <select className={inputCls} value={draft.frequency} onChange={(e) => set('frequency', e.target.value as MktFrequency)}>
@@ -313,11 +313,11 @@ function Promocao() {
           <select className={inputCls} value={d.location} onChange={(e) => set('location', e.target.value as MktLocation)}>
             {Object.entries(LOCATION_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
-        <div><label className={labelCls}>Público</label>
+        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3"><div><label className={labelCls}>Público</label>
           <select className={inputCls} value={d.audience} onChange={(e) => set('audience', e.target.value as MktAudience)}>
             {Object.entries(AUDIENCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
-        <div className="md:col-span-2 grid grid-cols-2 gap-3"><DateTimeField label="Início" value={d.starts_at} onChange={(x) => set('starts_at', x)} /><DateTimeField label="Fim" value={d.ends_at} onChange={(x) => set('ends_at', x)} /></div>
+            <DateTimeField label="Início" value={d.starts_at} onChange={(x) => set('starts_at', x)} /><DateTimeField label="Fim" value={d.ends_at} onChange={(x) => set('ends_at', x)} /></div>
         <div className="md:col-span-2 flex gap-6 text-sm text-slate-200">
           <label className="flex items-center gap-2"><input type="checkbox" checked={asBanner} onChange={(e) => setAsBanner(e.target.checked)} /> Publicar como banner</label>
           <label className="flex items-center gap-2"><input type="checkbox" checked={asPopup} onChange={(e) => setAsPopup(e.target.checked)} /> Publicar como popup</label>
