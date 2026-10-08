@@ -5,6 +5,15 @@ import { createCombo, listHubModules, type HubModule } from '@/services/admin/co
 const toCents = (v: string) => Math.round(Number(v.replace(',', '.')) * 100);
 const toNum = (v: string) => (v.trim() === '' ? null : Number(v));
 const inputCls = 'w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100';
+const LIMIT_KEYS = ['views', 'max_videos', 'max_pages', 'storage_gb'] as const;
+type LimitKey = (typeof LIMIT_KEYS)[number];
+
+// Maior plano ativo do módulo (maior preço mensal); se nenhum ativo, o maior de todos
+const bestPlan = (list: DynamicPlan[]): DynamicPlan | null => {
+  const act = list.filter((p) => p.is_active);
+  const base = act.length ? act : list;
+  return base.reduce<DynamicPlan | null>((b, p) => (!b || p.price_monthly_cents > b.price_monthly_cents ? p : b), null);
+};
 
 function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
@@ -45,6 +54,7 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
   const [rec, setRec] = useState(false);
   const [active, setActive] = useState(false);
   const [picked, setPicked] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     Promise.all([listHubModules(), listDynamicPlans()])
@@ -65,10 +75,62 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
     return map;
   }, [plans]);
 
+  // Soma dos planos escolhidos (null/vazio = ilimitado)
+  const suggested = useMemo(() => {
+    const slugs = Object.keys(picked);
+    if (slugs.length === 0) return null;
+    const acc: Record<LimitKey, { unl: boolean; total: number; seen: boolean }> = {
+      views: { unl: false, total: 0, seen: false },
+      max_videos: { unl: false, total: 0, seen: false },
+      max_pages: { unl: false, total: 0, seen: false },
+      storage_gb: { unl: false, total: 0, seen: false },
+    };
+    let tr = false;
+    let bd = false;
+    let monthly = 0;
+    slugs.forEach((slug) => {
+      const list = tiersByModule[slug] ?? [];
+      const plan = list.find((p) => p.plan_tier === picked[slug]) ?? bestPlan(list);
+      if (!plan) return;
+      monthly += plan.price_monthly_cents || 0;
+      const lim = (plan.limits_config ?? {}) as Record<string, unknown>;
+      LIMIT_KEYS.forEach((k) => {
+        if (!(k in lim)) return;
+        const v = lim[k];
+        acc[k].seen = true;
+        if (v === null) acc[k].unl = true;
+        else if (typeof v === 'number') acc[k].total += v;
+      });
+      if (lim.tracking === true) tr = true;
+      if (lim.badge_removable === true) bd = true;
+    });
+    const vals = {} as Record<LimitKey, string>;
+    LIMIT_KEYS.forEach((k) => {
+      vals[k] = acc[k].seen && !acc[k].unl ? String(acc[k].total) : '';
+    });
+    return { vals, tracking: tr, badge: bd, monthly };
+  }, [picked, tiersByModule]);
+
+  const mark = (k: string) => setTouched((t) => ({ ...t, [k]: true }));
+
+  const applySuggested = (force: boolean) => {
+    if (!suggested) return;
+    const t = force ? {} : touched;
+    const setters: Record<LimitKey, (v: string) => void> = { views: setViews, max_videos: setVideos, max_pages: setPages, storage_gb: setStorage };
+    LIMIT_KEYS.forEach((k) => { if (!t[k]) setters[k](suggested.vals[k]); });
+    if (!t.tracking) setTracking(suggested.tracking);
+    if (!t.badge) setBadge(suggested.badge);
+  };
+
+  useEffect(() => {
+    applySuggested(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggested]);
+
   function toggle(slug: string, on: boolean) {
     setPicked((prev) => {
       const next = { ...prev };
-      if (on) next[slug] = next[slug] ?? '';
+      if (on) next[slug] = next[slug] ?? bestPlan(tiersByModule[slug] ?? [])?.plan_tier ?? '';
       else delete next[slug];
       return next;
     });
@@ -129,6 +191,11 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
               <Field label="Semestral (R$)" value={ps} onChange={setPs} />
               <Field label="Anual (R$)" value={pa} onChange={setPa} />
             </div>
+            {suggested && suggested.monthly > 0 && (
+              <p className="-mt-2 text-[11px] text-slate-500">
+                Soma dos planos escolhidos: {(suggested.monthly / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} por mês.
+              </p>
+            )}
 
             <div>
               <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Módulos do combo (mínimo 2)</p>
@@ -140,16 +207,19 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
                     <div key={m.slug} className="flex items-center justify-between gap-3 rounded-md border border-slate-800 px-3 py-2">
                       <Check label={`${m.name}${m.status !== 'active' ? ` (${m.status})` : ''}`} value={on} onChange={(v) => toggle(m.slug, v)} />
                       {on && (
-                        <select
-                          value={picked[m.slug]}
-                          onChange={(e) => setPicked((p) => ({ ...p, [m.slug]: e.target.value }))}
-                          className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100"
-                        >
-                          <option value="">Plano do módulo: padrão</option>
-                          {tiers.map((t) => (
-                            <option key={t.id} value={t.plan_tier}>{t.plan_name}</option>
-                          ))}
-                        </select>
+                        tiers.length > 0 ? (
+                          <select
+                            value={picked[m.slug]}
+                            onChange={(e) => setPicked((p) => ({ ...p, [m.slug]: e.target.value }))}
+                            className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100"
+                          >
+                            {tiers.map((t) => (
+                              <option key={t.id} value={t.plan_tier}>{t.plan_name}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="text-[11px] text-slate-500">Sem planos cadastrados</span>
+                        )
                       )}
                     </div>
                   );
@@ -158,16 +228,28 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Limites do combo (vazio = ilimitado)</p>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Limites do combo (vazio = ilimitado)</p>
+                {suggested && (
+                  <button
+                    type="button"
+                    onClick={() => { setTouched({}); applySuggested(true); }}
+                    className="text-[11px] font-semibold text-[#0094eb] hover:underline"
+                  >
+                    Refazer a partir dos planos
+                  </button>
+                )}
+              </div>
+              <p className="mb-2 text-[11px] text-slate-500">Preenchido com a soma dos planos escolhidos. Edite à vontade.</p>
               <div className="grid grid-cols-4 gap-3">
-                <Field label="Plays/mês" value={views} onChange={setViews} />
-                <Field label="Vídeos" value={videos} onChange={setVideos} />
-                <Field label="Páginas" value={pages} onChange={setPages} />
-                <Field label="Storage (GB)" value={storage} onChange={setStorage} />
+                <Field label="Plays/mês" value={views} onChange={(v) => { setViews(v); mark('views'); }} />
+                <Field label="Vídeos" value={videos} onChange={(v) => { setVideos(v); mark('max_videos'); }} />
+                <Field label="Páginas" value={pages} onChange={(v) => { setPages(v); mark('max_pages'); }} />
+                <Field label="Storage (GB)" value={storage} onChange={(v) => { setStorage(v); mark('storage_gb'); }} />
               </div>
               <div className="mt-3 flex flex-wrap gap-4">
-                <Check label="Tracking" value={tracking} onChange={setTracking} />
-                <Check label="Remove selo" value={badge} onChange={setBadge} />
+                <Check label="Tracking" value={tracking} onChange={(v) => { setTracking(v); mark('tracking'); }} />
+                <Check label="Remove selo" value={badge} onChange={(v) => { setBadge(v); mark('badge'); }} />
                 <Check label="Recomendado" value={rec} onChange={setRec} />
                 <Check label="Ativo (visível para venda)" value={active} onChange={setActive} />
               </div>
