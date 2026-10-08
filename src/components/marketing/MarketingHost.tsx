@@ -111,9 +111,9 @@ export default function MarketingHost({ storeId, location, showBanner = true }: 
               <X className="w-4 h-4" />
             </button>
             {popup.image_url && (
-              <img src={popup.image_url} alt="" onClick={() => go(popup)} className={'w-full object-cover ' + (popup.cta_url ? 'cursor-pointer' : '')} style={{ aspectRatio: '3 / 2' }} />
+              <img src={popup.image_url} alt="" onClick={() => go(popup)} className={'w-full h-auto block ' + (popup.cta_url ? 'cursor-pointer' : '')} />
             )}
-            <div className="p-5 space-y-3 text-center">
+            <div className={'p-5 space-y-3 text-center' + (popup.image_url ? ' hidden' : '')}>
               <h3 className="text-lg font-bold text-slate-900">{popup.title}</h3>
               {popup.body && <p className="text-sm text-slate-600">{popup.body}</p>}
               <div className="flex items-center justify-center gap-3">{coupon(popup)}{cta(popup)}</div>

@@ -191,20 +191,14 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
         <button type="button" onClick={onCancel} className="text-slate-400 hover:text-slate-100"><X className="w-4 h-4" /></button>
       </div>
       <div className="grid md:grid-cols-2 gap-3">
-        <div className="md:col-span-2"><label className={labelCls}>Título</label>
+        <div className="md:col-span-2"><label className={labelCls}>Título (uso interno)</label>
           <input className={inputCls} value={draft.title} onChange={(e) => set('title', e.target.value)} /></div>
-        <div className="md:col-span-2"><label className={labelCls}>Texto</label>
-          <textarea className={inputCls} rows={2} value={draft.body} onChange={(e) => set('body', e.target.value)} /></div>
         {draft.kind === 'banner' ? (
               <div className="md:col-span-2"><SlidesEditor key={draft.id ?? 'novo'} slides={draft.slides ?? []} onChange={(s) => set('slides', s)} /></div>
             ) : (
               <ImageUpload kind={draft.kind} value={draft.image_url} onChange={(u) => set('image_url', u)} />
             )}
-        <div><label className={labelCls}>Cupom (opcional)</label>
-          <input className={inputCls} value={draft.coupon_code} onChange={(e) => set('coupon_code', e.target.value)} placeholder="BLACK10" /></div>
-        <div><label className={labelCls}>Texto do botão</label>
-          <input className={inputCls} value={draft.cta_label} onChange={(e) => set('cta_label', e.target.value)} placeholder="Aproveitar" /></div>
-        <div><label className={labelCls}>Link do botão</label>
+        <div><label className={labelCls}>Link ao clicar na imagem</label>
           <input className={inputCls} value={draft.cta_url} onChange={(e) => set('cta_url', e.target.value)} placeholder="/precos ou https://..." /></div>
         <div><label className={labelCls}>Local de exibição</label>
           <select className={inputCls} value={draft.location} onChange={(e) => set('location', e.target.value as MktLocation)}>
