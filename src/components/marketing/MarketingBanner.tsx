@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchActive, track, type ActiveItem } from '@/services/marketingPublic';
 
 type Loc = 'home' | 'vidlytics' | 'live';
@@ -42,8 +41,6 @@ export default function MarketingBanner({ storeId, location, onActive }: { store
 
   if (!item) return null;
 
-  const prev = () => setIdx((v) => (v - 1 + total) % total);
-  const next = () => setIdx((v) => (v + 1) % total);
 
   const go = () => {
     if (storeId) track(item.id, storeId, 'click');
@@ -52,7 +49,6 @@ export default function MarketingBanner({ storeId, location, onActive }: { store
     else window.location.assign(item.cta_url);
   };
 
-  const arrow = 'absolute top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/75';
 
   return (
     <div className="relative" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
@@ -74,8 +70,6 @@ export default function MarketingBanner({ storeId, location, onActive }: { store
       )}
       {total > 1 && (
         <>
-          <button type="button" aria-label="Banner anterior" onClick={prev} className={arrow + ' left-2'}><ChevronLeft className="w-5 h-5" /></button>
-          <button type="button" aria-label="Próximo banner" onClick={next} className={arrow + ' right-2'}><ChevronRight className="w-5 h-5" /></button>
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
             {items.map((b, n) => (
               <button key={b.id + ':' + n} type="button" aria-label={'Banner ' + (n + 1)} onClick={() => setIdx(n)}
