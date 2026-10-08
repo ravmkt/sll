@@ -23,7 +23,7 @@ const setClosed = (id: string) => {
   try { sessionStorage.setItem('mk:closed:' + id, '1'); } catch { /* ignora */ }
 };
 
-export default function MarketingHost({ storeId, location }: { storeId?: string | null; location: Loc }) {
+export default function MarketingHost({ storeId, location, showBanner = true }: { storeId?: string | null; location: Loc; showBanner?: boolean }) {
   const [items, setItems] = useState<ActiveItem[]>([]);
   const [closed, setClosedState] = useState<Set<string>>(new Set());
   const counted = useRef<Set<string>>(new Set());
@@ -38,7 +38,7 @@ export default function MarketingHost({ storeId, location }: { storeId?: string 
     return () => { alive = false; };
   }, [storeId, location]);
 
-  const banner = items.find((i) => i.kind === 'banner' && !closed.has(i.id) && !wasClosed(i.id));
+  const banner = !showBanner ? undefined : items.find((i) => i.kind === 'banner' && !closed.has(i.id) && !wasClosed(i.id));
   const popup = items.find((i) => i.kind === 'popup' && !closed.has(i.id));
 
   useEffect(() => {

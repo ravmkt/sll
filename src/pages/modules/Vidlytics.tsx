@@ -3,6 +3,9 @@ import { AppFooter } from '@/components/layout/AppFooter';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
+import MarketingBanner from '@/components/marketing/MarketingBanner';
+import MarketingHost from '@/components/marketing/MarketingHost';
+import { useLoja as useLojaMk } from '@/contexts/LojaContext';
 import { StoreBrand } from '../../components/layout/StoreBrand';
 import { VidlyticsSidebar, VidlyticsTab } from '../vidlytics/components/VidlyticsSidebar';
 import { ModuleSwitcher } from '../../components/layout/ModuleSwitcher';
@@ -20,6 +23,9 @@ export default function Vidlytics() {
     return 'visao-geral';
   });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [mkBanner, setMkBanner] = useState(false);
+  const mkCtx: any = useLojaMk();
+  const mkStoreId: string | null = mkCtx?.loja?.id ?? mkCtx?.store?.id ?? mkCtx?.storeId ?? mkCtx?.lojaId ?? null;
 
   useEffect(() => {
     localStorage.removeItem('sll_vidlytics_active_tab');
@@ -56,6 +62,7 @@ export default function Vidlytics() {
         onToggle={() => setIsSidebarCollapsed((prev) => !prev)}
       />
 
+      <MarketingHost storeId={mkStoreId} location="vidlytics" showBanner={false} />
       {/* 2. ÁREA DE CONTEÚDO PRINCIPAL */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* TOPBAR LIMPA: SELETOR DE MÓDULOS ALINHADO À DIREITA */}
@@ -67,7 +74,8 @@ export default function Vidlytics() {
         {/* CONTEÚDO DA PÁGINA */}
         <main className="flex-1 w-full max-w-7xl mx-auto p-6 space-y-6">
           {/* BANNER PROMO - EXCLUSIVO DA VISÃO GERAL */}
-          {activeTab === 'visao-geral' && (
+          {activeTab === 'visao-geral' && <MarketingBanner storeId={mkStoreId} location="vidlytics" onActive={setMkBanner} />}
+          {activeTab === 'visao-geral' && !mkBanner && (
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-6 shadow-md border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="space-y-2 max-w-xl z-10">
                 <span className="inline-flex items-center gap-1.5 bg-[#fd8539] text-white text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
