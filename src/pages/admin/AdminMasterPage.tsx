@@ -12,7 +12,7 @@ const SOON: Record<Exclude<MasterTab, 'dashboard' | 'lojas'>, { title: string; e
 };
 
 export default function AdminMasterPage() {
-  const [tab, setTab] = useState<MasterTab>('dashboard');
+  const [tab, setTab] = useState<MasterTab>(() => { const t = new URLSearchParams(window.location.search).get('tab') as MasterTab | null; return t && ['dashboard','lojas','modulos','precos','marketing','insights'].includes(t) ? t : 'dashboard'; });
 
   return (
     <MasterLayout tab={tab} onTab={setTab}>

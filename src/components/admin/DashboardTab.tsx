@@ -7,6 +7,7 @@ import {
   AlertTriangle, Banknote, Database, Eye, HardDrive, Hourglass, Loader2, Store, TrendingUp, UserCheck, Zap,
 } from 'lucide-react';
 import { getDashboard, getModulesDistribution, listModules, type DashboardData, type ModuleSlice, type SeriesPoint } from '@/services/admin/adminService';
+import ConsumptionDetail from '@/components/admin/ConsumptionDetail';
 
 type Periodo = 'today' | '7' | '30' | '90' | 'custom';
 
@@ -315,6 +316,7 @@ export default function DashboardTab() {
                 )}
               </div>
             </div>
+            <ConsumptionDetail start={range.start} end={range.end} module={module || null} />
             {module && module !== 'vidlytics' && (
               <p className="text-[11px] text-slate-500">O consumo detalhado deste módulo ainda não é medido; os dados acima são do Vidlytics.</p>
             )}
