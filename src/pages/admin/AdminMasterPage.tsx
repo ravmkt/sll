@@ -6,9 +6,9 @@ import { Construction } from 'lucide-react';
 import { MasterLayout, type MasterTab } from '@/components/admin/MasterLayout';
 import DashboardTab from '@/components/admin/DashboardTab';
 import LojasTab from '@/components/admin/LojasTab';
+import MarketingTab from '@/components/admin/MarketingTab';
 
-const SOON: Record<Exclude<MasterTab, 'dashboard' | 'lojas' | 'modulos' | 'precos'>, { title: string; etapa: string }> = {
-  marketing: { title: 'Marketing', etapa: 'Etapa 5' },
+const SOON: Record<Exclude<MasterTab, 'dashboard' | 'lojas' | 'modulos' | 'precos' | 'marketing'>, { title: string; etapa: string }> = {
   insights: { title: 'Insights', etapa: 'Etapa 6' },
 };
 
@@ -23,7 +23,9 @@ export default function AdminMasterPage() {
         <DashboardTab />
       ) : tab === 'lojas' ? (
         <LojasTab />
-      ) : tab === 'precos' ? (
+      ) : tab === 'marketing' ? (
+            <MarketingTab />
+          ) : tab === 'precos' ? (
         <PrecosTab initialModule={planModule} />
       ) : tab === 'modulos' ? (
         <ModulosTab onOpenPlans={(slug) => { setPlanModule(slug); setTab('precos'); }} onOpenStore={(id) => { setParams({ tab: 'lojas', loja: id }); setTab('lojas'); }} />
