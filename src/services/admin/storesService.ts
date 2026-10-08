@@ -36,13 +36,13 @@ export type AdminStoreDetail = {
 };
 
 export async function listStores(): Promise<AdminStoreRow[]> {
-  const { data, error } = await supabase.rpc('admin_list_stores');
+  const { data, error } = await supabase.rpc('admin_master_list_stores');
   if (error) throw error;
   return (data || []) as AdminStoreRow[];
 }
 
 export async function getStoreDetail(storeId: string): Promise<AdminStoreDetail> {
-  const { data, error } = await supabase.rpc('admin_store_detail', { p_store_id: storeId });
+  const { data, error } = await supabase.rpc('admin_master_store_detail', { p_store_id: storeId });
   if (error) throw error;
   return data as AdminStoreDetail;
 }
