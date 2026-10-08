@@ -27,6 +27,7 @@ interface FormState {
   contact_name: string;
   contact_email: string;
   owner_contact_email: string;
+  owner_whatsapp: string;
   whatsapp_number: string;
   whatsapp_message_template: string;
   whatsapp_enabled: boolean;
@@ -43,6 +44,7 @@ const DEFAULT_FORM: FormState = {
   contact_name: '',
   contact_email: '',
   owner_contact_email: '',
+  owner_whatsapp: '',
   whatsapp_number: '',
   whatsapp_message_template: 'Olá! Tenho interesse nesse produto que vi no vídeo: {{story_title}}',
   whatsapp_enabled: true,
@@ -126,6 +128,7 @@ const SettingsPage: React.FC = () => {
           contact_name: store?.contact_name || '',
           contact_email: settingsRow?.contact_email || store?.contact_email || '',
           owner_contact_email: settingsRow?.owner_contact_email || store?.owner_contact_email || '',
+          owner_whatsapp: formatWhatsapp(String((store as any)?.whatsapp || '')),
           whatsapp_number: settingsRow?.whatsapp_number || '',
           whatsapp_message_template:
             settingsRow?.whatsapp_message_template || DEFAULT_FORM.whatsapp_message_template,
@@ -175,6 +178,8 @@ const SettingsPage: React.FC = () => {
     if (!form.whatsapp_number.trim()) return 'O número de WhatsApp é obrigatório.';
     if (!form.whatsapp_message_template.trim()) return 'A mensagem padrão de WhatsApp é obrigatória.';
     if (!form.sector_id) return 'Selecione o setor da loja.';
+    if (form.owner_whatsapp.trim() && formatWhatsapp(form.owner_whatsapp).replace(/\D/g, '').length < 12)
+      return 'Informe um WhatsApp do dono valido, com DDD.';
     return '';
   };
 
@@ -246,6 +251,7 @@ const SettingsPage: React.FC = () => {
         contact_email: form.contact_email.trim(),
         owner_contact_email: form.owner_contact_email.trim(),
         sector_id: form.sector_id || null,
+        whatsapp: formatWhatsapp(form.owner_whatsapp).replace(/\D/g, '') || null,
         sector: selectedSector?.slug || null,
       });
 
@@ -448,6 +454,24 @@ const SettingsPage: React.FC = () => {
               />
             </div>
 
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                WhatsApp do Dono da Loja
+              </label>
+              <input
+                type="tel"
+                value={form.owner_whatsapp}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, owner_whatsapp: e.target.value.replace(/[^\d+\-() ]/g, '') }))
+                }
+                onBlur={(e) => setForm((p) => ({ ...p, owner_whatsapp: formatWhatsapp(e.target.value) }))}
+                placeholder="Ex: (41) 99999-9999"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
+              />
+              <p className="text-[10px] text-slate-400">
+                Contato direto com o dono. Nao e o numero do botao de WhatsApp dos videos.
+              </p>
+            </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 E-mail de Atendimento *
