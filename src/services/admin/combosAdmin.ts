@@ -44,3 +44,10 @@ export async function setComboModules(planId: string, modules: ComboModuleInput[
   const { error } = await (supabase as any).rpc('admin_set_combo_modules', { p_plan_id: planId, p_modules: modules });
   if (error) throw new Error(error.message);
 }
+export async function listAllComboModules(): Promise<ComboModuleRow[]> {
+  const { data, error } = await (supabase as any)
+    .from('combo_modules')
+    .select('plan_id,module_slug,member_tier');
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ComboModuleRow[];
+}
