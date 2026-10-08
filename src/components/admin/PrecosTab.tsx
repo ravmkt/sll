@@ -11,6 +11,7 @@ import CouponsManager from '@/components/admin/CouponsManager';
 import ComboCreator from '@/components/admin/ComboCreator';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import ComboModulesEditor from '@/components/admin/ComboModulesEditor';
+import ComboDiscountCard from '@/components/admin/ComboDiscountCard';
 import { listAllComboModules, type ComboModuleRow } from '@/services/admin/combosAdmin';
 import { CARD, INPUT, SELECT, brl, int } from '@/components/admin/moduleUi';
 
@@ -407,6 +408,8 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
               })}
             </div>
           </section>
+
+          <ComboDiscountCard />
 
           <section className="space-y-3">
             <h2 className="text-sm font-bold text-yellow-300">Combos <span className="ml-1 font-normal text-slate-500">({combos.length})</span></h2>
