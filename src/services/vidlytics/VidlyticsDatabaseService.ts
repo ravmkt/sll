@@ -465,21 +465,31 @@ export class VidlyticsDatabaseService {
     return map;
   }
 
+  static async getEventMetrics(storeId: string, startDay: string, endDay: string): Promise<any[]> {
+    const { data, error } = await (supabase as any).rpc('get_video_event_metrics', {
+      p_store_id: storeId,
+      p_start: String(startDay).slice(0, 10),
+      p_end: String(endDay).slice(0, 10),
+    });
+    if (error) {
+      console.error('[Vidlytics] Erro ao ler metricas por eventos:', error);
+      return [];
+    }
+    return (data || []).map((r: any) => ({
+      video_id: r.video_id,
+      views_count: Number(r.views) || 0,
+      cta_clicks_count: Number(r.clicks) || 0,
+      likes_count: 0,
+      comments_count: 0,
+    }));
+  }
+
   static async getVideosPerformanceBase(storeId: string, startDate: string, endDate: string): Promise<VidlyticsVideoRow[]> {
     const db: any = supabase;
     const { startDay, endDay } = this.periodRange(startDate, endDate);
     const [allVideos, metrics, conversions] = await Promise.all([
       this.getVideos(storeId),
-      this.fetchAll((a, b) =>
-        db
-          .from('daily_video_metrics')
-          .select('id, video_id, views_count, cta_clicks_count, likes_count, comments_count')
-          .eq('store_id', storeId)
-          .gte('date', startDay)
-          .lte('date', endDay)
-          .order('id', { ascending: true })
-          .range(a, b)
-      ),
+      this.getEventMetrics(storeId, startDay, endDay),
       this.getConversionsByVideo(storeId, startDay, endDay),
     ]);
 
