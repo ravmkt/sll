@@ -9,6 +9,8 @@ import { createDynamicPlan, getPlanSubscribers } from '@/services/admin/pricingS
 import { listModules } from '@/services/admin/adminService';
 import CouponsManager from '@/components/admin/CouponsManager';
 import ComboCreator from '@/components/admin/ComboCreator';
+import ComboModulesEditor from '@/components/admin/ComboModulesEditor';
+import { listAllComboModules, type ComboModuleRow } from '@/services/admin/combosAdmin';
 import { CARD, INPUT, SELECT, brl, int } from '@/components/admin/moduleUi';
 
 type Mod = { slug: string; name: string };
@@ -200,12 +202,14 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   const [error, setError] = useState('');
   const [editing, setEditing] = useState<DynamicPlan | 'new' | null>(null);
   const [creatingCombo, setCreatingCombo] = useState(false);
+  const [comboMods, setComboMods] = useState<ComboModuleRow[]>([]);
+  const [editingMods, setEditingMods] = useState<DynamicPlan | null>(null);
 
   const load = useCallback(async () => {
     setError('');
     try {
-      const [p, a, s, m] = await Promise.all([listDynamicPlans(), listPlanAddons(), getPlanSubscribers(), listModules()]);
-      setPlans(p); setAddons(a); setSubs(s); setModules(m);
+      const [p, a, s, m, cm] = await Promise.all([listDynamicPlans(), listPlanAddons(), getPlanSubscribers(), listModules(), listAllComboModules().catch(() => [] as ComboModuleRow[])]);
+      setPlans(p); setAddons(a); setSubs(s); setModules(m); setComboMods(cm);
     } catch (e: any) { setError(e?.message || 'Erro ao carregar os preços.'); }
   }, []);
 
@@ -213,6 +217,15 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
 
   const modName = useMemo(() => new Map(modules.map((m) => [m.slug, m.name])), [modules]);
   const list = (plans || []).filter((p) => !filter || p.module_slug === filter);
+  const comboLine = (id: string) =>
+    comboMods
+      .filter((r) => r.plan_id === id)
+      .map((r) => {
+        const planName = r.member_tier
+          ? (plans || []).find((x) => !x.is_combo && x.module_slug === r.module_slug && x.plan_tier === r.member_tier)?.plan_name
+          : null;
+        return planName || modName.get(r.module_slug) || r.module_slug;
+      });
   const TABS: { id: typeof sub; label: string }[] = [{ id: 'planos', label: 'Planos' }, { id: 'addons', label: 'Add-ons' }, { id: 'cupons', label: 'Cupons' }];
 
   return (
@@ -272,7 +285,13 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
                   </td>
                   <td className="px-3 py-3">
                     {p.is_combo ? (
-                      <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
+                      <div className="space-y-1">
+                        <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
+                        {comboLine(p.id).length > 0
+                          ? <p className="text-[10px] leading-snug text-amber-200/80">{comboLine(p.id).join(' + ')}</p>
+                          : <p className="text-[10px] text-rose-400">Sem módulos definidos</p>}
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setEditingMods(p); }} className="cursor-pointer text-[10px] font-semibold text-amber-300 hover:underline">Editar módulos</button>
+                      </div>
                     ) : (
                       <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-bold text-sky-300 ring-1 ring-sky-500/40">{modName.get(p.module_slug || '') || p.module_slug}</span>
                     )}
@@ -310,6 +329,8 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
       {sub === 'cupons' && <div className="overflow-hidden rounded-2xl bg-white"><CouponsManager /></div>}
 
       {creatingCombo && <ComboCreator onCreated={load} onClose={() => setCreatingCombo(false)} />}
+
+      {editingMods && <ComboModulesEditor combo={editingMods} onClose={() => setEditingMods(null)} onSaved={load} />}
 
       {editing && (
         <PlanDrawer
