@@ -167,7 +167,7 @@ export default function DashboardTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="sticky top-0 z-30 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
         <div>
           <h1 className="text-xl font-black text-white">Dashboard</h1>
           <p className="text-xs text-slate-500">Visão geral do ecossistema SLL.</p>
