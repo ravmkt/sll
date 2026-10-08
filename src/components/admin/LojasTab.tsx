@@ -1,187 +1,103 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ExternalLink, Loader2, Mail, MessageCircle, Search, X } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Eye, Loader2, Pencil, Power, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  getStoreDetail, listStores, setSubscriptionStatus,
-  type AdminStoreDetail, type AdminStoreRow, type StoreStatus,
+  deleteStore, listStores, setSubscriptionStatus,
+  type AdminStoreRow, type StoreStatus,
 } from '@/services/admin/storesService';
+import { Badge, CARD, ContactButtons, DeleteStoreModal, ICON, dt, modLabel } from '@/components/admin/storeUi';
 
-const CARD = 'rounded-2xl border border-white/10 bg-[#111524] p-4';
-const ICON = 'text-[#fd8539]';
+const BTN = 'rounded-lg p-1.5 transition-colors hover:bg-white/10 disabled:opacity-40';
+const CHIPS: { id: 'all' | StoreStatus; label: string }[] = [
+  { id: 'all', label: 'Todas' },
+  { id: 'active', label: 'Adimplentes' },
+  { id: 'past_due', label: 'Inadimplentes' },
+  { id: 'trial', label: 'Em trial' },
+  { id: 'inactive', label: 'Inativas' },
+];
 
-const STATUS_LABEL: Record<StoreStatus, string> = {
-  active: 'Ativa', trial: 'Em trial', past_due: 'Inadimplente', inactive: 'Inativa',
-};
-const STATUS_STYLE: Record<StoreStatus, string> = {
-  active: 'bg-emerald-500/15 text-emerald-300',
-  trial: 'bg-sky-500/15 text-sky-300',
-  past_due: 'bg-rose-500/15 text-rose-300',
-  inactive: 'bg-slate-500/15 text-slate-300',
-};
-
-const brl = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const dt = (v?: string | null) => (v ? new Date(v).toLocaleDateString('pt-BR') : '—');
-const mb = (b?: number | null) => `${((b || 0) / 1024 / 1024).toFixed(1)} MB`;
-const digits = (v?: string | null) => (v || '').replace(/\D/g, '');
-
-function Badge({ status }: { status: StoreStatus }) {
-  return <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${STATUS_STYLE[status]}`}>{STATUS_LABEL[status]}</span>;
-}
-
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-white/5 py-2 text-xs last:border-0">
-      <span className="text-slate-500">{label}</span>
-      <span className="text-right font-bold text-slate-200">{value}</span>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className={CARD}>
-      <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">{title}</p>
-      {children}
-    </div>
-  );
-}
-
-function RaioX({ storeId, onClose, onChanged }: { storeId: string; onClose: () => void; onChanged: () => void }) {
-  const [d, setD] = useState<AdminStoreDetail | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const load = useCallback(() => {
-    getStoreDetail(storeId).then(setD).catch((e) => { toast.error('Erro ao carregar a loja.'); console.error(e); });
-  }, [storeId]);
-
-  useEffect(() => { setD(null); load(); }, [load]);
-
-  const change = async (subId: string, status: 'active' | 'canceled' | 'lifetime') => {
-    const txt = status === 'canceled'
-      ? 'Cancelar esta assinatura?'
-      : status === 'lifetime'
-        ? 'Tornar esta assinatura vitalícia? Não gera cobrança no SLL.'
-        : 'Reativar esta assinatura?';
-    if (!window.confirm(`${txt}\nIsso altera só o SLL. Se existir assinatura recorrente no Asaas, cancele lá também.`)) return;
-    setBusy(true);
-    try {
-      await setSubscriptionStatus(subId, status);
-      toast.success('Assinatura atualizada.');
-      load();
-      onChanged();
-    } catch (e: any) {
-      toast.error(e?.message || 'Falha ao atualizar assinatura.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const s = d?.store;
-  const events = d ? Object.entries(d.events_30d) : [];
-
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60" onClick={onClose}>
-      <div className="h-full w-full max-w-xl space-y-3 overflow-y-auto border-l border-white/10 bg-[#0b0f1c] p-5" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-lg font-black text-white">{s?.name || 'Carregando...'}</h2>
-            {s?.url && (
-              <a href={s.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white">
-                {s.url} <ExternalLink size={12} className={ICON} />
-              </a>
-            )}
-          </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-white/10"><X size={18} className={ICON} /></button>
-        </div>
-
-        {!d || !s ? (
-          <div className="flex h-40 items-center justify-center"><Loader2 className={`h-6 w-6 animate-spin ${ICON}`} /></div>
-        ) : (
-          <>
-            <Section title="Conta">
-              <Row label="E-mail do dono" value={s.owner_email || '—'} />
-              <Row label="E-mail de atendimento" value={s.contact_email || '—'} />
-              <Row label="WhatsApp do dono" value={s.whatsapp ? `+${digits(s.whatsapp)}` : '—'} />
-              <Row label="Plataforma" value={s.platform || '—'} />
-              <Row label="Cadastro" value={dt(s.created_at)} />
-              <Row label="Último acesso" value={dt(s.last_sign_in_at)} />
-            </Section>
-
-            <Section title="Assinaturas">
-              {d.subscriptions.length === 0 && <p className="text-xs text-slate-500">Nenhuma assinatura.</p>}
-              {d.subscriptions.map((sub) => (
-                <div key={sub.id} className="border-b border-white/5 py-2 last:border-0">
-                  <Row
-                    label={`${sub.plan_name || sub.module_key || 'Plano'}${sub.is_current ? '' : ' (anterior)'}`}
-                    value={`${sub.status}${sub.billing_cycle ? ` · ${sub.billing_cycle}` : ''}`}
-                  />
-                  {sub.is_current && (
-                    <div className="mt-1 flex flex-wrap justify-end gap-2">
-                      {sub.status !== 'lifetime' && (
-                        <button disabled={busy} onClick={() => change(sub.id, 'lifetime')} className="rounded-lg bg-sky-500/15 px-2.5 py-1 text-[11px] font-bold text-sky-300 hover:bg-sky-500/25 disabled:opacity-50">Tornar vitalícia</button>
-                      )}
-                      {sub.status === 'canceled' && (
-                        <button disabled={busy} onClick={() => change(sub.id, 'active')} className="rounded-lg bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50">Reativar</button>
-                      )}
-                      {sub.status !== 'canceled' && (
-                        <button disabled={busy} onClick={() => change(sub.id, 'canceled')} className="rounded-lg bg-rose-500/15 px-2.5 py-1 text-[11px] font-bold text-rose-300 hover:bg-rose-500/25 disabled:opacity-50">Cancelar</button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </Section>
-
-            <Section title="Uso">
-              <Row label="Armazenamento" value={`${mb(s.storage_used_bytes)} de ${mb(s.storage_limit_bytes)}`} />
-              {events.length === 0 && <p className="pt-2 text-xs text-slate-500">Sem eventos nos últimos 30 dias.</p>}
-              {events.map(([k, v]) => <Row key={k} label={`Eventos: ${k}`} value={v} />)}
-            </Section>
-
-            <Section title="Financeiro">
-              <Row label="Total pago" value={brl(d.paid_cents)} />
-              <Row label="Em aberto" value={brl(d.open_cents)} />
-              {d.invoices.map((i) => (
-                <Row key={i.id} label={`${i.description || 'Fatura'} · ${dt(i.due_date)}`} value={`${brl(i.amount_cents)} · ${i.paid_at ? 'paga' : i.status}`} />
-              ))}
-            </Section>
-
-            <Section title="Indicações">
-              <Row label="Indicações feitas" value={d.referrals.count} />
-              <Row label="Comissões" value={brl(Number(d.referrals.total) * 100)} />
-            </Section>
-
-            <Section title="Log do Master">
-              {d.audit.length === 0 && <p className="text-xs text-slate-500">Nenhuma ação registrada.</p>}
-              {d.audit.map((a, i) => <Row key={i} label={a.action} value={dt(a.created_at)} />)}
-            </Section>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function LojasTab() {
+export function LojasTab() {
+  const [, setParams] = useSearchParams();
   const [rows, setRows] = useState<AdminStoreRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<'all' | StoreStatus>('all');
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [mod, setMod] = useState('all');
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [del, setDel] = useState<AdminStoreRow | null>(null);
+
+  const open = (id: string, aba?: string) =>
+    setParams(aba ? { tab: 'lojas', loja: id, aba } : { tab: 'lojas', loja: id });
 
   const load = useCallback(() => {
     setLoading(true);
-    listStores().then(setRows).catch((e) => { toast.error('Erro ao listar lojas.'); console.error(e); }).finally(() => setLoading(false));
+    listStores()
+      .then(setRows)
+      .catch((e) => { toast.error('Erro ao listar lojas.'); console.error(e); })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const counts = useMemo(() => {
+    const c: Record<'all' | StoreStatus, number> = { all: rows.length, active: 0, past_due: 0, trial: 0, inactive: 0 };
+    rows.forEach((r) => { c[r.status] += 1; });
+    return c;
+  }, [rows]);
+
+  const modules = useMemo(() => Array.from(new Set(rows.flatMap((r) => r.modules))).sort(), [rows]);
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     return rows.filter((r) =>
       (status === 'all' || r.status === status) &&
+      (mod === 'all' || r.modules.includes(mod)) &&
       (!term || [r.name, r.url, r.contact_email, r.owner_email].some((v) => (v || '').toLowerCase().includes(term))));
-  }, [rows, q, status]);
+  }, [rows, q, status, mod]);
+
+  const togglePlan = async (r: AdminStoreRow) => {
+    if (r.is_lifetime) {
+      toast.info('Loja vitalícia: gerencie na aba Assinaturas.');
+      open(r.id, 'assinaturas');
+      return;
+    }
+    const cancel = r.status !== 'inactive';
+    const targets = r.subs.filter((s) => (cancel ? s.status !== 'canceled' : s.status === 'canceled'));
+    if (targets.length === 0) {
+      toast.info('Sem assinatura atual para alterar. Abrindo a loja.');
+      open(r.id, 'assinaturas');
+      return;
+    }
+    const nome = r.name || 'esta loja';
+    const txt = cancel ? `Cancelar ${targets.length} assinatura(s) de ${nome}?` : `Reativar ${targets.length} assinatura(s) de ${nome}?`;
+    if (!window.confirm(`${txt}\nIsso altera só o SLL. Cobrança recorrente no Asaas deve ser cancelada lá.`)) return;
+    setBusyId(r.id);
+    try {
+      for (const t of targets) await setSubscriptionStatus(t.id, cancel ? 'canceled' : 'active');
+      toast.success('Plano atualizado.');
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || 'Falha ao atualizar plano.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!del) return;
+    setBusyId(del.id);
+    try {
+      await deleteStore(del.id);
+      toast.success('Loja excluída.');
+      setDel(null);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || 'Não foi possível excluir a loja.');
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -191,18 +107,33 @@ export default function LojasTab() {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        {CHIPS.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setStatus(c.id)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+              status === c.id ? 'border-[#fd8539] bg-[#fd8539]/15 text-white' : 'border-white/10 text-slate-400 hover:text-white'
+            }`}
+          >
+            {c.label} <span className="ml-1 text-slate-500">{counts[c.id]}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
         <div className="relative min-w-[240px] flex-1">
           <Search size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${ICON}`} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nome, URL ou e-mail"
-            className="w-full rounded-xl border border-white/10 bg-[#111524] py-2 pl-9 pr-3 text-xs text-white outline-none focus:border-[#fd8539]" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar por nome, URL ou e-mail"
+            className="w-full rounded-xl border border-white/10 bg-[#111524] py-2 pl-9 pr-3 text-xs text-white outline-none focus:border-[#fd8539]"
+          />
         </div>
-        <select value={status} onChange={(e) => setStatus(e.target.value as 'all' | StoreStatus)}
-          className="rounded-xl border border-white/10 bg-[#111524] px-3 py-2 text-xs text-white outline-none">
-          <option value="all">Todos os status</option>
-          <option value="active">Ativas</option>
-          <option value="trial">Em trial</option>
-          <option value="past_due">Inadimplentes</option>
-          <option value="inactive">Inativas</option>
+        <select value={mod} onChange={(e) => setMod(e.target.value)} className="rounded-xl border border-white/10 bg-[#111524] px-3 py-2 text-xs text-white outline-none">
+          <option value="all">Todos os módulos</option>
+          {modules.map((m) => <option key={m} value={m}>{modLabel(m)}</option>)}
         </select>
       </div>
 
@@ -213,43 +144,73 @@ export default function LojasTab() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-white/10 text-[10px] uppercase tracking-wider text-slate-500">
-                <th className="px-4 py-3">Loja</th><th className="px-4 py-3">Plano</th><th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Contato</th><th className="px-4 py-3">Cadastro</th><th className="px-4 py-3">Último acesso</th>
+                <th className="px-4 py-3">Loja</th>
+                <th className="px-4 py-3">Criada em</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Planos</th>
+                <th className="px-4 py-3">Aplicativos</th>
+                <th className="px-4 py-3">Indicações</th>
+                <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">Nenhuma loja encontrada.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">Nenhuma loja encontrada.</td></tr>
               )}
-              {filtered.map((r) => {
-                const wa = digits(r.whatsapp);
-                const mail = r.contact_email || r.owner_email;
-                return (
-                  <tr key={r.id} onClick={() => setOpenId(r.id)} className="cursor-pointer border-b border-white/5 last:border-0 hover:bg-white/5">
-                    <td className="px-4 py-3">
-                      <p className="font-bold text-white">{r.name || 'Sem nome'}</p>
-                      <p className="text-[11px] text-slate-500">{r.url || '—'}</p>
-                    </td>
-                    <td className="px-4 py-3 text-slate-300">{r.plans.length ? r.plans.join(', ') : '—'}</td>
-                    <td className="px-4 py-3"><Badge status={r.status} /></td>
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-2">
-                        {wa && <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer" title="WhatsApp"><MessageCircle size={16} className={ICON} /></a>}
-                        {mail && <a href={`mailto:${mail}`} title={mail}><Mail size={16} className={ICON} /></a>}
-                        {!wa && !mail && <span className="text-slate-600">—</span>}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-slate-400">{dt(r.created_at)}</td>
-                    <td className="px-4 py-3 text-slate-400">{dt(r.last_sign_in_at)}</td>
-                  </tr>
-                );
-              })}
+              {filtered.map((r) => (
+                <tr key={r.id} className="align-top hover:bg-white/5">
+                  <td className="px-4 py-3">
+                    <button type="button" onClick={() => open(r.id)} className="text-left font-bold text-white hover:text-[#fd8539]">
+                      {r.name || 'Sem nome'}
+                    </button>
+                    <p className="text-[11px] text-slate-500">{r.url || '—'}</p>
+                    <p className="text-[11px] text-slate-500">{r.owner_email || r.contact_email || 'sem e-mail'}</p>
+                  </td>
+                  <td className="px-4 py-3 text-slate-400">{dt(r.created_at)}</td>
+                  <td className="px-4 py-3">
+                    <Badge status={r.status} />
+                    {r.is_lifetime && <p className="mt-1 text-[10px] font-bold text-sky-300">Vitalícia</p>}
+                  </td>
+                  <td className="px-4 py-3 text-slate-300">
+                    {r.plans.length === 0 ? <span className="text-slate-600">—</span> : r.plans.map((p) => <p key={p}>{p}</p>)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {r.modules.length === 0 ? <span className="text-slate-600">—</span> : r.modules.map((m) => (
+                        <span key={m} className="rounded-md bg-white/5 px-2 py-0.5 text-[11px] text-slate-300">{modLabel(m)}</span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-slate-400"><strong className="text-slate-200">{r.referrals_made}</strong> indicadas</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-0.5">
+                      <button type="button" title="Detalhes" className={BTN} onClick={() => open(r.id)}><Eye size={16} className={ICON} /></button>
+                      <button type="button" title="Editar" className={BTN} onClick={() => open(r.id, 'dados')}><Pencil size={16} className={ICON} /></button>
+                      <button
+                        type="button"
+                        title={r.status === 'inactive' ? 'Ativar plano' : 'Cancelar plano'}
+                        disabled={busyId === r.id}
+                        className={BTN}
+                        onClick={() => togglePlan(r)}
+                      >
+                        <Power size={16} className={r.status === 'inactive' ? 'text-emerald-400' : 'text-amber-400'} />
+                      </button>
+                      <ContactButtons whatsapp={r.whatsapp} email={r.owner_email || r.contact_email} />
+                      <button type="button" title="Excluir" className={BTN} onClick={() => setDel(r)}><Trash2 size={16} className="text-rose-400" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
       </div>
 
-      {openId && <RaioX storeId={openId} onClose={() => setOpenId(null)} onChanged={load} />}
+      {del && (
+        <DeleteStoreModal name={del.name || 'excluir'} busy={busyId === del.id} onCancel={() => setDel(null)} onConfirm={confirmDelete} />
+      )}
     </div>
   );
 }
+
+export default LojasTab;
