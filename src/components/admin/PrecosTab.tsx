@@ -339,34 +339,36 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
 
   return (
     <div className="space-y-5">
-      <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
-        <div>
-          <h1 className="text-xl font-black text-white">Preços</h1>
-          <p className="text-xs text-slate-500">Planos, limites, add-ons e cupons de cada módulo.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-lg border border-slate-700 bg-[#0b0e1a] p-0.5">
-            {TABS.map((t) => (
-              <button key={t.id} type="button" onClick={() => setSub(t.id)}
-                className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${sub === t.id ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}>
-                {t.label}
-              </button>
-            ))}
+      <div className="sticky top-0 z-20 -mx-6 -mt-6 space-y-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
+        <div className="flex min-h-[44px] flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-black text-white">Preços</h1>
+            <p className="text-xs text-slate-500">Planos, limites, add-ons, cupons e custos de cada módulo.</p>
           </div>
-          {sub === 'planos' && (
-            <>
-              <select value={filter} onChange={(e) => setFilter(e.target.value)} className={`${SELECT} cursor-pointer`}>
-                <option value="">Todos os módulos</option>
-                {modules.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
-              </select>
-              <button type="button" onClick={() => setEditing('new')} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-xs font-bold text-white">
-                <Plus size={14} /> Novo plano
-              </button>
-              <button type="button" onClick={() => setCreatingCombo(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-bold text-slate-900">
-                <Plus size={14} /> Novo combo
-              </button>
-            </>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {sub === 'planos' && (
+              <>
+                <select value={filter} onChange={(e) => setFilter(e.target.value)} className={`${SELECT} cursor-pointer`}>
+                  <option value="">Todos os módulos</option>
+                  {modules.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
+                </select>
+                <button type="button" onClick={() => setEditing('new')} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-xs font-bold text-white">
+                  <Plus size={14} /> Novo plano
+                </button>
+                <button type="button" onClick={() => setCreatingCombo(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-bold text-slate-900">
+                  <Plus size={14} /> Novo combo
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="inline-flex rounded-lg border border-slate-700 bg-[#0b0e1a] p-0.5">
+          {TABS.map((t) => (
+            <button key={t.id} type="button" onClick={() => setSub(t.id)}
+              className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${sub === t.id ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}>
+              {t.label}
+            </button>
+          ))}
         </div>
       </div>
 

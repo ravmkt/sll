@@ -24,7 +24,7 @@ export function usePricingCosts(plans: DynamicPlan[] | null, comboMods: ComboMod
         let s = await getCostSettings();
         if (s && s.auto_sync_currency) {
           const last = s.last_currency_sync_at ? new Date(s.last_currency_sync_at).getTime() : 0;
-          if (Date.now() - last > 20 * 3600 * 1000) {
+          if (new Date(last).toLocaleDateString('en-CA') !== new Date().toLocaleDateString('en-CA')) {
             try { s = await syncFx(); } catch { /* mantem a cotacao salva */ }
           }
         }
