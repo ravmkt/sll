@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Flag, ImagePlus, Loader2, Trash2 } from 'lucide-react';
+import { ArrowLeft, ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ModulePlansCard from '@/components/admin/ModulePlansCard';
+import FeatureFlagsCard from '@/components/admin/FeatureFlagsCard';
 import {
   getModuleStores, getModulesOverview, updateHubModule, uploadModuleLogo,
   type ModuleOverview, type ModuleStoreRow,
@@ -224,10 +225,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
             </div>
 
             <ModulePlansCard slug={slug} onManage={() => onOpenPlans(slug)} />
-            <div className={`${CARD} space-y-2`}>
-              <p className="flex items-center gap-2 text-sm font-bold text-white"><Flag size={14} className="text-[#fd8539]" /> Feature flags</p>
-              <p className="text-xs text-slate-500">Em breve: liberar funcionalidades beta para lojas específicas antes do lançamento geral.</p>
-            </div>
+            <FeatureFlagsCard slug={slug} />
           </div>
         </div>
       )}
