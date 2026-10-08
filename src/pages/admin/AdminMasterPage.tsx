@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Construction } from 'lucide-react';
 import { MasterLayout, type MasterTab } from '@/components/admin/MasterLayout';
 import DashboardTab from '@/components/admin/DashboardTab';
+import LojasTab from '@/components/admin/LojasTab';
 
-const SOON: Record<Exclude<MasterTab, 'dashboard'>, { title: string; etapa: string }> = {
-  lojas: { title: 'Lojas', etapa: 'Etapa 3' },
+const SOON: Record<Exclude<MasterTab, 'dashboard' | 'lojas'>, { title: string; etapa: string }> = {
   modulos: { title: 'Módulos', etapa: 'Etapa 4' },
   precos: { title: 'Preços', etapa: 'Etapa 4' },
   marketing: { title: 'Marketing', etapa: 'Etapa 5' },
@@ -18,6 +18,8 @@ export default function AdminMasterPage() {
     <MasterLayout tab={tab} onTab={setTab}>
       {tab === 'dashboard' ? (
         <DashboardTab />
+      ) : tab === 'lojas' ? (
+        <LojasTab />
       ) : (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-[#111524] py-24 text-center">
           <Construction className="mb-3 h-9 w-9 text-[#fd8539]" />

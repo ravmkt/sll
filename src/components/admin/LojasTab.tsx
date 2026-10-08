@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ExternalLink, Loader2, Mail, MessageCircle, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  getStoreDetail, listStores, setStoreSubscription,
+  getStoreDetail, listStores, setSubscriptionStatus,
   type AdminStoreDetail, type AdminStoreRow, type StoreStatus,
 } from '@/services/admin/storesService';
 
@@ -56,13 +56,17 @@ function RaioX({ storeId, onClose, onChanged }: { storeId: string; onClose: () =
 
   useEffect(() => { setD(null); load(); }, [load]);
 
-  const change = async (status: 'active' | 'canceled') => {
-    const txt = status === 'canceled' ? 'Cancelar as assinaturas atuais desta loja?' : 'Reativar as assinaturas atuais desta loja?';
-    if (!window.confirm(`${txt}\nIsso altera o SLL, mas nao cancela nem cria cobranca no Asaas.`)) return;
+  const change = async (subId: string, status: 'active' | 'canceled' | 'lifetime') => {
+    const txt = status === 'canceled'
+      ? 'Cancelar esta assinatura?'
+      : status === 'lifetime'
+        ? 'Tornar esta assinatura vitalícia? Não gera cobrança no SLL.'
+        : 'Reativar esta assinatura?';
+    if (!window.confirm(`${txt}\nIsso altera só o SLL. Se existir assinatura recorrente no Asaas, cancele lá também.`)) return;
     setBusy(true);
     try {
-      const n = await setStoreSubscription(storeId, status);
-      toast.success(`${n} assinatura(s) atualizada(s).`);
+      await setSubscriptionStatus(subId, status);
+      toast.success('Assinatura atualizada.');
       load();
       onChanged();
     } catch (e: any) {
@@ -106,16 +110,26 @@ function RaioX({ storeId, onClose, onChanged }: { storeId: string; onClose: () =
             <Section title="Assinaturas">
               {d.subscriptions.length === 0 && <p className="text-xs text-slate-500">Nenhuma assinatura.</p>}
               {d.subscriptions.map((sub) => (
-                <Row
-                  key={sub.id}
-                  label={`${sub.plan_name || sub.module_key || 'Plano'}${sub.is_current ? '' : ' (anterior)'}`}
-                  value={`${sub.status}${sub.billing_cycle ? ` · ${sub.billing_cycle}` : ''}`}
-                />
+                <div key={sub.id} className="border-b border-white/5 py-2 last:border-0">
+                  <Row
+                    label={`${sub.plan_name || sub.module_key || 'Plano'}${sub.is_current ? '' : ' (anterior)'}`}
+                    value={`${sub.status}${sub.billing_cycle ? ` · ${sub.billing_cycle}` : ''}`}
+                  />
+                  {sub.is_current && (
+                    <div className="mt-1 flex flex-wrap justify-end gap-2">
+                      {sub.status !== 'lifetime' && (
+                        <button disabled={busy} onClick={() => change(sub.id, 'lifetime')} className="rounded-lg bg-sky-500/15 px-2.5 py-1 text-[11px] font-bold text-sky-300 hover:bg-sky-500/25 disabled:opacity-50">Tornar vitalícia</button>
+                      )}
+                      {sub.status === 'canceled' && (
+                        <button disabled={busy} onClick={() => change(sub.id, 'active')} className="rounded-lg bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50">Reativar</button>
+                      )}
+                      {sub.status !== 'canceled' && (
+                        <button disabled={busy} onClick={() => change(sub.id, 'canceled')} className="rounded-lg bg-rose-500/15 px-2.5 py-1 text-[11px] font-bold text-rose-300 hover:bg-rose-500/25 disabled:opacity-50">Cancelar</button>
+                      )}
+                    </div>
+                  )}
+                </div>
               ))}
-              <div className="mt-3 flex gap-2">
-                <button disabled={busy} onClick={() => change('active')} className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50">Reativar</button>
-                <button disabled={busy} onClick={() => change('canceled')} className="rounded-lg bg-rose-500/15 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500/25 disabled:opacity-50">Cancelar</button>
-              </div>
             </Section>
 
             <Section title="Uso">

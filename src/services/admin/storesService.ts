@@ -47,8 +47,8 @@ export async function getStoreDetail(storeId: string): Promise<AdminStoreDetail>
   return data as AdminStoreDetail;
 }
 
-export async function setStoreSubscription(storeId: string, status: 'active' | 'canceled'): Promise<number> {
-  const { data, error } = await supabase.rpc('admin_set_store_subscription', { p_store_id: storeId, p_status: status });
+export async function setSubscriptionStatus(subscriptionId: string, status: 'active' | 'canceled' | 'lifetime'): Promise<number> {
+  const { data, error } = await supabase.rpc('admin_set_subscription_status', { p_subscription_id: subscriptionId, p_status: status });
   if (error) throw error;
   return (data as number) ?? 0;
 }
