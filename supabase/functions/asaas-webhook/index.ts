@@ -7,23 +7,27 @@ const WEBHOOK_TOKEN_SANDBOX = Deno.env.get("ASAAS_WEBHOOK_TOKEN_SANDBOX")!;
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+// Status da ASSINATURA. O status da loja e recalculado por trigger no banco.
+// PAYMENT_DELETED / PAYMENT_REFUNDED afetam so a fatura, nao encerram a assinatura.
 const STATUS_MAP: Record<string, string> = {
   PAYMENT_CONFIRMED: "active",
   PAYMENT_RECEIVED: "active",
   PAYMENT_OVERDUE: "past_due",
-  PAYMENT_DELETED: "canceled",
-  PAYMENT_REFUNDED: "canceled",
   SUBSCRIPTION_INACTIVATED: "canceled",
   SUBSCRIPTION_DELETED: "canceled",
 };
 
 const INVOICE_STATUS_MAP: Record<string, string> = {
+  PAYMENT_CREATED: "pending",
+  PAYMENT_RESTORED: "pending",
   PAYMENT_CONFIRMED: "paid",
   PAYMENT_RECEIVED: "paid",
   PAYMENT_OVERDUE: "overdue",
   PAYMENT_DELETED: "canceled",
   PAYMENT_REFUNDED: "refunded",
 };
+
+type Sub = { id: string; status: string; store_id: string | null; is_current: boolean };
 
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
@@ -69,114 +73,49 @@ Deno.serve(async (req: Request) => {
   }
 
   const newSubStatus = STATUS_MAP[eventType];
-  const newInvoiceStatus = INVOICE_STATUS_MAP[eventType];
+  const payment = body?.payment;
+  const asaasSubscriptionId: string | undefined = payment?.subscription || body?.subscription?.id;
+  const asaasPaymentId: string | undefined = payment?.id;
 
-  const asaasSubscriptionId: string | undefined =
-    body?.payment?.subscription || body?.subscription?.id;
-  const asaasCustomerId: string | undefined =
-    body?.payment?.customer || body?.subscription?.customer;
-  const asaasPaymentId: string | undefined = body?.payment?.id;
-
-  let subscriptionUpdated = false;
-  let currentSub: { id: string; store_id: string | null } | null = null;
-  if (newSubStatus && asaasSubscriptionId) {
-    const { data: sub, error: findError } = await supabase
+  // 1) Localiza a assinatura (modulo/combo) deste evento
+  let sub: Sub | null = null;
+  if (asaasSubscriptionId) {
+    const { data, error } = await supabase
       .from("subscriptions")
-      .select("id, status, store_id")
+      .select("id, status, store_id, is_current")
       .eq("asaas_subscription_id", asaasSubscriptionId)
-      .eq("is_current", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
-
-    if (findError) console.error("Erro ao buscar subscription:", findError);
-
-    if (sub) {
-      subscriptionUpdated = true;
-          currentSub = sub;
-      if (sub.status !== newSubStatus) {
-        const { error: updateError } = await supabase
-          .from("subscriptions")
-          .update({ status: newSubStatus, updated_at: new Date().toISOString() })
-          .eq("id", sub.id);
-
-        if (updateError) {
-          console.error("Erro ao atualizar subscription:", updateError);
-        } else {
-          console.log(`[asaas-webhook] Subscription ${sub.id}: ${sub.status} -> ${newSubStatus}`);
-        }
-      }
-
-      if (sub.store_id) {
-        await updateStoreStatus(sub.store_id, newSubStatus);
-      }
-    }
+    if (error) console.error("Erro ao buscar subscription:", error);
+    sub = (data as Sub | null) ?? null;
+  } else {
+    console.warn(`[asaas-webhook] Evento ${eventType} sem subscription Asaas.`);
   }
 
-  if (!subscriptionUpdated && newSubStatus && asaasCustomerId) {
-    const { data: store, error: storeErr } = await supabase
-      .from("stores")
-      .select("id, subscription_status")
-      .eq("asaas_customer_id", asaasCustomerId)
-      .maybeSingle();
-
-    if (storeErr) console.error("Erro ao buscar store por customer_id:", storeErr);
-
-    if (store) {
-      await updateStoreStatus(store.id, newSubStatus);
-    } else {
-      console.warn(`[asaas-webhook] Nenhuma store/subscription encontrada para customer=${asaasCustomerId}`);
+  // 2) Atualiza SO a assinatura. 'canceled' e 'lifetime' sao estados finais.
+  if (sub && newSubStatus && sub.status !== newSubStatus && sub.status !== "canceled" && sub.status !== "lifetime") {
+    const now = new Date().toISOString();
+    const patch: Record<string, unknown> = { status: newSubStatus, updated_at: now };
+    if (newSubStatus === "canceled") {
+      patch.canceled_at = now;
+      patch.is_current = false;
     }
+    const { error } = await supabase.from("subscriptions").update(patch).eq("id", sub.id);
+    if (error) console.error("Erro ao atualizar subscription:", error);
+    else console.log(`[asaas-webhook] Subscription ${sub.id}: ${sub.status} -> ${newSubStatus}`);
   }
 
-  if (newInvoiceStatus && asaasPaymentId) {
-    const { data: invoice, error: invErr } = await supabase
-      .from("invoices")
-      .select("id, status")
-      .eq("asaas_payment_id", asaasPaymentId)
-      .maybeSingle();
+  // 3) Fatura (cria pendente, marca paga, vencida, cancelada ou estornada)
+  await syncInvoice(eventType, payment, sub);
 
-    if (invErr) console.error("Erro ao buscar invoice:", invErr);
-
-    if (invoice && invoice.status !== newInvoiceStatus) {
-      const { error: updateInvErr } = await supabase
-        .from("invoices")
-        .update({ status: newInvoiceStatus, updated_at: new Date().toISOString() })
-        .eq("id", invoice.id);
-
-      if (updateInvErr) {
-        console.error("Erro ao atualizar invoice:", updateInvErr);
-      } else {
-        console.log(`[asaas-webhook] Invoice ${invoice.id}: ${invoice.status} -> ${newInvoiceStatus}`);
-      }
-    }
-  }
-
-  if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && asaasPaymentId && currentSub) {
-    const paidValue = Number(body?.payment?.value ?? 0);
+  // 4) Comissao de indicacao
+  if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && asaasPaymentId && sub) {
+    const paidValue = Number(payment?.value ?? 0);
     if (paidValue > 0) {
-      const { data: inv } = await supabase
-        .from("invoices")
-        .select("id")
-        .eq("asaas_payment_id", asaasPaymentId)
-        .maybeSingle();
-
-      if (!inv && currentSub.store_id) {
-        const { error: invInsErr } = await supabase.from("invoices").insert({
-          store_id: currentSub.store_id,
-          subscription_id: currentSub.id,
-          amount_cents: Math.round(paidValue * 100),
-          currency: "BRL",
-          status: "paid",
-          description: `Pagamento Asaas - ${asaasPaymentId}`,
-          gateway_provider: "asaas",
-          asaas_payment_id: asaasPaymentId,
-          paid_at: new Date().toISOString(),
-        });
-        if (invInsErr) console.error("Erro ao criar invoice:", invInsErr);
-      }
-
-      const period = String(body?.payment?.dueDate ?? new Date().toISOString()).slice(0, 7);
+      const period = String(payment?.dueDate ?? new Date().toISOString()).slice(0, 7);
       const { error: refErr } = await supabase.rpc("record_referral_commission", {
-        p_subscription_id: currentSub.id,
+        p_subscription_id: sub.id,
         p_payment_id: asaasPaymentId,
         p_value: paidValue,
         p_period: period,
@@ -190,6 +129,7 @@ Deno.serve(async (req: Request) => {
     });
     if (cancelRefErr) console.error("Erro ao cancelar comissao:", cancelRefErr);
   }
+
   try {
     await supabase.from("admin_audit_logs").insert({
       action: `asaas_webhook:${eventId ?? "no-id"}`,
@@ -202,23 +142,52 @@ Deno.serve(async (req: Request) => {
   return new Response("OK", { status: 200 });
 });
 
-async function updateStoreStatus(storeId: string, newStatus: string) {
-  const patch: Record<string, unknown> = {
-    subscription_status: newStatus,
-    updated_at: new Date().toISOString(),
-  };
+async function syncInvoice(eventType: string, payment: any, sub: Sub | null) {
+  const target = INVOICE_STATUS_MAP[eventType];
+  const paymentId: string | undefined = payment?.id;
+  if (!target || !paymentId) return;
 
-  if (newStatus === "past_due") {
-    patch.past_due_since = new Date().toISOString();
-  } else if (newStatus === "active") {
-    patch.past_due_since = null;
+  const { data: inv, error: invErr } = await supabase
+    .from("invoices")
+    .select("id, status")
+    .eq("asaas_payment_id", paymentId)
+    .maybeSingle();
+  if (invErr) {
+    console.error("Erro ao buscar invoice:", invErr);
+    return;
   }
 
-  const { error } = await supabase.from("stores").update(patch).eq("id", storeId);
+  const now = new Date().toISOString();
 
-  if (error) {
-    console.error(`Erro ao atualizar store ${storeId}:`, error);
-  } else {
-    console.log(`[asaas-webhook] Store ${storeId} -> subscription_status=${newStatus}`);
+  if (inv) {
+    if (inv.status === target || inv.status === "refunded") return;
+    // evento atrasado/fora de ordem nao desfaz uma fatura ja paga
+    if (inv.status === "paid" && target !== "refunded") return;
+    const patch: Record<string, unknown> = { status: target, updated_at: now };
+    if (target === "paid") patch.paid_at = now;
+    const { error } = await supabase.from("invoices").update(patch).eq("id", inv.id);
+    if (error) console.error("Erro ao atualizar invoice:", error);
+    else console.log(`[asaas-webhook] Invoice ${inv.id}: ${inv.status} -> ${target}`);
+    return;
   }
+
+  if (!sub?.store_id) return;
+  const value = Number(payment?.value ?? 0);
+  if (!(value > 0)) return;
+
+  const { error } = await supabase.from("invoices").insert({
+    store_id: sub.store_id,
+    subscription_id: sub.id,
+    amount_cents: Math.round(value * 100),
+    currency: "BRL",
+    status: target,
+    description: `Pagamento Asaas - ${paymentId}`,
+    gateway_provider: "asaas",
+    asaas_payment_id: paymentId,
+    due_date: payment?.dueDate ?? null,
+    invoice_url: payment?.invoiceUrl ?? null,
+    payment_method: payment?.billingType ?? null,
+    paid_at: target === "paid" ? now : null,
+  });
+  if (error) console.error("Erro ao criar invoice:", error);
 }
