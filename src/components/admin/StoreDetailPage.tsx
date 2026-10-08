@@ -23,6 +23,54 @@ const ACTION_LABEL: Record<string, string> = {
   subscription_status_changed: 'Status da assinatura alterado',
   benefit_applied: 'Benefício aplicado',
 };
+const EVENT_LABEL: Record<string, string> = {
+  video_view: 'Vídeo assistido', story_open: 'Story aberto', story_complete: 'Story concluído',
+  video_close: 'Vídeo fechado', next_video: 'Passou para o próximo vídeo', progress: 'Progresso de reprodução',
+  product_view: 'Produto visualizado', product_click: 'Clique em produto', whatsapp_click: 'Clique no WhatsApp',
+  share: 'Compartilhamento', comment: 'Comentário', like: 'Curtida', unlike: 'Curtida removida',
+};
+const friendlyEvent = (t: string) => EVENT_LABEL[t] || t;
+
+const diasTxt = (n: number) => `${n} ${n === 1 ? 'dia' : 'dias'}`;
+
+function friendlyAudit(
+  action: string,
+  details: Record<string, unknown> | null,
+  planNames: Record<string, string>,
+): { title: string; text: string } {
+  const d: any = details || {};
+  const mod = d.module_key ? modLabel(String(d.module_key)) : 'Módulo';
+  const note = d.note ? ` Motivo: ${d.note}.` : '';
+  switch (action) {
+    case 'module_enabled': {
+      const days = Number(d.days);
+      return { title: 'Módulo ativado', text: days > 0 ? `${mod} liberado por ${diasTxt(days)}.` : `${mod} ativado.` };
+    }
+    case 'module_disabled':
+      return { title: 'Módulo desativado', text: `${mod} desativado.` };
+    case 'benefit_applied': {
+      if (d.kind === 'trial_days') return { title: 'Trial estendido', text: `+${diasTxt(Number(d.value) || 0)} de trial para a loja (vale para a loja toda).${note}` };
+      if (d.kind === 'discount_percent') return { title: 'Desconto registrado', text: `Desconto de ${d.value}% registrado.${note}` };
+      if (d.kind === 'coupon') return { title: 'Cupom registrado', text: `Cupom "${d.value}" registrado.${note}` };
+      return { title: 'Benefício aplicado', text: note.trim() };
+    }
+    case 'subscription_plan_changed':
+      return { title: 'Plano alterado', text: `Plano trocado para ${planNames[String(d.plan_id)] || 'outro plano'}.` };
+    case 'subscription_status_changed': {
+      const st = String(d.status || d.new_status || d.p_status || '');
+      const map: Record<string, string> = { active: 'ativada', canceled: 'cancelada', lifetime: 'marcada como vitalícia' };
+      return { title: 'Assinatura alterada', text: map[st] ? `Assinatura ${map[st]}.` : 'Status da assinatura alterado.' };
+    }
+    case 'store_updated':
+      return { title: 'Dados editados', text: 'Dados cadastrais da loja salvos.' };
+    case 'store_deleted':
+      return { title: 'Loja excluída', text: `Loja "${d.name || ''}" excluída.` };
+    default: {
+      const h = action.replace(/_/g, ' ');
+      return { title: h.charAt(0).toUpperCase() + h.slice(1), text: '' };
+    }
+  }
+}
 const FIELDS: [string, string][] = [
   ['name', 'Nome da loja'], ['url', 'URL da loja'], ['platform', 'Plataforma'], ['contact_name', 'Nome do contato'],
   ['contact_email', 'E-mail de contato'], ['owner_contact_email', 'E-mail do assinante'], ['whatsapp', 'WhatsApp (com DDD)'],
@@ -53,6 +101,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
   const [ben, setBen] = useState({ kind: 'trial_days', value: '', note: '' });
   const [planSel, setPlanSel] = useState<Record<string, string>>({});
   const [logFilter, setLogFilter] = useState<'all' | 'painel' | 'evento'>('all');
+  const [showCode, setShowCode] = useState(false);
 
   const load = useCallback(async (first = false) => {
     if (first) setLoading(true);
@@ -84,17 +133,18 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
 
   const logRows = useMemo(() => {
     if (!data) return [];
+    const planNames: Record<string, string> = Object.fromEntries(plans.map((p) => [p.id, p.name || '']));
     const a = data.audit.map((x) => ({
-      at: x.created_at, src: 'painel' as const, title: ACTION_LABEL[x.action] || x.action,
-      detail: x.details ? JSON.stringify(x.details) : '',
+      at: x.created_at, src: 'painel' as const, title: friendlyAudit(x.action, x.details, planNames).title,
+      text: friendlyAudit(x.action, x.details, planNames).text, detail: x.details ? JSON.stringify(x.details) : '',
     }));
     const e = data.recent_events.map((x) => ({
-      at: x.created_at, src: 'evento' as const, title: x.event_type, detail: x.page_path || '',
+      at: x.created_at, src: 'evento' as const, title: friendlyEvent(x.event_type), text: x.page_path ? `Na página ${x.page_path}` : '', detail: `${x.event_type}${x.page_path ? ' · ' + x.page_path : ''}`,
     }));
     return [...a, ...e]
       .filter((r) => logFilter === 'all' || r.src === logFilter)
       .sort((x, y) => new Date(y.at).getTime() - new Date(x.at).getTime());
-  }, [data, logFilter]);
+  }, [data, logFilter, plans]);
 
   const back = () => setParams({ tab: 'lojas' });
   const setAba = (a: string) => setParams({ tab: 'lojas', loja: storeId, aba: a });
@@ -398,7 +448,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
           </div>
           <div className={`${CARD} overflow-x-auto p-0`}>
             <table className="w-full text-left text-xs">
-              <thead><tr className="border-b border-white/10"><th className={TH}>Quando</th><th className={TH}>Origem</th><th className={TH}>O que</th><th className={TH}>Detalhe</th></tr></thead>
+              <thead><tr className="border-b border-white/10"><th className={TH}>Quando</th><th className={TH}>Origem</th><th className={TH}>O que</th><th className={TH}><label className="flex cursor-pointer items-center gap-2 normal-case tracking-normal"><input type="checkbox" checked={showCode} onChange={(e) => setShowCode(e.target.checked)} /> Detalhe · mostrar código técnico</label></th></tr></thead>
               <tbody className="divide-y divide-white/5">
                 {logRows.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">Sem registros.</td></tr>}
                 {logRows.map((r, i) => (
@@ -406,7 +456,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
                     <td className="whitespace-nowrap px-3 py-2 text-slate-400">{dtt(r.at)}</td>
                     <td className="px-3 py-2 text-slate-300">{r.src === 'painel' ? 'Painel' : 'Widget'}</td>
                     <td className="px-3 py-2 font-bold text-white">{r.title}</td>
-                    <td className="max-w-md truncate px-3 py-2 text-slate-500" title={r.detail}>{r.detail || '—'}</td>
+                    <td className="max-w-lg px-3 py-2 text-slate-300" title={r.detail}>{r.text || '—'}{showCode && r.detail && <span className="mt-1 block break-all font-mono text-[10px] text-slate-600">{r.detail}</span>}</td>
                   </tr>
                 ))}
               </tbody>
