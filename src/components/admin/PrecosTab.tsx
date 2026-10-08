@@ -8,6 +8,7 @@ import {
 import { createDynamicPlan, getPlanSubscribers } from '@/services/admin/pricingService';
 import { listModules } from '@/services/admin/adminService';
 import CouponsManager from '@/components/admin/CouponsManager';
+import ComboCreator from '@/components/admin/ComboCreator';
 import { CARD, INPUT, SELECT, brl, int } from '@/components/admin/moduleUi';
 
 type Mod = { slug: string; name: string };
@@ -38,7 +39,7 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
   plan: DynamicPlan | null; modules: Mod[]; defaultModule: string; onClose: () => void; onSaved: () => void;
 }) {
   const init = splitLimits(plan?.limits_config as Record<string, unknown> | null);
-  const [slug, setSlug] = useState(plan?.module_slug || defaultModule || modules[0]?.slug || '');
+  const [slug, setSlug] = useState(plan ? (plan.module_slug || '') : (defaultModule || modules[0]?.slug || ''));
   const [tier, setTier] = useState(plan?.plan_tier || '');
   const [name, setName] = useState(plan?.plan_name || '');
   const [pm, setPm] = useState(toReais(plan?.price_monthly_cents ?? 0));
@@ -106,6 +107,7 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
           <label className="space-y-1">
             <span className={LABEL}>Módulo</span>
             <select value={slug} onChange={(e) => setSlug(e.target.value)} disabled={!!plan} className={INPUT}>
+              {plan?.is_combo && <option value="">Combo</option>}
               {modules.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
             </select>
           </label>
@@ -197,6 +199,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   const [subs, setSubs] = useState<Record<string, number>>({});
   const [error, setError] = useState('');
   const [editing, setEditing] = useState<DynamicPlan | 'new' | null>(null);
+  const [creatingCombo, setCreatingCombo] = useState(false);
 
   const load = useCallback(async () => {
     setError('');
@@ -236,6 +239,9 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
               </select>
               <button type="button" onClick={() => setEditing('new')} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-xs font-bold text-white">
                 <Plus size={14} /> Novo plano
+              </button>
+              <button type="button" onClick={() => setCreatingCombo(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-bold text-white">
+                <Plus size={14} /> Novo combo
               </button>
             </>
           )}
@@ -296,6 +302,8 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
       ))}
 
       {sub === 'cupons' && <div className="overflow-hidden rounded-2xl bg-white"><CouponsManager /></div>}
+
+      {creatingCombo && <ComboCreator onCreated={load} onClose={() => setCreatingCombo(false)} />}
 
       {editing && (
         <PlanDrawer
