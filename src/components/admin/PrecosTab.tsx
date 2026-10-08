@@ -12,6 +12,10 @@ import ComboCreator from '@/components/admin/ComboCreator';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import ComboModulesEditor from '@/components/admin/ComboModulesEditor';
 import ComboDiscountCard from '@/components/admin/ComboDiscountCard';
+import ComboPricing from '@/components/admin/ComboPricing';
+import MarginBadge from '@/components/admin/MarginBadge';
+import InfraCostsCard from '@/components/admin/InfraCostsCard';
+import { usePricingCosts } from '@/hooks/admin/usePricingCosts';
 import { listAllComboModules, type ComboModuleRow } from '@/services/admin/combosAdmin';
 import { CARD, INPUT, SELECT, brl, int } from '@/components/admin/moduleUi';
 
@@ -196,7 +200,7 @@ function AddonRow({ a, onSaved }: { a: PlanAddon; onSaved: () => void }) {
 }
 
 export default function PrecosTab({ initialModule }: { initialModule: string | null }) {
-  const [sub, setSub] = useState<'planos' | 'addons' | 'cupons'>('planos');
+  const [sub, setSub] = useState<'planos' | 'addons' | 'cupons' | 'custos'>('planos');
   const [filter, setFilter] = useState(initialModule || '');
   const [modules, setModules] = useState<Mod[]>([]);
   const [plans, setPlans] = useState<DynamicPlan[] | null>(null);
@@ -209,6 +213,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   const [editingMods, setEditingMods] = useState<DynamicPlan | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
+  const costs = usePricingCosts(plans, comboMods);
 
   const load = useCallback(async () => {
     setError('');
@@ -275,16 +280,16 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
 
   const renderTable = (rows: DynamicPlan[], combo: boolean) => (
     <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#111524]">
-      <table className="w-full min-w-[900px] text-xs">
+      <table className="w-full min-w-[980px] text-xs">
         <thead className="border-b border-slate-800">
           <tr>
             <th className={TH}>Plano</th><th className={TH}>{combo ? 'Módulos incluídos' : 'Módulo'}</th>
             <th className={`${TH} text-center`}>Mensal</th><th className={`${TH} text-center`}>Semestral</th><th className={`${TH} text-center`}>Anual</th>
-            <th className={`${TH} text-center`}>Assinantes</th><th className={`${TH} text-center`}>Status</th><th className={`${TH} text-center`}>Ações</th>
+            <th className={`${TH} text-center`}>Margem</th><th className={`${TH} text-center`}>Assinantes</th><th className={`${TH} text-center`}>Status</th><th className={`${TH} text-center`}>Ações</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/5">
-          {rows.length === 0 && <tr><td colSpan={8} className="px-3 py-8 text-center text-slate-500">{combo ? 'Nenhum combo. Clique em "Novo combo".' : 'Nenhum plano. Clique em "Novo plano".'}</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={9} className="px-3 py-8 text-center text-slate-500">{combo ? 'Nenhum combo. Clique em "Novo combo".' : 'Nenhum plano. Clique em "Novo plano".'}</td></tr>}
           {rows.map((p) => (
             <tr key={p.id} className={`hover:bg-white/5 ${combo ? 'shadow-[inset_4px_0_0_0_#facc15]' : ''}`}>
               <td className="px-3 py-3">
@@ -307,7 +312,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
               <td className="px-3 py-3 text-center text-white">{brl(p.price_monthly_cents)}</td>
               <td className="px-3 py-3 text-center text-slate-300">{brl(p.price_semiannual_cents)}</td>
               <td className="px-3 py-3 text-center text-slate-300">{brl(p.price_annual_cents)}</td>
-              <td className="px-3 py-3 text-center font-semibold text-white">{int(subs[p.id])}</td>
+              <td className="px-3 py-3 text-center"><MarginBadge m={costs.marginOf(p)} /></td><td className="px-3 py-3 text-center font-semibold text-white">{int(subs[p.id])}</td>
               <td className="px-3 py-3 text-center">
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
               </td>
@@ -330,7 +335,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
     </div>
   );
 
-  const TABS: { id: typeof sub; label: string }[] = [{ id: 'planos', label: 'Planos' }, { id: 'addons', label: 'Add-ons' }, { id: 'cupons', label: 'Cupons' }];
+  const TABS: { id: typeof sub; label: string }[] = [{ id: 'planos', label: 'Planos' }, { id: 'addons', label: 'Add-ons' }, { id: 'cupons', label: 'Cupons' }, { id: 'custos', label: 'Custos' }];
 
   return (
     <div className="space-y-5">
@@ -365,7 +370,22 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
         </div>
       </div>
 
-      {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+      {costs.fx && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+          ⚠️ Alerta Cambial: o dólar subiu para {costs.fx.rate.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} (média de 30 dias: {costs.fx.avg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}). As margens dos planos e combos foram recalculadas automaticamente com o novo câmbio.
+        </div>
+      )}
+
+      {sub === 'planos' && costs.alerts.length > 0 && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+          <p className="font-bold">Atenção Rodrigo: {costs.alerts.length} {costs.alerts.length === 1 ? 'item está' : 'itens estão'} com margem abaixo de 50% no pior caso.</p>
+          <ul className="mt-1 list-disc pl-4">
+            {costs.alerts.slice(0, 6).map((a) => (
+              <li key={a.plan.id}>{a.plan.plan_name}: {a.margin.worst === null ? '—' : `${(a.margin.worst * 100).toFixed(0)}%`}. Avalie ajustar os limites ou revisar o preço.</li>
+            ))}
+          </ul>
+        </div>
+      )}{error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
 
       {sub === 'planos' && (plans === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
@@ -435,11 +455,10 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
                           ? <p className="mt-2 text-xs leading-snug text-amber-200/80">{line.join(' + ')}</p>
                           : <p className="mt-2 text-xs text-rose-400">Sem módulos definidos</p>}
                       </div>
-                      <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                        <div><p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Mensal</p><p className="text-xs font-bold text-white">{brl(p.price_monthly_cents)}</p></div>
-                        <div><p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Semestral</p><p className="text-xs font-bold text-slate-200">{brl(p.price_semiannual_cents)}</p></div>
-                        <div><p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Anual</p><p className="text-xs font-bold text-slate-200">{brl(p.price_annual_cents)}</p></div>
+                      <div onClick={(ev) => ev.stopPropagation()} className="mt-3 cursor-default">
+                        <ComboPricing combo={p} list={costs.listPrices(p.id)} pct={costs.discounts[p.id] ?? 0} onChanged={() => { load(); costs.reload(); }} />
                       </div>
+                      <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-slate-500"><span>Margem</span><MarginBadge m={costs.marginOf(p)} /></div>
                       <p className="mt-3 text-center text-[11px] text-slate-500">{int(subs[p.id])} assinantes</p>
                       <div className="mt-3 flex flex-wrap justify-center gap-1.5" onClick={(ev) => ev.stopPropagation()}>
                         <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer rounded-md bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-amber-300 hover:bg-white/10">Módulos</button>
@@ -459,6 +478,8 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
           </section>
         </div>
       ))}
+
+      {sub === 'custos' && <InfraCostsCard onChanged={costs.reload} />}
 
       {sub === 'addons' && (addons === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />

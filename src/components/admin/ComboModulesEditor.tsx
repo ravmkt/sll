@@ -35,7 +35,7 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
       listDynamicPlans(),
       listComboModules(combo.id),
       sb.from('combo_modules').select('module_slug,limits_override').eq('plan_id', combo.id),
-      sb.rpc('get_combo_discount'),
+      sb.from('dynamic_plans').select('discount_pct').eq('id', combo.id).maybeSingle(),
     ])
       .then(([m, p, cm, ov, disc]: any[]) => {
         setModules(m);
@@ -47,7 +47,7 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
           o[r.module_slug] = Object.fromEntries(Object.entries(lim).map(([k, v]) => [k, v === null ? '' : String(v)]));
         });
         setOver(o);
-        if (disc && !disc.error && disc.data !== null) setDiscount(Number(disc.data));
+        if (disc && !disc.error && disc.data) setDiscount(Number(disc.data.discount_pct ?? 0));
       })
       .catch((e) => toast.error((e as Error).message))
       .finally(() => setLoading(false));

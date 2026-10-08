@@ -39,9 +39,9 @@ export default function ComboDiscountCard() {
   return (
     <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-[#111524] p-4">
       <div>
-        <h2 className="text-sm font-bold text-yellow-300">Desconto dos combos</h2>
+        <h2 className="text-sm font-bold text-yellow-300">Desconto padrão dos combos</h2>
         <p className="mt-0.5 text-[11px] text-slate-500">
-          Vale para combos fixos (ao recalcular o preço) e para o combo personalizado montado pelo cliente.
+          Sugestão para novos combos e desconto do combo personalizado do cliente. Cada combo fixo tem o seu próprio desconto, editável no card.
         </p>
       </div>
       <div className="flex items-center gap-2">
