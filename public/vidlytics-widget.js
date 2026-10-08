@@ -1,5 +1,5 @@
 (function () {
-  var WIDGET_VERSION = '2026.10.08-1';
+  var WIDGET_VERSION = '2026.10.08-2';
 
   console.info(
     '%cVidlytics Widget carregado — versão ' + WIDGET_VERSION,
@@ -7972,6 +7972,15 @@ function readDisplayLocationsWithRules() {
   }).catch(function () { return []; });
 }
 
+function vlPlayAllowed() {
+  var sid = cleanUuid(storeId);
+  if (!hasSupabase || !sid) return Promise.resolve(true);
+  return supabaseFetch('rpc/widget_play_allowed', { method: 'POST', body: JSON.stringify({ p_store_id: sid }) })
+    .then(function (res) { return res.ok ? res.json() : true; })
+    .then(function (ok) { return ok !== false; })
+    .catch(function () { return true; });
+}
+
 function initWidget() {
   var _urlParams = new URLSearchParams(window.location.search);
   var _selectorToken = _urlParams.get('widgetSelectToken') || null;
@@ -7995,7 +8004,13 @@ function initWidget() {
         return;
       }
 
-      return readStoreSettings().then(function (settings) {
+      return Promise.all([readStoreSettings(), vlPlayAllowed()]).then(function (pair) {
+          var settings = pair[0];
+          if (pair[1] === false) {
+            console.warn('[Vidlytics] Widget pausado: cota mensal de visualizacoes acima de 110%.');
+            appDisabledBySettings = true;
+            return;
+          }
         if (settings.live_widget_config) {
           liveDivulgacaoConfig = settings.live_widget_config.divulgacao || settings.live_widget_config;
           liveAoVivoConfig = settings.live_widget_config.aoVivo || null;

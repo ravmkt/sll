@@ -329,6 +329,7 @@ export default function VisaoGeralTab() {
 
   const storageLimit = quotaStorage?.limit ?? 0;
   const viewsLimit = quotaPlays?.limit ?? 0;
+  const playsUsed = quotaPlays?.used ?? 0;
 
   const tc = totals(curRows);
   const tp = totals(prevRows);
@@ -339,7 +340,7 @@ export default function VisaoGeralTab() {
   if (!appEnabled) alerts.push({ tone: 'danger', text: 'O aplicativo está desativado: seus vídeos estão ocultos na loja.' });
   if (appEnabled && health && health.videos > 0 && health.views7 === 0) alerts.push({ tone: 'warn', text: 'Sem visualizações nos últimos 7 dias. Confira se o script está instalado na loja.' });
   if (health && health.idle > 0) alerts.push({ tone: 'warn', text: `${health.idle} ${health.idle === 1 ? 'vídeo ativo sem visualizações' : 'vídeos ativos sem visualizações'} em 30 dias.` });
-  if (health && viewsLimit > 0 && health.month >= viewsLimit * 0.8) alerts.push({ tone: 'danger', text: health.month > viewsLimit * 1.1 ? `Você passou de 110% da cota mensal de visualizações (${Math.round((health.month / viewsLimit) * 100)}%). Os vídeos podem ser pausados na loja. Fale com o suporte para ampliar o plano.` : `Você usou ${Math.round((health.month / viewsLimit) * 100)}% da cota mensal de visualizações. Fale com o suporte para ampliar o plano.` });
+  if (health && viewsLimit > 0 && playsUsed >= viewsLimit * 0.8) alerts.push({ tone: 'danger', text: playsUsed > viewsLimit * 1.1 ? `Você passou de 110% da cota mensal de visualizações (${Math.round((playsUsed / viewsLimit) * 100)}%). Os vídeos podem ser pausados na loja. Fale com o suporte para ampliar o plano.` : `Você usou ${Math.round((playsUsed / viewsLimit) * 100)}% da cota mensal de visualizações. Fale com o suporte para ampliar o plano.` });
 
   const academyTip = ACADEMY_TIPS[new Date().getMonth()];
 
@@ -510,12 +511,12 @@ export default function VisaoGeralTab() {
               <Eye className="w-4 h-4 text-[#0094eb]" />
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black text-slate-800">{fmtInt(health?.month ?? 0)}</span>
+              <span className="text-2xl font-black text-slate-800">{fmtInt(playsUsed)}</span>
               <span className="text-xs text-slate-400 font-medium">de {!quotaPlays ? '...' : viewsLimit > 0 ? fmtInt(viewsLimit) : 'Ilimitado'}</span>
             </div>
             <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
               <span>Quota do mês</span>
-              <span className="font-semibold text-slate-700">{viewsLimit > 0 ? Math.round(((health?.month ?? 0) / viewsLimit) * 100) : 0}%</span>
+              <span className="font-semibold text-slate-700">{viewsLimit > 0 ? Math.round(((playsUsed) / viewsLimit) * 100) : 0}%</span>
             </div>
           </div>
 
