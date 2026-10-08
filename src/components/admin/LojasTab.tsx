@@ -1,3 +1,4 @@
+import StoreDetailPage from '@/components/admin/StoreDetailPage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Eye, Loader2, Pencil, Power, Search, Trash2 } from 'lucide-react';
@@ -17,7 +18,7 @@ const CHIPS: { id: 'all' | StoreStatus; label: string }[] = [
   { id: 'inactive', label: 'Inativas' },
 ];
 
-export function LojasTab() {
+function LojasList() {
   const [, setParams] = useSearchParams();
   const [rows, setRows] = useState<AdminStoreRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,6 +212,12 @@ export function LojasTab() {
       )}
     </div>
   );
+}
+
+export function LojasTab() {
+  const [params] = useSearchParams();
+  const loja = params.get('loja');
+  return loja ? <StoreDetailPage key={loja} storeId={loja} /> : <LojasList />;
 }
 
 export default LojasTab;
