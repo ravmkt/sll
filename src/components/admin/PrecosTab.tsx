@@ -265,12 +265,18 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
             <tbody className="divide-y divide-white/5">
               {list.length === 0 && <tr><td colSpan={7} className="px-3 py-8 text-center text-slate-500">Nenhum plano. Clique em "Novo plano".</td></tr>}
               {list.map((p) => (
-                <tr key={p.id} onClick={() => setEditing(p)} className="cursor-pointer hover:bg-white/5">
+                <tr key={p.id} onClick={() => setEditing(p)} className={`cursor-pointer hover:bg-white/5 ${p.is_combo ? 'bg-violet-500/5 shadow-[inset_3px_0_0_0_#8b5cf6]' : ''}`}>
                   <td className="px-3 py-3">
                     <p className="font-bold text-white">{p.plan_name} {p.is_recommended && <span className="ml-1 rounded-full bg-[#fd8539]/15 px-1.5 py-0.5 text-[9px] text-[#fd8539]">Recomendado</span>}</p>
                     <p className="font-mono text-[10px] text-slate-600">{p.plan_tier}</p>
                   </td>
-                  <td className="px-3 py-3 text-slate-300">{p.is_combo ? 'Combo' : modName.get(p.module_slug || '') || p.module_slug}</td>
+                  <td className="px-3 py-3">
+                    {p.is_combo ? (
+                      <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-300">Combo</span>
+                    ) : (
+                      <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-300">{modName.get(p.module_slug || '') || p.module_slug}</span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-right text-white">{brl(p.price_monthly_cents)}</td>
                   <td className="px-3 py-3 text-right text-slate-300">{brl(p.price_semiannual_cents)}</td>
                   <td className="px-3 py-3 text-right text-slate-300">{brl(p.price_annual_cents)}</td>
