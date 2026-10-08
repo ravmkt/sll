@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { StoreBrand } from './StoreBrand';
 import { ModuleSwitcher } from './ModuleSwitcher';
+import { MasterButton } from '@/components/admin/MasterButton';
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isDark] = useState(false);
@@ -29,7 +30,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       >
         <header className="h-16 bg-white dark:bg-[#0f172a] border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-6 sticky top-0 z-20">
           <StoreBrand />
-          <ModuleSwitcher />
+          <div className="flex items-center gap-2"><MasterButton /><ModuleSwitcher /></div>
         </header>
 
         {/* Dynamic Content */}
