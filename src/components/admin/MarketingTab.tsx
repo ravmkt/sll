@@ -138,7 +138,10 @@ function SlidesEditor({ slides, onChange }: { slides: MktSlide[]; onChange: (s: 
   const [same, setSame] = useState(() => slides.every((s) => s.starts_at === slides[0]?.starts_at && s.ends_at === slides[0]?.ends_at));
 
   const setImage = (idx: number, url: string) => onChange(slides.map((s, n) => (n === idx ? { ...s, image_url: url } : s)));
-  const setDates = (idx: number, p: Partial<MktSlide>) => onChange(slides.map((s, n) => (n === idx || same ? { ...s, ...p } : s)));
+  const setDates = (idx: number, p: Partial<MktSlide>) => {
+    if (same && slides.length > 1) setSame(false);
+    onChange(slides.map((s, n) => (n === idx ? { ...s, ...p } : s)));
+  };
   const toggleSame = (v: boolean) => {
     setSame(v);
     if (v && slides.length > 1) onChange(slides.map((s) => ({ ...s, starts_at: slides[0].starts_at, ends_at: slides[0].ends_at })));
