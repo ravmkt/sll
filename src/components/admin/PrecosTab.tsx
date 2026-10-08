@@ -5,7 +5,7 @@ import {
   listDynamicPlans, listPlanAddons, updateDynamicPlan, updatePlanAddon,
   type DynamicPlan, type PlanAddon,
 } from '@/services/admin/plansAdmin';
-import { createDynamicPlan, getPlanSubscribers } from '@/services/admin/pricingService';
+import { createDynamicPlan, deleteDynamicPlan, getPlanSubscribers } from '@/services/admin/pricingService';
 import { listModules } from '@/services/admin/adminService';
 import CouponsManager from '@/components/admin/CouponsManager';
 import ComboCreator from '@/components/admin/ComboCreator';
@@ -252,6 +252,20 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
     }
   };
 
+  const removePlan = async (p: DynamicPlan) => {
+    if (!window.confirm(`Excluir "${p.plan_name}"? Essa ação não pode ser desfeita.`)) return;
+    setTogglingId(p.id);
+    try {
+      await deleteDynamicPlan(p.id);
+      toast.success('Plano excluído.');
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message || 'Não foi possível excluir.');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const renderTable = (rows: DynamicPlan[], combo: boolean) => (
     <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#111524]">
       <table className="w-full min-w-[900px] text-xs">
@@ -297,6 +311,9 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
                     className={`cursor-pointer rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-40 ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
                     {p.is_active ? 'Pausar' : 'Ativar'}
                   </button>
+                  <button type="button" disabled={togglingId === p.id || (subs[p.id] || 0) > 0} onClick={() => removePlan(p)}
+                    title={(subs[p.id] || 0) > 0 ? 'Plano com assinantes: use Pausar' : 'Excluir plano'}
+                    className="cursor-pointer rounded-md bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30">Excluir</button>
                 </div>
               </td>
             </tr>

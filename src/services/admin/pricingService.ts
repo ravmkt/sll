@@ -13,3 +13,8 @@ export async function createDynamicPlan(data: Record<string, unknown>): Promise<
   if (error) throw new Error(error.message);
   return id as string;
 }
+
+export async function deleteDynamicPlan(id: string): Promise<void> {
+  const { error } = await sb.rpc('admin_delete_dynamic_plan', { p_id: id });
+  if (error) throw new Error(error.message);
+}
