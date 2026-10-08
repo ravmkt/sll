@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import type { DynamicPlan } from '@/services/admin/plansAdmin';
 import type { ComboModuleRow } from '@/services/admin/combosAdmin';
 import {
-  MARGIN_NA, buildCalc, computeMargin, getCostSettings, getDiscounts, getFxAlert, getOverrides, getPayingStores, syncFx,
-  type Calc, type CostSettings, type Limits, type Margin, type Prices,
+  MARGIN_NA, buildCalc, computeMargin, getCostSettings, getDiscounts, getFxAlert, getOverrides, getPayingStores, syncFx, customTotalBrl, listCustomCosts,
+  type Calc, type CostSettings, type CustomCost, type Limits, type Margin, type Prices,
 } from '@/services/admin/costsAdmin';
 
 export type MarginAlert = { plan: DynamicPlan; margin: Margin };
@@ -11,6 +11,7 @@ export type MarginAlert = { plan: DynamicPlan; margin: Margin };
 export function usePricingCosts(plans: DynamicPlan[] | null, comboMods: ComboModuleRow[]) {
   const [settings, setSettings] = useState<CostSettings | null>(null);
   const [paying, setPaying] = useState(0);
+  const [extraCosts, setExtraCosts] = useState<CustomCost[]>([]);
   const [discounts, setDiscounts] = useState<Record<string, number>>({});
   const [overrides, setOverrides] = useState<Record<string, Record<string, Limits>>>({});
   const [fx, setFx] = useState<{ rate: number; avg: number } | null>(null);
@@ -28,14 +29,15 @@ export function usePricingCosts(plans: DynamicPlan[] | null, comboMods: ComboMod
             try { s = await syncFx(); } catch { /* mantem a cotacao salva */ }
           }
         }
-        const [p, d, o, f] = await Promise.all([
+        const [p, d, o, f, ex] = await Promise.all([
           getPayingStores().catch(() => 0),
           getDiscounts(),
           getOverrides(),
           s ? getFxAlert(s.usd_to_brl_rate).catch(() => null) : Promise.resolve(null),
+          listCustomCosts().catch(() => [] as CustomCost[]),
         ]);
         if (off) return;
-        setSettings(s); setPaying(p); setDiscounts(d); setOverrides(o); setFx(f);
+        setSettings(s); setPaying(p); setDiscounts(d); setOverrides(o); setFx(f); setExtraCosts(ex);
       } catch {
         if (!off) setSettings(null);
       }
@@ -43,7 +45,7 @@ export function usePricingCosts(plans: DynamicPlan[] | null, comboMods: ComboMod
     return () => { off = true; };
   }, [plans, tick]);
 
-  const calc: Calc | null = settings ? buildCalc(settings, paying) : null;
+  const calc: Calc | null = settings ? buildCalc(settings, paying, customTotalBrl(extraCosts, settings.usd_to_brl_rate)) : null;
 
   const bestIn = (slug: string, tier: string | null): DynamicPlan | null => {
     const list = (plans || []).filter((p) => !p.is_combo && p.module_slug === slug);

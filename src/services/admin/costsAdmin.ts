@@ -98,9 +98,9 @@ export type Calc = {
   deduction: number; mbPerPlay: number; realistic: number; payingStores: number;
 };
 
-export function buildCalc(s: CostSettings, paying: number): Calc {
+export function buildCalc(s: CostSettings, paying: number, extraBrl = 0): Calc {
   const rate = s.usd_to_brl_rate;
-  const fixedTotal = (s.supabase_pro_usd + s.vercel_pro_usd) * rate + s.domain_and_tools_monthly_brl;
+  const fixedTotal = (s.supabase_pro_usd + s.vercel_pro_usd) * rate + extraBrl;
   return {
     storageBrl: s.storage_cost_usd_per_gb * rate,
     trafficBrl: s.traffic_cost_usd_per_gb * rate,
@@ -157,4 +157,37 @@ export function computeMargin(prices: Prices, limitsList: Limits[], c: Calc): Ma
   const real = mg(cr);
   const level: Level = worst >= 0.5 ? 'ok' : worst >= 0.2 ? 'warn' : worst >= 0 ? 'low' : 'loss';
   return { level, worst, real, costWorst: cw, costReal: cr };
+}
+
+// ---------- despesas operacionais dinamicas ----------
+export type CustomCost = {
+  id: string; name: string; cost_type: 'fixed_monthly' | 'variable_quota'; currency: 'BRL' | 'USD';
+  amount: number; quota_notes: string | null; is_active: boolean;
+};
+
+export async function listCustomCosts(): Promise<CustomCost[]> {
+  const { data, error } = await sb.from('operational_custom_costs').select('*').order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return ((data as any[]) || []).map((r) => ({ ...r, amount: Number(r.amount) })) as CustomCost[];
+}
+
+export async function addCustomCost(input: Omit<CustomCost, 'id'>): Promise<CustomCost> {
+  const { data, error } = await sb.from('operational_custom_costs').insert(input).select().single();
+  if (error) throw new Error(error.message);
+  return { ...data, amount: Number(data.amount) } as CustomCost;
+}
+
+export async function updateCustomCost(id: string, patch: Partial<Omit<CustomCost, 'id'>>): Promise<void> {
+  const { error } = await sb.from('operational_custom_costs').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteCustomCost(id: string): Promise<void> {
+  const { error } = await sb.from('operational_custom_costs').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+// Soma das despesas ativas em R$ (USD convertido pelo cambio informado)
+export function customTotalBrl(list: CustomCost[], rate: number): number {
+  return list.filter((x) => x.is_active).reduce((t, x) => t + (x.currency === 'USD' ? x.amount * rate : x.amount), 0);
 }

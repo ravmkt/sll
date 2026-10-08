@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   NUM_KEYS, buildCalc, getCostSettings, getPayingStores, saveCostSettings, syncFx,
-  type CostSettings, type NumKey,
+  addCustomCost, customTotalBrl, deleteCustomCost, listCustomCosts, updateCustomCost,
+  type CostSettings, type CustomCost, type NumKey,
 } from '@/services/admin/costsAdmin';
+import { useConfirm } from '@/components/admin/ConfirmDialog';
 import {
   getAutoUsage, getManualUsage, getQuotas, saveManualUsage, saveQuotaIncluded, type Quota,
 } from '@/services/admin/infraUsageAdmin';
@@ -69,17 +71,21 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
   const [autoU, setAutoU] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [extras, setExtras] = useState<CustomCost[]>([]);
+  const [exTxt, setExTxt] = useState<Record<string, string>>({});
+  const { confirm, dialog } = useConfirm();
 
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const load = useCallback(async () => {
     try {
-      const [x, p, q, mu, au] = await Promise.all([
+      const [x, p, q, mu, au, ex] = await Promise.all([
         getCostSettings(),
         getPayingStores().catch(() => 0),
         getQuotas().catch(() => [] as Quota[]),
         getManualUsage(),
         getAutoUsage(),
+        listCustomCosts().catch(() => [] as CustomCost[]),
       ]);
       if (x) {
         setS(x);
@@ -91,6 +97,8 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
       setInc(Object.fromEntries(q.map((r) => [r.key, str(r.included)])));
       setMan(Object.fromEntries(Object.entries(mu).map(([k, v]) => [k, str(v)])));
       setAutoU(au);
+      setExtras(ex);
+      setExTxt(Object.fromEntries(ex.map((r) => [r.id, str(r.amount)])));
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -109,7 +117,43 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
   if (loading) return <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />;
   if (!s || !live) return <p className="text-xs text-rose-400">Configuração de custos não encontrada. Rode a migration de custos.</p>;
 
-  const c = buildCalc(live, paying);
+  const amt = (x: CustomCost) => num(exTxt[x.id] ?? String(x.amount));
+  const extraBrl = customTotalBrl(extras.map((x) => ({ ...x, amount: amt(x) })), live.usd_to_brl_rate);
+  const c = buildCalc(live, paying, extraBrl);
+
+  const patchEx = (id: string, p: Partial<CustomCost>) => setExtras((prev) => prev.map((x) => (x.id === id ? { ...x, ...p } : x)));
+  const addExtra = async () => {
+    setBusy(true);
+    try {
+      const r = await addCustomCost({ name: 'Novo custo', cost_type: 'fixed_monthly', currency: 'BRL', amount: 0, quota_notes: null, is_active: true });
+      setExtras((p) => [...p, r]);
+      setExTxt((p) => ({ ...p, [r.id]: '0' }));
+      onChanged();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const toggleEx = async (x: CustomCost) => {
+    try {
+      await updateCustomCost(x.id, { is_active: !x.is_active });
+      patchEx(x.id, { is_active: !x.is_active });
+      onChanged();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+  const removeEx = async (x: CustomCost) => {
+    if (!(await confirm({ title: 'Excluir despesa', message: `"${x.name}" será removida do custo fixo.`, confirmLabel: 'Excluir' }))) return;
+    try {
+      await deleteCustomCost(x.id);
+      setExtras((p) => p.filter((y) => y.id !== x.id));
+      onChanged();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
   const rate = live.usd_to_brl_rate;
   const usedOf = (q: Quota) => (q.source === 'auto' ? autoU[q.key] ?? 0 : num(man[q.key]));
   const inclOf = (q: Quota) => num(inc[q.key] ?? String(q.included));
@@ -132,7 +176,7 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
   const sbS = svc(sbRows, 'supabase_pro_usd');
   const vcS = svc(vcRows, 'vercel_pro_usd');
   const bunnyCost = (num(man.bunny_storage_gb) * live.storage_cost_usd_per_gb + num(man.bunny_traffic_gb) * live.traffic_cost_usd_per_gb) * rate;
-  const total = sbS.base + sbS.over + vcS.base + vcS.over + bunnyCost + live.domain_and_tools_monthly_brl;
+  const total = sbS.base + sbS.over + vcS.base + vcS.over + bunnyCost + extraBrl;
 
   const todayStr = new Date().toLocaleDateString('en-CA');
   const lastStr = s.last_currency_sync_at ? new Date(s.last_currency_sync_at).toLocaleDateString('en-CA') : '';
@@ -176,6 +220,10 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
       if (n === null) { toast.error(`Franquia inválida em "${q.label}".`); return; }
       items.push({ key: q.key, included: n });
     }
+    for (const x of extras) {
+      if (!x.name.trim()) { toast.error('Dê um nome a todas as despesas.'); return; }
+      if (parse(exTxt[x.id] ?? String(x.amount)) === null) { toast.error(`Valor inválido em "${x.name}".`); return; }
+    }
     const usage: Record<string, number> = {};
     const manualKeys = [...quotas.filter((q) => q.source === 'manual').map((q) => q.key), 'bunny_storage_gb', 'bunny_traffic_gb'];
     for (const k of manualKeys) {
@@ -186,6 +234,9 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
     setBusy(true);
     try {
       await saveCostSettings({ ...patch, auto_sync_currency: auto });
+      for (const x of extras) {
+        await updateCustomCost(x.id, { name: x.name.trim(), cost_type: x.cost_type, currency: x.currency, amount: amt(x), quota_notes: (x.quota_notes ?? '').trim() || null });
+      }
       await saveQuotaIncluded(items);
       await saveManualUsage(usage);
       toast.success('Custos salvos. Margens recalculadas.');
@@ -322,11 +373,70 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
 
       <section className={BOX}>
         <h2 className="text-sm font-bold text-yellow-300">Outros custos e taxas</h2>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <Field label="Domínios e ferramentas (R$/mês)" value={form.domain_and_tools_monthly_brl ?? ''} onChange={(v) => set('domain_and_tools_monthly_brl', v)} />
-          <Field label="Gateway (%)" value={form.gateway_fee_percent ?? ''} onChange={(v) => set('gateway_fee_percent', v)} />
-          <Field label="Impostos (%)" value={form.tax_percent ?? ''} onChange={(v) => set('tax_percent', v)} />
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Field label="Gateway de pagamento (%)" value={form.gateway_fee_percent ?? ''} onChange={(v) => set('gateway_fee_percent', v)} />
+          <Field label="Impostos / Simples Nacional (%)" value={form.tax_percent ?? ''} onChange={(v) => set('tax_percent', v)} />
         </div>
+
+        <div className="space-y-2 border-t border-white/5 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-white">Despesas operacionais e ferramentas</p>
+              <p className="text-[10px] text-slate-500">Entram no custo fixo e são rateadas entre as lojas. Em US$, convertidas pelo câmbio do dia.</p>
+            </div>
+            <button type="button" disabled={busy} onClick={addExtra} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-40">
+              <Plus size={14} /> Adicionar custo
+            </button>
+          </div>
+
+          {extras.length === 0 && <p className="py-3 text-center text-xs text-slate-500">Nenhuma despesa cadastrada.</p>}
+
+          {extras.map((x) => (
+            <div key={x.id} className={`grid grid-cols-12 items-end gap-2 border-t border-white/5 pt-2 ${x.is_active ? '' : 'opacity-50'}`}>
+              <label className="col-span-12 space-y-1 md:col-span-3">
+                <span className={LBL}>Nome</span>
+                <input value={x.name} onChange={(e) => patchEx(x.id, { name: e.target.value })} placeholder="Contabilidade" className={IN} />
+              </label>
+              <label className="col-span-6 space-y-1 md:col-span-2">
+                <span className={LBL}>Tipo</span>
+                <select value={x.cost_type} onChange={(e) => patchEx(x.id, { cost_type: e.target.value as CustomCost['cost_type'] })} className={`${IN} cursor-pointer`}>
+                  <option value="fixed_monthly">Fixo mensal</option>
+                  <option value="variable_quota">Variável / franquia</option>
+                </select>
+              </label>
+              <label className="col-span-3 space-y-1 md:col-span-1">
+                <span className={LBL}>Moeda</span>
+                <select value={x.currency} onChange={(e) => patchEx(x.id, { currency: e.target.value as CustomCost['currency'] })} className={`${IN} cursor-pointer`}>
+                  <option value="BRL">R$</option>
+                  <option value="USD">US$</option>
+                </select>
+              </label>
+              <label className="col-span-3 space-y-1 md:col-span-2">
+                <span className={LBL}>Valor mensal</span>
+                <input value={exTxt[x.id] ?? ''} onChange={(e) => setExTxt((p) => ({ ...p, [x.id]: e.target.value }))} className={IN} />
+                {x.currency === 'USD' && <span className="block text-[10px] text-slate-500">≈ {brl(amt(x) * rate)}</span>}
+              </label>
+              <label className="col-span-8 space-y-1 md:col-span-3">
+                <span className={LBL}>Observação / franquia</span>
+                <input value={x.quota_notes ?? ''} onChange={(e) => patchEx(x.id, { quota_notes: e.target.value })} placeholder="Até 50.000 disparos/mês" className={IN} />
+              </label>
+              <div className="col-span-4 flex items-center justify-end gap-1.5 md:col-span-1">
+                <button type="button" onClick={() => toggleEx(x)} title={x.is_active ? 'Desativar' : 'Ativar'}
+                  className={`cursor-pointer rounded-md px-2 py-1.5 text-[10px] font-bold ${x.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>
+                  {x.is_active ? 'On' : 'Off'}
+                </button>
+                <button type="button" onClick={() => removeEx(x)} title="Excluir" className="cursor-pointer rounded-md bg-rose-500/15 p-1.5 text-rose-300 hover:bg-rose-500/25">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <p className="border-t border-white/5 pt-2 text-right text-[11px] text-slate-400">
+            Total das despesas ativas: <b className="text-white">{brl(extraBrl)}</b> · edições só são gravadas em "Salvar custos"; adicionar, ativar e excluir gravam na hora.
+          </p>
+        </div>
+        {dialog}
       </section>
 
       <section className={BOX}>
