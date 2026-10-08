@@ -309,81 +309,56 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
   );
 }
 
-function Promocao() {
-  const [d, setD] = useState<MktDraft>(emptyDraft('banner'));
-  const [asBanner, setAsBanner] = useState(true);
-  const [asPopup, setAsPopup] = useState(false);
-  const [popupImage, setPopupImage] = useState('');
-  const [discount, setDiscount] = useState('');
+function Cupom() {
+  const [code, setCode] = useState('');
+  const [pct, setPct] = useState('');
+  const [maxUses, setMaxUses] = useState('');
+  const [expires, setExpires] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const set = <K extends keyof MktDraft>(k: K, v: MktDraft[K]) => setD({ ...d, [k]: v });
 
-  const publish = async () => {
+  const create = async () => {
     setSaving(true); setMsg(null);
     try {
-      const code = d.coupon_code.trim().toUpperCase();
-      if (code && discount.trim()) {
-        const pctv = Number(discount.replace(',', '.'));
-        if (!Number.isFinite(pctv) || pctv <= 0 || pctv > 100) throw new Error('O desconto deve ficar entre 1 e 100%.');
-        await saveCoupon(null, {
-          code,
-          discount_type: 'percentage',
-          discount_value: Math.round(pctv),
-          max_uses: null,
-          expires_at: d.ends_at,
-          applicable_plan_ids: [],
-          is_active: true,
-        });
-      }
-      const base = { ...d, coupon_code: code, id: undefined };
-      if (asBanner) await saveItem({ ...base, kind: 'banner' });
-      if (asPopup) await saveItem({ ...base, kind: 'popup', frequency: 'daily', image_url: popupImage });
-      setMsg({ ok: true, text: 'Promoção publicada. Acompanhe em Banners e Popups.' });
-      setD(emptyDraft('banner')); setPopupImage('');
+      const c = code.trim().toUpperCase();
+      const v = Number(pct.replace(',', '.'));
+      if (!c) throw new Error('Informe o código do cupom.');
+      if (!Number.isFinite(v) || v <= 0 || v > 100) throw new Error('O desconto deve ficar entre 1 e 100%.');
+      const mu = maxUses.trim() ? Number(maxUses) : null;
+      if (mu !== null && (!Number.isInteger(mu) || mu <= 0)) throw new Error('Limite de usos inválido.');
+      await saveCoupon(null, {
+        code: c,
+        discount_type: 'percentage',
+        discount_value: Math.round(v),
+        max_uses: mu,
+        expires_at: expires,
+        applicable_plan_ids: [],
+        is_active: true,
+      });
+      setMsg({ ok: true, text: 'Cupom ' + c + ' criado.' });
+      setCode(''); setPct(''); setMaxUses(''); setExpires(null);
     } catch (e: any) {
-      setMsg({ ok: false, text: e?.message || 'Erro ao publicar' });
+      setMsg({ ok: false, text: e?.message || 'Erro ao criar cupom' });
     } finally { setSaving(false); }
   };
 
   return (
     <div className="space-y-4">
-      <h2 className="text-base font-bold text-slate-100">Criar promoção</h2>
-      <p className="text-xs text-slate-400">Publica o banner e/ou o popup com o código do cupom, o período e o público numa só ação. Se você informar código e desconto (%), o cupom é criado junto, com validade até o fim da promoção.</p>
+      <h2 className="text-base font-bold text-slate-100">Criar cupom</h2>
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 grid md:grid-cols-2 gap-3">
-        <div className="md:col-span-2"><label className={labelCls}>Título da promoção</label>
-          <input className={inputCls} value={d.title} onChange={(e) => set('title', e.target.value)} /></div>
-        <div className="md:col-span-2"><label className={labelCls}>Texto</label>
-          <textarea className={inputCls} rows={2} value={d.body} onChange={(e) => set('body', e.target.value)} /></div>
-        <div><label className={labelCls}>Código do cupom</label>
-          <input className={inputCls} value={d.coupon_code} onChange={(e) => set('coupon_code', e.target.value)} /></div>
-        <div><label className={labelCls}>Desconto do cupom (%) — vazio = não criar cupom</label>
-          <input className={inputCls} value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="10" /></div>
-        <div><label className={labelCls}>Link do botão</label>
-          <input className={inputCls} value={d.cta_url} onChange={(e) => set('cta_url', e.target.value)} placeholder="/precos" /></div>
-        <div><label className={labelCls}>Texto do botão</label>
-          <input className={inputCls} value={d.cta_label} onChange={(e) => set('cta_label', e.target.value)} placeholder="Aproveitar" /></div>
-        {asBanner && <ImageUpload kind="banner" value={d.image_url} onChange={(u) => set('image_url', u)} />}
-        {asPopup && <ImageUpload kind="popup" value={popupImage} onChange={setPopupImage} />}
-        <div><label className={labelCls}>Local</label>
-          <select className={inputCls} value={d.location} onChange={(e) => set('location', e.target.value as MktLocation)}>
-            {Object.entries(LOCATION_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select></div>
-        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3"><div><label className={labelCls}>Público</label>
-          <select className={inputCls} value={d.audience} onChange={(e) => set('audience', e.target.value as MktAudience)}>
-            {Object.entries(AUDIENCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select></div>
-            <DateTimeField label="Início" value={d.starts_at} onChange={(x) => set('starts_at', x)} /><DateTimeField label="Fim" value={d.ends_at} onChange={(x) => set('ends_at', x)} /></div>
-        <div className="md:col-span-2 flex gap-6 text-sm text-slate-200">
-          <label className="flex items-center gap-2"><input type="checkbox" checked={asBanner} onChange={(e) => setAsBanner(e.target.checked)} /> Publicar como banner</label>
-          <label className="flex items-center gap-2"><input type="checkbox" checked={asPopup} onChange={(e) => setAsPopup(e.target.checked)} /> Publicar como popup</label>
-        </div>
+        <div><label className={labelCls}>Código</label>
+          <input className={inputCls} value={code} onChange={(e) => setCode(e.target.value)} placeholder="BLACK10" /></div>
+        <div><label className={labelCls}>Desconto (%)</label>
+          <input className={inputCls} value={pct} onChange={(e) => setPct(e.target.value)} placeholder="10" /></div>
+        <div><label className={labelCls}>Limite de usos (vazio = ilimitado)</label>
+          <input className={inputCls} value={maxUses} onChange={(e) => setMaxUses(e.target.value)} placeholder="100" /></div>
+        <DateTimeField label="Validade (vazio = sem fim)" value={expires} onChange={setExpires} />
       </div>
       {msg && <p className={'text-sm ' + (msg.ok ? 'text-emerald-400' : 'text-rose-400')}>{msg.text}</p>}
       <div className="flex justify-end">
-        <button type="button" disabled={saving || !d.title.trim() || (!asBanner && !asPopup)} onClick={publish}
+        <button type="button" disabled={saving || !code.trim() || !pct.trim()} onClick={create}
           className="px-4 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 disabled:opacity-50">
-          {saving ? 'Publicando...' : 'Publicar promoção'}
+          {saving ? 'Criando...' : 'Criar cupom'}
         </button>
       </div>
     </div>
@@ -396,7 +371,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'popup', label: 'Popups', icon: <LayoutTemplate className="w-4 h-4" /> },
   { key: 'email', label: 'E-mail', icon: <Mail className="w-4 h-4" /> },
   { key: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="w-4 h-4" /> },
-  { key: 'promocao', label: 'Promoções', icon: <Tag className="w-4 h-4" /> },
+  { key: 'promocao', label: 'Cupom', icon: <Tag className="w-4 h-4" /> },
 ];
 
 export default function MarketingTab() {
@@ -424,7 +399,7 @@ export default function MarketingTab() {
         <ChannelBlock title="WhatsApp marketing" icon={<MessageCircle className="w-4 h-4" />} labels={['Enviadas', 'Lidas', 'Clicadas', 'Respondidas']}
           note="Envio de WhatsApp ainda não conectado. Precisa da API oficial ou de um provedor para medir leitura e resposta." />
       )}
-      {tab === 'promocao' && <Promocao />}
+      {tab === 'promocao' && <Cupom />}
     </div>
   );
 }
