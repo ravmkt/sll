@@ -2,10 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { useLoja } from '../contexts/LojaContext';
+import MarketingBanner from '../components/marketing/MarketingBanner';
 import { Video, Radio, ShoppingBag, ArrowRight, Store } from 'lucide-react';
 
 export default function Dashboard() {
-  const { store } = useLoja();
+  const { store, storeId } = useLoja();
 
   const storeName = store?.name || 'sua loja';
   const logoUrl = store?.logo_url;
@@ -13,6 +14,7 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+            <MarketingBanner storeId={storeId} location="home" onActive={() => {}} />
         {/* Cabeçalho simplificado com logotipo e cumprimento */}
         <div className="flex items-center gap-4 bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-6 shadow-sm">
           <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-[#0094eb]/30 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 shadow-sm">

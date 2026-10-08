@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 export type MktKind = 'banner' | 'popup';
 export type MktLocation = 'all' | 'home' | 'vidlytics' | 'live';
 export type MktAudience = 'all' | 'past_due' | 'trial';
-export type MktFrequency = 'once' | 'daily' | 'always';
+export type MktFrequency = 'once' | 'session' | 'daily' | 'always';
 
 export interface MktDraft {
   id?: string;
@@ -45,7 +45,8 @@ export const AUDIENCE_LABEL: Record<MktAudience, string> = {
   trial: 'Em período de teste',
 };
 export const FREQUENCY_LABEL: Record<MktFrequency, string> = {
-  once: 'Uma vez por navegador',
+  session: 'Uma vez por sessão',
+  once: 'Uma só vez (por navegador)',
   daily: 'Uma vez por dia',
   always: 'Sempre que abrir',
 };

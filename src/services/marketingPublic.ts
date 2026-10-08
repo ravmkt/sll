@@ -9,7 +9,7 @@ export interface ActiveItem {
   cta_label: string | null;
   cta_url: string | null;
   coupon_code: string | null;
-  frequency: 'once' | 'daily' | 'always';
+  frequency: 'once' | 'session' | 'daily' | 'always';
 }
 
 export async function fetchActive(storeId: string, location: 'home' | 'vidlytics' | 'live'): Promise<ActiveItem[]> {

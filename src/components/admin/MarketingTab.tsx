@@ -101,6 +101,27 @@ function Visao() {
   );
 }
 
+function DateTimeField({ label, value, onChange }: { label: string; value: string | null; onChange: (v: string | null) => void }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</label>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={() => onChange(new Date().toISOString())} className="text-[11px] font-bold text-amber-400 hover:text-amber-300">Agora</button>
+          {value && <button type="button" onClick={() => onChange(null)} className="text-[11px] font-semibold text-slate-500 hover:text-slate-300">Limpar</button>}
+        </div>
+      </div>
+      <input
+        type="datetime-local"
+        className={inputCls + ' cursor-pointer [color-scheme:dark]'}
+        value={toLocal(value)}
+        onChange={(e) => onChange(toIso(e.target.value))}
+        onClick={(e) => { try { (e.currentTarget as any).showPicker?.(); } catch { /* ignora */ } }}
+      />
+    </div>
+  );
+}
+
 function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
   draft: MktDraft; onChange: (d: MktDraft) => void; onCancel: () => void; onSave: () => void; saving: boolean;
 }) {
@@ -131,10 +152,7 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
           <select className={inputCls} value={draft.audience} onChange={(e) => set('audience', e.target.value as MktAudience)}>
             {Object.entries(AUDIENCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
-        <div><label className={labelCls}>Início</label>
-          <input type="datetime-local" className={inputCls} value={toLocal(draft.starts_at)} onChange={(e) => set('starts_at', toIso(e.target.value))} /></div>
-        <div><label className={labelCls}>Fim</label>
-          <input type="datetime-local" className={inputCls} value={toLocal(draft.ends_at)} onChange={(e) => set('ends_at', toIso(e.target.value))} /></div>
+        <div className="md:col-span-2 grid grid-cols-2 gap-3"><DateTimeField label="Início" value={draft.starts_at} onChange={(x) => set('starts_at', x)} /><DateTimeField label="Fim" value={draft.ends_at} onChange={(x) => set('ends_at', x)} /></div>
         {draft.kind === 'popup' && (
           <div><label className={labelCls}>Frequência</label>
             <select className={inputCls} value={draft.frequency} onChange={(e) => set('frequency', e.target.value as MktFrequency)}>
@@ -299,10 +317,7 @@ function Promocao() {
           <select className={inputCls} value={d.audience} onChange={(e) => set('audience', e.target.value as MktAudience)}>
             {Object.entries(AUDIENCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
-        <div><label className={labelCls}>Início</label>
-          <input type="datetime-local" className={inputCls} value={toLocal(d.starts_at)} onChange={(e) => set('starts_at', toIso(e.target.value))} /></div>
-        <div><label className={labelCls}>Fim</label>
-          <input type="datetime-local" className={inputCls} value={toLocal(d.ends_at)} onChange={(e) => set('ends_at', toIso(e.target.value))} /></div>
+        <div className="md:col-span-2 grid grid-cols-2 gap-3"><DateTimeField label="Início" value={d.starts_at} onChange={(x) => set('starts_at', x)} /><DateTimeField label="Fim" value={d.ends_at} onChange={(x) => set('ends_at', x)} /></div>
         <div className="md:col-span-2 flex gap-6 text-sm text-slate-200">
           <label className="flex items-center gap-2"><input type="checkbox" checked={asBanner} onChange={(e) => setAsBanner(e.target.checked)} /> Publicar como banner</label>
           <label className="flex items-center gap-2"><input type="checkbox" checked={asPopup} onChange={(e) => setAsPopup(e.target.checked)} /> Publicar como popup</label>

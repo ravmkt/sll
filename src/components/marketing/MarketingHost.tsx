@@ -8,13 +8,14 @@ const today = () => new Date().toISOString().slice(0, 10);
 const seenOk = (i: ActiveItem) => {
   try {
     const v = localStorage.getItem('mk:seen:' + i.id);
+    if (i.frequency === 'session') return sessionStorage.getItem('mk:sess:' + i.id) === null;
     if (i.frequency === 'once') return !v;
     if (i.frequency === 'daily') return v !== today();
     return true;
   } catch { return true; }
 };
 const markSeen = (i: ActiveItem) => {
-  try { localStorage.setItem('mk:seen:' + i.id, today()); } catch { /* ignora */ }
+  try { localStorage.setItem('mk:seen:' + i.id, today()); sessionStorage.setItem('mk:sess:' + i.id, '1'); } catch { /* ignora */ }
 };
 const wasClosed = (id: string) => {
   try { return sessionStorage.getItem('mk:closed:' + id) === '1'; } catch { return false; }
