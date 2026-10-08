@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
 import { VidlyticsDatabaseService } from '../../../services/vidlytics/VidlyticsDatabaseService';
 import { getActiveSubscriptions } from '../../../services/subscriptions/getStoreSubscriptions';
+import { checkQuota, type QuotaState } from '@/services/quotaService';
 import { 
   CheckCircle2, 
   Hourglass, 
@@ -47,8 +48,8 @@ function getRange(p: Periodo, customStart: string, customEnd: string) {
 
 type PerfRow = Awaited<ReturnType<typeof VidlyticsDatabaseService.getVideosPerformance>>[number];
 
-const VIEWS_LIMIT = 60000;
-const STORAGE_LIMIT_DEFAULT = 50 * 1024 * 1024 * 1024;
+
+
 
 const fmtBytes = (b: number) => {
   if (!b) return '0 MB';
@@ -297,6 +298,15 @@ export default function VisaoGeralTab() {
     return () => { alive = false; };
   }, [storeId]);
 
+  const [quotaPlays, setQuotaPlays] = useState<QuotaState | null>(null);
+  const [quotaStorage, setQuotaStorage] = useState<QuotaState | null>(null);
+
+  useEffect(() => {
+    if (!storeId) return;
+    checkQuota(storeId, 'plays').then(setQuotaPlays).catch(() => setQuotaPlays(null));
+    checkQuota(storeId, 'storage').then(setQuotaStorage).catch(() => setQuotaStorage(null));
+  }, [storeId]);
+
   const [pagesLimit, setPagesLimit] = useState<number | null>(null);
 
   useEffect(() => {
@@ -317,7 +327,8 @@ export default function VisaoGeralTab() {
     return () => { alive = false; };
   }, [storeId]);
 
-  const storageLimit = Number((store as any)?.storage_limit_bytes) > 0 ? Number((store as any).storage_limit_bytes) : STORAGE_LIMIT_DEFAULT;
+  const storageLimit = quotaStorage?.limit ?? 0;
+  const viewsLimit = quotaPlays?.limit ?? 0;
 
   const tc = totals(curRows);
   const tp = totals(prevRows);
@@ -328,7 +339,7 @@ export default function VisaoGeralTab() {
   if (!appEnabled) alerts.push({ tone: 'danger', text: 'O aplicativo está desativado: seus vídeos estão ocultos na loja.' });
   if (appEnabled && health && health.videos > 0 && health.views7 === 0) alerts.push({ tone: 'warn', text: 'Sem visualizações nos últimos 7 dias. Confira se o script está instalado na loja.' });
   if (health && health.idle > 0) alerts.push({ tone: 'warn', text: `${health.idle} ${health.idle === 1 ? 'vídeo ativo sem visualizações' : 'vídeos ativos sem visualizações'} em 30 dias.` });
-  if (health && health.month >= VIEWS_LIMIT * 0.8) alerts.push({ tone: 'danger', text: `Você usou ${Math.round((health.month / VIEWS_LIMIT) * 100)}% da cota mensal de visualizações. Fale com o suporte para ampliar o plano.` });
+  if (health && viewsLimit > 0 && health.month >= viewsLimit * 0.8) alerts.push({ tone: 'danger', text: health.month > viewsLimit * 1.1 ? `Você passou de 110% da cota mensal de visualizações (${Math.round((health.month / viewsLimit) * 100)}%). Os vídeos podem ser pausados na loja. Fale com o suporte para ampliar o plano.` : `Você usou ${Math.round((health.month / viewsLimit) * 100)}% da cota mensal de visualizações. Fale com o suporte para ampliar o plano.` });
 
   const academyTip = ACADEMY_TIPS[new Date().getMonth()];
 
@@ -500,11 +511,11 @@ export default function VisaoGeralTab() {
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-black text-slate-800">{fmtInt(health?.month ?? 0)}</span>
-              <span className="text-xs text-slate-400 font-medium">de {fmtInt(VIEWS_LIMIT)}</span>
+              <span className="text-xs text-slate-400 font-medium">de {!quotaPlays ? '...' : viewsLimit > 0 ? fmtInt(viewsLimit) : 'Ilimitado'}</span>
             </div>
             <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
               <span>Quota do mês</span>
-              <span className="font-semibold text-slate-700">{Math.round(((health?.month ?? 0) / VIEWS_LIMIT) * 100)}%</span>
+              <span className="font-semibold text-slate-700">{viewsLimit > 0 ? Math.round(((health?.month ?? 0) / viewsLimit) * 100) : 0}%</span>
             </div>
           </div>
 
@@ -516,11 +527,11 @@ export default function VisaoGeralTab() {
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-black text-slate-800">{fmtBytes(storageBytes ?? 0)}</span>
-              <span className="text-xs text-slate-400 font-medium">de {fmtBytes(storageLimit)}</span>
+              <span className="text-xs text-slate-400 font-medium">de {!quotaStorage ? '...' : storageLimit > 0 ? fmtBytes(storageLimit) : 'Ilimitado'}</span>
             </div>
             <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
               <span>Vídeos na nuvem</span>
-              <span className="font-semibold text-slate-700">{Math.min(100, Math.round(((storageBytes ?? 0) / storageLimit) * 100))}%</span>
+              <span className="font-semibold text-slate-700">{storageLimit > 0 ? Math.min(100, Math.round(((storageBytes ?? 0) / storageLimit) * 100)) : 0}%</span>
             </div>
           </div>
 
