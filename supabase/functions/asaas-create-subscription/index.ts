@@ -19,6 +19,7 @@ interface RequestBody {
   billing_cycle: "MONTHLY" | "SEMIANNUAL" | "YEARLY";
   module_key?: string | null;
   coupon_code?: string | null;
+  dynamic_plan_id?: string | null;
 }
 
 const CYCLE_MAP: Record<string, string> = {
@@ -69,9 +70,9 @@ Deno.serve(async (req) => {
     }
 
     const body: RequestBody = await req.json();
-    const { store_id, plan_id, billing_cycle, module_key, coupon_code } = body;
+    const { store_id, plan_id, billing_cycle, module_key, coupon_code, dynamic_plan_id } = body;
 
-    if (!store_id || !plan_id || !billing_cycle) {
+    if (!store_id || (!plan_id && !dynamic_plan_id) || !billing_cycle) {
       return jsonResponse({ error: "CAMPOS_OBRIGATORIOS_FALTANTES" }, 400);
     }
 
@@ -103,35 +104,60 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 4. Busca o plano e o preço correto para o ciclo escolhido
-    const { data: plan, error: planErr } = await supabaseAdmin
-      .from("plans")
-      .select("id, name, price_cents")
-      .eq("id", plan_id)
-      .maybeSingle();
+    // 4. Plano e preço do ciclo escolhido (dinâmico ou legado)
+    let dyn: {
+      id: string; plan_name: string; is_combo: boolean; module_slug: string | null; is_active: boolean;
+      price_monthly_cents: number; price_semiannual_cents: number; price_annual_cents: number;
+    } | null = null;
+    let planName = "";
+    let priceCents = 0;
 
-    if (planErr || !plan) {
-      return jsonResponse({ error: "PLANO_INVALIDO" }, 400);
-    }
-
-    let priceCents = plan.price_cents;
-    const { data: priceRow } = await supabaseAdmin
-      .from("plan_prices")
-      .select("price_cents")
-      .eq("plan_id", plan_id)
-      .eq("billing_cycle", billing_cycle.toLowerCase())
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (priceRow?.price_cents) {
-      priceCents = priceRow.price_cents;
+    if (dynamic_plan_id) {
+      const { data: d } = await supabaseAdmin
+        .from("dynamic_plans")
+        .select("id, plan_name, is_combo, module_slug, is_active, price_monthly_cents, price_semiannual_cents, price_annual_cents")
+        .eq("id", dynamic_plan_id)
+        .maybeSingle();
+      if (!d || !d.is_active) {
+        return jsonResponse({ error: "PLANO_INVALIDO" }, 400);
+      }
+      dyn = d;
+      planName = d.plan_name;
+      priceCents =
+        billing_cycle === "MONTHLY" ? d.price_monthly_cents
+        : billing_cycle === "SEMIANNUAL" ? d.price_semiannual_cents
+        : d.price_annual_cents;
+      if (!priceCents || priceCents < 500) {
+        return jsonResponse({ error: "PLANO_INVALIDO" }, 400);
+      }
+    } else {
+      const { data: plan, error: planErr } = await supabaseAdmin
+        .from("plans")
+        .select("id, name, price_cents")
+        .eq("id", plan_id)
+        .maybeSingle();
+      if (planErr || !plan) {
+        return jsonResponse({ error: "PLANO_INVALIDO" }, 400);
+      }
+      planName = plan.name;
+      priceCents = plan.price_cents;
+      const { data: priceRow } = await supabaseAdmin
+        .from("plan_prices")
+        .select("price_cents")
+        .eq("plan_id", plan_id)
+        .eq("billing_cycle", billing_cycle.toLowerCase())
+        .eq("is_active", true)
+        .maybeSingle();
+      if (priceRow?.price_cents) {
+        priceCents = priceRow.price_cents;
+      }
     }
 
     let discountCents = 0;
     if (coupon_code && coupon_code.trim()) {
       const { data: v, error: vErr } = await supabaseAdmin.rpc("validate_coupon", {
         p_code: coupon_code.trim(),
-        p_plan_id: plan_id,
+        p_plan_id: dynamic_plan_id ?? plan_id,
       });
       if (vErr || !v?.valid) {
         return jsonResponse({ error: "CUPOM_INVALIDO", reason: v?.reason ?? "erro_validacao" }, 400);
@@ -158,27 +184,48 @@ Deno.serve(async (req) => {
     const asaasCycle = CYCLE_MAP[billing_cycle] ?? "MONTHLY";
 
     // 4.5 Resolve o módulo pelo plano (não confia no cliente) e bloqueia duplicidade
-    const { data: planRow } = await supabaseAdmin
-      .from("plans")
-      .select("modules")
-      .eq("id", plan_id)
-      .maybeSingle();
-    const planModules: string[] = Array.isArray(planRow?.modules) ? planRow.modules : [];
-    const resolvedModuleKey: string | null =
-      planModules.length === 1 ? planModules[0] : (module_key ?? null);
+    let resolvedModuleKey: string | null = null;
+    let blockKeys: string[] = [];
 
-    if (resolvedModuleKey) {
+    if (dyn) {
+      if (dyn.is_combo) {
+        const { data: cm } = await supabaseAdmin
+          .from("combo_modules")
+          .select("module_slug")
+          .eq("plan_id", dyn.id);
+        blockKeys = (cm ?? []).map((r: any) => r.module_slug);
+        if (blockKeys.length < 2) {
+          await release();
+          return jsonResponse({ error: "COMBO_INVALIDO" }, 400);
+        }
+        resolvedModuleKey = "bundle";
+      } else {
+        resolvedModuleKey = dyn.module_slug;
+        blockKeys = dyn.module_slug ? [dyn.module_slug] : [];
+      }
+    } else {
+      const { data: planRow } = await supabaseAdmin
+        .from("plans")
+        .select("modules")
+        .eq("id", plan_id)
+        .maybeSingle();
+      const planModules: string[] = Array.isArray(planRow?.modules) ? planRow.modules : [];
+      resolvedModuleKey = planModules.length === 1 ? planModules[0] : (module_key ?? null);
+      blockKeys = resolvedModuleKey ? [resolvedModuleKey] : [];
+    }
+
+    if (blockKeys.length > 0) {
       const { data: dupSub } = await supabaseAdmin
         .from("subscriptions")
-        .select("id, status")
+        .select("id, status, module_key")
         .eq("store_id", store_id)
-        .eq("module_key", resolvedModuleKey)
+        .in("module_key", [...blockKeys, "bundle"])
         .in("status", ["active", "trialing", "past_due", "lifetime"])
         .limit(1)
         .maybeSingle();
       if (dupSub) {
         await release();
-        return jsonResponse({ error: "MODULE_ALREADY_SUBSCRIBED", module_key: resolvedModuleKey, status: dupSub.status }, 409);
+        return jsonResponse({ error: "MODULE_ALREADY_SUBSCRIBED", module_key: dupSub.module_key, status: dupSub.status }, 409);
       }
     }
 
@@ -233,7 +280,7 @@ Deno.serve(async (req) => {
         nextDueDate: nextDueDate.toISOString().slice(0, 10),
         value,
         cycle: asaasCycle,
-        description: `${plan.name}${module_key ? ` (${module_key})` : ""} - SLL Hub`,
+        description: `${planName}${module_key ? ` (${module_key})` : ""} - SLL Hub`,
         externalReference: store_id,
       }),
     });
@@ -266,8 +313,10 @@ Deno.serve(async (req) => {
       .from("subscriptions")
       .insert({
         store_id,
-        plan_id,
-        module_key: resolvedModuleKey,
+        plan_id: dyn ? null : plan_id,
+            dynamic_plan_id: dyn ? dyn.id : null,
+            combo_kind: dyn?.is_combo ? "fixed" : null,
+            module_key: resolvedModuleKey,
         billing_cycle: billing_cycle.toLowerCase(),
         status: "incomplete",
         current_period_start: new Date().toISOString(),

@@ -127,4 +127,34 @@ export async function subscribeToPlan(params: {
 
   return { invoiceUrl: body?.invoice_url };
 }
+export async function subscribeToDynamicPlan(params: {
+  storeId: string;
+  dynamicPlanId: string;
+  billingCycle: "monthly" | "semiannual" | "yearly";
+  couponCode?: string | null;
+}): Promise<{ invoiceUrl?: string; error?: string }> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) return { error: "SESSAO_EXPIRADA" };
 
+  const { data, error } = await supabase.functions.invoke("asaas-create-subscription", {
+    body: {
+      dynamic_plan_id: params.dynamicPlanId,
+      store_id: params.storeId,
+      billing_cycle: params.billingCycle.toUpperCase(),
+      coupon_code: params.couponCode ?? null,
+    },
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  let body = data;
+  if (error && (error as any).context) {
+    try {
+      body = await (error as any).context.json();
+    } catch (_) {}
+  }
+  if (error || body?.error) {
+    return { error: body?.message || body?.error || "ERRO_DESCONHECIDO" };
+  }
+  return { invoiceUrl: body?.invoice_url };
+}
