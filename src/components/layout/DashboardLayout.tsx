@@ -46,7 +46,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       <AppFooter />
       </main>
-      <MarketingHost storeId={mkStoreId} location={mkLocation} />
+      <MarketingHost storeId={mkStoreId} location={mkLocation} showBanner={mkLocation !== 'home'} />
     </div>
   );
 }
