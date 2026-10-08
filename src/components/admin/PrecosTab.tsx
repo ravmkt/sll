@@ -368,15 +368,91 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
 
       {sub === 'planos' && (plans === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
-      ) : (
-        <div className="space-y-6">
+      ) : filter ? (
+        <div className="space-y-4">
+          <button type="button" onClick={() => setFilter('')} className="cursor-pointer text-xs font-semibold text-slate-400 hover:text-white">← Todos os módulos</button>
           <section className="space-y-2">
-            <h2 className="text-sm font-bold text-sky-300">Planos individuais <span className="ml-1 font-normal text-slate-500">({individuals.length})</span></h2>
+            <h2 className="text-sm font-bold text-sky-300">{modName.get(filter) || filter} <span className="ml-1 font-normal text-slate-500">({individuals.length} planos)</span></h2>
             {renderTable(individuals, false)}
           </section>
-          <section className="space-y-2">
+        </div>
+      ) : (
+        <div className="space-y-8">
+          <section data-sec="modulo-cards" className="space-y-3">
+            <h2 className="text-sm font-bold text-sky-300">Módulos</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {modules.map((m) => {
+                const mp = (plans || []).filter((p) => !p.is_combo && p.module_slug === m.slug);
+                const act = mp.filter((p) => p.is_active);
+                const min = act.length ? Math.min(...act.map((p) => p.price_monthly_cents)) : null;
+                const sc = mp.reduce((sum, p) => sum + (subs[p.id] || 0), 0);
+                return (
+                  <button key={m.slug} type="button" onClick={() => setFilter(m.slug)}
+                    className="cursor-pointer rounded-2xl border border-slate-800 bg-[#111524] p-5 text-left transition-colors hover:border-sky-500/50 hover:bg-white/5">
+                    <p className="text-base font-black text-white">{m.name}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">{mp.length === 0 ? 'Nenhum plano ainda' : `${mp.length} ${mp.length === 1 ? 'plano' : 'planos'} · ${act.length} ativos`}</p>
+                    <div className="mt-4 flex items-end justify-between">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">A partir de</p>
+                        <p className="text-lg font-black text-sky-300">{min === null ? '—' : brl(min)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Assinantes</p>
+                        <p className="text-lg font-black text-white">{int(sc)}</p>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-[11px] font-semibold text-sky-300">Gerenciar planos →</p>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="space-y-3">
             <h2 className="text-sm font-bold text-yellow-300">Combos <span className="ml-1 font-normal text-slate-500">({combos.length})</span></h2>
-            {renderTable(combos, true)}
+            {combos.length === 0 ? (
+              <p className="rounded-2xl border border-slate-800 bg-[#111524] px-4 py-8 text-center text-xs text-slate-500">Nenhum combo. Clique em "Novo combo".</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {combos.map((p) => {
+                  const line = comboLine(p.id);
+                  return (
+                    <div key={p.id} onClick={() => setEditing(p)}
+                      className="flex min-h-[270px] cursor-pointer flex-col rounded-2xl border border-slate-800 bg-[#111524] p-5 shadow-[inset_4px_0_0_0_#facc15] transition-colors hover:bg-white/5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-base font-black text-white">{p.plan_name}</p>
+                          <p className="font-mono text-[10px] text-slate-600">{p.plan_tier}</p>
+                        </div>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
+                      </div>
+                      <div className="mt-3 flex-1">
+                        <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
+                        {line.length > 0
+                          ? <p className="mt-2 text-xs leading-snug text-amber-200/80">{line.join(' + ')}</p>
+                          : <p className="mt-2 text-xs text-rose-400">Sem módulos definidos</p>}
+                      </div>
+                      <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                        <div><p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Mensal</p><p className="text-xs font-bold text-white">{brl(p.price_monthly_cents)}</p></div>
+                        <div><p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Semestral</p><p className="text-xs font-bold text-slate-200">{brl(p.price_semiannual_cents)}</p></div>
+                        <div><p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Anual</p><p className="text-xs font-bold text-slate-200">{brl(p.price_annual_cents)}</p></div>
+                      </div>
+                      <p className="mt-3 text-center text-[11px] text-slate-500">{int(subs[p.id])} assinantes</p>
+                      <div className="mt-3 flex flex-wrap justify-center gap-1.5" onClick={(ev) => ev.stopPropagation()}>
+                        <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer rounded-md bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-amber-300 hover:bg-white/10">Módulos</button>
+                        <button type="button" disabled={togglingId === p.id} onClick={() => toggleActive(p)}
+                          className={`cursor-pointer rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-40 ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
+                          {p.is_active ? 'Pausar' : 'Ativar'}
+                        </button>
+                        <button type="button" disabled={togglingId === p.id || (subs[p.id] || 0) > 0} onClick={() => removePlan(p)}
+                          title={(subs[p.id] || 0) > 0 ? 'Combo com assinantes: use Pausar' : 'Excluir combo'}
+                          className="cursor-pointer rounded-md bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30">Excluir</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         </div>
       ))}
