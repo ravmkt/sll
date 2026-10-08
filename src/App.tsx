@@ -24,6 +24,7 @@ const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
 const SettingsPage = lazy(() => import('./pages/configuracoes/SettingsPage'));
 const Assinaturas = lazy(() => import('./pages/assinaturas/Assinaturas'));
 const Planos = lazy(() => import('./pages/planos/Planos'));
+const Checkout = lazy(() => import('./pages/checkout/Checkout'));
 const PlanosGatePage = lazy(() => import('./pages/planos/PlanosGatePage'));
 const IntegrationPage = lazy(() => import('./pages/integracao/IntegrationPage'));
 const InstagramCallback = lazy(() => import('./pages/auth/InstagramCallback'));
@@ -75,6 +76,12 @@ function AppRoutes() {
         <Route
           path="/dashboard/assinaturas"
           element={user ? <Assinaturas /> : <Navigate to="/auth" replace />}
+        />
+
+        {/* Checkout próprio: cupom + dados fiscais antes de ir ao Asaas */}
+        <Route
+          path="/dashboard/checkout"
+          element={user ? <Checkout /> : <Navigate to="/auth" replace />}
         />
 
         {/* Rotas Operacionais Protegidas pelo SubscriptionGate */}

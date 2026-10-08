@@ -95,7 +95,7 @@ export async function subscribeToPlan(params: {
   storeId: string;
   planId: string;
   billingCycle: "monthly" | "semiannual" | "yearly";
-  moduleKey?: string | null;
+  moduleKey?: string | null; couponCode?: string | null;
 }): Promise<{ invoiceUrl?: string; error?: string }> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
@@ -109,7 +109,7 @@ export async function subscribeToPlan(params: {
       plan_id: params.planId,
       store_id: params.storeId,
       billing_cycle: params.billingCycle.toUpperCase(),
-      module_key: params.moduleKey ?? null,
+      module_key: params.moduleKey ?? null, coupon_code: params.couponCode ?? null,
     },
     headers: { Authorization: `Bearer ${accessToken}` },
   });

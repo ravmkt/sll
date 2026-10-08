@@ -267,6 +267,27 @@ Deno.serve(async (req) => {
       asaasCustomerId = customerData.id;
     }
 
+    // PATCH_CUSTOMER_UPDATE: mantém os dados fiscais do cliente no Asaas atualizados
+    if (existingSub?.asaas_customer_id) {
+      try {
+        await fetch(`${ASAAS_API_URL}/customers/${asaasCustomerId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
+          body: JSON.stringify({
+            name: billingInfo.legal_name || store.contact_name || "Cliente SLL",
+            cpfCnpj: billingInfo.cnpj_cpf,
+            email: billingInfo.email || store.owner_contact_email,
+            mobilePhone: billingInfo.phone,
+            postalCode: billingInfo.cep,
+            address: billingInfo.address,
+            addressNumber: billingInfo.number,
+            complement: billingInfo.complement,
+            province: billingInfo.neighborhood,
+          }),
+        });
+      } catch (_) { /* melhor esforco */ }
+    }
+
     // 6. Cria a subscription no Asaas
     const nextDueDate = new Date();
     nextDueDate.setDate(nextDueDate.getDate() + 1);
