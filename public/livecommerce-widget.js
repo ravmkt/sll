@@ -26,6 +26,39 @@
   var supabaseUrl = SUPABASE_URL;
   var supabaseAnonKey = SUPABASE_ANON_KEY;
   var hasSupabase = true;
+  // ===== SLL FEATURE FLAGS (compartilhado com o vidlytics-widget) =====
+  window.SLL = window.SLL || {};
+  if (!window.SLL.flagsReady) {
+    var sllFlags = [];
+    window.SLL.flags = sllFlags;
+    window.SLL.hasFlag = function (key) {
+      var k = String(key || '').trim().toLowerCase();
+      if (!k) return false;
+      if (k.indexOf(':') === -1) k = 'live_commerce:' + k;
+      return sllFlags.indexOf(k) !== -1;
+    };
+    window.SLL.flagsReady = (function () {
+      var sid = String(storeId || '').trim();
+      var okUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sid);
+      if (!okUuid) return Promise.resolve(sllFlags);
+      return fetch(supabaseUrl + '/rest/v1/rpc/widget_feature_flags', {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseAnonKey,
+          'Authorization': 'Bearer ' + supabaseAnonKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_store_id: sid })
+      })
+        .then(function (res) { return res.ok ? res.json() : []; })
+        .then(function (rows) {
+          if (Array.isArray(rows)) rows.forEach(function (x) { sllFlags.push(String(x).toLowerCase()); });
+          try { window.dispatchEvent(new CustomEvent('sll:flags', { detail: sllFlags.slice() })); } catch (e) {}
+          return sllFlags;
+        })
+        .catch(function () { return sllFlags; });
+    })();
+  }
 
   function supabaseFetch(path, options) {
     options = options || {};
