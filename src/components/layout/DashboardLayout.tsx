@@ -5,10 +5,17 @@ import { Sidebar } from './Sidebar';
 import { StoreBrand } from './StoreBrand';
 import { ModuleSwitcher } from './ModuleSwitcher';
 import { MasterButton } from '@/components/admin/MasterButton';
+import MarketingHost from '@/components/marketing/MarketingHost';
+import { useLoja } from '@/contexts/LojaContext';
+import { useLocation } from 'react-router-dom';
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isDark] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const ctx: any = useLoja();
+  const { pathname } = useLocation();
+  const mkStoreId: string | null = ctx?.loja?.id ?? ctx?.store?.id ?? ctx?.storeId ?? ctx?.lojaId ?? null;
+  const mkLocation = pathname.includes('vidlytics') ? 'vidlytics' : pathname.includes('live') ? 'live' : 'home';
 
   useEffect(() => {
     if (isDark) {
@@ -39,6 +46,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       <AppFooter />
       </main>
+      <MarketingHost storeId={mkStoreId} location={mkLocation} />
     </div>
   );
 }
