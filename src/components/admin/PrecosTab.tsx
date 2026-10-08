@@ -97,8 +97,8 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60" onClick={onClose}>
-      <div className="h-full w-full max-w-lg space-y-4 overflow-y-auto border-l border-slate-800 bg-[#0f1322] p-5" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl border border-slate-700 bg-[#0f1322] p-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black text-white">{plan ? 'Editar plano' : 'Novo plano'}</h2>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-white"><X size={18} /></button>
@@ -116,6 +116,7 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
           <label className="space-y-1">
             <span className={LABEL}>Chave do plano</span>
             <input value={plan ? plan.plan_tier : tier} onChange={(e) => setTier(e.target.value)} disabled={!!plan} placeholder="starter" className={INPUT} />
+            <span className="block text-[10px] text-slate-600">{plan ? 'Identificador interno. Não pode ser alterado.' : 'Identificador interno, sem espaços. Depois de criada, não muda.'}</span>
           </label>
         </div>
         <label className="block space-y-1">
@@ -204,6 +205,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   const [creatingCombo, setCreatingCombo] = useState(false);
   const [comboMods, setComboMods] = useState<ComboModuleRow[]>([]);
   const [editingMods, setEditingMods] = useState<DynamicPlan | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError('');
@@ -216,7 +218,10 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   useEffect(() => { load(); }, [load]);
 
   const modName = useMemo(() => new Map(modules.map((m) => [m.slug, m.name])), [modules]);
-  const list = (plans || []).filter((p) => !filter || p.module_slug === filter);
+  const filtered = (plans || []).filter((p) =>
+    !filter || (p.is_combo ? comboMods.some((r) => r.plan_id === p.id && r.module_slug === filter) : p.module_slug === filter));
+  const individuals = filtered.filter((p) => !p.is_combo);
+  const combos = filtered.filter((p) => p.is_combo);
   const comboLine = (id: string) =>
     comboMods
       .filter((r) => r.plan_id === id)
@@ -226,6 +231,81 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
           : null;
         return planName || modName.get(r.module_slug) || r.module_slug;
       });
+  const toggleActive = async (p: DynamicPlan) => {
+    setTogglingId(p.id);
+    try {
+      await updateDynamicPlan(p.id, {
+        plan_name: p.plan_name,
+        price_monthly_cents: p.price_monthly_cents,
+        price_semiannual_cents: p.price_semiannual_cents,
+        price_annual_cents: p.price_annual_cents,
+        limits_config: p.limits_config ?? {},
+        is_recommended: p.is_recommended,
+        is_active: !p.is_active,
+      });
+      toast.success(p.is_active ? 'Plano pausado.' : 'Plano ativado.');
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message || 'Não foi possível alterar o status.');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const renderTable = (rows: DynamicPlan[], combo: boolean) => (
+    <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#111524]">
+      <table className="w-full min-w-[900px] text-xs">
+        <thead className="border-b border-slate-800">
+          <tr>
+            <th className={TH}>Plano</th><th className={TH}>{combo ? 'Módulos incluídos' : 'Módulo'}</th>
+            <th className={`${TH} text-right`}>Mensal</th><th className={`${TH} text-right`}>Semestral</th><th className={`${TH} text-right`}>Anual</th>
+            <th className={`${TH} text-right`}>Assinantes</th><th className={TH}>Status</th><th className={`${TH} text-right`}>Ações</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/5">
+          {rows.length === 0 && <tr><td colSpan={8} className="px-3 py-8 text-center text-slate-500">{combo ? 'Nenhum combo. Clique em "Novo combo".' : 'Nenhum plano. Clique em "Novo plano".'}</td></tr>}
+          {rows.map((p) => (
+            <tr key={p.id} className={`hover:bg-white/5 ${combo ? 'shadow-[inset_4px_0_0_0_#facc15]' : ''}`}>
+              <td className="px-3 py-3">
+                <p className="font-bold text-white">{p.plan_name} {p.is_recommended && <span className="ml-1 rounded-full bg-[#fd8539]/15 px-1.5 py-0.5 text-[9px] text-[#fd8539]">Recomendado</span>}</p>
+                <p className="font-mono text-[10px] text-slate-600">{p.plan_tier}</p>
+              </td>
+              <td className="px-3 py-3">
+                {combo ? (
+                  <div className="space-y-1">
+                    <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
+                    {comboLine(p.id).length > 0
+                      ? <p className="text-[10px] leading-snug text-amber-200/80">{comboLine(p.id).join(' + ')}</p>
+                      : <p className="text-[10px] text-rose-400">Sem módulos definidos</p>}
+                    <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer text-[10px] font-semibold text-amber-300 hover:underline">Editar módulos</button>
+                  </div>
+                ) : (
+                  <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-bold text-sky-300 ring-1 ring-sky-500/40">{modName.get(p.module_slug || '') || p.module_slug}</span>
+                )}
+              </td>
+              <td className="px-3 py-3 text-right text-white">{brl(p.price_monthly_cents)}</td>
+              <td className="px-3 py-3 text-right text-slate-300">{brl(p.price_semiannual_cents)}</td>
+              <td className="px-3 py-3 text-right text-slate-300">{brl(p.price_annual_cents)}</td>
+              <td className="px-3 py-3 text-right font-semibold text-white">{int(subs[p.id])}</td>
+              <td className="px-3 py-3">
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
+              </td>
+              <td className="px-3 py-3">
+                <div className="flex justify-end gap-1.5">
+                  <button type="button" onClick={() => setEditing(p)} className="cursor-pointer rounded-md bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:bg-white/10">Editar</button>
+                  <button type="button" disabled={togglingId === p.id} onClick={() => toggleActive(p)}
+                    className={`cursor-pointer rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-40 ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
+                    {p.is_active ? 'Pausar' : 'Ativar'}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   const TABS: { id: typeof sub; label: string }[] = [{ id: 'planos', label: 'Planos' }, { id: 'addons', label: 'Add-ons' }, { id: 'cupons', label: 'Cupons' }];
 
   return (
@@ -266,47 +346,15 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
       {sub === 'planos' && (plans === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#111524]">
-          <table className="w-full min-w-[820px] text-xs">
-            <thead className="border-b border-slate-800">
-              <tr>
-                <th className={TH}>Plano</th><th className={TH}>Módulo</th>
-                <th className={`${TH} text-right`}>Mensal</th><th className={`${TH} text-right`}>Semestral</th><th className={`${TH} text-right`}>Anual</th>
-                <th className={`${TH} text-right`}>Assinantes</th><th className={TH}>Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {list.length === 0 && <tr><td colSpan={7} className="px-3 py-8 text-center text-slate-500">Nenhum plano. Clique em "Novo plano".</td></tr>}
-              {list.map((p) => (
-                <tr key={p.id} onClick={() => setEditing(p)} className={`cursor-pointer hover:bg-white/5 ${p.is_combo ? 'bg-yellow-400/10 shadow-[inset_4px_0_0_0_#facc15]' : ''}`}>
-                  <td className="px-3 py-3">
-                    <p className="font-bold text-white">{p.plan_name} {p.is_recommended && <span className="ml-1 rounded-full bg-[#fd8539]/15 px-1.5 py-0.5 text-[9px] text-[#fd8539]">Recomendado</span>}</p>
-                    <p className="font-mono text-[10px] text-slate-600">{p.plan_tier}</p>
-                  </td>
-                  <td className="px-3 py-3">
-                    {p.is_combo ? (
-                      <div className="space-y-1">
-                        <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
-                        {comboLine(p.id).length > 0
-                          ? <p className="text-[10px] leading-snug text-amber-200/80">{comboLine(p.id).join(' + ')}</p>
-                          : <p className="text-[10px] text-rose-400">Sem módulos definidos</p>}
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setEditingMods(p); }} className="cursor-pointer text-[10px] font-semibold text-amber-300 hover:underline">Editar módulos</button>
-                      </div>
-                    ) : (
-                      <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-bold text-sky-300 ring-1 ring-sky-500/40">{modName.get(p.module_slug || '') || p.module_slug}</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 text-right text-white">{brl(p.price_monthly_cents)}</td>
-                  <td className="px-3 py-3 text-right text-slate-300">{brl(p.price_semiannual_cents)}</td>
-                  <td className="px-3 py-3 text-right text-slate-300">{brl(p.price_annual_cents)}</td>
-                  <td className="px-3 py-3 text-right font-semibold text-white">{int(subs[p.id])}</td>
-                  <td className="px-3 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Inativo'}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-6">
+          <section className="space-y-2">
+            <h2 className="text-sm font-bold text-sky-300">Planos individuais <span className="ml-1 font-normal text-slate-500">({individuals.length})</span></h2>
+            {renderTable(individuals, false)}
+          </section>
+          <section className="space-y-2">
+            <h2 className="text-sm font-bold text-yellow-300">Combos <span className="ml-1 font-normal text-slate-500">({combos.length})</span></h2>
+            {renderTable(combos, true)}
+          </section>
         </div>
       ))}
 
