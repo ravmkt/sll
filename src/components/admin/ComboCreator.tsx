@@ -1,0 +1,189 @@
+import { useEffect, useMemo, useState } from 'react';
+import { listDynamicPlans, type DynamicPlan } from '@/services/admin/plansAdmin';
+import { createCombo, listHubModules, type HubModule } from '@/services/admin/combosAdmin';
+
+const toCents = (v: string) => Math.round(Number(v.replace(',', '.')) * 100);
+const toNum = (v: string) => (v.trim() === '' ? null : Number(v));
+const inputCls = 'w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100';
+
+function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <label className="block text-xs text-slate-400">
+      {label}
+      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={inputCls} />
+    </label>
+  );
+}
+
+function Check({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-2 text-xs text-slate-300">
+      <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} />
+      {label}
+    </label>
+  );
+}
+
+export default function ComboCreator({ onCreated, onClose }: { onCreated: () => void; onClose: () => void }) {
+  const [modules, setModules] = useState<HubModule[]>([]);
+  const [plans, setPlans] = useState<DynamicPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const [name, setName] = useState('');
+  const [tier, setTier] = useState('');
+  const [pm, setPm] = useState('0,00');
+  const [ps, setPs] = useState('0,00');
+  const [pa, setPa] = useState('0,00');
+  const [views, setViews] = useState('');
+  const [videos, setVideos] = useState('');
+  const [pages, setPages] = useState('');
+  const [storage, setStorage] = useState('');
+  const [tracking, setTracking] = useState(true);
+  const [badge, setBadge] = useState(true);
+  const [rec, setRec] = useState(false);
+  const [active, setActive] = useState(false);
+  const [picked, setPicked] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    Promise.all([listHubModules(), listDynamicPlans()])
+      .then(([m, p]) => {
+        setModules(m);
+        setPlans(p.filter((x) => !x.is_combo));
+      })
+      .catch((e) => setError((e as Error).message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const tiersByModule = useMemo(() => {
+    const map: Record<string, DynamicPlan[]> = {};
+    plans.forEach((p) => {
+      if (!p.module_slug) return;
+      (map[p.module_slug] ??= []).push(p);
+    });
+    return map;
+  }, [plans]);
+
+  function toggle(slug: string, on: boolean) {
+    setPicked((prev) => {
+      const next = { ...prev };
+      if (on) next[slug] = next[slug] ?? '';
+      else delete next[slug];
+      return next;
+    });
+  }
+
+  async function save() {
+    const slugs = Object.keys(picked);
+    const cents = [toCents(pm), toCents(ps), toCents(pa)];
+    const nums = [toNum(views), toNum(videos), toNum(pages), toNum(storage)];
+    if (!name.trim() || !tier.trim()) return setError('Informe nome e chave do combo.');
+    if (slugs.length < 2) return setError('Selecione ao menos 2 módulos.');
+    if (cents.some((c) => !Number.isFinite(c) || c < 0)) return setError('Preços inválidos.');
+    if (nums.some((n) => n !== null && (!Number.isFinite(n) || n < 0))) return setError('Limites inválidos.');
+    setError(null);
+    setSaving(true);
+    try {
+      await createCombo({
+        plan_name: name.trim(),
+        plan_tier: tier.trim().toLowerCase(),
+        price_monthly_cents: cents[0],
+        price_semiannual_cents: cents[1],
+        price_annual_cents: cents[2],
+        limits_config: { views: nums[0], max_videos: nums[1], max_pages: nums[2], storage_gb: nums[3], tracking, badge_removable: badge },
+        is_recommended: rec,
+        is_active: active,
+        modules: slugs.map((s) => ({ module_slug: s, member_tier: picked[s] || null })),
+      });
+      onCreated();
+      onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl space-y-4 overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-100">Novo combo</h2>
+          <button type="button" onClick={onClose} className="text-sm text-slate-400 hover:text-slate-200">Fechar</button>
+        </div>
+
+        {error && <p className="rounded-md bg-red-950 px-3 py-2 text-sm text-red-300">{error}</p>}
+
+        {loading ? (
+          <p className="text-sm text-slate-400">Carregando...</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Nome" value={name} onChange={setName} placeholder="Combo Master" />
+              <Field label="Chave (única)" value={tier} onChange={setTier} placeholder="master" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Mensal (R$)" value={pm} onChange={setPm} />
+              <Field label="Semestral (R$)" value={ps} onChange={setPs} />
+              <Field label="Anual (R$)" value={pa} onChange={setPa} />
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Módulos do combo (mínimo 2)</p>
+              <div className="space-y-2">
+                {modules.map((m) => {
+                  const on = m.slug in picked;
+                  const tiers = tiersByModule[m.slug] ?? [];
+                  return (
+                    <div key={m.slug} className="flex items-center justify-between gap-3 rounded-md border border-slate-800 px-3 py-2">
+                      <Check label={`${m.name}${m.status !== 'active' ? ` (${m.status})` : ''}`} value={on} onChange={(v) => toggle(m.slug, v)} />
+                      {on && (
+                        <select
+                          value={picked[m.slug]}
+                          onChange={(e) => setPicked((p) => ({ ...p, [m.slug]: e.target.value }))}
+                          className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100"
+                        >
+                          <option value="">Plano do módulo: padrão</option>
+                          {tiers.map((t) => (
+                            <option key={t.id} value={t.plan_tier}>{t.plan_name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Limites do combo (vazio = ilimitado)</p>
+              <div className="grid grid-cols-4 gap-3">
+                <Field label="Plays/mês" value={views} onChange={setViews} />
+                <Field label="Vídeos" value={videos} onChange={setVideos} />
+                <Field label="Páginas" value={pages} onChange={setPages} />
+                <Field label="Storage (GB)" value={storage} onChange={setStorage} />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-4">
+                <Check label="Tracking" value={tracking} onChange={setTracking} />
+                <Check label="Remove selo" value={badge} onChange={setBadge} />
+                <Check label="Recomendado" value={rec} onChange={setRec} />
+                <Check label="Ativo (visível para venda)" value={active} onChange={setActive} />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+            >
+              {saving ? 'Criando...' : 'Criar combo'}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
