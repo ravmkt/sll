@@ -1,5 +1,5 @@
 (function () {
-  var WIDGET_VERSION = '2026.09.16-21';
+  var WIDGET_VERSION = '2026.10.08-1';
 
   console.info(
     '%cVidlytics Widget carregado — versão ' + WIDGET_VERSION,
@@ -46,6 +46,33 @@
 
   if (window.__vidlytics_widget_loaded_version === WIDGET_VERSION) return;
   window.__vidlytics_widget_loaded_version = WIDGET_VERSION;
+  // ===== SLL FEATURE FLAGS =====
+  window.SLL = window.SLL || {};
+  var sllFlags = [];
+  window.SLL.flags = sllFlags;
+  window.SLL.hasFlag = function (key) {
+    var k = String(key || '').trim().toLowerCase();
+    if (!k) return false;
+    if (k.indexOf(':') === -1) k = 'vidlytics:' + k;
+    return sllFlags.indexOf(k) !== -1;
+  };
+  window.SLL.flagsReady = (function () {
+    var flagStoreId = cleanUuid(storeId);
+    if (!hasSupabase || !flagStoreId) return Promise.resolve(sllFlags);
+    return supabaseFetch('rpc/widget_feature_flags', {
+      method: 'POST',
+      body: JSON.stringify({ p_store_id: flagStoreId })
+    })
+      .then(function (res) { return res.ok ? res.json() : []; })
+      .then(function (rows) {
+        if (Array.isArray(rows)) {
+          rows.forEach(function (r) { sllFlags.push(String(r).toLowerCase()); });
+        }
+        try { window.dispatchEvent(new CustomEvent('sll:flags', { detail: sllFlags.slice() })); } catch (e) {}
+        return sllFlags;
+      })
+      .catch(function () { return sllFlags; });
+  })();
 
   try {
     var oldRoot = document.getElementById('vidlytics-widget-root');
