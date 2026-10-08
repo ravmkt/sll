@@ -22,6 +22,9 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
+import { checkQuota, quotaErrorKind, type QuotaState } from "@/services/quotaService";
+import { useQuotaGuard } from "@/hooks/useQuotaGuard";
+import QuotaUpgradeModal from "@/components/QuotaUpgradeModal";
 import TikTokImportModal from "@/components/vidlytics/TikTokImportModal";
 import InstagramImportModal from "@/components/vidlytics/InstagramImportModal";
 
@@ -56,7 +59,7 @@ interface BibliotecaTabProps {
   storeId?: string;
 }
 
-const STORAGE_LIMIT_BYTES = 50 * 1024 * 1024 * 1024; // 50 GB
+const GB_BYTES = 1024 * 1024 * 1024;
 const BUCKET_NAME = "videos";
 
 const vidlyticsDb = (supabase as any).schema 
@@ -347,7 +350,19 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   }, [videos]);
 
   const usedMB = (totalBytesUsed / (1024 * 1024)).toFixed(1);
-  const percentUsed = Math.min(100, (totalBytesUsed / STORAGE_LIMIT_BYTES) * 100).toFixed(1);
+  const [storageQuota, setStorageQuota] = useState<QuotaState | null>(null);
+  useEffect(() => {
+    if (!storeId) return;
+    checkQuota(storeId, "storage").then(setStorageQuota).catch(() => setStorageQuota(null));
+  }, [storeId, videos]);
+  const { guard, blocked, showBlocked, close } = useQuotaGuard(storeId);
+  const limitBytes = storageQuota?.limit ?? null;
+  const limitLabel = !storageQuota
+    ? "..."
+    : limitBytes
+      ? `${(limitBytes / GB_BYTES).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} GB`
+      : "Ilimitado";
+  const percentUsed = (limitBytes ? Math.min(100, (totalBytesUsed / limitBytes) * 100) : 0).toFixed(1);
 
   // Upload Direto da Biblioteca com Extração de Thumbnail Automática
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -360,7 +375,12 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     }
 
     try {
-      setIsUploading(true);
+      const isMediaVideo = !file.type.startsWith("image/");
+        if (!(await guard("storage", file.size)) || (isMediaVideo && !(await guard("videos", 1)))) {
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
+        setIsUploading(true);
       setErrorMsg(null);
       setSuccessMsg(null);
 
@@ -419,7 +439,11 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       };
 
       const { error: insertErr } = await vidlyticsDb.from("vid_videos").insert([payload]);
-      if (insertErr) throw new Error(insertErr.message);
+      if (insertErr) {
+          const qk = quotaErrorKind(insertErr);
+          if (qk) { showBlocked(qk as any); return; }
+          throw new Error(insertErr.message);
+        }
 
       setSuccessMsg("Mídia e capa processadas com sucesso!");
       await fetchVideos();
@@ -439,7 +463,8 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     if (!cleanUrl) return;
 
     try {
-      setIsSavingExternal(true);
+      if (!(await guard("videos", 1))) return;
+        setIsSavingExternal(true);
       setErrorMsg(null);
 
       const ytId = extractYouTubeId(cleanUrl);
@@ -469,7 +494,11 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       if (externalModel) payload.model_id = externalModel;
 
       const { error: insertErr } = await vidlyticsDb.from("vid_videos").insert([payload]);
-      if (insertErr) throw new Error(insertErr.message);
+      if (insertErr) {
+          const qk = quotaErrorKind(insertErr);
+          if (qk) { showBlocked(qk as any); return; }
+          throw new Error(insertErr.message);
+        }
 
       setSuccessMsg("Vídeo cadastrado com sucesso!");
       setIsUrlModalOpen(false);
@@ -1027,7 +1056,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           <button
             type="button"
             className="h-10 w-full xl:w-[140px] px-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 hover:border-slate-300 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition whitespace-nowrap cursor-pointer"
-            onClick={() => setInstagramOpen(true)}
+            onClick={async () => { if (await guard("videos", 1)) setInstagramOpen(true); }}
           >
             <IconInstagram className="w-4 h-4 flex-shrink-0" />
             INSTAGRAM
@@ -1037,11 +1066,12 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 <button
             type="button"
             className="h-10 w-full xl:w-[140px] px-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 hover:border-slate-300 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition whitespace-nowrap cursor-pointer"
-            onClick={() => setTiktokOpen(true)}
+            onClick={async () => { if (await guard("videos", 1)) setTiktokOpen(true); }}
           >
             <IconTikTok className="w-4 h-4 flex-shrink-0 text-slate-900" />
             TIKTOK
           </button>
+<QuotaUpgradeModal state={blocked} onClose={close} onManage={close} />
 {tiktokOpen && (<TikTokImportModal storeId={storeId} onClose={() => { setTiktokOpen(false); fetchVideos(); }} />)}
 {instagramOpen && (<InstagramImportModal storeId={storeId} onClose={() => { setInstagramOpen(false); fetchVideos(); }} />)}
 </>
@@ -1090,11 +1120,11 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-slate-800 text-sm">SCALE</span>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-md">
-                  50 GB LIMITE
+                  {limitLabel} LIMITE
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Uso atual: <span className="font-bold text-slate-800">{usedMB} MB</span> de 50 GB
+                Uso atual: <span className="font-bold text-slate-800">{usedMB} MB</span> de {limitLabel}
               </p>
             </div>
           </div>
