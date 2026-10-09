@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { getPlansShowcase, getPriceForCycle, subscribeToPlan, type Plan, type PlanPrice } from '@/services/plans/getPlansShowcase';
+import { getPlansShowcase, getPriceForCycle, subscribeToPlan, subscribeToDynamicPlan, type Plan, type PlanPrice } from '@/services/plans/getPlansShowcase';
 
 type Cycle = 'monthly' | 'semiannual' | 'yearly';
 type Person = 'pf' | 'pj';
@@ -77,6 +77,31 @@ const emptyForm: Form = { type: 'pf', name: '', doc: '', email: '', phone: '', c
 
 type Applied = { code: string; type: 'percentage' | 'fixed_amount'; value: number };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Resolve plano de dynamic_plans por uuid ou por tier (starter/pro/scale) + modulo
+async function resolveDynamic(key: string | null, moduleKey: string | null): Promise<{ plan: Plan; prices: PlanPrice[] } | null> {
+  if (!key) return null;
+  let q = sb.from('dynamic_plans')
+    .select('id, plan_tier, plan_name, module_slug, is_active, price_monthly_cents, price_semiannual_cents, price_annual_cents')
+    .eq('is_active', true);
+  q = UUID_RE.test(key) ? q.eq('id', key) : q.eq('plan_tier', key).eq('module_slug', moduleKey ?? 'vidlytics').eq('is_combo', false);
+  const { data, error } = await q.limit(1).maybeSingle();
+  if (error || !data) return null;
+  const plan = {
+    id: data.id, slug: data.plan_tier, name: data.plan_name, description: null,
+    price_cents: data.price_monthly_cents, modules: data.module_slug ? [data.module_slug] : [],
+    is_popular: false, is_active: true, sort_order: 0, views_limit: 0, storage_limit_bytes: 0,
+    pages_limit: 0, videos_limit: null, allows_live: null,
+  } as Plan;
+  const prices: PlanPrice[] = [
+    { plan_id: data.id, billing_cycle: 'monthly', price_cents: data.price_monthly_cents, is_active: true },
+    { plan_id: data.id, billing_cycle: 'semiannual', price_cents: data.price_semiannual_cents, is_active: true },
+    { plan_id: data.id, billing_cycle: 'yearly', price_cents: data.price_annual_cents, is_active: true },
+  ];
+  return { plan, prices };
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -97,13 +122,20 @@ export default function Checkout() {
   const [cepBusy, setCepBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [dynamic, setDynamic] = useState(false);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
 
   useEffect(() => {
-    getPlansShowcase().then(({ plans, prices }) => {
-      setPlan(plans.find((p) => p.id === planId) ?? null);
-      setPrices(prices);
+    getPlansShowcase().then(async ({ plans, prices }) => {
+      let found: Plan | null = plans.find((p) => p.id === planId) ?? null;
+      let pr: PlanPrice[] = prices;
+      if (!found) {
+        const r = await resolveDynamic(planId, moduleKey);
+        if (r) { found = r.plan; pr = r.prices; setDynamic(true); }
+      }
+      setPlan(found);
+      setPrices(pr);
       setLoading(false);
     });
   }, [planId]);
@@ -191,7 +223,9 @@ export default function Checkout() {
     }, { onConflict: 'store_id' });
     if (upErr) { setSubmitting(false); toast.error('Não foi possível salvar os dados: ' + upErr.message); return; }
 
-    const result = await subscribeToPlan({ storeId, planId: plan.id, billingCycle: cycle, moduleKey, couponCode: applied?.code ?? null });
+    const result = dynamic
+      ? await subscribeToDynamicPlan({ storeId, dynamicPlanId: plan.id, billingCycle: cycle, couponCode: applied?.code ?? null })
+      : await subscribeToPlan({ storeId, planId: plan.id, billingCycle: cycle, moduleKey, couponCode: applied?.code ?? null });
     if (result.error) {
       setSubmitting(false);
       toast.error(ERR[result.error] ?? result.error);
