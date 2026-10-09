@@ -264,60 +264,87 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
         </div>
       )}
 
-      {aba === 'assinaturas' && (
-        <div className={`${CARD} overflow-x-auto p-0`}>
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className={TH}>Módulo</th><th className={TH}>Plano</th><th className={TH}>Status</th>
-                <th className={TH}>Ciclo</th><th className={TH}>Criada em</th><th className={TH}>Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {data.subscriptions.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">Sem assinaturas.</td></tr>}
-              {data.subscriptions.map((sub) => {
-                const sel = planSel[sub.id] ?? '';
-                return (
-                  <tr key={sub.id} className={sub.is_current ? '' : 'opacity-50'}>
-                    <td className="px-3 py-3 font-bold text-white">
-                      {sub.module_key ? modLabel(sub.module_key) : 'Combo'}
-                      {!sub.is_current && <span className="ml-2 text-[10px] font-normal text-slate-500">(histórico)</span>}
-                    </td>
-                    <td className="px-3 py-3">
-                      <p className="mb-1 text-slate-300">{sub.plan_name || '—'}</p>
-                      {sub.is_current && (
-                        <div className="flex gap-2">
-                          <select value={sel} onChange={(e) => setPlanSel({ ...planSel, [sub.id]: e.target.value })} className={`${INPUT} !w-44`}>
-                            <option value="">Trocar para…</option>
-                            {plans.filter((p) => !p.module_key || !sub.module_key || p.module_key === sub.module_key).map((p) => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                          </select>
-                          <button type="button" disabled={busy || !sel} onClick={() => run(() => changePlan(sub.id, sel), 'Plano alterado.')} className={`${BTN} bg-[#fd8539] text-white`}>Salvar</button>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-slate-300">{SUB_LABEL[sub.status] || sub.status}</td>
-                    <td className="px-3 py-3 text-slate-400">{sub.billing_cycle || '—'}</td>
-                    <td className="px-3 py-3 text-slate-400">{dt(sub.created_at)}</td>
-                    <td className="px-3 py-3">
-                      {sub.is_current && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {sub.status !== 'canceled' && <button type="button" disabled={busy} onClick={() => changeStatus(sub.id, 'canceled', sub.has_asaas)} className={`${BTN} bg-amber-500/15 text-amber-300`}>Cancelar</button>}
-                          {sub.status !== 'active' && <button type="button" disabled={busy} onClick={() => changeStatus(sub.id, 'active', sub.has_asaas)} className={`${BTN} bg-emerald-500/15 text-emerald-300`}>Ativar</button>}
-                          {sub.status !== 'lifetime' && <button type="button" disabled={busy} onClick={() => changeStatus(sub.id, 'lifetime', sub.has_asaas)} className={`${BTN} bg-sky-500/15 text-sky-300`}>Vitalício</button>}
-                        </div>
-                      )}
-                      {sub.has_asaas && <p className="mt-1 text-[10px] text-amber-400">Cobrança ativa no Asaas</p>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {aba === 'assinaturas' && (() => {
+        const atuais = data.subscriptions.filter((x) => x.is_current);
+        const historico = data.subscriptions.filter((x) => !x.is_current);
+        return (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-white">Assinaturas atuais ({atuais.length})</p>
+              <div className={`${CARD} overflow-x-auto p-0`}>
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className={TH}>Módulo</th><th className={TH}>Plano</th><th className={TH}>Status</th>
+                      <th className={TH}>Ciclo</th><th className={TH}>Criada em</th><th className={TH}>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {atuais.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">Nenhuma assinatura atual.</td></tr>}
+                    {atuais.map((sub) => {
+                      const sel = planSel[sub.id] ?? '';
+                      return (
+                        <tr key={sub.id}>
+                          <td className="px-3 py-3 font-bold text-white">{sub.module_key ? modLabel(sub.module_key) : 'Combo'}</td>
+                          <td className="px-3 py-3">
+                            <p className="mb-1 text-slate-300">{sub.plan_name || '—'}</p>
+                            <div className="flex gap-2">
+                              <select value={sel} onChange={(e) => setPlanSel({ ...planSel, [sub.id]: e.target.value })} className={`${INPUT} !w-44`}>
+                                <option value="">Trocar para…</option>
+                                {plans.filter((p) => !p.module_key || !sub.module_key || p.module_key === sub.module_key).map((p) => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                              </select>
+                              <button type="button" disabled={busy || !sel} onClick={() => run(() => changePlan(sub.id, sel), 'Plano alterado.')} className={`${BTN} bg-[#fd8539] text-white`}>Salvar</button>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-slate-300">{SUB_LABEL[sub.status] || sub.status}</td>
+                          <td className="px-3 py-3 text-slate-400">{sub.billing_cycle || '—'}</td>
+                          <td className="px-3 py-3 text-slate-400">{dt(sub.created_at)}</td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-wrap gap-1.5">
+                              {sub.status !== 'canceled' && <button type="button" disabled={busy} onClick={() => changeStatus(sub.id, 'canceled', sub.has_asaas)} className={`${BTN} bg-amber-500/15 text-amber-300`}>Cancelar</button>}
+                              {sub.status !== 'active' && <button type="button" disabled={busy} onClick={() => changeStatus(sub.id, 'active', sub.has_asaas)} className={`${BTN} bg-emerald-500/15 text-emerald-300`}>Ativar</button>}
+                              {sub.status !== 'lifetime' && <button type="button" disabled={busy} onClick={() => changeStatus(sub.id, 'lifetime', sub.has_asaas)} className={`${BTN} bg-sky-500/15 text-sky-300`}>Vitalício</button>}
+                            </div>
+                            {sub.has_asaas && <p className="mt-1 text-[10px] text-amber-400">Cobrança ativa no Asaas</p>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-slate-400">Histórico ({historico.length})</p>
+              <div className={`${CARD} overflow-x-auto p-0`}>
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className={TH}>Módulo</th><th className={TH}>Plano</th><th className={TH}>Status</th>
+                      <th className={TH}>Ciclo</th><th className={TH}>Criada em</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {historico.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-500">Sem histórico.</td></tr>}
+                    {historico.map((sub) => (
+                      <tr key={sub.id} className="opacity-60">
+                        <td className="px-3 py-2 font-bold text-white">{sub.module_key ? modLabel(sub.module_key) : 'Combo'}</td>
+                        <td className="px-3 py-2 text-slate-300">{sub.plan_name || '—'}</td>
+                        <td className="px-3 py-2 text-slate-300">{SUB_LABEL[sub.status] || sub.status}</td>
+                        <td className="px-3 py-2 text-slate-400">{sub.billing_cycle || '—'}</td>
+                        <td className="px-3 py-2 text-slate-400">{dt(sub.created_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {aba === 'financeiro' && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">

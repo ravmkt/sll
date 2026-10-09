@@ -83,20 +83,29 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true, message: "Assinatura já estava cancelada." });
     }
 
-    // 2. Cancela no Asaas (se houver ID remoto)
+    // 2. Cancela no Asaas (assinatura + cobranças pendentes/vencidas)
+    let paymentsRemoved = 0;
+    const paymentErrors: unknown[] = [];
     if (sub.asaas_subscription_id) {
-      const asaasRes = await fetch(
-        `${ASAAS_API_URL}/subscriptions/${sub.asaas_subscription_id}`,
-        {
-          method: "DELETE",
-          headers: { access_token: ASAAS_API_KEY },
-        }
-      );
+      const h = { access_token: ASAAS_API_KEY, "Content-Type": "application/json" };
+      const asaasId = sub.asaas_subscription_id;
 
-      // 404 = já não existe no Asaas -> ignora
+      const asaasRes = await fetch(`${ASAAS_API_URL}/subscriptions/${asaasId}`, { method: "DELETE", headers: h });
+      const asaasBody = await asaasRes.json().catch(() => ({}));
+      console.log("asaas delete subscription", asaasId, asaasRes.status, JSON.stringify(asaasBody));
       if (!asaasRes.ok && asaasRes.status !== 404) {
-        const errData = await asaasRes.json().catch(() => ({}));
-        return jsonResponse({ error: "ASAAS_CANCEL_ERROR", details: errData }, 400);
+        return jsonResponse({ error: "ASAAS_CANCEL_ERROR", details: asaasBody }, 400);
+      }
+
+      for (const st of ["PENDING", "OVERDUE"]) {
+        const listRes = await fetch(`${ASAAS_API_URL}/payments?subscription=${asaasId}&status=${st}&limit=100`, { headers: h });
+        const list = await listRes.json().catch(() => ({}));
+        for (const p of (list?.data ?? []) as { id: string }[]) {
+          const r = await fetch(`${ASAAS_API_URL}/payments/${p.id}`, { method: "DELETE", headers: h });
+          const rb = await r.json().catch(() => ({}));
+          console.log("asaas delete payment", p.id, r.status, JSON.stringify(rb));
+          if (r.ok) paymentsRemoved++; else paymentErrors.push(rb);
+        }
       }
     }
 
@@ -115,7 +124,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "DB_ERROR", details: updateErr }, 500);
     }
 
-    return jsonResponse({ success: true });
+    return jsonResponse({ success: true, payments_removed: paymentsRemoved, payment_errors: paymentErrors });
   } catch (err) {
     return jsonResponse({ error: "UNEXPECTED_ERROR", details: String(err) }, 500);
   }
