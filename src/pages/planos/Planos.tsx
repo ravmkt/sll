@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Eye, Film, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLoja } from "@/contexts/LojaContext";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { VidlyticsPlanCard, type PlanCycle } from "@/components/planos/VidlyticsPlanCard";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -27,6 +28,13 @@ const CONTACT_URL = CONTACT_WPP
 type Cell = boolean | string | { ok: string };
 
 const COMPARE_COLS = ["Starter", "Pro", "Scale"];
+
+const TIER_RANK: Record<string, number> = { starter: 1, pro: 2, scale: 3 };
+
+const ADDONS = [
+  { key: "videos_10", icon: Film, title: "+10 Vídeos Ativos", desc: "Adicione mais produtos com vídeos no seu e-commerce", cents: 2990 },
+  { key: "views_25k", icon: Eye, title: "+25.000 Visualizações", desc: "Aumente sua franquia mensal para picos de campanhas e tráfego", cents: 3990 },
+];
 
 const COMPARE: { group: string; rows: { label: string; v: [Cell, Cell, Cell] }[] }[] = [
   {
@@ -77,6 +85,8 @@ export default function Planos() {
   const [plans, setPlans] = useState<CatalogPlan[]>([]);
   const [mods, setMods] = useState<CatalogModule[]>([]);
   const [cycle, setCycle] = useState<PlanCycle>("monthly");
+  // null = sem plano ativo no Vidlytics; tier pode ser null em assinaturas sem plano dinamico (ex.: vitalicia)
+  const [current, setCurrent] = useState<{ tier: string | null } | null>(null);
 
   useEffect(() => {
     Promise.all([getCatalogShowcase(), getCatalogModules()]).then(([list, m]) => {
@@ -85,6 +95,40 @@ export default function Planos() {
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (!storeId) return;
+    let alive = true;
+    (async () => {
+      const sb: any = supabase;
+      const { data: sub } = await sb
+        .from("subscriptions")
+        .select("dynamic_plan_id, status")
+        .eq("store_id", storeId)
+        .eq("module_key", "vidlytics")
+        .eq("is_current", true)
+        .in("status", ["active", "past_due", "lifetime"])
+        .limit(1)
+        .maybeSingle();
+      if (!alive) return;
+      if (!sub) { setCurrent(null); return; }
+      let tier: string | null = null;
+      if (sub.dynamic_plan_id) {
+        const { data: dp } = await sb.from("dynamic_plans").select("plan_tier").eq("id", sub.dynamic_plan_id).maybeSingle();
+        tier = dp?.plan_tier ? String(dp.plan_tier).toLowerCase() : null;
+      }
+      if (alive) setCurrent({ tier });
+    })();
+    return () => { alive = false; };
+  }, [storeId]);
+
+  function handleAddon(title: string) {
+    if (!current) {
+      toast.warning("Selecione um plano base primeiro para contratar add-ons.");
+      return;
+    }
+    toast.info(`A contratação de "${title}" será liberada em breve.`);
+  }
 
   const soon = useMemo(() => mods.filter((m) => m.status === "coming_soon"), [mods]);
   const modBySlug = useMemo(() => new Map(mods.map((m) => [m.slug, m])), [mods]);
@@ -156,6 +200,9 @@ export default function Planos() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-4 max-w-5xl mx-auto">
             {plans.map((p) => {
               const mod = modBySlug.get(p.module_slug);
+              const tierKey = String(p.plan_tier || "").toLowerCase();
+              const isCurrent = !!current?.tier && current.tier === tierKey;
+              const isUpgrade = !!current?.tier && (TIER_RANK[tierKey] ?? 0) > (TIER_RANK[current.tier] ?? 0);
               return (
                 <VidlyticsPlanCard
                   key={p.id}
@@ -168,6 +215,8 @@ export default function Planos() {
                   annualCents={p.price_annual_cents}
                   cycle={cycle}
                   isPopular={String(p.plan_tier).toLowerCase() === "pro"}
+                  isCurrent={isCurrent}
+                  ctaLabel={isUpgrade ? "Fazer upgrade" : undefined}
                   contactUrl={CONTACT_URL}
                   onSelect={() => handleSelect(p)}
                 />
@@ -228,9 +277,42 @@ export default function Planos() {
               </table>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-center text-xs font-medium leading-relaxed text-slate-500">
-              {"\u{1F4E6}"} Precisa de mais vídeos ou visualizações? Você poderá contratar pacotes adicionais avulsos
-              (Add-ons) diretamente pelo painel a qualquer momento, sem precisar mudar de plano.
+            <div className="space-y-5 pt-6">
+              <div className="text-center space-y-2">
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Turbine sua conta com Add-ons</h2>
+                <p className="text-sm font-medium text-slate-500">
+                  Precisa de mais capacidade sem trocar de plano? Adicione pacotes extras à sua assinatura a qualquer momento.
+                </p>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2 max-w-3xl mx-auto">
+                {ADDONS.map((a) => {
+                  const Icon = a.icon;
+                  return (
+                    <div key={a.key} className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <div className="space-y-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0091ff]/10 text-[#0091ff]">
+                          <Icon size={22} />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900">{a.title}</h3>
+                        <p className="text-xs font-medium leading-relaxed text-slate-500">{a.desc}</p>
+                        <p className="text-slate-900">
+                          <span className="text-2xl font-black tracking-tight">
+                            {(a.cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </span>
+                          <span className="ml-1 text-xs font-bold text-slate-400">/ mês</span>
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddon(a.title)}
+                        className="mt-5 w-full rounded-2xl bg-[#0091ff] py-3 px-4 text-xs font-black uppercase tracking-wider text-white shadow-lg transition-all hover:bg-[#0070f3] hover:scale-[1.02] cursor-pointer"
+                      >
+                        Contratar Pacote
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </section>
         )}
