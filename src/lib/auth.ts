@@ -241,3 +241,7 @@ export const resolveCurrentStoreId = async () => {
   }
   return resolveStoreId();
 };
+
+// Captura o código de indicação assim que o app carrega, antes de qualquer redirect
+if (typeof window !== 'undefined') getActiveReferralCode();
+
