@@ -23,12 +23,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Busca a sessão inicial
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
+    let active = true;
+
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Valida se o usuário ainda existe (token órfão de conta excluída)
+      if (session) {
+        const { error } = await supabase.auth.getUser();
+        if (error && (error.status === 401 || error.status === 403 || error.status === 404)) {
+          await supabase.auth.signOut({ scope: 'local' });
+          if (!active) return;
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (!active) return;
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-    });
+    };
+
+    init();
 
     // Escuta mudanças de autenticação
     const {
@@ -40,6 +59,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     return () => {
+      active = false;
       subscription.unsubscribe();
     };
   }, []);

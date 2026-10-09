@@ -7,6 +7,7 @@ const MAIL_FROM = Deno.env.get("MAIL_FROM")!;
 const APP_URL = (Deno.env.get("APP_URL") ?? "").replace(/\/+$/, "");
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+const MAIL_ADMIN_COPY = (Deno.env.get("MAIL_ADMIN_COPY") ?? "").trim();
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-internal-secret",
@@ -116,6 +117,7 @@ Deno.serve(async (req) => {
     body: JSON.stringify({
       from: MAIL_FROM,
       to: [to],
+      ...(MAIL_ADMIN_COPY ? { bcc: [MAIL_ADMIN_COPY] } : {}),
       subject: "Bem-vindo(a) ao SLL Hub!",
       html: html(claimed.contact_name ?? ""),
     }),
