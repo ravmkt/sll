@@ -122,12 +122,32 @@ export default function Planos() {
     return () => { alive = false; };
   }, [storeId]);
 
-  function handleAddon(title: string) {
+  const [busyAddon, setBusyAddon] = useState<string | null>(null);
+
+  async function handleAddon(key: string) {
     if (!current) {
       toast.warning("Selecione um plano base primeiro para contratar add-ons.");
       return;
     }
-    toast.info(`A contratação de "${title}" será liberada em breve.`);
+    if (!storeId) {
+      toast.error("Nenhuma loja ativa encontrada.");
+      return;
+    }
+    setBusyAddon(key);
+    const { data, error } = await supabase.functions.invoke("asaas-create-addon", {
+      body: { store_id: storeId, addon_key: key },
+    });
+    let body: any = data;
+    if (error && (error as any).context) {
+      try { body = await (error as any).context.json(); } catch (_) {}
+    }
+    setBusyAddon(null);
+    if (error || body?.error) {
+      toast.error(body?.message || body?.error || "Não foi possível contratar o pacote.");
+      return;
+    }
+    if (body?.invoice_url) window.open(body.invoice_url, "_blank", "noopener");
+    toast.success("Pacote criado. Conclua o pagamento para liberar a capacidade extra.");
   }
 
   const soon = useMemo(() => mods.filter((m) => m.status === "coming_soon"), [mods]);
@@ -304,7 +324,7 @@ export default function Planos() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleAddon(a.title)}
+                        onClick={() => handleAddon(a.key)} disabled={busyAddon === a.key}
                         className="mt-5 w-full rounded-2xl bg-[#0091ff] py-3 px-4 text-xs font-black uppercase tracking-wider text-white shadow-lg transition-all hover:bg-[#0070f3] hover:scale-[1.02] cursor-pointer"
                       >
                         Contratar Pacote

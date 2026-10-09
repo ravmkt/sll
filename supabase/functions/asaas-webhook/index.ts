@@ -144,6 +144,12 @@ Deno.serve(async (req: Request) => {
     if (cancelRefErr) console.error("Erro ao cancelar comissao:", cancelRefErr);
   }
 
+  if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && body?.payment?.subscription) {
+    const { error: addonErr } = await supabase.rpc("activate_addon_order", {
+      p_asaas_subscription_id: body.payment.subscription,
+    });
+    if (addonErr) console.error("Erro ao ativar add-on:", addonErr);
+  }
   try {
     await supabase.from("admin_audit_logs").insert({
       action: `asaas_webhook:${eventId ?? "no-id"}`,
