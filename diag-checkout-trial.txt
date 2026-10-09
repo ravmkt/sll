@@ -1,0 +1,199 @@
+== Checkout.tsx (1-149)
+1: import { useEffect, useMemo, useState } from 'react';
+2: import { useNavigate, useSearchParams } from 'react-router-dom';
+3: import { ArrowLeft, CheckCircle2, Loader2, Tag } from 'lucide-react';
+4: import { toast } from 'sonner';
+5: import { supabase } from '@/lib/supabase';
+6: import { useLoja } from '@/contexts/LojaContext';
+7: import { DashboardLayout } from '@/components/layout/DashboardLayout';
+8: import { getPlansShowcase, getPriceForCycle, subscribeToPlan, type Plan, type PlanPrice } from '@/services/plans/getPlansShowcase';
+10: type Cycle = 'monthly' | 'semiannual' | 'yearly';
+11: type Person = 'pf' | 'pj';
+13: const sb: any = supabase;
+14: const CYCLE_LABEL: Record<Cycle, string> = { monthly: 'Mensal', semiannual: 'Semestral', yearly: 'Anual' };
+15: const brl = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+16: const digits = (v: string) => v.replace(/\D/g, '');
+18: const ERR: Record<string, string> = {
+19:   SESSAO_EXPIRADA: 'Sessão expirada. Faça login novamente.',
+20:   MODULE_ALREADY_SUBSCRIBED: 'Você já possui este módulo ativo na sua loja.',
+21:   DB_ERROR: 'Não foi possível registrar a assinatura. Tente novamente.',
+22:   CUPOM_INVALIDO: 'Cupom inválido ou esgotado.',
+23:   CUPOM_VALOR_MINIMO: 'O valor final ficaria abaixo do mínimo de R$ 5,00.',
+24:   DADOS_FISCAIS_OBRIGATORIOS: 'Preencha os dados de faturamento.',
+25:   ASAAS_CUSTOMER_ERROR: 'O Asaas recusou os dados. Confira CPF/CNPJ, CEP e telefone.',
+26:   ASAAS_SUBSCRIPTION_ERROR: 'O Asaas recusou a assinatura. Tente novamente em instantes.',
+27: };
+28: const COUPON_REASON: Record<string, string> = {
+29:   not_found: 'Cupom não encontrado.',
+30:   expired: 'Este cupom expirou.',
+31:   exhausted: 'Este cupom esgotou.',
+32:   not_started: 'Este cupom ainda não está valendo.',
+33:   plan_not_allowed: 'Este cupom não vale para este plano.',
+34: };
+36: function validCpf(v: string) {
+37:   const d = digits(v);
+38:   if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
+39:   for (const t of [9, 10]) {
+40:     let s = 0;
+41:     for (let i = 0; i < t; i++) s += Number(d[i]) * (t + 1 - i);
+42:     if (((s * 10) % 11) % 10 !== Number(d[t])) return false;
+43:   }
+44:   return true;
+45: }
+46: function validCnpj(v: string) {
+47:   const d = digits(v);
+48:   if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;
+49:   const calc = (n: number) => {
+50:     let s = 0, p = n - 7;
+51:     for (let i = 0; i < n; i++) { s += Number(d[i]) * p--; if (p < 2) p = 9; }
+52:     const r = s % 11;
+53:     return r < 2 ? 0 : 11 - r;
+54:   };
+55:   return calc(12) === Number(d[12]) && calc(13) === Number(d[13]);
+56: }
+57: const maskDoc = (v: string, t: Person) => {
+58:   const d = digits(v).slice(0, t === 'pf' ? 11 : 14);
+59:   return t === 'pf'
+60:     ? d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+61:     : d.replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+62: };
+63: const maskCep = (v: string) => digits(v).slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
+64: const maskPhone = (v: string) => {
+65:   const d = digits(v).slice(0, 11);
+66:   return d.length > 10 ? d.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : d.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '');
+67: };
+69: const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0091ff]';
+70: const labelCls = 'block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1';
+72: type Form = {
+73:   type: Person; name: string; doc: string; email: string; phone: string;
+74:   cep: string; address: string; number: string; complement: string; neighborhood: string; city: string; state: string;
+75: };
+76: const emptyForm: Form = { type: 'pf', name: '', doc: '', email: '', phone: '', cep: '', address: '', number: '', complement: '', neighborhood: '', city: '', state: '' };
+78: type Applied = { code: string; type: 'percentage' | 'fixed_amount'; value: number };
+80: export default function Checkout() {
+81:   const navigate = useNavigate();
+82:   const [params] = useSearchParams();
+83:   const { storeId } = useLoja();
+85:   const planId = params.get('plan');
+86:   const cycle = (['monthly', 'semiannual', 'yearly'].includes(params.get('cycle') ?? '') ? params.get('cycle') : 'monthly') as Cycle;
+87:   const moduleKey = params.get('module');
+89:   const [loading, setLoading] = useState(true);
+90:   const [plan, setPlan] = useState<Plan | null>(null);
+91:   const [prices, setPrices] = useState<PlanPrice[]>([]);
+92:   const [f, setF] = useState<Form>(emptyForm);
+93:   const [couponInput, setCouponInput] = useState('');
+94:   const [applied, setApplied] = useState<Applied | null>(null);
+95:   const [couponMsg, setCouponMsg] = useState<string | null>(null);
+96:   const [couponBusy, setCouponBusy] = useState(false);
+97:   const [cepBusy, setCepBusy] = useState(false);
+98:   const [errors, setErrors] = useState<Record<string, string>>({});
+99:   const [submitting, setSubmitting] = useState(false);
+101:   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
+103:   useEffect(() => {
+104:     getPlansShowcase().then(({ plans, prices }) => {
+105:       setPlan(plans.find((p) => p.id === planId) ?? null);
+106:       setPrices(prices);
+107:       setLoading(false);
+108:     });
+109:   }, [planId]);
+111:   useEffect(() => {
+112:     if (!storeId) return;
+113:     sb.from('billing_info').select('*').eq('store_id', storeId).maybeSingle().then(({ data }: any) => {
+114:       if (!data) return;
+115:       setF({
+116:         type: data.person_type === 'pj' || digits(data.cnpj_cpf ?? '').length === 14 ? 'pj' : 'pf',
+117:         name: data.legal_name ?? '', doc: data.cnpj_cpf ?? '', email: data.email ?? '', phone: data.phone ?? '',
+118:         cep: data.cep ?? '', address: data.address ?? '', number: data.number ?? '', complement: data.complement ?? '',
+119:         neighborhood: data.neighborhood ?? '', city: data.city ?? '', state: data.state ?? '',
+120:       });
+121:     });
+122:   }, [storeId]);
+124:   const priceCents = plan ? getPriceForCycle(plan.id, cycle, prices, plan.price_cents) : 0;
+125:   const discountCents = useMemo(() => {
+126:     if (!applied) return 0;
+127:     const d = applied.type === 'percentage' ? Math.round((priceCents * applied.value) / 100) : applied.value;
+128:     return Math.min(Math.max(d, 0), priceCents);
+129:   }, [applied, priceCents]);
+130:   const finalCents = priceCents - discountCents;
+132:   async function applyCoupon() {
+133:     const code = couponInput.trim();
+134:     if (!code || !plan) return;
+135:     setCouponBusy(true); setCouponMsg(null);
+136:     const { data, error } = await sb.rpc('validate_coupon', { p_code: code, p_plan_id: plan.id });
+137:     setCouponBusy(false);
+138:     if (error || !data?.valid) {
+139:       setApplied(null);
+140:       setCouponMsg(COUPON_REASON[data?.reason] ?? 'Não foi possível validar o cupom.');
+141:       return;
+142:     }
+143:     const d = data.type === 'percentage' ? Math.round((priceCents * Number(data.value)) / 100) : Number(data.value);
+144:     if (priceCents - Math.min(d, priceCents) < 500) {
+145:       setApplied(null);
+146:       setCouponMsg('O valor final ficaria abaixo do mínimo de R$ 5,00.');
+147:       return;
+148:     }
+149:     setApplied({ code: code.toUpperCase(), type: data.type, value: Number(data.value) });
+== db.ts: criacao do trial (1000-1060)
+1000:   const {
+1001:     data: { user },
+1002:     error: userError,
+1003:   } = await supabase.auth.getUser();
+1005:   if (userError) {
+1006:     console.error('Erro ao buscar usuário autenticado:', userError);
+1007:     throw userError;
+1008:   }
+1010:   if (!user) {
+1011:     throw new Error(
+1012:       'Usuário não autenticado. Faça login antes de criar uma loja no Supabase.',
+1013:     );
+1014:   }
+1016:   let localStore: Store | null = null;
+1018:   try {
+1019:     if (typeof window !== 'undefined' && window.localStorage) {
+1020:       const local = localStorage.getItem('vidlytics_stores');
+1021:       const stores = local ? (JSON.parse(local) as Store[]) : [];
+1022:       localStore = stores.find(store => store.id === storeId) || null;
+1023:     }
+1024:   } catch (error) {
+1025:     console.warn('Não foi possível buscar loja no localStorage:', error);
+1026:   }
+1028:   const trialEndsDate = new Date();
+1029:   trialEndsDate.setDate(trialEndsDate.getDate() + 7);
+1031:   const storeToInsert = sanitizeTablePayload('stores', {
+1032:     id: storeId,
+1033:     name: localStore?.name || 'Loja',
+1034:     url: localStore?.url || '',
+1035:     owner_user_id: user.id,
+1036: plan_id: (localStore as any)?.plan_id || '5493cbc5-05b4-4f39-99ba-e29c98d86cb6',
+1037: subscription_status: (localStore as any)?.subscription_status || 'trialing',
+1038: trial_ends_at: (localStore as any)?.trial_ends_at || trialEndsDate.toISOString(),
+1039:   });
+1041:   const { error } = await supabase
+1042:     .from('stores' as any)
+1043:     .upsert(storeToInsert as any, { onConflict: 'id' });
+1045:   if (error) {
+1046:     console.error('Erro ao criar/atualizar loja no Supabase:', error);
+1047:     throw error;
+1048:   }
+1049: };
+1051: const ensureSupabaseAppearanceExists = async (
+1052:   appearanceId?: string | null,
+1053:   storeId?: string,
+1054: ): Promise<string | null> => {
+1055:   if (!isSupabaseConfigured) {
+1056:     return appearanceId || null;
+1057:   }
+1059:   if (!appearanceId || !isValidUuid(appearanceId)) {
+1060:     return null;
+== _module_limits: comportamento sem plano (trial)
+20261009_coupons_start_date.sql:66: if v_val is null or v_val < 1 or v_val > 100 then raise exception 'O desconto deve ficar entre 1 e 100%%.'; end if;
+20261017_get_store_video_pages.sql:42: return json_build_object('pages', coalesce(v_pages, 0), 'limit', v_limit);
+20261029_admin_master_pricing.sql:63: coalesce(p_data->'limits_config', '{}'::jsonb),
+20261030_admin_master_combos.sql:87: coalesce(p_data->'limits_config', '{}'::jsonb),
+20261030_limits_checkout_dinamico.sql:28: select pl.limits_config || coalesce(cm.limits_override, '{}'::jsonb)
+20261030_limits_checkout_dinamico.sql:49: 'storage_gb', case when coalesce(p.storage_limit_bytes, 0) = 0 then null
+20261030_limits_checkout_dinamico.sql:61: if best is null then return null; end if;
+20261030_limits_checkout_dinamico.sql:120: if l is null or jsonb_typeof(l -> 'storage_gb') <> 'number' then return; end if;
+20261102_quota_grace_travas.sql:66: select pl.limits_config || coalesce(cm.limits_override, '{}'::jsonb)
+20261102_quota_grace_travas.sql:86: 'storage_gb', case when coalesce(p.storage_limit_bytes, 0) = 0 then null
+20261102_quota_grace_travas.sql:98: if best is null then return null; end if;

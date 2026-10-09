@@ -1,0 +1,27 @@
+== edge function: MODULE_ALREADY_SUBSCRIBED
+F:\RODRIGO VICENTE\DYAD\sll-hub\supabase\functions\asaas-create-subscription\index.ts
+        .eq("id", plan_id)
+        .maybeSingle();
+      const planModules: string[] = Array.isArray(planRow?.modules) ? planRow.modules : [];
+      resolvedModuleKey = planModules.length === 1 ? planModules[0] : (module_key ?? null);
+      blockKeys = resolvedModuleKey ? [resolvedModuleKey] : [];
+    }
+
+    if (blockKeys.length > 0) {
+      const { data: dupSub } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id, status, module_key")
+        .eq("store_id", store_id)
+        .in("module_key", [...blockKeys, "bundle"])
+        .in("status", ["active", "trialing", "past_due", "lifetime"])
+        .limit(1)
+        .maybeSingle();
+      if (dupSub) {
+        await release();
+        return jsonResponse({ error: "MODULE_ALREADY_SUBSCRIBED", module_key: dupSub.module_key, status: dupSub.status }, 409);
+      }
+    }
+
+    // 5. Reaproveita asaas_customer_id se já existir para esta loja
+== indices unicos de subscriptions
+20260929_multi_subscriptions_billing_anchor.sql:44: on public.subscriptions (store_id, status);

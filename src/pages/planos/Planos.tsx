@@ -1,62 +1,50 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLoja } from "@/contexts/LojaContext";
 import { toast } from "sonner";
-import {
-  getPlansShowcase,
-  getPlanKind,
-  getPriceForCycle,
-  type Plan,
-  type PlanObjective,
-  type PlanPrice,
-} from "@/services/plans/getPlansShowcase";
 import { PlanCard } from "@/components/planos/PlanCard";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { getCatalogShowcase, type CatalogPlan } from "@/services/plans/getCatalogShowcase";
 
 type BillingCycle = "monthly" | "semiannual" | "yearly";
-type TabKey = "individual" | "objective" | "total";
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "individual", label: "Módulos Individuais" },
-  { key: "objective", label: "Pacotes por Objetivo" },
-  { key: "total", label: "Pacote Total" },
+const CYCLES: [BillingCycle, string][] = [
+  ["monthly", "Mensal"],
+  ["semiannual", "Semestral"],
+  ["yearly", "Anual"],
 ];
+
+function priceFor(p: CatalogPlan, cycle: BillingCycle): number {
+  if (cycle === "semiannual") return p.price_semiannual_cents;
+  if (cycle === "yearly") return p.price_annual_cents;
+  return p.price_monthly_cents;
+}
 
 export default function Planos() {
   const navigate = useNavigate();
   const { storeId } = useLoja();
-
   const [loading, setLoading] = useState(true);
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [prices, setPrices] = useState<PlanPrice[]>([]);
-  const [objectives, setObjectives] = useState<PlanObjective[]>([]);
+  const [plans, setPlans] = useState<CatalogPlan[]>([]);
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
-  const [tab, setTab] = useState<TabKey>("individual");
-  const [subscribingId] = useState<string | null>(null);
 
   useEffect(() => {
-    getPlansShowcase().then(({ plans, prices, objectives }) => {
-      setPlans(plans);
-      setPrices(prices);
-      setObjectives(objectives);
+    getCatalogShowcase().then((list) => {
+      setPlans(list);
       setLoading(false);
     });
   }, []);
 
-  const individualPlans = useMemo(() => plans.filter((p) => getPlanKind(p.slug) === "individual"), [plans]);
-  const totalPlan = useMemo(() => plans.find((p) => p.slug === "pacote-total"), [plans]);
-
-  function handleSelect(plan: Plan, moduleKey?: string | null) {
+  function handleSelect(p: CatalogPlan) {
     if (!storeId) {
       toast.error("Nenhuma loja ativa encontrada.");
       return;
     }
-    const qs = new URLSearchParams({ plan: plan.id, cycle });
-    if (moduleKey) qs.set("module", moduleKey);
+    const qs = new URLSearchParams({ plan: p.id, cycle, module: p.module_slug });
     navigate(`/dashboard/checkout?${qs.toString()}`);
   }
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -81,19 +69,13 @@ export default function Planos() {
 
         <div className="text-center max-w-2xl mx-auto space-y-4">
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Escolha os módulos ideais para sua loja
+            Escolha o plano ideal para sua loja
           </h1>
-          <p className="text-sm font-medium text-slate-500">
-            Assine módulos individualmente ou aproveite os pacotes com desconto.
-          </p>
+          <p className="text-sm font-medium text-slate-500">Escolha o plano e o ciclo de cobrança.</p>
 
           <div className="flex justify-center pt-2">
             <div className="inline-flex items-center gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/50">
-              {([
-                ["monthly", "Mensal"],
-                ["semiannual", "Semestral"],
-                ["yearly", "Anual"],
-              ] as [BillingCycle, string][]).map(([key, label]) => (
+              {CYCLES.map(([key, label]) => (
                 <button
                   key={key}
                   type="button"
@@ -108,86 +90,27 @@ export default function Planos() {
               ))}
             </div>
           </div>
-
-          <div className="flex justify-center gap-2 pt-3 flex-wrap">
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setTab(t.key)}
-                className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border",
-                  tab === t.key
-                    ? "bg-[#0091ff] text-white border-[#0091ff]"
-                    : "bg-white text-slate-500 border-slate-200 hover:border-[#0091ff]/50"
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {tab === "individual" && (
+        {plans.length === 0 ? (
+          <p className="text-center text-sm text-slate-500 pt-6">Nenhum plano disponível no momento.</p>
+        ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-4 max-w-5xl mx-auto">
-            {individualPlans.map((p) => {
-              const priceCents = getPriceForCycle(p.id, cycle, prices, p.price_cents);
-              const moduleKey = p.modules?.[0] ?? null;
-              return (
-                <PlanCard
-                  key={p.id}
-                  title={p.name}
-                  description={p.description}
-                  priceCents={priceCents}
-                  cycle={cycle}
-                  modules={p.modules ?? []}
-                  isPopular={p.is_popular}
-                  isLoading={subscribingId === p.id}
-                  onSelect={() => handleSelect(p, moduleKey)}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {tab === "objective" && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-4 max-w-5xl mx-auto">
-            {objectives.map((o) => {
-              const plan = plans.find((p) => p.id === o.plan_id);
-              if (!plan) return null;
-              const priceCents = getPriceForCycle(plan.id, cycle, prices, plan.price_cents);
-              return (
-                <PlanCard
-                  key={o.id}
-                  title={o.name}
-                  description={o.description}
-                  priceCents={priceCents}
-                  cycle={cycle}
-                  modules={o.modules}
-                  isLoading={subscribingId === plan.id}
-                  onSelect={() => handleSelect(plan, null)}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {tab === "total" && totalPlan && (
-          <div className="grid gap-6 sm:grid-cols-1 max-w-md mx-auto pt-4">
-            <PlanCard
-              title={totalPlan.name}
-              description={totalPlan.description}
-              priceCents={getPriceForCycle(totalPlan.id, cycle, prices, totalPlan.price_cents)}
-              cycle={cycle}
-              modules={totalPlan.modules ?? []}
-              isPopular
-              isLoading={subscribingId === totalPlan.id}
-              onSelect={() => handleSelect(totalPlan, null)}
-            />
+            {plans.map((p) => (
+              <PlanCard
+                key={p.id}
+                title={p.plan_name}
+                description={null}
+                priceCents={priceFor(p, cycle)}
+                cycle={cycle}
+                modules={[p.module_slug]}
+                isPopular={p.plan_tier === "pro"}
+                onSelect={() => handleSelect(p)}
+              />
+            ))}
           </div>
         )}
       </div>
     </DashboardLayout>
   );
 }
-
