@@ -71,10 +71,10 @@ const PLANS: Plan[] = [
       anual: 'R$ 1.524,00 por ano, em até 12x',
     },
     features: [
-      'Vídeos ilimitados',
-      'Visualizações ilimitadas',
+      'Até 150 vídeos ativos',
+      'Até 180.000 visualizações/mês',
       'Todos os formatos liberados',
-      'Carregamento em CDN dedicado',
+      'CDN de alta performance no carregamento',
       'Suporte prioritário via WhatsApp',
     ],
   },
@@ -360,7 +360,7 @@ export default function VidlyticsLanding() {
           </div>
 
           <p className="text-center text-sm text-gray-500 mt-10 max-w-2xl mx-auto">
-            Depois do teste, pagamento por cartão de crédito ou Pix. A renovação é automática e você cancela quando quiser, direto no painel.
+            Precisa de mais de 150 vídeos ou 180 mil visualizações? Fale com nosso time para um plano sob medida. Depois do teste, pagamento por cartão de crédito ou Pix. A renovação é automática e você cancela quando quiser, direto no painel.
           </p>
         </div>
 
@@ -387,7 +387,7 @@ export default function VidlyticsLanding() {
                 Leva menos de 1 minuto. Você usa tudo do plano Scale por 7 dias para rodar na sua loja, sem cartão de crédito.
               </p>
               <ul className="space-y-2 text-sm mb-6">
-                {['Vídeos e visualizações ilimitados', 'Todos os formatos liberados', 'Escolha o plano só no fim do teste'].map((x) => (
+                {['Até 150 vídeos e 180.000 visualizações/mês', 'Todos os formatos liberados', 'Escolha o plano só no fim do teste'].map((x) => (
                   <li key={x} className="flex items-start gap-2"><Check className="w-4 h-4 mt-0.5 text-indigo-600 shrink-0" />{x}</li>
                 ))}
               </ul>
