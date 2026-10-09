@@ -58,7 +58,7 @@ export default function Auth() {
         }
       });
       if (error) alert('Erro ao cadastrar: ' + error.message);
-      else alert('Cadastro realizado com sucesso! Verifique seu email.');
+      else alert('Conta criada com sucesso! Agora vamos configurar a sua loja.');
     }
     setLoading(false);
   };
