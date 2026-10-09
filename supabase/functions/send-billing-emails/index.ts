@@ -233,12 +233,31 @@ Deno.serve(async (req) => {
   // ===== Fluxo 1: checkout abandonado (assinatura 'incomplete') =====
   const { data: pend } = await admin
     .from("subscriptions").select("*")
-    .eq("status", "incomplete").eq("is_current", true)
+    .eq("status", "incomplete")
     .gte("created_at", new Date(now.getTime() - 48 * 3600000).toISOString());
 
-  for (const sub of pend ?? []) {
+  const groups = new Map<string, any[]>();
+  for (const s of pend ?? []) {
+    const k = `${s.store_id}|${s.dynamic_plan_id ?? s.plan_id ?? ""}|${s.module_key ?? ""}`;
+    groups.set(k, [...(groups.get(k) ?? []), s]);
+  }
+  const heads: any[] = [];
+  const sibIds = new Map<string, string[]>();
+  for (const list of groups.values()) {
+    list.sort((x, y) => Date.parse(y.created_at) - Date.parse(x.created_at));
+    if (!list[0].is_current) continue;
+    heads.push(list[0]);
+    sibIds.set(list[0].id, list.slice(1).map((x) => x.id));
+  }
+
+  for (const sub of heads) {
+    const olds = sibIds.get(sub.id) ?? [];
     const ageH = (now.getTime() - Date.parse(sub.created_at)) / 3600000;
     const kind: Kind | null = ageH >= 24 ? "checkout_24h" : ageH >= 1 ? "checkout_1h" : null;
+    if (kind && olds.length) {
+      const { data: prev } = await admin.from("email_events").select("id").eq("kind", kind).in("ref_id", olds).limit(1);
+      if (prev?.length) continue;
+    }
     if (!kind) continue;
 
     const mk = String(sub.module_key ?? "");
