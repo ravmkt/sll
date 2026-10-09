@@ -1,3 +1,4 @@
+import VidlyticsLanding from '@/pages/landing/VidlyticsLanding';
 import CheckoutIntentWatcher from '@/components/auth/CheckoutIntentWatcher';
 import AuthRedirect from '@/components/auth/AuthRedirect';
 import PrivacyPage from "@/pages/legal/PrivacyPage";
@@ -214,6 +215,7 @@ function AppRoutes() {
           }
         />
 
+        <Route path="/vidlytics" element={<VidlyticsLanding />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes></>
     </Suspense>
