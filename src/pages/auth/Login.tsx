@@ -1,6 +1,7 @@
 import { AppFooter } from '@/components/layout/AppFooter';
 import { useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
+import { toast } from 'sonner';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(() => new URLSearchParams(window.location.search).get('mode') !== 'signup');
@@ -22,7 +23,7 @@ export default function Auth() {
         redirectTo: `${window.location.origin}/`,
       },
     });
-    if (error) alert('Erro no login com Google: ' + error.message);
+    if (error) toast.error('Erro no login com Google: ' + error.message);
   };
 
   const handleAuth = async (e: FormEvent) => {
@@ -38,10 +39,10 @@ export default function Auth() {
 
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) alert('Erro ao fazer login: ' + error.message);
+      if (error) toast.error('Erro ao fazer login: ' + error.message);
     } else {
       if (password !== confirmPassword) {
-        alert('As senhas não coincidem!');
+        toast.error('As senhas não coincidem!');
         setLoading(false);
         return;
       }
@@ -55,8 +56,8 @@ export default function Auth() {
           }
         }
       });
-      if (error) alert('Erro ao cadastrar: ' + error.message);
-      else alert('Conta criada com sucesso! Agora vamos configurar a sua loja.');
+      if (error) toast.error('Erro ao cadastrar: ' + error.message);
+      else toast.success('Conta criada com sucesso! Agora vamos configurar a sua loja.');
     }
     setLoading(false);
   };
