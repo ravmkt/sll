@@ -34,8 +34,7 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
   // 2. Verifica status de assinatura / período de teste / vitalício
   const status = (store?.subscription_status || '').toLowerCase();
   const isTrialActive =
-    status === 'trialing' ||
-    (store?.trial_ends_at && new Date(store.trial_ends_at).getTime() > Date.now());
+    (store?.trial_ends_at ? new Date(store.trial_ends_at).getTime() > Date.now() : status === 'trialing');
 
   const hasAccess = status === 'active' || status === 'lifetime' || status === 'paid' || isTrialActive;
 
