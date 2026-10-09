@@ -95,7 +95,13 @@ Deno.serve(async (req) => {
       .select("id");
     if (upErr) { result.push({ ...row, error: "ERRO_DB", details: upErr.message }); continue; }
 
-    result.push({ ...row, canceled: !!upd?.length, coupon_id: s.coupon_id ?? null });
+    let couponReleased = false;
+    if (upd?.length && s.coupon_id) {
+      const { error: rcErr } = await admin.rpc("release_coupon", { p_coupon_id: s.coupon_id });
+      couponReleased = !rcErr;
+      if (rcErr) console.error("release_coupon falhou", s.id, rcErr.message);
+    }
+    result.push({ ...row, canceled: !!upd?.length, coupon_id: s.coupon_id ?? null, coupon_released: couponReleased });
   }
 
   console.log("cancel-stale-checkouts", JSON.stringify(result));
