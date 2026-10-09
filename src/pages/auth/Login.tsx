@@ -25,6 +25,13 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     
+    const qp = new URLSearchParams(window.location.search);
+    const intentPlan = qp.get('plan');
+    const intent = intentPlan
+      ? { plan: intentPlan, cycle: qp.get('cycle') ?? 'monthly', module: qp.get('module') ?? undefined }
+      : null;
+    if (intent) localStorage.setItem('sll_checkout_intent', JSON.stringify(intent));
+
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) alert('Erro ao fazer login: ' + error.message);
@@ -40,7 +47,8 @@ export default function Auth() {
         options: {
           data: {
             nome_completo: nome,
-            nome_loja: loja
+            nome_loja: loja,
+            ...(intent ? { checkout_intent: intent } : {})
           }
         }
       });

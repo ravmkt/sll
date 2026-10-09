@@ -1,3 +1,4 @@
+import AuthRedirect from '@/components/auth/AuthRedirect';
 import PrivacyPage from "@/pages/legal/PrivacyPage";
 import AboutPage from "@/pages/legal/AboutPage";
 import TermsPage from "@/pages/legal/TermsPage";
@@ -57,9 +58,9 @@ function AppRoutes() {
         <Route path="/sobre" element={<AboutPage />} />
         <Route path="/privacidade" element={<PrivacyPage />} />
         <Route path="/termos" element={<TermsPage />} />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<AuthRedirect />} />
         <Route path="/dashboard/products" element={<Navigate to="/dashboard/produtos" replace />} />
-        <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+        <Route path="/auth" element={user ? <AuthRedirect /> : <Login />} />
         <Route path="/auth/instagram/callback" element={<InstagramCallback />} />
 
         {/* Landing Page de Bloqueio/Upgrade (Acessível a usuários logados) */}
