@@ -6,7 +6,7 @@ export default function TermsPage() {
   return (
     <LegalLayout title="Termos de Serviço">
       <p>
-        Ao criar uma conta ou usar o SLL Hub (Sistema Loja Lucrativa), em app.sllhub.com.br, você
+        Ao criar uma conta ou usar o SLL Hub, em app.sllhub.com.br, operado pela RAV Marketing e Treinamento LTDA (CNPJ 62.894.336/0001-00), você
         concorda com estes termos.
       </p>
 

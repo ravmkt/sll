@@ -45,7 +45,7 @@ A nota fiscal será enviada ao e-mail cadastrado nos dados de faturamento. Você
 </div>
 </td></tr>
 <tr><td align="center" style="background:#0f172a;padding:18px 24px;font-size:12px;color:#94a3b8;">
-SLL Hub · Você recebeu este e-mail porque assinou um plano.
+SLL Hub · RAV Marketing e Treinamento LTDA · CNPJ 62.894.336/0001-00 · Você recebeu este e-mail porque assinou um plano.
 </td></tr>
 </table>
 </td></tr></table>

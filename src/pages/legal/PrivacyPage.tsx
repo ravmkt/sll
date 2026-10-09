@@ -6,7 +6,7 @@ export default function PrivacyPage() {
   return (
     <LegalLayout title="Política de Privacidade">
       <p>
-        O SLL Hub (Sistema Loja Lucrativa), acessível em app.sllhub.com.br, é uma plataforma para
+        O SLL Hub, acessível em app.sllhub.com.br, é uma plataforma da RAV Marketing e Treinamento LTDA (CNPJ 62.894.336/0001-00), controladora dos dados nos termos da LGPD, para
         lojistas de e-commerce. Esta política explica quais dados coletamos, para que usamos e como
         você exerce seus direitos, conforme a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018).
       </p>

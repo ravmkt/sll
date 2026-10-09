@@ -3,9 +3,9 @@ import LegalLayout from "./LegalLayout";
 
 export default function AboutPage() {
   return (
-    <LegalLayout title="SLL Hub - Sistema Loja Lucrativa">
+    <LegalLayout title="SLL Hub">
       <p>
-        O SLL Hub é uma plataforma para lojistas de e-commerce aumentarem vendas e lucro. Reunimos
+        O SLL Hub é uma plataforma para lojistas de e-commerce aumentarem vendas e lucro. Operado por RAV Marketing e Treinamento LTDA, CNPJ 62.894.336/0001-00. Reunimos
         em um só lugar ferramentas que se integram à sua loja (Shopify, Nuvemshop, Yampi e outras)
         por meio de um script simples ou do Google Tag Manager.
       </p>
