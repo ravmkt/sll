@@ -52,6 +52,15 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
     return <>{children}</>;
   }
 
+  // Usuário novo ainda sem loja: aguarda o onboarding criar (não bloqueia)
+  if (!store) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-8 h-8 border-3 border-[#0094eb]/30 border-t-[#0094eb] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   const status = (store?.subscription_status || '').toLowerCase();
   const isTrialActive = store?.trial_ends_at
     ? new Date(store.trial_ends_at).getTime() > Date.now()
