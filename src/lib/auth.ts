@@ -37,6 +37,7 @@ export const getActiveReferralCode = (): string | null => {
     if (refFromUrl) {
       const cleanRef = refFromUrl.trim().toUpperCase();
       localStorage.setItem('sll_referral_code', cleanRef);
+      localStorage.setItem('sll_referral_pending', cleanRef);
       return cleanRef;
     }
     return localStorage.getItem('sll_referral_code');
@@ -245,3 +246,43 @@ export const resolveCurrentStoreId = async () => {
 // Captura o código de indicação assim que o app carrega, antes de qualquer redirect
 if (typeof window !== 'undefined') getActiveReferralCode();
 
+
+// Aplica a indicação pendente assim que houver sessão e uma loja elegível (sem indicador)
+export const applyPendingReferral = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') return true;
+  const code = localStorage.getItem('sll_referral_pending');
+  if (!code) return true;
+  const { data, error } = await supabase.rpc('apply_referral_code', { p_code: code });
+  if (error) {
+    console.warn('[Auth] Falha ao aplicar indicação:', error.message);
+    return false;
+  }
+  const reason = (data as any)?.reason;
+  if ((data as any)?.applied || reason === 'code_not_found' || reason === 'self_referral') {
+    localStorage.removeItem('sll_referral_pending');
+    localStorage.removeItem('sll_referral_code');
+    return true;
+  }
+  return false;
+};
+
+if (typeof window !== 'undefined') {
+  let running = false;
+  let attempts = 0;
+  const tick = async () => {
+    if (running || attempts >= 120) return;
+    if (!localStorage.getItem('sll_referral_pending')) return;
+    running = true;
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) return;
+      attempts++;
+      await applyPendingReferral();
+    } catch (e) {
+      console.warn('[Auth] Erro ao aplicar indicação pendente:', e);
+    } finally {
+      running = false;
+    }
+  };
+  setInterval(tick, 5000);
+}
