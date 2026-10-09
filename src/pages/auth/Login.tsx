@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(() => new URLSearchParams(window.location.search).get('mode') !== 'signup');
   const [nome, setNome] = useState('');
   const [loja, setLoja] = useState('');
   const [email, setEmail] = useState('');
@@ -12,6 +12,11 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
+    const gq = new URLSearchParams(window.location.search);
+    if (gq.get('plan')) {
+      sessionStorage.removeItem('sll_intent_used');
+      localStorage.setItem('sll_checkout_intent', JSON.stringify({ ts: Date.now(), plan: gq.get('plan'), cycle: gq.get('cycle') ?? 'monthly', module: gq.get('module') ?? undefined }));
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -28,9 +33,9 @@ export default function Auth() {
     const qp = new URLSearchParams(window.location.search);
     const intentPlan = qp.get('plan');
     const intent = intentPlan
-      ? { plan: intentPlan, cycle: qp.get('cycle') ?? 'monthly', module: qp.get('module') ?? undefined }
+      ? { ts: Date.now(), plan: intentPlan, cycle: qp.get('cycle') ?? 'monthly', module: qp.get('module') ?? undefined }
       : null;
-    if (intent) localStorage.setItem('sll_checkout_intent', JSON.stringify(intent));
+    if (intent) { sessionStorage.removeItem('sll_intent_used'); localStorage.setItem('sll_checkout_intent', JSON.stringify(intent)); }
 
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });

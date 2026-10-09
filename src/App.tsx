@@ -1,3 +1,4 @@
+import CheckoutIntentWatcher from '@/components/auth/CheckoutIntentWatcher';
 import AuthRedirect from '@/components/auth/AuthRedirect';
 import PrivacyPage from "@/pages/legal/PrivacyPage";
 import AboutPage from "@/pages/legal/AboutPage";
@@ -54,7 +55,7 @@ function AppRoutes() {
       {user && <OnboardingModal />}
       {user && <CommentAlertModal />}
 
-      <Routes>
+      <><CheckoutIntentWatcher /><Routes>
         <Route path="/sobre" element={<AboutPage />} />
         <Route path="/privacidade" element={<PrivacyPage />} />
         <Route path="/termos" element={<TermsPage />} />
@@ -214,7 +215,7 @@ function AppRoutes() {
         />
 
         <Route path="*" element={<Navigate to="/auth" replace />} />
-      </Routes>
+      </Routes></>
     </Suspense>
   );
 }
