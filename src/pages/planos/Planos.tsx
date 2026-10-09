@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLoja } from "@/contexts/LojaContext";
 import { toast } from "sonner";
@@ -23,6 +23,52 @@ const CONTACT_WPP = (import.meta.env.VITE_CONTACT_WHATSAPP as string | undefined
 const CONTACT_URL = CONTACT_WPP
   ? `https://wa.me/${CONTACT_WPP}?text=${encodeURIComponent("Olá! Quero um plano sob medida do Vidlytics.")}`
   : undefined;
+
+type Cell = boolean | string | { ok: string };
+
+const COMPARE_COLS = ["Starter", "Pro", "Scale"];
+
+const COMPARE: { group: string; rows: { label: string; v: [Cell, Cell, Cell] }[] }[] = [
+  {
+    group: "Capacidade e consumo",
+    rows: [
+      { label: "Vídeos ativos simultâneos", v: ["5 vídeos", "20 vídeos", "50 vídeos"] },
+      { label: "Franquia de visualizações mensais", v: ["5.000 views", "25.000 views", "60.000 views"] },
+      {
+        label: "Formatos liberados (Flutuante, Stories, Carrossel, Grade)",
+        v: [{ ok: "Todos" }, { ok: "Todos" }, { ok: "Todos" }],
+      },
+    ],
+  },
+  {
+    group: "Conversão e inteligência",
+    rows: [
+      { label: "Botão Comprar via WhatsApp (com link do produto)", v: [true, true, true] },
+      { label: "Métricas básicas (visualizações e cliques no vídeo)", v: [true, true, true] },
+      { label: "Rastreamento de vendas e faturamento gerado por vídeo", v: [false, true, true] },
+      { label: "Remoção da marca d'água (Player 100% White-label)", v: [false, true, true] },
+    ],
+  },
+  {
+    group: "Atendimento e suporte",
+    rows: [
+      { label: "Suporte por e-mail", v: [true, true, true] },
+      { label: "Suporte direto via WhatsApp com especialista", v: [false, true, true] },
+    ],
+  },
+];
+
+function CompareCell({ v }: { v: Cell }) {
+  if (v === true) return <Check className="mx-auto h-5 w-5 stroke-[3] text-emerald-500" />;
+  if (v === false) return <span className="text-slate-300">{"\u2014"}</span>;
+  if (typeof v === "string") return <span className="font-bold text-slate-800">{v}</span>;
+  return (
+    <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
+      <Check className="h-4 w-4 stroke-[3] text-emerald-500" />
+      {v.ok}
+    </span>
+  );
+}
 
 export default function Planos() {
   const navigate = useNavigate();
@@ -128,6 +174,65 @@ export default function Planos() {
               );
             })}
           </div>
+        )}
+
+        {plans.length > 0 && (
+          <section className="max-w-5xl mx-auto space-y-6 pt-8">
+            <div className="text-center space-y-2">
+              <p className="text-xs font-black uppercase tracking-widest text-[#0091ff]">{"\u2014"} COMPARATIVO</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                Compare todos os recursos do Vidlytics
+              </h2>
+              <p className="text-sm font-medium text-slate-500">
+                Veja exatamente o que cada plano oferece para acelerar as vendas da sua loja.
+              </p>
+            </div>
+
+            <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-5 py-4 text-left" />
+                    {COMPARE_COLS.map((c, i) => (
+                      <th
+                        key={c}
+                        className={cn(
+                          "px-4 py-4 text-center text-xs font-black uppercase tracking-wider",
+                          i === 1 ? "bg-orange-50 text-[#fd8539]" : "text-slate-700"
+                        )}
+                      >
+                        {c}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                {COMPARE.map((g) => (
+                  <tbody key={g.group} className="divide-y divide-slate-100">
+                    <tr className="bg-slate-50">
+                      <td colSpan={4} className="px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-500">
+                        {g.group}
+                      </td>
+                    </tr>
+                    {g.rows.map((r) => (
+                      <tr key={r.label}>
+                        <td className="px-5 py-3.5 text-xs font-bold text-slate-700">{r.label}</td>
+                        {r.v.map((cell, i) => (
+                          <td key={i} className={cn("px-4 py-3.5 text-center text-xs", i === 1 && "bg-orange-50/40")}>
+                            <CompareCell v={cell} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                ))}
+              </table>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-center text-xs font-medium leading-relaxed text-slate-500">
+              {"\u{1F4E6}"} Precisa de mais vídeos ou visualizações? Você poderá contratar pacotes adicionais avulsos
+              (Add-ons) diretamente pelo painel a qualquer momento, sem precisar mudar de plano.
+            </div>
+          </section>
         )}
 
         {soon.length > 0 && (

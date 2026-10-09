@@ -28,8 +28,8 @@ const FEATURES: Record<string, string[]> = {
     "Suporte direto via WhatsApp",
   ],
   scale: [
-    "Até 150 vídeos ativos",
-    "Até 180.000 visualizações/mês",
+    "Até 50 vídeos ativos",
+    "Até 60.000 visualizações/mês",
     "Todos os formatos liberados",
     "Botão de compra direta pelo WhatsApp",
     "Rastreamento de conversão e receita gerada por vídeo",
@@ -71,12 +71,12 @@ export function VidlyticsPlanCard({
       className={cn(
         "relative flex flex-col justify-between rounded-3xl border bg-white p-6 sm:p-7 transition-all duration-300 hover:-translate-y-1.5 shadow-sm",
         isPopular
-          ? "z-10 border-[#fd8539]/60 shadow-xl shadow-orange-500/20 lg:scale-[1.03] lg:py-9"
+          ? "z-10 border-[#fd8539]/60 shadow-xl shadow-orange-500/20 lg:scale-[1.03] pt-12 sm:pt-12 lg:pt-14 lg:pb-9"
           : "border-slate-200"
       )}
     >
       {isPopular && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#fd8539] px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full bg-[#fd8539] px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
           Mais popular
         </div>
       )}
