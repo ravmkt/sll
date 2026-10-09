@@ -4,6 +4,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const WEBHOOK_TOKEN = Deno.env.get("ASAAS_WEBHOOK_TOKEN")!;
 const WEBHOOK_TOKEN_SANDBOX = Deno.env.get("ASAAS_WEBHOOK_TOKEN_SANDBOX")!;
+const INTERNAL_SECRET = Deno.env.get("INTERNAL_TEST_SECRET") ?? "";
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
@@ -114,7 +115,7 @@ Deno.serve(async (req: Request) => {
     try {
       const mailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-welcome-email`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${SERVICE_ROLE_KEY}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${SERVICE_ROLE_KEY}`, "x-internal-secret": INTERNAL_SECRET, "Content-Type": "application/json" },
         body: JSON.stringify({ store_id: sub.store_id }),
       });
       if (!mailRes.ok) console.error("[asaas-webhook] send-welcome-email falhou:", mailRes.status, await mailRes.text());
