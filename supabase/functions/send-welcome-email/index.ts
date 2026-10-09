@@ -30,10 +30,10 @@ function html(name: string) {
 <tr><td style="padding:16px 40px 8px;">
 <h1 style="margin:0 0 12px;font-size:24px;line-height:1.3;color:#0f172a;">Bem-vindo(a), ${first}! 🎉</h1>
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#475569;">
-Seu pagamento foi confirmado e a sua loja já está liberada no <strong>SLL Hub</strong>.
+Sua conta foi criada e o seu teste grátis de <strong>7 dias</strong> do <strong>Vidlytics</strong> já está liberado no <strong>SLL Hub</strong>.
 </p>
 <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#475569;">
-Acesse o painel, conecte sua loja e ative os módulos contratados.
+Acesse o painel, suba seus primeiros vídeos, vincule os produtos e cole o código na sua loja. Leva cerca de 2 minutos.
 </p>
 </td></tr>
 <tr><td align="center" style="padding:0 40px 28px;">
@@ -41,11 +41,11 @@ Acesse o painel, conecte sua loja e ative os módulos contratados.
 </td></tr>
 <tr><td style="padding:0 40px 28px;">
 <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;font-size:13px;line-height:1.6;color:#64748b;">
-A nota fiscal será enviada ao e-mail cadastrado nos dados de faturamento. Você pode atualizá-los a qualquer momento em <strong>Assinaturas</strong>.
+Você não precisa de cartão para testar. Se gostar, escolha o seu plano em <strong>Assinaturas</strong>.
 </div>
 </td></tr>
 <tr><td align="center" style="background:#0f172a;padding:18px 24px;font-size:12px;color:#94a3b8;">
-SLL Hub · RAV Marketing e Treinamento LTDA · CNPJ 62.894.336/0001-00 · Você recebeu este e-mail porque assinou um plano.
+SLL Hub · RAV Marketing e Treinamento LTDA · CNPJ 62.894.336/0001-00 · Você recebeu este e-mail porque criou uma conta no SLL Hub.
 </td></tr>
 </table>
 </td></tr></table>
