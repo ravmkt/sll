@@ -192,7 +192,7 @@ export const OnboardingModal: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#0094eb]" />
               <span className="text-xs font-black uppercase tracking-wider text-[#0094eb]">
-                Setup Inicial • Sistema Loja Lucrativa
+                Setup Inicial • SLL Hub
               </span>
             </div>
             <span className="text-xs font-bold text-slate-400">Passo {step} de 4</span>
@@ -219,7 +219,7 @@ export const OnboardingModal: React.FC = () => {
               <div className="flex items-center justify-center w-full py-0 -mt-2">
                 <img
                   src={LOGO_SRC}
-                  alt="Sistema Loja Lucrativa"
+                  alt="SLL Hub"
                   className="w-64 sm:w-72 h-auto max-h-40 object-contain drop-shadow-sm"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/sll-logotipo-b.png';

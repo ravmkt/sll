@@ -91,7 +91,7 @@ export const VidlyticsLayout: React.FC<VidlyticsLayoutProps> = ({
                 <span className="font-extrabold text-base tracking-tight text-slate-900 flex items-center gap-1">
                   SLL <span className="text-[#0094eb] font-semibold text-xs tracking-normal">HUB</span>
                 </span>
-                <span className="text-[10px] text-slate-400 block -mt-1 font-medium">Sistema Loja Lucrativa</span>
+                <span className="text-[10px] text-slate-400 block -mt-1 font-medium">SLL Hub</span>
               </div>
             </a>
 

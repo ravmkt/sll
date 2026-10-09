@@ -64,6 +64,6 @@ export function whatsappLink(phone: string | null, storeName: string): string | 
   let digits = phone.replace(/\D/g, '');
   if (digits.length < 10) return null;
   if (digits.length <= 11) digits = '55' + digits;
-  const msg = `Olá! Aqui é o Rodrigo, do Sistema Loja Lucrativa. Vi que a loja ${storeName} usa o Vidlytics e queria ajudar você a vender mais com os vídeos.`;
+  const msg = `Olá! Aqui é o Rodrigo, do SLL Hub. Vi que a loja ${storeName} usa o Vidlytics e queria ajudar você a vender mais com os vídeos.`;
   return `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
 }

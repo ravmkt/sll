@@ -35,13 +35,13 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           {isExpanded ? (
             <img
               src="/assets/sll-logotipo.png"
-              alt="Loja Lucrativa"
+              alt="SLL Hub"
               className="h-10 w-auto object-contain"
             />
           ) : (
             <img
               src="/assets/sll-logotipo-ico.png"
-              alt="Loja Lucrativa"
+              alt="SLL Hub"
               className="h-9 w-9 object-contain"
             />
           )}

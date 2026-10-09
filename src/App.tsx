@@ -34,7 +34,7 @@ function PageLoader() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
       <div className="w-10 h-10 border-4 border-[#0094eb]/20 border-t-[#0094eb] rounded-full animate-spin mb-4" />
       <span className="text-sm font-medium text-gray-600 tracking-wide">
-        Carregando Sistema Loja Lucrativa...
+        Carregando SLL Hub...
       </span>
     </div>
   );

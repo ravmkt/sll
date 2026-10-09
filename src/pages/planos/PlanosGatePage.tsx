@@ -18,7 +18,7 @@ export default function PlanosGatePage() {
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0094eb] to-cyan-400 flex items-center justify-center font-bold text-white shadow-lg shadow-[#0094eb]/20">
             SLL
           </div>
-          <span className="font-bold tracking-tight text-lg">Sistema Loja Lucrativa</span>
+          <span className="font-bold tracking-tight text-lg">SLL Hub</span>
         </div>
 
         <button
