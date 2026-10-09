@@ -80,8 +80,10 @@ const PLANS: Plan[] = [
   },
 ];
 
+const CYCLE_PARAM: Record<Cycle, string> = { mensal: 'monthly', semestral: 'semiannual', anual: 'yearly' };
+
 const checkoutUrl = (plan: PlanId, cycle: Cycle) =>
-  `${CTA}&plan=${plan}&cycle=${cycle}&checkout=1`;
+  `${CTA}&plan=${plan}&cycle=${CYCLE_PARAM[cycle]}`;
 
 const TRIAL_STEPS = [
   ['1', 'Cadastro em 30 segundos', 'Nome, e-mail e senha, ou direto com o Google. Sem cartão.'],
