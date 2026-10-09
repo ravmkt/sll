@@ -1,52 +1,87 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, ArrowRight, Smartphone, Layers, LayoutGrid, PlayCircle, Sparkles } from 'lucide-react';
+import { Check, X, ArrowRight, Smartphone, Layers, LayoutGrid, PlayCircle, Sparkles } from 'lucide-react';
 
 const CTA = '/auth?mode=signup&module=vidlytics';
 
+type Cycle = 'mensal' | 'semestral' | 'anual';
+
+const CYCLES: { id: Cycle; label: string; off?: string }[] = [
+  { id: 'mensal', label: 'Mensal' },
+  { id: 'semestral', label: 'Semestral', off: '17% OFF' },
+  { id: 'anual', label: 'Anual', off: '33% OFF · 4 meses grátis' },
+];
+
+type PlanId = 'starter' | 'pro' | 'scale';
 type Plan = {
+  id: PlanId;
   name: string;
-  price: string;
-  billing: string;
-  note: string;
-  off?: string;
-  badge?: string;
+  tag: string;
+  price: Record<Cycle, string>;
+  billing: Record<Cycle, string>;
+  features: string[];
   highlight?: boolean;
 };
 
-// Tabela oficial: Mensal R$ 59,90 | Semestral R$ 299,40 (49,90/mes) | Anual R$ 478,80 (39,90/mes)
 const PLANS: Plan[] = [
   {
-    name: 'Mensal',
-    price: '59,90',
-    billing: 'Cobrado R$ 59,90 todo mês',
-    note: 'Flexibilidade total, sem desconto.',
+    id: 'starter',
+    name: 'Starter',
+    tag: 'Para quem está começando',
+    price: { mensal: '59,90', semestral: '49,90', anual: '39,90' },
+    billing: {
+      mensal: 'R$ 59,90 cobrado todo mês',
+      semestral: 'R$ 299,40 a cada 6 meses',
+      anual: 'R$ 478,80 por ano, em até 12x',
+    },
+    features: [
+      'Até 5 vídeos ativos na loja',
+      'Até 5.000 visualizações/mês',
+      'Stories e Widget Flutuante',
+      'Suporte padrão',
+    ],
   },
   {
-    name: 'Semestral',
-    price: '49,90',
-    billing: 'R$ 299,40 a cada 6 meses',
-    note: 'Pague 5, leve 6.',
-    off: '17% OFF',
-  },
-  {
-    name: 'Anual',
-    price: '39,90',
-    billing: 'R$ 478,80 por ano, em até 12x',
-    note: '4 meses grátis.',
-    off: 'Economize 33%',
-    badge: 'Mais Popular',
+    id: 'pro',
+    name: 'Pro',
+    tag: 'Operação ativa',
     highlight: true,
+    price: { mensal: '97,00', semestral: '79,90', anual: '67,00' },
+    billing: {
+      mensal: 'R$ 97,00 cobrado todo mês',
+      semestral: 'R$ 479,40 a cada 6 meses',
+      anual: 'R$ 804,00 por ano, em até 12x',
+    },
+    features: [
+      'Até 20 vídeos ativos na loja',
+      'Até 25.000 visualizações/mês',
+      'Stories, Widget e Carrossel na PDP',
+      'Botão WhatsApp e Checkout direto',
+      'Métricas completas',
+    ],
+  },
+  {
+    id: 'scale',
+    name: 'Scale',
+    tag: 'Grandes lojas e alto tráfego',
+    price: { mensal: '197,00', semestral: '159,00', anual: '127,00' },
+    billing: {
+      mensal: 'R$ 197,00 cobrado todo mês',
+      semestral: 'R$ 954,00 a cada 6 meses',
+      anual: 'R$ 1.524,00 por ano, em até 12x',
+    },
+    features: [
+      'Vídeos ilimitados',
+      'Visualizações ilimitadas',
+      'Todos os formatos liberados',
+      'Carregamento em CDN dedicado',
+      'Suporte prioritário via WhatsApp',
+    ],
   },
 ];
 
-const INCLUDED = [
-  'Vídeo Flutuante, Carrossel, Grade e Player Tela Cheia',
-  'Botões "Ver Produto" e WhatsApp direto',
-  'Métricas de visualização, cliques e vendas por vídeo',
-  'Insights de desempenho dos seus vídeos',
-  'Suporte humano e instalação simplificada',
-];
+const checkoutUrl = (plan: PlanId, cycle: Cycle) =>
+  `${CTA}&plan=${plan}&cycle=${cycle}&checkout=1`;
 
 const TRIAL_STEPS = [
   ['1', 'Cadastro em 30 segundos', 'Nome, e-mail, WhatsApp e nome da loja. Sem cartão.'],
@@ -68,6 +103,15 @@ const DIFFS = [
 ];
 
 export default function VidlyticsLanding() {
+  const [cycle, setCycle] = useState<Cycle>('anual');
+  const [trialOpen, setTrialOpen] = useState(false);
+
+  useEffect(() => {
+    if (!trialOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setTrialOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [trialOpen]);
   useEffect(() => {
     document.title = 'Vidlytics by SLL Hub | Aumente suas Vendas com Vídeos';
     const prev = document.documentElement.style.scrollBehavior;
@@ -222,14 +266,14 @@ export default function VidlyticsLanding() {
       {/* Planos */}
       <section id="planos" className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Teste grátis por 7 dias. Escolha o plano depois.</h2>
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Escolha o plano ideal para sua loja</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Acesso completo a todas as funcionalidades, sem cartão de crédito. Todos os ciclos incluem os mesmos recursos: muda só o quanto você economiza.
+              Cadastre-se e ganhe 7 dias de Acesso Total (Plano Scale) para rodar na sua loja. Sem necessidade de cartão de crédito.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto mb-14">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto mb-12">
             {TRIAL_STEPS.map(([n, t, d]) => (
               <div key={n} className="flex gap-4 bg-white border border-gray-200 rounded-2xl p-5">
                 <span className="w-9 h-9 shrink-0 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center">{n}</span>
@@ -241,53 +285,74 @@ export default function VidlyticsLanding() {
             ))}
           </div>
 
+          <div className="flex justify-center mb-14">
+            <div role="tablist" className="inline-flex flex-wrap justify-center gap-1 p-1 rounded-full bg-white border border-gray-200 shadow-sm">
+              {CYCLES.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={cycle === c.id}
+                  onClick={() => setCycle(c.id)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                    cycle === c.id ? 'bg-gray-900 text-white shadow' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  {c.label}
+                  {c.off && (
+                    <span className={`ml-2 text-xs font-bold ${cycle === c.id ? 'text-orange-300' : 'text-green-600'}`}>{c.off}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
             {PLANS.map((p) => (
               <div
-                key={p.name}
+                key={p.id}
                 className={`rounded-2xl p-8 relative transition ${
                   p.highlight
                     ? 'bg-[#0f172a] text-white border border-blue-900 shadow-2xl md:-translate-y-4'
                     : 'bg-white border border-gray-200 shadow-sm hover:shadow-lg'
                 }`}
               >
-                {p.badge && (
+                {p.highlight && (
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-orange-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide whitespace-nowrap">
-                    {p.badge}
+                    Mais Escolhido
                   </div>
                 )}
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className={`text-2xl font-bold ${p.highlight ? 'text-blue-400' : ''}`}>{p.name}</h3>
-                  {p.off && (
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${p.highlight ? 'bg-orange-500/20 text-orange-300' : 'bg-green-100 text-green-700'}`}>
-                      {p.off}
-                    </span>
-                  )}
-                </div>
+                <h3 className={`text-2xl font-bold ${p.highlight ? 'text-blue-400' : ''}`}>{p.name}</h3>
+                <p className={`text-sm mb-5 ${p.highlight ? 'text-gray-300' : 'text-gray-500'}`}>{p.tag}</p>
                 <div>
                   <span className="text-sm font-semibold align-top">R$ </span>
-                  <span className="text-5xl font-extrabold">{p.price}</span>
+                  <span className="text-5xl font-extrabold">{p.price[cycle]}</span>
                   <span className={p.highlight ? 'text-gray-400' : 'text-gray-500'}> /mês</span>
                 </div>
-                <p className={`text-sm font-semibold mt-2 ${p.highlight ? 'text-gray-200' : 'text-gray-700'}`}>{p.billing}</p>
-                <p className={`text-sm mb-6 ${p.highlight ? 'text-orange-300' : 'text-[#0094eb]'}`}>{p.note}</p>
+                <p className={`text-sm font-semibold mt-2 mb-6 ${p.highlight ? 'text-gray-200' : 'text-gray-700'}`}>{p.billing[cycle]}</p>
                 <ul className="space-y-3 mb-8 text-sm">
-                  {INCLUDED.map((txt) => (
+                  {p.features.map((txt) => (
                     <li key={txt} className="flex items-start gap-3">
                       <Check className={`w-5 h-5 shrink-0 ${p.highlight ? 'text-blue-400' : 'text-indigo-600'}`} />
                       {txt}
                     </li>
                   ))}
                 </ul>
-                <Link
-                  to={CTA}
+                <button
+                  type="button"
+                  onClick={() => setTrialOpen(true)}
                   className={`block w-full py-3 px-4 text-center font-bold rounded-xl transition ${
                     p.highlight ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                   }`}
                 >
-                  Testar Grátis por 7 Dias
-                </Link>
-                <p className={`text-xs text-center mt-3 ${p.highlight ? 'text-gray-400' : 'text-gray-500'}`}>Sem cartão de crédito</p>
+                  Testar 7 Dias Grátis
+                </button>
+                <p className={`text-xs text-center mt-3 ${p.highlight ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Já quer assinar?{' '}
+                  <Link to={checkoutUrl(p.id, cycle)} className={`font-semibold underline ${p.highlight ? 'text-orange-300' : 'text-[#0094eb]'}`}>
+                    Contratar agora
+                  </Link>
+                </p>
               </div>
             ))}
           </div>
@@ -296,6 +361,41 @@ export default function VidlyticsLanding() {
             Depois do teste, pagamento por cartão de crédito ou Pix. A renovação é automática e você cancela quando quiser, direto no painel.
           </p>
         </div>
+
+        {trialOpen && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4"
+            onClick={() => setTrialOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Teste grátis por 7 dias"
+          >
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 relative" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                aria-label="Fechar"
+                onClick={() => setTrialOpen(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <span className="inline-block px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold mb-4">7 dias de Acesso Total · Plano Scale</span>
+              <h3 className="text-2xl font-bold mb-2">Crie sua conta grátis</h3>
+              <p className="text-sm text-gray-600 mb-5">
+                Leva menos de 1 minuto. Você usa tudo do plano Scale por 7 dias para rodar na sua loja, sem cartão de crédito.
+              </p>
+              <ul className="space-y-2 text-sm mb-6">
+                {['Vídeos e visualizações ilimitados', 'Todos os formatos liberados', 'Escolha o plano só no fim do teste'].map((x) => (
+                  <li key={x} className="flex items-start gap-2"><Check className="w-4 h-4 mt-0.5 text-indigo-600 shrink-0" />{x}</li>
+                ))}
+              </ul>
+              <Link to={`${CTA}&plan=scale&trial=1`} className="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center font-bold py-4 rounded-xl transition shadow-lg">
+                Criar minha conta grátis
+              </Link>
+              <p className="text-xs text-gray-500 text-center mt-3">Sem cartão de crédito. Cancele quando quiser.</p>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* CTA final */}
