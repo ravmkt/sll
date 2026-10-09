@@ -5,7 +5,6 @@ import { supabase } from '../../lib/supabase';
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(() => new URLSearchParams(window.location.search).get('mode') !== 'signup');
   const [nome, setNome] = useState('');
-  const [loja, setLoja] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -52,7 +51,6 @@ export default function Auth() {
         options: {
           data: {
             nome_completo: nome,
-            nome_loja: loja,
             ...(intent ? { checkout_intent: intent } : {})
           }
         }
@@ -94,7 +92,6 @@ export default function Auth() {
           {!isLogin && (
             <>
               <input type="text" placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium" required />
-              <input type="text" placeholder="Nome da loja" value={loja} onChange={(e) => setLoja(e.target.value)} className="p-3.5 rounded-xl bg-[#f1f5f9] border-transparent focus:bg-white focus:border-[#0094eb] focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700 font-medium" required />
             </>
           )}
           

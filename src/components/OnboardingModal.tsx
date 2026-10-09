@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService, StorePayload } from '@/services/SLLDatabaseService';
 import { useNavigate } from 'react-router-dom';
 import { useLoja } from '@/contexts/LojaContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const LOGO_SRC = '/assets/sll-logotipo-b.png';
 const LOGO_BUCKET = 'store-assets';
@@ -48,6 +49,7 @@ const formatAndSanitizeUrl = (inputUrl: string): string => {
 
 export const OnboardingModal: React.FC = () => {
   const { needsOnboarding, setStoreManually } = useLoja();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -79,6 +81,19 @@ export const OnboardingModal: React.FC = () => {
       .catch(() => setSectors([]));
   }, [needsOnboarding]);
 
+  // Pré-preenche responsável e e-mails com os dados do cadastro
+  useEffect(() => {
+    if (!user) return;
+    const meta: any = user.user_metadata || {};
+    const fullName = String(meta.nome_completo || meta.full_name || meta.name || '').trim();
+    const mail = String(user.email || '').trim();
+    setFormData((prev) => ({
+      ...prev,
+      contact_name: prev.contact_name || fullName,
+      contact_email: prev.contact_email || mail,
+      owner_contact_email: prev.owner_contact_email || mail,
+    }));
+  }, [user?.id]);
   if (!needsOnboarding) return null;
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
