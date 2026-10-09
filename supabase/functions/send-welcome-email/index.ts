@@ -62,7 +62,6 @@ Deno.serve(async (req) => {
       headers: { apikey: token, Authorization: `Bearer ${token}` },
     });
     authorized = chk.ok;
-    if (!chk.ok) console.log("AUTH_CHECK_FAIL", chk.status, token.length, "env_len", SERVICE_KEY.length, SERVICE_KEY.slice(0, 8));
   }
   const INTERNAL_SECRET = Deno.env.get("INTERNAL_TEST_SECRET") ?? "";
   if (!authorized && INTERNAL_SECRET !== "" && req.headers.get("x-internal-secret") === INTERNAL_SECRET) authorized = true;
