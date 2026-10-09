@@ -26,6 +26,16 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+async function isSuperadmin(user: { id: string; app_metadata?: Record<string, unknown> }) {
+  if (user.app_metadata?.is_superadmin === true) return true;
+  const { data, error } = await supabaseAdmin
+    .from("admin_superusers")
+    .select("*")
+    .eq("user_id", user.id)
+    .limit(1);
+  return !error && !!data && data.length > 0;
+}
+
 Deno.serve(async (req) => {
   try {
     if (req.method === "OPTIONS") {
@@ -46,16 +56,17 @@ Deno.serve(async (req) => {
     if (userErr || !userData?.user) {
       return jsonResponse({ error: "NAO_AUTENTICADO" }, 401);
     }
+    const user = userData.user;
 
     const { subscription_id } = await req.json();
     if (!subscription_id) {
       return jsonResponse({ error: "SUBSCRIPTION_ID_OBRIGATORIO" }, 400);
     }
 
-    // 1. Busca a assinatura e confirma que pertence a uma loja do usuário
+    // 1. Busca a assinatura e confirma permissão (dono da loja ou superadmin)
     const { data: sub, error: subErr } = await supabaseAdmin
       .from("subscriptions")
-      .select("id, store_id, asaas_subscription_id, status, stores!inner(owner_user_id)")
+      .select("id, store_id, asaas_subscription_id, status, is_current, stores!inner(owner_user_id)")
       .eq("id", subscription_id)
       .maybeSingle();
 
@@ -64,11 +75,11 @@ Deno.serve(async (req) => {
     }
 
     const store = sub.stores as unknown as { owner_user_id: string };
-    if (store.owner_user_id !== userData.user.id) {
+    if (store.owner_user_id !== user.id && !(await isSuperadmin(user))) {
       return jsonResponse({ error: "NAO_AUTORIZADO" }, 403);
     }
 
-    if (sub.status === "canceled") {
+    if (sub.status === "canceled" && !sub.is_current) {
       return jsonResponse({ success: true, message: "Assinatura já estava cancelada." });
     }
 
@@ -82,7 +93,7 @@ Deno.serve(async (req) => {
         }
       );
 
-      // Asaas retorna 200 mesmo em cancelamento; só bloqueia em erro real (ex: já não existe -> ignora)
+      // 404 = já não existe no Asaas -> ignora
       if (!asaasRes.ok && asaasRes.status !== 404) {
         const errData = await asaasRes.json().catch(() => ({}));
         return jsonResponse({ error: "ASAAS_CANCEL_ERROR", details: errData }, 400);

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  addBenefit, changePlan, deleteStore, getStoreFull, listPlans, setSubscriptionStatus, updateStore,
+  addBenefit, cancelSubscription, changePlan, deleteStore, getStoreFull, listPlans, setSubscriptionStatus, updateStore,
   type AdminStoreFull, type PlanOption, type StoreStatus,
 } from '@/services/admin/storesService';
 import { Badge, CARD, ContactButtons, DeleteStoreModal, ICON, INPUT, brl, dt, dtt, mb, modLabel } from '@/components/admin/storeUi';
@@ -158,9 +158,11 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
 
   const changeStatus = (id: string, to: 'active' | 'canceled' | 'lifetime', hasAsaas: boolean) => {
     const label = to === 'canceled' ? 'Cancelar' : to === 'active' ? 'Ativar' : 'Tornar vitalícia';
-    const aviso = hasAsaas ? '\nHá cobrança no Asaas: isso não altera o Asaas.' : '';
+    const aviso = !hasAsaas ? '' : to === 'canceled'
+      ? '\nA cobrança também será cancelada no Asaas.'
+      : '\nHá cobrança no Asaas: isso não altera o Asaas.';
     if (!window.confirm(`${label} esta assinatura?${aviso}`)) return;
-    run(() => setSubscriptionStatus(id, to), 'Assinatura atualizada.');
+    run(() => (to === 'canceled' ? cancelSubscription(id) : setSubscriptionStatus(id, to)), 'Assinatura atualizada.');
   };
 
   const confirmDelete = async () => {

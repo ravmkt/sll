@@ -118,3 +118,20 @@ export async function deleteStore(storeId: string): Promise<void> {
 export async function addBenefit(storeId: string, kind: string, value: string, note: string): Promise<void> {
   await call<null>('admin_master_add_benefit', { p_store_id: storeId, p_kind: kind, p_value: value, p_note: note });
 }
+
+export async function cancelSubscription(subscriptionId: string): Promise<void> {
+  const { data, error } = await client.functions.invoke('asaas-cancel-subscription', {
+    body: { subscription_id: subscriptionId },
+  });
+  if (error) {
+    let msg: string = error.message || 'Erro ao cancelar a assinatura.';
+    try {
+      const b = await error.context.json();
+      msg = b?.details?.errors?.[0]?.description || b?.error || msg;
+    } catch { /* mantém a mensagem padrão */ }
+    throw new Error(msg);
+  }
+  if (data?.error) throw new Error(String(data.error));
+  // Registra a ação no log do painel (o cancelamento já foi feito acima)
+  try { await setSubscriptionStatus(subscriptionId, 'canceled'); } catch { /* já cancelada */ }
+}
