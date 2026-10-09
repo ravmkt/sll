@@ -27,6 +27,7 @@ function html(name: string, item: string) {
   const first = esc((name || "").trim().split(" ")[0] || "tudo bem");
   const logo = `${APP_URL}/assets/sll-logotipo-b.png`;
   const link = `${APP_URL}/dashboard`;
+  const until = new Date(Date.now() + 7 * 86400000).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric" });
   return `<!doctype html>
 <html lang="pt-BR"><body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 12px;">
@@ -42,7 +43,7 @@ function html(name: string, item: string) {
 A assinatura de <strong>${esc(item)}</strong> no <strong>SLL Hub</strong> foi cancelada e as próximas cobranças foram interrompidas.
 </p>
 <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#475569;">
-Seus vídeos e configurações continuam guardados. Se quiser voltar, é só assinar novamente pelo painel.
+Seus vídeos e configurações ficam guardados por <strong>7 dias</strong>, até <strong>${until}</strong>. Se você assinar novamente nesse prazo, tudo continua como estava. Depois dele, os dados do módulo são apagados de forma definitiva.
 </p>
 </td></tr>
 <tr><td align="center" style="padding:0 40px 28px;">
