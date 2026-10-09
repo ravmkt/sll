@@ -1,45 +1,57 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, X, ArrowRight, Smartphone, Layers, LayoutGrid, PlayCircle, Sparkles } from 'lucide-react';
+import { Check, ArrowRight, Smartphone, Layers, LayoutGrid, PlayCircle, Sparkles } from 'lucide-react';
 
 const CTA = '/auth?mode=signup&module=vidlytics';
 
-type Plan = { name: string; desc: string; price: string; features: [string, boolean][]; highlight?: boolean };
+type Plan = {
+  name: string;
+  price: string;
+  billing: string;
+  note: string;
+  off?: string;
+  badge?: string;
+  highlight?: boolean;
+};
+
+// Tabela oficial: Mensal R$ 59,90 | Semestral R$ 299,40 (49,90/mes) | Anual R$ 478,80 (39,90/mes)
 const PLANS: Plan[] = [
   {
-    name: 'Start',
-    desc: 'Ideal para lojas que estão começando com vídeos.',
-    price: 'R$ 97',
-    features: [
-      ['5.000 visualizações de vídeo', true],
-      ['Vídeo Flutuante e Carrossel', true],
-      ['Botão "Ver Produto"', true],
-      ['Insights de IA', false],
-    ],
+    name: 'Mensal',
+    price: '59,90',
+    billing: 'Cobrado R$ 59,90 todo mês',
+    note: 'Flexibilidade total, sem desconto.',
   },
   {
-    name: 'Pro',
-    desc: 'O motor de vendas completo para o seu e-commerce.',
-    price: 'R$ 197',
+    name: 'Semestral',
+    price: '49,90',
+    billing: 'R$ 299,40 a cada 6 meses',
+    note: 'Pague 5, leve 6.',
+    off: '17% OFF',
+  },
+  {
+    name: 'Anual',
+    price: '39,90',
+    billing: 'R$ 478,80 por ano, em até 12x',
+    note: '4 meses grátis.',
+    off: 'Economize 33%',
+    badge: 'Mais Popular',
     highlight: true,
-    features: [
-      ['25.000 visualizações de vídeo', true],
-      ['Todos os formatos de Widgets', true],
-      ['Insights e Recomendações de IA', true],
-      ['Botão WhatsApp Direto', true],
-    ],
   },
-  {
-    name: 'Scale',
-    desc: 'Para grandes operações com alto volume de tráfego.',
-    price: 'R$ 497',
-    features: [
-      ['Visualizações Ilimitadas', true],
-      ['Múltiplos Domínios (Até 3 lojas)', true],
-      ['Gerente de Sucesso Dedicado', true],
-      ['Relatórios Customizados', true],
-    ],
-  },
+];
+
+const INCLUDED = [
+  'Vídeo Flutuante, Carrossel, Grade e Player Tela Cheia',
+  'Botões "Ver Produto" e WhatsApp direto',
+  'Métricas de visualização, cliques e vendas por vídeo',
+  'Insights de desempenho dos seus vídeos',
+  'Suporte humano e instalação simplificada',
+];
+
+const TRIAL_STEPS = [
+  ['1', 'Cadastro em 30 segundos', 'Nome, e-mail, WhatsApp e nome da loja. Sem cartão.'],
+  ['2', 'Instale o script', 'Cole uma vez e veja o primeiro vídeo rodando na sua loja.'],
+  ['3', 'Escolha o plano depois', 'Só quando o teste estiver perto de acabar, dentro do painel.'],
 ];
 
 const FORMATS = [
@@ -210,10 +222,25 @@ export default function VidlyticsLanding() {
       {/* Planos */}
       <section id="planos" className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Escolha o plano ideal para sua loja</h2>
-            <p className="text-xl text-gray-600">Teste qualquer plano por 7 dias grátis. Sem cartão de crédito.</p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Teste grátis por 7 dias. Escolha o plano depois.</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Acesso completo a todas as funcionalidades, sem cartão de crédito. Todos os ciclos incluem os mesmos recursos: muda só o quanto você economiza.
+            </p>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto mb-14">
+            {TRIAL_STEPS.map(([n, t, d]) => (
+              <div key={n} className="flex gap-4 bg-white border border-gray-200 rounded-2xl p-5">
+                <span className="w-9 h-9 shrink-0 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center">{n}</span>
+                <div>
+                  <h3 className="font-bold">{t}</h3>
+                  <p className="text-sm text-gray-600">{d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
             {PLANS.map((p) => (
               <div
@@ -224,21 +251,30 @@ export default function VidlyticsLanding() {
                     : 'bg-white border border-gray-200 shadow-sm hover:shadow-lg'
                 }`}
               >
-                {p.highlight && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-orange-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
-                    Mais Escolhido
+                {p.badge && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-orange-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide whitespace-nowrap">
+                    {p.badge}
                   </div>
                 )}
-                <h3 className={`text-2xl font-bold mb-2 ${p.highlight ? 'text-blue-400' : ''}`}>{p.name}</h3>
-                <p className={`text-sm mb-6 ${p.highlight ? 'text-gray-300' : 'text-gray-500'}`}>{p.desc}</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-extrabold">{p.price}</span>
-                  <span className={p.highlight ? 'text-gray-400' : 'text-gray-500'}>/mês</span>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className={`text-2xl font-bold ${p.highlight ? 'text-blue-400' : ''}`}>{p.name}</h3>
+                  {p.off && (
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${p.highlight ? 'bg-orange-500/20 text-orange-300' : 'bg-green-100 text-green-700'}`}>
+                      {p.off}
+                    </span>
+                  )}
                 </div>
-                <ul className="space-y-4 mb-8 text-sm">
-                  {p.features.map(([txt, ok]) => (
-                    <li key={txt} className={`flex items-center gap-3 ${ok ? '' : 'text-gray-400'}`}>
-                      {ok ? <Check className={`w-5 h-5 ${p.highlight ? 'text-blue-400' : 'text-indigo-600'}`} /> : <X className="w-5 h-5" />}
+                <div>
+                  <span className="text-sm font-semibold align-top">R$ </span>
+                  <span className="text-5xl font-extrabold">{p.price}</span>
+                  <span className={p.highlight ? 'text-gray-400' : 'text-gray-500'}> /mês</span>
+                </div>
+                <p className={`text-sm font-semibold mt-2 ${p.highlight ? 'text-gray-200' : 'text-gray-700'}`}>{p.billing}</p>
+                <p className={`text-sm mb-6 ${p.highlight ? 'text-orange-300' : 'text-[#0094eb]'}`}>{p.note}</p>
+                <ul className="space-y-3 mb-8 text-sm">
+                  {INCLUDED.map((txt) => (
+                    <li key={txt} className="flex items-start gap-3">
+                      <Check className={`w-5 h-5 shrink-0 ${p.highlight ? 'text-blue-400' : 'text-indigo-600'}`} />
                       {txt}
                     </li>
                   ))}
@@ -249,11 +285,16 @@ export default function VidlyticsLanding() {
                     p.highlight ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                   }`}
                 >
-                  Começar 7 Dias Grátis
+                  Testar Grátis por 7 Dias
                 </Link>
+                <p className={`text-xs text-center mt-3 ${p.highlight ? 'text-gray-400' : 'text-gray-500'}`}>Sem cartão de crédito</p>
               </div>
             ))}
           </div>
+
+          <p className="text-center text-sm text-gray-500 mt-10 max-w-2xl mx-auto">
+            Depois do teste, pagamento por cartão de crédito ou Pix. A renovação é automática e você cancela quando quiser, direto no painel.
+          </p>
         </div>
       </section>
 
