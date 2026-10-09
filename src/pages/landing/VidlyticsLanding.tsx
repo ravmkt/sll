@@ -1,204 +1,309 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, PlayCircle, ShoppingBag, BarChart3, Zap, Upload, Link2, Code2 } from 'lucide-react';
+import { Check, X, ArrowRight, Smartphone, Layers, LayoutGrid, PlayCircle, Sparkles } from 'lucide-react';
 
 const CTA = '/auth?mode=signup&module=vidlytics';
-const MICRO = 'Instalação em 2 minutos • Não precisa de cartão de crédito • Cancele quando quiser';
-const PLATFORMS = ['Nuvemshop', 'Shopify', 'Tray', 'WooCommerce', 'Vtex', 'Yampi'];
 
-const FAQ: [string, React.ReactNode][] = [
-  ['Vai deixar minha loja pesada ou lenta?', 'Não. O script carrega de forma assíncrona e é leve, então não trava a abertura da página. Os vídeos só são carregados quando entram em uso.'],
-  ['Funciona na minha plataforma?', 'Funciona em Nuvemshop, Shopify, Tray, WooCommerce, Vtex e Yampi. A instalação é um script simples, válido para qualquer plataforma que aceite código no tema ou no Google Tag Manager.'],
-  ['Preciso contratar um desenvolvedor?', 'Não. Você cola o código uma vez e pronto, em cerca de 2 minutos. Se travar em algum ponto, nosso suporte ajuda.'],
-  ['Preciso colocar cartão de crédito para testar?', 'Não. Os 7 dias são grátis e sem cartão. Você só decide pagar se gostar.'],
-  ['Que tipo de vídeo devo colocar?', 'Vídeos curtos e verticais gravados no celular: provador (peça no corpo, altura e tamanho da modelo), review e unboxing (textura e acabamento), detalhe e uso do produto, e respostas rápidas para as dúvidas mais comuns do WhatsApp.'],
-  ['Como funciona o cancelamento?', 'Você cancela quando quiser, direto no painel, sem multa e sem burocracia.'],
+type Plan = { name: string; desc: string; price: string; features: [string, boolean][]; highlight?: boolean };
+const PLANS: Plan[] = [
+  {
+    name: 'Start',
+    desc: 'Ideal para lojas que estão começando com vídeos.',
+    price: 'R$ 97',
+    features: [
+      ['5.000 visualizações de vídeo', true],
+      ['Vídeo Flutuante e Carrossel', true],
+      ['Botão "Ver Produto"', true],
+      ['Insights de IA', false],
+    ],
+  },
+  {
+    name: 'Pro',
+    desc: 'O motor de vendas completo para o seu e-commerce.',
+    price: 'R$ 197',
+    highlight: true,
+    features: [
+      ['25.000 visualizações de vídeo', true],
+      ['Todos os formatos de Widgets', true],
+      ['Insights e Recomendações de IA', true],
+      ['Botão WhatsApp Direto', true],
+    ],
+  },
+  {
+    name: 'Scale',
+    desc: 'Para grandes operações com alto volume de tráfego.',
+    price: 'R$ 497',
+    features: [
+      ['Visualizações Ilimitadas', true],
+      ['Múltiplos Domínios (Até 3 lojas)', true],
+      ['Gerente de Sucesso Dedicado', true],
+      ['Relatórios Customizados', true],
+    ],
+  },
 ];
 
-function Cta({ label }: { label: string }) {
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <Link to={CTA} className="px-8 py-4 rounded-xl bg-[#0094eb] hover:bg-[#0082cf] text-white font-bold shadow-xl shadow-[#0094eb]/25 transition-all hover:scale-[1.02] active:scale-[0.98]">
-        {label}
-      </Link>
-      <p className="text-xs text-slate-500 text-center">{MICRO}</p>
-    </div>
-  );
-}
+const FORMATS = [
+  { icon: Smartphone, color: 'bg-indigo-100 text-indigo-600', t: 'Vídeo Flutuante', d: 'Um player estilo TikTok que acompanha o usuário pela tela, perfeito para retenção e avisos rápidos.' },
+  { icon: Layers, color: 'bg-pink-100 text-pink-600', t: 'Carrossel Dinâmico', d: 'Exiba múltiplos vídeos em formato horizontal na sua home. Com autoplay inteligente para atrair cliques.' },
+  { icon: LayoutGrid, color: 'bg-blue-100 text-blue-600', t: 'Grade de Vídeos', d: 'Ideal para galerias de produtos ou provas sociais (reviews de clientes) integrados diretamente na página.' },
+  { icon: PlayCircle, color: 'bg-emerald-100 text-emerald-600', t: 'Player Tela Cheia', d: 'Ao clicar no widget, o vídeo expande com interações: Curtir, Comentar e botões de compra imediatos.' },
+];
+
+const DIFFS = [
+  { c: 'bg-indigo-500/20 text-indigo-400', t: 'Motor de Insights de IA', d: 'O sistema analisa quais vídeos têm baixa retenção e sugere trocas estratégicas de conteúdo e posição dos widgets.' },
+  { c: 'bg-pink-500/20 text-pink-400', t: 'Métricas de Receita Reais', d: 'Chega de métricas de vaidade. Veja exatamente o ROI e a "Receita Total Gerada por Vídeo" no seu dashboard.' },
+  { c: 'bg-green-500/20 text-green-400', t: 'Conexão WhatsApp e "Ver Produto"', d: 'Botões interativos no player redirecionam seu cliente no momento de maior desejo da compra.' },
+];
 
 export default function VidlyticsLanding() {
-  useEffect(() => { document.title = 'Vidlytics | Vídeos que vendem dentro da sua loja'; }, []);
+  useEffect(() => {
+    document.title = 'Vidlytics by SLL Hub | Aumente suas Vendas com Vídeos';
+    const prev = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = 'smooth';
+    return () => { document.documentElement.style.scrollBehavior = prev; };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <header className="border-b border-slate-100 px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
-        <div className="flex items-center gap-2 font-bold">
-          <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0094eb] to-cyan-400 text-white flex items-center justify-center text-sm">SLL</span>
-          Vidlytics
-        </div>
-        <Link to="/auth" className="text-sm text-slate-500 hover:text-slate-900">Entrar</Link>
-      </header>
-
-      {/* 1. HERO */}
-      <section className="max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center">
-        <div>
-          <span className="inline-block px-3 py-1.5 rounded-full bg-[#0094eb]/10 text-[#0094eb] text-xs font-semibold mb-5">
-            A experiência de compra que os seus clientes esperam
-          </span>
-          <h1 className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight mb-5">
-            Venda mais com o mesmo tráfego: coloque <span className="text-[#0094eb]">vídeos que vendem</span> dentro da sua loja
-          </h1>
-          <p className="text-lg text-slate-600 mb-8">
-            Provadores, reviews e demonstrações interativas na sua loja virtual, com botão <b>“Compre no Vídeo”</b> em 1 clique. Seu cliente vê o caimento, a textura e o detalhe, e compra sem sair da página.
-          </p>
-          <div className="flex flex-col items-start gap-6">
-            <Cta label="Testar Grátis por 7 Dias" />
-            <div className="flex flex-wrap gap-2">
-              {PLATFORMS.map((p) => (
-                <span key={p} className="px-3 py-1 rounded-full border border-slate-200 text-xs text-slate-600">{p}</span>
-              ))}
-            </div>
+    <div className="min-h-screen bg-gray-50 text-gray-900 antialiased">
+      {/* Navbar */}
+      <nav className="fixed w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
+          <div className="flex items-center gap-2 font-bold">
+            <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 text-white flex items-center justify-center text-sm">SLL</span>
+            Vidlytics
+          </div>
+          <div className="hidden md:flex space-x-8">
+            <a href="#recursos" className="text-gray-600 hover:text-blue-600 transition font-medium">Recursos</a>
+            <a href="#diferenciais" className="text-gray-600 hover:text-blue-600 transition font-medium">Diferenciais</a>
+            <a href="#planos" className="text-gray-600 hover:text-blue-600 transition font-medium">Planos</a>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link to="/auth" className="hidden sm:block text-sm text-gray-500 hover:text-gray-900">Entrar</Link>
+            <Link to={CTA} className="bg-gray-900 hover:bg-blue-600 text-white px-6 py-2.5 rounded-full font-medium transition shadow-lg shadow-gray-900/20">
+              Teste Grátis 7 Dias
+            </Link>
           </div>
         </div>
-        <div className="flex justify-center">
-          <div className="w-64 h-[500px] rounded-[2.5rem] border-8 border-slate-900 bg-slate-100 relative overflow-hidden shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-200 to-slate-300 flex items-center justify-center">
-              <PlayCircle size={64} className="text-white drop-shadow" />
+      </nav>
+
+      {/* Hero */}
+      <section
+        className="pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden"
+        style={{ backgroundImage: 'radial-gradient(circle at top right, rgba(37,99,235,0.1), transparent 40%), radial-gradient(circle at bottom left, rgba(249,115,22,0.1), transparent 40%)' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-semibold mb-6">
+              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+              Sem cartão de crédito necessário
             </div>
-            <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-[#fd8539] text-white text-center text-sm font-bold py-3 shadow-lg flex items-center justify-center gap-2">
-              <ShoppingBag size={16} /> Comprar agora
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
+              Transforme visualizações em{' '}
+              <span className="bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">Vendas Reais</span>
+            </h1>
+            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Widgets de vídeo interativos para o seu e-commerce. Retenha a atenção do seu cliente, mostre o produto em ação e impulsione sua taxa de conversão em poucos cliques.
+            </p>
+            <Link to={CTA} className="inline-flex bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full text-lg font-bold transition shadow-xl shadow-blue-600/30 items-center justify-center gap-2">
+              Comece seu Teste Grátis de 7 Dias <ArrowRight className="w-5 h-5" />
+            </Link>
+            <p className="mt-4 text-sm text-gray-500">Instalação em 2 minutos. Sem fidelidade.</p>
+          </div>
+
+          {/* Mockup */}
+          <div className="mt-20 relative mx-auto max-w-5xl">
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-2xl p-2 overflow-hidden">
+              <div className="bg-gray-100 rounded-xl h-[400px] md:h-[600px] w-full relative flex items-center justify-center overflow-hidden">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-4 w-full px-12 opacity-80">
+                  <div className="w-1/3 h-64 bg-gray-300 rounded-xl border-4 border-white shadow-lg" />
+                  <div className="w-1/3 h-64 bg-gray-300 rounded-xl border-4 border-indigo-500 shadow-xl scale-105" />
+                  <div className="w-1/3 h-64 bg-gray-300 rounded-xl border-4 border-white shadow-lg" />
+                </div>
+                <div className="absolute bottom-6 right-6 w-48 h-80 bg-black rounded-2xl shadow-2xl border-4 border-white overflow-hidden flex flex-col justify-end p-4 hover:scale-105 transition duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                  <div className="relative z-10">
+                    <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase w-max mb-2">Ao vivo</div>
+                    <h3 className="text-white font-bold text-sm leading-tight mb-2">Novo Tênis Esportivo Pro</h3>
+                    <div className="w-full bg-white text-black font-bold py-2 rounded-lg text-xs text-center">Ver Produto</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. DOR */}
-      <section className="bg-slate-950 text-white">
-        <div className="max-w-4xl mx-auto px-6 py-16">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-5">Seu cliente vive em vídeo. Sua loja ainda vive de foto.</h2>
-          <p className="text-slate-300 mb-6">
-            No Instagram e no TikTok, ele assiste, desliza e decide em segundos, tudo em vídeo vertical. Ao chegar na sua loja, encontra uma vitrine estática: foto parada, carrossel igual ao de 2015 e nenhuma resposta para as perguntas que pesam na compra.
-          </p>
-          <ul className="grid sm:grid-cols-2 gap-2 mb-6 text-slate-200">
-            {['Como cai no corpo?', 'Qual o tamanho da modelo?', 'O tecido é como parece?', 'Vale o preço?'].map((q) => (
-              <li key={q} className="px-4 py-3 rounded-lg bg-slate-900 border border-slate-800">{q}</li>
+      {/* Formatos */}
+      <section id="recursos" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Widgets que se adaptam à sua loja</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">Vários formatos para exibir seus vídeos na vitrine, na página de produto ou no checkout.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {FORMATS.map(({ icon: Icon, color, t, d }) => (
+              <div key={t} className="bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:shadow-xl transition group">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition ${color}`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">{t}</h3>
+                <p className="text-gray-600">{d}</p>
+              </div>
             ))}
-          </ul>
-          <p className="text-slate-300 mb-6">
-            <b className="text-white">E cada clique custa mais.</b> Você paga Meta Ads e Google para trazer gente qualificada. Se a página não passa segurança de caimento e acabamento, esse tráfego vira abandono de carrinho, mensagem no WhatsApp e, quando compra, devolução.
-          </p>
-          <blockquote className="border-l-4 border-[#fd8539] pl-4 text-lg text-white">
-            Se a conversão da sua loja está travada entre 1% e 2%, o problema raramente é o anúncio. É o que o cliente encontra depois do clique.
-          </blockquote>
+          </div>
         </div>
       </section>
 
-      {/* 3. MECANISMO */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-3">Três passos. Menos de 2 minutos para instalar.</h2>
-        <div className="grid md:grid-cols-3 gap-5 mt-10">
-          {[
-            [Upload, '1. Suba seus vídeos', 'Stories, reels ou provadores gravados no celular. Não precisa de produção.'],
-            [Link2, '2. Vincule os produtos', 'Escolha o produto e ative o botão de compra direto no vídeo, com 1 clique.'],
-            [Code2, '3. Cole o código na loja', 'Um script simples, sem mexer em código complexo e sem desenvolvedor.'],
-          ].map(([Icon, t, d]: any) => (
-            <div key={t} className="p-6 rounded-2xl border border-slate-200">
-              <Icon className="text-[#0094eb] mb-3" size={26} />
-              <h3 className="font-bold mb-1">{t}</h3>
-              <p className="text-sm text-slate-600">{d}</p>
-            </div>
-          ))}
-        </div>
-        <h3 className="text-xl font-bold text-center mt-14 mb-6">Três formatos, um só painel</h3>
-        <div className="grid md:grid-cols-3 gap-5">
-          {[
-            ['Stories na Home', 'Topo da página inicial', 'Engaja logo na entrada e leva o visitante aos produtos.'],
-            ['Widget flutuante', 'Qualquer página da loja', 'Mantém o vídeo e o botão de compra sempre à vista.'],
-            ['Carrossel de Reels', 'Página de produto (PDP)', 'Mostra o produto em uso no momento da decisão.'],
-          ].map(([t, w, d]) => (
-            <div key={t} className="p-6 rounded-2xl bg-slate-50 border border-slate-200">
-              <h4 className="font-bold">{t}</h4>
-              <p className="text-xs font-semibold text-[#0094eb] mb-2">{w}</p>
-              <p className="text-sm text-slate-600">{d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 4. DIFERENCIAIS */}
-      <section className="bg-slate-50">
-        <div className="max-w-6xl mx-auto px-6 py-16 grid sm:grid-cols-2 gap-5">
-          {[
-            [Zap, 'Carregamento leve', 'O script carrega de forma assíncrona e ultraleve, pensado para não pesar na navegação da sua loja.'],
-            [ShoppingBag, 'Botão “Compre no Vídeo”', 'O cliente avança para a compra sem quebrar a experiência de navegação.'],
-            [BarChart3, 'Métricas reais', 'Dashboard com visualizações, retenção, cliques e vendas atribuídas a cada vídeo e produto. Repita o que funciona.'],
-            [CheckCircle2, 'Menos dúvidas, menos trocas', 'Com o produto em movimento, o cliente pergunta menos “qual o tamanho da modelo?”. Isso alivia o suporte e ajuda a reduzir devoluções.'],
-          ].map(([Icon, t, d]: any) => (
-            <div key={t} className="p-6 rounded-2xl bg-white border border-slate-200">
-              <Icon className="text-[#fd8539] mb-3" size={24} />
-              <h3 className="font-bold mb-1">{t}</h3>
-              <p className="text-sm text-slate-600">{d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 5. AUTORIDADE */}
-      <section className="max-w-3xl mx-auto px-6 py-16 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-[#0094eb] mb-3">De lojista para lojista</p>
-        <blockquote className="text-xl md:text-2xl font-semibold leading-snug">
-          “Nós não somos uma agência teórica. Criamos o Vidlytics para resolver o gargalo de conversão da nossa própria marca de moda feminina, a Useane. É a ferramenta que usamos na nossa operação todos os dias.”
-        </blockquote>
-        <p className="text-sm text-slate-500 mt-4">Rodrigo Vicente, fundador da Useane e do Vidlytics, ao lado de Anne</p>
-      </section>
-
-      {/* 6. PREÇO */}
-      <section className="bg-slate-950 text-white">
-        <div className="max-w-md mx-auto px-6 py-16 text-center">
-          <h2 className="text-3xl font-extrabold mb-8">Um plano. Tudo incluso.</h2>
-          <div className="rounded-2xl bg-white text-slate-900 p-8 shadow-2xl">
-            <p className="font-bold text-slate-500">Vidlytics Mensal</p>
-            <p className="text-5xl font-extrabold my-2">R$ 59,90<span className="text-base font-semibold text-slate-500"> / mês</span></p>
-            <p className="text-sm font-semibold text-[#0094eb] mb-6">Teste grátis por 7 dias. Cancele quando quiser.</p>
-            <ul className="text-left text-sm space-y-2 mb-8">
-              {['Stories, Widget flutuante e Carrossel de Reels', 'Botão “Compre no Vídeo”', 'Métricas de visualização, retenção, cliques e vendas atribuídas', 'Suporte humano', 'Instalação simplificada'].map((i) => (
-                <li key={i} className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-500 mt-0.5 shrink-0" />{i}</li>
+      {/* Diferenciais */}
+      <section id="diferenciais" className="py-24 bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">Por que o Vidlytics supera a concorrência?</h2>
+            <p className="text-xl text-gray-400 mb-8">Nós não apenas exibimos vídeos. Nós rastreamos até o último centavo que cada vídeo gera para o seu caixa.</p>
+            <ul className="space-y-6">
+              {DIFFS.map((x) => (
+                <li key={x.t} className="flex gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${x.c}`}><Check className="w-5 h-5" /></div>
+                  <div>
+                    <h4 className="text-lg font-bold">{x.t}</h4>
+                    <p className="text-gray-400">{x.d}</p>
+                  </div>
+                </li>
               ))}
             </ul>
-            <Cta label="Iniciar Meu Teste Grátis de 7 Dias" />
+          </div>
+          <div className="relative">
+            <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-2xl blur-lg opacity-30" />
+            <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 relative">
+              <div className="flex items-center justify-between mb-6 border-b border-gray-700 pb-4">
+                <h3 className="font-bold">Dashboard de Performance</h3>
+                <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded">Dados ilustrativos</span>
+              </div>
+              <div className="space-y-4">
+                <div className="bg-gray-900 rounded-lg p-4">
+                  <div className="text-sm text-gray-400 mb-1">Receita Gerada por Vídeo</div>
+                  <div className="text-2xl font-bold text-green-400">R$ 14.590,00 <span className="text-xs text-gray-500 font-normal">+12% vs mês ant.</span></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-900 rounded-lg p-4">
+                    <div className="text-sm text-gray-400 mb-1">Cliques no Produto</div>
+                    <div className="text-xl font-bold">1.245</div>
+                  </div>
+                  <div className="bg-gray-900 rounded-lg p-4">
+                    <div className="text-sm text-gray-400 mb-1">Redirecionamentos WPP</div>
+                    <div className="text-xl font-bold text-indigo-400">389</div>
+                  </div>
+                </div>
+                <div className="mt-6 p-4 bg-indigo-900/30 border border-indigo-500/30 rounded-lg flex gap-3">
+                  <Sparkles className="w-4 h-4 text-indigo-400 mt-1 shrink-0" />
+                  <div>
+                    <div className="text-sm font-bold text-indigo-300">Insight de IA</div>
+                    <div className="text-xs text-gray-400">O vídeo "Review Tênis Pro" apresenta queda de retenção aos 15s. Sugerimos ativar o botão "Comprar" aos 10s.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 7. FAQ */}
-      <section className="max-w-3xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-extrabold text-center mb-8">Perguntas frequentes</h2>
-        <div className="space-y-3">
-          {FAQ.map(([q, a]) => (
-            <details key={q} className="group rounded-xl border border-slate-200 p-4">
-              <summary className="font-semibold cursor-pointer list-none flex justify-between">
-                {q}<span className="text-[#0094eb] group-open:rotate-45 transition-transform">+</span>
-              </summary>
-              <p className="text-sm text-slate-600 mt-3">{a}</p>
-            </details>
-          ))}
-        </div>
-      </section>
-
-      {/* 8. CTA FINAL */}
-      <section className="bg-gradient-to-tr from-[#0094eb] to-cyan-500 text-white text-center">
-        <div className="max-w-3xl mx-auto px-6 py-16">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Saia das fotos estáticas. Transforme visitantes em clientes.</h2>
-          <p className="mb-8 text-white/90">Cada dia com a loja parada em foto é tráfego pago que não vira venda. Em 2 minutos você coloca o primeiro vídeo no ar.</p>
-          <div className="flex flex-col items-center gap-3">
-            <Link to={CTA} className="px-8 py-4 rounded-xl bg-white text-[#0082cf] font-bold shadow-xl hover:scale-[1.02] transition-all">Testar Grátis por 7 Dias</Link>
-            <p className="text-xs text-white/80">{MICRO}</p>
+      {/* Planos */}
+      <section id="planos" className="py-24 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Escolha o plano ideal para sua loja</h2>
+            <p className="text-xl text-gray-600">Teste qualquer plano por 7 dias grátis. Sem cartão de crédito.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
+            {PLANS.map((p) => (
+              <div
+                key={p.name}
+                className={`rounded-2xl p-8 relative transition ${
+                  p.highlight
+                    ? 'bg-[#0f172a] text-white border border-blue-900 shadow-2xl md:-translate-y-4'
+                    : 'bg-white border border-gray-200 shadow-sm hover:shadow-lg'
+                }`}
+              >
+                {p.highlight && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-orange-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+                    Mais Escolhido
+                  </div>
+                )}
+                <h3 className={`text-2xl font-bold mb-2 ${p.highlight ? 'text-blue-400' : ''}`}>{p.name}</h3>
+                <p className={`text-sm mb-6 ${p.highlight ? 'text-gray-300' : 'text-gray-500'}`}>{p.desc}</p>
+                <div className="mb-6">
+                  <span className="text-4xl font-extrabold">{p.price}</span>
+                  <span className={p.highlight ? 'text-gray-400' : 'text-gray-500'}>/mês</span>
+                </div>
+                <ul className="space-y-4 mb-8 text-sm">
+                  {p.features.map(([txt, ok]) => (
+                    <li key={txt} className={`flex items-center gap-3 ${ok ? '' : 'text-gray-400'}`}>
+                      {ok ? <Check className={`w-5 h-5 ${p.highlight ? 'text-blue-400' : 'text-indigo-600'}`} /> : <X className="w-5 h-5" />}
+                      {txt}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to={CTA}
+                  className={`block w-full py-3 px-4 text-center font-bold rounded-xl transition ${
+                    p.highlight ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                  }`}
+                >
+                  Começar 7 Dias Grátis
+                </Link>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <footer className="bg-slate-950 text-slate-400 text-xs text-center py-6 px-4">
-        SLL Hub · RAV Marketing e Treinamento LTDA · CNPJ 62.894.336/0001-00
+      {/* CTA final */}
+      <section className="py-20 bg-blue-700">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Pronto para aumentar suas conversões?</h2>
+          <p className="text-xl text-indigo-100 mb-10">Crie sua conta em segundos. Não pedimos cartão de crédito. Risco zero para você testar na sua loja real.</p>
+          <div className="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-2xl text-left">
+            <h3 className="font-bold text-gray-900 text-xl mb-2">Crie sua conta</h3>
+            <p className="text-sm text-gray-600 mb-4">Leva menos de 1 minuto. Seu teste de 7 dias começa na hora, sem cartão.</p>
+            <Link to={CTA} className="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center font-bold py-4 rounded-xl transition shadow-lg">
+              Iniciar Trial de 7 Dias
+            </Link>
+            <p className="text-xs text-gray-500 mt-3">
+              Ao se cadastrar, você concorda com os <Link to="/termos" className="underline">Termos de Uso</Link> e a{' '}
+              <Link to="/privacidade" className="underline">Política de Privacidade</Link>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-2 font-bold text-white">
+              <span className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-400 text-white flex items-center justify-center text-xs">SLL</span>
+              Vidlytics
+            </div>
+            <p className="text-sm mt-4">A plataforma definitiva de vídeos interativos para e-commerce. Aumente seu faturamento retendo a atenção do seu cliente.</p>
+          </div>
+          <div>
+            <h4 className="text-white font-bold mb-4">Plataforma</h4>
+            <ul className="space-y-2 text-sm">
+              <li><a href="#recursos" className="hover:text-white transition">Recursos</a></li>
+              <li><a href="#planos" className="hover:text-white transition">Preços</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-white font-bold mb-4">Suporte</h4>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/termos" className="hover:text-white transition">Termos de Uso</Link></li>
+              <li><Link to="/privacidade" className="hover:text-white transition">Política de Privacidade</Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-gray-800 text-xs text-center">
+          SLL Hub · RAV Marketing e Treinamento LTDA · CNPJ 62.894.336/0001-00
+        </div>
       </footer>
     </div>
   );
