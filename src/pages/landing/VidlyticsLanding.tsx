@@ -84,7 +84,7 @@ const checkoutUrl = (plan: PlanId, cycle: Cycle) =>
   `${CTA}&plan=${plan}&cycle=${cycle}&checkout=1`;
 
 const TRIAL_STEPS = [
-  ['1', 'Cadastro em 30 segundos', 'Nome, e-mail, WhatsApp e nome da loja. Sem cartão.'],
+  ['1', 'Cadastro em 30 segundos', 'Nome, e-mail e senha, ou direto com o Google. Sem cartão.'],
   ['2', 'Instale o script', 'Cole uma vez e veja o primeiro vídeo rodando na sua loja.'],
   ['3', 'Escolha o plano depois', 'Só quando o teste estiver perto de acabar, dentro do painel.'],
 ];
@@ -97,7 +97,7 @@ const FORMATS = [
 ];
 
 const DIFFS = [
-  { c: 'bg-indigo-500/20 text-indigo-400', t: 'Motor de Insights de IA', d: 'O sistema analisa quais vídeos têm baixa retenção e sugere trocas estratégicas de conteúdo e posição dos widgets.' },
+  { c: 'bg-indigo-500/20 text-indigo-400', t: 'Insights de desempenho', d: 'O sistema analisa quais vídeos têm baixa retenção e sugere trocas estratégicas de conteúdo e posição dos widgets.' },
   { c: 'bg-pink-500/20 text-pink-400', t: 'Métricas de Receita Reais', d: 'Chega de métricas de vaidade. Veja exatamente o ROI e a "Receita Total Gerada por Vídeo" no seu dashboard.' },
   { c: 'bg-green-500/20 text-green-400', t: 'Conexão WhatsApp e "Ver Produto"', d: 'Botões interativos no player redirecionam seu cliente no momento de maior desejo da compra.' },
 ];
@@ -253,7 +253,7 @@ export default function VidlyticsLanding() {
                 <div className="mt-6 p-4 bg-indigo-900/30 border border-indigo-500/30 rounded-lg flex gap-3">
                   <Sparkles className="w-4 h-4 text-indigo-400 mt-1 shrink-0" />
                   <div>
-                    <div className="text-sm font-bold text-indigo-300">Insight de IA</div>
+                    <div className="text-sm font-bold text-indigo-300">Insight de desempenho</div>
                     <div className="text-xs text-gray-400">O vídeo "Review Tênis Pro" apresenta queda de retenção aos 15s. Sugerimos ativar o botão "Comprar" aos 10s.</div>
                   </div>
                 </div>
@@ -389,7 +389,7 @@ export default function VidlyticsLanding() {
                   <li key={x} className="flex items-start gap-2"><Check className="w-4 h-4 mt-0.5 text-indigo-600 shrink-0" />{x}</li>
                 ))}
               </ul>
-              <Link to={`${CTA}&plan=scale&trial=1`} className="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center font-bold py-4 rounded-xl transition shadow-lg">
+              <Link to={`${CTA}&trial=1`} className="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center font-bold py-4 rounded-xl transition shadow-lg">
                 Criar minha conta grátis
               </Link>
               <p className="text-xs text-gray-500 text-center mt-3">Sem cartão de crédito. Cancele quando quiser.</p>
