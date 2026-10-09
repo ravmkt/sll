@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLoja } from "@/contexts/LojaContext";
 import { toast } from "sonner";
-import { PlanCard } from "@/components/planos/PlanCard";
+import { VidlyticsPlanCard, type PlanCycle } from "@/components/planos/VidlyticsPlanCard";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   getCatalogModules,
@@ -13,35 +13,35 @@ import {
   type CatalogPlan,
 } from "@/services/plans/getCatalogShowcase";
 
-type BillingCycle = "monthly" | "semiannual" | "yearly";
-
-const CYCLES: [BillingCycle, string][] = [
-  ["monthly", "Mensal"],
-  ["semiannual", "Semestral"],
-  ["yearly", "Anual"],
+const CYCLES: { key: PlanCycle; label: string; badge?: string }[] = [
+  { key: "monthly", label: "Mensal" },
+  { key: "semiannual", label: "Semestral", badge: "17% OFF" },
+  { key: "yearly", label: "Anual", badge: "4 MESES GRÁTIS" },
 ];
 
-function priceFor(p: CatalogPlan, cycle: BillingCycle): number {
-  if (cycle === "semiannual") return p.price_semiannual_cents;
-  if (cycle === "yearly") return p.price_annual_cents;
-  return p.price_monthly_cents;
-}
+const CONTACT_WPP = (import.meta.env.VITE_CONTACT_WHATSAPP as string | undefined) || "";
+const CONTACT_URL = CONTACT_WPP
+  ? `https://wa.me/${CONTACT_WPP}?text=${encodeURIComponent("Olá! Quero um plano sob medida do Vidlytics.")}`
+  : undefined;
 
 export default function Planos() {
   const navigate = useNavigate();
   const { storeId } = useLoja();
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<CatalogPlan[]>([]);
-  const [soon, setSoon] = useState<CatalogModule[]>([]);
-  const [cycle, setCycle] = useState<BillingCycle>("monthly");
+  const [mods, setMods] = useState<CatalogModule[]>([]);
+  const [cycle, setCycle] = useState<PlanCycle>("monthly");
 
   useEffect(() => {
-    Promise.all([getCatalogShowcase(), getCatalogModules()]).then(([list, mods]) => {
+    Promise.all([getCatalogShowcase(), getCatalogModules()]).then(([list, m]) => {
       setPlans(list);
-      setSoon(mods.filter((m) => m.status === "coming_soon"));
+      setMods(m);
       setLoading(false);
     });
   }, []);
+
+  const soon = useMemo(() => mods.filter((m) => m.status === "coming_soon"), [mods]);
+  const modBySlug = useMemo(() => new Map(mods.map((m) => [m.slug, m])), [mods]);
 
   function handleSelect(p: CatalogPlan) {
     if (!storeId) {
@@ -81,18 +81,23 @@ export default function Planos() {
           <p className="text-sm font-medium text-slate-500">Escolha o plano e o ciclo de cobrança.</p>
 
           <div className="flex justify-center pt-2">
-            <div className="inline-flex items-center gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/50">
-              {CYCLES.map(([key, label]) => (
+            <div className="inline-flex flex-wrap items-center justify-center gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/50">
+              {CYCLES.map((c) => (
                 <button
-                  key={key}
+                  key={c.key}
                   type="button"
-                  onClick={() => setCycle(key)}
+                  onClick={() => setCycle(c.key)}
                   className={cn(
-                    "px-4 py-2 text-xs font-black rounded-xl transition-all",
-                    cycle === key ? "bg-white text-[#0091ff] shadow-sm" : "text-slate-400 hover:text-slate-600"
+                    "flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl transition-all",
+                    cycle === c.key ? "bg-white text-[#0091ff] shadow-sm" : "text-slate-400 hover:text-slate-600"
                   )}
                 >
-                  {label}
+                  {c.label}
+                  {c.badge && (
+                    <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                      {c.badge}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -103,18 +108,25 @@ export default function Planos() {
           <p className="text-center text-sm text-slate-500 pt-6">Nenhum plano disponível no momento.</p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-4 max-w-5xl mx-auto">
-            {plans.map((p) => (
-              <PlanCard
-                key={p.id}
-                title={p.plan_name}
-                description={null}
-                priceCents={priceFor(p, cycle)}
-                cycle={cycle}
-                modules={[p.module_slug]}
-                isPopular={p.plan_tier === "pro"}
-                onSelect={() => handleSelect(p)}
-              />
-            ))}
+            {plans.map((p) => {
+              const mod = modBySlug.get(p.module_slug);
+              return (
+                <VidlyticsPlanCard
+                  key={p.id}
+                  tier={String(p.plan_tier || "").toLowerCase()}
+                  title={p.plan_name}
+                  moduleName={mod?.name || "Vidlytics"}
+                  logoUrl={mod?.logo_url ?? null}
+                  monthlyCents={p.price_monthly_cents}
+                  semiannualCents={p.price_semiannual_cents}
+                  annualCents={p.price_annual_cents}
+                  cycle={cycle}
+                  isPopular={String(p.plan_tier).toLowerCase() === "pro"}
+                  contactUrl={CONTACT_URL}
+                  onSelect={() => handleSelect(p)}
+                />
+              );
+            })}
           </div>
         )}
 
