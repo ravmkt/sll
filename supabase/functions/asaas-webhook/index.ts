@@ -110,20 +110,19 @@ Deno.serve(async (req: Request) => {
   // 3) Fatura (cria pendente, marca paga, vencida, cancelada ou estornada)
   await syncInvoice(eventType, payment, sub);
 
-  // 3.5) E-mail de boas-vindas (1x por loja; a funcao ignora se ja foi enviado)
-  if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && sub?.store_id && sub.status !== "canceled") {
+  // 3.5) E-mail de confirmacao: 1 por assinatura (modulo/combo); a funcao ignora se ja enviou
+  if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && sub?.id && sub.status !== "canceled") {
     try {
-      const mailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-welcome-email`, {
+      const mailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-subscription-email`, {
         method: "POST",
         headers: { Authorization: `Bearer ${SERVICE_ROLE_KEY}`, "x-internal-secret": INTERNAL_SECRET, "Content-Type": "application/json" },
-        body: JSON.stringify({ store_id: sub.store_id }),
+        body: JSON.stringify({ subscription_id: sub.id, value: Number(payment?.value ?? 0) }),
       });
-      if (!mailRes.ok) console.error("[asaas-webhook] send-welcome-email falhou:", mailRes.status, await mailRes.text());
+      if (!mailRes.ok) console.error("[asaas-webhook] send-subscription-email falhou:", mailRes.status, await mailRes.text());
     } catch (e) {
-      console.error("[asaas-webhook] Erro ao chamar send-welcome-email:", e);
+      console.error("[asaas-webhook] Erro ao chamar send-subscription-email:", e);
     }
   }
-
   // 4) Comissao de indicacao
   if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && asaasPaymentId && sub) {
     const paidValue = Number(payment?.value ?? 0);
