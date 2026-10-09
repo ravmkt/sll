@@ -62,63 +62,66 @@ export function VidlyticsPlanCard({
 }: Props) {
   const total = cycle === "yearly" ? annualCents : cycle === "semiannual" ? semiannualCents : monthlyCents;
   const perMonth = Math.round(total / MONTHS[cycle]);
-  const yearSaving = monthlyCents * 12 - annualCents;
+  const saving = monthlyCents * MONTHS[cycle] - total;
+  const label = (tier || title).toUpperCase();
   const features = FEATURES[tier] ?? [];
 
   return (
     <div
       className={cn(
         "relative flex flex-col justify-between rounded-3xl border bg-white p-6 sm:p-7 transition-all duration-300 hover:-translate-y-1.5 shadow-sm",
-        isPopular ? "border-[#0091ff] shadow-lg shadow-blue-500/10 ring-1 ring-[#0091ff]/30" : "border-slate-200"
+        isPopular
+          ? "z-10 border-[#fd8539]/60 shadow-xl shadow-orange-500/20 lg:scale-[1.03] lg:py-9"
+          : "border-slate-200"
       )}
     >
       {isPopular && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#0091ff] px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#fd8539] px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
           Mais popular
         </div>
       )}
 
       <div>
-        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 mb-4">
+        <div className="flex flex-col items-center gap-3 border-b border-slate-100 pb-4 mb-4 text-center">
           {logoUrl ? (
-            <img src={logoUrl} alt={moduleName} className="h-10 w-10 shrink-0 rounded-xl bg-white object-contain p-1 border border-slate-100" />
+            <img src={logoUrl} alt={moduleName} className="h-20 w-20 object-contain" />
           ) : (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0091ff]/10 text-sm font-black text-[#0091ff]">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#0091ff]/10 text-3xl font-black text-[#0091ff]">
               {moduleName.charAt(0).toUpperCase()}
             </div>
           )}
-          <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{moduleName}</p>
-            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight leading-tight">{title}</h3>
+          <h3 className="text-xl font-black text-slate-900 uppercase tracking-wide leading-tight">{label}</h3>
+        </div>
+
+        {SUBTITLE[tier] && <p className="text-xs font-medium text-slate-500 mb-4 text-center">{SUBTITLE[tier]}</p>}
+
+        <div className="text-center">
+          {cycle !== "monthly" && monthlyCents > perMonth && (
+            <p className="text-xs font-bold text-slate-400 line-through">De {brl(monthlyCents)}/mês</p>
+          )}
+          <div className="flex items-baseline justify-center gap-1.5">
+            <span className="text-4xl font-black text-slate-900 tracking-tight">{brl(perMonth)}</span>
+            <span className="text-xs font-bold text-slate-400">/mês</span>
           </div>
+          {cycle !== "monthly" && (
+            <span className="text-[10px] font-bold text-slate-500 mt-1 block">
+              Total cobrado: {brl(total)} {cycle === "yearly" ? "por ano" : "a cada 6 meses"}
+            </span>
+          )}
+          {cycle === "yearly" && (
+            <span className="text-[10px] font-bold text-slate-400 block">ou em até 12x no cartão</span>
+          )}
+          {cycle !== "monthly" && saving > 0 && (
+            <span className="mt-2 inline-block rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-[11px] font-black text-emerald-700">
+              Você economiza {brl(saving)}
+            </span>
+          )}
         </div>
 
-        {SUBTITLE[tier] && <p className="text-xs font-medium text-slate-500 mb-4">{SUBTITLE[tier]}</p>}
-
-        {cycle === "yearly" && monthlyCents > perMonth && (
-          <p className="text-xs font-bold text-slate-400 line-through">De {brl(monthlyCents)}/mês</p>
-        )}
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl font-black text-slate-900 tracking-tight">{brl(perMonth)}</span>
-          <span className="text-xs font-bold text-slate-400">/mês</span>
-        </div>
-        {cycle !== "monthly" && (
-          <span className="text-[10px] font-bold text-slate-500 mt-1 block">
-            Total cobrado: {brl(total)} {cycle === "yearly" ? "por ano" : "a cada 6 meses"}
-          </span>
-        )}
-        {cycle === "yearly" && yearSaving > 0 && (
-          <span className="mt-1 inline-block rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-black text-emerald-700">
-            Você economiza {brl(yearSaving)} por ano
-          </span>
-        )}
-
-        <ul className="mt-5 space-y-2.5 border-t border-slate-100 pt-4">
+        <ul className="mt-5 space-y-3 border-t border-slate-100 pt-4">
           {features.map((f) => (
-            <li key={f} className="flex items-start gap-2.5 text-xs font-bold text-slate-700">
-              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#0091ff] text-white">
-                <Check size={11} className="stroke-[3]" />
-              </span>
+            <li key={f} className="flex items-start gap-2.5 text-xs font-bold text-slate-700 leading-snug">
+              <Check size={16} className="mt-px shrink-0 stroke-[3] text-emerald-500" />
               <span>{f}</span>
             </li>
           ))}
@@ -140,7 +143,10 @@ export function VidlyticsPlanCard({
           type="button"
           disabled={isLoading}
           onClick={onSelect}
-          className="w-full rounded-2xl bg-[#0091ff] hover:bg-[#0070f3] text-white shadow-lg hover:scale-[1.02] py-3 px-4 text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+          className={cn(
+            "w-full rounded-2xl text-white shadow-lg hover:scale-[1.02] py-3 px-4 text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
+            isPopular ? "bg-[#fd8539] hover:bg-[#e8742a] shadow-orange-500/30" : "bg-[#0091ff] hover:bg-[#0070f3]"
+          )}
         >
           {isLoading ? <Loader2 size={14} className="animate-spin" /> : "Assinar"}
         </button>
