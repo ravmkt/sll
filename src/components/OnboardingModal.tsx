@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService, StorePayload } from '@/services/SLLDatabaseService';
+import { useNavigate } from 'react-router-dom';
 import { useLoja } from '@/contexts/LojaContext';
 
 const LOGO_SRC = '/assets/sll-logotipo-b.png';
@@ -47,6 +48,7 @@ const formatAndSanitizeUrl = (inputUrl: string): string => {
 
 export const OnboardingModal: React.FC = () => {
   const { needsOnboarding, setStoreManually } = useLoja();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -175,6 +177,7 @@ export const OnboardingModal: React.FC = () => {
 
       const newStore = await SLLDatabaseService.createInitialStore(user.id, finalPayload);
       setStoreManually(newStore);
+      navigate('/dashboard/modules/vidlytics', { replace: true });
     } catch (err: any) {
       console.error('Falha ao concluir setup inicial:', err);
       setErrorMsg(err?.message || 'Erro ao criar a loja. Tente novamente.');
