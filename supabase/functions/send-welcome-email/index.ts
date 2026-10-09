@@ -65,10 +65,24 @@ Deno.serve(async (req) => {
   }
   const INTERNAL_SECRET = Deno.env.get("INTERNAL_TEST_SECRET") ?? "";
   if (!authorized && INTERNAL_SECRET !== "" && req.headers.get("x-internal-secret") === INTERNAL_SECRET) authorized = true;
-  if (!authorized) return json({ error: "FORBIDDEN" }, 403);
+  // autorizacao final apos checar o dono da loja
 
   const { store_id } = await req.json().catch(() => ({}));
   if (!store_id) return json({ error: "STORE_ID_OBRIGATORIO" }, 400);
+
+  if (!authorized && token) {
+    const { data: u } = await admin.auth.getUser(token);
+    if (u?.user) {
+      const { data: own } = await admin
+        .from("stores")
+        .select("id")
+        .eq("id", store_id)
+        .eq("owner_user_id", u.user.id)
+        .maybeSingle();
+      authorized = !!own;
+    }
+  }
+  if (!authorized) return json({ error: "FORBIDDEN" }, 403);
 
   // Reserva o envio de forma atômica: só um disparo por loja
   const { data: claimed } = await admin

@@ -85,6 +85,12 @@ export const SLLDatabaseService = {
       throw storeError || new Error('Falha ao inserir loja');
     }
 
+    // E-mail de boas-vindas (não bloqueia o cadastro)
+    supabase.functions
+      .invoke('send-welcome-email', { body: { store_id: store.id } })
+      .then(({ error }) => { if (error) console.warn('Boas-vindas não enviado:', error); })
+      .catch((e) => console.warn('Boas-vindas não enviado:', e));
+
     // 2. Inserir em public.store_settings (fonte da verdade para todos os módulos)
     const { error: settingsError } = await supabase
       .from('store_settings')
