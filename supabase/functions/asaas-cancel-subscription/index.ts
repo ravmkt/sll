@@ -124,6 +124,18 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "DB_ERROR", details: updateErr }, 500);
     }
 
+    // 4. E-mail de cancelamento (nao bloqueia o cancelamento)
+    try {
+      const mailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-cancel-email`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription_id }),
+      });
+      console.log("send-cancel-email", mailRes.status, await mailRes.text());
+    } catch (e) {
+      console.error("send-cancel-email falhou", e);
+    }
+
     return jsonResponse({ success: true, payments_removed: paymentsRemoved, payment_errors: paymentErrors });
   } catch (err) {
     return jsonResponse({ error: "UNEXPECTED_ERROR", details: String(err) }, 500);
