@@ -4,7 +4,7 @@ export const CARD = 'rounded-2xl border border-slate-800 bg-[#111524] p-4';
 export const INPUT = 'h-9 w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 text-xs text-slate-200 outline-none focus:border-[#0094eb]';
 export const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-xs text-slate-200 outline-none focus:border-[#0094eb]';
 
-export const STATUS_LABEL: Record<string, string> = { active: 'Ativo', coming_soon: 'Em breve' };
+export const STATUS_LABEL: Record<string, string> = { active: 'Ativo', coming_soon: 'Em breve', hidden: 'Oculto' };
 export const SUB_LABEL: Record<string, string> = { active: 'Ativa', trialing: 'Trial', past_due: 'Em atraso', lifetime: 'Vitalícia' };
 export const CYCLE_LABEL: Record<string, string> = { monthly: 'Mensal', semiannual: 'Semestral', annual: 'Anual' };
 

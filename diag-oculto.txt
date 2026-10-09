@@ -1,0 +1,668 @@
+
+
+=== supabase\migrations\20261028_admin_master_modules_v2.sql
+1: alter table public.hub_modules add column if not exists logo_url text;
+2: 
+3: -- resolve empates de ordem existentes (1, 2, 3...)
+4: update public.hub_modules h set sort_order = r.rn
+5: from (select slug, row_number() over (order by coalesce(sort_order, 999), name) as rn from public.hub_modules) r
+6: where r.slug = h.slug;
+7: 
+8: -- bucket publico para os logos (somente superadmin grava)
+9: insert into storage.buckets (id, name, public) values ('module-logos', 'module-logos', true)
+10: on conflict (id) do nothing;
+11: 
+12: drop policy if exists "module_logos_admin_write" on storage.objects;
+13: create policy "module_logos_admin_write" on storage.objects
+14:   for all to authenticated
+15:   using (bucket_id = 'module-logos' and public.is_superadmin())
+16:   with check (bucket_id = 'module-logos' and public.is_superadmin());
+17: 
+18: drop function if exists public.admin_update_hub_module(text, text, text, boolean, int);
+19: 
+20: create or replace function public.admin_update_hub_module(
+21:   p_slug text, p_name text, p_status text, p_public boolean, p_sort int, p_logo text default null
+22: )
+23: returns void
+24: language plpgsql
+25: security definer
+26: set search_path = public
+27: as $$
+28: declare
+29:   v_old public.hub_modules%rowtype;
+30:   v_public boolean;
+31:   v_down boolean;
+32: begin
+33:   if not public.is_superadmin() then
+34:     raise exception 'forbidden';
+35:   end if;
+36:   if coalesce(trim(p_name), '') = '' then
+37:     raise exception 'O nome do módulo é obrigatório.';
+38:   end if;
+39:   if p_status not in ('active', 'coming_soon') then
+40:     raise exception 'Status inválido.';
+41:   end if;
+42: 
+43:   select * into v_old from public.hub_modules where slug = p_slug;
+44:   if not found then
+45:     raise exception 'Módulo não encontrado.';
+46:   end if;
+47: 
+48:   v_public := case when p_status = 'active' then coalesce(p_public, false) else false end;
+49:   v_down := coalesce(p_sort, v_old.sort_order, 0) > coalesce(v_old.sort_order, 0);
+50: 
+51:   update public.hub_modules
+52:      set name = trim(p_name),
+53:          status = p_status,
+54:          is_public_for_sale = v_public,
+55:          sort_order = coalesce(p_sort, sort_order),
+56:          logo_url = case when p_logo is null then logo_url when p_logo = '' then null else p_logo end,
+57:          updated_at = now()
+58:    where slug = p_slug;
+59: 
+60:   -- renumera: o módulo editado ocupa a posição pedida e os demais se ajustam
+61:   update public.hub_modules h set sort_order = r.rn
+62:   from (
+63:     select slug, row_number() over (
+64:       order by coalesce(sort_order, 999), ((slug = p_slug) = v_down), name
+65:     ) as rn
+66:     from public.hub_modules
+67:   ) r
+68:   where r.slug = h.slug and h.sort_order is distinct from r.rn;
+69: 
+70:   insert into public.admin_audit_logs (admin_id, action, details)
+71:   values (auth.uid(), 'module_updated', jsonb_build_object(
+72:     'module_key', p_slug,
+73:     'before', jsonb_build_object('name', v_old.name, 'status', v_old.status, 'public', v_old.is_public_for_sale, 'sort', v_old.sort_order),
+74:     'after', jsonb_build_object('name', trim(p_name), 'status', p_status, 'public', v_public, 'sort', coalesce(p_sort, v_old.sort_order)),
+75:     'logo_changed', p_logo is not null
+76:   ));
+77: end;
+78: $$;
+79: 
+80: revoke all on function public.admin_update_hub_module(text, text, text, boolean, int, text) from public, anon;
+81: grant execute on function public.admin_update_hub_module(text, text, text, boolean, int, text) to authenticated;
+82: 
+83: select slug, name, sort_order, logo_url from public.hub_modules order by sort_order;
+
+=== src\services\admin\modulesService.ts
+1: import { supabase } from '@/lib/supabase';
+2: 
+3: const sb: any = supabase;
+4: 
+5: export type ModuleOverview = {
+6:   slug: string;
+7:   name: string;
+8:   status: string;
+9:   is_public_for_sale: boolean;
+10:   sort_order: number;
+11:   logo_url: string | null;
+12:   access: number;
+13:   paying: number;
+14:   trial: number;
+15:   past_due: number;
+16:   lifetime: number;
+17:   mrr: number;
+18:   errors: number;
+19:   events: number | null;
+20:   views: number | null;
+21:   clicks: number | null;
+22:   active_stores: number | null;
+23:   videos: number | null;
+24:   storage_bytes: number | null;
+25: };
+26: 
+27: export type ModulesData = { days: number; modules: ModuleOverview[]; bundle_stores: number; bundle_mrr: number };
+28: 
+29: export type ModuleStoreRow = { id: string; name: string | null; status: string; billing_cycle: string | null; plan_name: string | null; via_combo: boolean };
+30: 
+31: export async function getModulesOverview(days: number): Promise<ModulesData> {
+32:   const { data, error } = await sb.rpc('admin_master_modules', { p_days: days });
+33:   if (error) throw new Error(error.message);
+34:   const res = data as ModulesData;
+35:   const { data: logos } = await sb.from('hub_modules').select('slug,logo_url');
+36:   const map = new Map<string, string | null>((logos || []).map((l: any) => [l.slug, l.logo_url ?? null]));
+37:   res.modules = res.modules.map((m) => ({ ...m, logo_url: map.get(m.slug) ?? null }));
+38:   return res;
+39: }
+40: 
+41: export async function getModuleStores(slug: string): Promise<ModuleStoreRow[]> {
+42:   const { data, error } = await sb.rpc('admin_module_stores', { p_slug: slug });
+43:   if (error) throw new Error(error.message);
+44:   return (data || []) as ModuleStoreRow[];
+45: }
+46: 
+47: // logo: null = mantém, '' = remove, texto = nova URL
+48: export async function updateHubModule(
+49:   slug: string, name: string, status: string, isPublic: boolean, sort: number, logo: string | null = null,
+50: ): Promise<void> {
+51:   const { error } = await sb.rpc('admin_update_hub_module', {
+52:     p_slug: slug, p_name: name, p_status: status, p_public: isPublic, p_sort: sort, p_logo: logo,
+53:   });
+54:   if (error) throw new Error(error.message);
+55: }
+56: 
+57: export async function uploadModuleLogo(slug: string, file: File): Promise<string> {
+58:   if (!file.type.startsWith('image/')) throw new Error('Envie uma imagem (PNG, JPG, SVG ou WebP).');
+59:   if (file.size > 2 * 1024 * 1024) throw new Error('A imagem deve ter até 2 MB.');
+60:   const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+61:   const path = `${slug}/${Date.now()}.${ext}`;
+62:   const { error } = await sb.storage.from('module-logos').upload(path, file, { contentType: file.type, upsert: true });
+63:   if (error) throw new Error(error.message);
+64:   return sb.storage.from('module-logos').getPublicUrl(path).data.publicUrl as string;
+65: }
+
+=== src\components\admin\moduleUi.tsx
+1: import type { ReactNode } from 'react';
+2: 
+3: export const CARD = 'rounded-2xl border border-slate-800 bg-[#111524] p-4';
+4: export const INPUT = 'h-9 w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 text-xs text-slate-200 outline-none focus:border-[#0094eb]';
+5: export const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-xs text-slate-200 outline-none focus:border-[#0094eb]';
+6: 
+7: export const STATUS_LABEL: Record<string, string> = { active: 'Ativo', coming_soon: 'Em breve' };
+8: export const SUB_LABEL: Record<string, string> = { active: 'Ativa', trialing: 'Trial', past_due: 'Em atraso', lifetime: 'Vitalícia' };
+9: export const CYCLE_LABEL: Record<string, string> = { monthly: 'Mensal', semiannual: 'Semestral', annual: 'Anual' };
+10: 
+11: export const int = (n: number | null | undefined) => (Number(n) || 0).toLocaleString('pt-BR');
+12: export const brl = (cents: number | null | undefined) => ((Number(cents) || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+13: export const bytes = (b: number | null | undefined) => {
+14:   const mb = (Number(b) || 0) / 1048576;
+15:   return mb < 1024 ? `${mb.toFixed(1).replace('.', ',')} MB` : `${(mb / 1024).toFixed(2).replace('.', ',')} GB`;
+16: };
+17: 
+18: export function Kpi({ label, value, tone }: { label: string; value: ReactNode; tone?: string }) {
+19:   return (
+20:     <div className="rounded-xl bg-white/[0.03] px-3 py-2">
+21:       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+22:       <p className={`mt-0.5 text-lg font-black ${tone || 'text-white'}`}>{value}</p>
+23:     </div>
+24:   );
+25: }
+26: 
+27: export function ModuleLogo({ url, name, size = 40 }: { url: string | null; name: string; size?: number }) {
+28:   const style = { width: size, height: size };
+29:   return url ? (
+30:     <img src={url} alt={name} style={style} className="shrink-0 rounded-xl bg-white object-contain p-1" />
+31:   ) : (
+32:     <div style={style} className="flex shrink-0 items-center justify-center rounded-xl bg-[#fd8539]/15 text-sm font-black text-[#fd8539]">
+33:       {(name || '?').charAt(0).toUpperCase()}
+34:     </div>
+35:   );
+36: }
+
+=== src\components\admin\ModuloDetalhe.tsx
+1: import { useCallback, useEffect, useRef, useState } from 'react';
+2: import { ArrowLeft, ImagePlus, Loader2, Trash2 } from 'lucide-react';
+3: import { toast } from 'sonner';
+4: import ModulePlansCard from '@/components/admin/ModulePlansCard';
+5: import FeatureFlagsCard from '@/components/admin/FeatureFlagsCard';
+6: import {
+7:   getModuleStores, getModulesOverview, updateHubModule, uploadModuleLogo,
+8:   type ModuleOverview, type ModuleStoreRow,
+9: } from '@/services/admin/modulesService';
+10: import {
+11:   CARD, CYCLE_LABEL, INPUT, SELECT, STATUS_LABEL, SUB_LABEL, Kpi, ModuleLogo, bytes, brl, int,
+12: } from '@/components/admin/moduleUi';
+13: 
+14: const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
+15: const LABEL = 'text-[10px] font-bold uppercase tracking-wider text-slate-500';
+16: 
+17: export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }: {
+18:   slug: string; onBack: () => void; onOpenStore: (id: string) => void; onOpenPlans: (slug: string) => void;
+19: }) {
+20:   const [days, setDays] = useState(30);
+21:   const [m, setM] = useState<ModuleOverview | null>(null);
+22:   const [stores, setStores] = useState<ModuleStoreRow[] | null>(null);
+23:   const [loading, setLoading] = useState(true);
+24:   const [error, setError] = useState('');
+25: 
+26:   const [name, setName] = useState('');
+27:   const [status, setStatus] = useState('active');
+28:   const [pub, setPub] = useState(false);
+29:   const [sort, setSort] = useState('1');
+30:   const [logo, setLogo] = useState<string | null>(null);
+31:   const [saving, setSaving] = useState(false);
+32:   const [uploading, setUploading] = useState(false);
+33:   const filled = useRef(false);
+34:   const fileRef = useRef<HTMLInputElement>(null);
+35: 
+36:   const load = useCallback(async (fill: boolean) => {
+37:     setLoading(true);
+38:     setError('');
+39:     try {
+40:       const res = await getModulesOverview(days);
+41:       const found = res.modules.find((x) => x.slug === slug) || null;
+42:       if (!found) { setError('Módulo não encontrado.'); return; }
+43:       setM(found);
+44:       if (fill || !filled.current) {
+45:         setName(found.name);
+46:         setStatus(found.status);
+47:         setPub(found.is_public_for_sale);
+48:         setSort(String(found.sort_order ?? 1));
+49:         setLogo(found.logo_url);
+50:         filled.current = true;
+51:       }
+52:     } catch (e: any) {
+53:       setError(e?.message || 'Erro ao carregar o módulo.');
+54:     } finally {
+55:       setLoading(false);
+56:     }
+57:   }, [days, slug]);
+58: 
+59:   useEffect(() => { load(false); }, [load]);
+60: 
+61:   useEffect(() => {
+62:     getModuleStores(slug).then(setStores).catch((e: any) => { toast.error(e?.message || 'Erro ao listar lojas.'); setStores([]); });
+63:   }, [slug]);
+64: 
+65:   const onFile = async (file: File | undefined) => {
+66:     if (!file) return;
+67:     setUploading(true);
+68:     try { setLogo(await uploadModuleLogo(slug, file)); toast.success('Logo enviado. Clique em Salvar para aplicar.'); }
+69:     catch (e: any) { toast.error(e?.message || 'Falha no envio do logo.'); }
+70:     finally { setUploading(false); if (fileRef.current) fileRef.current.value = ''; }
+71:   };
+72: 
+73:   const save = async () => {
+74:     if (!m) return;
+75:     setSaving(true);
+76:     try {
+77:       const logoArg = logo === (m.logo_url ?? null) ? null : (logo ?? '');
+78:       await updateHubModule(slug, name, status, status === 'active' ? pub : false, Number(sort) || 1, logoArg);
+79:       toast.success('Módulo atualizado.');
+80:       await load(true);
+81:     } catch (e: any) {
+82:       toast.error(e?.message || 'Não foi possível salvar.');
+83:     } finally {
+84:       setSaving(false);
+85:     }
+86:   };
+87: 
+88:   const measured = !!m && m.events !== null;
+89:   const ctr = m && m.views ? ((Number(m.clicks) || 0) / m.views) * 100 : 0;
+90: 
+91:   return (
+92:     <div className="space-y-5">
+93:       <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
+94:         <div className="flex items-center gap-3">
+95:           <button type="button" onClick={onBack} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10">
+96:             <ArrowLeft size={14} /> Módulos
+97:           </button>
+98:           {m && <ModuleLogo url={logo} name={name || m.name} size={40} />}
+99:           <div>
+100:             <h1 className="text-xl font-black text-white">{m?.name || 'Módulo'}</h1>
+101:             <p className="font-mono text-[10px] text-slate-600">{slug}</p>
+102:           </div>
+103:         </div>
+104:         <div className="flex items-center gap-2">
+105:           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
+106:           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
+107:             <option value={7}>Últimos 7 dias</option>
+108:             <option value={30}>Últimos 30 dias</option>
+109:             <option value={90}>Últimos 90 dias</option>
+110:           </select>
+111:         </div>
+112:       </div>
+113: 
+114:       {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+115: 
+116:       {m && (
+117:         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+118:           <div className="space-y-4 xl:col-span-2">
+119:             <div className={`${CARD} space-y-3`}>
+120:               <p className="text-sm font-bold text-white">Lojas e receita</p>
+121:               <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+122:                 <Kpi label="Com acesso" value={int(m.access)} />
+123:                 <Kpi label="Pagantes" value={int(m.paying)} tone="text-emerald-300" />
+124:                 <Kpi label="Em trial" value={int(m.trial)} tone="text-sky-300" />
+125:                 <Kpi label="Inadimplentes" value={int(m.past_due)} tone={m.past_due ? 'text-rose-300' : undefined} />
+126:                 <Kpi label="Vitalícias" value={int(m.lifetime)} />
+127:                 <Kpi label="Receita mensal" value={brl(m.mrr)} />
+128:               </div>
+129:             </div>
+130: 
+131:             <div className={`${CARD} space-y-3`}>
+132:               <p className="text-sm font-bold text-white">Consumo e desempenho ({days} dias)</p>
+133:               {measured ? (
+134:                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+135:                   <Kpi label="Views" value={int(m.views)} />
+136:                   <Kpi label="Cliques" value={int(m.clicks)} />
+137:                   <Kpi label="CTR" value={`${ctr.toFixed(1).replace('.', ',')}%`} />
+138:                   <Kpi label="Lojas ativas" value={int(m.active_stores)} />
+139:                   <Kpi label="Vídeos" value={int(m.videos)} />
+140:                   <Kpi label="Espaço" value={bytes(m.storage_bytes)} />
+141:                 </div>
+142:               ) : (
+143:                 <p className="rounded-xl bg-white/[0.03] px-3 py-3 text-xs text-slate-500">O consumo deste módulo ainda não é medido.</p>
+144:               )}
+145:               <p className={`text-[11px] ${m.errors ? 'text-rose-300' : 'text-slate-500'}`}>
+146:                 {m.errors ? `${int(m.errors)} erro(s) registrado(s) no período.` : 'Nenhum erro registrado no período.'}
+147:               </p>
+148:             </div>
+149: 
+150:             <div className={`${CARD} space-y-3`}>
+151:               <p className="text-sm font-bold text-white">Lojas com acesso</p>
+152:               {stores === null ? (
+153:                 <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
+154:               ) : stores.length === 0 ? (
+155:                 <p className="text-xs text-slate-500">Nenhuma loja com acesso.</p>
+156:               ) : (
+157:                 <div className="overflow-x-auto rounded-xl border border-slate-800">
+158:                   <table className="w-full min-w-[560px] text-xs">
+159:                     <thead className="border-b border-slate-800">
+160:                       <tr><th className={TH}>Loja</th><th className={TH}>Plano</th><th className={TH}>Ciclo</th><th className={TH}>Origem</th><th className={TH}>Status</th></tr>
+161:                     </thead>
+162:                     <tbody className="divide-y divide-white/5">
+163:                       {stores.map((s) => (
+164:                         <tr key={s.id} onClick={() => onOpenStore(s.id)} className="cursor-pointer hover:bg-white/5">
+165:                           <td className="px-3 py-2 font-bold text-white">{s.name || 'Sem nome'}</td>
+166:                           <td className="px-3 py-2 text-slate-300">{s.plan_name || '—'}</td>
+167:                           <td className="px-3 py-2 text-slate-400">{s.billing_cycle ? CYCLE_LABEL[s.billing_cycle] || s.billing_cycle : '—'}</td>
+168:                           <td className="px-3 py-2 text-slate-400">{s.via_combo ? 'Combo' : 'Individual'}</td>
+169:                           <td className="px-3 py-2 text-slate-300">{SUB_LABEL[s.status] || s.status}</td>
+170:                         </tr>
+171:                       ))}
+172:                     </tbody>
+173:                   </table>
+174:                 </div>
+175:               )}
+176:             </div>
+177:           </div>
+178: 
+179:           <div className="space-y-4">
+180:             <div className={`${CARD} space-y-4`}>
+181:               <p className="text-sm font-bold text-white">Dados do módulo</p>
+182: 
+183:               <div className="space-y-2">
+184:                 <span className={LABEL}>Logo</span>
+185:                 <div className="flex items-center gap-3">
+186:                   <ModuleLogo url={logo} name={name || m.name} size={56} />
+187:                   <div className="flex flex-col gap-1.5">
+188:                     <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+189:                     <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-[11px] font-bold text-slate-200 hover:bg-white/10 disabled:opacity-40">
+190:                       {uploading ? <Loader2 size={12} className="animate-spin" /> : <ImagePlus size={12} />} Enviar imagem
+191:                     </button>
+192:                     {logo && (
+193:                       <button type="button" onClick={() => setLogo(null)} className="flex cursor-pointer items-center gap-1.5 text-[11px] text-slate-500 hover:text-rose-300">
+194:                         <Trash2 size={12} /> Remover logo
+195:                       </button>
+196:                     )}
+197:                   </div>
+198:                 </div>
+199:                 <p className="text-[10px] text-slate-600">PNG, JPG, SVG ou WebP, até 2 MB. Fundo transparente fica melhor.</p>
+200:               </div>
+201: 
+202:               <label className="block space-y-1">
+203:                 <span className={LABEL}>Nome</span>
+204:                 <input value={name} onChange={(e) => setName(e.target.value)} className={INPUT} />
+205:               </label>
+206:               <label className="block space-y-1">
+207:                 <span className={LABEL}>Status</span>
+208:                 <select value={status} onChange={(e) => setStatus(e.target.value)} className={INPUT}>
+209:                   <option value="active">{STATUS_LABEL.active}</option>
+210:                   <option value="coming_soon">{STATUS_LABEL.coming_soon}</option>
+211:                 </select>
+212:               </label>
+213:               <label className="flex items-center gap-2 text-xs text-slate-300">
+214:                 <input type="checkbox" checked={status === 'active' && pub} disabled={status !== 'active'} onChange={(e) => setPub(e.target.checked)} />
+215:                 À venda para os lojistas {status !== 'active' && <span className="text-slate-500">(só módulos ativos)</span>}
+216:               </label>
+217:               <label className="block space-y-1">
+218:                 <span className={LABEL}>Posição na lista</span>
+219:                 <input type="number" min={1} value={sort} onChange={(e) => setSort(e.target.value)} className={INPUT} />
+220:                 <span className="block text-[10px] text-slate-600">Os outros módulos se ajustam sozinhos, sem repetir posição.</span>
+221:               </label>
+222:               <button type="button" disabled={saving || uploading || !name.trim()} onClick={save} className="w-full cursor-pointer rounded-lg bg-[#fd8539] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">
+223:                 {saving ? 'Salvando…' : 'Salvar alterações'}
+224:               </button>
+225:             </div>
+226: 
+227:             <ModulePlansCard slug={slug} onManage={() => onOpenPlans(slug)} />
+228:             <FeatureFlagsCard slug={slug} />
+229:           </div>
+230:         </div>
+231:       )}
+232:     </div>
+233:   );
+234: }
+
+=== src\components\admin\ModulosTab.tsx
+1: import { useCallback, useEffect, useState } from 'react';
+2: import { ChevronRight, Loader2 } from 'lucide-react';
+3: import { getModulesOverview, type ModulesData } from '@/services/admin/modulesService';
+4: import ModuloDetalhe from '@/components/admin/ModuloDetalhe';
+5: import { CARD, SELECT, STATUS_LABEL, ModuleLogo, brl, int } from '@/components/admin/moduleUi';
+6: 
+7: const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
+8: 
+9: export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: (id: string) => void; onOpenPlans: (slug: string) => void }) {
+10:   const [days, setDays] = useState(30);
+11:   const [data, setData] = useState<ModulesData | null>(null);
+12:   const [loading, setLoading] = useState(true);
+13:   const [error, setError] = useState('');
+14:   const [selected, setSelected] = useState<string | null>(null);
+15: 
+16:   const load = useCallback(async () => {
+17:     setLoading(true);
+18:     setError('');
+19:     try { setData(await getModulesOverview(days)); }
+20:     catch (e: any) { setError(e?.message || 'Erro ao carregar os módulos.'); }
+21:     finally { setLoading(false); }
+22:   }, [days]);
+23: 
+24:   useEffect(() => { load(); }, [load]);
+25: 
+26:   if (selected) {
+27:     return (
+28:       <ModuloDetalhe
+29:         slug={selected}
+30:         onBack={() => { setSelected(null); load(); }}
+31:         onOpenStore={onOpenStore}
+32:         onOpenPlans={onOpenPlans}
+33:       />
+34:     );
+35:   }
+36: 
+37:   return (
+38:     <div className="space-y-5">
+39:       <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
+40:         <div>
+41:           <h1 className="text-xl font-black text-white">Módulos</h1>
+42:           <p className="text-xs text-slate-500">Clique em um módulo para ver os detalhes e editar.</p>
+43:         </div>
+44:         <div className="flex items-center gap-2">
+45:           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
+46:           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
+47:             <option value={7}>Últimos 7 dias</option>
+48:             <option value={30}>Últimos 30 dias</option>
+49:             <option value={90}>Últimos 90 dias</option>
+50:           </select>
+51:         </div>
+52:       </div>
+53: 
+54:       {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+55: 
+56:       {data && (
+57:         <>
+58:           <div className={`${CARD} flex flex-wrap items-center gap-x-8 gap-y-2`}>
+59:             <div>
+60:               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Combos (todos os módulos)</p>
+61:               <p className="text-lg font-black text-white">{int(data.bundle_stores)} loja(s)</p>
+62:             </div>
+63:             <div>
+64:               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Receita mensal dos combos</p>
+65:               <p className="text-lg font-black text-white">{brl(data.bundle_mrr)}</p>
+66:             </div>
+67:             <p className="text-[11px] text-slate-500">Lojas com combo contam como acesso em cada módulo. A receita do combo não é dividida entre eles.</p>
+68:           </div>
+69: 
+70:           <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#111524]">
+71:             <table className="w-full min-w-[820px] text-xs">
+72:               <thead className="border-b border-slate-800">
+73:                 <tr>
+74:                   <th className={TH}>Ordem</th>
+75:                   <th className={TH}>Módulo</th>
+76:                   <th className={TH}>Status</th>
+77:                   <th className={TH}>Venda</th>
+78:                   <th className={`${TH} text-right`}>Com acesso</th>
+79:                   <th className={`${TH} text-right`}>Pagantes</th>
+80:                   <th className={`${TH} text-right`}>Receita mensal</th>
+81:                   <th className={`${TH} text-right`}>Views ({data.days}d)</th>
+82:                   <th className={TH} />
+83:                 </tr>
+84:               </thead>
+85:               <tbody className="divide-y divide-white/5">
+86:                 {data.modules.map((m) => (
+87:                   <tr key={m.slug} onClick={() => setSelected(m.slug)} className="cursor-pointer transition-colors hover:bg-white/5">
+88:                     <td className="px-3 py-3 font-bold text-slate-400">{m.sort_order}</td>
+89:                     <td className="px-3 py-3">
+90:                       <div className="flex items-center gap-3">
+91:                         <ModuleLogo url={m.logo_url} name={m.name} size={36} />
+92:                         <div className="min-w-0">
+93:                           <p className="truncate text-sm font-bold text-white">{m.name}</p>
+94:                           <p className="font-mono text-[10px] text-slate-600">{m.slug}</p>
+95:                         </div>
+96:                       </div>
+97:                     </td>
+98:                     <td className="px-3 py-3">
+99:                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${m.status === 'active' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}`}>
+100:                         {STATUS_LABEL[m.status] || m.status}
+101:                       </span>
+102:                     </td>
+103:                     <td className="px-3 py-3">
+104:                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${m.is_public_for_sale ? 'bg-sky-500/15 text-sky-300' : 'bg-slate-500/15 text-slate-400'}`}>
+105:                         {m.is_public_for_sale ? 'À venda' : 'Fora de venda'}
+106:                       </span>
+107:                     </td>
+108:                     <td className="px-3 py-3 text-right font-semibold text-white">{int(m.access)}</td>
+109:                     <td className="px-3 py-3 text-right font-semibold text-emerald-300">{int(m.paying)}</td>
+110:                     <td className="px-3 py-3 text-right font-semibold text-white">{brl(m.mrr)}</td>
+111:                     <td className="px-3 py-3 text-right text-slate-300">{m.views === null ? '—' : int(m.views)}</td>
+112:                     <td className="px-3 py-3 text-right text-slate-500"><ChevronRight size={16} /></td>
+113:                   </tr>
+114:                 ))}
+115:               </tbody>
+116:             </table>
+117:           </div>
+118:         </>
+119:       )}
+120:     </div>
+121:   );
+122: }
+
+=== src\components\layout\ModuleSwitcher.tsx
+1: import { useEffect, useMemo, useRef, useState } from 'react';
+2: import type { ElementType } from 'react';
+3: import { useLocation, useNavigate } from 'react-router-dom';
+4: import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, Radio } from 'lucide-react';
+5: import { useLoja } from '@/contexts/LojaContext';
+6: import { getActiveSubscriptions } from '@/services/subscriptions/getStoreSubscriptions';
+7: import { TrialPill } from '@/components/layout/TrialPill';
+8: 
+9: type Item = { key: string; name: string; category: string; path: string; icon: ElementType; soon?: boolean };
+10: 
+11: // Modulo novo = uma linha aqui. "key" deve ser igual ao module_key / plans.modules.
+12: const SWITCHER_MODULES: Item[] = [
+13:   { key: 'vidlytics', name: 'Vidlytics Stories', category: 'Vídeos Interativos', path: '/dashboard/modules/vidlytics', icon: Layers },
+14:   { key: 'live_commerce', name: 'Live Commerce', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/live-commerce', icon: Radio },
+15:   { key: 'gamification', name: 'Gamificação', category: 'Engajamento & Prêmios', path: '/dashboard/modules/gamificacao', icon: Gamepad2, soon: true },
+16: ];
+17: 
+18: const HOME: Item = { key: 'home', name: 'SLL Hub', category: 'Visão geral da loja', path: '/dashboard', icon: LayoutDashboard };
+19: 
+20: const cache = new Map<string, string[]>();
+21: 
+22: export function ModuleSwitcher() {
+23:   const { storeId } = useLoja() as { storeId: string | null };
+24:   const navigate = useNavigate();
+25:   const { pathname } = useLocation();
+26:   const [open, setOpen] = useState(false);
+27:   const [owned, setOwned] = useState<string[]>(() => (storeId ? cache.get(storeId) ?? [] : []));
+28:   const ref = useRef<HTMLDivElement>(null);
+29: 
+30:   useEffect(() => {
+31:     if (!storeId) return;
+32:     let alive = true;
+33:     getActiveSubscriptions(storeId).then((subs) => {
+34:       const keys = new Set<string>();
+35:       for (const s of subs) {
+36:         if (s.module_key && s.module_key !== 'bundle') keys.add(s.module_key);
+37:         else (s.plan?.modules ?? []).forEach((m) => keys.add(m));
+38:       }
+39:       const list = Array.from(keys);
+40:       cache.set(storeId, list);
+41:       if (alive) setOwned(list);
+42:     });
+43:     return () => { alive = false; };
+44:   }, [storeId]);
+45: 
+46:   useEffect(() => {
+47:     const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+48:     document.addEventListener('mousedown', close);
+49:     return () => document.removeEventListener('mousedown', close);
+50:   }, []);
+51: 
+52:   const current = useMemo(
+53:     () => SWITCHER_MODULES.find((m) => pathname === m.path || pathname.startsWith(m.path + '/')) ?? HOME,
+54:     [pathname],
+55:   );
+56:   const items = useMemo(
+57:     () => [HOME, ...SWITCHER_MODULES.filter((m) => owned.includes(m.key) || m.key === current.key)],
+58:     [owned, current],
+59:   );
+60:   const CurrentIcon = current.icon;
+61: 
+62:   return (
+63:     <div className="flex items-center gap-2">
+64:       <TrialPill />
+65:       <div className="relative shrink-0" ref={ref}>
+66:       <button
+67:         type="button"
+68:         onClick={() => setOpen((v) => !v)}
+69:         className="flex items-center gap-2.5 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-xl px-3.5 py-1.5 text-xs text-slate-700 font-medium hover:border-slate-300 transition-all cursor-pointer"
+70:       >
+71:         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+72:         <CurrentIcon className="w-4 h-4 text-[#0094eb]" />
+73:         <span className="font-semibold text-slate-800">{current.name}</span>
+74:         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+75:       </button>
+76: 
+77:       {open && (
+78:         <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200/90 py-2 z-50">
+79:           <div className="px-3.5 py-2 border-b border-slate-100">
+80:             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Seus módulos</span>
+81:           </div>
+82:           <div className="p-1.5 space-y-1">
+83:             {items.map((m) => {
+84:               const Icon = m.icon;
+85:               const isCurrent = m.key === current.key;
+86:               return (
+87:                 <button
+88:                   key={m.key}
+89:                   type="button"
+90:                   onClick={() => { setOpen(false); if (!isCurrent && !m.soon) navigate(m.path); }}
+91:                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer ${isCurrent ? 'bg-blue-50/80 text-[#0094eb]' : 'hover:bg-slate-50 text-slate-700'}`}
+92:                 >
+93:                   <div className="flex items-center gap-3 min-w-0">
+94:                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isCurrent ? 'bg-[#0094eb] text-white' : 'bg-slate-100 text-slate-600'}`}>
+95:                       <Icon className="w-4 h-4" />
+96:                     </div>
+97:                     <div className="truncate">
+98:                       <p className="text-xs font-semibold truncate leading-tight">{m.name}</p>
+99:                       <p className="text-[11px] text-slate-400 truncate">{m.category}</p>
+100:                     </div>
+101:                   </div>
+102:                   {isCurrent && <Check className="w-4 h-4 text-[#0094eb] shrink-0 ml-2" />}
+103:                   {m.soon && <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0 ml-2">Em breve</span>}
+104:                 </button>
+105:               );
+106:             })}
+107:           </div>
+108:         </div>
+109:       )}
+110:       </div>
+111:     </div>
+112:   );
+113: }
+114: 
+115: export default ModuleSwitcher;

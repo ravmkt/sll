@@ -96,7 +96,7 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${m.status === 'active' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${m.status === 'active' ? 'bg-emerald-500/15 text-emerald-300' : m.status === 'hidden' ? 'bg-slate-500/15 text-slate-400' : 'bg-amber-500/15 text-amber-300'}`}>
                         {STATUS_LABEL[m.status] || m.status}
                       </span>
                     </td>

@@ -11,18 +11,31 @@ export type CatalogPlan = {
   sort_order: number;
 };
 
+export type CatalogModule = {
+  slug: string;
+  name: string;
+  status: "active" | "coming_soon";
+  is_public_for_sale: boolean;
+  logo_url: string | null;
+  sort_order: number;
+};
+
 const sb: any = supabase;
 
-// Planos de venda: apenas modulos ativos e "a venda" no Master (hub_modules)
-export async function getCatalogShowcase(): Promise<CatalogPlan[]> {
-  const { data: mods, error: modErr } = await sb
-    .from("hub_modules")
-    .select("slug")
-    .eq("status", "active")
-    .eq("is_public_for_sale", true);
-  if (modErr) console.error("[getCatalogShowcase] hub_modules:", modErr.message);
+// Modulos visiveis ao lojista (ativos e em breve). Os ocultos nunca chegam aqui.
+export async function getCatalogModules(): Promise<CatalogModule[]> {
+  const { data, error } = await sb.rpc("get_catalog_modules");
+  if (error) {
+    console.error("[getCatalogModules]", error.message);
+    return [];
+  }
+  return (data ?? []) as CatalogModule[];
+}
 
-  const slugs: string[] = (mods ?? []).map((m: any) => m.slug);
+// Planos de venda: apenas modulos ativos e "a venda"
+export async function getCatalogShowcase(): Promise<CatalogPlan[]> {
+  const mods = await getCatalogModules();
+  const slugs = mods.filter((m) => m.status === "active" && m.is_public_for_sale).map((m) => m.slug);
   if (!slugs.length) return [];
 
   const { data, error } = await sb

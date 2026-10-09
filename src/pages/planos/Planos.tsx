@@ -6,7 +6,12 @@ import { useLoja } from "@/contexts/LojaContext";
 import { toast } from "sonner";
 import { PlanCard } from "@/components/planos/PlanCard";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { getCatalogShowcase, type CatalogPlan } from "@/services/plans/getCatalogShowcase";
+import {
+  getCatalogModules,
+  getCatalogShowcase,
+  type CatalogModule,
+  type CatalogPlan,
+} from "@/services/plans/getCatalogShowcase";
 
 type BillingCycle = "monthly" | "semiannual" | "yearly";
 
@@ -27,11 +32,13 @@ export default function Planos() {
   const { storeId } = useLoja();
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<CatalogPlan[]>([]);
+  const [soon, setSoon] = useState<CatalogModule[]>([]);
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
 
   useEffect(() => {
-    getCatalogShowcase().then((list) => {
+    Promise.all([getCatalogShowcase(), getCatalogModules()]).then(([list, mods]) => {
       setPlans(list);
+      setSoon(mods.filter((m) => m.status === "coming_soon"));
       setLoading(false);
     });
   }, []);
@@ -108,6 +115,34 @@ export default function Planos() {
                 onSelect={() => handleSelect(p)}
               />
             ))}
+          </div>
+        )}
+
+        {soon.length > 0 && (
+          <div className="max-w-5xl mx-auto space-y-3">
+            <h2 className="text-center text-xs font-black uppercase tracking-wider text-slate-400">Em breve</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {soon.map((m) => (
+                <div
+                  key={m.slug}
+                  className="flex items-center justify-between gap-3 rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-5"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    {m.logo_url ? (
+                      <img src={m.logo_url} alt={m.name} className="h-9 w-9 shrink-0 rounded-xl bg-white object-contain p-1" />
+                    ) : (
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-sm font-black text-slate-500">
+                        {m.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <p className="truncate text-sm font-black uppercase tracking-tight text-slate-700">{m.name}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-700">
+                    Em breve
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

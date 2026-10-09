@@ -208,6 +208,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
                 <select value={status} onChange={(e) => setStatus(e.target.value)} className={INPUT}>
                   <option value="active">{STATUS_LABEL.active}</option>
                   <option value="coming_soon">{STATUS_LABEL.coming_soon}</option>
+                  <option value="hidden">{STATUS_LABEL.hidden}</option>
                 </select>
               </label>
               <label className="flex items-center gap-2 text-xs text-slate-300">

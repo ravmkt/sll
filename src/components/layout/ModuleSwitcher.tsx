@@ -5,6 +5,7 @@ import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, Radio } from 'lu
 import { useLoja } from '@/contexts/LojaContext';
 import { getActiveSubscriptions } from '@/services/subscriptions/getStoreSubscriptions';
 import { TrialPill } from '@/components/layout/TrialPill';
+import { getCatalogModules, type CatalogModule } from '@/services/plans/getCatalogShowcase';
 
 type Item = { key: string; name: string; category: string; path: string; icon: ElementType; soon?: boolean };
 
@@ -26,6 +27,11 @@ export function ModuleSwitcher() {
   const [open, setOpen] = useState(false);
   const [owned, setOwned] = useState<string[]>(() => (storeId ? cache.get(storeId) ?? [] : []));
   const ref = useRef<HTMLDivElement>(null);
+  const [catalog, setCatalog] = useState<CatalogModule[]>([]);
+
+  useEffect(() => {
+    getCatalogModules().then(setCatalog).catch(() => setCatalog([]));
+  }, []);
 
   useEffect(() => {
     if (!storeId) return;
@@ -54,8 +60,15 @@ export function ModuleSwitcher() {
     [pathname],
   );
   const items = useMemo(
-    () => [HOME, ...SWITCHER_MODULES.filter((m) => owned.includes(m.key) || m.key === current.key)],
-    [owned, current],
+    () => {
+      const st = new Map(catalog.map((c) => [c.slug, c.status] as [string, string]));
+      const list = SWITCHER_MODULES
+        .filter((m) => st.get(m.key) !== 'hidden')
+        .filter((m) => owned.includes(m.key) || m.key === current.key || st.get(m.key) === 'coming_soon')
+        .map((m) => ({ ...m, soon: m.soon || (st.get(m.key) === 'coming_soon' && !owned.includes(m.key)) }));
+      return [HOME, ...list];
+    },
+    [owned, current, catalog],
   );
   const CurrentIcon = current.icon;
 
