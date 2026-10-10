@@ -46,7 +46,7 @@ export async function getActiveSubscriptions(storeId: string): Promise<StoreSubs
   const subs = (data ?? []) as unknown as (Omit<StoreSubscription, "price_cents">)[];
 
   // Busca o preço real por ciclo em plan_prices (evita mostrar preço mensal em plano anual)
-  const planIds = [...new Set(subs.map((s) => s.plan_id))];
+  const planIds = [...new Set(subs.map((s) => s.plan_id).filter((id): id is string => !!id && id !== "null"))];
   const { data: prices } = await supabase
     .from("plan_prices")
     .select("plan_id, billing_cycle, price_cents")
