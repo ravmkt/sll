@@ -220,12 +220,59 @@ Deno.serve(async (req) => {
         .select("id, status, module_key")
         .eq("store_id", store_id)
         .in("module_key", [...blockKeys, "bundle"])
-        .in("status", ["active", "trialing", "past_due", "lifetime"])
+        .in("status", ["active", "past_due", "lifetime"])
         .limit(1)
         .maybeSingle();
       if (dupSub) {
         await release();
         return jsonResponse({ error: "MODULE_ALREADY_SUBSCRIBED", module_key: dupSub.module_key, status: dupSub.status }, 409);
+      }
+    }
+
+    // 4.6 Trial de 7 dias por modulo (1x por loja/modulo, so para quem ja tem plano pago)
+    const TRIAL_DAYS = 7;
+    let trialDays = 0;
+    let existingTrial: { id: string; asaas_subscription_id: string | null; current_period_end: string | null } | null = null;
+
+    if (resolvedModuleKey && resolvedModuleKey !== "bundle") {
+      const { data: hist } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id")
+        .eq("store_id", store_id)
+        .eq("module_key", resolvedModuleKey)
+        .neq("status", "incomplete")
+        .limit(1);
+      const { data: paidSubs } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id")
+        .eq("store_id", store_id)
+        .in("status", ["active", "lifetime", "past_due"])
+        .limit(1);
+      if (!(hist && hist.length > 0) && paidSubs && paidSubs.length > 0) trialDays = TRIAL_DAYS;
+
+      const { data: tr } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id, asaas_subscription_id, current_period_end")
+        .eq("store_id", store_id)
+        .eq("module_key", resolvedModuleKey)
+        .eq("status", "trialing")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      existingTrial = tr ?? null;
+
+      // Trial ativo com fatura no Asaas: devolve a fatura existente em vez de criar outra assinatura
+      if (tr?.asaas_subscription_id && tr.current_period_end && new Date(tr.current_period_end) > new Date()) {
+        let url: string | null = null;
+        try {
+          const pr = await fetch(`${ASAAS_API_URL}/subscriptions/${tr.asaas_subscription_id}/payments`, {
+            headers: { access_token: ASAAS_API_KEY },
+          });
+          const pj = await pr.json();
+          url = pj?.data?.[0]?.invoiceUrl ?? null;
+        } catch (_) { /* melhor esforco */ }
+        await release();
+        return jsonResponse({ error: "TRIAL_ACTIVE", invoice_url: url, trial_ends_at: tr.current_period_end }, 409);
       }
     }
 
@@ -290,7 +337,7 @@ Deno.serve(async (req) => {
 
     // 6. Cria a subscription no Asaas
     const nextDueDate = new Date();
-    nextDueDate.setDate(nextDueDate.getDate() + 1);
+    nextDueDate.setDate(nextDueDate.getDate() + (trialDays || 1));
 
     const subRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
       method: "POST",
@@ -329,6 +376,7 @@ Deno.serve(async (req) => {
     if (billing_cycle === "MONTHLY") periodEnd.setMonth(periodEnd.getMonth() + 1);
     if (billing_cycle === "SEMIANNUAL") periodEnd.setMonth(periodEnd.getMonth() + 6);
     if (billing_cycle === "YEARLY") periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+    if (trialDays > 0) periodEnd.setTime(Date.now() + trialDays * 86400000);
 
     const { data: savedSub, error: dbError } = await supabaseAdmin
       .from("subscriptions")
@@ -339,7 +387,7 @@ Deno.serve(async (req) => {
             combo_kind: dyn?.is_combo ? "fixed" : null,
             module_key: resolvedModuleKey,
         billing_cycle: billing_cycle.toLowerCase(),
-        status: "incomplete",
+        status: trialDays > 0 ? "trialing" : "incomplete",
         current_period_start: new Date().toISOString(),
         current_period_end: periodEnd.toISOString(),
         asaas_customer_id: asaasCustomerId,
@@ -363,7 +411,23 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "DB_ERROR", details: dbError }, 500);
     }
 
-    return jsonResponse({ success: true, subscription: savedSub, invoice_url: invoiceUrl, discount_cents: discountCents });
+    // Substitui o trial anterior (vencido ou manual) pela nova assinatura
+    if (existingTrial) {
+      await supabaseAdmin
+        .from("subscriptions")
+        .update({ status: "canceled", is_current: false, canceled_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq("id", existingTrial.id);
+      if (existingTrial.asaas_subscription_id) {
+        try {
+          await fetch(`${ASAAS_API_URL}/subscriptions/${existingTrial.asaas_subscription_id}`, {
+            method: "DELETE",
+            headers: { access_token: ASAAS_API_KEY },
+          });
+        } catch (_) { /* melhor esforco */ }
+      }
+    }
+
+    return jsonResponse({ success: true, subscription: savedSub, invoice_url: invoiceUrl, discount_cents: discountCents, trial: trialDays > 0, trial_days: trialDays });
   } catch (err) {
     await release();
     return jsonResponse({ error: "UNEXPECTED_ERROR", details: String(err) }, 500);

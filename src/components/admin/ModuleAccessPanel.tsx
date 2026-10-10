@@ -53,7 +53,7 @@ export function ModuleAccessPanel({ storeId }: { storeId: string }) {
     setBusy(m.module_key);
     setMsg(null);
     try {
-      const r = await setModuleAccess(storeId, m.module_key, enable, enable && days ? Number(days) : null);
+      const r = await setModuleAccess(storeId, m.module_key, enable, enable && days ? Number(days.replace('t', '')) : null, enable && days.startsWith('t'));
       if (r.result === 'noop') setMsg({ type: 'info', text: r.message ?? 'Nenhuma alteração.' });
       else setMsg({ type: 'ok', text: enable ? 'Módulo liberado.' : 'Módulo desativado.' });
       await load();
@@ -82,7 +82,7 @@ export function ModuleAccessPanel({ storeId }: { storeId: string }) {
             className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs"
           >
             <option value="">Sem prazo</option>
-            <option value="30">30 dias</option>
+            <option value="t7">Teste de 7 dias</option><option value="t14">Teste de 14 dias</option><option value="30">30 dias</option>
             <option value="90">90 dias</option>
             <option value="365">365 dias</option>
           </select>
@@ -102,7 +102,7 @@ export function ModuleAccessPanel({ storeId }: { storeId: string }) {
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-slate-900">{LABELS[m.module_key]}</span>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATE_STYLE[m.state]}`}>
-                    {STATE_TEXT[m.state]}
+                    {STATE_TEXT[m.state]}{m.status === 'trialing' ? ' (teste)' : ''}
                   </span>
                   {m.ends_at && (
                     <span className="text-xs text-slate-500">

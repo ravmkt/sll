@@ -27,12 +27,14 @@ export async function setModuleAccess(
   moduleKey: ModuleKey,
   enabled: boolean,
   days: number | null = null,
+  asTrial = false,
 ): Promise<ModuleAccessResult> {
   const { data, error } = await (supabase as any).rpc('admin_set_module_access', {
     p_store_id: storeId,
     p_module_key: moduleKey,
     p_enabled: enabled,
     p_days: days,
+    p_as_trial: asTrial,
   });
   if (error) throw new Error(error.message);
   return data as ModuleAccessResult;
