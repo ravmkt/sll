@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, Radio } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { getActiveSubscriptions } from '@/services/subscriptions/getStoreSubscriptions';
-import { TrialPill } from '@/components/layout/TrialPill';
 import { getCatalogModules, type CatalogModule } from '@/services/plans/getCatalogShowcase';
 
 type Item = { key: string; name: string; category: string; path: string; icon: ElementType; soon?: boolean };
@@ -74,7 +73,7 @@ export function ModuleSwitcher() {
 
   return (
     <div className="flex items-center gap-2">
-      <TrialPill />
+      
       <div className="relative shrink-0" ref={ref}>
       <button
         type="button"
