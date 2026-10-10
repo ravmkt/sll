@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, Circle, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { HEX, digits, normalizeUrl, type WizardData } from './shared';
+import { HEX, validateManager, validateStore, type WizardData } from './shared';
 
 const sb: any = supabase;
 const MODULE_NAMES: Record<string, string> = { vidlytics: 'Vidlytics', live_commerce: 'Live Commerce' };
@@ -31,18 +31,17 @@ export function StepSummary({ data, storeId, busy, onFinish }: { data: WizardDat
   }, [storeId]);
 
   const b = data.brand;
-  const storeOk = !!normalizeUrl(data.store_url) && !!data.store_niche && digits(data.manager_whatsapp).length >= 10;
-  const social = Object.values(b.social_links).some((v) => v.trim());
+  const storeOk = !validateStore(data);
+  const managerOk = !validateManager(data);
 
   return (
     <div className="space-y-6">
       <ul className="space-y-3">
         <Row ok={storeOk} label="Dados da loja" hint={storeOk ? `${data.store_url} · ${data.store_niche}` : 'Preencha o passo 1'} />
+        <Row ok={managerOk} label="Gestor e faturamento" hint={managerOk ? data.billing.legal_name : 'Preencha o passo 2'} />
         <Row ok={data.script_verified} label={data.script_verified ? 'Script conectado' : 'Script ainda não verificado'} hint={data.script_verified ? undefined : 'Você pode concluir agora e instalar depois.'} />
         <Row ok={HEX.test(b.primary_color) && HEX.test(b.secondary_color)} label="Cores da marca" />
         <Row ok={!!b.logo_url} label="Logo da loja" hint={b.logo_url ? undefined : 'Opcional, pode enviar depois.'} />
-        <Row ok={social} label="Redes sociais" hint={social ? undefined : 'Opcional.'} />
-        <Row ok={b.benefits.length > 0} label={`Benefícios (${b.benefits.length})`} />
       </ul>
 
       <div>
@@ -63,9 +62,9 @@ export function StepSummary({ data, storeId, busy, onFinish }: { data: WizardDat
       </div>
 
       <button type="button" disabled={busy} onClick={onFinish}
-        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-6 py-3.5 text-sm font-black text-white shadow-lg shadow-[#fd8539]/30 disabled:opacity-50">
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-6 py-3.5 text-sm font-black text-white shadow-lg shadow-[#0094eb]/30 disabled:opacity-50">
         {busy ? <Loader2 size={16} className="animate-spin" /> : null}
-        Finalizar e Entrar no Dashboard <ArrowRight size={16} />
+        Finalizar e acessar o SLL Hub <ArrowRight size={16} />
       </button>
     </div>
   );

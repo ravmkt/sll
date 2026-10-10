@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Plus, Upload, X } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { HEX, INPUT, LABEL, type Brand, type StepProps } from './shared';
 
@@ -8,9 +8,7 @@ export function StepBrand({ data, storeId, onChange }: StepProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [tag, setTag] = useState('');
   const setBrand = (patch: Partial<Brand>) => onChange({ brand: { ...b, ...patch } });
-  const setSocial = (k: keyof Brand['social_links'], v: string) => setBrand({ social_links: { ...b.social_links, [k]: v } });
 
   const upload = async (file: File) => {
     setErr(null);
@@ -23,11 +21,6 @@ export function StepBrand({ data, storeId, onChange }: StepProps) {
     setUploading(false);
     if (error) { setErr(error.message); return; }
     setBrand({ logo_url: supabase.storage.from('videos').getPublicUrl(path).data.publicUrl });
-  };
-  const addTag = () => {
-    const t = tag.trim().slice(0, 40);
-    if (t && b.benefits.length < 8 && !b.benefits.some((x) => x.toLowerCase() === t.toLowerCase())) setBrand({ benefits: [...b.benefits, t] });
-    setTag('');
   };
 
   return (
@@ -61,31 +54,6 @@ export function StepBrand({ data, storeId, onChange }: StepProps) {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div><span className={LABEL}>Instagram</span><input value={b.social_links.instagram} onChange={(e) => setSocial('instagram', e.target.value)} className={INPUT} placeholder="@sualoja" /></div>
-        <div><span className={LABEL}>TikTok</span><input value={b.social_links.tiktok} onChange={(e) => setSocial('tiktok', e.target.value)} className={INPUT} placeholder="@sualoja" /></div>
-        <div><span className={LABEL}>WhatsApp</span><input inputMode="tel" value={b.social_links.whatsapp} onChange={(e) => setSocial('whatsapp', e.target.value.replace(/[^\d+]/g, ''))} className={INPUT} placeholder="5541999999999" /></div>
-      </div>
-
-      <div>
-        <span className={LABEL}>Benefícios da loja</span>
-        <div className="mb-2 flex flex-wrap gap-2">
-          {b.benefits.map((x) => (
-            <span key={x} className="inline-flex items-center gap-1.5 rounded-full bg-[#0094eb]/10 px-3 py-1 text-xs font-semibold text-[#0094eb]">
-              {x}
-              <button type="button" aria-label={`Remover ${x}`} className="cursor-pointer" onClick={() => setBrand({ benefits: b.benefits.filter((y) => y !== x) })}><X size={12} /></button>
-            </span>
-          ))}
-        </div>
-        {b.benefits.length < 8 && (
-          <div className="flex gap-2">
-            <input value={tag} onChange={(e) => setTag(e.target.value)} className={INPUT} placeholder="Ex.: Entrega expressa"
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} />
-            <button type="button" onClick={addTag} className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50"><Plus size={14} /> Adicionar</button>
-          </div>
-        )}
       </div>
     </div>
   );
