@@ -145,7 +145,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
         .from("store_integrations")
         .delete()
         .eq("store_id", storeId)
-        .or(`platform.eq.${provider},provider.eq.${provider}`);
+        .eq("platform", provider);
 
       if (error) throw error;
       await fetchIntegrations();
@@ -157,7 +157,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
   };
 
   const getStatus = (provider: "instagram" | "tiktok") => {
-    return integrations.find((i) => (i.platform === provider || i.provider === provider));
+    return integrations.find((i) => (i.platform === provider));
   };
 
   const igAccount = getStatus("instagram");
