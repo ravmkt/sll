@@ -89,7 +89,11 @@ export default function SocialConnectRow({ storeId, platform, label, logoSrc, pr
     const baseline = item?.updated_at ?? null;
     prepare?.();
     localStorage.setItem('sll_social_popup', String(Date.now()));
-    const w = window.open('', 'sll_social_connect', 'width=520,height=760,left=200,top=60');
+    const pw = 520;
+    const ph = Math.min(760, window.screen.availHeight - 40);
+    const left = Math.round((window.screenX ?? window.screenLeft ?? 0) + (window.outerWidth - pw) / 2);
+    const top = Math.round((window.screenY ?? window.screenTop ?? 0) + (window.outerHeight - ph) / 2);
+    const w = window.open('', 'sll_social_connect', `width=${pw},height=${ph},left=${left},top=${top}`);
     if (!w) { showError('O navegador bloqueou a janela. Permita pop-ups para este site e tente de novo.'); return; }
     popup.current = w;
     setBusy(true);
@@ -115,7 +119,7 @@ export default function SocialConnectRow({ storeId, platform, label, logoSrc, pr
           return;
         }
       } catch { /* tenta de novo */ }
-      if (Date.now() - started > 5 * 60 * 1000) stopWait();
+      if (popup.current?.closed || Date.now() - started > 5 * 60 * 1000) stopWait();
     }, 2000);
   };
 
