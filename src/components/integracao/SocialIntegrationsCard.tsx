@@ -1,3 +1,4 @@
+import { closeSocialPopup } from "@/lib/socialPopup";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -76,7 +77,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
       }).then(({ error }) => {
         if (error) {
           Promise.resolve((error as any)?.context?.json?.()).then((b: any) => alert("Erro ao conectar: " + (b?.error || error.message))).catch(() => alert("Erro ao conectar: " + error.message));
-        } else { const back = sessionStorage.getItem('ig_return'); if (back) { sessionStorage.removeItem('ig_return'); window.location.href = back; } else { fetchIntegrations(); } }
+        } else { if (closeSocialPopup()) return; const back = sessionStorage.getItem('ig_return'); if (back) { sessionStorage.removeItem('ig_return'); window.location.href = back; } else { fetchIntegrations(); } }
       }).catch(err => {
         console.error("Erro fatal:", err);
       }).finally(() => {
@@ -91,6 +92,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
     if (!st) return;
     if (st === "connected") toast.success("TikTok conectado com sucesso!");
     else toast.error(p.get("message") || "Falha ao conectar o TikTok.");
+    closeSocialPopup(st === "connected" ? 1200 : 3500);
     window.history.replaceState({}, document.title, window.location.pathname);
     fetchIntegrations();
   }, [fetchIntegrations]);

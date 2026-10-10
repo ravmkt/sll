@@ -9,8 +9,10 @@ export const ONBOARDING_DONE_EVENT = 'sll:onboarding-completed';
 
 // Redireciona para o wizard enquanto onboarding_completed = false. Falha aberta em caso de erro.
 export function OnboardingGuard() {
-  const { pathname } = useLocation();
-  const guarded = pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/onboarding');
+  const { pathname, search } = useLocation();
+  const qs = new URLSearchParams(search);
+  const oauthReturn = (qs.has('code') && qs.has('state')) || qs.has('tiktok');
+  const guarded = pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/onboarding') && !oauthReturn;
   const [status, setStatus] = useState<'loading' | 'pending' | 'ok'>('loading');
   const done = useRef(false);
 

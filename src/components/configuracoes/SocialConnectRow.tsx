@@ -88,6 +88,7 @@ export default function SocialConnectRow({ storeId, platform, label, logoSrc, pr
     if (!storeId || waiting || busy) return;
     const baseline = item?.updated_at ?? null;
     prepare?.();
+    localStorage.setItem('sll_social_popup', String(Date.now()));
     const w = window.open('', 'sll_social_connect', 'width=520,height=760,left=200,top=60');
     if (!w) { showError('O navegador bloqueou a janela. Permita pop-ups para este site e tente de novo.'); return; }
     popup.current = w;
