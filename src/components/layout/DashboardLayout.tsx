@@ -7,6 +7,7 @@ import { ModuleSwitcher } from './ModuleSwitcher';
 import { MasterButton } from '@/components/admin/MasterButton';
 import MarketingHost from '@/components/marketing/MarketingHost';
 import { useLoja } from '@/contexts/LojaContext';
+import { TrialBanner } from './TrialBanner';
 import { useLocation } from 'react-router-dom';
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -35,6 +36,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           isCollapsed ? 'ml-20' : 'ml-64'
         }`}
       >
+        <TrialBanner />
         <header className="h-16 bg-white dark:bg-[#0f172a] border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-6 sticky top-0 z-20">
           <StoreBrand />
           <div className="flex items-center gap-2"><MasterButton /><ModuleSwitcher /></div>
