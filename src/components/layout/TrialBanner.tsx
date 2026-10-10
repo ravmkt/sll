@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Clock, AlertTriangle, Sparkles, Flame } from 'lucide-react';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
 import { useModuleTrials } from '@/hooks/useModuleTrials';
+import TrialModulesDialog from '@/components/layout/TrialModulesDialog';
 
 const PLANOS_PATH = '/dashboard/planos';
 const BANNER_H = 44;
@@ -12,6 +13,7 @@ export function TrialBanner() {
   const { state, daysLeft, endsAt } = useTrialStatus();
   const { loading, hasPaid, trials } = useModuleTrials();
   const [tick, setTick] = useState(0);
+  const [open, setOpen] = useState(false);
 
   const mod = useMemo(() => {
     const active = trials.filter((t) => !t.expired).sort((a, b) => a.daysLeft - b.daysLeft)[0];
@@ -71,17 +73,18 @@ export function TrialBanner() {
 
   const Icon = expired ? AlertTriangle : last ? Flame : urgent ? Clock : Sparkles;
 
+  const what = trials.length === 1 && label ? ` do ${label}` : '';
   let text: string;
   if (isModule) {
     text = expired
-      ? `O teste do ${label} terminou. Assine o ${label} para voltar a usar.`
+      ? `O teste${what} terminou. Assine para voltar a usar.`
       : last
         ? endsToday
-          ? `Atenção: seu teste do ${label} vence hoje! Assine para não perder o acesso.`
-          : `Atenção: seu teste do ${label} vence amanhã! Assine para não perder o acesso.`
+          ? `Atenção: seu teste${what} vence hoje! Assine para não perder o acesso.`
+          : `Atenção: seu teste${what} vence amanhã! Assine para não perder o acesso.`
         : urgent
-          ? `Faltam 2 dias do seu teste do ${label}! Assine e continue usando.`
-          : `Faltam ${left} dias do seu teste do ${label}. Assine para continuar.`;
+          ? `Faltam 2 dias do seu teste${what}! Assine e continue usando.`
+          : `Faltam ${left} dias do seu teste${what}. Assine para continuar.`;
   } else {
     text = expired
       ? 'Seu período de teste terminou. Assine para continuar usando todas as funções.'
@@ -93,7 +96,6 @@ export function TrialBanner() {
           ? 'Faltam 2 dias do seu teste gratuito! Escolha um plano e continue vendendo mais.'
           : `Você está em período de teste gratuito: faltam ${left} dias. Escolha seu plano.`;
   }
-
   const to = isModule && mod ? `${PLANOS_PATH}?modulo=${mod.moduleKey}` : PLANOS_PATH;
   const cta = expired ? 'Reativar agora' : isModule ? `Assinar ${label}` : 'Escolher plano';
 
@@ -115,12 +117,22 @@ export function TrialBanner() {
       >
         <Icon size={18} className="shrink-0" />
         <p className="text-xs sm:text-sm font-bold truncate">{text}</p>
-        <Link
-          to={to}
-          className="shrink-0 bg-white text-slate-900 text-xs font-extrabold uppercase tracking-wide px-4 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-        >
-          {cta}
-        </Link>
+        {multi ? (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="shrink-0 bg-white text-slate-900 text-xs font-extrabold uppercase tracking-wide px-4 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            {cta}
+          </button>
+        ) : (
+          <Link
+            to={to}
+            className="shrink-0 bg-white text-slate-900 text-xs font-extrabold uppercase tracking-wide px-4 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+          >
+            {cta}
+          </Link>
+        )}
         {expired && (
           <button
             type="button"
@@ -131,6 +143,7 @@ export function TrialBanner() {
           </button>
         )}
       </div>
+      {open && <TrialModulesDialog trials={trials} onClose={() => setOpen(false)} />}
     </>
   );
 }
