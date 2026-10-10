@@ -13,6 +13,7 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
   const { store, loading } = useLoja();
   const location = useLocation();
   const [isSuperDb, setIsSuperDb] = useState<boolean | null>(null);
+  const [hasPaidSub, setHasPaidSub] = useState<boolean | null>(null);
 
   // SuperAdmin validado no banco (public.is_superadmin -> admin_superusers)
   useEffect(() => {
@@ -35,7 +36,36 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
     };
   }, [user?.id]);
 
-  if (loading || isSuperDb === null) {
+    // Assinatura paga (qualquer modulo) mantem o acesso depois do trial
+  useEffect(() => {
+    let alive = true;
+    const sid = store?.id;
+    if (!sid) {
+      setHasPaidSub(false);
+      return;
+    }
+    setHasPaidSub(null);
+    (supabase as any)
+      .from('subscriptions')
+      .select('id')
+      .eq('store_id', sid)
+      .eq('is_current', true)
+      .in('status', ['active', 'lifetime', 'past_due'])
+      .limit(1)
+      .then(
+        ({ data, error }: { data: unknown[] | null; error: unknown }) => {
+          if (alive) setHasPaidSub(!error && !!data && data.length > 0);
+        },
+        () => {
+          if (alive) setHasPaidSub(false);
+        }
+      );
+    return () => {
+      alive = false;
+    };
+  }, [store?.id]);
+
+  if (loading || isSuperDb === null || hasPaidSub === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="w-8 h-8 border-3 border-[#0094eb]/30 border-t-[#0094eb] rounded-full animate-spin" />
@@ -66,7 +96,7 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
     ? new Date(store.trial_ends_at).getTime() > Date.now()
     : status === 'trialing';
 
-  const hasAccess = status === 'active' || status === 'lifetime' || status === 'paid' || isTrialActive;
+  const hasAccess = status === 'active' || status === 'lifetime' || status === 'paid' || hasPaidSub === true || isTrialActive;
 
   if (!hasAccess) {
     return <Navigate to="/planos-bloqueio" state={{ from: location }} replace />;
