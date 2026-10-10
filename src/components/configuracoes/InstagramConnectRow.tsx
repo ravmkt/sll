@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Link2, Loader2, Unlink } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { disconnectIntegration, getSocialIntegration, type SocialIntegration } from '@/services/socialIntegrationsService';
 
-const APP_ID = '1735532341065265';
+const APP_ID = '28436857449312028';
 
 export default function InstagramConnectRow({ storeId }: { storeId: string }) {
   const [ig, setIg] = useState<SocialIntegration | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const timer = useRef<number | null>(null);
 
   const load = useCallback(async () => {
     if (!storeId) return;
@@ -17,13 +18,14 @@ export default function InstagramConnectRow({ storeId }: { storeId: string }) {
   }, [storeId]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => () => { if (timer.current) window.clearInterval(timer.current); }, []);
 
+  // Abre o login do Instagram em popup; esta pagina continua onde esta
   const connect = () => {
     if (!storeId) return;
-    setBusy(true);
     const redirectUri = `${window.location.origin}/dashboard/integracao`;
     sessionStorage.setItem('ig_redirect_uri', redirectUri);
-    sessionStorage.setItem('ig_return', window.location.pathname);
+    sessionStorage.removeItem('ig_return');
     localStorage.setItem('sll_oauth_store_id', storeId);
     const params = new URLSearchParams({
       client_id: APP_ID,
@@ -32,7 +34,36 @@ export default function InstagramConnectRow({ storeId }: { storeId: string }) {
       scope: 'instagram_business_basic',
       state: storeId,
     });
-    window.location.href = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+    const w = window.open(
+      `https://www.instagram.com/oauth/authorize?${params.toString()}`,
+      'ig_connect',
+      'width=520,height=760,left=200,top=60',
+    );
+    if (!w) {
+      showError('O navegador bloqueou a janela. Permita pop-ups para este site e tente de novo.');
+      return;
+    }
+    setBusy(true);
+    if (timer.current) window.clearInterval(timer.current);
+    const started = Date.now();
+    let arrivedAt = 0;
+    timer.current = window.setInterval(async () => {
+      const stop = async () => {
+        if (timer.current) window.clearInterval(timer.current);
+        timer.current = null;
+        try { if (!w.closed) w.close(); } catch { /* ignora */ }
+        await load();
+        setBusy(false);
+      };
+      if (w.closed || Date.now() - started > 5 * 60 * 1000) { await stop(); return; }
+      try {
+        // So le o endereco quando o popup volta para o nosso dominio
+        if (w.location.pathname.startsWith('/dashboard/integracao')) {
+          if (!arrivedAt) arrivedAt = Date.now();
+          if (Date.now() - arrivedAt > 5000) { await stop(); showSuccess('Instagram atualizado.'); }
+        }
+      } catch { /* ainda no dominio do Instagram */ }
+    }, 1000);
   };
 
   const disconnect = async () => {

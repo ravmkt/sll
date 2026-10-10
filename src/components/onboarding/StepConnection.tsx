@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle2, Copy, Loader2, PlayCircle, Plug, Star, XCircle } from 'lucide-react';
+import { CheckCircle2, Copy, ExternalLink, Loader2, PlayCircle, Plug, Star, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getYampiStatus, saveYampiCredentials } from '@/services/yampiService';
 import { registerYampiWebhook } from '@/services/yampiSyncService';
 import { Field } from './Field';
-import { INPUT, LABEL, sllSnippet, type Method, type StepProps } from './shared';
+import { INPUT, LABEL, sllSnippet, youtubeId, type Method, type StepProps } from './shared';
 
 const sb: any = supabase;
-const GTM_VIDEO = (import.meta.env.VITE_ONBOARDING_GTM_VIDEO as string | undefined) || '';
+const GTM_VIDEO = youtubeId((import.meta.env.VITE_ONBOARDING_GTM_VIDEO as string | undefined) || '');
 const GTM_STEPS: [string, string][] = [
-  ['Abra o Google Tag Manager', 'Acesse tagmanager.google.com e entre no contêiner da sua loja.'],
+  ['Abra o Google Tag Manager', 'Use o botão acima (abre em nova aba) e entre no contêiner da sua loja.'],
   ['Crie uma nova Tag', 'No menu Tags, clique em Nova.'],
   ['Escolha o tipo', 'Em Configuração da tag, selecione HTML personalizado.'],
   ['Cole o código', 'Cole o código do SLL (caixa acima) no campo HTML.'],
   ['Defina o acionador', 'Em Acionamento, escolha All Pages (Todas as páginas), dê um nome à tag e salve.'],
-  ['Publique', 'Clique em Enviar e depois em Publicar. Em seguida, use o botão Testar conexão.'],
+  ['Publique', 'Clique em Enviar e depois em Publicar. Em seguida, volte aqui e use o botão Testar conexão.'],
 ];
 
 function YampiBox({ storeId }: { storeId: string }) {
@@ -128,9 +128,16 @@ export function StepConnection({ data, storeId, onChange }: StepProps) {
         {method === 'gtm' && (
           <div className="mt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
             {snippetBox}
+
+            <a href="https://tagmanager.google.com/" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
+              Abrir o Google Tag Manager <ExternalLink size={14} />
+            </a>
+
             {GTM_VIDEO ? (
               <div className="aspect-video overflow-hidden rounded-xl bg-black">
-                <iframe src={`https://www.youtube-nocookie.com/embed/${GTM_VIDEO}`} title="Como instalar pelo GTM" className="h-full w-full" allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
+                <iframe src={`https://www.youtube-nocookie.com/embed/${GTM_VIDEO}?rel=0`} title="Como instalar pelo GTM" className="h-full w-full"
+                  allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
               </div>
             ) : (
               <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-400">
@@ -138,6 +145,7 @@ export function StepConnection({ data, storeId, onChange }: StepProps) {
                 <span className="text-xs font-semibold">Vídeo tutorial em breve</span>
               </div>
             )}
+
             <ol className="space-y-3">
               {GTM_STEPS.map(([title, text], i) => (
                 <li key={title} className="flex gap-3">

@@ -6,19 +6,18 @@ import { ONBOARDING_DONE_EVENT, ONBOARDING_SKIP_KEY } from '@/components/onboard
 import { StepStoreData } from '@/components/onboarding/StepStoreData';
 import { StepManager } from '@/components/onboarding/StepManager';
 import { StepConnection } from '@/components/onboarding/StepConnection';
-import { StepBrand } from '@/components/onboarding/StepBrand';
 import { StepSummary } from '@/components/onboarding/StepSummary';
 import {
-  DEFAULT_BRAND, EMPTY_BILLING, HEX, digits, maskCep, maskDoc, maskPhone, normalizeUrl,
-  validateBrand, validateManager, validateStore, type Billing, type Method, type WizardData,
+  DEFAULT_BRAND, HEX, digits, maskPhone, normalizeUrl,
+  validateManager, validateStore, type Method, type WizardData,
 } from '@/components/onboarding/shared';
 
 const sb: any = supabase;
-const TITLES = ['Dados da loja', 'Gestor e faturamento', 'Conexão do script', 'Identidade da marca', 'Conclusão'];
+const TITLES = ['Dados da loja', 'Dados do gestor', 'Conexão do script', 'Conclusão'];
 const TOTAL = TITLES.length;
 const EMPTY: WizardData = {
   store_url: '', store_niche: '', store_email: '', store_whatsapp: '', manager_name: '', manager_phone: '', manager_email: '',
-  billing: EMPTY_BILLING, connection_method: 'gtm', script_verified: false, brand: DEFAULT_BRAND,
+  connection_method: 'gtm', script_verified: false, brand: DEFAULT_BRAND,
 };
 
 export default function OnboardingPage() {
@@ -39,20 +38,17 @@ export default function OnboardingPage() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth?.user) { navigate('/auth', { replace: true }); return; }
       const { data: r, error: e } = await sb.from('stores')
-        .select('id,onboarding_step,onboarding_completed,store_url,store_niche,store_email,store_whatsapp,manager_whatsapp,manager_name,manager_phone,manager_email,billing_data,connection_method,script_verified,brand_settings')
+        .select('id,onboarding_step,onboarding_completed,store_url,store_niche,store_email,store_whatsapp,manager_whatsapp,manager_name,manager_phone,manager_email,connection_method,script_verified,brand_settings')
         .eq('owner_user_id', auth.user.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
       if (!alive) return;
       if (e || !r) { setFailed(true); return; }
       if (r.onboarding_completed) { navigate('/dashboard', { replace: true }); return; }
       const bs = (r.brand_settings || {}) as Partial<WizardData['brand']>;
-      const bl = (r.billing_data || {}) as Partial<Billing>;
-      const type: 'pf' | 'pj' = bl.person_type === 'pf' ? 'pf' : 'pj';
       const m: Method = r.connection_method === 'manual' ? 'manual' : 'gtm';
       setData({
         store_url: r.store_url ?? '', store_niche: r.store_niche ?? '', store_email: r.store_email ?? '',
         store_whatsapp: maskPhone(r.store_whatsapp ?? r.manager_whatsapp ?? ''),
         manager_name: r.manager_name ?? '', manager_phone: maskPhone(r.manager_phone ?? ''), manager_email: r.manager_email ?? '',
-        billing: { ...EMPTY_BILLING, ...bl, person_type: type, document: maskDoc(bl.document ?? '', type), zip: maskCep(bl.zip ?? '') },
         connection_method: m, script_verified: r.script_verified === true,
         brand: { ...DEFAULT_BRAND, ...bs },
       });
@@ -66,18 +62,16 @@ export default function OnboardingPage() {
   useEffect(() => { topRef.current?.scrollTo({ top: 0 }); }, [step]);
 
   const validate = (s: number): string | null =>
-    s === 1 ? validateStore(data) : s === 2 ? validateManager(data) : s === 4 ? validateBrand(data) : null;
+    s === 1 ? validateStore(data) : s === 2 ? validateManager(data) : null;
 
   const save = async (d: WizardData, to: number, completed = false, silent = false): Promise<boolean> => {
     if (!storeId) return false;
     if (!silent) setBusy(true);
-    const bl = d.billing;
+    // Faturamento nao e enviado: o que ja existe em billing_data fica intacto
     const p_data: Record<string, unknown> = {
       store_url: normalizeUrl(d.store_url) ?? d.store_url.trim(), store_niche: d.store_niche, store_email: d.store_email.trim(),
       store_whatsapp: digits(d.store_whatsapp), manager_name: d.manager_name.trim(), manager_phone: digits(d.manager_phone),
-      manager_email: d.manager_email.trim(),
-      billing_data: { ...bl, document: digits(bl.document), zip: digits(bl.zip), state: bl.state.trim().toUpperCase() },
-      connection_method: d.connection_method,
+      manager_email: d.manager_email.trim(), connection_method: d.connection_method,
     };
     if (HEX.test(d.brand.primary_color) && HEX.test(d.brand.secondary_color)) p_data.brand_settings = d.brand;
     const { error: e } = await sb.rpc('save_onboarding_progress', { p_store_id: storeId, p_step: to, p_completed: completed, p_data });
@@ -86,7 +80,7 @@ export default function OnboardingPage() {
     return true;
   };
 
-  // Salva sozinho enquanto o usuário digita (evita perder dados ao sair para conectar Instagram/TikTok)
+  // Salva sozinho enquanto o usuario digita
   useEffect(() => {
     if (!ready || !dirty.current) return;
     const t = setTimeout(() => { dirty.current = false; save(data, step, false, true); }, 1200);
@@ -105,7 +99,7 @@ export default function OnboardingPage() {
   const back = async () => { setError(null); const to = Math.max(1, step - 1); if (await save(data, to)) setStep(to); };
   const later = async () => { await save(data, step); sessionStorage.setItem(ONBOARDING_SKIP_KEY, '1'); navigate('/dashboard'); };
   const finish = async () => {
-    const msg = validateStore(data) || validateManager(data) || validateBrand(data);
+    const msg = validateStore(data) || validateManager(data);
     if (msg) { setError(msg); return; }
     setError(null);
     if (await save(data, TOTAL, true)) {
@@ -143,8 +137,7 @@ export default function OnboardingPage() {
         {step === 1 && <StepStoreData data={data} storeId={storeId} onChange={onChange} />}
         {step === 2 && <StepManager data={data} storeId={storeId} onChange={onChange} />}
         {step === 3 && <StepConnection data={data} storeId={storeId} onChange={onChange} />}
-        {step === 4 && <StepBrand data={data} storeId={storeId} onChange={onChange} />}
-        {step === 5 && <StepSummary data={data} storeId={storeId} busy={busy} onFinish={finish} />}
+        {step === 4 && <StepSummary data={data} storeId={storeId} busy={busy} onFinish={finish} />}
         {error && <p className="mt-4 rounded-xl bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-700">{error}</p>}
       </main>
 

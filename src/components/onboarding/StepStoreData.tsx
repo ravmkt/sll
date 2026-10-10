@@ -1,17 +1,38 @@
-import { useState } from 'react';
-import { Music2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Music2, Upload } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import InstagramConnectRow from '@/components/configuracoes/InstagramConnectRow';
 import { startTikTokConnect } from '@/services/socialIntegrationsService';
 import { Field } from './Field';
-import { INPUT, LABEL, NICHES, maskPhone, type StepProps } from './shared';
+import { HEX, INPUT, LABEL, NICHES, maskPhone, type Brand, type StepProps } from './shared';
 
 export function StepStoreData({ data, storeId, onChange }: StepProps) {
   const [tt, setTt] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const b = data.brand;
+  const setBrand = (patch: Partial<Brand>) => onChange({ brand: { ...b, ...patch } });
+
+  const upload = async (file: File) => {
+    setErr(null);
+    if (!/^image\/(png|jpe?g|webp|svg\+xml)$/.test(file.type)) { setErr('Use PNG, JPG, WEBP ou SVG.'); return; }
+    if (file.size > 2 * 1024 * 1024) { setErr('A logo deve ter até 2 MB.'); return; }
+    setUploading(true);
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const path = `${storeId}/brand/logo-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('videos').upload(path, file, { contentType: file.type, upsert: true });
+    setUploading(false);
+    if (error) { setErr(error.message); return; }
+    setBrand({ logo_url: supabase.storage.from('videos').getPublicUrl(path).data.publicUrl });
+  };
+
   const connectTikTok = async () => {
     setTt(null);
     try { await startTikTokConnect(storeId); }
     catch (e: any) { setTt(e?.message || 'Não foi possível iniciar a conexão com o TikTok.'); }
   };
+
   return (
     <div className="space-y-5">
       <Field label="URL da loja virtual">
@@ -33,6 +54,37 @@ export function StepStoreData({ data, storeId, onChange }: StepProps) {
       </div>
 
       <div>
+        <span className={LABEL}>Logo da loja</span>
+        <div className="flex items-center gap-4">
+          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50">
+            {b.logo_url ? <img src={b.logo_url} alt="Logo da loja" className="h-full w-full object-contain" /> : <Upload className="h-5 w-5 text-slate-400" />}
+          </div>
+          <div>
+            <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()} className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
+              {uploading ? 'Enviando...' : b.logo_url ? 'Trocar logo' : 'Enviar logo'}
+            </button>
+            <p className="mt-1 text-[11px] text-slate-400">PNG, JPG, WEBP ou SVG, até 2 MB.</p>
+            {err && <p className="mt-1 text-[11px] font-semibold text-rose-600">{err}</p>}
+          </div>
+          <input ref={fileRef} type="file" className="hidden" accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ''; }} />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {(['primary_color', 'secondary_color'] as const).map((k) => (
+          <div key={k}>
+            <span className={LABEL}>{k === 'primary_color' ? 'Cor primária' : 'Cor secundária'}</span>
+            <div className="flex items-center gap-2">
+              <input type="color" aria-label={k} value={HEX.test(b[k]) ? b[k] : '#000000'} onChange={(e) => setBrand({ [k]: e.target.value })}
+                className="h-10 w-12 cursor-pointer rounded-lg border border-slate-200 bg-white p-1" />
+              <input value={b[k]} onChange={(e) => setBrand({ [k]: e.target.value })} className={INPUT} placeholder="#0094eb" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div>
         <span className={LABEL}>Redes sociais (opcional)</span>
         <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
           <InstagramConnectRow storeId={storeId} />
@@ -41,7 +93,6 @@ export function StepStoreData({ data, storeId, onChange }: StepProps) {
             <button type="button" onClick={connectTikTok} className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white">Conectar TikTok</button>
           </div>
           {tt && <p className="text-[11px] font-semibold text-rose-600">{tt}</p>}
-          <p className="text-[11px] text-slate-400">O que você preencheu é salvo automaticamente antes de abrir a conexão.</p>
         </div>
       </div>
     </div>

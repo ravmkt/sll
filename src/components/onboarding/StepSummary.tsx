@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, Circle, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { HEX, validateManager, validateStore, type WizardData } from './shared';
+import { validateManager, validateStore, type WizardData } from './shared';
 
 const sb: any = supabase;
 const MODULE_NAMES: Record<string, string> = { vidlytics: 'Vidlytics', live_commerce: 'Live Commerce' };
@@ -30,7 +30,6 @@ export function StepSummary({ data, storeId, busy, onFinish }: { data: WizardDat
     return () => { alive = false; };
   }, [storeId]);
 
-  const b = data.brand;
   const storeOk = !validateStore(data);
   const managerOk = !validateManager(data);
 
@@ -38,10 +37,9 @@ export function StepSummary({ data, storeId, busy, onFinish }: { data: WizardDat
     <div className="space-y-6">
       <ul className="space-y-3">
         <Row ok={storeOk} label="Dados da loja" hint={storeOk ? `${data.store_url} · ${data.store_niche}` : 'Preencha o passo 1'} />
-        <Row ok={managerOk} label="Gestor e faturamento" hint={managerOk ? data.billing.legal_name : 'Preencha o passo 2'} />
+        <Row ok={!!data.brand.logo_url} label="Logo da loja" hint={data.brand.logo_url ? undefined : 'Opcional, pode enviar depois.'} />
+        <Row ok={managerOk} label="Dados do gestor" hint={managerOk ? data.manager_name : 'Preencha o passo 2'} />
         <Row ok={data.script_verified} label={data.script_verified ? 'Script conectado' : 'Script ainda não verificado'} hint={data.script_verified ? undefined : 'Você pode concluir agora e instalar depois.'} />
-        <Row ok={HEX.test(b.primary_color) && HEX.test(b.secondary_color)} label="Cores da marca" />
-        <Row ok={!!b.logo_url} label="Logo da loja" hint={b.logo_url ? undefined : 'Opcional, pode enviar depois.'} />
       </ul>
 
       <div>
