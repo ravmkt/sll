@@ -104,6 +104,53 @@ Deno.serve(async (req) => {
     result.push({ ...row, canceled: !!upd?.length, coupon_id: s.coupon_id ?? null, coupon_released: couponReleased });
   }
 
+  // Trials vencidos ha mais de 3 dias sem pagamento: encerra a cobranca no Asaas.
+  // A linha continua 'trialing' (vencida): o modulo segue bloqueado pela data.
+  const trialCutoff = new Date(Date.now() - 3 * 86400000).toISOString();
+  const { data: trials } = await admin
+    .from("subscriptions")
+    .select("id, store_id, asaas_subscription_id, coupon_id")
+    .eq("status", "trialing")
+    .not("asaas_subscription_id", "is", null)
+    .lt("current_period_end", trialCutoff)
+    .limit(BATCH);
+
+  for (const t of trials ?? []) {
+    const row: Record<string, unknown> = { subscription: t.id, store: t.store_id, kind: "trial_expired" };
+    const asaasId = String(t.asaas_subscription_id);
+
+    const pay = await asaas(`/subscriptions/${asaasId}/payments?limit=100`);
+    if (!pay.ok && pay.status !== 404) { result.push({ ...row, skipped: "ERRO_CONSULTA_ASAAS", status: pay.status }); continue; }
+    const list: any[] = pay.ok ? (pay.body?.data ?? []) : [];
+    if (list.some((p) => BLOCKING.has(String(p.status)))) { result.push({ ...row, skipped: "PAGAMENTO_NO_ASAAS" }); continue; }
+    const openPayments = list.filter((p) => OPEN.has(String(p.status))).map((p) => String(p.id));
+
+    if (dry_run) { result.push({ ...row, would_cancel: true, open_payments: openPayments.length }); continue; }
+
+    // solta o vinculo antes de apagar, para o webhook SUBSCRIPTION_DELETED nao cancelar a linha
+    const { error: unlinkErr } = await admin
+      .from("subscriptions")
+      .update({ asaas_subscription_id: null, updated_at: new Date().toISOString() })
+      .eq("id", t.id)
+      .eq("status", "trialing");
+    if (unlinkErr) { result.push({ ...row, error: "ERRO_DB", details: unlinkErr.message }); continue; }
+
+    for (const pid of openPayments) await asaas(`/payments/${pid}`, "DELETE");
+    const del = await asaas(`/subscriptions/${asaasId}`, "DELETE");
+    if (!del.ok && del.status !== 404) {
+      await admin.from("subscriptions").update({ asaas_subscription_id: asaasId }).eq("id", t.id);
+      result.push({ ...row, error: "ERRO_CANCELAR_ASAAS", status: del.status });
+      continue;
+    }
+
+    let couponReleased = false;
+    if (t.coupon_id) {
+      const { error: rcErr } = await admin.rpc("release_coupon", { p_coupon_id: t.coupon_id });
+      couponReleased = !rcErr;
+    }
+    result.push({ ...row, canceled_billing: true, coupon_released: couponReleased });
+  }
+
   console.log("cancel-stale-checkouts", JSON.stringify(result));
   return json({ dry_run: !!dry_run, processed: result.length, result });
 });

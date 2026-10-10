@@ -96,7 +96,7 @@ export async function subscribeToPlan(params: {
   planId: string;
   billingCycle: "monthly" | "semiannual" | "yearly";
   moduleKey?: string | null; couponCode?: string | null;
-}): Promise<{ invoiceUrl?: string; error?: string }> {
+}): Promise<{ invoiceUrl?: string; error?: string; trial?: boolean }> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
 
@@ -122,17 +122,17 @@ export async function subscribeToPlan(params: {
   }
 
   if (error || body?.error) {
-    return { error: body?.message || body?.error || "ERRO_DESCONHECIDO" };
+    return { error: body?.message || body?.error || "ERRO_DESCONHECIDO", invoiceUrl: body?.invoice_url };
   }
 
-  return { invoiceUrl: body?.invoice_url };
+  return { invoiceUrl: body?.invoice_url, trial: !!body?.trial };
 }
 export async function subscribeToDynamicPlan(params: {
   storeId: string;
   dynamicPlanId: string;
   billingCycle: "monthly" | "semiannual" | "yearly";
   couponCode?: string | null;
-}): Promise<{ invoiceUrl?: string; error?: string }> {
+}): Promise<{ invoiceUrl?: string; error?: string; trial?: boolean }> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) return { error: "SESSAO_EXPIRADA" };
@@ -154,7 +154,7 @@ export async function subscribeToDynamicPlan(params: {
     } catch (_) {}
   }
   if (error || body?.error) {
-    return { error: body?.message || body?.error || "ERRO_DESCONHECIDO" };
+    return { error: body?.message || body?.error || "ERRO_DESCONHECIDO", invoiceUrl: body?.invoice_url };
   }
-  return { invoiceUrl: body?.invoice_url };
+  return { invoiceUrl: body?.invoice_url, trial: !!body?.trial };
 }

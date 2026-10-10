@@ -18,6 +18,7 @@ const digits = (v: string) => v.replace(/\D/g, '');
 const ERR: Record<string, string> = {
   SESSAO_EXPIRADA: 'Sessão expirada. Faça login novamente.',
   MODULE_ALREADY_SUBSCRIBED: 'Você já possui este módulo ativo na sua loja.',
+  TRIAL_ACTIVE: 'Seu teste deste módulo já está ativo.',
   DB_ERROR: 'Não foi possível registrar a assinatura. Tente novamente.',
   CUPOM_INVALIDO: 'Cupom inválido ou esgotado.',
   CUPOM_VALOR_MINIMO: 'O valor final ficaria abaixo do mínimo de R$ 5,00.',
@@ -123,6 +124,7 @@ export default function Checkout() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [dynamic, setDynamic] = useState(false);
+  const [trialEligible, setTrialEligible] = useState(false);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
 
@@ -152,6 +154,20 @@ export default function Checkout() {
       });
     });
   }, [storeId]);
+
+  const trialModule = plan ? (plan.modules.length === 1 ? plan.modules[0] : moduleKey) : null;
+  useEffect(() => {
+    if (!storeId || !trialModule || trialModule === 'bundle') { setTrialEligible(false); return; }
+    let alive = true;
+    sb.from('subscriptions').select('status,module_key').eq('store_id', storeId).then(({ data }: any) => {
+      if (!alive) return;
+      const rows: any[] = data ?? [];
+      const hadModule = rows.some((r) => r.module_key === trialModule && r.status !== 'incomplete');
+      const hasPaid = rows.some((r) => ['active', 'lifetime', 'past_due'].includes(r.status));
+      setTrialEligible(!hadModule && hasPaid);
+    });
+    return () => { alive = false; };
+  }, [storeId, trialModule]);
 
   const priceCents = plan ? getPriceForCycle(plan.id, cycle, prices, plan.price_cents) : 0;
   const discountCents = useMemo(() => {
@@ -228,7 +244,17 @@ export default function Checkout() {
       : await subscribeToPlan({ storeId, planId: plan.id, billingCycle: cycle, moduleKey, couponCode: applied?.code ?? null });
     if (result.error) {
       setSubmitting(false);
+      if (result.error === 'TRIAL_ACTIVE' && result.invoiceUrl) {
+        toast.info('Seu teste já está ativo. Abrindo a fatura...');
+        window.location.href = result.invoiceUrl;
+        return;
+      }
       toast.error(ERR[result.error] ?? result.error);
+      return;
+    }
+    if (result.trial) {
+      toast.success('Teste de 7 dias ativado! A fatura fica disponível em Minhas Assinaturas.');
+      window.location.assign('/dashboard'); // recarrega para a tarja ler o novo trial
       return;
     }
     if (result.invoiceUrl) {
@@ -323,6 +349,11 @@ export default function Checkout() {
                 <div className="flex justify-between text-sm text-emerald-600"><span>Cupom {applied?.code}</span><span>- {brl(discountCents)}</span></div>
               )}
               <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-black text-slate-900"><span>Total</span><span>{brl(finalCents)}</span></div>
+              {trialEligible && (
+                <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+                  Teste grátis de 7 dias. A primeira cobrança vence em {new Date(Date.now() + 7 * 86400000).toLocaleDateString('pt-BR')}.
+                </p>
+              )}
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-2">
@@ -341,7 +372,7 @@ export default function Checkout() {
 
             <button type="button" disabled={submitting} onClick={submit}
               className="w-full rounded-2xl bg-[#0091ff] py-3 text-sm font-black text-white hover:bg-[#0080e0] disabled:opacity-60">
-              {submitting ? 'Processando...' : 'Ir para o pagamento'}
+              {submitting ? 'Processando...' : trialEligible ? 'Iniciar teste de 7 dias' : 'Ir para o pagamento'}
             </button>
             <p className="text-center text-[11px] text-slate-400">O pagamento é feito no ambiente seguro do Asaas.</p>
           </div>

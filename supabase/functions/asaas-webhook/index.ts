@@ -95,7 +95,8 @@ Deno.serve(async (req: Request) => {
   }
 
   // 2) Atualiza SO a assinatura. 'canceled' e 'lifetime' sao estados finais.
-  if (sub && newSubStatus && sub.status !== newSubStatus && sub.status !== "canceled" && sub.status !== "lifetime") {
+  // Trial vencido sem pagamento nao vira past_due (past_due conta como pago e reabriria o modulo)
+  if (sub && newSubStatus && sub.status !== newSubStatus && sub.status !== "canceled" && sub.status !== "lifetime" && !(sub.status === "trialing" && newSubStatus === "past_due")) {
     const now = new Date().toISOString();
     const patch: Record<string, unknown> = { status: newSubStatus, updated_at: now };
     if (newSubStatus === "canceled") {
