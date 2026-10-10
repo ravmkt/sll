@@ -1,4 +1,3 @@
-import { Music2 } from 'lucide-react';
 import SocialConnectRow from './SocialConnectRow';
 import { getTikTokAuthUrl } from '@/services/socialIntegrationsService';
 
@@ -8,9 +7,8 @@ export default function TikTokConnectRow({ storeId, className }: { storeId: stri
       storeId={storeId}
       platform="tiktok"
       label="TikTok"
+      logoSrc="/assets/platforms/tiktok.png"
       className={className}
-      iconClassName="bg-slate-900"
-      icon={<Music2 className="h-6 w-6" />}
       getAuthUrl={() => getTikTokAuthUrl(storeId)}
     />
   );

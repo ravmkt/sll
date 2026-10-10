@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Link2, Loader2, Unlink } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { disconnectIntegration, getSocialIntegration, type SocialIntegration } from '@/services/socialIntegrationsService';
@@ -7,8 +7,7 @@ interface Props {
   storeId: string;
   platform: 'instagram' | 'tiktok';
   label: string;
-  icon: ReactNode;
-  iconClassName: string;
+  logoSrc: string;
   prepare?: () => void;
   getAuthUrl: () => Promise<string>;
   className?: string;
@@ -16,7 +15,7 @@ interface Props {
 
 const BTN = 'inline-flex h-9 items-center justify-center gap-2 rounded-xl px-4 text-xs font-black uppercase tracking-wider cursor-pointer disabled:opacity-50';
 
-export default function SocialConnectRow({ storeId, platform, label, icon, iconClassName, prepare, getAuthUrl, className }: Props) {
+export default function SocialConnectRow({ storeId, platform, label, logoSrc, prepare, getAuthUrl, className }: Props) {
   const [item, setItem] = useState<SocialIntegration | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -45,7 +44,6 @@ export default function SocialConnectRow({ storeId, platform, label, icon, iconC
     if (!storeId || waiting || busy) return;
     const baseline = item?.updated_at ?? null;
     prepare?.();
-    // O popup abre no clique (evita bloqueio) e recebe a URL em seguida
     const w = window.open('', 'sll_social_connect', 'width=520,height=760,left=200,top=60');
     if (!w) { showError('O navegador bloqueou a janela. Permita pop-ups para este site e tente de novo.'); return; }
     popup.current = w;
@@ -95,22 +93,19 @@ export default function SocialConnectRow({ storeId, platform, label, icon, iconC
 
   return (
     <div className={`flex flex-wrap items-center justify-between gap-4 ${wrapper}`}>
-      <div className="flex items-center gap-3">
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white ${iconClassName}`}>{icon}</div>
-        <div>
-          <p className="text-sm font-black text-slate-900 dark:text-white">{label}</p>
-          {loading ? (
-            <Loader2 size={14} className="animate-spin text-slate-400" />
-          ) : item && !expired ? (
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-600">
-              <CheckCircle2 size={13} /> Conectado{item.account_username ? ` · @${item.account_username}` : ''}
-            </span>
-          ) : expired ? (
-            <span className="text-[11px] font-bold text-rose-600">Sessão expirada · reconecte</span>
-          ) : (
-            <span className="text-[11px] font-bold text-amber-600">Não conectado</span>
-          )}
-        </div>
+      <div className="flex flex-col gap-1">
+        <img src={logoSrc} alt={label} className="h-10 w-36 object-contain object-left" />
+        {loading ? (
+          <Loader2 size={14} className="animate-spin text-slate-400" />
+        ) : item && !expired ? (
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-600">
+            <CheckCircle2 size={13} /> Conectado{item.account_username ? ` · @${item.account_username}` : ''}
+          </span>
+        ) : expired ? (
+          <span className="text-[11px] font-bold text-rose-600">Sessão expirada · reconecte</span>
+        ) : (
+          <span className="text-[11px] font-bold text-amber-600">Não conectado</span>
+        )}
       </div>
 
       {waiting ? (
@@ -128,8 +123,8 @@ export default function SocialConnectRow({ storeId, platform, label, icon, iconC
           </button>
         </div>
       ) : (
-        <button type="button" disabled={busy || loading} onClick={connect} className={`${BTN} bg-[#0094eb] text-white`}>
-          {busy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />} Conectar {label}
+        <button type="button" disabled={busy || loading} onClick={connect} className={`${BTN} min-w-[132px] bg-[#0094eb] text-white`}>
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />} Conectar
         </button>
       )}
     </div>
