@@ -6,6 +6,7 @@ import AboutPage from "@/pages/legal/AboutPage";
 import TermsPage from "@/pages/legal/TermsPage";
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { OnboardingGuard } from '@/components/onboarding/OnboardingGuard';
 import { Toaster } from 'sonner';
 import { useAuth } from './contexts/AuthContext';
 import { LojaProvider } from './contexts/LojaContext';
@@ -33,6 +34,7 @@ const Planos = lazy(() => import('./pages/planos/Planos'));
 const Checkout = lazy(() => import('./pages/checkout/Checkout'));
 const PlanosGatePage = lazy(() => import('./pages/planos/PlanosGatePage'));
 const IntegrationPage = lazy(() => import('./pages/integracao/IntegrationPage'));
+const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
 const InstagramCallback = lazy(() => import('./pages/auth/InstagramCallback'));
 
 function PageLoader() {
@@ -61,7 +63,8 @@ function AppRoutes() {
       {user && <GlobalTrialBanner />}
       {user && <TrialExpiredModal />}
 
-      <><CheckoutIntentWatcher /><Routes>
+      <><CheckoutIntentWatcher /><OnboardingGuard />
+      <Routes>
         <Route path="/sobre" element={<AboutPage />} />
         <Route path="/privacidade" element={<PrivacyPage />} />
         <Route path="/termos" element={<TermsPage />} />
@@ -221,6 +224,7 @@ function AppRoutes() {
         />
 
         <Route path="/vidlytics" element={<VidlyticsLanding />} />
+        <Route path="/dashboard/onboarding" element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes></>
     </Suspense>
