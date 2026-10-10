@@ -72,7 +72,7 @@ function AppRoutes() {
         <Route path="/termos" element={<TermsPage />} />
             <Route path="/exclusao-de-dados" element={<ExclusaoDadosPage />} />
             <Route path="/term" element={<Navigate to="/termos" replace />} />
-        <Route path="/" element={<AuthRedirect />} />
+        <Route path="/" element={user ? <AuthRedirect /> : <VidlyticsLanding />} />
         <Route path="/dashboard/products" element={<Navigate to="/dashboard/produtos" replace />} />
         <Route path="/auth" element={user ? <AuthRedirect /> : <Login />} />
         <Route path="/auth/instagram/callback" element={<InstagramCallback />} />
@@ -227,7 +227,7 @@ function AppRoutes() {
           }
         />
 
-        <Route path="/vidlytics" element={<VidlyticsLanding />} />
+        <Route path="/vidlytics" element={<Navigate to="/" replace />} />
         <Route path="/dashboard/onboarding" element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes></>
