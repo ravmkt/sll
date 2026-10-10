@@ -15,6 +15,50 @@ interface Props {
 
 const BTN = 'inline-flex h-9 items-center justify-center gap-2 rounded-xl px-4 text-xs font-black uppercase tracking-wider cursor-pointer disabled:opacity-50';
 
+// Corta as margens vazias do PNG para que todos os logos tenham o mesmo tamanho visual
+function TrimmedLogo({ src, alt }: { src: string; alt: string }) {
+  const [url, setUrl] = useState(src);
+  useEffect(() => {
+    let alive = true;
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        const ctx = c.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0);
+        const { data, width, height } = ctx.getImageData(0, 0, c.width, c.height);
+        let x0 = width, y0 = height, x1 = -1, y1 = -1;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const i = (y * width + x) * 4;
+            const white = data[i] > 245 && data[i + 1] > 245 && data[i + 2] > 245;
+            if (data[i + 3] > 20 && !white) {
+              if (x < x0) x0 = x;
+              if (x > x1) x1 = x;
+              if (y < y0) y0 = y;
+              if (y > y1) y1 = y;
+            }
+          }
+        }
+        if (x1 < 0) return;
+        const w = x1 - x0 + 1;
+        const h = y1 - y0 + 1;
+        const o = document.createElement('canvas');
+        o.width = w;
+        o.height = h;
+        o.getContext('2d')?.drawImage(c, x0, y0, w, h, 0, 0, w, h);
+        if (alive) setUrl(o.toDataURL('image/png'));
+      } catch { /* mantém o original */ }
+    };
+    img.src = src;
+    return () => { alive = false; };
+  }, [src]);
+  return <img src={url} alt={alt} className="h-10 w-auto max-w-[11rem] object-contain object-left" />;
+}
+
 export default function SocialConnectRow({ storeId, platform, label, logoSrc, prepare, getAuthUrl, className }: Props) {
   const [item, setItem] = useState<SocialIntegration | null>(null);
   const [loading, setLoading] = useState(false);
@@ -93,8 +137,8 @@ export default function SocialConnectRow({ storeId, platform, label, logoSrc, pr
 
   return (
     <div className={`flex flex-wrap items-center justify-between gap-4 ${wrapper}`}>
-      <div className="flex flex-col gap-1">
-        <img src={logoSrc} alt={label} className="h-10 w-36 object-contain object-left" />
+      <div className="flex flex-col items-start gap-1.5">
+        <TrimmedLogo src={logoSrc} alt={label} />
         {loading ? (
           <Loader2 size={14} className="animate-spin text-slate-400" />
         ) : item && !expired ? (
@@ -123,7 +167,7 @@ export default function SocialConnectRow({ storeId, platform, label, logoSrc, pr
           </button>
         </div>
       ) : (
-        <button type="button" disabled={busy || loading} onClick={connect} className={`${BTN} min-w-[132px] bg-[#0094eb] text-white`}>
+        <button type="button" disabled={busy || loading} onClick={connect} className={`${BTN} bg-[#0094eb] text-white`}>
           {busy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />} Conectar
         </button>
       )}

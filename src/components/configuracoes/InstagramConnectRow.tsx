@@ -9,8 +9,8 @@ export default function InstagramConnectRow({ storeId, className }: { storeId: s
       storeId={storeId}
       platform="instagram"
       label="Instagram"
-      logoSrc="/assets/platforms/instagram.png"
       className={className}
+      logoSrc="/assets/platforms/instagram.png"
       prepare={() => {
         sessionStorage.setItem('ig_redirect_uri', redirectUri);
         sessionStorage.removeItem('ig_return');

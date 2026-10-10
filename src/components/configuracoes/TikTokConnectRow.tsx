@@ -7,8 +7,8 @@ export default function TikTokConnectRow({ storeId, className }: { storeId: stri
       storeId={storeId}
       platform="tiktok"
       label="TikTok"
-      logoSrc="/assets/platforms/tiktok.png"
       className={className}
+      logoSrc="/assets/platforms/tiktok.png"
       getAuthUrl={() => getTikTokAuthUrl(storeId)}
     />
   );
