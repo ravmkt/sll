@@ -1,0 +1,86 @@
+== Pasta src\pages\legal
+AboutPage.tsx
+LegalLayout.tsx
+PrivacyPage.tsx
+TermsPage.tsx
+== App.tsx (rotas relacionadas)
+4: import PrivacyPage from "@/pages/legal/PrivacyPage";
+5: import AboutPage from "@/pages/legal/AboutPage";
+6: import TermsPage from "@/pages/legal/TermsPage";
+70: <Route path="/privacidade" element={<PrivacyPage />} />
+71: <Route path="/termos" element={<TermsPage />} />
+== F:\RODRIGO VICENTE\DYAD\sll-hub\src\pages\legal\PrivacyPage.tsx
+1: import LegalLayout, { CONTACT_EMAIL } from "./LegalLayout";
+2: 
+3: const h2 = "text-xl font-semibold mt-8 mb-2";
+4: 
+5: export default function PrivacyPage() {
+6:   return (
+7:     <LegalLayout title="Política de Privacidade">
+8:       <p>
+9:         O SLL Hub, acessível em app.sllhub.com.br, é uma plataforma da RAV Marketing e Treinamento LTDA (CNPJ 62.894.336/0001-00), controladora dos dados nos termos da LGPD, para
+10:         lojistas de e-commerce. Esta política explica quais dados coletamos, para que usamos e como
+11:         você exerce seus direitos, conforme a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018).
+12:       </p>
+13: 
+14:       <h2 className={h2}>1. Dados que coletamos</h2>
+15:       <ul className="list-disc space-y-1 pl-6">
+16:         <li><strong>Conta:</strong> nome, e-mail e foto de perfil, quando você entra com e-mail ou com a conta Google.</li>
+17:         <li><strong>Loja:</strong> nome, URL, catálogo de produtos e configurações informadas por você.</li>
+18:         <li><strong>Conteúdo:</strong> vídeos, stories e mídias que você envia ou importa, inclusive do Instagram quando você autoriza a conexão.</li>
+19:         <li><strong>Uso e métricas:</strong> visualizações, reproduções, cliques e conversões gerados pelos widgets instalados na loja.</li>
+20:         <li><strong>Pagamento:</strong> status da assinatura. Os dados do cartão são tratados pelo processador de pagamentos (Asaas) e não ficam conosco.</li>
+21:       </ul>
+22: 
+23:       <h2 className={h2}>2. Como usamos os dados</h2>
+24:       <ul className="list-disc space-y-1 pl-6">
+25:         <li>Autenticar você e manter sua conta.</li>
+26:         <li>Fornecer os módulos contratados (vídeos interativos, live commerce e analytics).</li>
+27:         <li>Cobrar a assinatura e dar suporte.</li>
+28:         <li>Melhorar o desempenho e a segurança da plataforma.</li>
+29:       </ul>
+30:       <p>Não vendemos dados pessoais.</p>
+31: 
+32:       <h2 className={h2}>3. Login com Google</h2>
+33:       <p>
+34:         Ao entrar com o Google, recebemos apenas seu nome, e-mail e foto de perfil. Usamos essas
+35:         informações somente para criar e identificar sua conta. O uso dessas informações segue a
+36:         Política de Dados de Usuário dos Serviços de API do Google, incluindo os requisitos de uso limitado.
+37:       </p>
+38: 
+39:       <h2 className={h2}>4. Integração com o Instagram</h2>
+40:       <p>
+41:         Quando você conecta sua conta do Instagram, acessamos apenas as mídias que você escolhe
+42:         importar para a sua loja. Você pode desconectar a qualquer momento na tela de Integração.
+43:       </p>
+44: 
+45:       <h2 className={h2}>5. Compartilhamento</h2>
+46:       <p>
+47:         Compartilhamos dados apenas com prestadores necessários à operação: hospedagem e banco de
+48:         dados (Supabase e Vercel), pagamentos (Asaas) e as plataformas que você conecta (Instagram/Meta, Google).
+49:       </p>
+50: 
+51:       <h2 className={h2}>6. Armazenamento e segurança</h2>
+52:       <p>
+53:         Os dados ficam em banco com controle de acesso por loja e criptografia em trânsito. Mantemos
+54:         os dados enquanto sua conta estiver ativa e pelo prazo exigido por lei após o cancelamento.
+55:       </p>
+56: 
+57:       <h2 className={h2}>7. Seus direitos</h2>
+58:       <p>
+59:         Você pode solicitar acesso, correção, portabilidade, anonimização ou exclusão dos seus dados,
+60:         e revogar consentimentos. Escreva para{" "}
+61:         <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+62:       </p>
+63: 
+64:       <h2 className={h2}>8. Cookies e armazenamento local</h2>
+65:       <p>
+66:         Usamos armazenamento local do navegador para manter sua sessão e preferências. Os widgets
+67:         instalados nas lojas registram eventos de uso para gerar as métricas do lojista.
+68:       </p>
+69: 
+70:       <h2 className={h2}>9. Alterações</h2>
+71:       <p>Podemos atualizar esta política. A data da última atualização fica no topo da página.</p>
+72:     </LegalLayout>
+73:   );
+74: }

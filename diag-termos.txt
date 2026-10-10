@@ -1,0 +1,109 @@
+== TermsPage.tsx
+1: import LegalLayout, { CONTACT_EMAIL } from "./LegalLayout";
+2: 
+3: const h2 = "text-xl font-semibold mt-8 mb-2";
+4: 
+5: export default function TermsPage() {
+6:   return (
+7:     <LegalLayout title="Termos de Serviço">
+8:       <p>
+9:         Ao criar uma conta ou usar o SLL Hub, em app.sllhub.com.br, operado pela RAV Marketing e Treinamento LTDA (CNPJ 62.894.336/0001-00), você
+10:         concorda com estes termos.
+11:       </p>
+12: 
+13:       <h2 className={h2}>1. O serviço</h2>
+14:       <p>
+15:         O SLL Hub oferece módulos para lojistas de e-commerce, como vídeos interativos (Vidlytics) e
+16:         live commerce, com widgets instalados na loja via script ou Google Tag Manager, além de
+17:         painéis de métricas.
+18:       </p>
+19: 
+20:       <h2 className={h2}>2. Conta</h2>
+21:       <p>
+22:         Você é responsável pelas informações da conta, pela segurança do acesso e por toda atividade
+23:         feita nela. Informe dados verdadeiros e mantenha-os atualizados.
+24:       </p>
+25: 
+26:       <h2 className={h2}>3. Planos e pagamento</h2>
+27:       <p>
+28:         Os módulos disponíveis dependem do plano contratado. A cobrança é recorrente e feita pelo
+29:         processador de pagamentos. A falta de pagamento pode suspender módulos ou a conta. Você pode
+30:         cancelar a qualquer momento, e o acesso vale até o fim do período já pago.
+31:       </p>
+32: 
+33:       <h2 className={h2}>4. Conteúdo do lojista</h2>
+34:       <p>
+35:         Você mantém a propriedade dos vídeos, imagens e textos que envia e nos autoriza a hospedá-los
+36:         e exibi-los para operar o serviço. Você declara ter os direitos sobre esse conteúdo e se
+37:         responsabiliza por ele, inclusive por material importado de redes sociais.
+38:       </p>
+39: 
+40:       <h2 className={h2}>5. Uso proibido</h2>
+41:       <ul className="list-disc space-y-1 pl-6">
+42:         <li>Publicar conteúdo ilegal, enganoso ou que viole direitos de terceiros.</li>
+43:         <li>Tentar acessar dados de outras lojas ou burlar limites do plano.</li>
+44:         <li>Prejudicar a estabilidade ou a segurança da plataforma.</li>
+45:       </ul>
+46: 
+47:       <h2 className={h2}>6. Disponibilidade</h2>
+48:       <p>
+49:         Buscamos manter o serviço disponível, mas não garantimos funcionamento ininterrupto.
+50:         Manutenções e falhas de terceiros podem causar indisponibilidade.
+51:       </p>
+52: 
+53:       <h2 className={h2}>7. Limitação de responsabilidade</h2>
+54:       <p>
+55:         Na extensão permitida por lei, não respondemos por lucros cessantes ou danos indiretos
+56:         decorrentes do uso do serviço. Os resultados de vendas dependem da operação de cada loja.
+57:       </p>
+58: 
+59:       <h2 className={h2}>8. Privacidade</h2>
+60:       <p>O tratamento de dados pessoais segue nossa Política de Privacidade.</p>
+61: 
+62:       <h2 className={h2}>9. Alterações e contato</h2>
+63:       <p>
+64:         Podemos atualizar estes termos, e o uso contínuo após a mudança indica aceitação. Dúvidas:{" "}
+65:         <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Foro: Curitiba/PR.
+66:       </p>
+67:     </LegalLayout>
+68:   );
+69: }
+== LegalLayout.tsx
+1: import { Link } from "react-router-dom";
+2: import type { ReactNode } from "react";
+3: 
+4: export const CONTACT_EMAIL = "contato@sllhub.com.br";
+5: export const LAST_UPDATE = "05/10/2026";
+6: 
+7: export default function LegalLayout({ title, children }: { title: string; children: ReactNode }) {
+8:   return (
+9:     <div className="min-h-screen bg-background text-foreground">
+10:       <header className="border-b">
+11:         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
+12:           <Link to="/" className="text-lg font-semibold">SLL Hub</Link>
+13:           <nav className="flex gap-4 text-sm text-muted-foreground">
+14:             <Link to="/privacidade" className="hover:underline">Privacidade</Link>
+15:             <Link to="/termos" className="hover:underline">Termos</Link>
+16:           </nav>
+17:         </div>
+18:       </header>
+19:       <main className="mx-auto max-w-3xl space-y-6 px-4 py-10 leading-relaxed">
+20:         <h1 className="text-3xl font-bold">{title}</h1>
+21:         <p className="text-sm text-muted-foreground">Última atualização: {LAST_UPDATE}</p>
+22:         {children}
+23:       </main>
+24:     </div>
+25:   );
+26: }
+== Escopos TikTok / Instagram no codigo
+\supabase\functions\tiktok-oauth-callback\index.ts:58: const grantedScopes: string[] = String(tk.scope ?? "").split(",").map((s: string) => s.trim()).filter(Boolean);
+\supabase\functions\tiktok-oauth-callback\index.ts:60: // 2. perfil, campos conforme os scopes concedidos
+\supabase\functions\tiktok-oauth-callback\index.ts:62: if (grantedScopes.includes("user.info.profile")) fields.push("bio_description", "profile_deep_link", "is_verified", "username");
+\supabase\functions\tiktok-oauth-callback\index.ts:63: if (grantedScopes.includes("user.info.stats")) fields.push("follower_count", "following_count", "likes_count", "video_count");
+\supabase\functions\tiktok-oauth-callback\index.ts:93: scopes: grantedScopes,
+\supabase\functions\tiktok-oauth-start\index.ts:34: const scopes = Deno.env.get("TIKTOK_SCOPES") ?? "user.info.basic,user.info.profile,user.info.stats,video.list";
+\supabase\functions\tiktok-oauth-start\index.ts:40: url.searchParams.set("scope", scopes);
+\src\components\configuracoes\InstagramConnectRow.tsx:24: scope: 'instagram_business_basic',
+\src\components\integracao\SocialIntegrationsCard.tsx:117: params.set("scope", "instagram_business_basic");
+\src\services\socialIntegrationsService.ts:9: scopes: string[];
+\src\services\socialIntegrationsService.ts:24: .select('id, platform, account_username, display_name, avatar_url, scopes, status, profile, updated_at')
