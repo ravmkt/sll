@@ -12,6 +12,7 @@ import { LojaProvider } from './contexts/LojaContext';
 import { OnboardingModal } from './components/OnboardingModal';
 import { CommentAlertModal } from './components/alerts/CommentAlerts';
 import { SubscriptionGate } from './components/auth/SubscriptionGate';
+import { ModuleGate } from './components/auth/ModuleGate';
 import { AdminGuard } from '@/components/admin/AdminGuard';
 import AdminMasterPage from '@/pages/admin/AdminMasterPage';
 
@@ -105,7 +106,7 @@ function AppRoutes() {
           element={
             user ? (
               <SubscriptionGate>
-                <Vidlytics />
+                <ModuleGate moduleKey="vidlytics"><Vidlytics /></ModuleGate>
               </SubscriptionGate>
             ) : (
               <Navigate to="/auth" replace />
@@ -117,7 +118,7 @@ function AppRoutes() {
           element={
             user ? (
               <SubscriptionGate>
-                <LiveCommerce />
+                <ModuleGate moduleKey="live_commerce"><LiveCommerce /></ModuleGate>
               </SubscriptionGate>
             ) : (
               <Navigate to="/auth" replace />
@@ -129,7 +130,7 @@ function AppRoutes() {
           element={
             user ? (
               <SubscriptionGate>
-                <LiveAdminPage />
+                <ModuleGate moduleKey="live_commerce"><LiveAdminPage /></ModuleGate>
               </SubscriptionGate>
             ) : (
               <Navigate to="/auth" replace />

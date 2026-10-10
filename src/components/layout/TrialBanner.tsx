@@ -1,14 +1,25 @@
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, AlertTriangle, Sparkles, Flame } from 'lucide-react';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
+import { useModuleTrials } from '@/hooks/useModuleTrials';
 
 const PLANOS_PATH = '/dashboard/planos';
 const BANNER_H = 44;
 
 export function TrialBanner() {
   const { state, daysLeft, endsAt } = useTrialStatus();
-  const visible = state === 'trial' || state === 'expired';
+  const { loading, hasPaid, trials } = useModuleTrials();
+
+  const mod = useMemo(() => {
+    const active = trials.filter((t) => !t.expired).sort((a, b) => a.daysLeft - b.daysLeft)[0];
+    return active ?? trials[0] ?? null;
+  }, [trials]);
+
+  const storeVisible = !loading && !hasPaid && (state === 'trial' || state === 'expired');
+  const moduleVisible = !loading && !storeVisible && !!mod;
+  const kind: 'store' | 'module' | null = storeVisible ? 'store' : moduleVisible ? 'module' : null;
+  const visible = kind !== null;
 
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -19,10 +30,14 @@ export function TrialBanner() {
 
   if (!visible) return null;
 
-  const expired = state === 'expired';
-  const last = !expired && daysLeft <= 1;
-  const urgent = !expired && !last && daysLeft <= 2;
-  const endsToday = !!endsAt && new Date(endsAt).toDateString() === new Date().toDateString();
+  const isModule = kind === 'module';
+  const expired = isModule ? !!mod?.expired : state === 'expired';
+  const left = isModule ? mod?.daysLeft ?? 0 : daysLeft;
+  const end = isModule ? mod?.endsAt ?? null : endsAt;
+  const label = mod?.label ?? '';
+  const last = !expired && left <= 1;
+  const urgent = !expired && !last && left <= 2;
+  const endsToday = !!end && new Date(end).toDateString() === new Date().toDateString();
 
   const tone = expired
     ? 'bg-red-700'
@@ -34,15 +49,31 @@ export function TrialBanner() {
 
   const Icon = expired ? AlertTriangle : last ? Flame : urgent ? Clock : Sparkles;
 
-  const text = expired
-    ? 'Seu período de teste terminou. Assine para continuar usando todas as funções.'
-    : last
-      ? endsToday
-        ? 'Atenção: seu teste gratuito vence hoje! Escolha um plano para não perder o acesso.'
-        : 'Atenção: seu teste gratuito vence amanhã! Escolha um plano para não perder o acesso.'
-      : urgent
-        ? 'Faltam 2 dias do seu teste gratuito! Escolha um plano e continue vendendo mais.'
-        : `Você está em período de teste gratuito: faltam ${daysLeft} dias. Escolha seu plano.`;
+  let text: string;
+  if (isModule) {
+    text = expired
+      ? `O teste do ${label} terminou. Assine o ${label} para voltar a usar.`
+      : last
+        ? endsToday
+          ? `Atenção: seu teste do ${label} vence hoje! Assine para não perder o acesso.`
+          : `Atenção: seu teste do ${label} vence amanhã! Assine para não perder o acesso.`
+        : urgent
+          ? `Faltam 2 dias do seu teste do ${label}! Assine e continue usando.`
+          : `Faltam ${left} dias do seu teste do ${label}. Assine para continuar.`;
+  } else {
+    text = expired
+      ? 'Seu período de teste terminou. Assine para continuar usando todas as funções.'
+      : last
+        ? endsToday
+          ? 'Atenção: seu teste gratuito vence hoje! Escolha um plano para não perder o acesso.'
+          : 'Atenção: seu teste gratuito vence amanhã! Escolha um plano para não perder o acesso.'
+        : urgent
+          ? 'Faltam 2 dias do seu teste gratuito! Escolha um plano e continue vendendo mais.'
+          : `Você está em período de teste gratuito: faltam ${left} dias. Escolha seu plano.`;
+  }
+
+  const to = isModule && mod ? `${PLANOS_PATH}?modulo=${mod.moduleKey}` : PLANOS_PATH;
+  const cta = expired ? 'Reativar agora' : isModule ? `Assinar ${label}` : 'Escolher plano';
 
   return (
     <>
@@ -54,10 +85,10 @@ export function TrialBanner() {
         <Icon size={18} className="shrink-0" />
         <p className="text-xs sm:text-sm font-bold truncate">{text}</p>
         <Link
-          to={PLANOS_PATH}
+          to={to}
           className="shrink-0 bg-white text-slate-900 text-xs font-extrabold uppercase tracking-wide px-4 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
         >
-          {expired ? 'Reativar agora' : 'Escolher plano'}
+          {cta}
         </Link>
       </div>
     </>
