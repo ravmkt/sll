@@ -7,7 +7,6 @@ import { ModuleSwitcher } from './ModuleSwitcher';
 import { MasterButton } from '@/components/admin/MasterButton';
 import MarketingHost from '@/components/marketing/MarketingHost';
 import { useLoja } from '@/contexts/LojaContext';
-import { TrialBanner } from './TrialBanner';
 import { useLocation } from 'react-router-dom';
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -27,8 +26,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   }, [isDark]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 transition-colors duration-300 flex" style={{ paddingTop: 'var(--trial-h, 0px)' }}>
-      <TrialBanner />
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 transition-colors duration-300 flex">
       <Sidebar isCollapsed={isCollapsed} onToggle={() => setIsCollapsed((v) => !v)} />
 
       {/* Main Content Area */}

@@ -14,6 +14,7 @@ import { CommentAlertModal } from './components/alerts/CommentAlerts';
 import { SubscriptionGate } from './components/auth/SubscriptionGate';
 import { ModuleGate } from './components/auth/ModuleGate';
 import { AdminGuard } from '@/components/admin/AdminGuard';
+import { GlobalTrialBanner } from '@/components/layout/GlobalTrialBanner';
 import AdminMasterPage from '@/pages/admin/AdminMasterPage';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
@@ -56,6 +57,7 @@ function AppRoutes() {
       {/* Modal de Onboarding: só aparece se needsOnboarding for true */}
       {user && <OnboardingModal />}
       {user && <CommentAlertModal />}
+      {user && <GlobalTrialBanner />}
 
       <><CheckoutIntentWatcher /><Routes>
         <Route path="/sobre" element={<AboutPage />} />

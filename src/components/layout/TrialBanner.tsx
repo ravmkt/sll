@@ -77,7 +77,7 @@ export function TrialBanner() {
 
   return (
     <>
-      <style>{`aside{top:var(--trial-h,0px)!important;height:calc(100vh - var(--trial-h,0px))!important}`}</style>
+      <style>{`body{padding-top:var(--trial-h,0px)}.min-h-screen{min-height:calc(100vh - var(--trial-h,0px))!important}aside{top:var(--trial-h,0px)!important;height:calc(100vh - var(--trial-h,0px))!important}`}</style>
       <div
         className={`${tone} text-white fixed top-0 left-0 right-0 z-[60] px-4 sm:px-6 flex items-center justify-center gap-3 sm:gap-5 shadow-md`}
         style={{ height: BANNER_H }}
