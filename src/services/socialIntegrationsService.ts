@@ -33,3 +33,9 @@ export async function disconnectIntegration(integrationId: string): Promise<void
   const { error } = await supabase.from('store_integrations').delete().eq('id', integrationId);
   if (error) throw error;
 }
+
+export async function getTikTokAuthUrl(storeId: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('tiktok-oauth-start', { body: { storeId } });
+  if (error || !data?.url) throw new Error(data?.error || error?.message || 'Não foi possível iniciar a conexão com o TikTok.');
+  return data.url as string;
+}

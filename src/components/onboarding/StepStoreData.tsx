@@ -1,13 +1,12 @@
 import { useRef, useState } from 'react';
-import { Music2, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import InstagramConnectRow from '@/components/configuracoes/InstagramConnectRow';
-import { startTikTokConnect } from '@/services/socialIntegrationsService';
+import TikTokConnectRow from '@/components/configuracoes/TikTokConnectRow';
 import { Field } from './Field';
 import { HEX, INPUT, LABEL, NICHES, maskPhone, type Brand, type StepProps } from './shared';
 
 export function StepStoreData({ data, storeId, onChange }: StepProps) {
-  const [tt, setTt] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -25,12 +24,6 @@ export function StepStoreData({ data, storeId, onChange }: StepProps) {
     setUploading(false);
     if (error) { setErr(error.message); return; }
     setBrand({ logo_url: supabase.storage.from('videos').getPublicUrl(path).data.publicUrl });
-  };
-
-  const connectTikTok = async () => {
-    setTt(null);
-    try { await startTikTokConnect(storeId); }
-    catch (e: any) { setTt(e?.message || 'Não foi possível iniciar a conexão com o TikTok.'); }
   };
 
   return (
@@ -86,13 +79,9 @@ export function StepStoreData({ data, storeId, onChange }: StepProps) {
 
       <div>
         <span className={LABEL}>Redes sociais (opcional)</span>
-        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
-          <InstagramConnectRow storeId={storeId} />
-          <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-800"><Music2 size={16} /> TikTok</div>
-            <button type="button" onClick={connectTikTok} className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white">Conectar TikTok</button>
-          </div>
-          {tt && <p className="text-[11px] font-semibold text-rose-600">{tt}</p>}
+        <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white px-4">
+          <InstagramConnectRow storeId={storeId} className="py-4" />
+          <TikTokConnectRow storeId={storeId} className="py-4" />
         </div>
       </div>
     </div>
