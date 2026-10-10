@@ -15,7 +15,7 @@ import { SubscriptionGate } from './components/auth/SubscriptionGate';
 import { ModuleGate } from './components/auth/ModuleGate';
 import { AdminGuard } from '@/components/admin/AdminGuard';
 import { GlobalTrialBanner } from '@/components/layout/GlobalTrialBanner';
-import VidlyticsTrialExpiredModal from '@/components/layout/VidlyticsTrialExpiredModal';
+import TrialExpiredModal from '@/components/layout/TrialExpiredModal';
 import AdminMasterPage from '@/pages/admin/AdminMasterPage';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
@@ -59,7 +59,7 @@ function AppRoutes() {
       {user && <OnboardingModal />}
       {user && <CommentAlertModal />}
       {user && <GlobalTrialBanner />}
-      {user && <VidlyticsTrialExpiredModal />}
+      {user && <TrialExpiredModal />}
 
       <><CheckoutIntentWatcher /><Routes>
         <Route path="/sobre" element={<AboutPage />} />
