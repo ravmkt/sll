@@ -30,7 +30,7 @@ export function TrialBanner() {
       ? 'bg-gradient-to-r from-red-600 to-rose-500'
       : urgent
         ? 'bg-gradient-to-r from-orange-500 to-amber-500'
-        : 'bg-gradient-to-r from-[#0094eb] to-indigo-500';
+        : 'bg-gradient-to-r from-emerald-600 to-green-500';
 
   const Icon = expired ? AlertTriangle : last ? Flame : urgent ? Clock : Sparkles;
 
