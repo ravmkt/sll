@@ -80,7 +80,6 @@ export function useModuleTrials(): { loading: boolean; hasPaid: boolean; trials:
           error = r2.error;
         }
         if (!alive) return;
-        console.log('[DBG useModuleTrials]', sid, error, JSON.stringify(data));
         const r = error || !data ? { hasPaid: false, trials: [] as ModuleTrial[] } : compute(data as Row[]);
         setRes({ sid, ...r });
       } catch (e) {
