@@ -90,7 +90,7 @@ export default function VidlyticsTrialExpiredModal() {
         <button
           type="button"
           onClick={() => { dismiss(); navigate('/dashboard/planos'); }}
-          className="w-full py-3 rounded-xl bg-[#fd8539] hover:bg-[#e8742a] text-white text-sm font-bold shadow-lg transition-colors cursor-pointer"
+          className="w-full py-3 rounded-xl bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold shadow-lg transition-colors cursor-pointer"
         >
           Ver Planos e Reativar Vídeos
         </button>
