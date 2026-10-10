@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       <ul className="list-disc space-y-1 pl-6">
         <li><strong>Conta:</strong> nome, e-mail e foto de perfil, quando você entra com e-mail ou com a conta Google.</li>
         <li><strong>Loja:</strong> nome, URL, catálogo de produtos e configurações informadas por você.</li>
-        <li><strong>Conteúdo:</strong> vídeos, stories e mídias que você envia ou importa, inclusive do Instagram quando você autoriza a conexão.</li>
+        <li><strong>Conteúdo:</strong> vídeos, stories e mídias que você envia ou importa, inclusive do Instagram e do TikTok quando você autoriza a conexão.</li>
         <li><strong>Uso e métricas:</strong> visualizações, reproduções, cliques e conversões gerados pelos widgets instalados na loja.</li>
         <li><strong>Pagamento:</strong> status da assinatura. Os dados do cartão são tratados pelo processador de pagamentos (Asaas) e não ficam conosco.</li>
       </ul>
@@ -39,13 +39,20 @@ export default function PrivacyPage() {
       <h2 className={h2}>4. Integração com o Instagram</h2>
       <p>
         Quando você conecta sua conta do Instagram, acessamos apenas as mídias que você escolhe
-        importar para a sua loja. Você pode desconectar a qualquer momento na tela de Integração.
+        importar para a sua loja, além do nome de usuário e do identificador da conta. Guardamos o token de acesso para manter a conexão. Você pode desconectar a qualquer momento na tela de Integração.
+      </p>
+
+      <h2 className={h2}>4.1. Integração com o TikTok</h2>
+      <p>
+        Quando você conecta sua conta do TikTok, acessamos apenas seu nome de exibição, sua foto de perfil e os vídeos que você
+        escolhe importar para a sua loja. Guardamos o token de acesso para manter a conexão. Você pode desconectar a qualquer
+        momento na tela de Integração.
       </p>
 
       <h2 className={h2}>5. Compartilhamento</h2>
       <p>
         Compartilhamos dados apenas com prestadores necessários à operação: hospedagem e banco de
-        dados (Supabase e Vercel), pagamentos (Asaas) e as plataformas que você conecta (Instagram/Meta, Google).
+        dados (Supabase e Vercel), pagamentos (Asaas) e as plataformas que você conecta (Instagram/Meta, TikTok, Google).
       </p>
 
       <h2 className={h2}>6. Armazenamento e segurança</h2>
@@ -58,7 +65,8 @@ export default function PrivacyPage() {
       <p>
         Você pode solicitar acesso, correção, portabilidade, anonimização ou exclusão dos seus dados,
         e revogar consentimentos. Escreva para{" "}
-        <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+        <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Para pedir a exclusão dos seus dados, incluindo os das integrações com Instagram e TikTok, veja{" "}
+        <a className="underline" href="/exclusao-de-dados">as instruções de exclusão de dados</a>.
       </p>
 
       <h2 className={h2}>8. Cookies e armazenamento local</h2>

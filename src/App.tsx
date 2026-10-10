@@ -4,6 +4,7 @@ import AuthRedirect from '@/components/auth/AuthRedirect';
 import PrivacyPage from "@/pages/legal/PrivacyPage";
 import AboutPage from "@/pages/legal/AboutPage";
 import TermsPage from "@/pages/legal/TermsPage";
+import ExclusaoDadosPage from "@/pages/legal/ExclusaoDadosPage";
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { OnboardingGuard } from '@/components/onboarding/OnboardingGuard';
@@ -69,6 +70,8 @@ function AppRoutes() {
         <Route path="/sobre" element={<AboutPage />} />
         <Route path="/privacidade" element={<PrivacyPage />} />
         <Route path="/termos" element={<TermsPage />} />
+            <Route path="/exclusao-de-dados" element={<ExclusaoDadosPage />} />
+            <Route path="/term" element={<Navigate to="/termos" replace />} />
         <Route path="/" element={<AuthRedirect />} />
         <Route path="/dashboard/products" element={<Navigate to="/dashboard/produtos" replace />} />
         <Route path="/auth" element={user ? <AuthRedirect /> : <Login />} />
