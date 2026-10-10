@@ -13,7 +13,7 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
   const { store, loading } = useLoja();
   const location = useLocation();
   const [isSuperDb, setIsSuperDb] = useState<boolean | null>(null);
-  const [hasPaidSub, setHasPaidSub] = useState<boolean | null>(null);
+  const [paidCheck, setPaidCheck] = useState<{ sid: string; paid: boolean } | null>(null);
 
   // SuperAdmin validado no banco (public.is_superadmin -> admin_superusers)
   useEffect(() => {
@@ -36,15 +36,11 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
     };
   }, [user?.id]);
 
-    // Assinatura paga (qualquer modulo) mantem o acesso depois do trial
+  // Assinatura paga (qualquer modulo) mantem o acesso depois do trial
+  const sid = store?.id;
   useEffect(() => {
+    if (!sid) return;
     let alive = true;
-    const sid = store?.id;
-    if (!sid) {
-      setHasPaidSub(false);
-      return;
-    }
-    setHasPaidSub(null);
     (supabase as any)
       .from('subscriptions')
       .select('id')
@@ -54,16 +50,19 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
       .limit(1)
       .then(
         ({ data, error }: { data: unknown[] | null; error: unknown }) => {
-          if (alive) setHasPaidSub(!error && !!data && data.length > 0);
+          if (alive) setPaidCheck({ sid, paid: !error && !!data && data.length > 0 });
         },
         () => {
-          if (alive) setHasPaidSub(false);
+          if (alive) setPaidCheck({ sid, paid: false });
         }
       );
     return () => {
       alive = false;
     };
-  }, [store?.id]);
+  }, [sid]);
+
+  // null = ainda consultando (resultado so vale para a loja atual)
+  const hasPaidSub: boolean | null = !sid ? false : paidCheck?.sid === sid ? paidCheck.paid : null;
 
   if (loading || isSuperDb === null || hasPaidSub === null) {
     return (
