@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, AlertTriangle, Sparkles, Flame } from 'lucide-react';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
@@ -6,10 +6,12 @@ import { useModuleTrials } from '@/hooks/useModuleTrials';
 
 const PLANOS_PATH = '/dashboard/planos';
 const BANNER_H = 44;
+const EXPIRED_WINDOW_MS = 72 * 60 * 60 * 1000;
 
 export function TrialBanner() {
   const { state, daysLeft, endsAt } = useTrialStatus();
   const { loading, hasPaid, trials } = useModuleTrials();
+  const [tick, setTick] = useState(0);
 
   const mod = useMemo(() => {
     const active = trials.filter((t) => !t.expired).sort((a, b) => a.daysLeft - b.daysLeft)[0];
@@ -19,7 +21,30 @@ export function TrialBanner() {
   const storeVisible = !loading && !hasPaid && (state === 'trial' || state === 'expired');
   const moduleVisible = !loading && !storeVisible && !!mod;
   const kind: 'store' | 'module' | null = storeVisible ? 'store' : moduleVisible ? 'module' : null;
-  const visible = kind !== null;
+
+  const isModule = kind === 'module';
+  const expired = isModule ? !!mod?.expired : state === 'expired';
+  const end = isModule ? mod?.endsAt ?? null : endsAt;
+  const bannerId =
+    kind && expired ? `sll_trial_banner:${isModule ? mod?.moduleKey : 'store'}:${end ?? 'na'}` : null;
+
+  const expiredHidden = useMemo(() => {
+    if (!bannerId) return false;
+    try {
+      if (localStorage.getItem(`${bannerId}:dismissed`)) return true;
+      let first = Number(localStorage.getItem(`${bannerId}:first`));
+      if (!first) {
+        first = Date.now();
+        localStorage.setItem(`${bannerId}:first`, String(first));
+      }
+      return Date.now() - first > EXPIRED_WINDOW_MS;
+    } catch {
+      return false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bannerId, tick]);
+
+  const visible = kind !== null && !expiredHidden;
 
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -30,10 +55,7 @@ export function TrialBanner() {
 
   if (!visible) return null;
 
-  const isModule = kind === 'module';
-  const expired = isModule ? !!mod?.expired : state === 'expired';
   const left = isModule ? mod?.daysLeft ?? 0 : daysLeft;
-  const end = isModule ? mod?.endsAt ?? null : endsAt;
   const label = mod?.label ?? '';
   const last = !expired && left <= 1;
   const urgent = !expired && !last && left <= 2;
@@ -75,6 +97,15 @@ export function TrialBanner() {
   const to = isModule && mod ? `${PLANOS_PATH}?modulo=${mod.moduleKey}` : PLANOS_PATH;
   const cta = expired ? 'Reativar agora' : isModule ? `Assinar ${label}` : 'Escolher plano';
 
+  const dismiss = () => {
+    try {
+      if (bannerId) localStorage.setItem(`${bannerId}:dismissed`, '1');
+    } catch {
+      /* ignore */
+    }
+    setTick((t) => t + 1);
+  };
+
   return (
     <>
       <style>{`body{padding-top:var(--trial-h,0px)}.min-h-screen{min-height:calc(100vh - var(--trial-h,0px))!important}aside{top:var(--trial-h,0px)!important;height:calc(100vh - var(--trial-h,0px))!important}`}</style>
@@ -90,6 +121,15 @@ export function TrialBanner() {
         >
           {cta}
         </Link>
+        {expired && (
+          <button
+            type="button"
+            onClick={dismiss}
+            className="shrink-0 text-white/90 hover:text-white text-xs font-semibold underline underline-offset-2"
+          >
+            Não, obrigado
+          </button>
+        )}
       </div>
     </>
   );
