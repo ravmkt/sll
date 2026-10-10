@@ -64,21 +64,29 @@ export function useModuleTrials(): { loading: boolean; hasPaid: boolean; trials:
   useEffect(() => {
     if (!sid) return;
     let alive = true;
-    (supabase as any)
-      .from('subscriptions')
-      .select('status,module_key,current_period_end,plans(modules)')
-      .eq('store_id', sid)
-      .in('status', ['active', 'trialing', 'lifetime', 'past_due'])
-      .then(
-        ({ data, error }: { data: Row[] | null; error: unknown }) => {
-          if (!alive) return;
-          const r = error || !data ? { hasPaid: false, trials: [] as ModuleTrial[] } : compute(data);
-          setRes({ sid, ...r });
-        },
-        () => {
-          if (alive) setRes({ sid, hasPaid: false, trials: [] });
+    const q = (cols: string) =>
+      (supabase as any)
+        .from('subscriptions')
+        .select(cols)
+        .eq('store_id', sid)
+        .in('status', ['active', 'trialing', 'lifetime', 'past_due']);
+    (async () => {
+      try {
+        let { data, error } = await q('status,module_key,current_period_end,plans(modules)');
+        if (error || !data) {
+          console.warn('[useModuleTrials] query com plans falhou, tentando sem plans:', error);
+          const r2 = await q('status,module_key,current_period_end');
+          data = r2.data;
+          error = r2.error;
         }
-      );
+        if (!alive) return;
+        const r = error || !data ? { hasPaid: false, trials: [] as ModuleTrial[] } : compute(data as Row[]);
+        setRes({ sid, ...r });
+      } catch (e) {
+        console.error('[useModuleTrials]', e);
+        if (alive) setRes({ sid, hasPaid: false, trials: [] });
+      }
+    })();
     return () => {
       alive = false;
     };
