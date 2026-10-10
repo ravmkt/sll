@@ -97,7 +97,8 @@ export function TrialBanner() {
           : `Você está em período de teste gratuito: faltam ${left} dias. Escolha seu plano.`;
   }
   const to = isModule && mod ? `${PLANOS_PATH}?modulo=${mod.moduleKey}` : PLANOS_PATH;
-  const cta = expired ? 'Reativar agora' : isModule ? `Assinar ${label}` : 'Escolher plano';
+  const cta = expired ? 'Reativar agora' : isModule ? 'Assinar' : 'Escolher plano';
+  const multi = trials.length > 1;
 
   const dismiss = () => {
     try {
@@ -147,3 +148,4 @@ export function TrialBanner() {
     </>
   );
 }
+
