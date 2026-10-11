@@ -1,19 +1,50 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Clock, Copy, DollarSign, GraduationCap, Gift, MousePointerClick, Package, Play, Radio, Eye, Layers, Trophy } from 'lucide-react';
+import { ArrowRight, Check, Clock, Copy, DollarSign, GraduationCap, Gift, MousePointerClick, Package, Play, Radio, Eye, Shirt, Trophy } from 'lucide-react';
 import type { ElementType, ReactNode } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import MarketingBanner from '@/components/marketing/MarketingBanner';
+import DashboardNotice from '@/components/dashboard/DashboardNotice';
 import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
 import DashboardTour from '@/components/dashboard/DashboardTour';
 import { useDashboardData } from '@/components/dashboard/useDashboardData';
 import { useLoja } from '@/contexts/LojaContext';
 import { showSuccess } from '@/utils/toast';
 
-const ROUTES: Record<string, string> = {
-  vidlytics: '/dashboard/modules/vidlytics',
-  live_commerce: '/dashboard/modules/live-commerce',
-};
-const ICONS: Record<string, ElementType> = { vidlytics: Play, live_commerce: Radio };
+interface ModuleCard {
+  slug: string;
+  name: string;
+  icon: ElementType;
+  route?: string;
+  desc: string;
+  bullets: string[];
+  forceSoon?: boolean;
+}
+
+const MODULES: ModuleCard[] = [
+  {
+    slug: 'vidlytics',
+    name: 'Vidlytics',
+    icon: Play,
+    route: '/dashboard/modules/vidlytics',
+    desc: 'Vídeos interativos que vendem dentro da sua loja.',
+    bullets: ['Stories em vídeo no site', 'Vídeos flutuantes e carrossel de reels', 'Botão "Compre no Vídeo" em 1 clique', 'Carregamento leve e assíncrono'],
+  },
+  {
+    slug: 'live_commerce',
+    name: 'Live Commerce',
+    icon: Radio,
+    route: '/dashboard/modules/live-commerce',
+    desc: 'Transmissões ao vivo direto no seu e-commerce.',
+    bullets: ['Lives com produtos vinculados', 'Chat em tempo real', 'Tudo na página da sua loja'],
+  },
+  {
+    slug: 'provador',
+    name: 'Provador Virtual',
+    icon: Shirt,
+    desc: 'Ajude o cliente a escolher o tamanho certo.',
+    bullets: ['Recomendação de tamanho', 'Menos trocas e devoluções'],
+    forceSoon: true,
+  },
+];
 
 const int = (n: number) => (n || 0).toLocaleString('pt-BR');
 const brl = (n: number) => (n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -79,10 +110,8 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Mural de avisos (gerenciado em Master > Marketing) */}
-        <div data-tour="modules">
-          <MarketingBanner storeId={storeId} location="home" onActive={() => {}} />
-        </div>
+        {/* Mural de avisos nativo */}
+        <DashboardNotice />
 
         {/* KPIs */}
         <div data-tour="kpis" className={`grid grid-cols-2 gap-3 xl:grid-cols-4 ${loading ? 'opacity-60' : ''}`}>
@@ -92,80 +121,83 @@ export default function Dashboard() {
           <Kpi label="Vendas assistidas" value={brl(data.revenueMonth)} hint="Atribuídas aos vídeos, neste mês" icon={DollarSign} />
         </div>
 
-        {/* Hub de módulos */}
-        <Section title="Seus módulos">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {data.catalog.map((m) => {
-              const owned = data.owned.includes(m.slug);
-              const route = ROUTES[m.slug];
-              const Icon = ICONS[m.slug] ?? Layers;
-              const trial = data.trialDays[m.slug];
-              const soon = m.status === 'coming_soon';
+        {/* Ecossistema de módulos */}
+        <div data-tour="modules">
+          <Section title="Seus módulos">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {MODULES.map((m) => {
+                const info = data.catalog.find((c) => c.slug === m.slug);
+                const owned = data.owned.includes(m.slug);
+                const soon = !!m.forceSoon || info?.status === 'coming_soon';
+                const trial = data.trialDays[m.slug];
+                const Icon = m.icon;
 
-              if (owned) {
                 return (
-                  <div key={m.slug} className={`${CARD} space-y-4 p-5`}>
+                  <div key={m.slug} className={`${CARD} flex flex-col gap-4 p-5 ${owned ? '' : 'border-dashed'}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]"><Icon className="h-5 w-5" /></div>
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${owned ? 'bg-[#0094eb]/10 text-[#0094eb]' : 'bg-slate-100 text-slate-500'}`}><Icon className="h-5 w-5" /></div>
                         <h3 className="text-base font-black text-slate-900">{m.name}</h3>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">No ar</span>
-                        {trial && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#fd8539]"><Clock className="h-3 w-3" /> Teste: {trial} {trial === 1 ? 'dia' : 'dias'}</span>
+                        {owned ? (
+                          <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">Ativo</span>
+                        ) : soon ? (
+                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">Em breve</span>
+                        ) : (
+                          <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#0094eb]">Módulo disponível</span>
+                        )}
+                        {owned && trial && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500"><Clock className="h-3 w-3" /> Teste: {trial} {trial === 1 ? 'dia' : 'dias'}</span>
                         )}
                       </div>
                     </div>
-                    {m.slug === 'vidlytics' && (
+
+                    <p className="text-xs leading-relaxed text-slate-500">{m.desc}</p>
+
+                    {m.slug === 'vidlytics' && owned && (
                       <div className="grid grid-cols-3 gap-2">
                         <Mini label="Vídeos ativos" value={int(data.activeVideos)} />
                         <Mini label="Views hoje" value={int(data.viewsToday)} />
                         <Mini label="CTR do mês" value={pct(data.ctrMonth)} />
                       </div>
                     )}
-                    {route && (
-                      <button type="button" onClick={() => navigate(route)} className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#007fcc]">
-                        Acessar painel <ArrowRight className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+
+                    <ul className="space-y-1.5">
+                      {m.bullets.map((b) => (
+                        <li key={b} className="flex items-start gap-2 text-xs text-slate-600">
+                          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0094eb]" /> {b}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="mt-auto pt-1">
+                      {soon ? (
+                        <button type="button" disabled className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-4 py-2.5 text-xs font-bold text-slate-500">
+                          Em breve
+                        </button>
+                      ) : owned && m.route ? (
+                        <button type="button" onClick={() => navigate(m.route as string)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#007fcc]">
+                          Acessar painel <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
+                      ) : !owned ? (
+                        <button type="button" onClick={() => navigate(`/dashboard/planos?modulo=${m.slug}`)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#007fcc]">
+                          Ativar {m.name} <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 );
-              }
-
-              return (
-                <div key={m.slug} className={`${CARD} space-y-3 border-dashed p-5`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500"><Icon className="h-5 w-5" /></div>
-                      <h3 className="text-base font-black text-slate-900">{m.name}</h3>
-                    </div>
-                    <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-violet-700">{soon ? 'Em breve' : 'Módulo disponível'}</span>
-                  </div>
-                  <p className="text-xs leading-relaxed text-slate-500">
-                    {m.slug === 'live_commerce'
-                      ? 'Faça transmissões ao vivo direto no seu e-commerce, com produtos vinculados e chat em tempo real.'
-                      : 'Amplie as vendas da sua loja com este módulo do SLL Hub.'}
-                  </p>
-                  <button
-                    type="button"
-                    disabled={soon}
-                    onClick={() => navigate(`/dashboard/planos?modulo=${m.slug}`)}
-                    className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2 text-xs font-bold text-white hover:bg-[#e8742a] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {soon ? 'Em breve' : 'Ver planos'} {!soon && <ArrowRight className="h-3.5 w-3.5" />}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </Section>
+              })}
+            </div>
+          </Section>
+        </div>
 
         {/* Clube + Academy */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <div data-tour="club" className={`${CARD} space-y-4 p-5`}>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fd8539]/10 text-[#fd8539]"><Trophy className="h-5 w-5" /></div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]"><Trophy className="h-5 w-5" /></div>
               <div>
                 <h3 className="text-base font-black text-slate-900">Clube SLL: indique e ganhe todo mês</h3>
                 <p className="text-xs text-slate-500">10% de comissão recorrente enquanto a loja indicada assinar.</p>
@@ -188,7 +220,7 @@ export default function Dashboard() {
                 <Copy className="h-3.5 w-3.5" /> Copiar link
               </button>
             </div>
-            <button type="button" onClick={() => navigate('/dashboard/afiliados')} className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#fd8539] hover:underline">
+            <button type="button" onClick={() => navigate('/dashboard/afiliados')} className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline">
               <Gift className="h-3.5 w-3.5" /> Ver ganhos e metas <ArrowRight className="h-3 w-3" />
             </button>
           </div>
