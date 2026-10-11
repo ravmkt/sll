@@ -13,7 +13,7 @@ import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/compo
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 
-// dash-v10-noah-wide
+// dash-v11-noah-size
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
 
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -305,7 +305,7 @@ export default function Dashboard() {
 
           <div className={`${CARD} flex flex-col gap-3 p-5`}>
             <div className="flex items-center gap-3">
-              <AssetImg src={NOAH_LOGO} alt="Dica do Noah" className="h-10 w-auto max-w-[200px] object-contain" fallback={<h3 className="text-base font-black text-slate-900">Dica do Noah</h3>} />
+              <AssetImg src={NOAH_LOGO} alt="Dica do Noah" className="h-14 w-auto max-w-[280px] object-contain" fallback={<h3 className="text-base font-black text-slate-900">Dica do Noah</h3>} />
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-slate-800">{insight.title}</p>
