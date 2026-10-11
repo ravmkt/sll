@@ -13,7 +13,7 @@ import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/compo
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 
-// dash-v7-kpis-academy
+// dash-v8-links-modulos
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
 
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -26,7 +26,7 @@ const PERIODOS: { key: Periodo; label: string }[] = [
 
 const ICONS: Record<string, ElementType> = { vidlytics: Play, live_commerce: Radio, provador: Shirt };
 const ROUTES: Record<string, string> = { vidlytics: '/dashboard/modules/vidlytics', live_commerce: '/dashboard/modules/live-commerce' };
-const ACADEMY_URL = (import.meta.env.VITE_ACADEMY_CHANNEL_URL as string | undefined) || 'https://www.youtube.com';
+
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -45,9 +45,9 @@ const LEVELS = [
 
 const CLUB_LOGO = '/assets/clube-sll-b.png';
 const NOAH_LOGO = '/assets/noah-b.png';
-const METRICS_ROUTE = '/metricas';
-const PRODUCTS_ROUTE = '/produtos';
-const MODULES_ROUTE = '/modulos';
+const METRICS_ROUTE = '/dashboard/metricas';
+const TIPS_ROUTE = '/dashboard/dicas';
+const PRODUCTS_ROUTE = '/dashboard/produtos';
 
 function AssetImg({ src, alt, className, fallback }: { src: string; alt: string; className: string; fallback: ReactNode }) {
   const [failed, setFailed] = useState(false);
@@ -173,6 +173,10 @@ export default function Dashboard() {
     showSuccess('Link copiado! Compartilhe com seus amigos.');
   };
 
+  const goModules = () => {
+    document.getElementById('meus-modulos')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const onWait = async (slug: string) => {
     if (!storeId) return;
     setBusySlug(slug);
@@ -200,13 +204,6 @@ export default function Dashboard() {
               <p className="text-sm text-slate-700">O que o SLL Hub gerou no período escolhido.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => navigate(METRICS_ROUTE)}
-                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
-              >
-                Ver relatório completo de métricas <ArrowRight className="h-3 w-3" />
-              </button>
               {periodo === 'custom' && (
                 <>
                   <input type="date" value={cs} max={ce} onChange={(e) => setCs(e.target.value)} className={DATE_IN} />
@@ -232,7 +229,7 @@ export default function Dashboard() {
           </div>
 
           <div className={`grid grid-cols-1 gap-3 xl:grid-cols-4 ${loading ? 'opacity-60' : ''}`}>
-            <div className={`${CARD} flex items-center justify-between gap-3 bg-gradient-to-br from-[#0094eb]/5 to-white p-4 xl:col-span-2`}>
+            <div className={`${CARD} flex items-start justify-between gap-3 bg-gradient-to-br from-[#0094eb]/5 to-white p-4 xl:col-span-2`}>
               <div className="min-w-0">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Impacto financeiro total</p>
                 <p className="mt-1 truncate text-3xl font-bold text-emerald-600">{brl(total)}</p>
@@ -254,7 +251,7 @@ export default function Dashboard() {
                   <Kpi label="CTR" value={pct(data.ctrRange)} hint="Cliques ÷ visualizações" icon={Activity} />
                 </>
               ) : (
-                <Kpi label="Módulos" value={int(data.owned.length)} hint="módulos ativos" icon={Layers} onClick={() => navigate(MODULES_ROUTE)} />
+                <Kpi label="Módulos" value={int(data.owned.length)} hint="módulos ativos" icon={Layers} onClick={goModules} />
               )}
             </div>
           </div>
@@ -262,7 +259,7 @@ export default function Dashboard() {
 
         {/* Pulso de hoje + dica */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <div className={`${CARD} space-y-4 p-5`}>
+          <div className={`${CARD} flex flex-col gap-4 p-5`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2.5 w-2.5">
@@ -297,6 +294,13 @@ export default function Dashboard() {
               </p>
             ) : null}
             <p className="text-sm text-slate-700">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
+            <button
+              type="button"
+              onClick={() => navigate(METRICS_ROUTE)}
+              className="mt-auto inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
+            >
+              Ver relatório completo de métricas <ArrowRight className="h-3 w-3" />
+            </button>
           </div>
 
           <div className={`${CARD} flex flex-col gap-3 p-5`}>
@@ -312,8 +316,8 @@ export default function Dashboard() {
             </div>
             <button
               type="button"
-              onClick={() => window.open(ACADEMY_URL, '_blank', 'noopener')}
-              className="inline-flex w-fit cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+              onClick={() => navigate(TIPS_ROUTE)}
+              className="inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
             >
               Ver mais dicas e insights <ArrowRight className="h-3 w-3" />
             </button>
@@ -321,7 +325,7 @@ export default function Dashboard() {
         </div>
 
         {/* Modulos vindos do Master */}
-        <div data-tour="modules">
+        <div id="meus-modulos" data-tour="modules" className="scroll-mt-24">
           <Section title="Seus módulos">
             {visibleMods.length === 0 && !loading && (
               <p className="text-sm text-slate-500">Nenhum módulo disponível no momento.</p>
@@ -341,14 +345,16 @@ export default function Dashboard() {
                 return (
                   <div key={m.slug} className={`${CARD} flex w-[85%] shrink-0 snap-center flex-col gap-4 p-5 md:w-auto ${owned ? '' : 'border-dashed'}`}>
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#0094eb]/15 to-[#0094eb]/5 ring-1 ring-[#0094eb]/15">
-                          {m.logo_url
-                            ? <img src={m.logo_url} alt={m.name} className="h-11 w-11 object-contain" />
-                            : <Icon className="h-6 w-6 text-[#0094eb]" />}
+                      {m.logo_url ? (
+                        <img src={m.logo_url} alt={m.name} className="h-20 w-auto max-w-[65%] object-contain object-left" />
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0094eb]/15 to-[#0094eb]/5 ring-1 ring-[#0094eb]/15">
+                            <Icon className="h-9 w-9 text-[#0094eb]" />
+                          </div>
+                          <h3 className="text-lg font-black text-slate-900">{m.name}</h3>
                         </div>
-                        <h3 className="text-lg font-black text-slate-900">{m.name}</h3>
-                      </div>
+                      )}
                       <div className="flex flex-col items-end gap-1">
                         {maint ? (
                           <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-amber-700">Em manutenção</span>
@@ -398,7 +404,7 @@ export default function Dashboard() {
                         </button>
                       ) : owned ? (
                         route ? (
-                          <button type="button" onClick={() => navigate(route)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#007fcc]">
+                          <button type="button" onClick={() => navigate(route)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700">
                             Acessar painel <ArrowRight className="h-3.5 w-3.5" />
                           </button>
                         ) : null
@@ -468,7 +474,7 @@ export default function Dashboard() {
                 <Copy className="h-3.5 w-3.5" /> Copiar link
               </button>
             </div>
-            <button type="button" onClick={() => navigate('/dashboard/afiliados')} className="mt-auto inline-flex w-fit cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline">
+            <button type="button" onClick={() => navigate('/dashboard/afiliados')} className="mt-auto inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline">
               <Gift className="h-3.5 w-3.5" /> Ver ganhos e metas <ArrowRight className="h-3 w-3" />
             </button>
           </div>

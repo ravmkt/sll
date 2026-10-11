@@ -120,7 +120,7 @@ export default function VidlyticsAcademy() {
         href={SUBSCRIBE_URL}
         target="_blank"
         rel="noreferrer"
-        className="mt-auto inline-flex w-fit items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+        className="mt-auto inline-flex items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
       >
         <Play className="h-3.5 w-3.5" /> Assistir e se inscrever <ArrowRight className="h-3 w-3" />
       </a>
