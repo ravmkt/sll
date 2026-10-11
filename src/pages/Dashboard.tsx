@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import type { ElementType, ReactNode } from 'react';
+import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Activity, ArrowRight, Check, Clock, Copy, DollarSign, Eye, Gift,
-  Layers, MousePointerClick, Package, Play, Radio, Shirt, Sparkles, Users,
+  Layers, MousePointerClick, Package, Play, Radio, Shirt, Sparkles,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import DashboardNotice from '@/components/dashboard/DashboardNotice';
@@ -13,7 +13,7 @@ import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/compo
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 
-// dash-v6-alinhamento
+// dash-v7-kpis-academy
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
 
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -46,6 +46,8 @@ const LEVELS = [
 const CLUB_LOGO = '/assets/clube-sll-b.png';
 const NOAH_LOGO = '/assets/noah-b.png';
 const METRICS_ROUTE = '/metricas';
+const PRODUCTS_ROUTE = '/produtos';
+const MODULES_ROUTE = '/modulos';
 
 function AssetImg({ src, alt, className, fallback }: { src: string; alt: string; className: string; fallback: ReactNode }) {
   const [failed, setFailed] = useState(false);
@@ -56,9 +58,14 @@ function AssetImg({ src, alt, className, fallback }: { src: string; alt: string;
 const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md';
 const DATE_IN = 'h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#0094eb]';
 
-function Kpi({ label, value, hint, icon: Icon }: { label: string; value: string; hint: string; icon: ElementType }) {
+function Kpi({ label, value, hint, icon: Icon, onClick }: { label: string; value: string; hint: string; icon: ElementType; onClick?: () => void }) {
   return (
-    <div className={`${CARD} flex items-start justify-between gap-3 p-4`}>
+    <div
+      {...(onClick
+        ? { role: 'button', tabIndex: 0, onClick, onKeyDown: (e: KeyboardEvent) => { if (e.key === 'Enter') onClick(); } }
+        : {})}
+      className={`${CARD} flex items-start justify-between gap-3 p-4 ${onClick ? 'cursor-pointer hover:border-[#0094eb]/40' : ''}`}
+    >
       <div className="min-w-0">
         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
         <p className="mt-1 truncate text-3xl font-bold text-slate-900">{value}</p>
@@ -157,6 +164,8 @@ export default function Dashboard() {
   const hasVid = data.owned.includes('vidlytics');
   const total = data.assistedRevenue + data.clubCommission;
   const insight = buildInsight(data, hasVid);
+  const visibleMods = data.modules.filter((m) => m.status !== 'hidden');
+  const modCols = visibleMods.length <= 1 ? 'md:grid-cols-1' : visibleMods.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
 
   const copy = () => {
     if (!referralLink) return;
@@ -226,7 +235,7 @@ export default function Dashboard() {
             <div className={`${CARD} flex items-center justify-between gap-3 bg-gradient-to-br from-[#0094eb]/5 to-white p-4 xl:col-span-2`}>
               <div className="min-w-0">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Impacto financeiro total</p>
-                <p className="mt-1 truncate text-3xl font-bold text-slate-900">{brl(total)}</p>
+                <p className="mt-1 truncate text-3xl font-bold text-emerald-600">{brl(total)}</p>
                 <p className="mt-0.5 text-sm text-slate-700">
                   {brl(data.assistedRevenue)} em vendas na loja + {brl(data.clubCommission)} em comissões do Clube
                 </p>
@@ -237,17 +246,15 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 xl:col-span-2">
-              <Kpi label="Produtos sincronizados" value={int(data.products)} hint="SKUs ativos na loja" icon={Package} />
+              <Kpi label="Produtos sincronizados" value={int(data.products)} hint="SKUs ativos na loja" icon={Package} onClick={() => navigate(PRODUCTS_ROUTE)} />
               {hasVid ? (
                 <>
                   <Kpi label="Visualizações" value={int(data.viewsRange)} hint="Vídeos no período" icon={Eye} />
                   <Kpi label="Cliques nos widgets" value={int(data.clicksRange)} hint="Produto e WhatsApp" icon={MousePointerClick} />
                   <Kpi label="CTR" value={pct(data.ctrRange)} hint="Cliques ÷ visualizações" icon={Activity} />
                 </>
-              ) : noModule ? (
-                <Kpi label="Módulos ativos" value={int(data.owned.length)} hint="Ative em Planos" icon={Layers} />
               ) : (
-                <Kpi label="Lojas indicadas" value={int(data.referred)} hint="No Clube SLL" icon={Users} />
+                <Kpi label="Módulos" value={int(data.owned.length)} hint="módulos ativos" icon={Layers} onClick={() => navigate(MODULES_ROUTE)} />
               )}
             </div>
           </div>
@@ -316,11 +323,11 @@ export default function Dashboard() {
         {/* Modulos vindos do Master */}
         <div data-tour="modules">
           <Section title="Seus módulos">
-            {data.modules.length === 0 && !loading && (
+            {visibleMods.length === 0 && !loading && (
               <p className="text-sm text-slate-500">Nenhum módulo disponível no momento.</p>
             )}
-            <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-3">
-              {data.modules.map((m) => {
+            <div className={`-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 md:mx-0 md:grid ${modCols} md:overflow-visible md:px-0 md:pb-0`}>
+              {visibleMods.map((m) => {
                 const owned = data.owned.includes(m.slug);
                 if (m.status === 'hidden') return null;
 
@@ -421,9 +428,9 @@ export default function Dashboard() {
 
         {/* Clube + Academy */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <div data-tour="club" className={`${CARD} space-y-4 p-5`}>
+          <div data-tour="club" className={`${CARD} flex flex-col gap-4 p-5`}>
             <div className="flex flex-col items-start gap-2">
-              <AssetImg src={CLUB_LOGO} alt="Clube SLL" className="h-12 w-auto max-w-[200px] shrink-0 object-contain" fallback={<span className="text-base font-black text-slate-900">Clube SLL</span>} />
+              <AssetImg src={CLUB_LOGO} alt="Clube SLL" className="h-10 w-auto max-w-[200px] shrink-0 object-contain" fallback={<span className="text-base font-black text-slate-900">Clube SLL</span>} />
               <p className="text-sm font-medium text-slate-700">Indique lojas, suba de nível e conquiste benefícios exclusivos.</p>
             </div>
             <div className="space-y-2 rounded-xl bg-slate-50 p-4">
@@ -461,7 +468,7 @@ export default function Dashboard() {
                 <Copy className="h-3.5 w-3.5" /> Copiar link
               </button>
             </div>
-            <button type="button" onClick={() => navigate('/dashboard/afiliados')} className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline">
+            <button type="button" onClick={() => navigate('/dashboard/afiliados')} className="mt-auto inline-flex w-fit cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline">
               <Gift className="h-3.5 w-3.5" /> Ver ganhos e metas <ArrowRight className="h-3 w-3" />
             </button>
           </div>
