@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
 const STEPS = [
-  { sel: '[data-tour="modules"]', title: 'Seu ecossistema de vendas', text: 'Aqui você acessa seus módulos e acompanha os avisos importantes.' },
-  { sel: '[data-tour="kpis"]', title: 'Seus números em tempo real', text: 'Veja quantas pessoas interagem com seus vídeos e quanto isso gerou de venda.' },
-  { sel: '[data-tour="club"]', title: 'Aprenda e ganhe benefícios', text: 'Assista às aulas de operação e indique colegas para receber comissão todo mês.' },
+  { sel: '[data-tour="kpis"]', title: 'Quanto o SLL Hub colocou no seu bolso', text: 'Aqui você vê as vendas assistidas pelos módulos e as comissões do Clube SLL, no período que escolher.' },
+  { sel: '[data-tour="modules"]', title: 'Seus módulos e atalhos', text: 'Os módulos ativos viram atalhos com números rápidos. Clique em Acessar painel para configurar cada um.' },
+  { sel: '[data-tour="club"]', title: 'Clube SLL: indique e ganhe', text: 'Compartilhe seu link. Cada loja indicada que assinar te paga 10% todo mês, em saldo para saque via PIX.' },
 ];
 
 const keyOf = (storeId: string) => `sll_dash_tour:${storeId}`;

@@ -1,32 +1,49 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Radio, X } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
+import { fetchActive, track, type ActiveItem } from '@/services/marketingPublic';
 
-// Para trocar o aviso: altere o id (reaparece para todos) e os textos.
-const NOTICE = {
-  id: 'live-commerce-2026-10',
-  badge: 'NOVO',
-  title: 'Conheça o Live Commerce do SLL Hub',
-  text: 'Transmita ao vivo direto na sua loja, com produtos vinculados e chat em tempo real.',
-  cta: 'Ver como funciona',
-  to: '/dashboard/planos?modulo=live_commerce',
+const keyOf = (id: string) => `banner_dismissed_${id}`;
+const dismissed = (id: string) => {
+  try { return localStorage.getItem(keyOf(id)) === '1'; } catch { return false; }
 };
 
-export default function DashboardNotice() {
+// Banner da Home gerenciado em Master > Marketing > Banners (local "Home do SLL" ou "Todos")
+export default function DashboardNotice({ storeId }: { storeId: string | null | undefined }) {
   const navigate = useNavigate();
-  const key = `sll_notice_dismissed:${NOTICE.id}`;
-  const [hidden, setHidden] = useState(true);
+  const [item, setItem] = useState<ActiveItem | null>(null);
+  const counted = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    try { setHidden(localStorage.getItem(key) === '1'); } catch { setHidden(false); }
-  }, [key]);
+    if (!storeId) return;
+    let alive = true;
+    fetchActive(storeId, 'home').then((list) => {
+      if (!alive) return;
+      const next = list.find((i) => i.kind === 'banner' && !dismissed(i.id)) ?? null;
+      setItem(next);
+    });
+    return () => { alive = false; };
+  }, [storeId]);
+
+  useEffect(() => {
+    if (!item || !storeId || counted.current.has(item.id)) return;
+    counted.current.add(item.id);
+    track(item.id, storeId, 'impression');
+  }, [item, storeId]);
+
+  if (!item) return null;
 
   const close = () => {
-    try { localStorage.setItem(key, '1'); } catch { /* ignora */ }
-    setHidden(true);
+    if (storeId) track(item.id, storeId, 'close');
+    try { localStorage.setItem(keyOf(item.id), '1'); } catch { /* ignora */ }
+    setItem(null);
   };
-
-  if (hidden) return null;
+  const go = () => {
+    if (storeId) track(item.id, storeId, 'click');
+    if (!item.cta_url) return;
+    if (/^https?:\/\//i.test(item.cta_url)) window.open(item.cta_url, '_blank', 'noopener');
+    else navigate(item.cta_url);
+  };
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-[#0b3a5c] p-6 shadow-sm">
@@ -40,23 +57,26 @@ export default function DashboardNotice() {
       </button>
       <div className="flex items-center justify-between gap-6">
         <div className="min-w-0 max-w-xl space-y-3 pr-6">
-          <span className="inline-block rounded-full bg-[#0094eb] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">{NOTICE.badge}</span>
-          <h2 className="text-xl font-black leading-tight text-white">{NOTICE.title}</h2>
-          <p className="text-sm leading-relaxed text-slate-300">{NOTICE.text}</p>
-          <button
-            type="button"
-            onClick={() => navigate(NOTICE.to)}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#007fcc]"
-          >
-            {NOTICE.cta} <ArrowRight className="h-3.5 w-3.5" />
-          </button>
+          {item.coupon_code && (
+            <span className="inline-block rounded-full border border-dashed border-[#fd8539] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#fd8539]">
+              Cupom {item.coupon_code}
+            </span>
+          )}
+          <h2 className="text-xl font-black leading-tight text-white">{item.title}</h2>
+          {item.body && <p className="text-sm leading-relaxed text-slate-300">{item.body}</p>}
+          {item.cta_url && (
+            <button
+              type="button"
+              onClick={go}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#007fcc]"
+            >
+              {item.cta_label || 'Saiba mais'} <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
-        <div className="hidden shrink-0 sm:block">
-          <div className="relative flex h-28 w-28 items-center justify-center rounded-3xl border border-white/10 bg-white/5">
-            <Radio className="h-12 w-12 text-[#0094eb]" />
-            <span className="absolute -bottom-2 rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">Ao vivo</span>
-          </div>
-        </div>
+        {item.image_url && (
+          <img src={item.image_url} alt="" className="hidden h-28 w-auto max-w-[220px] shrink-0 rounded-2xl object-cover sm:block" />
+        )}
       </div>
     </div>
   );
