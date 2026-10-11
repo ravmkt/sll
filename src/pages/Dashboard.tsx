@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Activity, ArrowRight, Check, Clock, Copy, DollarSign, Eye, GraduationCap, Gift, Lightbulb,
-  MousePointerClick, Package, Play, Radio, Shirt, Trophy, Users,
+  Activity, ArrowRight, Check, Clock, Copy, DollarSign, Eye, Gift,
+  MousePointerClick, Package, Play, Radio, Shirt, Sparkles, Users,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import DashboardNotice from '@/components/dashboard/DashboardNotice';
@@ -13,7 +13,7 @@ import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/compo
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 
-// dash-v2-master
+// dash-v3-sol
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
 
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -35,12 +35,24 @@ const int = (n: number) => (n || 0).toLocaleString('pt-BR');
 const brl = (n: number) => (n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const pct = (n: number) => `${(n || 0).toFixed(1).replace('.', ',')}%`;
 
-const TIERS = [
-  { n: 100, name: 'Platinum' },
-  { n: 50, name: 'Diamante' },
-  { n: 25, name: 'Ouro' },
+const LEVELS = [
+  { n: 0, name: 'Bronze' },
   { n: 10, name: 'Prata' },
+  { n: 25, name: 'Ouro' },
+  { n: 50, name: 'Diamante' },
+  { n: 100, name: 'Platinum' },
 ];
+
+const CLUB_LOGO = '/assets/clube-sll-b.png';
+const ACADEMY_LOGO = '/assets/sll-academy-b.png';
+const SOL_LOGO = '/assets/sol-b.png';
+const METRICS_ROUTE = '/metricas';
+
+function AssetImg({ src, alt, className, fallback }: { src: string; alt: string; className: string; fallback: ReactNode }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <>{fallback}</>;
+  return <img src={src} alt={alt} className={className} onError={() => setFailed(true)} />;
+}
 
 const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md';
 const DATE_IN = 'h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#0094eb]';
@@ -137,8 +149,11 @@ export default function Dashboard() {
   const pulse = usePulse(storeId);
 
   const referralLink = store?.referral_code ? `${window.location.origin}/?ref=${store.referral_code}` : '';
-  const tier = TIERS.find((t) => data.referred >= t.n);
-  const next = [...TIERS].reverse().find((t) => data.referred < t.n);
+  const lvIdx = LEVELS.reduce((acc, l, i) => (data.referred >= l.n ? i : acc), 0);
+  const cur = LEVELS[lvIdx];
+  const nxt = LEVELS[lvIdx + 1] ?? null;
+  const clubPct = nxt ? Math.min(100, Math.round(((data.referred - cur.n) / (nxt.n - cur.n)) * 100)) : 100;
+  const noModule = !loading && data.owned.length === 0;
   const hasVid = data.owned.includes('vidlytics');
   const total = data.assistedRevenue + data.clubCommission;
   const insight = buildInsight(data, hasVid);
@@ -176,6 +191,13 @@ export default function Dashboard() {
               <p className="text-xs text-slate-500">O que o SLL Hub gerou no período escolhido.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate(METRICS_ROUTE)}
+                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+              >
+                Ver relatório completo de métricas <ArrowRight className="h-3 w-3" />
+              </button>
               {periodo === 'custom' && (
                 <>
                   <input type="date" value={cs} max={ce} onChange={(e) => setCs(e.target.value)} className={DATE_IN} />
@@ -201,14 +223,14 @@ export default function Dashboard() {
           </div>
 
           <div className={`grid grid-cols-1 gap-3 xl:grid-cols-4 ${loading ? 'opacity-60' : ''}`}>
-            <div className={`${CARD} flex flex-col justify-between bg-gradient-to-br from-[#0094eb]/5 to-white p-6 xl:col-span-2`}>
+            <div className={`${CARD} flex flex-col justify-center gap-1 bg-gradient-to-br from-[#0094eb]/5 to-white p-6 xl:col-span-2`}>
               <div className="flex items-start justify-between gap-3">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Impacto financeiro total</p>
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
                   <DollarSign className="h-4 w-4" />
                 </div>
               </div>
-              <div className="mt-3">
+              <div className="mt-1">
                 <p className="text-4xl font-black text-slate-900">{brl(total)}</p>
                 <p className="mt-2 text-sm font-medium text-slate-600">
                   {brl(data.assistedRevenue)} em vendas na loja + {brl(data.clubCommission)} em comissões do Clube
@@ -225,6 +247,20 @@ export default function Dashboard() {
                   <Kpi label="Cliques nos widgets" value={int(data.clicksRange)} hint="Produto e WhatsApp" icon={MousePointerClick} />
                   <Kpi label="CTR" value={pct(data.ctrRange)} hint="Cliques ÷ visualizações" icon={Activity} />
                 </>
+              ) : noModule ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard/planos')}
+                  className={`${CARD} flex cursor-pointer flex-col items-start justify-center gap-1 border-dashed p-4 text-left`}
+                >
+                  <span className="flex items-center gap-1.5 text-sm font-black text-slate-900">
+                    <Sparkles className="h-4 w-4 text-[#0094eb]" /> Ative seu primeiro módulo
+                  </span>
+                  <span className="text-xs text-slate-500">Seus números de vídeos e cliques aparecem aqui assim que um módulo estiver ativo.</span>
+                  <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb]">
+                    Ver planos <ArrowRight className="h-3 w-3" />
+                  </span>
+                </button>
               ) : (
                 <Kpi label="Lojas indicadas" value={int(data.referred)} hint="No Clube SLL" icon={Users} />
               )}
@@ -243,22 +279,40 @@ export default function Dashboard() {
                 </span>
                 <h3 className="text-base font-black text-slate-900">Pulso da sua loja hoje</h3>
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Atualiza a cada minuto</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Atividade de hoje</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <Mini label="Pessoas que interagiram" value={pulse ? int(pulse.interactions) : '—'} />
-              <Mini label="Cliques em comprar" value={pulse ? int(pulse.buyClicks) : '—'} />
-              <Mini label="Sessões com vídeo engajado" value={pulse ? int(pulse.engaged) : '—'} />
-            </div>
+            {hasVid ? (
+              <div className="grid grid-cols-3 gap-2">
+                <Mini label="Pessoas que interagiram" value={pulse ? int(pulse.interactions) : '—'} />
+                <Mini label="Cliques em comprar" value={pulse ? int(pulse.buyClicks) : '—'} />
+                <Mini label="Sessões com vídeo engajado" value={pulse ? int(pulse.engaged) : '—'} />
+              </div>
+            ) : noModule ? (
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard/planos')}
+                className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-left transition-colors hover:border-[#0094eb]"
+              >
+                <span className="text-sm font-black text-slate-900">Ative seu primeiro módulo</span>
+                <span className="text-xs text-slate-500">Assim você acompanha o engajamento dos seus clientes aqui.</span>
+                <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb]">
+                  Ver planos <ArrowRight className="h-3 w-3" />
+                </span>
+              </button>
+            ) : !loading ? (
+              <p className="rounded-xl bg-slate-50 px-4 py-4 text-sm font-medium text-slate-600">
+                A atividade dos seus módulos ativos aparecerá aqui.
+              </p>
+            ) : null}
             <p className="text-xs text-slate-500">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
           </div>
 
           <div className={`${CARD} flex flex-col gap-3 p-5`}>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fd8539]/10 text-[#fd8539]">
-                <Lightbulb className="h-5 w-5" />
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-[#0094eb]/10 text-[#0094eb] ring-1 ring-[#0094eb]/15">
+                <AssetImg src={SOL_LOGO} alt="Sol" className="h-8 w-8 object-contain" fallback={<Sparkles className="h-5 w-5" />} />
               </div>
-              <h3 className="text-base font-black text-slate-900">Dica do especialista</h3>
+              <h3 className="text-base font-black text-slate-900">Dica do Sol</h3>
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-slate-800">{insight.title}</p>
@@ -280,7 +334,7 @@ export default function Dashboard() {
             {data.modules.length === 0 && !loading && (
               <p className="text-sm text-slate-500">Nenhum módulo disponível no momento.</p>
             )}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-3">
               {data.modules.map((m) => {
                 const owned = data.owned.includes(m.slug);
                 if (m.status === 'hidden' && !owned) return null;
@@ -293,7 +347,7 @@ export default function Dashboard() {
                 const isJoined = joined.has(m.slug) || data.waitlist.includes(m.slug);
 
                 return (
-                  <div key={m.slug} className={`${CARD} flex flex-col gap-4 p-5 ${owned ? '' : 'border-dashed'}`}>
+                  <div key={m.slug} className={`${CARD} flex w-[85%] shrink-0 snap-center flex-col gap-4 p-5 md:w-auto ${owned ? '' : 'border-dashed'}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#0094eb]/15 to-[#0094eb]/5 ring-1 ring-[#0094eb]/15">
@@ -384,20 +438,29 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <div data-tour="club" className={`${CARD} space-y-4 p-5`}>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]"><Trophy className="h-5 w-5" /></div>
-              <div>
-                <h3 className="text-base font-black text-slate-900">Clube SLL: indique e ganhe todo mês</h3>
-                <p className="text-xs text-slate-500">10% de comissão recorrente enquanto a loja indicada assinar.</p>
-              </div>
+              <AssetImg src={CLUB_LOGO} alt="Clube SLL" className="h-12 w-auto max-w-[160px] shrink-0 object-contain" fallback={<span className="text-base font-black text-slate-900">Clube SLL</span>} />
+              <p className="min-w-0 text-xs font-medium text-slate-500">Indique e ganhe todo mês: 10% de comissão recorrente enquanto a loja indicada assinar.</p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="rounded-full bg-[#0094eb]/10 px-3 py-1 font-bold text-[#0094eb]">
-                {tier ? `Parceiro ${tier.name}` : 'Início da jornada'}
-              </span>
-              <span className="text-slate-500">
-                {int(data.referred)} {data.referred === 1 ? 'loja indicada' : 'lojas indicadas'}
-                {next ? ` · faltam ${next.n - data.referred} para ${next.name}` : ''}
-              </span>
+            <div className="space-y-2 rounded-xl bg-slate-50 p-4">
+              <div className="flex items-end justify-between gap-2">
+                <p className="text-2xl font-black text-slate-900">
+                  {int(data.referred)} <span className="text-base text-slate-400">/ {nxt ? nxt.n : data.referred}</span>{' '}
+                  <span className="text-sm font-bold text-slate-600">{data.referred === 1 ? 'loja indicada' : 'lojas indicadas'}</span>
+                </p>
+                <span className="rounded-full bg-[#0094eb]/10 px-3 py-1 text-[11px] font-bold text-[#0094eb]">Nível {cur.name}</span>
+              </div>
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                <div className="h-full rounded-full bg-[#0094eb] transition-all duration-500" style={{ width: `${clubPct}%` }} />
+              </div>
+              <div className="flex justify-between text-[11px] font-bold text-slate-500">
+                <span>{cur.name}</span>
+                <span>{nxt ? nxt.name : 'Nível máximo'}</span>
+              </div>
+              <p className="text-sm font-medium text-slate-600">
+                {nxt
+                  ? `Faltam ${nxt.n - data.referred} ${nxt.n - data.referred === 1 ? 'loja' : 'lojas'} para subir ao nível ${nxt.name}.`
+                  : 'Você chegou ao nível máximo do Clube SLL.'}
+              </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <div className="min-w-0 flex-1 truncate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
@@ -413,12 +476,15 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center gap-3 px-1">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]"><GraduationCap className="h-5 w-5" /></div>
-              <div>
-                <h3 className="text-base font-black text-slate-900">SLL Academy: aulas práticas de operação</h3>
-                <p className="text-xs text-slate-500">Aprenda a vender mais com método e visão de loja real.</p>
-              </div>
+            <div className="flex items-center justify-between gap-3 px-1">
+              <AssetImg src={ACADEMY_LOGO} alt="SLL Academy" className="h-9 w-auto max-w-[180px] object-contain" fallback={<span className="text-base font-black text-slate-900">SLL Academy</span>} />
+              <button
+                type="button"
+                onClick={() => window.open(ACADEMY_URL, '_blank', 'noopener')}
+                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+              >
+                Ver todas as aulas <ArrowRight className="h-3 w-3" />
+              </button>
             </div>
             <VidlyticsAcademy />
           </div>
