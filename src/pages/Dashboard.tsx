@@ -13,7 +13,7 @@ import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/compo
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 
-// dash-v4-noah
+// dash-v5-modulos
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
 
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -44,7 +44,6 @@ const LEVELS = [
 ];
 
 const CLUB_LOGO = '/assets/clube-sll-b.png';
-const ACADEMY_LOGO = '/assets/sll-academy-b.png';
 const NOAH_LOGO = '/assets/noah-b.png';
 const METRICS_ROUTE = '/metricas';
 
@@ -338,7 +337,7 @@ export default function Dashboard() {
             <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-3">
               {data.modules.map((m) => {
                 const owned = data.owned.includes(m.slug);
-                if (m.status === 'hidden' && !owned) return null;
+                if (m.status === 'hidden') return null;
 
                 const maint = m.status === 'maintenance';
                 const soon = m.status === 'coming_soon' && !owned;
@@ -482,18 +481,8 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className={`${CARD} flex flex-col gap-3 p-5`}>
-            <div className="flex items-center justify-between gap-3">
-              <AssetImg src={ACADEMY_LOGO} alt="SLL Academy" className="h-12 w-auto max-w-[160px] shrink-0 object-contain" fallback={<span className="text-base font-black text-slate-900">SLL Academy</span>} />
-              <button
-                type="button"
-                onClick={() => window.open(ACADEMY_URL, '_blank', 'noopener')}
-                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
-              >
-                Ver todas as aulas <ArrowRight className="h-3 w-3" />
-              </button>
-            </div>
-            <div className="min-w-0 flex-1"><VidlyticsAcademy /></div>
+          <div className="flex min-w-0 flex-col [&>*]:h-full [&>*]:flex-1">
+            <VidlyticsAcademy />
           </div>
         </div>
       </div>

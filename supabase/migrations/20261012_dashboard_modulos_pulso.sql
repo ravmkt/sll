@@ -30,11 +30,7 @@ update public.hub_modules set
   route_path = '/dashboard/modules/live-commerce'
 where slug = 'live_commerce' and description is null;
 
-insert into public.hub_modules (slug, name, status, is_public_for_sale, sort_order, description, benefits)
-values ('provador', 'Provador Virtual', 'coming_soon', false, 3,
-        'Ajude o cliente a escolher o tamanho certo.',
-        '["Recomendação de tamanho","Menos trocas e devoluções"]'::jsonb)
-on conflict (slug) do nothing;
+-- Modulos vem somente do cadastro do Master (Provador Virtual removido daqui)
 
 -- Lista de espera
 create table if not exists public.module_waitlist (
