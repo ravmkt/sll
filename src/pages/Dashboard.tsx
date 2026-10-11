@@ -13,7 +13,7 @@ import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/compo
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 
-// dash-v3-sol
+// dash-v4-noah
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
 
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -45,7 +45,7 @@ const LEVELS = [
 
 const CLUB_LOGO = '/assets/clube-sll-b.png';
 const ACADEMY_LOGO = '/assets/sll-academy-b.png';
-const SOL_LOGO = '/assets/sol-b.png';
+const NOAH_LOGO = '/assets/noah-b.png';
 const METRICS_ROUTE = '/metricas';
 
 function AssetImg({ src, alt, className, fallback }: { src: string; alt: string; className: string; fallback: ReactNode }) {
@@ -152,7 +152,8 @@ export default function Dashboard() {
   const lvIdx = LEVELS.reduce((acc, l, i) => (data.referred >= l.n ? i : acc), 0);
   const cur = LEVELS[lvIdx];
   const nxt = LEVELS[lvIdx + 1] ?? null;
-  const clubPct = nxt ? Math.min(100, Math.round(((data.referred - cur.n) / (nxt.n - cur.n)) * 100)) : 100;
+  const segFrac = nxt ? (data.referred - cur.n) / (nxt.n - cur.n) : 0;
+  const clubPct = nxt ? Math.min(100, Math.round(((lvIdx + segFrac) / (LEVELS.length - 1)) * 100)) : 100;
   const noModule = !loading && data.owned.length === 0;
   const hasVid = data.owned.includes('vidlytics');
   const total = data.assistedRevenue + data.clubCommission;
@@ -310,9 +311,9 @@ export default function Dashboard() {
           <div className={`${CARD} flex flex-col gap-3 p-5`}>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-[#0094eb]/10 text-[#0094eb] ring-1 ring-[#0094eb]/15">
-                <AssetImg src={SOL_LOGO} alt="Sol" className="h-8 w-8 object-contain" fallback={<Sparkles className="h-5 w-5" />} />
+                <AssetImg src={NOAH_LOGO} alt="Noah" className="h-8 w-8 object-contain" fallback={<Sparkles className="h-5 w-5" />} />
               </div>
-              <h3 className="text-base font-black text-slate-900">Dica do Sol</h3>
+              <h3 className="text-base font-black text-slate-900">Dica do Noah</h3>
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-slate-800">{insight.title}</p>
@@ -439,7 +440,7 @@ export default function Dashboard() {
           <div data-tour="club" className={`${CARD} space-y-4 p-5`}>
             <div className="flex items-center gap-3">
               <AssetImg src={CLUB_LOGO} alt="Clube SLL" className="h-12 w-auto max-w-[160px] shrink-0 object-contain" fallback={<span className="text-base font-black text-slate-900">Clube SLL</span>} />
-              <p className="min-w-0 text-xs font-medium text-slate-500">Indique e ganhe todo mês: 10% de comissão recorrente enquanto a loja indicada assinar.</p>
+              <p className="min-w-0 text-xs font-medium text-slate-500">Indique lojas, suba de nível e conquiste benefícios exclusivos.</p>
             </div>
             <div className="space-y-2 rounded-xl bg-slate-50 p-4">
               <div className="flex items-end justify-between gap-2">
@@ -449,12 +450,18 @@ export default function Dashboard() {
                 </p>
                 <span className="rounded-full bg-[#0094eb]/10 px-3 py-1 text-[11px] font-bold text-[#0094eb]">Nível {cur.name}</span>
               </div>
-              <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
-                <div className="h-full rounded-full bg-[#0094eb] transition-all duration-500" style={{ width: `${clubPct}%` }} />
-              </div>
-              <div className="flex justify-between text-[11px] font-bold text-slate-500">
-                <span>{cur.name}</span>
-                <span>{nxt ? nxt.name : 'Nível máximo'}</span>
+              <div className="relative pt-1">
+                <div className="absolute left-[10%] right-[10%] top-[10px] h-2 -translate-y-1/2 rounded-full bg-slate-200">
+                  <div className="h-full rounded-full bg-[#0094eb] transition-all duration-500" style={{ width: `${clubPct}%` }} />
+                </div>
+                <div className="relative grid grid-cols-5">
+                  {LEVELS.map((l, i) => (
+                    <div key={l.name} className="flex flex-col items-center gap-1.5">
+                      <span className={`h-[18px] w-[18px] rounded-full border-2 ${i <= lvIdx ? 'border-[#0094eb] bg-[#0094eb]' : 'border-slate-300 bg-white'}`} />
+                      <span className={`text-[11px] font-bold ${i === lvIdx ? 'text-[#0094eb]' : 'text-slate-500'}`}>{l.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
               <p className="text-sm font-medium text-slate-600">
                 {nxt
@@ -475,9 +482,9 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3 px-1">
-              <AssetImg src={ACADEMY_LOGO} alt="SLL Academy" className="h-9 w-auto max-w-[180px] object-contain" fallback={<span className="text-base font-black text-slate-900">SLL Academy</span>} />
+          <div className={`${CARD} flex flex-col gap-3 p-5`}>
+            <div className="flex items-center justify-between gap-3">
+              <AssetImg src={ACADEMY_LOGO} alt="SLL Academy" className="h-12 w-auto max-w-[160px] shrink-0 object-contain" fallback={<span className="text-base font-black text-slate-900">SLL Academy</span>} />
               <button
                 type="button"
                 onClick={() => window.open(ACADEMY_URL, '_blank', 'noopener')}
@@ -486,7 +493,7 @@ export default function Dashboard() {
                 Ver todas as aulas <ArrowRight className="h-3 w-3" />
               </button>
             </div>
-            <VidlyticsAcademy />
+            <div className="min-w-0 flex-1"><VidlyticsAcademy /></div>
           </div>
         </div>
       </div>
