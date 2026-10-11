@@ -1,16 +1,50 @@
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Settings, Video, LogOut, PanelLeftClose, PanelLeftOpen, Plug, Package, Ruler, Crown } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Settings, Video, LogOut, PanelLeftClose, PanelLeftOpen, Plug, Package, Ruler, Crown, Gift, Clock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLoja } from '@/contexts/LojaContext';
+import { supabase } from '@/lib/supabase';
 
 interface SidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
 }
 
+type PlanState = { kind: 'trial'; days: number } | { kind: 'expired' } | null;
+
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const location = useLocation();
   const { signOut } = useAuth();
   const isExpanded = !isCollapsed;
+  const ctx: any = useLoja();
+  const storeId: string | null = ctx?.loja?.id ?? ctx?.store?.id ?? ctx?.storeId ?? ctx?.lojaId ?? null;
+  const [plan, setPlan] = useState<PlanState>(null);
+
+  useEffect(() => {
+    if (!storeId) { setPlan(null); return; }
+    let alive = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('status, current_period_end, is_current')
+        .eq('store_id', storeId)
+        .eq('is_current', true);
+      if (!alive || error || !data) return;
+      const rows = data as any[];
+      if (rows.some((s) => s.status === 'active')) { setPlan(null); return; }
+      const trials = rows.filter((s) => s.status === 'trialing' && s.current_period_end);
+      const now = Date.now();
+      const live = trials.map((s) => new Date(s.current_period_end).getTime()).filter((t) => t > now);
+      if (live.length) {
+        setPlan({ kind: 'trial', days: Math.max(1, Math.ceil((Math.min(...live) - now) / 86400000)) });
+      } else if (trials.length) {
+        setPlan({ kind: 'expired' });
+      } else {
+        setPlan(null);
+      }
+    })();
+    return () => { alive = false; };
+  }, [storeId]);
 
   const menuItems = [
     { name: 'Visão Geral', icon: LayoutDashboard, path: '/dashboard' },
@@ -103,6 +137,79 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         })}
       </nav>
 
+      {/* Upsell: oportunidade e status do teste */}
+      {storeId && (
+        <div className="px-4 pb-3 space-y-2">
+          {isExpanded ? (
+            <>
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                <div className="flex items-center gap-2 text-emerald-700">
+                  <Gift size={16} className="shrink-0" />
+                  <p className="text-xs font-bold">Próximo módulo</p>
+                </div>
+                <p className="mt-1 text-xs leading-snug text-emerald-800">
+                  Monte sua suíte de vendas: conheça o Live Commerce.
+                </p>
+                <Link
+                  to="/dashboard/planos"
+                  className="mt-2 block rounded-lg bg-emerald-600 py-1.5 text-center text-xs font-bold text-white hover:bg-emerald-700"
+                >
+                  Ver módulos
+                </Link>
+              </div>
+
+              {plan && (
+                <div
+                  className={`rounded-xl border p-3 ${
+                    plan.kind === 'trial'
+                      ? 'border-[#0094eb]/30 bg-[#0094eb]/5'
+                      : 'border-red-200 bg-red-50'
+                  }`}
+                >
+                  <div className={`flex items-center gap-2 ${plan.kind === 'trial' ? 'text-[#0094eb]' : 'text-red-600'}`}>
+                    <Clock size={16} className="shrink-0" />
+                    <p className="text-xs font-bold">
+                      {plan.kind === 'trial'
+                        ? `Período de teste: ${plan.days} ${plan.days === 1 ? 'dia restante' : 'dias restantes'}`
+                        : 'Teste encerrado'}
+                    </p>
+                  </div>
+                  <Link
+                    to="/dashboard/planos"
+                    className={`mt-2 block rounded-lg py-1.5 text-center text-xs font-bold text-white ${
+                      plan.kind === 'trial' ? 'bg-[#0094eb] hover:bg-[#007bc4]' : 'bg-red-600 hover:bg-red-700'
+                    }`}
+                  >
+                    Assinar agora
+                  </Link>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <Link
+                to="/dashboard/planos"
+                title="Próximo módulo: ver módulos"
+                className="flex items-center justify-center rounded-lg bg-emerald-50 p-2 text-emerald-700 hover:bg-emerald-100"
+              >
+                <Gift size={18} />
+              </Link>
+              {plan && (
+                <Link
+                  to="/dashboard/planos"
+                  title={plan.kind === 'trial' ? `Teste: ${plan.days} dia(s) restante(s)` : 'Teste encerrado'}
+                  className={`flex items-center justify-center rounded-lg p-2 ${
+                    plan.kind === 'trial' ? 'bg-[#0094eb]/10 text-[#0094eb]' : 'bg-red-50 text-red-600'
+                  }`}
+                >
+                  <Clock size={18} />
+                </Link>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {/* Footer / Logout */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-800">
         <button
@@ -119,5 +226,3 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     </aside>
   );
 }
-
-
