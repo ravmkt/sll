@@ -45,7 +45,7 @@ export default function DashboardNotice({ storeId }: { storeId: string | null | 
     else navigate(item.cta_url);
   };
 
-  const img = <img src={item.image_url ?? ''} alt={item.title} className="block h-auto w-full" />;
+  const img = <img src={item.image_url ?? ''} alt={item.title} className="block h-auto max-h-44 w-full object-cover object-center" />;
 
   return (
     <div className="relative overflow-hidden rounded-2xl shadow-sm">
@@ -60,7 +60,7 @@ export default function DashboardNotice({ storeId }: { storeId: string | null | 
         type="button"
         onClick={close}
         aria-label="Fechar aviso"
-        className="absolute right-2 top-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white/90 transition-colors hover:bg-black/60"
+        className="absolute right-2 top-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-white/80 p-1 text-slate-700 shadow-sm transition-colors hover:bg-white"
       >
         <X className="h-3.5 w-3.5" />
       </button>

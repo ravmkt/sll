@@ -93,17 +93,6 @@ export default function VidlyticsAcademy() {
                 <p className="mt-2 line-clamp-2 text-sm font-semibold leading-snug text-slate-700">{v.title}</p>
               </button>
             ))}
-            <a
-              href={SUBSCRIBE_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="group block w-full shrink-0 snap-start sm:w-[calc(50%-0.375rem)]"
-            >
-              <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-center transition-colors group-hover:border-[#0094eb]/40 group-hover:bg-white">
-                <img src="/assets/sll-academy.png" alt="SLL Academy" className="h-8 w-auto object-contain" />
-                <p className="text-sm font-semibold leading-snug text-slate-700">Assista a todos os conteúdos</p>
-              </div>
-            </a>
           </div>
           <button
             type="button"

@@ -3,7 +3,7 @@ import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Activity, ArrowRight, Check, Clock, Copy, DollarSign, Eye, Gift,
-  Layers, MousePointerClick, Package, Play, Radio, Shirt, Sparkles,
+  Layers, MousePointerClick, Package, Play, Radio, Shirt,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import DashboardNotice from '@/components/dashboard/DashboardNotice';
@@ -13,7 +13,7 @@ import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/compo
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 
-// dash-v8-links-modulos
+// dash-v9-dica-logo
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
 
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -44,7 +44,7 @@ const LEVELS = [
 ];
 
 const CLUB_LOGO = '/assets/clube-sll-b.png';
-const NOAH_LOGO = '/assets/noah-b.png';
+const NOAH_LOGO = '/assets/dica-do-noah.svg';
 const METRICS_ROUTE = '/dashboard/metricas';
 const TIPS_ROUTE = '/dashboard/dicas';
 const PRODUCTS_ROUTE = '/dashboard/produtos';
@@ -225,6 +225,13 @@ export default function Dashboard() {
                   </button>
                 ))}
               </div>
+              <button
+                type="button"
+                onClick={() => navigate(METRICS_ROUTE)}
+                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+              >
+                Ver relatório completo de métricas <ArrowRight className="h-3 w-3" />
+              </button>
             </div>
           </div>
 
@@ -293,22 +300,12 @@ export default function Dashboard() {
                 A atividade dos seus módulos ativos aparecerá aqui.
               </p>
             ) : null}
-            <p className="text-sm text-slate-700">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
-            <button
-              type="button"
-              onClick={() => navigate(METRICS_ROUTE)}
-              className="mt-auto inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
-            >
-              Ver relatório completo de métricas <ArrowRight className="h-3 w-3" />
-            </button>
+            <p className="mt-auto text-sm text-slate-700">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
           </div>
 
           <div className={`${CARD} flex flex-col gap-3 p-5`}>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-[#0094eb]/10 text-[#0094eb] ring-1 ring-[#0094eb]/15">
-                <AssetImg src={NOAH_LOGO} alt="Noah" className="h-8 w-8 object-contain" fallback={<Sparkles className="h-5 w-5" />} />
-              </div>
-              <h3 className="text-base font-black text-slate-900">Dica do Noah</h3>
+              <AssetImg src={NOAH_LOGO} alt="Dica do Noah" className="h-10 w-auto max-w-[200px] object-contain" fallback={<h3 className="text-base font-black text-slate-900">Dica do Noah</h3>} />
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-slate-800">{insight.title}</p>
