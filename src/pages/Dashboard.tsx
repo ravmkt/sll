@@ -13,7 +13,7 @@ import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/compo
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 
-// dash-v9-dica-logo
+// dash-v10-noah-wide
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
 
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -44,7 +44,7 @@ const LEVELS = [
 ];
 
 const CLUB_LOGO = '/assets/clube-sll-b.png';
-const NOAH_LOGO = '/assets/dica-do-noah.svg';
+const NOAH_LOGO = '/assets/dica-do-noah-logo-wide.svg';
 const METRICS_ROUTE = '/dashboard/metricas';
 const TIPS_ROUTE = '/dashboard/dicas';
 const PRODUCTS_ROUTE = '/dashboard/produtos';
