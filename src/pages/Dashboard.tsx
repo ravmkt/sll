@@ -9,6 +9,7 @@ import { useDashboardData } from '@/components/dashboard/useDashboardData';
 import { useLoja } from '@/contexts/LojaContext';
 import { showSuccess } from '@/utils/toast';
 
+// dash-modulos-dinamicos
 interface ModuleCard {
   slug: string;
   name: string;
@@ -57,7 +58,7 @@ const TIERS = [
   { n: 10, name: 'Prata' },
 ];
 
-const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm';
+const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md';
 
 function Kpi({ label, value, hint, icon: Icon }: { label: string; value: string; hint: string; icon: ElementType }) {
   return (
@@ -76,9 +77,9 @@ function Kpi({ label, value, hint, icon: Icon }: { label: string; value: string;
 
 function Mini({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-slate-50 px-3 py-2 text-center">
-      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
-      <p className="text-sm font-black text-slate-800">{value}</p>
+    <div className="rounded-xl bg-slate-50 px-3 py-3 text-center">
+      <p className="text-[11px] font-bold leading-tight text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-black text-slate-900">{value}</p>
     </div>
   );
 }
@@ -100,6 +101,7 @@ export default function Dashboard() {
   const referralLink = store?.referral_code ? `${window.location.origin}/?ref=${store.referral_code}` : '';
   const tier = TIERS.find((t) => data.referred >= t.n);
   const next = [...TIERS].reverse().find((t) => data.referred < t.n);
+  const hasVid = data.owned.includes('vidlytics');
 
   const copy = () => {
     if (!referralLink) return;
@@ -113,12 +115,12 @@ export default function Dashboard() {
         {/* Mural de avisos nativo */}
         <DashboardNotice />
 
-        {/* KPIs */}
-        <div data-tour="kpis" className={`grid grid-cols-2 gap-3 xl:grid-cols-4 ${loading ? 'opacity-60' : ''}`}>
+        {/* KPIs: fixos + os dos modulos ativos */}
+        <div data-tour="kpis" className={`grid grid-cols-2 gap-3 ${hasVid ? 'xl:grid-cols-4' : 'xl:grid-cols-2'} ${loading ? 'opacity-60' : ''}`}>
           <Kpi label="Produtos sincronizados" value={int(data.products)} hint="SKUs ativos na loja" icon={Package} />
-          <Kpi label="Visualizações de vídeos" value={int(data.viewsMonth)} hint="Neste mês" icon={Eye} />
-          <Kpi label="Cliques nos widgets" value={int(data.clicksMonth)} hint="Produto e WhatsApp, neste mês" icon={MousePointerClick} />
-          <Kpi label="Vendas assistidas" value={brl(data.revenueMonth)} hint="Atribuídas aos vídeos, neste mês" icon={DollarSign} />
+          {hasVid && <Kpi label="Visualizações de vídeos" value={int(data.viewsMonth)} hint="Neste mês" icon={Eye} />}
+          {hasVid && <Kpi label="Cliques nos widgets" value={int(data.clicksMonth)} hint="Produto e WhatsApp, neste mês" icon={MousePointerClick} />}
+          <Kpi label="Vendas assistidas" value={brl(data.revenueMonth)} hint={hasVid ? 'Atribuídas aos vídeos, neste mês' : 'Atribuídas às ferramentas, neste mês'} icon={DollarSign} />
         </div>
 
         {/* Ecossistema de módulos */}
@@ -136,12 +138,16 @@ export default function Dashboard() {
                   <div key={m.slug} className={`${CARD} flex flex-col gap-4 p-5 ${owned ? '' : 'border-dashed'}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${owned ? 'bg-[#0094eb]/10 text-[#0094eb]' : 'bg-slate-100 text-slate-500'}`}><Icon className="h-5 w-5" /></div>
-                        <h3 className="text-base font-black text-slate-900">{m.name}</h3>
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#0094eb]/15 to-[#0094eb]/5 ring-1 ring-[#0094eb]/15">
+                          {info?.logo_url
+                            ? <img src={info.logo_url} alt={m.name} className="h-11 w-11 object-contain" />
+                            : <Icon className="h-6 w-6 text-[#0094eb]" />}
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900">{m.name}</h3>
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         {owned ? (
-                          <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">Ativo</span>
+                          <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">● Ativo</span>
                         ) : soon ? (
                           <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">Em breve</span>
                         ) : (
@@ -153,23 +159,27 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    <p className="text-xs leading-relaxed text-slate-500">{m.desc}</p>
+                    <p className="text-sm font-medium leading-relaxed text-slate-600">{m.desc}</p>
 
-                    {m.slug === 'vidlytics' && owned && (
+                    {owned && m.slug === 'vidlytics' ? (
                       <div className="grid grid-cols-3 gap-2">
-                        <Mini label="Vídeos ativos" value={int(data.activeVideos)} />
-                        <Mini label="Views hoje" value={int(data.viewsToday)} />
+                        <Mini label="Vídeos cadastrados" value={int(data.totalVideos)} />
+                        <Mini label="Views no mês" value={int(data.viewsMonth)} />
                         <Mini label="CTR do mês" value={pct(data.ctrMonth)} />
                       </div>
+                    ) : owned ? (
+                      <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
+                        {trial ? `Em período de teste: ${trial} ${trial === 1 ? 'dia restante' : 'dias restantes'}` : 'Módulo ativo na sua loja.'}
+                      </div>
+                    ) : (
+                      <ul className="space-y-2">
+                        {m.bullets.map((b) => (
+                          <li key={b} className="flex items-start gap-2 text-sm font-medium text-slate-700">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#0094eb]" /> {b}
+                          </li>
+                        ))}
+                      </ul>
                     )}
-
-                    <ul className="space-y-1.5">
-                      {m.bullets.map((b) => (
-                        <li key={b} className="flex items-start gap-2 text-xs text-slate-600">
-                          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0094eb]" /> {b}
-                        </li>
-                      ))}
-                    </ul>
 
                     <div className="mt-auto pt-1">
                       {soon ? (
@@ -182,7 +192,7 @@ export default function Dashboard() {
                         </button>
                       ) : !owned ? (
                         <button type="button" onClick={() => navigate(`/dashboard/planos?modulo=${m.slug}`)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#007fcc]">
-                          Ativar {m.name} <ArrowRight className="h-3.5 w-3.5" />
+                          Ativar Módulo <ArrowRight className="h-3.5 w-3.5" />
                         </button>
                       ) : null}
                     </div>

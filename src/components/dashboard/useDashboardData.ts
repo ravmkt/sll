@@ -14,6 +14,7 @@ export interface DashData {
   revenueMonth: number;
   viewsToday: number;
   activeVideos: number;
+  totalVideos: number;
   ctrMonth: number;
   owned: string[];
   trialDays: Record<string, number>;
@@ -22,7 +23,7 @@ export interface DashData {
 }
 
 const EMPTY: DashData = {
-  products: 0, viewsMonth: 0, clicksMonth: 0, revenueMonth: 0, viewsToday: 0, activeVideos: 0,
+  products: 0, viewsMonth: 0, clicksMonth: 0, revenueMonth: 0, viewsToday: 0, activeVideos: 0, totalVideos: 0,
   ctrMonth: 0, owned: [], trialDays: {}, catalog: [], referred: 0,
 };
 
@@ -79,6 +80,7 @@ export function useDashboardData(storeId: string | null | undefined) {
         revenueMonth: Number(val(overview, null)?.totalRevenue) || 0,
         viewsToday: sum(dayRows, 'views'),
         activeVideos: monthRows.filter((r) => r.status === 'active').length,
+        totalVideos: monthRows.length,
         ctrMonth: views > 0 ? (clicks / views) * 100 : 0,
         owned,
         trialDays,
