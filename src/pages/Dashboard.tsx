@@ -3,7 +3,7 @@ import type { ElementType, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Activity, ArrowRight, Check, Clock, Copy, DollarSign, Eye, Gift,
-  MousePointerClick, Package, Play, Radio, Shirt, Sparkles, Users,
+  Layers, MousePointerClick, Package, Play, Radio, Shirt, Sparkles, Users,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import DashboardNotice from '@/components/dashboard/DashboardNotice';
@@ -13,7 +13,7 @@ import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/compo
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 
-// dash-v5-modulos
+// dash-v6-alinhamento
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
 
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -60,12 +60,12 @@ function Kpi({ label, value, hint, icon: Icon }: { label: string; value: string;
   return (
     <div className={`${CARD} flex items-start justify-between gap-3 p-4`}>
       <div className="min-w-0">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
-        <p className="mt-1 truncate text-2xl font-black text-slate-900">{value}</p>
-        <p className="mt-0.5 text-[11px] text-slate-400">{hint}</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
+        <p className="mt-1 truncate text-3xl font-bold text-slate-900">{value}</p>
+        <p className="mt-0.5 text-sm text-slate-700">{hint}</p>
       </div>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
-        <Icon className="h-4 w-4" />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+        <Icon className="h-5 w-5" />
       </div>
     </div>
   );
@@ -74,7 +74,7 @@ function Kpi({ label, value, hint, icon: Icon }: { label: string; value: string;
 function Mini({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-slate-50 px-3 py-3 text-center">
-      <p className="text-[11px] font-bold leading-tight text-slate-500">{label}</p>
+      <p className="text-sm font-semibold leading-tight text-slate-700">{label}</p>
       <p className="mt-1 text-lg font-black text-slate-900">{value}</p>
     </div>
   );
@@ -188,7 +188,7 @@ export default function Dashboard() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-black text-slate-900">Resultados da sua loja</h2>
-              <p className="text-xs text-slate-500">O que o SLL Hub gerou no período escolhido.</p>
+              <p className="text-sm text-slate-700">O que o SLL Hub gerou no período escolhido.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -223,19 +223,16 @@ export default function Dashboard() {
           </div>
 
           <div className={`grid grid-cols-1 gap-3 xl:grid-cols-4 ${loading ? 'opacity-60' : ''}`}>
-            <div className={`${CARD} flex flex-col justify-center gap-1 bg-gradient-to-br from-[#0094eb]/5 to-white p-6 xl:col-span-2`}>
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Impacto financeiro total</p>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
-                  <DollarSign className="h-4 w-4" />
-                </div>
-              </div>
-              <div className="mt-1">
-                <p className="text-4xl font-black text-slate-900">{brl(total)}</p>
-                <p className="mt-2 text-sm font-medium text-slate-600">
+            <div className={`${CARD} flex items-center justify-between gap-3 bg-gradient-to-br from-[#0094eb]/5 to-white p-4 xl:col-span-2`}>
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Impacto financeiro total</p>
+                <p className="mt-1 truncate text-3xl font-bold text-slate-900">{brl(total)}</p>
+                <p className="mt-0.5 text-sm text-slate-700">
                   {brl(data.assistedRevenue)} em vendas na loja + {brl(data.clubCommission)} em comissões do Clube
                 </p>
-                <p className="mt-1 text-[11px] text-slate-400">Vendas atribuídas aos módulos e comissões geradas no período.</p>
+              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+                <DollarSign className="h-5 w-5" />
               </div>
             </div>
 
@@ -248,19 +245,7 @@ export default function Dashboard() {
                   <Kpi label="CTR" value={pct(data.ctrRange)} hint="Cliques ÷ visualizações" icon={Activity} />
                 </>
               ) : noModule ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/dashboard/planos')}
-                  className={`${CARD} flex cursor-pointer flex-col items-start justify-center gap-1 border-dashed p-4 text-left`}
-                >
-                  <span className="flex items-center gap-1.5 text-sm font-black text-slate-900">
-                    <Sparkles className="h-4 w-4 text-[#0094eb]" /> Ative seu primeiro módulo
-                  </span>
-                  <span className="text-xs text-slate-500">Seus números de vídeos e cliques aparecem aqui assim que um módulo estiver ativo.</span>
-                  <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb]">
-                    Ver planos <ArrowRight className="h-3 w-3" />
-                  </span>
-                </button>
+                <Kpi label="Módulos ativos" value={int(data.owned.length)} hint="Ative em Planos" icon={Layers} />
               ) : (
                 <Kpi label="Lojas indicadas" value={int(data.referred)} hint="No Clube SLL" icon={Users} />
               )}
@@ -277,7 +262,7 @@ export default function Dashboard() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
                 </span>
-                <h3 className="text-base font-black text-slate-900">Pulso da sua loja hoje</h3>
+                <h3 className="text-base font-black text-slate-900">Movimentação de Hoje</h3>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Atividade de hoje</span>
             </div>
@@ -294,7 +279,7 @@ export default function Dashboard() {
                 className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-left transition-colors hover:border-[#0094eb]"
               >
                 <span className="text-sm font-black text-slate-900">Ative seu primeiro módulo</span>
-                <span className="text-xs text-slate-500">Assim você acompanha o engajamento dos seus clientes aqui.</span>
+                <span className="text-sm text-slate-700">Assim você acompanha o engajamento dos seus clientes aqui.</span>
                 <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb]">
                   Ver planos <ArrowRight className="h-3 w-3" />
                 </span>
@@ -304,7 +289,7 @@ export default function Dashboard() {
                 A atividade dos seus módulos ativos aparecerá aqui.
               </p>
             ) : null}
-            <p className="text-xs text-slate-500">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
+            <p className="text-sm text-slate-700">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
           </div>
 
           <div className={`${CARD} flex flex-col gap-3 p-5`}>
@@ -316,7 +301,7 @@ export default function Dashboard() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-slate-800">{insight.title}</p>
-              <p className="mt-1 text-sm font-medium leading-relaxed text-slate-600">{insight.text}</p>
+              <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{insight.text}</p>
             </div>
             <button
               type="button"
@@ -368,14 +353,14 @@ export default function Dashboard() {
                           <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#0094eb]">Disponível</span>
                         )}
                         {owned && trial && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
                             <Clock className="h-3 w-3" /> Teste: {trial} {trial === 1 ? 'dia' : 'dias'}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {m.description && <p className="text-sm font-medium leading-relaxed text-slate-600">{m.description}</p>}
+                    {m.description && <p className="text-sm font-medium leading-relaxed text-slate-700">{m.description}</p>}
 
                     {owned && m.slug === 'vidlytics' ? (
                       <div className="grid grid-cols-3 gap-2">
@@ -437,9 +422,9 @@ export default function Dashboard() {
         {/* Clube + Academy */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <div data-tour="club" className={`${CARD} space-y-4 p-5`}>
-            <div className="flex items-center gap-3">
-              <AssetImg src={CLUB_LOGO} alt="Clube SLL" className="h-12 w-auto max-w-[160px] shrink-0 object-contain" fallback={<span className="text-base font-black text-slate-900">Clube SLL</span>} />
-              <p className="min-w-0 text-xs font-medium text-slate-500">Indique lojas, suba de nível e conquiste benefícios exclusivos.</p>
+            <div className="flex flex-col items-start gap-2">
+              <AssetImg src={CLUB_LOGO} alt="Clube SLL" className="h-12 w-auto max-w-[200px] shrink-0 object-contain" fallback={<span className="text-base font-black text-slate-900">Clube SLL</span>} />
+              <p className="text-sm font-medium text-slate-700">Indique lojas, suba de nível e conquiste benefícios exclusivos.</p>
             </div>
             <div className="space-y-2 rounded-xl bg-slate-50 p-4">
               <div className="flex items-end justify-between gap-2">
@@ -457,12 +442,12 @@ export default function Dashboard() {
                   {LEVELS.map((l, i) => (
                     <div key={l.name} className="flex flex-col items-center gap-1.5">
                       <span className={`h-[18px] w-[18px] rounded-full border-2 ${i <= lvIdx ? 'border-[#0094eb] bg-[#0094eb]' : 'border-slate-300 bg-white'}`} />
-                      <span className={`text-[11px] font-bold ${i === lvIdx ? 'text-[#0094eb]' : 'text-slate-500'}`}>{l.name}</span>
+                      <span className={`text-xs font-bold ${i === lvIdx ? 'text-[#0094eb]' : 'text-slate-700'}`}>{l.name}</span>
                     </div>
                   ))}
                 </div>
               </div>
-              <p className="text-sm font-medium text-slate-600">
+              <p className="text-sm font-medium text-slate-700">
                 {nxt
                   ? `Faltam ${nxt.n - data.referred} ${nxt.n - data.referred === 1 ? 'loja' : 'lojas'} para subir ao nível ${nxt.name}.`
                   : 'Você chegou ao nível máximo do Clube SLL.'}
