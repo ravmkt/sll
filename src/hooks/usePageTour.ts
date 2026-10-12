@@ -114,13 +114,14 @@ export function usePageTour(tourKey: string, steps: TourStep[]) {
     let cancelled = false;
     let timer: number | undefined;
     (async () => {
-      if (await wasDone(user.id, tourKey)) return;
+      const force = new URLSearchParams(window.location.search).has('tour');
+      if (!force && (await wasDone(user.id, tourKey))) return;
       if (cancelled) return;
       let tries = 0;
       const tick = () => {
         if (cancelled) return;
         const ready = stepsRef.current.some((s) => document.querySelector(s.element));
-        const blocked = document.querySelector('[role="dialog"]');
+        const blocked = document.querySelector('[role="dialog"]:not(.driver-popover)');
         if (ready && !blocked) { start(); return; }
         if (++tries < 25) timer = window.setTimeout(tick, 400);
       };
