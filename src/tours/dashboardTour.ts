@@ -27,7 +27,7 @@ export const DASHBOARD_TOUR: TourStep[] = [
   {
     element: '[data-tour="club"]',
     title: 'Clube SLL',
-    description: 'Indique lojas e receba 10% de comissão recorrente. Suba de nível para desbloquear benefícios exclusivos.',
+    description: 'Indique lojas e receba benefícios recorrentes. Suba de nível para desbloquear benefícios exclusivos.',
     side: 'top',
   },
 ];
