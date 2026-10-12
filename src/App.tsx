@@ -37,6 +37,7 @@ const Checkout = lazy(() => import('./pages/checkout/Checkout'));
 const PlanosGatePage = lazy(() => import('./pages/planos/PlanosGatePage'));
 const IntegrationPage = lazy(() => import('./pages/integracao/IntegrationPage'));
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
+const DicasNoah = lazy(() => import('./pages/dicas/DicasNoah'));
 const InstagramCallback = lazy(() => import('./pages/auth/InstagramCallback'));
 
 function PageLoader() {
@@ -229,6 +230,18 @@ function AppRoutes() {
 
         <Route path="/vidlytics" element={<Navigate to="/" replace />} />
         <Route path="/dashboard/onboarding" element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} />
+        <Route
+          path="/dashboard/dicas"
+          element={
+            user ? (
+              <SubscriptionGate>
+                <DicasNoah />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes></>
     </Suspense>
