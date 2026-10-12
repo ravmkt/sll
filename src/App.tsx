@@ -10,6 +10,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { OnboardingGuard } from '@/components/onboarding/OnboardingGuard';
 import { SocialPopupOverlay } from '@/components/SocialPopupOverlay';
 import { Toaster } from 'sonner';
+import ScrollToTop from '@/components/layout/ScrollToTop';
 import { useAuth } from './contexts/AuthContext';
 import { LojaProvider } from './contexts/LojaContext';
 import { OnboardingModal } from './components/OnboardingModal';
@@ -66,7 +67,7 @@ function AppRoutes() {
       {user && <GlobalTrialBanner />}
       {user && <TrialExpiredModal />}
 
-      <><CheckoutIntentWatcher /><OnboardingGuard /><SocialPopupOverlay />
+      <><CheckoutIntentWatcher /><OnboardingGuard /><SocialPopupOverlay /><ScrollToTop />
       <Routes>
         <Route path="/sobre" element={<AboutPage />} />
         <Route path="/privacidade" element={<PrivacyPage />} />
