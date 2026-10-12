@@ -66,3 +66,29 @@ export async function deleteModel(id: string, storeId: string): Promise<void> {
   const { error } = await sb.from('sizing_models').delete().eq('id', id).eq('store_id', storeId);
   if (error) throw new Error(error.message);
 }
+
+async function pluckAll(build: (from: number, to: number) => PromiseLike<{ data: any[] | null; error: any }>, col: string): Promise<string[]> {
+  const out: string[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await build(from, from + 999);
+    if (error) return out;
+    (data || []).forEach((r) => { if (r[col]) out.push(String(r[col])); });
+    if (!data || data.length < 1000) break;
+  }
+  return out;
+}
+
+export async function listLinkedModelIds(storeId: string): Promise<Set<string>> {
+  const [a, b] = await Promise.all([
+    pluckAll((x, y) => sb.schema('vidlytics').from('vid_videos').select('model_id').eq('store_id', storeId).not('model_id', 'is', null).range(x, y), 'model_id'),
+    pluckAll((x, y) => sb.from('videos').select('sizing_model_id').eq('store_id', storeId).not('sizing_model_id', 'is', null).range(x, y), 'sizing_model_id'),
+  ]);
+  return new Set([...a, ...b]);
+}
+
+export async function deleteModels(ids: string[], storeId: string): Promise<void> {
+  for (let i = 0; i < ids.length; i += 100) {
+    const { error } = await sb.from('sizing_models').delete().eq('store_id', storeId).in('id', ids.slice(i, i + 100));
+    if (error) throw new Error(error.message);
+  }
+}

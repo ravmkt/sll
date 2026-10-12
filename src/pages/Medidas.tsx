@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Edit3, Loader2, Package, Plus, Trash2, User } from 'lucide-react';
+import { Loader2, Package, Plus, Trash2, User } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { useLoja } from '@/contexts/LojaContext';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog';
 import ProductsTabs from '@/components/products/ProductsTabs';
+import MedidasList from '@/components/products/MedidasList';
 import { Modal, inputCls, primaryBtn, ghostBtn, labelCls, errMsg } from '@/components/products/Modal';
 import { showError, showSuccess } from '@/utils/toast';
 import { logPanelActivity } from '@/lib/activityLog';
-import { MeasureModel, ModelMeasure, ModelType, deleteModel, listModels, saveModel } from '@/services/sizingModelsService';
+import { MeasureModel, ModelMeasure, ModelType, deleteModel, deleteModels, listLinkedModelIds, listModels, saveModel } from '@/services/sizingModelsService';
 
 type Extra = { id: string; name: string; value: string };
 type FormState = { type: ModelType; name: string; title: string; height: string; width: string; length: string; weight: string; extras: Extra[] };
@@ -43,12 +44,16 @@ export default function Medidas() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<MeasureModel | null>(null);
   const [del, setDel] = useState<MeasureModel | null>(null);
+  const [bulkDel, setBulkDel] = useState<string[] | null>(null);
+  const [linked, setLinked] = useState<Set<string>>(new Set());
   const [form, setForm] = useState<FormState>(EMPTY);
 
   const reload = useCallback(async () => {
     if (!storeId) { setModels([]); setLoading(false); return; }
     try {
-      setModels(await listModels(storeId));
+      const [list, lk] = await Promise.all([listModels(storeId), listLinkedModelIds(storeId).catch(() => new Set<string>())]);
+      setModels(list);
+      setLinked(lk);
     } catch (e) {
       showError(errMsg(e));
     } finally {
@@ -127,6 +132,19 @@ export default function Medidas() {
     }
   };
 
+  const confirmBulkDelete = async () => {
+    if (!bulkDel || !storeId) return;
+    try {
+      await deleteModels(bulkDel, storeId);
+      logPanelActivity('model.deleted', `${bulkDel.length} medidas`, storeId);
+      showSuccess(bulkDel.length === 1 ? 'Medida removida com sucesso.' : `${bulkDel.length} medidas removidas com sucesso.`);
+      setBulkDel(null);
+      await reload();
+    } catch (e) {
+      showError(errMsg(e));
+    }
+  };
+
   const isObj = form.type === 'objeto';
   const unitInput = (value: string, onChange: (v: string) => void, ph: string, unit = 'cm') => (
     <div className="relative">
@@ -150,57 +168,7 @@ export default function Medidas() {
           </button>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[#0094eb]" /></div>
-        ) : models.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center">
-            <Package size={40} className="mx-auto mb-3 text-slate-400" />
-            <p className="font-bold">Nenhum perfil de medidas cadastrado.</p>
-            <p className="mt-1 text-xs text-slate-500">Clique em "Novo" para criar o primeiro perfil da sua loja.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {models.map((m) => (
-              <div key={m.id} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] p-6 shadow-sm transition hover:shadow-lg">
-                <div className="mb-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0094eb] text-white">
-                      {m.type === 'objeto' ? <Package size={18} /> : <User size={18} />}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="truncate text-lg font-black uppercase tracking-tight">{m.name}</h3>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        {m.type === 'objeto' ? 'Dimensões do Objeto' : 'Perfil do Humano'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button type="button" title="Editar medidas" onClick={() => openEdit(m)} className="cursor-pointer rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb]">
-                      <Edit3 size={16} />
-                    </button>
-                    <button type="button" title="Excluir perfil" onClick={() => setDel(m)} className="cursor-pointer rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-500">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-2.5">
-                  {m.measures.length === 0 && <p className="py-4 text-center text-xs font-semibold text-slate-400">Nenhuma medida cadastrada.</p>}
-                  {m.measures.map((x, i) => (
-                    <div key={`${m.id}-${x.name}-${i}`} className="flex items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#111524] p-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#0094eb]" />
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{x.name}</span>
-                      </div>
-                      <span className="rounded-xl border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-2.5 py-1 font-mono text-xs font-black">
-                        {x.value}{x.unit ? ` ${x.unit}` : ""}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <MedidasList models={models} linked={linked} loading={loading} onEdit={openEdit} onDelete={setDel} onBulkDelete={setBulkDel} />
       </div>
 
       {pickOpen && (
@@ -290,6 +258,7 @@ export default function Medidas() {
       )}
 
       <ConfirmDeleteDialog isOpen={!!del} title="EXCLUIR PERFIL" itemName={del?.name} onConfirm={confirmDelete} onCancel={() => setDel(null)} />
+      <ConfirmDeleteDialog isOpen={!!bulkDel} title="EXCLUIR MEDIDAS" itemName={bulkDel ? `${bulkDel.length} medidas` : undefined} onConfirm={confirmBulkDelete} onCancel={() => setBulkDel(null)} />
     </DashboardLayout>
   );
 }
