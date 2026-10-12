@@ -12,6 +12,8 @@ import DashboardTour from '@/components/dashboard/DashboardTour';
 import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/components/dashboard/useDashboardData';
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
+import PageTour from '@/components/tour/PageTour';
+import { DASHBOARD_TOUR } from '@/tours/dashboardTour';
 
 // dash-v11-noah-size
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
@@ -303,7 +305,7 @@ export default function Dashboard() {
             <p className="mt-auto text-sm text-slate-700">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
           </div>
 
-          <div className={`${CARD} flex flex-col gap-3 p-5`}>
+          <div className={`${CARD} flex flex-col gap-3 p-5`} data-tour="noah">
             <div className="flex items-center gap-3">
               <AssetImg src={NOAH_LOGO} alt="Dica do Noah" className="h-12 w-auto max-w-[220px] shrink-0 object-contain" fallback={<h3 className="text-base font-black text-slate-900">Dica do Noah</h3>} />
             </div>
@@ -321,6 +323,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
         {/* Modulos vindos do Master */}
         <div id="meus-modulos" data-tour="modules" className="scroll-mt-24">
           <Section title="Seus módulos">
