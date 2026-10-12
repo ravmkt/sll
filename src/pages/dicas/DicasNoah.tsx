@@ -9,7 +9,7 @@ import { CATEGORIES, categoryLabel, isTriggerActive, norm } from '@/lib/tipsMetr
 import { listActiveTips, listFeedback, saveFeedback, type Tip, type TipFeedback } from '@/services/tipsService';
 import { showError } from '@/utils/toast';
 
-const NOAH_SQUARE = '/assets/dica-do-noah-logo-quadrado.png';
+const NOAH_SQUARE = '/assets/noah-a1.png';
 const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md';
 
 const pad = (n: number) => String(n).padStart(2, '0');
