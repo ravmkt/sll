@@ -1,3 +1,5 @@
+import PageTour from '@/components/tour/PageTour';
+import { visaoGeralTour } from '@/tours/visaoGeralVidlyticsTour';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLoja } from '../../../contexts/LojaContext';
@@ -352,6 +354,7 @@ export default function VisaoGeralTab() {
 
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-300">
+<PageTour tourKey="vidlytics-visao-geral" steps={visaoGeralTour} />
       
       {/* 1. Header: boas-vindas, plano e status do app */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white px-5 py-3 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -441,7 +444,7 @@ export default function VisaoGeralTab() {
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div data-tour="vg-faturamento" className="grid grid-cols-1 md:grid-cols-3 gap-4">
           
           {/* Card: Aguardando Pagamento */}
           <div data-card-tip="Pedidos iniciados a partir dos seus vídeos que ainda não tiveram o pagamento confirmado." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all flex items-center justify-between">
@@ -502,7 +505,7 @@ export default function VisaoGeralTab() {
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 px-1">
           Consumo do Plano
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div data-tour="vg-consumo" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Visualizações */}
           <div data-card-tip="Visualizações dos seus vídeos no mês atual em relação à cota do seu plano." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
@@ -576,7 +579,7 @@ export default function VisaoGeralTab() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-6">
             {/* Desempenho dos videos */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4 flex flex-col">
+            <div data-tour="vg-desempenho" className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4 flex flex-col">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle icon={Activity}>Desempenho dos vídeos</CardTitle>
                 <button type="button" onClick={() => goTab('resultados', 'videos')} className="text-[11px] font-semibold text-[#0094eb] hover:underline cursor-pointer whitespace-nowrap">
@@ -603,7 +606,7 @@ export default function VisaoGeralTab() {
             </div>
 
             {/* Videos mais vistos */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+            <div data-tour="vg-top" className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
               <CardTitle icon={Trophy}>Vídeos mais assistidos</CardTitle>
               {top3.length === 0 ? (
                 <p className="text-xs text-slate-500">{perfLoading ? 'Carregando...' : 'Nenhuma visualização no período selecionado.'}</p>
@@ -647,7 +650,7 @@ export default function VisaoGeralTab() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm h-full flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
+          <div data-tour="vg-indique" className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm h-full flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
             <img src="/assets/clube-sll-logo-wide.png" alt="Clube SLL" className="h-8 w-auto object-contain" />
             <Share2 className="w-4 h-4 text-slate-400" />

@@ -1,3 +1,5 @@
+import PageTour from '@/components/tour/PageTour';
+import { produtosTour } from '@/tours/produtosTour';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, Edit3, Loader2, Package, Plus, RefreshCw, Search, Tag, Trash2, Upload } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
@@ -175,17 +177,18 @@ export default function Products() {
         <ProductsTabs />
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Catálogo de Produtos</h1>
+            <PageTour tourKey="produtos" steps={produtosTour} />
+<h1 className="text-2xl font-bold tracking-tight">Catálogo de Produtos</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">Base central de produtos, compartilhada com todos os seus módulos SLL.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] hover:bg-[#007bc4] px-4 py-2.5 text-sm font-semibold text-white transition cursor-pointer">
+            <button type="button" data-tour="prod-novo" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] hover:bg-[#007bc4] px-4 py-2.5 text-sm font-semibold text-white transition cursor-pointer">
               <Plus size={16} /> Novo produto
             </button>
-            <button type="button" onClick={() => setCatsOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-[#0094eb] transition cursor-pointer">
+            <button type="button" data-tour="prod-categorias" onClick={() => setCatsOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-[#0094eb] transition cursor-pointer">
               <Tag size={15} className="text-[#0094eb]" /> Categorias
             </button>
-            <button type="button" onClick={() => setImportOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-[#0094eb] transition cursor-pointer">
+            <button type="button" data-tour="prod-importar" onClick={() => setImportOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-[#0094eb] transition cursor-pointer">
               <Upload size={15} className="text-[#0094eb]" /> Importar produtos
             </button>
           </div>
@@ -193,7 +196,7 @@ export default function Products() {
 
         <ProductMetricCards {...metrics} loading={loading || lojaLoading} />
 
-        <div className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] p-5">
+        <div data-tour="prod-lista" className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] p-5">
           <div className="flex flex-col gap-3 lg:flex-row">
             <div className="relative flex-1">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

@@ -18,7 +18,7 @@ export default function ProductMetricCards({ total, active, inactive, linked, lo
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div data-tour="prod-metricas" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {items.map(({ label, value, Icon, box, icon }) => (
         <div key={label} className="flex items-center gap-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] px-5 py-4">
           <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', box)}>
