@@ -43,8 +43,8 @@ const LEVELS = [
   { n: 100, name: 'Platinum' },
 ];
 
-const CLUB_LOGO = '/assets/clube-sll-b.png';
-const NOAH_LOGO = '/assets/dica-do-noah-logo-wide.svg';
+const CLUB_LOGO = '/assets/clube-sll-logo-wide.png';
+const NOAH_LOGO = '/assets/dica-do-noah-logo-wide.png';
 const METRICS_ROUTE = '/dashboard/metricas';
 const TIPS_ROUTE = '/dashboard/dicas';
 const PRODUCTS_ROUTE = '/dashboard/produtos';
@@ -305,7 +305,7 @@ export default function Dashboard() {
 
           <div className={`${CARD} flex flex-col gap-3 p-5`}>
             <div className="flex items-center gap-3">
-              <AssetImg src={NOAH_LOGO} alt="Dica do Noah" className="h-14 w-auto max-w-[280px] object-contain" fallback={<h3 className="text-base font-black text-slate-900">Dica do Noah</h3>} />
+              <AssetImg src={NOAH_LOGO} alt="Dica do Noah" className="h-12 w-auto max-w-[220px] shrink-0 object-contain" fallback={<h3 className="text-base font-black text-slate-900">Dica do Noah</h3>} />
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-slate-800">{insight.title}</p>
@@ -433,7 +433,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <div data-tour="club" className={`${CARD} flex flex-col gap-4 p-5`}>
             <div className="flex flex-col items-start gap-2">
-              <AssetImg src={CLUB_LOGO} alt="Clube SLL" className="h-10 w-auto max-w-[200px] shrink-0 object-contain" fallback={<span className="text-base font-black text-slate-900">Clube SLL</span>} />
+              <AssetImg src={CLUB_LOGO} alt="Clube SLL" className="h-12 w-auto max-w-[220px] shrink-0 object-contain" fallback={<span className="text-base font-black text-slate-900">Clube SLL</span>} />
               <p className="text-sm font-medium text-slate-700">Indique lojas, suba de nível e conquiste benefícios exclusivos.</p>
             </div>
             <div className="space-y-2 rounded-xl bg-slate-50 p-4">

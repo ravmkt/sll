@@ -25,7 +25,7 @@ export function SocialPopupOverlay() {
   if (!IS_SOCIAL_POPUP) return null;
   return (
     <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-4 bg-white p-6 text-center">
-      <img src="/assets/sll-logotipo.png" alt="SLL Hub" className="h-10 w-auto object-contain" />
+      <img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="h-10 w-auto object-contain" />
       {slow ? (
         <>
           <CheckCircle2 className="h-8 w-8 text-emerald-500" />

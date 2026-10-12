@@ -52,7 +52,7 @@ export default function VidlyticsAcademy() {
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md">
       <div className="flex flex-col items-start gap-2">
-        <img src="/assets/sll-academy.png" alt="SLL Academy" className="h-10 w-auto max-w-[200px] shrink-0 object-contain" />
+        <img src="/assets/sll-academy-logo-wide.png" alt="SLL Academy" className="h-12 w-auto max-w-[220px] shrink-0 object-contain" />
         <p className="text-sm font-medium text-slate-700">
           Aulas práticas e estratégias reais para acelerar o seu e-commerce.
         </p>

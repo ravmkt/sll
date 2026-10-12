@@ -68,13 +68,13 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         <div className="flex justify-center items-center">
           {isExpanded ? (
             <img
-              src="/assets/sll-logotipo.png"
+              src="/assets/sll-hub-logo-wide.png"
               alt="SLL Hub"
               className="h-10 w-auto object-contain"
             />
           ) : (
             <img
-              src="/assets/sll-logotipo-ico.png"
+              src="/assets/sll-hub-logo-ico.png"
               alt="SLL Hub"
               className="h-9 w-9 object-contain"
             />

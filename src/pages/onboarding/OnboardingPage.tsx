@@ -120,7 +120,7 @@ export default function OnboardingPage() {
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-2xl px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            <img src="/assets/sll-logotipo.png" alt="SLL Hub" className="h-7 w-auto object-contain" />
+            <img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="h-7 w-auto object-contain" />
             <p className="text-xs text-slate-500">Passo {step} de {TOTAL}: <b className="text-slate-800">{TITLES[step - 1]}</b></p>
           </div>
           <div className="mt-3 flex items-center gap-3">
