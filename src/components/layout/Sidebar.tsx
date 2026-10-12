@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Package, LayoutGrid, GraduationCap, Crown, Plug,
+  LayoutDashboard, Package, Lightbulb, Crown, Plug,
   CreditCard, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Gift, Clock,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -28,14 +28,12 @@ const GROUPS: Group[] = [
       { name: 'Produtos & Catálogo', icon: Package, path: '/dashboard/produtos' },
     ],
   },
-  {
-    title: 'Ecossistema',
-    items: [{ name: 'Módulos do Hub', icon: LayoutGrid, path: '/dashboard/planos' }],
-  },
+  // Ecossistema oculto temporariamente: reativar quando houver mais módulos além do Vidlytics.
+  // { title: 'Ecossistema', items: [{ name: 'Módulos do Hub', icon: LayoutGrid, path: '/dashboard/planos' }] },
   {
     title: 'Comunidade & Ensino',
     items: [
-      { name: 'SLL Academy', icon: GraduationCap, path: '/dashboard/dicas' },
+      { name: 'Insights do Noah', icon: Lightbulb, path: '/dashboard/dicas' },
       { name: 'Clube SLL (Indique e Ganhe)', icon: Crown, path: '/dashboard/afiliados' },
     ],
   },
