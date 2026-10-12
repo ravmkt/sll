@@ -75,6 +75,11 @@ export const listProducts = (storeId: string) =>
   fetchAll<CatalogProduct>((a, b) =>
     sb.from('products').select(COLS).eq('store_id', storeId).order('created_at', { ascending: false }).range(a, b));
 
+export async function listLinkedProductIds(storeId: string): Promise<Set<string>> {
+  const rows = await fetchAll<{ product_id: string | null }>((a, b) =>
+    sb.schema('vidlytics').from('vid_videos').select('product_id').eq('store_id', storeId).not('product_id', 'is', null).range(a, b));
+  return new Set(rows.map((r) => String(r.product_id)));
+}
 export async function saveProduct(storeId: string, input: ProductInput, id?: string): Promise<CatalogProduct> {
   const payload = {
     name: input.name.trim(),

@@ -12,9 +12,11 @@ import {
   listCategories,
   listProducts,
   setProductActive,
+  listLinkedProductIds,
 } from '@/services/productsService';
 import ProductFormModal from '@/components/products/ProductFormModal';
 import ProductsTabs from '@/components/products/ProductsTabs';
+import ProductMetricCards from '@/components/products/ProductMetricCards';
 import CategoriesModal from '@/components/products/CategoriesModal';
 import ImportModal from '@/components/products/ImportModal';
 import { inputCls } from '@/components/products/Modal';
@@ -49,16 +51,18 @@ export default function Products() {
   const [importOpen, setImportOpen] = useState(false);
   const [del, setDel] = useState<{ ids: string[]; label: string } | null>(null);
   const [stock, setStock] = useState<Map<string, number>>(new Map());
+  const [linked, setLinked] = useState<Set<string>>(new Set());
   const [varProduct, setVarProduct] = useState<CatalogProduct | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
     try {
-      const [p, c, st] = await Promise.all([listProducts(storeId), listCategories(storeId), listStock(storeId).catch(() => new Map<string, number>())]);
+      const [p, c, st, lk] = await Promise.all([listProducts(storeId), listCategories(storeId), listStock(storeId).catch(() => new Map<string, number>()), listLinkedProductIds(storeId).catch(() => new Set<string>())]);
       setProducts(p);
       setCategories(c);
       setStock(st);
+      setLinked(lk);
     } catch (e) {
       console.error('Erro ao carregar produtos:', e);
       showError('Erro ao carregar produtos.');
@@ -69,6 +73,11 @@ export default function Products() {
 
   useEffect(() => { if (!lojaLoading) reload(); }, [lojaLoading, reload]);
   useEffect(() => { setPage(1); }, [search, fCat, fStatus, fOrigin, pageSize]);
+
+  const metrics = useMemo(() => {
+    const active = products.filter((p) => !!p.active).length;
+    return { total: products.length, active, inactive: products.length - active, linked: products.filter((p) => linked.has(p.id)).length };
+  }, [products, linked]);
 
   const categoryNames = useMemo(
     () => Array.from(new Set([...categories.map((c) => c.name), ...products.map((p) => p.category || '').filter(Boolean)])).sort((a, b) => a.localeCompare(b, 'pt-BR')),
@@ -181,6 +190,8 @@ export default function Products() {
             </button>
           </div>
         </div>
+
+        <ProductMetricCards {...metrics} loading={loading || lojaLoading} />
 
         <div className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] p-5">
           <div className="flex flex-col gap-3 lg:flex-row">
