@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Package, Ruler, LayoutGrid, Video, Play, Radio, GraduationCap, Crown, Plug,
+  LayoutDashboard, Package, LayoutGrid, GraduationCap, Crown, Plug,
   CreditCard, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Gift, Clock,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,10 +20,35 @@ type Group = { title: string; items: Item[]; bottom?: boolean };
 
 const sb: any = supabase;
 
-const MODULE_SHORTCUTS: Record<string, Item> = {
-  vidlytics: { name: 'Vidlytics', icon: Play, path: '/dashboard/modules/vidlytics' },
-  live_commerce: { name: 'Live Commerce', icon: Radio, path: '/dashboard/modules/live-commerce' },
-};
+const GROUPS: Group[] = [
+  {
+    title: 'Operação',
+    items: [
+      { name: 'Visão Geral', icon: LayoutDashboard, path: '/dashboard', exact: true },
+      { name: 'Produtos & Catálogo', icon: Package, path: '/dashboard/produtos' },
+    ],
+  },
+  {
+    title: 'Ecossistema',
+    items: [{ name: 'Módulos do Hub', icon: LayoutGrid, path: '/dashboard/planos' }],
+  },
+  {
+    title: 'Comunidade & Ensino',
+    items: [
+      { name: 'SLL Academy', icon: GraduationCap, path: '/dashboard/dicas' },
+      { name: 'Clube SLL (Indique e Ganhe)', icon: Crown, path: '/dashboard/afiliados' },
+    ],
+  },
+  {
+    title: 'Sistema',
+    bottom: true,
+    items: [
+      { name: 'Instalação & Script', icon: Plug, path: '/dashboard/integracao' },
+      { name: 'Configurações', icon: Settings, path: '/dashboard/settings' },
+      { name: 'Assinatura & Planos', icon: CreditCard, path: '/dashboard/assinaturas' },
+    ],
+  },
+];
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const location = useLocation();
@@ -32,28 +57,18 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const ctx: any = useLoja();
   const storeId: string | null = ctx?.loja?.id ?? ctx?.store?.id ?? ctx?.storeId ?? ctx?.lojaId ?? null;
   const [plan, setPlan] = useState<PlanState>(null);
-  const [owned, setOwned] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!storeId) { setPlan(null); setOwned([]); return; }
+    if (!storeId) { setPlan(null); return; }
     let alive = true;
     (async () => {
-      const [subsRes, modsRes] = await Promise.all([
-        sb.from('subscriptions').select('status, current_period_end, is_current').eq('store_id', storeId).eq('is_current', true),
-        sb.rpc('get_store_active_modules', { p_store_id: storeId }),
-      ]);
-      if (!alive) return;
-
-      if (!modsRes.error && Array.isArray(modsRes.data)) {
-        const slugs = (modsRes.data as any[])
-          .map((m) => (typeof m === 'string' ? m : m?.slug ?? m?.module_slug ?? m?.module ?? ''))
-          .map((s) => String(s).toLowerCase().replace(/-/g, '_'))
-          .filter(Boolean);
-        setOwned(Array.from(new Set(slugs)));
-      }
-
-      if (subsRes.error || !subsRes.data) return;
-      const rows = subsRes.data as any[];
+      const { data, error } = await sb
+        .from('subscriptions')
+        .select('status, current_period_end, is_current')
+        .eq('store_id', storeId)
+        .eq('is_current', true);
+      if (!alive || error || !data) return;
+      const rows = data as any[];
       if (rows.some((s) => s.status === 'active')) { setPlan(null); return; }
       const trials = rows.filter((s) => s.status === 'trialing' && s.current_period_end);
       const now = Date.now();
@@ -69,45 +84,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     return () => { alive = false; };
   }, [storeId]);
 
-  const moduleItems = owned.map((slug) => MODULE_SHORTCUTS[slug]).filter(Boolean) as Item[];
-  const ecosystemItems: Item[] = moduleItems.length
-    ? moduleItems
-    : [{ name: 'Módulos', icon: Video, path: '/dashboard/modules' }];
-
-  const groups: Group[] = [
-    {
-      title: 'Operação',
-      items: [
-        { name: 'Visão Geral', icon: LayoutDashboard, path: '/dashboard', exact: true },
-        { name: 'Produtos & SKUs', icon: Package, path: '/dashboard/produtos' },
-        { name: 'Tabela de Medidas', icon: Ruler, path: '/dashboard/medidas' },
-      ],
-    },
-    {
-      title: 'Ecossistema',
-      items: [
-        ...ecosystemItems,
-        { name: 'Explorar módulos', icon: LayoutGrid, path: '/dashboard/planos' },
-      ],
-    },
-    {
-      title: 'Crescimento',
-      items: [
-        { name: 'SLL Academy', icon: GraduationCap, path: '/dashboard/dicas' },
-        { name: 'Clube SLL', icon: Crown, path: '/dashboard/afiliados' },
-      ],
-    },
-    {
-      title: 'Sistema & Gestão',
-      bottom: true,
-      items: [
-        { name: 'Instalação & Script', icon: Plug, path: '/dashboard/integracao' },
-        { name: 'Assinatura & Planos', icon: CreditCard, path: '/dashboard/assinaturas' },
-        { name: 'Configurações', icon: Settings, path: '/dashboard/settings' },
-      ],
-    },
-  ];
-
   const isActive = (it: Item) =>
     it.exact
       ? location.pathname === it.path
@@ -115,7 +91,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   const renderItem = (it: Item) => {
     const Icon = it.icon;
-    const active = isActive(it);
     return (
       <Link
         key={it.name}
@@ -124,7 +99,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-200 ${
           !isExpanded ? 'justify-center' : ''
         } ${
-          active
+          isActive(it)
             ? 'bg-[#0094eb] text-white font-medium shadow-md shadow-[#0094eb]/20'
             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb]'
         }`}
@@ -152,7 +127,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         isExpanded ? 'w-64' : 'w-20'
       }`}
     >
-      {/* Logo Area */}
       <div className="p-4 flex flex-col gap-3 h-24 justify-center border-b border-slate-200 dark:border-slate-800">
         <div className="flex justify-center items-center">
           {isExpanded ? (
@@ -163,7 +137,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         </div>
       </div>
 
-      {/* Botão Recolher/Expandir */}
       <div className="px-4 pt-3">
         <button
           type="button"
@@ -186,12 +159,10 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         </button>
       </div>
 
-      {/* Navegação em grupos */}
       <nav className="flex-1 flex flex-col px-4 py-5 overflow-y-auto [&::-webkit-scrollbar]:hidden">
-        {groups.map(renderGroup)}
+        {GROUPS.map(renderGroup)}
       </nav>
 
-      {/* Rodapé: upsell + teste + sair */}
       <div className="px-4 pt-3 pb-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
         {storeId && (
           isExpanded ? (
