@@ -159,9 +159,15 @@ export function MarketStudyModal({ open, onClose, sector, loja }: Props) {
         rg('ticket médio', row.ticket_avg_min, row.ticket_avg_max, brl),
       ].filter(Boolean)
     : [];
-  const sectorSummary = sectorParts.length
-    ? `No setor de ${String(row?.sector_name)}, o mercado trabalha com ${sectorParts.join('; ')}.`
-    : '';
+  const scenarioFor = (name: string): string => {
+    const n = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (n.includes('moda')) return 'Moda é uma das maiores categorias do e-commerce brasileiro e segue em crescimento, puxada pelo celular e pelo social commerce. O cenário é favorável, mas competitivo: quem mostra o produto em uso, em vídeo, se destaca e tende a reduzir trocas.';
+    if (n.includes('belez')) return 'Beleza e cosméticos tem demanda recorrente e forte influência de conteúdo e avaliações. O cenário é favorável, com clientes que voltam a comprar. Vídeos de aplicação e resultado ajudam na decisão.';
+    if (n.includes('aliment')) return 'Alimentos e bebidas cresce no online, com compras frequentes e ticket menor por pedido. O cenário é favorável à recorrência, mas exige logística e prazos bem cuidados.';
+    if (n.includes('artesan')) return 'Artesanato é um nicho de valor percebido alto e público fiel. Cresce com histórias e bastidores, e o vídeo mostra o feito à mão. O mercado é menor, porém menos disputado por preço.';
+    return 'O e-commerce brasileiro segue em expansão, com o consumidor cada vez mais no celular e atento a conteúdo em vídeo. O cenário é favorável para quem constrói confiança e mostra o produto com clareza.';
+  };
+  const sectorSummary = sectorParts.length ? scenarioFor(String(row?.sector_name)) : '';
   let summary = 'Sua loja ainda não tem dados suficientes. Assim que os vídeos receberem visualizações, mostramos aqui onde você está em relação ao setor.';
   if (withData.length > 0) {
     summary =
@@ -186,7 +192,7 @@ export function MarketStudyModal({ open, onClose, sector, loja }: Props) {
           <div className="pb-4">
             <h2 className="text-lg font-bold text-slate-900">Estudo de mercado</h2>
             <p className="text-sm font-semibold text-[#0094eb]">{row ? String(row.sector_name) : sector || 'Setor não definido'}</p>
-            <p className="mt-2 max-w-md text-sm font-medium leading-snug text-slate-700">{sectorSummary}</p><p className="mt-1 max-w-md text-sm leading-snug text-slate-500">{summary}</p>
+            <p className="mt-2 max-w-md text-sm font-medium leading-snug text-slate-700">{sectorSummary}</p><p className="mt-1 max-w-md text-sm leading-snug text-slate-500">{summary}</p><p className="mt-2 max-w-md text-[11px] leading-snug text-slate-400">Fontes: NIQ Ebit (Webshoppers), Neotrust e relatórios de Social Commerce. As faixas são estimativas internas do SLL, revisadas a cada semestre.</p>
           </div>
           <div className="flex items-start gap-1">
             {mascotOk && (
