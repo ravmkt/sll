@@ -128,7 +128,7 @@ function buildInsight(d: DashData, hasVid: boolean): { title: string; text: stri
   if (d.referred === 0) {
     return {
       title: 'Indique lojistas e ganhe todo mês',
-      text: 'Cada loja que você indica e que assina te paga 10% de comissão recorrente. Compartilhe seu link exclusivo do Clube SLL.',
+      text: 'Cada loja que você indica e que assina te paga comissão recorrente todo mês. Compartilhe seu link exclusivo do Clube SLL.',
     };
   }
   if (d.products === 0) {
@@ -346,26 +346,29 @@ export default function Dashboard() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-slate-800">{insight.title}</p>
-              <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{insight.text}</p>
+              <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">
+                {insight.text}
+                {hubCta && (
+                  <>
+                    {' '}
+                    <button
+                      type="button"
+                      onClick={() => (/^https?:\/\//i.test(hubCta.url) ? window.open(hubCta.url, '_blank', 'noopener') : navigate(hubCta.url))}
+                      className="inline cursor-pointer font-bold text-[#0094eb] hover:underline"
+                    >
+                      Saiba mais →
+                    </button>
+                  </>
+                )}
+              </p>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-3 self-end">
-              {hubCta && (
-                <button
-                  type="button"
-                  onClick={() => (/^https?:\/\//i.test(hubCta.url) ? window.open(hubCta.url, '_blank', 'noopener') : navigate(hubCta.url))}
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#007fcc]"
-                >
-                  {hubCta.label} <ArrowRight className="h-3 w-3" />
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => navigate(TIPS_ROUTE)}
-                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
-              >
-                Ver mais dicas e insights <ArrowRight className="h-3 w-3" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate(TIPS_ROUTE)}
+              className="inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
+            >
+              Ver mais dicas e insights <ArrowRight className="h-3 w-3" />
+            </button>
           </div>
         </div>
 
