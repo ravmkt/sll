@@ -22,6 +22,12 @@ export default function Vidlytics() {
     return 'visao-geral';
   });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Informa a aba ativa ao chat de suporte (Noah)
+  useEffect(() => {
+    (window as any).__sllActiveTab = activeTab;
+    window.dispatchEvent(new CustomEvent('sll:active-tab', { detail: activeTab }));
+  }, [activeTab]);
   const [, setMkBanner] = useState(false);
   const { storeId } = useLoja() as { storeId: string | null };
 

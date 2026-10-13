@@ -15,7 +15,7 @@ import { useAuth } from './contexts/AuthContext';
 import { LojaProvider } from './contexts/LojaContext';
 import { OnboardingModal } from './components/OnboardingModal';
 import { CommentAlertModal } from './components/alerts/CommentAlerts';
-import WhatsAppSupportButton from '@/components/support/WhatsAppSupportButton';
+import NoahChatWidget from '@/components/support/NoahChatWidget';
 import { SubscriptionGate } from './components/auth/SubscriptionGate';
 import { ModuleGate } from './components/auth/ModuleGate';
 import { AdminGuard } from '@/components/admin/AdminGuard';
@@ -66,7 +66,7 @@ function AppRoutes() {
       {/* Modal de Onboarding: só aparece se needsOnboarding for true */}
       {user && <OnboardingModal />}
       {user && <CommentAlertModal />}
-      {user && <WhatsAppSupportButton />}
+      {user && <NoahChatWidget />}
       {user && <GlobalTrialBanner />}
       {user && <TrialExpiredModal />}
 
