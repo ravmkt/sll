@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Loader2, MessageCircle, Send, X } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { buildSupportUrl } from '@/config/support';
@@ -52,7 +53,26 @@ function Typewriter({ text, onTick }: { text: string; onTick: () => void }) {
     }, 15);
     return () => clearTimeout(t);
   }, [n, text, onTick]);
-  return <>{text.slice(0, n)}</>;
+  return <Md text={text.slice(0, n)} />;
+}
+
+function Md({ text }: { text: string }) {
+  return (
+    <ReactMarkdown
+      components={{
+        p: ({ children }: any) => <p className="mb-2 last:mb-0">{children}</p>,
+        ul: ({ children }: any) => <ul className="mb-2 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
+        ol: ({ children }: any) => <ol className="mb-2 list-decimal space-y-1.5 pl-5 last:mb-0">{children}</ol>,
+        li: ({ children }: any) => <li className="pl-0.5">{children}</li>,
+        strong: ({ children }: any) => <strong className="font-semibold text-slate-900">{children}</strong>,
+        a: ({ children, href }: any) => (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#0094eb] underline">{children}</a>
+        ),
+      }}
+    >
+      {text}
+    </ReactMarkdown>
+  );
 }
 
 export default function NoahChatWidget() {
@@ -143,15 +163,15 @@ export default function NoahChatWidget() {
           </button>
         </div>
 
-        <div className="flex-1 space-y-3 overflow-y-auto bg-white px-4 py-4">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain scroll-smooth bg-white px-4 py-4 [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed ${
+                className={`max-w-[85%] break-words rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed ${
                   m.role === 'user' ? 'rounded-br-sm bg-[#0094eb] text-white' : 'rounded-bl-sm bg-slate-100 text-slate-800'
                 }`}
               >
-                {m.animate ? <Typewriter text={m.content} onTick={scrollDown} /> : m.content}
+                {m.animate ? <Typewriter text={m.content} onTick={scrollDown} /> : m.role === 'assistant' ? <Md text={m.content} /> : m.content}
               </div>
             </div>
           ))}
