@@ -1,19 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Lightbulb, LayoutDashboard, Package, Plug, Settings } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import DashboardNotice from '@/components/dashboard/DashboardNotice';
 
 const sb: any = supabase;
-
-const TABS = [
-  { label: 'Visão Geral', to: '/dashboard', icon: LayoutDashboard, match: (p: string) => p === '/dashboard' },
-  { label: 'Produtos & Catálogo', to: '/dashboard/produtos', icon: Package, match: (p: string) => p.startsWith('/dashboard/produtos') || p.startsWith('/dashboard/medidas') },
-  { label: 'Insights do Noah', to: '/dashboard/dicas', icon: Lightbulb, match: (p: string) => p.startsWith('/dashboard/dicas') },
-  { label: 'Instalação & Script', to: '/dashboard/integracao', icon: Plug, match: (p: string) => p.startsWith('/dashboard/integracao') },
-  { label: 'Configurações', to: '/dashboard/settings', icon: Settings, match: (p: string) => p.startsWith('/dashboard/settings') },
-];
 
 const initials = (name: string) =>
   (name || 'Loja').trim().split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || 'L';
@@ -47,14 +38,14 @@ export default function PortalHeader() {
     return () => { alive = false; };
   }, [storeId, store?.logo_url]);
 
+  if (pathname !== '/dashboard') return null;
+
   const storeName = name || store?.name || 'sua loja';
   const greetName = (contact || String(store?.contact_name || '')).trim().split(/\s+/)[0] || storeName;
 
   return (
     <div className="space-y-4">
-      {pathname === '/dashboard' && <DashboardNotice storeId={storeId} />}
-
-      {pathname === '/dashboard' && (
+      <DashboardNotice storeId={storeId} />
       <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-sm">
         {logo && !imgFailed ? (
           <img src={logo} alt={storeName} className="h-14 w-14 shrink-0 rounded-2xl border border-slate-200 bg-white object-contain p-1" onError={() => setImgFailed(true)} />
@@ -68,28 +59,6 @@ export default function PortalHeader() {
           <p className="text-sm text-slate-500">Painel de controle e inteligência da sua operação online.</p>
         </div>
       </div>
-      )}
-
-      <nav aria-label="Navegação principal" className="max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="inline-flex gap-1 rounded-xl bg-slate-100 p-1">
-          {TABS.map((t) => {
-            const active = t.match(pathname);
-            const Icon = t.icon;
-            return (
-              <Link
-                key={t.to}
-                to={t.to}
-                aria-current={active ? 'page' : undefined}
-                className={`flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                  active ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-slate-900'
-                }`}
-              >
-                <Icon className="h-4 w-4" /> {t.label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
     </div>
   );
 }

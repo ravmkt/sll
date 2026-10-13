@@ -6,18 +6,25 @@ import { useLoja } from '@/contexts/LojaContext';
 import { getActiveSubscriptions } from '@/services/subscriptions/getStoreSubscriptions';
 import { getCatalogModules, type CatalogModule } from '@/services/plans/getCatalogShowcase';
 
-type Item = { key: string; name: string; category: string; path: string; icon: ElementType; soon?: boolean };
+type Item = { key: string; name: string; category: string; path: string; icon: ElementType; logo?: string; soon?: boolean };
 
 // Modulo novo = uma linha aqui. "key" deve ser igual ao module_key / plans.modules.
+// O logotipo vem do cadastro do modulo (hub_modules.logo_url); "logo" e a alternativa local.
 const SWITCHER_MODULES: Item[] = [
-  { key: 'vidlytics', name: 'Vidlytics Stories', category: 'Vídeos Interativos', path: '/dashboard/modules/vidlytics', icon: Layers },
+  { key: 'vidlytics', name: 'Vidlytics Stories', category: 'Vídeos Interativos', path: '/dashboard/modules/vidlytics', icon: Layers, logo: '/assets/vidlytics-logo-ico.png' },
   { key: 'live_commerce', name: 'Live Commerce', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/live-commerce', icon: Radio },
   { key: 'gamification', name: 'Gamificação', category: 'Engajamento & Prêmios', path: '/dashboard/modules/gamificacao', icon: Gamepad2, soon: true },
 ];
 
-const HOME: Item = { key: 'home', name: 'SLL Hub', category: 'Visão geral da loja', path: '/dashboard', icon: LayoutDashboard };
+const HOME: Item = { key: 'home', name: 'SLL Hub', category: 'Visão geral da loja', path: '/dashboard', icon: LayoutDashboard, logo: '/assets/sll-hub-logo-ico.png' };
 
 const cache = new Map<string, string[]>();
+
+function Logo({ src, Icon, size }: { src?: string; Icon: ElementType; size: number }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) return <Icon style={{ width: size * 0.6, height: size * 0.6 }} className="text-[#0094eb]" />;
+  return <img src={src} alt="" style={{ width: size, height: size }} className="object-contain" onError={() => setFailed(true)} />;
+}
 
 export function ModuleSwitcher() {
   const { storeId } = useLoja() as { storeId: string | null };
@@ -54,72 +61,73 @@ export function ModuleSwitcher() {
     return () => document.removeEventListener('mousedown', close);
   }, []);
 
-  const current = useMemo(
-    () => SWITCHER_MODULES.find((m) => pathname === m.path || pathname.startsWith(m.path + '/')) ?? HOME,
-    [pathname],
-  );
-  const items = useMemo(
-    () => {
-      const st = new Map(catalog.map((c) => [c.slug, c.status] as [string, string]));
-      const list = SWITCHER_MODULES
-        .filter((m) => st.get(m.key) !== 'hidden')
-        .filter((m) => owned.includes(m.key) || m.key === current.key || st.get(m.key) === 'coming_soon')
-        .map((m) => ({ ...m, soon: m.soon || (st.get(m.key) === 'coming_soon' && !owned.includes(m.key)) }));
-      return [HOME, ...list];
-    },
-    [owned, current, catalog],
-  );
-  const CurrentIcon = current.icon;
+  const withLogo = (m: Item): Item => {
+    const c = catalog.find((x) => x.slug === m.key);
+    return { ...m, logo: c?.logo_url || m.logo };
+  };
+
+  const current = useMemo(() => {
+    const found = SWITCHER_MODULES.find((m) => pathname === m.path || pathname.startsWith(m.path + '/'));
+    return withLogo(found ?? HOME);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, catalog]);
+
+  const items = useMemo(() => {
+    const st = new Map(catalog.map((c) => [c.slug, c.status] as [string, string]));
+    const list = SWITCHER_MODULES
+      .filter((m) => st.get(m.key) !== 'hidden')
+      .filter((m) => owned.includes(m.key) || m.key === current.key || st.get(m.key) === 'coming_soon')
+      .map((m) => ({ ...withLogo(m), soon: m.soon || (st.get(m.key) === 'coming_soon' && !owned.includes(m.key)) }));
+    return [withLogo(HOME), ...list];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [owned, current, catalog]);
 
   return (
-    <div className="flex items-center gap-2">
-      
-      <div className="relative shrink-0" ref={ref}>
+    <div className="relative shrink-0" ref={ref}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2.5 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-xl px-3.5 py-1.5 text-xs text-slate-700 font-medium hover:border-slate-300 transition-all cursor-pointer"
+        aria-expanded={open}
+        className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50"
       >
-        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-        <CurrentIcon className="w-4 h-4 text-[#0094eb]" />
+        <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+        <Logo src={current.logo} Icon={current.icon} size={20} />
         <span className="font-semibold text-slate-800">{current.name}</span>
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200/90 py-2 z-50">
-          <div className="px-3.5 py-2 border-b border-slate-100">
+        <div className="absolute right-0 z-50 mt-2 w-72 rounded-2xl border border-slate-200/90 bg-white py-2 shadow-xl">
+          <div className="border-b border-slate-100 px-3.5 py-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Seus módulos</span>
           </div>
-          <div className="p-1.5 space-y-1">
+          <div className="space-y-1 p-1.5">
             {items.map((m) => {
-              const Icon = m.icon;
               const isCurrent = m.key === current.key;
               return (
                 <button
                   key={m.key}
                   type="button"
                   onClick={() => { setOpen(false); if (!isCurrent && !m.soon) navigate(m.path); }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer ${isCurrent ? 'bg-blue-50/80 text-[#0094eb]' : 'hover:bg-slate-50 text-slate-700'}`}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${m.soon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'} ${isCurrent ? 'bg-blue-50/80 text-[#0094eb]' : 'text-slate-700 hover:bg-slate-50'}`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isCurrent ? 'bg-[#0094eb] text-white' : 'bg-slate-100 text-slate-600'}`}>
-                      <Icon className="w-4 h-4" />
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${isCurrent ? 'border-[#0094eb]/30 bg-white' : 'border-slate-100 bg-slate-50'}`}>
+                      <Logo src={m.logo} Icon={m.icon} size={26} />
                     </div>
                     <div className="truncate">
-                      <p className="text-xs font-semibold truncate leading-tight">{m.name}</p>
-                      <p className="text-[11px] text-slate-400 truncate">{m.category}</p>
+                      <p className="truncate text-xs font-semibold leading-tight">{m.name}</p>
+                      <p className="truncate text-[11px] text-slate-400">{m.category}</p>
                     </div>
                   </div>
-                  {isCurrent && <Check className="w-4 h-4 text-[#0094eb] shrink-0 ml-2" />}
-                  {m.soon && <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0 ml-2">Em breve</span>}
+                  {isCurrent && <Check className="ml-2 h-4 w-4 shrink-0 text-[#0094eb]" />}
+                  {m.soon && <span className="ml-2 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Em breve</span>}
                 </button>
               );
             })}
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 }
