@@ -234,20 +234,16 @@ export default function ProximasDatasComerciais() {
                   )}
                 </div>
               </div>
-              <button
+              <div className="flex shrink-0 items-start gap-2"><img src="/assets/noah-a2.png" alt="Noah" className="h-28 w-auto object-contain -mt-1" /><button
                 type="button"
                 onClick={() => setSelected(null)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                 aria-label="Fechar"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </button></div>
             </div>
             <div className="p-5 space-y-3">
-              <div className="flex items-center gap-2 text-[#0094eb]">
-                <img src="/assets/noah-a2.png" alt="Noah" className="h-12 w-12 shrink-0 object-contain" />
-                <span className="text-xs font-bold uppercase tracking-wider">Dica do Noah</span>
-              </div>
               <p className="text-sm text-slate-700 leading-relaxed">
                 {selText || 'Ainda não há uma dica cadastrada para esta data.'}
               </p>
