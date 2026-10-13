@@ -54,6 +54,7 @@ export default function PortalHeader() {
     <div className="space-y-4">
       {pathname === '/dashboard' && <DashboardNotice storeId={storeId} />}
 
+      {pathname === '/dashboard' && (
       <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-sm">
         {logo && !imgFailed ? (
           <img src={logo} alt={storeName} className="h-14 w-14 shrink-0 rounded-2xl border border-slate-200 bg-white object-contain p-1" onError={() => setImgFailed(true)} />
@@ -67,6 +68,7 @@ export default function PortalHeader() {
           <p className="text-sm text-slate-500">Painel de controle e inteligência da sua operação online.</p>
         </div>
       </div>
+      )}
 
       <nav aria-label="Navegação principal" className="max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="inline-flex gap-1 rounded-xl bg-slate-100 p-1">
