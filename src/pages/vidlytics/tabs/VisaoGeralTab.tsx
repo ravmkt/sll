@@ -348,7 +348,7 @@ export default function VisaoGeralTab() {
   const academyTip = ACADEMY_TIPS[new Date().getMonth()];
 
   const [vidTips, setVidTips] = useState<ScopedTip[]>([]);
-  const [vidSkip, setVidSkip] = useState(0);
+  const vidSkip = 0;
   useEffect(() => {
     let alive = true;
     listScopedTips('vidlytics').then((l) => { if (alive) setVidTips(l); });
@@ -660,13 +660,13 @@ export default function VisaoGeralTab() {
               <p className="text-sm font-bold text-slate-800">{noahTip.title}</p>
               <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{noahTip.text}</p>
             </div>
-            {vidTips.length > 1 && (
+            {vidTips.length > 0 && (
               <button
                 type="button"
-                onClick={() => setVidSkip((s) => s + 1)}
+                onClick={() => navigate('/dashboard/dicas/vidlytics')}
                 className="self-end text-xs font-bold text-[#0094eb] hover:underline cursor-pointer"
               >
-                Próxima dica →
+                Ver mais dicas →
               </button>
             )}
           </div>

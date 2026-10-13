@@ -9,6 +9,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
 import { listScopedTips, pickTip, resolveCta, plainText, type ScopedTip } from '@/services/scopedTips';
+import { getSeasonalTip, type SeasonalTip } from '@/services/seasonalTips';
 import DashboardTour from '@/components/dashboard/DashboardTour';
 import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/components/dashboard/useDashboardData';
 import { useLoja } from '@/contexts/LojaContext';
@@ -165,6 +166,13 @@ export default function Dashboard() {
   const pulse = usePulse(storeId);
 
   const [hubTips, setHubTips] = useState<ScopedTip[]>([]);
+  const [seasonal, setSeasonal] = useState<SeasonalTip | null>(null);
+  useEffect(() => {
+    if (!storeId) return;
+    let alive = true;
+    getSeasonalTip(storeId, (store as any)?.sector_id ?? null).then((s) => { if (alive) setSeasonal(s); });
+    return () => { alive = false; };
+  }, [storeId, (store as any)?.sector_id]);
   useEffect(() => {
     let alive = true;
     listScopedTips('hub').then((l) => { if (alive) setHubTips(l); });
@@ -204,8 +212,8 @@ export default function Dashboard() {
     ctr: data.ctrRange, views: data.viewsRange, clicks: data.clicksRange, revenue: data.assistedRevenue,
     products: data.products, videos: data.totalVideos, referred: data.referred,
   });
-  const hubCta = hubTip ? resolveCta(hubTip, data.owned) : null;
-  const insight = hubTip ? { title: hubTip.title, text: plainText(hubTip.content) } : buildInsight(data, hasVid);
+  const hubCta = !seasonal && hubTip ? resolveCta(hubTip, data.owned) : null;
+  const insight = seasonal ? { title: seasonal.title, text: seasonal.text } : hubTip ? { title: hubTip.title, text: plainText(hubTip.content) } : buildInsight(data, hasVid);
   const visibleMods = sortModules(data.modules.filter((m) => m.status !== 'hidden'), data.owned);
   const modCols = visibleMods.length <= 1 ? 'md:grid-cols-1' : visibleMods.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
 

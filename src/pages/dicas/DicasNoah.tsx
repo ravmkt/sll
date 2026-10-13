@@ -8,6 +8,7 @@ import { useDashboardData } from '@/components/dashboard/useDashboardData';
 import { CATEGORIES, categoryLabel, isTriggerActive, norm } from '@/lib/tipsMetrics';
 import { listActiveTips, listFeedback, saveFeedback, type Tip, type TipFeedback } from '@/services/tipsService';
 import { showError } from '@/utils/toast';
+import { listScopedTips, resolveCta } from '@/services/scopedTips';
 
 const NOAH_SQUARE = '/assets/noah-a1.png';
 const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md';
@@ -102,7 +103,7 @@ function TipCard({ tip, fb, urgent, onDone, onVote, onAction }: {
   );
 }
 
-export default function DicasNoah() {
+export default function DicasNoah({ scope = 'hub' }: { scope?: 'hub' | 'vidlytics' }) {
   const navigate = useNavigate();
   const { store, storeId } = useLoja() as { store: any; storeId: string | null };
   const range = useMemo(() => {
@@ -123,7 +124,7 @@ export default function DicasNoah() {
   useEffect(() => {
     if (!storeId) return;
     let alive = true;
-    Promise.all([listActiveTips(), listFeedback(storeId)])
+    Promise.all([scope === 'hub' ? listActiveTips() : (listScopedTips(scope) as unknown as Promise<Tip[]>), listFeedback(storeId)])
       .then(([t, f]) => {
         if (!alive) return;
         setTips(t);
@@ -132,7 +133,7 @@ export default function DicasNoah() {
       .catch((e) => showError((e as Error).message))
       .finally(() => alive && setLoading(false));
     return () => { alive = false; };
-  }, [storeId]);
+  }, [storeId, scope]);
 
   const niche: string = store?.store_niche || '';
   const metrics = useMemo(() => ({
@@ -178,32 +179,34 @@ export default function DicasNoah() {
     catch (e) { setFbMap((m) => ({ ...m, [tip.id]: prev })); showError((e as Error).message); }
   };
 
-  const go = (tip: Tip) => {
-    const url = tip.action_url;
+  const go = (url?: string | null) => {
     if (!url) return;
     if (/^https?:\/\//i.test(url)) window.open(url, '_blank', 'noopener');
     else navigate(url);
   };
 
   const clear = () => { setCat('all'); setQ(''); setOnlyPending(false); };
-  const render = (t: Tip, urgent: boolean) => (
-    <TipCard key={t.id} tip={t} fb={fbMap[t.id]} urgent={urgent}
+  const render = (t: Tip, urgent: boolean) => {
+    const cta = resolveCta(t as any, (data as any).owned || []);
+    return (
+    <TipCard key={t.id} tip={{ ...t, action_label: cta?.label ?? null, action_url: cta?.url ?? null } as Tip} fb={fbMap[t.id]} urgent={urgent}
       onDone={() => update(t, { implemented: !fbMap[t.id]?.implemented })}
       onVote={(v) => update(t, { vote: fbMap[t.id]?.vote === v ? null : v })}
-      onAction={() => go(t)} />
-  );
+      onAction={() => go(cta?.url)} />
+    );
+  };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <button type="button" onClick={() => navigate('/dashboard')} className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#0094eb]">
-          <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao Dashboard
+        <button type="button" onClick={() => navigate(scope === 'vidlytics' ? '/dashboard/modules/vidlytics' : '/dashboard')} className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#0094eb]">
+          <ArrowLeft className="h-3.5 w-3.5" /> {scope === 'vidlytics' ? 'Voltar ao Vidlytics' : 'Voltar ao Dashboard'}
         </button>
 
         <div className="flex items-center gap-4">
           <NoahImg className="h-16 w-16 shrink-0 rounded-2xl object-contain" fallback={<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0094eb]/10"><Lightbulb className="h-8 w-8 text-[#0094eb]" /></div>} />
           <div>
-            <h1 className="text-2xl font-black text-slate-900">Dicas & Insights do Noah</h1>
+            <h1 className="text-2xl font-black text-slate-900">{scope === 'vidlytics' ? 'Dicas do Vidlytics' : 'Dicas & Insights do Noah'}</h1>
             <p className="text-sm text-slate-600">Recomendações práticas e acionáveis para destravar as vendas e a margem da sua loja.</p>
           </div>
         </div>

@@ -231,6 +231,18 @@ function AppRoutes() {
         />
 
         <Route path="/vidlytics" element={<Navigate to="/" replace />} />
+        <Route
+          path="/dashboard/dicas/vidlytics"
+          element={
+            user ? (
+              <SubscriptionGate>
+                <DicasNoah scope="vidlytics" />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
         <Route path="/dashboard/onboarding" element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} />
         <Route
           path="/dashboard/dicas"
