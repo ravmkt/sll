@@ -6,12 +6,13 @@ import { MasterLayout, type MasterTab } from '@/components/admin/MasterLayout';
 import DashboardTab from '@/components/admin/DashboardTab';
 import LojasTab from '@/components/admin/LojasTab';
 import MarketingTab from '@/components/admin/MarketingTab';
+import NoahSupportTab from '@/components/master/NoahSupportTab';
 import BenchmarkUpdateCard from '@/components/admin/BenchmarkUpdateCard';
 
 export default function AdminMasterPage() {
   const [, setParams] = useSearchParams();
   const [planModule, setPlanModule] = useState<string | null>(null);
-  const [tab, setTab] = useState<MasterTab>(() => { const t = new URLSearchParams(window.location.search).get('tab') as MasterTab | null; return t && ['dashboard','lojas','modulos','precos','marketing','insights'].includes(t) ? t : 'dashboard'; });
+  const [tab, setTab] = useState<MasterTab>(() => { const t = new URLSearchParams(window.location.search).get('tab') as MasterTab | null; return t && ['dashboard','lojas','modulos','precos','marketing','noah','insights'].includes(t) ? t : 'dashboard'; });
 
   return (
     <MasterLayout tab={tab} onTab={setTab}>
@@ -19,7 +20,9 @@ export default function AdminMasterPage() {
         <DashboardTab />
       ) : tab === 'lojas' ? (
         <LojasTab />
-      ) : tab === 'marketing' ? (
+      ) : tab === 'noah' ? (
+<NoahSupportTab />
+) : tab === 'marketing' ? (
         <MarketingTab />
       ) : tab === 'precos' ? (
         <PrecosTab initialModule={planModule} />

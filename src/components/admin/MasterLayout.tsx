@@ -1,8 +1,8 @@
 import type { ElementType, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Layers, LayoutDashboard, Lightbulb, Megaphone, ShieldCheck, Store, Tag } from 'lucide-react';
+import { Bot, ArrowLeft, Layers, LayoutDashboard, Lightbulb, Megaphone, ShieldCheck, Store, Tag } from 'lucide-react';
 
-export type MasterTab = 'dashboard' | 'lojas' | 'modulos' | 'precos' | 'marketing' | 'insights';
+export type MasterTab = 'dashboard' | 'lojas' | 'modulos' | 'precos' | 'marketing' | 'insights' | 'noah';
 
 const ITEMS: { id: MasterTab; label: string; icon: ElementType }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -11,6 +11,7 @@ const ITEMS: { id: MasterTab; label: string; icon: ElementType }[] = [
   { id: 'precos', label: 'Preços', icon: Tag },
   { id: 'marketing', label: 'Marketing', icon: Megaphone },
   { id: 'insights', label: 'Insights', icon: Lightbulb },
+  { id: 'noah', label: 'Suporte Noah', icon: Bot },
 ];
 
 export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: (t: MasterTab) => void; children: ReactNode }) {
