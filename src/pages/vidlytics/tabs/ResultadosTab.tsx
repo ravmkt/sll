@@ -3,7 +3,7 @@ import InsightsPanel from '@/components/vidlytics/InsightsPanel';
 import VideoRetentionModal from '@/components/vidlytics/VideoRetentionModal';
 import { supabase } from '@/lib/supabase';
 import React, { useState, useEffect, useMemo } from 'react';
-import { BarChart3, Film, CheckSquare, Sparkles, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, ChevronDown, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
+import { BarChart3, Film, CheckSquare, Sparkles, Hourglass, CheckCircle2, DollarSign, Wallet, Eye, MousePointerClick, Heart, MessageCircle, Percent, ArrowUpRight, TrendingDown, Compass, RefreshCw, Zap, Search, Clock, Flame, LogOut, Volume2, Maximize2, Play, Share2, TrendingUp, Info } from 'lucide-react';
 import { useLoja } from '../../../contexts/LojaContext';
 import { useCardTip } from '@/hooks/useCardTip';
 import { VidlyticsDatabaseService, VidlyticsOverviewMetrics, VidlyticsVideoRow, VidlyticsRetentionRow, VidlyticsInsightRow } from '../../../services/vidlytics/VidlyticsDatabaseService';
@@ -331,19 +331,19 @@ export default function ResultadosTab() {
 
   const PeriodoSelector = () => (
     <div className="flex items-center gap-2 self-start sm:self-auto">
-      <div className="relative inline-block">
-        <select
-          value={periodo}
-          onChange={(e) => setPeriodo(e.target.value as PeriodoKey)}
-          className="appearance-none bg-white border border-slate-200 text-xs font-semibold text-slate-700 py-2 pl-3.5 pr-8 rounded-xl shadow-xs hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20 cursor-pointer"
-        >
-          <option value="hoje">Hoje</option>
-          <option value="7">7 dias</option>
-          <option value="15">15 dias</option>
-          <option value="30">30 dias</option>
-          <option value="custom">Personalizado</option>
-        </select>
-        <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5">
+        {([['hoje', 'Hoje'], ['7', '7 dias'], ['30', '30 dias'], ['custom', 'Personalizado']] as [PeriodoKey, string][]).map(([k, l]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setPeriodo(k)}
+            className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+              periodo === k ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-500 hover:text-[#0094eb]'
+            }`}
+          >
+            {l}
+          </button>
+        ))}
       </div>
 
       {periodo === 'custom' && (
@@ -352,14 +352,14 @@ export default function ResultadosTab() {
             type="date"
             value={customStart}
             onChange={(e) => setCustomStart(e.target.value)}
-            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+            className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#0094eb]"
           />
           <span className="text-xs text-slate-400">até</span>
           <input
             type="date"
             value={customEnd}
             onChange={(e) => setCustomEnd(e.target.value)}
-            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#0094eb]/20"
+            className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#0094eb]"
           />
         </div>
       )}
