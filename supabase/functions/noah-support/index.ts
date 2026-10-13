@@ -85,6 +85,8 @@ Deno.serve(async (req) => {
     `- Aba ativa: ${clean(ctx.activeTab, 40) || "nenhuma"}\n` +
     `- Aplicativo de vídeos: ${status}`;
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+  const { data: cfg } = await admin.from("noah_settings").select("ai_enabled, model").eq("id", 1).maybeSingle();
+  if (cfg && cfg.ai_enabled === false) return json({ error: "IA_DESATIVADA" }, 403);
   const { data: kb } = await admin.from("noah_knowledge").select("module, title, content").eq("is_active", true).order("module").order("title").limit(60);
   let used = 0;
   const docs: string[] = [];
@@ -98,7 +100,7 @@ Deno.serve(async (req) => {
     ? `${baseSystem}\n\nDOCUMENTAÇÃO DE SUPORTE (fonte de verdade; se conflitar com as regras acima, esta prevalece)\n${docs.join("\n\n---\n")}`
     : baseSystem;
 
-  const MODELS = [...new Set([MODEL, "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview", "gemini-3.7-flash", "gemini-flash-latest"])];
+  const MODELS = [...new Set([cfg?.model || MODEL, "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview", "gemini-3.7-flash", "gemini-flash-latest"])];
   let data: any = null;
   let usedModel = "";
   for (const m of MODELS) {

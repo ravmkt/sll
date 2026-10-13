@@ -75,6 +75,12 @@ function Md({ text }: { text: string }) {
   );
 }
 
+function waUrl(cfg: any, name?: string | null, id?: string | null): string {
+  const num = String(cfg.whatsapp_number ?? '').replace(/\D/g, '');
+  const text = String(cfg.whatsapp_message ?? '').replace(/\{loja\}/g, name ?? '').replace(/\{id\}/g, id ?? '');
+  return `https://wa.me/${num}?text=${encodeURIComponent(text)}`;
+}
+
 export default function NoahChatWidget() {
   const { pathname } = useLocation();
   const { store, storeId } = useLoja() as { store: any; storeId: string | null };
@@ -84,10 +90,16 @@ export default function NoahChatWidget() {
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<string | undefined>((window as any).__sllActiveTab);
   const [appStatus, setAppStatus] = useState<boolean | undefined>(undefined);
+  const [cfg, setCfg] = useState<any>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollDown = useCallback(() => endRef.current?.scrollIntoView({ block: 'end' }), []);
+  useEffect(() => {
+    let alive = true;
+    sb.rpc('noah_public_config').then(({ data }: any) => { if (alive && data) setCfg(data); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     const h = (e: Event) => setTab(((e as CustomEvent).detail as string) || undefined);
@@ -113,7 +125,7 @@ export default function NoahChatWidget() {
   if (HIDDEN_ON.some((p) => pathname === p || pathname.startsWith(p + '/'))) return null;
 
   const inVidlytics = pathname.startsWith('/dashboard/modules/vidlytics');
-  const whatsapp = buildSupportUrl(store?.name, storeId ?? store?.id);
+  const whatsapp = cfg?.whatsapp_number ? waUrl(cfg, store?.name, storeId ?? store?.id) : buildSupportUrl(store?.name, storeId ?? store?.id);
 
   const send = async () => {
     const text = input.trim().slice(0, MAX_LEN);
@@ -220,7 +232,7 @@ export default function NoahChatWidget() {
 
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { if (cfg && cfg.ai_enabled === false) { window.open(whatsapp, '_blank', 'noopener,noreferrer'); return; } setOpen((v) => !v); }}
         aria-label={open ? 'Fechar chat com o Noah' : 'Abrir chat com o Noah'}
         aria-expanded={open}
         className="group relative flex h-[90px] w-[90px] items-center justify-center rounded-full transition-all duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
