@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
-const MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-2.0-flash";
+const MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.1-flash-lite";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -80,20 +80,28 @@ Deno.serve(async (req) => {
     `- Aba ativa: ${clean(ctx.activeTab, 40) || "nenhuma"}\n` +
     `- Aplicativo de vídeos: ${status}`;
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents: contents.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
-      generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
-    }),
-  });
-  if (!res.ok) {
-    console.error("noah-support gemini", res.status, (await res.text()).slice(0, 300));
-    return json({ error: "IA_INDISPONIVEL" }, 502);
+  const MODELS = [...new Set([MODEL, "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview", "gemini-3.7-flash", "gemini-flash-latest"])];
+  let data: any = null;
+  for (const m of MODELS) {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: contents.map((x) => ({ role: x.role, parts: [{ text: x.text }] })),
+        generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
+      }),
+    });
+    if (res.ok) {
+      data = await res.json().catch(() => null);
+      if (data) break;
+      continue;
+    }
+    console.error("noah-support gemini", m, res.status, (await res.text()).slice(0, 300));
+    if (res.status === 404 || res.status === 429 || res.status >= 500) continue;
+    break;
   }
-  const data = await res.json().catch(() => ({}));
+  if (!data) return json({ error: "IA_INDISPONIVEL" }, 502);
   const reply = String(data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text ?? "").join("") ?? "").trim();
   return json({ reply: reply || "Não consegui responder agora. Pode reformular a pergunta ou chamar nosso time no WhatsApp?" });
 });
