@@ -24,6 +24,15 @@ export default function PortalHeader() {
   const [logo, setLogo] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [imgFailed, setImgFailed] = useState(false);
+  const [contact, setContact] = useState('');
+
+  useEffect(() => {
+    if (!storeId) return;
+    let alive = true;
+    sb.from('stores').select('contact_name').eq('id', storeId).maybeSingle()
+      .then(({ data }: any) => { if (alive) setContact(((data?.contact_name as string) || '').trim()); });
+    return () => { alive = false; };
+  }, [storeId]);
 
   useEffect(() => {
     if (!storeId) return;
@@ -39,6 +48,7 @@ export default function PortalHeader() {
   }, [storeId, store?.logo_url]);
 
   const storeName = name || store?.name || 'sua loja';
+  const greetName = (contact || String(store?.contact_name || '')).trim().split(/\s+/)[0] || storeName;
 
   return (
     <div className="space-y-4">
@@ -53,28 +63,30 @@ export default function PortalHeader() {
           </div>
         )}
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-black text-slate-900">Bem-vindo(a), {storeName}</h1>
+          <h1 className="truncate text-xl font-black text-slate-900">Bem-vindo(a), {greetName}</h1>
           <p className="text-sm text-slate-500">Painel de controle e inteligência da sua operação online.</p>
         </div>
       </div>
 
-      <nav aria-label="Navegação principal" className="flex gap-1 overflow-x-auto border-b border-slate-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {TABS.map((t) => {
-          const active = t.match(pathname);
-          const Icon = t.icon;
-          return (
-            <Link
-              key={t.to}
-              to={t.to}
-              aria-current={active ? 'page' : undefined}
-              className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
-                active ? 'border-[#0094eb] text-[#0094eb]' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'
-              }`}
-            >
-              <Icon className="h-4 w-4" /> {t.label}
-            </Link>
-          );
-        })}
+      <nav aria-label="Navegação principal" className="max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="inline-flex gap-1 rounded-xl bg-slate-100 p-1">
+          {TABS.map((t) => {
+            const active = t.match(pathname);
+            const Icon = t.icon;
+            return (
+              <Link
+                key={t.to}
+                to={t.to}
+                aria-current={active ? 'page' : undefined}
+                className={`flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                  active ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-slate-900'
+                }`}
+              >
+                <Icon className="h-4 w-4" /> {t.label}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );

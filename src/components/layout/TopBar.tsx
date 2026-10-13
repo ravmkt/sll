@@ -61,6 +61,8 @@ export function TopBar(_props: { onMenuClick?: () => void; [k: string]: unknown 
   const [owned, setOwned] = useState<string[]>([]);
   const [open, setOpen] = useState<'apps' | 'user' | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -87,6 +89,18 @@ export function TopBar(_props: { onMenuClick?: () => void; [k: string]: unknown 
   }, [storeId]);
 
   useEffect(() => {
+    if (!storeId) return;
+    let alive = true;
+    sb.from('store_settings').select('logo_url').eq('store_id', storeId).maybeSingle()
+      .then(({ data }: any) => {
+        if (!alive) return;
+        setAvatar(((data?.logo_url as string) || store?.logo_url || '').trim() || null);
+        setAvatarFailed(false);
+      });
+    return () => { alive = false; };
+  }, [storeId, store?.logo_url]);
+
+  useEffect(() => {
     const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(null); };
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(null); };
     document.addEventListener('mousedown', close);
@@ -110,7 +124,7 @@ export function TopBar(_props: { onMenuClick?: () => void; [k: string]: unknown 
         {logoFailed ? (
           <span className="text-lg font-black text-[#0094eb]">SLL Hub</span>
         ) : (
-          <img src="/assets/sll-logotipo.png" alt="SLL Hub" className="h-8 w-auto object-contain" onError={() => setLogoFailed(true)} />
+          <img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="h-9 w-auto object-contain" onError={() => setLogoFailed(true)} />
         )}
       </Link>
 
@@ -167,9 +181,11 @@ export function TopBar(_props: { onMenuClick?: () => void; [k: string]: unknown 
             aria-label="Menu da conta"
             aria-expanded={open === 'user'}
             onClick={() => setOpen(open === 'user' ? null : 'user')}
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[#0094eb] text-xs font-black text-white hover:bg-[#007fcc]"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#0094eb] text-xs font-black text-white hover:bg-[#007fcc]"
           >
-            {initials(store?.name)}
+            {avatar && !avatarFailed
+              ? <img src={avatar} alt={store?.name || 'Loja'} className="h-full w-full bg-white object-contain p-0.5" onError={() => setAvatarFailed(true)} />
+              : initials(store?.name)}
           </button>
           {open === 'user' && (
             <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl">

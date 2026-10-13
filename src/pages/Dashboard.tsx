@@ -225,7 +225,8 @@ export default function Dashboard() {
               <h2 className="text-lg font-black text-slate-900">Resultados da sua loja</h2>
               <p className="text-sm text-slate-700">O que o SLL Hub gerou no período escolhido.</p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
               {periodo === 'custom' && (
                 <>
                   <input type="date" value={cs} max={ce} onChange={(e) => setCs(e.target.value)} className={DATE_IN} />
@@ -247,6 +248,7 @@ export default function Dashboard() {
                   </button>
                 ))}
               </div>
+              </div>
               <button
                 type="button"
                 onClick={() => navigate(METRICS_ROUTE)}
@@ -258,12 +260,12 @@ export default function Dashboard() {
           </div>
 
           <div className={`grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-5 ${loading ? 'opacity-60' : ''}`}>
-            <div className={`${CARD} relative flex h-full min-h-[148px] flex-col justify-between overflow-hidden bg-gradient-to-br from-[#0094eb]/10 via-white to-emerald-50 p-4`}>
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-[#0094eb]/10" />
-              <div className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-emerald-400/10" />
+            <div className={`${CARD} flex h-full min-h-[148px] flex-col justify-between p-4`}>
+              
+              
               <div className="relative flex items-start justify-between gap-2">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Impacto financeiro</p>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
                   <DollarSign className="h-4 w-4" />
                 </div>
               </div>
