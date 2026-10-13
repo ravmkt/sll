@@ -666,7 +666,7 @@ export default function VisaoGeralTab() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Dica do Noah (somente dicas do Vidlytics) */}
           <div data-tour="vg-noah" className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm h-full flex flex-col gap-3">
-            <img src="/assets/dica-do-noah-logo-wide.png" alt="Dica do Noah" className="h-12 w-auto max-w-[220px] shrink-0 object-contain object-left" />
+            <img src="/assets/dica-do-noah-logo-wide.png" alt="Dica do Noah" className="h-auto w-[180px] shrink-0 object-contain object-left" />
             <div className="flex-1">
               <p className="text-sm font-bold text-slate-800">{noahTip.title}</p>
               <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{noahTip.text}</p>
@@ -684,7 +684,7 @@ export default function VisaoGeralTab() {
 
           <div data-tour="vg-indique" className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm h-full flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
-            <img src="/assets/clube-sll-logo-wide.png" alt="Clube SLL" className="h-12 w-auto max-w-[220px] shrink-0 object-contain object-left" />
+            <img src="/assets/clube-sll-logo-wide.png" alt="Clube SLL" className="h-auto w-[180px] shrink-0 object-contain object-left" />
             <Share2 className="w-4 h-4 text-slate-400" />
           </div>
 
