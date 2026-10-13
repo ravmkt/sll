@@ -73,7 +73,7 @@ export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 
   return (
     <section data-tour="academy" className="flex w-full max-w-2xl flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md">
       <div className="flex flex-col items-start gap-2">
-        <img src="/assets/sll-academy-logo-wide.png" alt="SLL Academy" className="h-auto w-[180px] shrink-0 object-contain object-left" />
+        <img src="/assets/sll-academy-logo-wide.png" alt="SLL Academy" className="h-auto w-[165px] shrink-0 object-contain object-left" />
         <p className="text-sm font-medium text-slate-700">
           {hub ? 'Aulas e dicas do nosso canal para impulsionar o seu e-commerce: operação, tráfego, margem e vendas.' : 'Veja como configurar o Vidlytics, tire dúvidas e aprenda dicas para vender mais com vídeos interativos.'}
         </p>
