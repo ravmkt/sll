@@ -181,7 +181,7 @@ export const DEFAULT_APPEARANCES: DefaultAppearance[] = [
     id: 'DEFAULT_VIDLYTICS',
     name: 'Vidlytics',
     description: 'Estilo padrão do sistema com a identidade azul Vidlytics.',
-    imageUrl: '/templates/vidlytics-preview.png',
+    imageUrl: '/assets/template-vidlytics.png',
     widget_style: {
       desktop: createDesktopConfig('#0094EB'),
       mobile: createMobileConfig('#0094EB'),

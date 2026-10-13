@@ -141,7 +141,7 @@ export const TemplatesCarousel: React.FC<TemplatesCarouselProps> = ({
                   <img
                     src={tpl.imageUrl}
                     alt={tpl.name}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    className="absolute inset-0 z-10 w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = "none";
                     }}
