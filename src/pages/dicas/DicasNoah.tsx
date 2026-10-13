@@ -118,7 +118,7 @@ export default function DicasNoah() {
   const [loading, setLoading] = useState(true);
   const [cat, setCat] = useState('all');
   const [q, setQ] = useState('');
-  const [onlyPending, setOnlyPending] = useState(false);
+  const [onlyPending, setOnlyPending] = useState(true);
 
   useEffect(() => {
     if (!storeId) return;
@@ -167,6 +167,7 @@ export default function DicasNoah() {
   const priority = filtered.filter(active);
   const feed = filtered.filter((t) => !active(t));
   const priorityCount = mine.filter((t) => active(t) && !fbMap[t.id]?.implemented).length;
+  const doneCount = mine.filter((t) => eligible(t) && fbMap[t.id]?.implemented).length;
 
   const update = async (tip: Tip, patch: Partial<TipFeedback>) => {
     if (!storeId) return;
@@ -224,7 +225,7 @@ export default function DicasNoah() {
                 className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-800 outline-none focus:border-[#0094eb]" />
             </div>
             <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600">
-              <input type="checkbox" checked={onlyPending} onChange={(e) => setOnlyPending(e.target.checked)} /> Apenas pendentes
+              <input type="checkbox" checked={onlyPending} onChange={(e) => setOnlyPending(e.target.checked)} /> Ocultar concluídas{doneCount > 0 ? ` (${doneCount})` : ''}
             </label>
           </div>
           <div className="flex flex-wrap gap-2">
