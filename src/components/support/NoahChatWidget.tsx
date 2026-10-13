@@ -116,6 +116,7 @@ export default function NoahChatWidget() {
     try {
       const { data, error } = await supabase.functions.invoke('noah-support', { body: { messages: history, context } });
       if (!error && data?.reply) reply = String(data.reply);
+      else if (error) console.error('noah-support', error, await (error as any).context?.text?.().catch(() => ''));
     } catch { /* usa o texto padrao */ }
 
     setMessages((m) => [...m, { role: 'assistant', content: reply, animate: true }]);
