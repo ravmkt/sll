@@ -5,6 +5,7 @@ import { CreditCard, LogOut, Play, Radio, Settings } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
+import { sortModules } from '@/lib/moduleOrder';
 import { MasterButton } from '@/components/admin/MasterButton';
 
 const sb: any = supabase;
@@ -150,7 +151,7 @@ export function TopBar(_props: { onMenuClick?: () => void; [k: string]: unknown 
             <div className="absolute right-0 top-full z-50 mt-2 w-[300px] rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
               <p className="px-1 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Módulos do Hub</p>
               <div className="grid grid-cols-2 gap-2">
-                {mods.map((m) => {
+                {sortModules(mods, owned).map((m) => {
                   const isOwned = owned.includes(m.slug);
                   const soon = m.status === 'coming_soon' && !isOwned;
                   return (
@@ -181,10 +182,10 @@ export function TopBar(_props: { onMenuClick?: () => void; [k: string]: unknown 
             aria-label="Menu da conta"
             aria-expanded={open === 'user'}
             onClick={() => setOpen(open === 'user' ? null : 'user')}
-            className="flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#0094eb] text-xs font-black text-white hover:bg-[#007fcc]"
+            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-[#0094eb] text-xs font-black text-white hover:bg-[#007fcc]"
           >
             {avatar && !avatarFailed
-              ? <img src={avatar} alt={store?.name || 'Loja'} className="h-full w-full bg-white object-contain p-0.5" onError={() => setAvatarFailed(true)} />
+              ? <img src={avatar} alt={store?.name || 'Loja'} className="h-full w-full rounded-full bg-white object-cover" onError={() => setAvatarFailed(true)} />
               : initials(store?.name)}
           </button>
           {open === 'user' && (

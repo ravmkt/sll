@@ -24,6 +24,7 @@ import AdminMasterPage from '@/pages/admin/AdminMasterPage';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Metricas = lazy(() => import('./pages/Metricas'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Vidlytics = lazy(() => import('./pages/modules/Vidlytics'));
 const LiveCommerce = lazy(() => import('./pages/modules/LiveCommerce'));
@@ -237,6 +238,20 @@ function AppRoutes() {
             user ? (
               <SubscriptionGate>
                 <DicasNoah />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
+      <Route path="/metricas" element={<Navigate to="/dashboard/metricas" replace />} />
+      <Route path="/relatorios" element={<Navigate to="/dashboard/metricas" replace />} />
+      <Route
+          path="/dashboard/metricas"
+          element={
+            user ? (
+              <SubscriptionGate>
+                <Metricas />
               </SubscriptionGate>
             ) : (
               <Navigate to="/auth" replace />

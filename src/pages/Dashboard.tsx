@@ -11,6 +11,7 @@ import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
 import DashboardTour from '@/components/dashboard/DashboardTour';
 import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/components/dashboard/useDashboardData';
 import { useLoja } from '@/contexts/LojaContext';
+import { sortModules } from '@/lib/moduleOrder';
 import { showError, showSuccess } from '@/utils/toast';
 import PageTour from '@/components/tour/PageTour';
 import { DASHBOARD_TOUR } from '@/tours/dashboardTour';
@@ -192,7 +193,7 @@ export default function Dashboard() {
   const hasVid = data.owned.includes('vidlytics');
   const total = data.assistedRevenue + data.clubCommission;
   const insight = buildInsight(data, hasVid);
-  const visibleMods = data.modules.filter((m) => m.status !== 'hidden');
+  const visibleMods = sortModules(data.modules.filter((m) => m.status !== 'hidden'), data.owned);
   const modCols = visibleMods.length <= 1 ? 'md:grid-cols-1' : visibleMods.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
 
   const copy = () => {
@@ -249,13 +250,6 @@ export default function Dashboard() {
                 ))}
               </div>
               </div>
-              <button
-                type="button"
-                onClick={() => navigate(METRICS_ROUTE)}
-                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
-              >
-                Ver relatório completo de métricas <ArrowRight className="h-3 w-3" />
-              </button>
             </div>
           </div>
 
@@ -282,6 +276,15 @@ export default function Dashboard() {
             <Metric label="Visualizações" value={hasVid ? int(data.viewsRange) : '—'} hint={hasVid ? 'Vídeos no período' : 'Ative o Vidlytics'} icon={Eye} />
             <Metric label="Cliques & interações" value={hasVid ? int(data.clicksRange) : '—'} hint={hasVid ? 'Comprar e WhatsApp' : 'Ative o Vidlytics'} icon={MousePointerClick} />
             <Metric label="Taxa de conversão (CTR)" value={hasVid ? pct(data.ctrRange) : '—'} hint={hasVid ? 'Cliques ÷ visualizações' : 'Ative o Vidlytics'} icon={Activity} />
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => navigate(METRICS_ROUTE)}
+              className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+            >
+              Ver relatório completo de métricas <ArrowRight className="h-3 w-3" />
+            </button>
           </div>
         </div>
 
@@ -345,7 +348,7 @@ export default function Dashboard() {
         <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
         {/* Modulos vindos do Master */}
         <div id="meus-modulos" data-tour="modules" className="scroll-mt-24">
-          <Section title="Seus módulos">
+          <Section title="Módulos">
             {visibleMods.length === 0 && !loading && (
               <p className="text-sm text-slate-500">Nenhum módulo disponível no momento.</p>
             )}
