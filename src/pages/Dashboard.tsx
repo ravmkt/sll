@@ -1,12 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Activity, ArrowRight, Check, Clock, Copy, DollarSign, Eye, Gift,
-  Layers, MousePointerClick, Package, Play, Radio, Shirt,
+  Activity, ArrowRight, TrendingDown, TrendingUp, Check, Clock, Copy, DollarSign, Eye, Gift,
+  MousePointerClick, Package, Play, Radio, Shirt,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import DashboardNotice from '@/components/dashboard/DashboardNotice';
+import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
 import DashboardTour from '@/components/dashboard/DashboardTour';
 import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/components/dashboard/useDashboardData';
@@ -60,22 +60,28 @@ function AssetImg({ src, alt, className, fallback }: { src: string; alt: string;
 const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md';
 const DATE_IN = 'h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#0094eb]';
 
-function Kpi({ label, value, hint, icon: Icon, onClick }: { label: string; value: string; hint: string; icon: ElementType; onClick?: () => void }) {
+
+function Metric({ label, value, hint, icon: Icon, onClick, badge }: {
+  label: string; value: string; hint: string; icon: ElementType; onClick?: () => void; badge?: ReactNode;
+}) {
   return (
     <div
       {...(onClick
         ? { role: 'button', tabIndex: 0, onClick, onKeyDown: (e: KeyboardEvent) => { if (e.key === 'Enter') onClick(); } }
         : {})}
-      className={`${CARD} flex items-start justify-between gap-3 p-4 ${onClick ? 'cursor-pointer hover:border-[#0094eb]/40' : ''}`}
+      className={`${CARD} flex h-full min-h-[148px] flex-col justify-between p-4 ${onClick ? 'cursor-pointer hover:border-[#0094eb]/40' : ''}`}
     >
-      <div className="min-w-0">
+      <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
-        <p className="mt-1 truncate text-3xl font-bold text-slate-900">{value}</p>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <div className="min-w-0">
+        <p className="truncate text-3xl font-bold text-slate-900">{value}</p>
         <p className="mt-0.5 text-sm text-slate-700">{hint}</p>
       </div>
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
-        <Icon className="h-5 w-5" />
-      </div>
+      <div className="min-h-[20px]">{badge}</div>
     </div>
   );
 }
@@ -156,6 +162,26 @@ export default function Dashboard() {
   const { data, loading } = useDashboardData(storeId, range);
   const pulse = usePulse(storeId);
 
+  const [prevRevenue, setPrevRevenue] = useState<number | null>(null);
+  useEffect(() => {
+    if (!storeId || range.start > range.end) return;
+    const s = new Date(range.start + 'T00:00:00');
+    const e = new Date(range.end + 'T00:00:00');
+    const days = Math.round((e.getTime() - s.getTime()) / 86400000) + 1;
+    let alive = true;
+    VidlyticsDatabaseService.getOverviewMetrics(storeId, ymd(addDays(s, -days)), ymd(addDays(s, -1)))
+      .then((m: any) => { if (alive) setPrevRevenue(Number(m?.totalRevenue) || 0); })
+      .catch(() => { if (alive) setPrevRevenue(null); });
+    return () => { alive = false; };
+  }, [storeId, range.start, range.end]);
+
+  const delta = prevRevenue !== null && prevRevenue > 0 ? ((data.assistedRevenue - prevRevenue) / prevRevenue) * 100 : null;
+  const deltaUp = delta === null || delta >= 0;
+  const deltaText =
+    delta !== null
+      ? `${delta >= 0 ? '+' : ''}${delta.toFixed(1).replace('.', ',')}% vs período anterior`
+      : data.assistedRevenue > 0 ? 'Novo no período' : '+0% vs período anterior';
+
   const referralLink = store?.referral_code ? `${window.location.origin}/?ref=${store.referral_code}` : '';
   const lvIdx = LEVELS.reduce((acc, l, i) => (data.referred >= l.n ? i : acc), 0);
   const cur = LEVELS[lvIdx];
@@ -175,11 +201,7 @@ export default function Dashboard() {
     showSuccess('Link copiado! Compartilhe com seus amigos.');
   };
 
-  const goModules = () => {
-    document.getElementById('meus-modulos')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-  const onWait = async (slug: string) => {
+    const onWait = async (slug: string) => {
     if (!storeId) return;
     setBusySlug(slug);
     const ok = await joinWaitlist(storeId, slug);
@@ -195,8 +217,6 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Banner gerenciado pelo Master */}
-        <DashboardNotice storeId={storeId} />
 
         {/* Resultados com filtro de periodo */}
         <div data-tour="kpis" className="space-y-3">
@@ -237,32 +257,29 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className={`grid grid-cols-1 gap-3 xl:grid-cols-4 ${loading ? 'opacity-60' : ''}`}>
-            <div className={`${CARD} flex items-start justify-between gap-3 bg-gradient-to-br from-[#0094eb]/5 to-white p-4 xl:col-span-2`}>
-              <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Impacto financeiro total</p>
-                <p className="mt-1 truncate text-3xl font-bold text-emerald-600">{brl(total)}</p>
-                <p className="mt-0.5 text-sm text-slate-700">
-                  {brl(data.assistedRevenue)} em vendas na loja + {brl(data.clubCommission)} em comissões do Clube
-                </p>
+          <div className={`grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-5 ${loading ? 'opacity-60' : ''}`}>
+            <div className={`${CARD} relative flex h-full min-h-[148px] flex-col justify-between overflow-hidden bg-gradient-to-br from-[#0094eb]/10 via-white to-emerald-50 p-4`}>
+              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-[#0094eb]/10" />
+              <div className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-emerald-400/10" />
+              <div className="relative flex items-start justify-between gap-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Impacto financeiro</p>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600">
+                  <DollarSign className="h-4 w-4" />
+                </div>
               </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
-                <DollarSign className="h-5 w-5" />
+              <div className="relative min-w-0">
+                <p className="truncate text-3xl font-bold text-emerald-600">{brl(total)}</p>
+                <p className="mt-0.5 text-sm text-slate-700">Vendas assistidas + comissões do Clube</p>
               </div>
+              <span className={`relative inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${deltaUp ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                {deltaUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />} {deltaText}
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 xl:col-span-2">
-              <Kpi label="Produtos sincronizados" value={int(data.products)} hint="SKUs ativos na loja" icon={Package} onClick={() => navigate(PRODUCTS_ROUTE)} />
-              {hasVid ? (
-                <>
-                  <Kpi label="Visualizações" value={int(data.viewsRange)} hint="Vídeos no período" icon={Eye} />
-                  <Kpi label="Cliques nos widgets" value={int(data.clicksRange)} hint="Produto e WhatsApp" icon={MousePointerClick} />
-                  <Kpi label="CTR" value={pct(data.ctrRange)} hint="Cliques ÷ visualizações" icon={Activity} />
-                </>
-              ) : (
-                <Kpi label="Módulos" value={int(data.owned.length)} hint="módulos ativos" icon={Layers} onClick={goModules} />
-              )}
-            </div>
+            <Metric label="Catálogo ativo" value={int(data.products)} hint="SKUs sincronizados" icon={Package} onClick={() => navigate(PRODUCTS_ROUTE)} />
+            <Metric label="Visualizações" value={hasVid ? int(data.viewsRange) : '—'} hint={hasVid ? 'Vídeos no período' : 'Ative o Vidlytics'} icon={Eye} />
+            <Metric label="Cliques & interações" value={hasVid ? int(data.clicksRange) : '—'} hint={hasVid ? 'Comprar e WhatsApp' : 'Ative o Vidlytics'} icon={MousePointerClick} />
+            <Metric label="Taxa de conversão (CTR)" value={hasVid ? pct(data.ctrRange) : '—'} hint={hasVid ? 'Cliques ÷ visualizações' : 'Ative o Vidlytics'} icon={Activity} />
           </div>
         </div>
 
