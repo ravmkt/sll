@@ -91,8 +91,8 @@ Deno.serve(async (req) => {
   let used = 0;
   const docs: string[] = [];
   for (const k of kb ?? []) {
-    const block = `[${k.module}] ${k.title}\n${String(k.content ?? "").slice(0, 4000)}`;
-    if (used + block.length > 20000) break;
+    const block = `[${k.module}] ${k.title}\n${String(k.content ?? "").slice(0, 60000)}`;
+    if (used + block.length > 150000) break;
     used += block.length;
     docs.push(block);
   }

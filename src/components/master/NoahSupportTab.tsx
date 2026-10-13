@@ -1,9 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BookOpen, ChevronLeft, ChevronRight, Coins, Loader2, MessageSquare, Pencil, Plus, Store, Trash2, X, Zap } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, CloudDownload, Coins, ExternalLink, FileUp, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Store, Trash2, X, Zap } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { showError, showSuccess } from '@/utils/toast';
 
 const sb: any = supabase;
+
+async function callAdmin(body: Record<string, unknown>): Promise<any> {
+  const { data, error } = await sb.functions.invoke('noah-admin', { body });
+  if (error) {
+    let msg = error.message;
+    try {
+      const j = await error.context?.json?.();
+      if (j?.error) msg = j.error;
+    } catch { /* ignore */ }
+    throw new Error(msg);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
 
 type Mod = 'vidlytics' | 'sll-hub' | 'geral';
 type Item = { id: string; module: Mod; title: string; content: string; is_active: boolean; updated_at: string };
@@ -118,6 +132,11 @@ export default function NoahSupportTab() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [storesOpen, setStoresOpen] = useState(false);
   const [nm, setNm] = useState({ model: '', inUsd: '', outUsd: '' });
+  const [checking, setChecking] = useState<string | null>(null);
+  const [found, setFound] = useState<Record<string, { input_usd: number; output_usd: number; url: string }>>({});
+  const [listing, setListing] = useState(false);
+  const [avail, setAvail] = useState<{ model: string; label: string }[]>([]);
+  const [reading, setReading] = useState(false);
 
   const range = useMemo(() => {
     const n = new Date();
@@ -214,6 +233,79 @@ export default function NoahSupportTab() {
     setNm({ model: '', inUsd: '', outUsd: '' });
     showSuccess('Modelo adicionado.');
     void load();
+  };
+
+  const checkPrice = async (model: string) => {
+    setChecking(model);
+    try {
+      const r = await callAdmin({ action: 'check_price', model });
+      setFound((f) => ({ ...f, [model]: { input_usd: Number(r.input_usd), output_usd: Number(r.output_usd), url: String(r.url) } }));
+    } catch (e: any) {
+      showError(e.message || 'Não foi possível conferir o preço.');
+    }
+    setChecking(null);
+  };
+
+  const applyPrice = async (model: string) => {
+    const f = found[model];
+    if (!f) return;
+    const { error } = await sb.from('noah_models').update({ input_usd: f.input_usd, output_usd: f.output_usd, price_checked_at: new Date().toISOString() }).eq('model', model);
+    if (error) return showError(error.message);
+    setFound((x) => {
+      const n = { ...x };
+      delete n[model];
+      return n;
+    });
+    showSuccess('Preço atualizado.');
+    void load();
+  };
+
+  const listModels = async () => {
+    setListing(true);
+    try {
+      const r = await callAdmin({ action: 'list_models' });
+      const list = (r.models || []) as { model: string; label: string }[];
+      const have = new Set(models.map((x) => x.model));
+      setAvail(list.filter((x) => !have.has(x.model)));
+      showSuccess(`${list.length} modelos encontrados na sua chave.`);
+    } catch (e: any) {
+      showError(e.message || 'Falha ao buscar modelos.');
+    }
+    setListing(false);
+  };
+
+  const addAvail = async (m: { model: string; label: string }) => {
+    const { error } = await sb.from('noah_models').insert({ model: m.model, label: m.label, input_usd: 0, output_usd: 0 });
+    if (error) return showError(error.message);
+    setAvail((l) => l.filter((x) => x.model !== m.model));
+    showSuccess('Modelo adicionado. Clique em "Conferir no Google" para trazer o preço.');
+    void load();
+  };
+
+  const readDoc = async (file: File) => {
+    if (file.size > 8 * 1024 * 1024) return showError('Arquivo acima de 8 MB.');
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    if (!['pdf', 'docx', 'txt', 'md'].includes(ext)) return showError('Use PDF, DOCX, TXT ou MD.');
+    setReading(true);
+    try {
+      let text = '';
+      if (ext === 'txt' || ext === 'md') {
+        text = await file.text();
+      } else {
+        const buf = new Uint8Array(await file.arrayBuffer());
+        let bin = '';
+        for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...Array.from(buf.subarray(i, i + 0x8000)));
+        const r = await callAdmin({ action: 'extract_doc', ext, data: btoa(bin) });
+        text = String(r.text || '');
+      }
+      text = text.replace(/\r\n/g, '\n').trim();
+      if (!text) throw new Error('Não encontrei texto neste documento.');
+      setEditing({ module: 'geral', title: file.name.replace(/\.[^.]+$/, '').slice(0, 120), content: text.slice(0, 60000) });
+      if (text.length > 60000) showError('Documento longo: mantive os primeiros 60.000 caracteres. Divida o restante em outro tópico.');
+    } catch (e: any) {
+      showError(e.message || 'Falha ao ler o documento.');
+    }
+    setReading(false);
   };
 
   const toggle = async (it: Item) => {
@@ -343,7 +435,24 @@ export default function NoahSupportTab() {
                       <td className="px-3 py-2"><p className="font-semibold text-white">{m.label || m.model}</p><p className="text-[10px] text-slate-500">{m.model}</p></td>
                       <td className="px-3 py-2"><input key={`i${m.input_usd}`} className={`${input} !w-24 !py-1`} defaultValue={m.input_usd} onBlur={(e) => e.target.value !== String(m.input_usd) && updatePrice(m.model, 'input_usd', e.target.value)} /></td>
                       <td className="px-3 py-2"><input key={`o${m.output_usd}`} className={`${input} !w-24 !py-1`} defaultValue={m.output_usd} onBlur={(e) => e.target.value !== String(m.output_usd) && updatePrice(m.model, 'output_usd', e.target.value)} /></td>
-                      <td className="px-3 py-2">{m.price_checked_at ? new Date(m.price_checked_at).toLocaleDateString('pt-BR') : <span className="font-semibold text-amber-300">conferir</span>}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-slate-400">{m.price_checked_at ? new Date(m.price_checked_at).toLocaleDateString('pt-BR') : 'nunca'}</span>
+                          <button type="button" disabled={checking === m.model} onClick={() => checkPrice(m.model)} className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-700 px-2 py-1 text-[11px] font-bold text-white hover:bg-white/5 disabled:opacity-50">
+                            {checking === m.model ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3 text-[#0094eb]" />} Conferir no Google
+                          </button>
+                        </div>
+                        {found[m.model] && (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
+                            <span className="text-slate-300">Google: US$ {found[m.model].input_usd} / {found[m.model].output_usd}</span>
+                            {Number(found[m.model].input_usd) === Number(m.input_usd) && Number(found[m.model].output_usd) === Number(m.output_usd) && <span className="font-semibold text-emerald-400">igual ao cadastrado</span>}
+                            <button type="button" onClick={() => applyPrice(m.model)} className="cursor-pointer rounded-lg bg-emerald-600 px-2 py-0.5 font-bold text-white hover:bg-emerald-700">
+                              {Number(found[m.model].input_usd) === Number(m.input_usd) && Number(found[m.model].output_usd) === Number(m.output_usd) ? 'Confirmar' : 'Aplicar'}
+                            </button>
+                            <a href={found[m.model].url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-[#0094eb] hover:underline">fonte <ExternalLink className="h-3 w-3" /></a>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -355,11 +464,34 @@ export default function NoahSupportTab() {
               <input className={input} placeholder="US$ saída" value={nm.outUsd} onChange={(e) => setNm({ ...nm, outUsd: e.target.value })} />
             </div>
             <button type="button" onClick={addModel} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-white hover:bg-white/5"><Plus className="h-4 w-4" /> Adicionar modelo</button>
+            <button type="button" disabled={listing} onClick={listModels} className="ml-2 inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-white hover:bg-white/5 disabled:opacity-50">
+              {listing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudDownload className="h-4 w-4 text-[#0094eb]" />} Buscar modelos do Google
+            </button>
+            {avail.length > 0 && (
+              <div className="max-h-56 space-y-1 overflow-y-auto rounded-xl border border-slate-800 bg-[#0b0e1a] p-2">
+                {avail.map((a) => (
+                  <div key={a.model} className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-white/5">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold text-white">{a.label}</p>
+                      <p className="truncate text-[10px] text-slate-500">{a.model}</p>
+                    </div>
+                    <button type="button" onClick={() => addAvail(a)} className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg bg-[#0094eb] px-2.5 py-1 text-[11px] font-bold text-white hover:bg-[#007fcc]"><Plus className="h-3 w-3" /> Adicionar</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-[#0094eb]" /><h3 className="text-base font-bold text-white">Base de conhecimento</h3></div>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-[#0094eb]" /><h3 className="text-base font-bold text-white">Base de conhecimento</h3></div>
+                <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-white hover:bg-white/5 ${reading ? 'pointer-events-none opacity-60' : ''}`}>
+                  {reading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4 text-[#0094eb]" />} Enviar documento
+                  <input type="file" accept=".pdf,.docx,.txt,.md" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void readDoc(f); }} />
+                </label>
+                <span className="text-[11px] text-slate-500">≈ {n0(Math.min(150000, items.filter((i) => i.is_active).reduce((a, i) => a + Math.min(i.content.length, 60000), 0)) / 3.5)} tokens enviados a cada pergunta</span>
+              </div>
               <button type="button" onClick={() => setEditing({ module: 'geral', title: '', content: '' })} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#007fcc]">
                 <Plus className="h-4 w-4" /> Novo tópico
               </button>
@@ -421,8 +553,8 @@ export default function NoahSupportTab() {
             </div>
             <div>
               <label className={label}>Conteúdo (texto ou markdown)</label>
-              <textarea className={`${input} mt-1 min-h-[220px] font-mono text-xs`} maxLength={4000} value={editing.content || ''} onChange={(e) => setEditing({ ...editing, content: e.target.value })} />
-              <p className="mt-1 text-right text-[10px] text-slate-500">{(editing.content || '').length}/4000</p>
+              <textarea className={`${input} mt-1 min-h-[220px] font-mono text-xs`} maxLength={60000} value={editing.content || ''} onChange={(e) => setEditing({ ...editing, content: e.target.value })} />
+              <p className="mt-1 text-right text-[10px] text-slate-500">{(editing.content || '').length}/60000</p>
             </div>
             <div className="flex gap-3 border-t border-slate-800 pt-4">
               <button type="button" disabled={saving} onClick={() => setEditing(null)} className="flex-1 cursor-pointer rounded-xl border border-slate-700 py-2.5 text-sm font-bold text-slate-300 hover:bg-white/5">Cancelar</button>
