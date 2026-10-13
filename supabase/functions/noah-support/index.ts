@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.1-flash-lite";
 
@@ -75,15 +76,29 @@ Deno.serve(async (req) => {
   if (!contents.length || contents[contents.length - 1].role !== "user") return json({ error: "MENSAGEM_INVALIDA" }, 400);
 
   const status = typeof ctx.appStatus === "boolean" ? (ctx.appStatus ? "ativo" : "desativado") : "desconhecido";
-  const system =
+  const baseSystem =
     `${SYSTEM}\n\nCONTEXTO ATUAL (dados do sistema)\n` +
     `- Loja: ${clean(store.name, 80)}\n` +
     `- Rota atual: ${clean(ctx.currentRoute, 120)}\n` +
     `- Aba ativa: ${clean(ctx.activeTab, 40) || "nenhuma"}\n` +
     `- Aplicativo de vídeos: ${status}`;
+  const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+  const { data: kb } = await admin.from("noah_knowledge").select("module, title, content").eq("is_active", true).order("module").order("title").limit(60);
+  let used = 0;
+  const docs: string[] = [];
+  for (const k of kb ?? []) {
+    const block = `[${k.module}] ${k.title}\n${String(k.content ?? "").slice(0, 4000)}`;
+    if (used + block.length > 20000) break;
+    used += block.length;
+    docs.push(block);
+  }
+  const system = docs.length
+    ? `${baseSystem}\n\nDOCUMENTAÇÃO DE SUPORTE (fonte de verdade; se conflitar com as regras acima, esta prevalece)\n${docs.join("\n\n---\n")}`
+    : baseSystem;
 
   const MODELS = [...new Set([MODEL, "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview", "gemini-3.7-flash", "gemini-flash-latest"])];
   let data: any = null;
+  let usedModel = "";
   for (const m of MODELS) {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
       method: "POST",
@@ -96,7 +111,7 @@ Deno.serve(async (req) => {
     });
     if (res.ok) {
       data = await res.json().catch(() => null);
-      if (data) break;
+      if (data) { usedModel = m; break; }
       continue;
     }
     console.error("noah-support gemini", m, res.status, (await res.text()).slice(0, 300));
@@ -105,5 +120,19 @@ Deno.serve(async (req) => {
   }
   if (!data) return json({ error: "IA_INDISPONIVEL" }, 502);
   const reply = String(data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text ?? "").join("") ?? "").trim();
+  const usage = data?.usageMetadata ?? {};
+  const pt = Number(usage.promptTokenCount ?? 0);
+  const tt = Number(usage.totalTokenCount ?? 0);
+  const ct = tt > pt ? tt - pt : Number(usage.candidatesTokenCount ?? 0);
+  const { error: logErr } = await admin.from("noah_logs").insert({
+    store_id: storeId,
+    model: usedModel,
+    prompt_tokens: pt,
+    completion_tokens: ct,
+    total_tokens: tt || pt + ct,
+    user_message: contents[contents.length - 1].text.slice(0, 500),
+  });
+  if (logErr) console.error("noah_logs", logErr.message);
+  
   return json({ reply: reply || "Não consegui responder agora. Pode reformular a pergunta ou chamar nosso time no WhatsApp?" });
 });
