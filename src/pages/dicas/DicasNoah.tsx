@@ -61,6 +61,11 @@ function TipCard({ tip, fb, urgent, onDone, onVote, onAction }: {
             </span>
           )}
           <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#0094eb]">{categoryLabel(tip.category)}</span>
+          {done && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black uppercase text-emerald-700">
+              <Check className="h-3 w-3" /> Concluído
+            </span>
+          )}
         </div>
         {tip.estimated_minutes && (
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500">
@@ -139,16 +144,25 @@ export default function DicasNoah() {
     (t.niche || []).some((n) => norm(n) === 'geral' || (niche && norm(n) === norm(niche))),
   ), [tips, niche]);
 
-  const active = (t: Tip) => !metricsLoading && isTriggerActive(t.metric_trigger, metrics);
+  const hasTrigger = (t: Tip) => !!(t.metric_trigger as any)?.metric;
+  const prereq = (t: Tip) => {
+    const m = (t.metric_trigger as any)?.metric;
+    if (m === 'ctr') return metrics.videos > 0 && metrics.views > 50;
+    if (m === 'videos') return metrics.products > 0;
+    return true;
+  };
+  const active = (t: Tip) => !metricsLoading && hasTrigger(t) && prereq(t) && isTriggerActive(t.metric_trigger, metrics);
+  const eligible = (t: Tip) => !hasTrigger(t) || active(t);
 
   const filtered = useMemo(() => {
     const s = norm(q);
     return mine.filter((t) =>
+      eligible(t) &&
       (cat === 'all' || t.category === cat) &&
       (!s || norm(t.title).includes(s) || norm(t.content).includes(s)) &&
       (!onlyPending || !fbMap[t.id]?.implemented),
     );
-  }, [mine, cat, q, onlyPending, fbMap]);
+  }, [mine, cat, q, onlyPending, fbMap, metrics, metricsLoading]);
 
   const priority = filtered.filter(active);
   const feed = filtered.filter((t) => !active(t));
