@@ -123,6 +123,11 @@ export default function VisaoGeralTab() {
   const [affiliateSummary, setAffiliateSummary] = useState<AffiliateSummary | null>(null);
 
   const [appEnabled, setAppEnabled] = useState(true);
+  useEffect(() => {
+    const onApp = (e: Event) => setAppEnabled(!!(e as CustomEvent).detail);
+    window.addEventListener('vidlytics:app-enabled', onApp);
+    return () => window.removeEventListener('vidlytics:app-enabled', onApp);
+  }, []);
   const [appLoading, setAppLoading] = useState(true);
   const [appSaving, setAppSaving] = useState(false);
   const [appError, setAppError] = useState<string | null>(null);
@@ -380,53 +385,7 @@ export default function VisaoGeralTab() {
     <div className="space-y-8 pb-12 animate-in fade-in duration-300">
 <PageTour tourKey="vidlytics-visao-geral" steps={visaoGeralTour} />
       
-      {/* 1. Header: boas-vindas, plano e status do app */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white px-5 py-3 rounded-2xl border border-slate-200/80 shadow-sm">
-        <div className="min-w-0 space-y-1">
-          <p className="text-sm font-semibold text-slate-700 truncate">
-            Bem-vindo(a){replyName ? ` ${replyName}` : ''}
-          </p>
-          <span className="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-[#0094eb]/10 text-[#0094eb] uppercase tracking-wide">{planName || 'Sem plano ativo'}</span>
-        </div>
-
-        {/* Seletor do Aplicativo */}
-        <div
-          className={`rounded-lg px-3 py-2 flex items-center gap-3 border transition-colors ${
-            appEnabled ? 'bg-emerald-50/70 border-emerald-200/80' : 'bg-rose-50/70 border-rose-200/80'
-          }`}
-        >
-          <div className="min-w-0">
-            <h4
-              className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
-                appEnabled ? 'text-emerald-900' : 'text-rose-900'
-              }`}
-            >
-              <span className={`w-2 h-2 rounded-full ${appEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-              {appEnabled ? 'Aplicativo Ativado' : 'Aplicativo Desativado'}
-            </h4>
-            <p className={`text-[11px] mt-0.5 truncate ${appEnabled ? 'text-emerald-700' : 'text-rose-700'}`}>
-              {appError ? appError : appEnabled ? 'Vídeos online na sua loja.' : 'Vídeos ocultos na sua loja.'}
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={appEnabled}
-            aria-label="Ativar ou desativar o aplicativo"
-            disabled={appLoading || appSaving}
-            onClick={handleToggleApp}
-            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-wait ${
-              appEnabled ? 'bg-emerald-500' : 'bg-slate-300'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                appEnabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
-      </div>
+      {void [replyName, appLoading, appSaving, appError, handleToggleApp]}
 
       {/* 2. Faturamento */}
       <div>
