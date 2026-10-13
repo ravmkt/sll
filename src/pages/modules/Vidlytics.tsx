@@ -23,7 +23,7 @@ export default function Vidlytics() {
     return 'visao-geral';
   });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [mkBanner, setMkBanner] = useState(false);
+  const [, setMkBanner] = useState(false);
   const mkCtx: any = useLojaMk();
   const mkStoreId: string | null = mkCtx?.loja?.id ?? mkCtx?.store?.id ?? mkCtx?.storeId ?? mkCtx?.lojaId ?? null;
 
@@ -75,39 +75,7 @@ export default function Vidlytics() {
         <main className="flex-1 w-full max-w-7xl mx-auto p-6 space-y-6">
           {/* BANNER PROMO - EXCLUSIVO DA VISÃO GERAL */}
           {activeTab === 'visao-geral' && <MarketingBanner storeId={mkStoreId} location="vidlytics" onActive={setMkBanner} />}
-          {activeTab === 'visao-geral' && !mkBanner && (
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-6 shadow-md border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-2 max-w-xl z-10">
-                <span className="inline-flex items-center gap-1.5 bg-[#fd8539] text-white text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                  <Sparkles className="w-3 h-3" /> TURBINE SEU E-COMMERCE
-                </span>
-                <h2 className="text-2xl font-bold tracking-tight text-white">
-                  Transforme visitantes em clientes com Vídeos Curtos e Stories
-                </h2>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Seus produtos integrados diretamente nos vídeos interativos com conversão em tempo real.
-                </p>
-              </div>
-
-              {/* Gráfico decorativo do banner */}
-              <div className="hidden lg:flex flex-col bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 w-60 shadow-inner">
-                <div className="flex items-center justify-between text-[10px] text-slate-400 mb-2 font-mono">
-                  <span>USERS: LAST 7 DAYS</span>
-                  <span className="text-emerald-400 font-semibold">+57.1%</span>
-                </div>
-                <div className="flex items-end gap-1.5 h-10 pt-2">
-                  <div className="flex-1 bg-[#0094eb]/40 rounded-t h-4"></div>
-                  <div className="flex-1 bg-[#0094eb]/60 rounded-t h-6"></div>
-                  <div className="flex-1 bg-[#0094eb]/40 rounded-t h-5"></div>
-                  <div className="flex-1 bg-[#0094eb]/80 rounded-t h-9"></div>
-                  <div className="flex-1 bg-[#0094eb]/90 rounded-t h-7"></div>
-                  <div className="flex-1 bg-[#0094eb] rounded-t h-10 shadow-[0_0_8px_rgba(0,148,235,0.4)]"></div>
-                  <div className="flex-1 bg-[#0094eb]/70 rounded-t h-8"></div>
-                  <div className="flex-1 bg-[#0094eb]/85 rounded-t h-9"></div>
-                </div>
-              </div>
-            </div>
-          )}
+          
 
           {/* RENDERIZAÇÃO DAS ABAS NAVEGADAS PELA SIDEBAR */}
           {activeTab === 'visao-geral' && <VisaoGeralTab />}
