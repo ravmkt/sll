@@ -38,14 +38,13 @@ export default function WhatsAppSupportButton() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Fale com o suporte no WhatsApp"
-        className="group relative flex h-16 w-16 items-center justify-center rounded-full shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+        className="group relative flex h-[74px] w-[74px] items-center justify-center rounded-full transition-all duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
       >
         <span role="tooltip" className="pointer-events-none absolute right-full mr-3 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
           Fale com o suporte no WhatsApp
         </span>
-        <span className="relative block h-16 w-16">
-          <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/30 motion-reduce:hidden" aria-hidden="true" />
-          <img src="/assets/noah-suporte.png" alt="Noah, suporte SLL" className="relative h-16 w-16 rounded-full border-2 border-white bg-white object-cover" />
+        <span className="relative block h-[74px] w-[74px]">
+          <img src="/assets/noah-suporte.png" alt="Noah, suporte SLL" className="relative h-[74px] w-[74px] bg-transparent object-contain drop-shadow-lg" />
           <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-[#25D366] text-white"><WhatsAppIcon /></span>
         </span>
       </a>
