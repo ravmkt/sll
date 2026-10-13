@@ -919,9 +919,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
         widget_style: widgetStyleToSave,
       });
 
-      if (typeof saveStyle === 'function') {
-        try { await saveStyle(); } catch (e) { /* fallback seguro */ }
-      }
+      // fix-duplo-save: a gravacao acima ja salva o estilo; atualiza a lista
+      window.dispatchEvent(new Event('vidlytics:appearance_saved'));
 
       window.dispatchEvent(new CustomEvent('vidlytics:appearance_saved'));
       setShowNameModal(false);
