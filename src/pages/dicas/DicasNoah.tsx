@@ -8,7 +8,8 @@ import { useDashboardData } from '@/components/dashboard/useDashboardData';
 import { CATEGORIES, categoryLabel, isTriggerActive, norm } from '@/lib/tipsMetrics';
 import { listActiveTips, listFeedback, saveFeedback, type Tip, type TipFeedback } from '@/services/tipsService';
 import { showError } from '@/utils/toast';
-import { listScopedTips, resolveCta } from '@/services/scopedTips';
+import { listScopedTips, resolveCta, tipMatches } from '@/services/scopedTips';
+import { useStoreSector } from '@/hooks/useStoreSector';
 
 const NOAH_SQUARE = '/assets/noah-a1.png';
 const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md';
@@ -136,14 +137,13 @@ export default function DicasNoah({ scope = 'hub' }: { scope?: 'hub' | 'vidlytic
   }, [storeId, scope]);
 
   const niche: string = store?.store_niche || '';
+  const sectorId = useStoreSector();
   const metrics = useMemo(() => ({
     ctr: data.ctrRange, views: data.viewsRange, clicks: data.clicksRange, revenue: data.assistedRevenue,
     products: data.products, videos: data.totalVideos, referred: data.referred,
   }), [data]);
 
-  const mine = useMemo(() => tips.filter((t) =>
-    (t.niche || []).some((n) => norm(n) === 'geral' || (niche && norm(n) === norm(niche))),
-  ), [tips, niche]);
+  const mine = useMemo(() => tips.filter((t) => tipMatches(t as any, { sectorId, niche })), [tips, niche, sectorId]);
 
   const hasTrigger = (t: Tip) => !!(t.metric_trigger as any)?.metric;
   const prereq = (t: Tip) => {

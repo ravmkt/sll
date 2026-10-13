@@ -10,6 +10,7 @@ import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabase
 import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
 import { listScopedTips, pickTip, resolveCta, plainText, type ScopedTip } from '@/services/scopedTips';
 import { getSeasonalTip, type SeasonalTip } from '@/services/seasonalTips';
+import { useStoreSector } from '@/hooks/useStoreSector';
 import DashboardTour from '@/components/dashboard/DashboardTour';
 import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/components/dashboard/useDashboardData';
 import { useLoja } from '@/contexts/LojaContext';
@@ -165,14 +166,16 @@ export default function Dashboard() {
   const { data, loading } = useDashboardData(storeId, range);
   const pulse = usePulse(storeId);
 
+  const sectorId = useStoreSector();
   const [hubTips, setHubTips] = useState<ScopedTip[]>([]);
   const [seasonal, setSeasonal] = useState<SeasonalTip | null>(null);
   useEffect(() => {
     if (!storeId) return;
     let alive = true;
-    getSeasonalTip(storeId, (store as any)?.sector_id ?? null).then((s) => { if (alive) setSeasonal(s); });
+    if (sectorId === undefined) return;
+    getSeasonalTip(sectorId, 'hub').then((s) => { if (alive) setSeasonal(s); });
     return () => { alive = false; };
-  }, [storeId, (store as any)?.sector_id]);
+  }, [storeId, sectorId]);
   useEffect(() => {
     let alive = true;
     listScopedTips('hub').then((l) => { if (alive) setHubTips(l); });
@@ -208,11 +211,11 @@ export default function Dashboard() {
   const noModule = !loading && data.owned.length === 0;
   const hasVid = data.owned.includes('vidlytics');
   const total = data.assistedRevenue + data.clubCommission;
-  const hubTip = pickTip(hubTips, store?.store_niche || '', {
+  const hubTip = pickTip(hubTips, { sectorId, niche: store?.store_niche || '' }, {
     ctr: data.ctrRange, views: data.viewsRange, clicks: data.clicksRange, revenue: data.assistedRevenue,
     products: data.products, videos: data.totalVideos, referred: data.referred,
   });
-  const hubCta = !seasonal && hubTip ? resolveCta(hubTip, data.owned) : null;
+  const hubCta = seasonal ? (seasonal.source ? resolveCta(seasonal.source, data.owned) : null) : hubTip ? resolveCta(hubTip, data.owned) : null;
   const insight = seasonal ? { title: seasonal.title, text: seasonal.text } : hubTip ? { title: hubTip.title, text: plainText(hubTip.content) } : buildInsight(data, hasVid);
   const visibleMods = sortModules(data.modules.filter((m) => m.status !== 'hidden'), data.owned);
   const modCols = visibleMods.length <= 1 ? 'md:grid-cols-1' : visibleMods.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';

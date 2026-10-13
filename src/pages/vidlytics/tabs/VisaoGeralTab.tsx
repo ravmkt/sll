@@ -6,6 +6,8 @@ import { useLoja } from '../../../contexts/LojaContext';
 import { useCardTip } from '@/hooks/useCardTip';
 import VidlyticsAcademy from '../../../components/vidlytics/VidlyticsAcademy';
 import { listScopedTips, pickTip, plainText, type ScopedTip } from '../../../services/scopedTips';
+import { useStoreSector } from '../../../hooks/useStoreSector';
+import { getSeasonalTip, type SeasonalTip } from '../../../services/seasonalTips';
 import ProximasDatasComerciais from '../../../components/vidlytics/ProximasDatasComerciais';
 import { supabase } from '@/lib/supabase';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
@@ -354,10 +356,19 @@ export default function VisaoGeralTab() {
     listScopedTips('vidlytics').then((l) => { if (alive) setVidTips(l); });
     return () => { alive = false; };
   }, []);
-  const vidTip = pickTip(vidTips, String((store as any)?.store_niche || ''), {
+  const sectorId = useStoreSector();
+  const [seasonal, setSeasonal] = useState<SeasonalTip | null>(null);
+  useEffect(() => {
+    const sid = (store as any)?.id;
+    if (!sid || sectorId === undefined) return;
+    let alive = true;
+    getSeasonalTip(sectorId, 'vidlytics').then((s) => { if (alive) setSeasonal(s); });
+    return () => { alive = false; };
+  }, [(store as any)?.id, sectorId]);
+  const vidTip = pickTip(vidTips, { sectorId, niche: String((store as any)?.store_niche || '') }, {
     ctr: tc.ctr, views: tc.views, clicks: tc.clicks,
   }, vidSkip);
-  const noahTip = vidTip ? { title: vidTip.title, text: plainText(vidTip.content) } : academyTip;
+  const noahTip = seasonal ? { title: seasonal.title, text: seasonal.text } : vidTip ? { title: vidTip.title, text: plainText(vidTip.content) } : academyTip;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(store?.referral_code ? (window.location.origin + '/?ref=' + store.referral_code) : 'https://vidlytics.com.br/indica/useanny');
