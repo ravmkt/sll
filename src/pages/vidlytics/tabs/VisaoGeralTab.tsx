@@ -580,14 +580,14 @@ export default function VisaoGeralTab() {
           </div>
 
           {/* Ciclo da Conta */}
-          <div data-card-tip="Situação da sua assinatura e data da próxima renovação." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
+          <div data-card-tip="Situação da sua assinatura e data da próxima renovação." className={cycle?.status === 'Em atraso' ? "bg-white rounded-2xl border border-red-300 p-5 shadow-sm hover:border-red-400 transition-all space-y-3" : "bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3"}>
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[11px] font-bold uppercase">Ciclo da Conta</span>
               <Clock className="w-4 h-4 text-[#0094eb]" />
             </div>
             <div>
               <span className="text-[10px] text-slate-400 uppercase font-bold block">Status</span>
-              <span className="text-xl font-black text-slate-800">{cycle?.status ?? '...'}</span>
+              <span className={`text-xl font-black ${cycle?.status === 'Em atraso' ? 'text-red-600' : 'text-slate-800'}`}>{cycle?.status ?? '...'}</span>
             </div>
             <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
               <span>{cycle?.label ?? 'Renovação:'}</span>
