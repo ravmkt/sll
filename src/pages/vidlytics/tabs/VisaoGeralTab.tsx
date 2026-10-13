@@ -652,7 +652,7 @@ export default function VisaoGeralTab() {
 
           <div data-tour="vg-indique" className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm h-full flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
-            <img src="/assets/clube-sll-logo-wide.png" alt="Clube SLL" className="h-8 w-auto object-contain" />
+            <img src="/assets/clube-sll-logo-wide.png" alt="Clube SLL" className="h-10 w-auto shrink-0 object-contain object-left" />
             <Share2 className="w-4 h-4 text-slate-400" />
           </div>
 
