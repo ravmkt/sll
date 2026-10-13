@@ -245,8 +245,8 @@ export default function ProximasDatasComerciais() {
             </div>
             <div className="p-5 space-y-3">
               <div className="flex items-center gap-2 text-[#0094eb]">
-                <Lightbulb className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wider">Dica de ação comercial</span>
+                <img src="/assets/noah-a2.png" alt="Noah" className="h-12 w-12 shrink-0 object-contain" />
+                <span className="text-xs font-bold uppercase tracking-wider">Dica do Noah</span>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed">
                 {selText || 'Ainda não há uma dica cadastrada para esta data.'}
