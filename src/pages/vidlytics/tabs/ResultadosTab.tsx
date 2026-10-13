@@ -711,7 +711,7 @@ export default function ResultadosTab() {
             </div>
 
             <button type="button" onClick={() => setStudyOpen(true)} className="bg-[#0094eb] hover:bg-sky-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex-shrink-0">Ver Estudo de Mercado</button>
-<MarketStudyModal open={studyOpen} onClose={() => setStudyOpen(false)} sector={nicho} />
+<MarketStudyModal open={studyOpen} onClose={() => setStudyOpen(false)} sector={nicho} loja={{ ctr: metrics.ctr }} />
           </div>
 
         </div>

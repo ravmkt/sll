@@ -41,7 +41,7 @@ type Metric = {
 type Status = 'below' | 'within' | 'above' | 'none';
 
 const statusOf = (m: Metric): Status => {
-  if (m.value === null || m.min === null || m.max === null) return 'none';
+  if (m.value === null || m.value <= 0 || m.min === null || m.max === null) return 'none';
   if (m.value < m.min) return 'below';
   if (m.value > m.max) return 'above';
   return 'within';
@@ -72,7 +72,7 @@ function MetricCard({ m }: { m: Metric }) {
       <div className="mt-2 flex items-end justify-between">
         <div>
           <p className="text-[10px] uppercase tracking-wide text-slate-400">Sua loja</p>
-          <p className="text-lg font-black text-slate-900">{m.value !== null ? m.fmt(m.value) : '—'}</p>
+          <p className="text-lg font-black text-slate-900">{m.fmt(m.value ?? 0)}</p>
         </div>
         <div className="text-right">
           <p className="text-[10px] uppercase tracking-wide text-slate-400">Setor</p>
@@ -84,7 +84,7 @@ function MetricCard({ m }: { m: Metric }) {
       {hasRange && (
         <div className="relative mt-3 h-2 rounded-full bg-slate-100">
           <div className="absolute top-0 h-2 rounded-full bg-[#0094eb]/30" style={{ left: `${left}%`, width: `${width}%` }} />
-          {m.value !== null && (
+          {m.value !== null && m.value > 0 && (
             <div className={`absolute -top-1 h-4 w-1.5 rounded-full ${ui.marker}`} style={{ left: `${pos}%` }} />
           )}
         </div>
@@ -149,7 +149,20 @@ export function MarketStudyModal({ open, onClose, sector, loja }: Props) {
   const above = withData.filter((m) => statusOf(m) === 'above').length;
   const within = withData.filter((m) => statusOf(m) === 'within').length;
 
-  let summary = 'Compare os indicadores do seu setor. Assim que a loja tiver dados suficientes, mostramos aqui onde você está.';
+  const rg = (label: string, a: unknown, b: unknown, f: (n: number) => string) =>
+    num(a) !== null && num(b) !== null ? `${label} entre ${f(num(a) as number)} e ${f(num(b) as number)}` : null;
+  const sectorParts = row
+    ? [
+        rg('conversão', row.conversion_rate_min, row.conversion_rate_max, pct),
+        rg('CTR dos vídeos', row.video_ctr_min, row.video_ctr_max, pct),
+        rg('retenção aos 5s', row.retention_5s_min, row.retention_5s_max, pct),
+        rg('ticket médio', row.ticket_avg_min, row.ticket_avg_max, brl),
+      ].filter(Boolean)
+    : [];
+  const sectorSummary = sectorParts.length
+    ? `No setor de ${String(row?.sector_name)}, o mercado trabalha com ${sectorParts.join('; ')}.`
+    : '';
+  let summary = 'Sua loja ainda não tem dados suficientes. Assim que os vídeos receberem visualizações, mostramos aqui onde você está em relação ao setor.';
   if (withData.length > 0) {
     summary =
       below.length === 0
@@ -173,7 +186,7 @@ export function MarketStudyModal({ open, onClose, sector, loja }: Props) {
           <div className="pb-4">
             <h2 className="text-lg font-bold text-slate-900">Estudo de mercado</h2>
             <p className="text-sm font-semibold text-[#0094eb]">{row ? String(row.sector_name) : sector || 'Setor não definido'}</p>
-            <p className="mt-2 max-w-md text-sm leading-snug text-slate-600">{summary}</p>
+            <p className="mt-2 max-w-md text-sm font-medium leading-snug text-slate-700">{sectorSummary}</p><p className="mt-1 max-w-md text-sm leading-snug text-slate-500">{summary}</p>
           </div>
           <div className="flex items-start gap-1">
             {mascotOk && (
