@@ -8,6 +8,7 @@ import {
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
+import { listScopedTips, pickTip, resolveCta, plainText, type ScopedTip } from '@/services/scopedTips';
 import DashboardTour from '@/components/dashboard/DashboardTour';
 import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/components/dashboard/useDashboardData';
 import { useLoja } from '@/contexts/LojaContext';
@@ -163,6 +164,13 @@ export default function Dashboard() {
   const { data, loading } = useDashboardData(storeId, range);
   const pulse = usePulse(storeId);
 
+  const [hubTips, setHubTips] = useState<ScopedTip[]>([]);
+  useEffect(() => {
+    let alive = true;
+    listScopedTips('hub').then((l) => { if (alive) setHubTips(l); });
+    return () => { alive = false; };
+  }, []);
+
   const [prevRevenue, setPrevRevenue] = useState<number | null>(null);
   useEffect(() => {
     if (!storeId || range.start > range.end) return;
@@ -192,7 +200,12 @@ export default function Dashboard() {
   const noModule = !loading && data.owned.length === 0;
   const hasVid = data.owned.includes('vidlytics');
   const total = data.assistedRevenue + data.clubCommission;
-  const insight = buildInsight(data, hasVid);
+  const hubTip = pickTip(hubTips, store?.store_niche || '', {
+    ctr: data.ctrRange, views: data.viewsRange, clicks: data.clicksRange, revenue: data.assistedRevenue,
+    products: data.products, videos: data.totalVideos, referred: data.referred,
+  });
+  const hubCta = hubTip ? resolveCta(hubTip, data.owned) : null;
+  const insight = hubTip ? { title: hubTip.title, text: plainText(hubTip.content) } : buildInsight(data, hasVid);
   const visibleMods = sortModules(data.modules.filter((m) => m.status !== 'hidden'), data.owned);
   const modCols = visibleMods.length <= 1 ? 'md:grid-cols-1' : visibleMods.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
 
@@ -335,13 +348,24 @@ export default function Dashboard() {
               <p className="text-sm font-bold text-slate-800">{insight.title}</p>
               <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{insight.text}</p>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate(TIPS_ROUTE)}
-              className="inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
-            >
-              Ver mais dicas e insights <ArrowRight className="h-3 w-3" />
-            </button>
+            <div className="flex flex-wrap items-center justify-end gap-3 self-end">
+              {hubCta && (
+                <button
+                  type="button"
+                  onClick={() => (/^https?:\/\//i.test(hubCta.url) ? window.open(hubCta.url, '_blank', 'noopener') : navigate(hubCta.url))}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#007fcc]"
+                >
+                  {hubCta.label} <ArrowRight className="h-3 w-3" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => navigate(TIPS_ROUTE)}
+                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+              >
+                Ver mais dicas e insights <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -502,7 +526,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex min-w-0 flex-col [&>*]:h-full [&>*]:flex-1">
-            <VidlyticsAcademy />
+            <VidlyticsAcademy variant="hub" />
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLoja } from '../../../contexts/LojaContext';
 import { useCardTip } from '@/hooks/useCardTip';
 import VidlyticsAcademy from '../../../components/vidlytics/VidlyticsAcademy';
+import { listScopedTips, pickTip, plainText, type ScopedTip } from '../../../services/scopedTips';
 import ProximasDatasComerciais from '../../../components/vidlytics/ProximasDatasComerciais';
 import { supabase } from '@/lib/supabase';
 import { AffiliateDatabaseService, AffiliateSummary } from '../../../services/AffiliateDatabaseService';
@@ -27,7 +28,7 @@ import {
   Edit3, 
   ArrowRight
 } from 'lucide-react';
-import { Activity, TrendingUp, TrendingDown, Trophy, AlertTriangle, GraduationCap } from 'lucide-react';
+import { Activity, TrendingUp, TrendingDown, Trophy, AlertTriangle } from 'lucide-react';
 
 type Periodo = 'today' | '7' | '30' | 'custom';
 
@@ -346,6 +347,18 @@ export default function VisaoGeralTab() {
 
   const academyTip = ACADEMY_TIPS[new Date().getMonth()];
 
+  const [vidTips, setVidTips] = useState<ScopedTip[]>([]);
+  const [vidSkip, setVidSkip] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    listScopedTips('vidlytics').then((l) => { if (alive) setVidTips(l); });
+    return () => { alive = false; };
+  }, []);
+  const vidTip = pickTip(vidTips, String((store as any)?.store_niche || ''), {
+    ctr: tc.ctr, views: tc.views, clicks: tc.clicks,
+  }, vidSkip);
+  const noahTip = vidTip ? { title: vidTip.title, text: plainText(vidTip.content) } : academyTip;
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(store?.referral_code ? (window.location.origin + '/?ref=' + store.referral_code) : 'https://vidlytics.com.br/indica/useanny');
     setCopied(true);
@@ -578,15 +591,15 @@ export default function VisaoGeralTab() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-6">
-            {/* Desempenho dos videos */}
-            <div data-tour="vg-desempenho" className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4 flex flex-col">
+            {/* Desempenho + vídeos mais assistidos (card único) */}
+            <div data-tour="vg-desempenho" className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle icon={Activity}>Desempenho dos vídeos</CardTitle>
                 <button type="button" onClick={() => goTab('resultados', 'videos')} className="text-[11px] font-semibold text-[#0094eb] hover:underline cursor-pointer whitespace-nowrap">
                   Ver mais métricas →
                 </button>
               </div>
-              <div className={`flex-1 content-center grid grid-cols-1 sm:grid-cols-3 gap-3 ${perfLoading ? 'opacity-50' : ''}`}>
+              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 ${perfLoading ? 'opacity-50' : ''}`}>
                 <div data-card-tip="Total de visualizações dos vídeos no período, comparado ao período anterior de mesma duração." className="rounded-xl border border-slate-100 p-3 space-y-1">
                   <span className="text-[11px] font-bold uppercase text-slate-400">Visualizações</span>
                   <p className="text-xl font-black text-slate-800">{fmtInt(tc.views)}</p>
@@ -603,16 +616,15 @@ export default function VisaoGeralTab() {
                   <Delta cur={tc.ctr} prev={tp.ctr} />
                 </div>
               </div>
-            </div>
 
-            {/* Videos mais vistos */}
-            <div data-tour="vg-top" className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
-              <CardTitle icon={Trophy}>Vídeos mais assistidos</CardTitle>
-              {top3.length === 0 ? (
-                <p className="text-xs text-slate-500">{perfLoading ? 'Carregando...' : 'Nenhuma visualização no período selecionado.'}</p>
-              ) : (
-                <div className="space-y-2">
-                  {top3.map((v, idx) => (
+              <div data-tour="vg-top" className="space-y-2 border-t border-slate-100 pt-4">
+                <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <Trophy className="w-4 h-4 text-[#0094eb]" /> Vídeos mais assistidos
+                </p>
+                {top3.length === 0 ? (
+                  <p className="text-xs text-slate-500">{perfLoading ? 'Carregando...' : 'Nenhuma visualização no período selecionado.'}</p>
+                ) : (
+                  top3.map((v, idx) => (
                     <div key={v.id} className="flex items-center gap-3 p-2 rounded-xl border border-slate-100">
                       <span className="w-5 text-center text-xs font-black text-slate-400">{idx + 1}</span>
                       {v.thumbnailUrl ? (
@@ -626,9 +638,9 @@ export default function VisaoGeralTab() {
                       </div>
                       <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700">CTR {fmtPct(v.ctr)}</span>
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
@@ -641,18 +653,27 @@ export default function VisaoGeralTab() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Dica da Academy */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm h-full flex flex-col justify-between gap-4">
-            <CardTitle icon={GraduationCap}>Dica da Academy</CardTitle>
-            <div className="flex-1 flex flex-col justify-center">
-              <p className="text-xs font-bold text-slate-800">{academyTip.title}</p>
-              <p className="text-xs text-slate-500 leading-relaxed mt-1">{academyTip.text}</p>
+          {/* Dica do Noah (somente dicas do Vidlytics) */}
+          <div data-tour="vg-noah" className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm h-full flex flex-col gap-3">
+            <img src="/assets/dica-do-noah-logo-wide.png" alt="Dica do Noah" className="h-12 w-auto max-w-[220px] shrink-0 object-contain object-left" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-slate-800">{noahTip.title}</p>
+              <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{noahTip.text}</p>
             </div>
+            {vidTips.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setVidSkip((s) => s + 1)}
+                className="self-end text-xs font-bold text-[#0094eb] hover:underline cursor-pointer"
+              >
+                Próxima dica →
+              </button>
+            )}
           </div>
 
           <div data-tour="vg-indique" className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm h-full flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
-            <img src="/assets/clube-sll-logo-wide.png" alt="Clube SLL" className="h-10 w-auto shrink-0 object-contain object-left" />
+            <img src="/assets/clube-sll-logo-wide.png" alt="Clube SLL" className="h-12 w-auto max-w-[220px] shrink-0 object-contain object-left" />
             <Share2 className="w-4 h-4 text-slate-400" />
           </div>
 
@@ -692,8 +713,10 @@ export default function VisaoGeralTab() {
         </div>
       </div>
 
-      {/* 5. Vidlytics Academy */}
-      <VidlyticsAcademy />
+      {/* 5. Vidlytics Academy (largura total) */}
+      <div className="w-full [&>*]:!w-full [&>*]:!max-w-none">
+        <VidlyticsAcademy variant="vidlytics" />
+      </div>
 
     </div>
   );

@@ -23,7 +23,7 @@ export type TipInput = Omit<Tip, 'id' | 'created_at'>;
 export interface TipFeedback { tip_id: string; implemented: boolean; vote: number | null }
 
 export async function listActiveTips(): Promise<Tip[]> {
-  const { data, error } = await sb.from('tips').select('*').eq('status', true)
+  const { data, error } = await sb.from('tips').select('*').eq('status', true).eq('scope', 'hub')
     .order('is_featured', { ascending: false }).order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data || []) as Tip[];

@@ -4,10 +4,11 @@ import { supabase } from '@/lib/supabase';
 
 type AcademyVideo = { id: string; title: string; thumbnail: string; published: string };
 
-const PLAYLIST_ID =
+const VID_PLAYLIST_ID =
   (import.meta.env.VITE_VIDLYTICS_PLAYLIST_ID as string | undefined) ||
   (import.meta.env.VITE_ACADEMY_PLAYLIST_ID as string | undefined) ||
   '';
+const HUB_PLAYLIST_ID = (import.meta.env.VITE_ACADEMY_HUB_PLAYLIST_ID as string | undefined) || '';
 const CHANNEL_URL = (import.meta.env.VITE_ACADEMY_CHANNEL_URL as string | undefined) || 'https://www.youtube.com';
 const SUBSCRIBE_URL = CHANNEL_URL + (CHANNEL_URL.includes('?') ? '&' : '?') + 'sub_confirmation=1';
 
@@ -23,7 +24,9 @@ function YoutubeMark({ className }: { className: string }) {
   );
 }
 
-export default function VidlyticsAcademy() {
+export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 'hub' | 'vidlytics' }) {
+  const hub = variant === 'hub';
+  const PLAYLIST_ID = hub ? (HUB_PLAYLIST_ID || VID_PLAYLIST_ID) : VID_PLAYLIST_ID;
   const [videos, setVideos] = useState<AcademyVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,9 +73,9 @@ export default function VidlyticsAcademy() {
   return (
     <section data-tour="academy" className="flex w-full max-w-2xl flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md">
       <div className="flex flex-col items-start gap-2">
-        <img src="/assets/sll-academy-logo-wide.png" alt="SLL Academy" className="h-10 w-auto shrink-0 object-contain object-left" />
+        <img src="/assets/sll-academy-logo-wide.png" alt="SLL Academy" className="h-12 w-auto max-w-[220px] shrink-0 object-contain object-left" />
         <p className="text-sm font-medium text-slate-700">
-          Veja como configurar o Vidlytics, tire dúvidas e aprenda dicas para vender mais com vídeos interativos.
+          {hub ? 'Aulas e dicas do nosso canal para impulsionar o seu e-commerce: operação, tráfego, margem e vendas.' : 'Veja como configurar o Vidlytics, tire dúvidas e aprenda dicas para vender mais com vídeos interativos.'}
         </p>
       </div>
 
@@ -119,7 +122,7 @@ export default function VidlyticsAcademy() {
                 <YoutubeMark className="h-9 w-9" />
                 <span className="text-sm font-black leading-tight">Quer ver mais?</span>
                 <span className="text-[11px] font-medium leading-snug text-white/90">
-                  Veja todos os vídeos do Vidlytics no nosso canal do YouTube.
+                  {hub ? 'Veja mais vídeos e dicas para impulsionar o seu e-commerce no nosso canal do YouTube.' : 'Veja todos os vídeos do Vidlytics no nosso canal do YouTube.'}
                 </span>
               </a>
               <p className="mt-2 text-xs font-semibold leading-snug text-slate-700">Mais vídeos no canal</p>
