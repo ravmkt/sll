@@ -1,0 +1,1077 @@
+=== ARQUIVOS ===
+src\lib\db.ts  (1717 linhas)
+src\pages\Medidas.tsx  (295 linhas)
+src\pages\vidlytics\tabs\BibliotecaTab.tsx  (1610 linhas)
+src\services\sizingModelsService.ts  (68 linhas)
+
+=== src\lib\db.ts (ate 350 linhas) ===
+1: import { supabase } from './supabase';
+2: 
+3: // ═══════════════════════════════════════════════════════
+4: // INTERFACES
+5: // ═══════════════════════════════════════════════════════
+6: 
+7: export interface Video {
+8:   id: string;
+9:   store_id: string;
+10:   title: string;
+11:   description?: string;
+12:   source_type:
+13:     | 'upload'
+14:     | 'instagram'
+15:     | 'tiktok'
+16:     | 'external_url'
+17:     | 'mobile_upload'
+18:     | 'gallery';
+19:   video_url: string;
+20:   thumbnail_url: string;
+21:   poster_url?: string;
+22:   image_url?: string;
+23:   duration?: number;
+24:   file_size?: number;
+25:   status: 'active' | 'inactive';
+26:   active?: boolean;
+27:   product_id?: string | null;
+28:   model_id?: string | null;
+29:   created_at?: string;
+30:   updated_at?: string;
+31: }
+32: 
+33: export type AppearanceDevice = 'desktop' | 'mobile';
+34: 
+35: export type ResponsiveAppearanceConfig<
+36:   T extends Record<string, any> = Record<string, any>,
+37: > = {
+38:   desktop: T;
+39:   mobile: T;
+40:   [key: string]: any;
+41: };
+42: 
+43: export interface Appearance {
+44:   id: string;
+45:   store_id: string;
+46:   created_at?: string;
+47:   updated_at?: string;
+48: 
+49:   // 🟦 Básico
+50:   name?: string;
+51:   is_default?: boolean;
+52:   use_global_appearance?: boolean;
+53: 
+54:   // 🟨 Identidade Visual
+55:   primary_color?: string;
+56:   secondary_color?: string;
+57:   text_color?: string;
+58:   background_color?: string;
+59:   button_color?: string;
+60:   font_family?: string;
+61:   font_size?: string;
+62:   border_radius?: number;
+63:   shadow_enabled?: boolean;
+64: 
+65:   // 🔴 Flutuante
+66:   widget_shape?: string;
+67:   widget_size?: string;
+68:   widget_animation?: string;
+69: 
+70:   // 🟢 Carrossel — JSONB + CAMPOS PLANOS
+71:   carousel_config?: ResponsiveAppearanceConfig;
+72:   carousel_shape?: string;
+73:   carousel_size?: string | number;
+74:   carousel_card_shape?: string;
+75:   carousel_visible_items?: number;
+76:   carousel_spacing?: number;
+77:   carousel_gap?: number;
+78:   carousel_border_color?: string;
+79:   carousel_border_width?: string | number;
+80:   carousel_border_radius?: string | number;
+81:   carousel_object_fit?: string;
+82:   carousel_margin_top?: string | number;
+83:   carousel_margin_bottom?: string | number;
+84:   carousel_show_title?: boolean;
+85:   carousel_show_product?: boolean;
+86:   carousel_show_play_button?: boolean;
+87:   carousel_auto_center?: boolean;
+88:   carousel_view_mode?: string;
+89: 
+90:   // 🟣 Grade — JSONB + CAMPOS PLANOS
+91:   grid_config?: ResponsiveAppearanceConfig;
+92:   grid_shape?: string;
+93:   grid_columns?: string;
+94:   grid_rows?: string;
+95:   grid_spacing?: string;
+96:   grid_size?: string;
+97:   grid_border_color?: string;
+98:   grid_border_width?: string;
+99:   grid_border_radius?: string;
+100:   grid_object_fit?: string;
+101:   grid_show_title?: boolean;
+102:   grid_margin_top?: string | number;
+103:   grid_margin_bottom?: string | number;
+104: 
+105:   // 🔵 Modal — JSONB + CAMPOS PLANOS
+106:   modal_config?: ResponsiveAppearanceConfig;
+107:   modal_show_title?: boolean;
+108:   modal_show_play_button?: boolean;
+109:   modal_show_product?: boolean;
+110:   modal_show_like_button?: boolean;
+111:   modal_show_comment_button?: boolean;
+112:   modal_show_share_button?: boolean;
+113:   modal_show_whatsapp_button?: boolean;
+114:   modal_show_product_button?: boolean;
+115:   modal_hide_stories?: boolean;
+116:   modal_shadow_enabled?: boolean;
+117:   modal_border_color?: string;
+118:   modal_border_width?: string | number;
+119:   modal_border_radius?: string | number;
+120: 
+121:   // 👁️ Visibilidade dos botões (legado)
+122:   show_title?: boolean;
+123:   show_play_button?: boolean;
+124:   show_product?: boolean;
+125:   show_like_button?: boolean;
+126:   show_comment_button?: boolean;
+127:   show_share_button?: boolean;
+128:   show_whatsapp_button?: boolean;
+129:   show_product_button?: boolean;
+130: 
+131:   // 🔗 Outros
+132:   url?: string | null;
+133: 
+134:   // ⚠️ Aliases legados (normalizados em runtime, não salvos)
+135:   isDefault?: boolean;
+136:   useGlobalAppearance?: boolean;
+137: }
+138: 
+139: export type DisplayPosition =
+140:   | 'beforebegin'
+141:   | 'afterend'
+142:   | 'afterbegin'
+143:   | 'beforeend';
+144: 
+145: export interface DisplayLocation {
+146:   id: string;
+147:   store_id: string;
+148:   story_id: string;
+149:   location?: string | null;
+150:   selector: string;
+151:   position: DisplayPosition;
+152:   active?: boolean;
+153:   created_at?: string;
+154:   updated_at?: string;
+155: }
+156: 
+157: export type ConditionType =
+158:   | 'home'
+159:   | 'all_pages'
+160:   | 'url_contains'
+161:   | 'url_equals'
+162:   | 'url_not_equals';
+163: 
+164: export interface PageRule {
+165:   id: string;
+166:   store_id: string;
+167:   story_id: string;
+168:   condition_type: ConditionType;
+169:   value?: string | null;
+170:   created_at?: string;
+171:   updated_at?: string;
+172: }
+173: 
+174: export type StoryFormat = 'floating_widget' | 'carousel' | 'dynamic_carousel' | 'grid';
+175: export type CTAType = 'product' | 'custom_link' | 'whatsapp' | 'none';
+176: export type ScrollDirection = 'horizontal' | 'vertical';
+177: 
+178: export interface Story {
+179:   id: string;
+180:   store_id: string;
+181:   title: string;
+182:   format: StoryFormat;
+183:   scroll_direction?: ScrollDirection;
+184:   active: boolean;
+185:   appearance_id?: string | null;
+186:   model_id?: string | null;
+187:   cta_enabled: boolean;
+188:   cta_text?: string;
+189:   cta_type: CTAType;
+190:   cta_url?: string;
+191:   whatsapp_message?: string;
+192:   view_count?: number;
+193:   click_count?: number;
+194:   created_at?: string;
+195:   updated_at?: string;
+196:   position: number;
+197: }
+198: 
+199: export interface StoryVideo {
+200:   id: string;
+201:   store_id: string;
+202:   story_id: string;
+203:   video_id: string;
+204:   position: number;
+205:   is_cover: boolean;
+206:   created_at?: string;
+207: }
+208: 
+209: export interface Product {
+210:   id: string;
+211:   store_id: string;
+212:   name: string;
+213:   image_url: string;
+214:   product_url: string;
+215:   price: number;
+216:   sku?: string;
+217:   short_description?: string;
+218:   active: boolean;
+219:   created_at?: string;
+220:   updated_at?: string;
+221:   origin?: 'manual' | 'integration' | string;
+222: }
+223: 
+224: export interface StoryProduct {
+225:   id: string;
+226:   store_id: string;
+227:   story_id: string;
+228:   video_id?: string | null;
+229:   product_id: string;
+230:   created_at?: string;
+231: }
+232: 
+233: export type CommentStatus = 'pending' | 'approved' | 'rejected' | 'spam';
+234: 
+235: export interface Comment {
+236:   id: string;
+237:   store_id: string;
+238:   story_id: string;
+239:   video_id?: string;
+240:   user_name: string;
+241:   user_email?: string;
+242:   text: string;
+243:   status: CommentStatus;
+244:   created_at?: string;
+245: }
+246: 
+247: export interface GeneralSettings {
+248:   id: string;
+249:   store_id: string;
+250:   store_name: string;
+251: store_url: string;
+252: logo_url?: string;
+253: contact_email?: string;
+254: owner_contact_email?: string;
+255: whatsapp_number?: string;
+256: whatsapp_default_message?: string;
+257: app_enabled: boolean;
+258: stories_enabled: boolean;
+259: carousel_enabled: boolean;
+260:   floating_widget_enabled: boolean;
+261:   default_appearance_id?: string | null;
+262:   platform?: string | null;
+263:   defaultAppearanceId?: string | null;
+264:   timezone: string;
+265:   language: string;
+266:   open_product_new_tab: boolean;
+267:   autoplay: boolean;
+268:   muted_by_default: boolean;
+269:   mutedByDefault?: boolean;
+270:   show_video_controls: boolean;
+271:   created_at?: string;
+272:   updated_at?: string;
+273:   whatsapp_button_enabled?: boolean;
+274:   pause_on_invisible?: boolean;
+275:   widget_enabled?: boolean;
+276:   default_template?: string;
+277:   whatsapp_enabled?: boolean;
+278:   whatsapp_message_template?: string;
+279:   pause_on_leave?: boolean;
+280: }
+281: 
+282: export interface Store {
+283:   id: string;
+284:   name: string;
+285:   url: string;
+286:   active: boolean;
+287:   platform?: string;
+288:   owner_user_id?: string;
+289:   plan_id?: string;
+290:   subscription_status?: 'trialing' | 'active' | 'past_due' | 'canceled';
+291:   trial_ends_at?: string | null;
+292:   storage_used_bytes?: number;
+293:   storage_limit_bytes?: number;
+294:   asaas_customer_id?: string | null;
+295:   created_at?: string;
+296: }
+297: 
+298: export interface SizeMeasure {
+299:   name: string;
+300:   value: number;
+301:   unit: 'cm' | 'm';
+302: }
+303: 
+304: export interface SizingModel {
+305:   id: string;
+306:   store_id: string;
+307:   name: string;
+308:   image_url?: string;
+309:   measures: SizeMeasure[];
+310:   size_name?: string;
+311:   created_at?: string;
+312:   updated_at?: string;
+313: }
+314: 
+315: // ═══════════════════════════════════════════════════════
+316: // CONSTANTES E DADOS PADRÃO
+317: // ═══════════════════════════════════════════════════════
+318: 
+319: export const isSupabaseConfigured =
+320:   !!import.meta.env.VITE_SUPABASE_URL &&
+321:   !!import.meta.env.VITE_SUPABASE_ANON_KEY &&
+322:   !!supabase;
+323: 
+324: const DEFAULT_STORE_ID = '11111111-1111-4111-8111-111111111111';
+325: const DEFAULT_store_settings_ID = '22222222-2222-4222-8222-222222222222';
+326: const DEFAULT_APPEARANCE_ID = '33333333-3333-4333-8333-333333333333';
+327: 
+328: const DEFAULT_STORE: Store = {
+329:   id: DEFAULT_STORE_ID,
+330:   name: 'Loja Exemplo',
+331:   url: 'lojaexemplo.com.br',
+332:   active: true,
+333: };
+334: 
+335: const DEFAULT_store_settings: GeneralSettings = {
+336:   id: DEFAULT_store_settings_ID,
+337:   store_id: DEFAULT_STORE.id,
+338:   store_name: DEFAULT_STORE.name,
+339:   store_url: DEFAULT_STORE.url,
+340: logo_url: '',
+341: contact_email: '',
+342: owner_contact_email: '',
+343: whatsapp_number: '',
+344: whatsapp_default_message: 'Olá! Tenho interesse no vídeo: {{story_title}}',
+345:   whatsapp_default_message: 'Olá! Tenho interesse no vídeo: {{story_title}}',
+346:   app_enabled: true,
+347:   stories_enabled: true,
+348:   carousel_enabled: true,
+349:   floating_widget_enabled: true,
+350:   default_appearance_id: DEFAULT_APPEARANCE_ID,
+
+=== src\pages\Medidas.tsx (ate 350 linhas) ===
+1: import { useCallback, useEffect, useState } from 'react';
+2: import { Edit3, Loader2, Package, Plus, Trash2, User } from 'lucide-react';
+3: import { DashboardLayout } from '../components/layout/DashboardLayout';
+4: import { useLoja } from '@/contexts/LojaContext';
+5: import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog';
+6: import ProductsTabs from '@/components/products/ProductsTabs';
+7: import { Modal, inputCls, primaryBtn, ghostBtn, labelCls, errMsg } from '@/components/products/Modal';
+8: import { showError, showSuccess } from '@/utils/toast';
+9: import { logPanelActivity } from '@/lib/activityLog';
+10: import { MeasureModel, ModelMeasure, ModelType, deleteModel, listModels, saveModel } from '@/services/sizingModelsService';
+11: 
+12: type Extra = { id: string; name: string; value: string };
+13: type FormState = { type: ModelType; name: string; title: string; height: string; width: string; length: string; weight: string; extras: Extra[] };
+14: 
+15: const EMPTY: FormState = { type: 'humano', name: '', title: '', height: '', width: '', length: '', weight: '', extras: [] };
+16: const BASE = ['altura', 'largura', 'comprimento', 'peso'];
+17: const uid = () => crypto.randomUUID();
+18: 
+19: function validate(f: FormState): string[] {
+20:   const errs: string[] = [];
+21:   if (!f.name.trim()) errs.push(f.type === 'humano' ? 'Nome do modelo é obrigatório.' : 'Nome do objeto é obrigatório.');
+22:   const num = (v: string, label: string, required: boolean) => {
+23:     if (!v.trim()) { if (required) errs.push(`${label} é obrigatória.`); return; }
+24:     if (isNaN(Number(v))) errs.push(`${label} deve ser um número válido.`);
+25:     else if (Number(v) <= 0) errs.push(`${label} deve ser maior que zero.`);
+26:   };
+27:   num(f.height, 'Altura', f.type === 'humano');
+28:   num(f.weight, 'Peso', false);
+29:   if (f.type === 'objeto') { num(f.width, 'Largura', false); num(f.length, 'Comprimento', false); }
+30:   f.extras.forEach((m, i) => {
+31:     if (m.name.trim() && !m.value.trim()) errs.push(`Valor do campo "${m.name}" é obrigatório.`);
+32:     if (!m.name.trim() && m.value.trim()) errs.push(`Nome do campo ${i + 1} é obrigatório.`);
+33:   });
+34:   return errs;
+35: }
+36: 
+37: export default function Medidas() {
+38:   const { storeId, loading: lojaLoading } = useLoja();
+39:   const [models, setModels] = useState<MeasureModel[]>([]);
+40:   const [loading, setLoading] = useState(true);
+41:   const [pickOpen, setPickOpen] = useState(false);
+42:   const [formOpen, setFormOpen] = useState(false);
+43:   const [saving, setSaving] = useState(false);
+44:   const [editing, setEditing] = useState<MeasureModel | null>(null);
+45:   const [del, setDel] = useState<MeasureModel | null>(null);
+46:   const [form, setForm] = useState<FormState>(EMPTY);
+47: 
+48:   const reload = useCallback(async () => {
+49:     if (!storeId) { setModels([]); setLoading(false); return; }
+50:     try {
+51:       setModels(await listModels(storeId));
+52:     } catch (e) {
+53:       showError(errMsg(e));
+54:     } finally {
+55:       setLoading(false);
+56:     }
+57:   }, [storeId]);
+58: 
+59:   useEffect(() => { if (!lojaLoading) reload(); }, [lojaLoading, reload]);
+60: 
+61:   const closeForm = () => { setFormOpen(false); setEditing(null); setForm(EMPTY); };
+62: 
+63:   const pick = (type: ModelType) => { setForm({ ...EMPTY, type }); setPickOpen(false); setFormOpen(true); };
+64: 
+65:   const openEdit = (m: MeasureModel) => {
+66:     const get = (n: string) => { const raw = String(m.measures.find((x) => String(x.name).toLowerCase() === n)?.value ?? '').trim(); return raw !== '' && !isNaN(Number(raw)) ? raw : ''; };
+67:     const base = m.type === 'objeto' ? BASE : ['altura', 'peso'];
+68:     setEditing(m);
+69:     setForm({
+70:       type: m.type,
+71:       name: m.name,
+72:       height: get('altura'),
+73:       width: get('largura'),
+74:       length: get('comprimento'),
+75:       weight: get('peso'),
+76:       title: m.title || '',
+77:       extras: m.measures
+78:         .filter((x) => !base.includes(String(x.name).toLowerCase()))
+79:         .map((x) => ({ id: uid(), name: x.name, value: String(x.value) })),
+80:     });
+81:     setFormOpen(true);
+82:   };
+83: 
+84:   const setExtra = (id: string, field: 'name' | 'value', v: string) =>
+85:     setForm((p) => ({ ...p, extras: p.extras.map((e) => (e.id === id ? { ...e, [field]: v } : e)) }));
+86: 
+87:   const submit = async () => {
+88:     if (!storeId) { showError('Não foi possível identificar a loja atual.'); return; }
+89:     const errs = validate(form);
+90:     if (errs.length) { errs.forEach((e) => showError(e)); return; }
+91: 
+92:     const measures: ModelMeasure[] = [];
+93:     const push = (name: string, v: string, unit: 'cm' | 'g' = 'cm') => { if (v.trim()) measures.push({ name, value: Number(v), unit }); };
+94:     push('Altura', form.height);
+95:     if (form.type === 'objeto') { push('Largura', form.width); push('Comprimento', form.length); }
+96:     push('Peso', form.weight, 'g');
+97:     form.extras.filter((e) => e.name.trim() && e.value.trim()).forEach((e) => {
+98:       const raw = e.value.trim();
+99:       const n = Number(raw);
+100:       measures.push({ name: e.name.trim(), value: isNaN(n) ? raw : n, unit: '' });
+101:     });
+102: 
+103:     try {
+104:       setSaving(true);
+105:       await saveModel({ id: editing?.id, store_id: storeId, name: form.name.trim(), title: form.title.trim(), type: form.type, measures });
+106:       logPanelActivity(editing ? 'model.updated' : 'model.created', form.name.trim(), storeId);
+107:       showSuccess(editing ? 'Medida atualizada com sucesso!' : 'Medida criada com sucesso!');
+108:       closeForm();
+109:       await reload();
+110:     } catch (e) {
+111:       showError(errMsg(e));
+112:     } finally {
+113:       setSaving(false);
+114:     }
+115:   };
+116: 
+117:   const confirmDelete = async () => {
+118:     if (!del || !storeId) return;
+119:     try {
+120:       await deleteModel(del.id, storeId);
+121:       logPanelActivity('model.deleted', del.name, storeId);
+122:       showSuccess('Medida removida com sucesso.');
+123:       setDel(null);
+124:       await reload();
+125:     } catch (e) {
+126:       showError(errMsg(e));
+127:     }
+128:   };
+129: 
+130:   const isObj = form.type === 'objeto';
+131:   const unitInput = (value: string, onChange: (v: string) => void, ph: string, unit = 'cm') => (
+132:     <div className="relative">
+133:       <input type="number" min="0" step="1" placeholder={ph} value={value} onChange={(e) => onChange(e.target.value)} className={`${inputCls} pr-10`} />
+134:       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{unit}</span>
+135:     </div>
+136:   );
+137: 
+138:   return (
+139:     <DashboardLayout>
+140:       <div className="space-y-6 pb-20">
+141:         <ProductsTabs />
+142: 
+143:         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+144:           <div>
+145:             <h1 className="text-2xl font-bold tracking-tight">Medidas</h1>
+146:             <p className="text-sm text-slate-500 dark:text-slate-400">Cadastre as medidas para exibição interativa nos vídeos.</p>
+147:           </div>
+148:           <button type="button" disabled={!storeId || lojaLoading} onClick={() => { setEditing(null); setForm(EMPTY); setPickOpen(true); }} className={primaryBtn}>
+149:             <Plus size={16} /> Novo
+150:           </button>
+151:         </div>
+152: 
+153:         {loading ? (
+154:           <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+155:         ) : models.length === 0 ? (
+156:           <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center">
+157:             <Package size={40} className="mx-auto mb-3 text-slate-400" />
+158:             <p className="font-bold">Nenhum perfil de medidas cadastrado.</p>
+159:             <p className="mt-1 text-xs text-slate-500">Clique em "Novo" para criar o primeiro perfil da sua loja.</p>
+160:           </div>
+161:         ) : (
+162:           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+163:             {models.map((m) => (
+164:               <div key={m.id} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] p-6 shadow-sm transition hover:shadow-lg">
+165:                 <div className="mb-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+166:                   <div className="flex min-w-0 items-center gap-3">
+167:                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0094eb] text-white">
+168:                       {m.type === 'objeto' ? <Package size={18} /> : <User size={18} />}
+169:                     </div>
+170:                     <div className="min-w-0">
+171:                       <h3 className="truncate text-lg font-black uppercase tracking-tight">{m.name}</h3>
+172:                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+173:                         {m.type === 'objeto' ? 'Dimensões do Objeto' : 'Perfil do Humano'}
+174:                       </span>
+175:                     </div>
+176:                   </div>
+177:                   <div className="flex shrink-0 items-center gap-1">
+178:                     <button type="button" title="Editar medidas" onClick={() => openEdit(m)} className="cursor-pointer rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb]">
+179:                       <Edit3 size={16} />
+180:                     </button>
+181:                     <button type="button" title="Excluir perfil" onClick={() => setDel(m)} className="cursor-pointer rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-500">
+182:                       <Trash2 size={16} />
+183:                     </button>
+184:                   </div>
+185:                 </div>
+186:                 <div className="space-y-2.5">
+187:                   {m.measures.length === 0 && <p className="py-4 text-center text-xs font-semibold text-slate-400">Nenhuma medida cadastrada.</p>}
+188:                   {m.measures.map((x, i) => (
+189:                     <div key={`${m.id}-${x.name}-${i}`} className="flex items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#111524] p-3.5">
+190:                       <div className="flex items-center gap-2.5">
+191:                         <span className="h-1.5 w-1.5 rounded-full bg-[#0094eb]" />
+192:                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{x.name}</span>
+193:                       </div>
+194:                       <span className="rounded-xl border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-2.5 py-1 font-mono text-xs font-black">
+195:                         {x.value}{x.unit ? ` ${x.unit}` : ""}
+196:                       </span>
+197:                     </div>
+198:                   ))}
+199:                 </div>
+200:               </div>
+201:             ))}
+202:           </div>
+203:         )}
+204:       </div>
+205: 
+206:       {pickOpen && (
+207:         <Modal title="O que você deseja cadastrar?" onClose={() => setPickOpen(false)}>
+208:           <div className="space-y-4 p-5">
+209:             {([
+210:               { t: 'humano' as ModelType, icon: User, title: 'Perfil Humano', desc: 'Ideal para roupas, calçados e provador de modelos.' },
+211:               { t: 'objeto' as ModelType, icon: Package, title: 'Dimensões do Objeto', desc: 'Ideal para canecas, eletrônicos, móveis ou embalagens.' },
+212:             ]).map(({ t, icon: Icon, title, desc }) => (
+213:               <button key={t} type="button" onClick={() => pick(t)} className="flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#111524]/40 p-5 text-left transition hover:border-[#0094eb]">
+214:                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-[#0094eb]"><Icon size={24} /></div>
+215:                 <div>
+216:                   <h4 className="text-sm font-black uppercase tracking-tight">{title}</h4>
+217:                   <p className="mt-1 text-xs text-slate-500">{desc}</p>
+218:                 </div>
+219:               </button>
+220:             ))}
+221:             <button type="button" onClick={() => setPickOpen(false)} className={`${ghostBtn} w-full`}>Cancelar</button>
+222:           </div>
+223:         </Modal>
+224:       )}
+225: 
+226:       {formOpen && (
+227:         <Modal title={`${editing ? 'Editar' : 'Novo'} ${isObj ? 'Objeto' : 'Humano'}`} onClose={closeForm}>
+228:           <div className="space-y-5 p-5">
+229:             <div className="space-y-2">
+230:               <label className={labelCls}>{isObj ? 'Nome do objeto' : 'Nome do modelo'} <span className="text-rose-500">*</span></label>
+231:               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={isObj ? 'Ex: Caneca Cerâmica 350ml' : 'Ex: Modelo Padrão Feminino'} className={inputCls} />
+232:             </div>
+233: 
+234:             <div className="space-y-2">
+235:                 <label className={labelCls}>Título <span className="text-xs font-normal text-slate-400">(opcional)</span></label>
+236:                 <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={isObj ? 'Ex: Medidas do produto' : 'Ex: Medidas da modelo'} className={inputCls} />
+237:               </div>{isObj ? (
+238:               <div className="grid grid-cols-3 gap-3">
+239:                 <div className="space-y-2"><label className={labelCls}>Altura</label>{unitInput(form.height, (v) => setForm({ ...form, height: v }), 'Ex: 50')}</div>
+240:                 <div className="space-y-2"><label className={labelCls}>Largura</label>{unitInput(form.width, (v) => setForm({ ...form, width: v }), 'Ex: 30')}</div>
+241:                 <div className="space-y-2"><label className={labelCls}>Comprimento</label>{unitInput(form.length, (v) => setForm({ ...form, length: v }), 'Ex: 20')}</div>
+242:               </div>
+243:             ) : (
+244:               <div className="space-y-2">
+245:                 <label className={labelCls}>Altura em cm <span className="text-rose-500">*</span></label>
+246:                 {unitInput(form.height, (v) => setForm({ ...form, height: v }), 'Ex: 170')}
+247:               </div>
+248:             )}
+249: 
+250:             <div className="space-y-2">
+251:               <label className={labelCls}>Peso em gramas <span className="text-xs font-normal text-slate-400">(opcional)</span></label>
+252:               {unitInput(form.weight, (v) => setForm({ ...form, weight: v }), 'Ex: 450', 'g')}
+253:             </div>
+254: 
+255:             <div className="space-y-3">
+256:               <div className="flex items-center justify-between">
+257:                 <label className={labelCls}>Campos adicionais</label>
+258:                 <button type="button" onClick={() => setForm((p) => ({ ...p, extras: [...p.extras, { id: uid(), name: '', value: '' }] }))} className="inline-flex cursor-pointer items-center gap-1 rounded-xl bg-[#0094eb]/10 px-3 py-1.5 text-xs font-black text-[#0094eb] transition hover:bg-[#0094eb] hover:text-white">
+259:                   <Plus size={14} /> Adicionar
+260:                 </button>
+261:               </div>
+262:               {form.extras.length === 0 ? (
+263:                 <p className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#111524] py-4 text-center text-sm text-slate-400">
+264:                   Nenhum campo adicional. Clique em "Adicionar" para incluir.
+265:                 </p>
+266:               ) : (
+267:                 form.extras.map((x, i) => (
+268:                   <div key={x.id} className="flex items-center gap-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#111524] p-3">
+269:                     <span className="w-6 text-center text-xs font-bold text-slate-400">{i + 1}</span>
+270:                     <div className="flex-1 space-y-2">
+271:                       <input value={x.name} onChange={(e) => setExtra(x.id, 'name', e.target.value)} placeholder={isObj ? 'Nome, ex: Peso ou Volume' : 'Nome, ex: Busto ou Peso'} className={inputCls} />
+272:                       <input value={x.value} onChange={(e) => setExtra(x.id, 'value', e.target.value)} placeholder={isObj ? 'Valor, ex: 2kg ou 350ml' : 'Valor, ex: 85cm ou 65kg'} className={inputCls} />
+273:                     </div>
+274:                     <button type="button" title="Remover campo" onClick={() => setForm((p) => ({ ...p, extras: p.extras.filter((e) => e.id !== x.id) }))} className="cursor-pointer rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-500">
+275:                       <Trash2 size={16} />
+276:                     </button>
+277:                   </div>
+278:                 ))
+279:               )}
+280:             </div>
+281: 
+282:             <div className="flex gap-3 pt-2">
+283:               <button type="button" onClick={closeForm} className={`${ghostBtn} flex-1`}>Cancelar</button>
+284:               <button type="button" onClick={submit} disabled={saving} className={`${primaryBtn} flex-1`}>
+285:                 {saving ? <Loader2 size={16} className="animate-spin" /> : null} {saving ? 'Salvando...' : 'Salvar'}
+286:               </button>
+287:             </div>
+288:           </div>
+289:         </Modal>
+290:       )}
+291: 
+292:       <ConfirmDeleteDialog isOpen={!!del} title="EXCLUIR PERFIL" itemName={del?.name} onConfirm={confirmDelete} onCancel={() => setDel(null)} />
+293:     </DashboardLayout>
+294:   );
+295: }
+
+=== src\pages\vidlytics\tabs\BibliotecaTab.tsx (ate 350 linhas) ===
+1: import React, { useState, useEffect, useMemo, useRef } from "react";
+2: import {
+3:   Search,
+4:   UploadCloud,
+5:   Globe,
+6:   Trash2,
+7:   Edit2,
+8:   Eye,
+9:   Download,
+10:   HardDrive,
+11:   Film,
+12:   Image as ImageIcon,
+13:   CheckCircle,
+14:   AlertCircle,
+15:   RefreshCw,
+16:   X,
+17:   Play,
+18:   Link2,
+19:   ArrowLeft,
+20:   AlertTriangle,
+21:   Save
+22: } from "lucide-react";
+23: import { supabase } from "@/lib/supabase";
+24: import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
+25: import { checkQuota, quotaErrorKind, type QuotaState } from "@/services/quotaService";
+26: import { useQuotaGuard } from "@/hooks/useQuotaGuard";
+27: import QuotaUpgradeModal from "@/components/QuotaUpgradeModal";
+28: import TikTokImportModal from "@/components/vidlytics/TikTokImportModal";
+29: import InstagramImportModal from "@/components/vidlytics/InstagramImportModal";
+30: 
+31: interface VidVideo {
+32:   id: string;
+33:   store_id: string;
+34:   title: string;
+35:   video_url: string;
+36:   thumbnail_url?: string;
+37:   status?: string;
+38:   position?: number;
+39:   active?: boolean;
+40:   video_source_type?: string;
+41:   file_size_bytes?: number;
+42:   product_id?: string;
+43:   model_id?: string;
+44:   story_title?: string;
+45:   created_at: string;
+46:   updated_at?: string;
+47: }
+48: 
+49: interface ProductItem {
+50:   id: string;
+51:   title?: string;
+52:   name?: string;
+53:   thumbnail?: string;
+54:   image_url?: string;
+55:   price?: number;
+56: }
+57: 
+58: interface BibliotecaTabProps {
+59:   storeId?: string;
+60: }
+61: 
+62: const GB_BYTES = 1024 * 1024 * 1024;
+63: const BUCKET_NAME = "videos";
+64: 
+65: const vidlyticsDb = (supabase as any).schema 
+66:   ? (supabase as any).schema("vidlytics") 
+67:   : supabase;
+68: 
+69: // Utilitário para extrair ID do YouTube (suporta /shorts/, /watch?v=, youtu.be/)
+70: export const extractYouTubeId = (url: string): string | null => {
+71:   if (!url) return null;
+72:   const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+73:   const match = url.match(regExp);
+74:   return match && match[1] ? match[1] : null;
+75: };
+76: 
+77: // Gerador de thumbnail capturando frame do vídeo via Canvas no navegador
+78: const captureVideoThumbnail = (file: File): Promise<Blob> => {
+79:   return new Promise((resolve, reject) => {
+80:     const video = document.createElement("video");
+81:     video.preload = "metadata";
+82:     video.muted = true;
+83:     video.playsInline = true;
+84: 
+85:     const url = URL.createObjectURL(file);
+86:     video.src = url;
+87: 
+88:     video.onloadeddata = () => {
+89:       // Avança para 0.5s para evitar primeiro frame preto
+90:       video.currentTime = Math.min(0.5, (video.duration || 1) / 2);
+91:     };
+92: 
+93:     video.onseeked = () => {
+94:       try {
+95:         const canvas = document.createElement("canvas");
+96:         canvas.width = video.videoWidth || 720;
+97:         canvas.height = video.videoHeight || 1280;
+98:         const ctx = canvas.getContext("2d");
+99:         if (!ctx) {
+100:           URL.revokeObjectURL(url);
+101:           reject(new Error("Canvas context não disponível"));
+102:           return;
+103:         }
+104: 
+105:         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+106:         canvas.toBlob(
+107:           (blob) => {
+108:             URL.revokeObjectURL(url);
+109:             if (blob) {
+110:               resolve(blob);
+111:             } else {
+112:               reject(new Error("Falha ao converter canvas para blob"));
+113:             }
+114:           },
+115:           "image/jpeg",
+116:           0.85
+117:         );
+118:       } catch (err) {
+119:         URL.revokeObjectURL(url);
+120:         reject(err);
+121:       }
+122:     };
+123: 
+124:     video.onerror = () => {
+125:       URL.revokeObjectURL(url);
+126:       reject(new Error("Não foi possível carregar vídeo para extração de thumbnail"));
+127:     };
+128:   });
+129: };
+130: 
+131: const IconInstagram: React.FC<{ className?: string }> = ({ className }) => (
+132:   <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+133:     <defs>
+134:       <linearGradient id="sll-ig-grad" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse">
+135:         <stop offset="0" stopColor="#FEDA75" />
+136:         <stop offset="0.3" stopColor="#FA7E1E" />
+137:         <stop offset="0.55" stopColor="#D62976" />
+138:         <stop offset="0.8" stopColor="#962FBF" />
+139:         <stop offset="1" stopColor="#4F5BD5" />
+140:       </linearGradient>
+141:     </defs>
+142:     <rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#sll-ig-grad)" strokeWidth="2" />
+143:     <circle cx="12" cy="12" r="4" stroke="url(#sll-ig-grad)" strokeWidth="2" />
+144:     <circle cx="17.5" cy="6.5" r="1.3" fill="url(#sll-ig-grad)" />
+145:   </svg>
+146: );
+147: 
+148: const IconTikTok: React.FC<{ className?: string }> = ({ className }) => (
+149:   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+150:     <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+151:   </svg>
+152: );
+153: const isExternalMedia = (v: VidVideo): boolean =>
+154:   v.video_source_type === 'external' || /youtube\.com|youtu\.be/i.test(v.video_url || '');
+155: 
+156: const downloadMedia = async (v: VidVideo): Promise<void> => {
+157:   const url = v.video_url;
+158:   if (!url) return;
+159:   const ext = (url.split('?')[0].match(/\.([a-z0-9]{2,4})$/i)?.[1] || 'mp4').toLowerCase();
+160:   const base = (v.title || 'arquivo').replace(/[\\/:*?"<>|]+/g, '').trim() || 'arquivo';
+161:   const name = base.toLowerCase().endsWith('.' + ext) ? base : `${base}.${ext}`;
+162: 
+163:   // Download direto (Supabase Storage responde com Content-Disposition: attachment)
+164:   const direct = () => {
+165:     const a = document.createElement('a');
+166:     a.href = url + (url.includes('?') ? '&' : '?') + 'download=' + encodeURIComponent(name);
+167:     a.download = name;
+168:     document.body.appendChild(a);
+169:     a.click();
+170:     a.remove();
+171:   };
+172: 
+173:   const picker = (window as any).showSaveFilePicker;
+174:   if (!picker) {
+175:     direct();
+176:     return;
+177:   }
+178:   try {
+179:     const handle = await picker({ suggestedName: name });
+180:     const res = await fetch(url);
+181:     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+182:     const writable = await handle.createWritable();
+183:     await res.body.pipeTo(writable);
+184:   } catch (err: any) {
+185:     if (err?.name === 'AbortError') return;
+186:     console.error('[Biblioteca] Falha no seletor de pasta, usando download direto:', err);
+187:     direct();
+188:   }
+189: };
+190: export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialStoreId }) => {
+191:   const [storeId, setStoreId] = useState<string>(initialStoreId || "");
+192:   const [videos, setVideos] = useState<VidVideo[]>([]);
+193:   const [products, setProducts] = useState<ProductItem[]>([]);
+194:   const [loading, setLoading] = useState<boolean>(true);
+195:   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+196:   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+197: 
+198:   // Filtros
+199:   const [searchTerm, setSearchTerm] = useState<string>("");
+200:   const [activeFilter, setActiveFilter] = useState<"TODOS" | "VIDEOS" | "IMAGENS">("TODOS");
+201: 
+202:   // Visualização e Subpáginas
+203:   const [previewMedia, setPreviewMedia] = useState<VidVideo | null>(null);
+204:   const [editingVideo, setEditingVideo] = useState<VidVideo | null>(null);
+205: 
+206:   // Modal Exclusão Padrão (Print 5)
+207:   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
+208:   const [videoToDelete, setVideoToDelete] = useState<VidVideo | null>(null);
+209:   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+210: 
+211:   // Modal URL Externa
+212:   const [isUrlModalOpen, setIsUrlModalOpen] = useState<boolean>(false);
+213:   const [externalUrl, setExternalUrl] = useState<string>("");
+214:   const [externalTitle, setExternalTitle] = useState<string>("");
+215:   const [externalProduct, setExternalProduct] = useState<string>("");
+216:   const [externalModel, setExternalModel] = useState<string>("");
+217:   const [isSavingExternal, setIsSavingExternal] = useState<boolean>(false);
+218: 
+219:   // Edição
+220:   const [editTitle, setEditTitle] = useState<string>("");
+221:   const [editSourceType, setEditSourceType] = useState<string>("upload");
+222:   const [editVideoUrl, setEditVideoUrl] = useState<string>("");
+223:   const [editFileSize, setEditFileSize] = useState<number | null>(null);
+224:   const [editThumbnailUrl, setEditThumbnailUrl] = useState<string>("");
+225:   const [editProductId, setEditProductId] = useState<string>("");
+226:   const [editModelId, setEditModelId] = useState<string>("");
+227:   const [sizingModels, setSizingModels] = useState<{ id: string; name: string; type?: string }[]>([]);
+228:   useEffect(() => {
+229:     if (!storeId) { setSizingModels([]); return; }
+230:     (supabase as any)
+231:       .from("sizing_models")
+232:       .select("id,name,type")
+233:       .eq("store_id", storeId)
+234:       .order("name", { ascending: true })
+235:       .then(({ data }: any) => setSizingModels(data || []));
+236:   }, [storeId]);
+237:   const [editStatus, setEditStatus] = useState<string>("active");
+238:   const [editStoryTitle, setEditStoryTitle] = useState<string>("");
+239:   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
+240: 
+241:   // Inputs
+242:   const fileInputRef = useRef<HTMLInputElement>(null);
+243:   const editVideoFileRef = useRef<HTMLInputElement>(null);
+244:   const editThumbFileRef = useRef<HTMLInputElement>(null);
+245:   const [isUploading, setIsUploading] = useState<boolean>(false);
+246:   const [tiktokOpen, setTiktokOpen] = useState<boolean>(false);
+247:   const [instagramOpen, setInstagramOpen] = useState<boolean>(false);
+248:   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+249:   const [bulkDeleteOpen, setBulkDeleteOpen] = useState<boolean>(false);
+250:   const [isBulkDeleting, setIsBulkDeleting] = useState<boolean>(false);
+251: 
+252:   // Resolver store_id
+253:   useEffect(() => {
+254:     if (initialStoreId) {
+255:       setStoreId(initialStoreId);
+256:       return;
+257:     }
+258: 
+259:     async function resolveStoreId() {
+260:       try {
+261:         const stored = localStorage.getItem("current_store_id") || localStorage.getItem("store_id");
+262:         if (stored) {
+263:           setStoreId(stored);
+264:           return;
+265:         }
+266: 
+267:         const { data: stores } = await supabase.from("stores").select("id").limit(1);
+268:         if (stores && stores.length > 0) {
+269:           setStoreId(stores[0].id);
+270:         } else {
+271:           setLoading(false);
+272:         }
+273:       } catch (e) {
+274:         console.warn("[BibliotecaTab] Falha ao resolver storeId:", e);
+275:         setLoading(false);
+276:       }
+277:     }
+278: 
+279:     resolveStoreId();
+280:   }, [initialStoreId]);
+281: 
+282:   // Carregar produtos da loja
+283:   useEffect(() => {
+284:     async function fetchProducts() {
+285:       if (!storeId) return;
+286:       try {
+287:         const { data } = await supabase
+288:           .from("products")
+289:           .select("*")
+290:           .eq("store_id", storeId)
+291:           .limit(100);
+292: 
+293:         if (data) setProducts(data);
+294:       } catch {
+295:         // silencioso
+296:       }
+297:     }
+298:     fetchProducts();
+299:   }, [storeId]);
+300: 
+301:   // Carregar Mídias
+302:   const fetchVideos = async () => {
+303:     setLoading(true);
+304:     setErrorMsg(null);
+305: 
+306:     try {
+307:       let query = vidlyticsDb.from("vid_videos").select("*");
+308:       if (storeId) {
+309:         query = query.eq("store_id", storeId);
+310:       }
+311: 
+312:       const { data, error } = await query.order("created_at", { ascending: false });
+313: 
+314:       if (error) {
+315:         console.error("[BibliotecaTab] Erro ao buscar vídeos:", error);
+316:         setErrorMsg(error.message);
+317:       } else {
+318:         setVideos(data || []);
+319:       }
+320:     } catch (err: any) {
+321:       console.error("[BibliotecaTab] Catch fetchVideos:", err);
+322:       setErrorMsg(err.message || "Falha ao carregar mídias.");
+323:     } finally {
+324:       setLoading(false);
+325:     }
+326:   };
+327: 
+328:   useEffect(() => {
+329:     if (storeId) {
+330:       fetchVideos();
+331:     }
+332:   }, [storeId]);
+333: 
+334:   // Helpers
+335:   const formatFileSize = (bytes?: number) => {
+336:     if (!bytes || bytes === 0) return "—";
+337:     if (bytes < 1024 * 1024) {
+338:       return `${(bytes / 1024).toFixed(1)} KB`;
+339:     }
+340:     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+341:   };
+342: 
+343:   const isImageFile = (url?: string) => {
+344:     if (!url) return false;
+345:     return !!url.match(/\.(jpeg|jpg|gif|png|webp)($|\?)/i);
+346:   };
+347: 
+348:   const totalBytesUsed = useMemo(() => {
+349:     return videos.reduce((acc, item) => acc + (Number(item.file_size_bytes) || 0), 0);
+350:   }, [videos]);
+
+=== src\services\sizingModelsService.ts (ate 350 linhas) ===
+1: import { supabase } from '@/lib/supabase';
+2: 
+3: const sb: any = supabase;
+4: 
+5: export type ModelType = 'humano' | 'objeto';
+6: export interface ModelMeasure { name: string; value: number | string; unit: 'cm' | 'g' | '' }
+7: export interface MeasureModel {
+8:   id: string;
+9:   store_id: string;
+10:   name: string;
+11:   title?: string | null;
+12:   type: ModelType;
+13:   measures: ModelMeasure[];
+14:   created_at: string | null;
+15:   updated_at: string | null;
+16: }
+17: export interface ModelInput {
+18:   id?: string;
+19:   store_id: string;
+20:   name: string;
+21:   title?: string | null;
+22:   type: ModelType;
+23:   measures: ModelMeasure[];
+24: }
+25: 
+26: function normalize(r: any): MeasureModel {
+27:   const measures: ModelMeasure[] = Array.isArray(r.measures) ? r.measures : [];
+28:   const inferred: ModelType = measures.some((m) => ['largura', 'comprimento'].includes(String(m?.name || '').toLowerCase()))
+29:     ? 'objeto'
+30:     : 'humano';
+31:   return {
+32:     id: r.id,
+33:     store_id: r.store_id,
+34:     name: r.name || '',
+35:     title: r.title || '',
+36:     type: r.type === 'objeto' || r.type === 'humano' ? r.type : inferred,
+37:     measures,
+38:     created_at: r.created_at ?? null,
+39:     updated_at: r.updated_at ?? null,
+40:   };
+41: }
+42: 
+43: export async function listModels(storeId: string): Promise<MeasureModel[]> {
+44:   const { data, error } = await sb
+45:     .from('sizing_models')
+46:     .select('*')
+47:     .eq('store_id', storeId)
+48:     .order('created_at', { ascending: false });
+49:   if (error) throw new Error(error.message);
+50:   return (data || []).map(normalize);
+51: }
+52: 
+53: export async function saveModel(input: ModelInput): Promise<void> {
+54:   const now = new Date().toISOString();
+55:   const row = { store_id: input.store_id, name: input.name, title: (input.title || '').trim() || null, type: input.type, measures: input.measures, updated_at: now };
+56:   if (input.id) {
+57:     const { error } = await sb.from('sizing_models').update(row).eq('id', input.id).eq('store_id', input.store_id);
+58:     if (error) throw new Error(error.message);
+59:     return;
+60:   }
+61:   const { error } = await sb.from('sizing_models').insert({ ...row, id: crypto.randomUUID(), created_at: now });
+62:   if (error) throw new Error(error.message);
+63: }
+64: 
+65: export async function deleteModel(id: string, storeId: string): Promise<void> {
+66:   const { error } = await sb.from('sizing_models').delete().eq('id', id).eq('store_id', storeId);
+67:   if (error) throw new Error(error.message);
+68: }
+
