@@ -20,6 +20,7 @@ interface RequestBody {
   module_key?: string | null;
   coupon_code?: string | null;
   dynamic_plan_id?: string | null;
+  addon_ids?: string[] | null;
 }
 
 const CYCLE_MAP: Record<string, string> = {
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
     }
 
     const body: RequestBody = await req.json();
-    const { store_id, plan_id, billing_cycle, module_key, coupon_code, dynamic_plan_id } = body;
+    const { store_id, plan_id, billing_cycle, module_key, coupon_code, dynamic_plan_id, addon_ids } = body;
 
     if (!store_id || (!plan_id && !dynamic_plan_id) || !billing_cycle) {
       return jsonResponse({ error: "CAMPOS_OBRIGATORIOS_FALTANTES" }, 400);
@@ -180,7 +181,7 @@ Deno.serve(async (req) => {
       reservedCouponId = v.coupon_id;
     }
 
-    const value = (priceCents - discountCents) / 100;
+    let value = (priceCents - discountCents) / 100;
     const asaasCycle = CYCLE_MAP[billing_cycle] ?? "MONTHLY";
 
     // 4.5 Resolve o módulo pelo plano (não confia no cliente) e bloqueia duplicidade
@@ -227,6 +228,31 @@ Deno.serve(async (req) => {
         await release();
         return jsonResponse({ error: "MODULE_ALREADY_SUBSCRIBED", module_key: dupSub.module_key, status: dupSub.status }, 409);
       }
+    }
+
+    // 4.55 Add-ons escolhidos no checkout (preco validado no servidor)
+    const addonIds = Array.from(new Set((addon_ids ?? []).filter((x) => typeof x === "string")));
+    if (addonIds.length > 0) {
+      if (!dyn) {
+        await release();
+        return jsonResponse({ error: "ADDON_INDISPONIVEL" }, 400);
+      }
+      const { data: ads } = await supabaseAdmin
+        .from("addons")
+        .select("id, price_monthly, scope, upsell_module_target")
+        .in("id", addonIds)
+        .eq("is_active", true)
+        .eq("is_upsell", true);
+      const okAds = (ads ?? []).filter((a: any) =>
+        (a.scope === "global" || blockKeys.includes(a.scope)) &&
+        (a.upsell_module_target === "all" || blockKeys.includes(a.upsell_module_target)));
+      if (okAds.length !== addonIds.length) {
+        await release();
+        return jsonResponse({ error: "ADDON_INDISPONIVEL" }, 400);
+      }
+      const addonMonths = billing_cycle === "SEMIANNUAL" ? 6 : billing_cycle === "YEARLY" ? 12 : 1;
+      const addonCents = okAds.reduce((s: number, a: any) => s + Math.round(Number(a.price_monthly) * 100 * addonMonths), 0);
+      value = (priceCents - discountCents + addonCents) / 100;
     }
 
     // 4.6 Trial de 7 dias por modulo (1x por loja/modulo, so para quem ja tem plano pago)
@@ -396,6 +422,7 @@ Deno.serve(async (req) => {
         coupon_id: reservedCouponId,
         coupon_discount_cents: discountCents > 0 ? discountCents : null,
         is_current: true,
+        pending_addon_ids: addonIds.length > 0 ? addonIds : null,
       })
       .select()
       .single();

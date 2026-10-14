@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { getPlansShowcase, getPriceForCycle, subscribeToPlan, subscribeToDynamicPlan, type Plan, type PlanPrice } from '@/services/plans/getPlansShowcase';
+import OrderBumpCard, { bumpTotal, useUpsells } from '@/components/checkout/OrderBumpCard';
 
 type Cycle = 'monthly' | 'semiannual' | 'yearly';
 type Person = 'pf' | 'pj';
@@ -21,6 +22,7 @@ const ERR: Record<string, string> = {
   TRIAL_ACTIVE: 'Seu teste deste módulo já está ativo.',
   DB_ERROR: 'Não foi possível registrar a assinatura. Tente novamente.',
   CUPOM_INVALIDO: 'Cupom inválido ou esgotado.',
+  ADDON_INDISPONIVEL: 'Um dos add-ons não está mais disponível. Desmarque e tente novamente.',
   CUPOM_VALOR_MINIMO: 'O valor final ficaria abaixo do mínimo de R$ 5,00.',
   DADOS_FISCAIS_OBRIGATORIOS: 'Preencha os dados de faturamento.',
   ASAAS_CUSTOMER_ERROR: 'O Asaas recusou os dados. Confira CPF/CNPJ, CEP e telefone.',
@@ -125,6 +127,9 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false);
   const [dynamic, setDynamic] = useState(false);
   const [trialEligible, setTrialEligible] = useState(false);
+  const [bump, setBump] = useState<Set<string>>(
+    () => new Set((params.get('addons') ?? '').split(',').filter((x) => UUID_RE.test(x))),
+  );
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
 
@@ -175,7 +180,12 @@ export default function Checkout() {
     const d = applied.type === 'percentage' ? Math.round((priceCents * applied.value) / 100) : applied.value;
     return Math.min(Math.max(d, 0), priceCents);
   }, [applied, priceCents]);
-  const finalCents = priceCents - discountCents;
+  const modsParam = params.get('mods') ?? '';
+  const bumpModules = plan ? (plan.modules.length ? plan.modules : modsParam.split(',').filter(Boolean)) : [];
+  const upsells = useUpsells(bumpModules);
+  const bumpIds = upsells.filter((a) => bump.has(a.id)).map((a) => a.id);
+  const bumpCents = Math.round(bumpTotal(upsells, new Set(bumpIds), cycle) * 100);
+  const finalCents = priceCents - discountCents + bumpCents;
 
   async function applyCoupon() {
     const code = couponInput.trim();
@@ -240,7 +250,7 @@ export default function Checkout() {
     if (upErr) { setSubmitting(false); toast.error('Não foi possível salvar os dados: ' + upErr.message); return; }
 
     const result = dynamic
-      ? await subscribeToDynamicPlan({ storeId, dynamicPlanId: plan.id, billingCycle: cycle, couponCode: applied?.code ?? null })
+      ? await subscribeToDynamicPlan({ storeId, dynamicPlanId: plan.id, billingCycle: cycle, couponCode: applied?.code ?? null, addonIds: bumpIds })
       : await subscribeToPlan({ storeId, planId: plan.id, billingCycle: cycle, moduleKey, couponCode: applied?.code ?? null });
     if (result.error) {
       setSubmitting(false);
@@ -348,6 +358,9 @@ export default function Checkout() {
               {discountCents > 0 && (
                 <div className="flex justify-between text-sm text-emerald-600"><span>Cupom {applied?.code}</span><span>- {brl(discountCents)}</span></div>
               )}
+              {bumpCents > 0 && (
+                <div className="flex justify-between text-sm"><span className="text-slate-600">Add-ons ({bumpIds.length})</span><span>{brl(bumpCents)}</span></div>
+              )}
               <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-black text-slate-900"><span>Total</span><span>{brl(finalCents)}</span></div>
               {trialEligible && (
                 <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
@@ -369,6 +382,10 @@ export default function Checkout() {
               {applied && <p className="flex items-center gap-1 text-xs text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5" /> Cupom aplicado.</p>}
               {couponMsg && <p className="text-xs text-rose-500">{couponMsg}</p>}
             </div>
+
+            {dynamic && upsells.length > 0 && (
+              <OrderBumpCard modules={bumpModules} cycle={cycle} selected={bump} onChange={setBump} />
+            )}
 
             <button type="button" disabled={submitting} onClick={submit}
               className="w-full rounded-2xl bg-[#0091ff] py-3 text-sm font-black text-white hover:bg-[#0080e0] disabled:opacity-60">

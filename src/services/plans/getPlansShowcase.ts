@@ -132,6 +132,7 @@ export async function subscribeToDynamicPlan(params: {
   dynamicPlanId: string;
   billingCycle: "monthly" | "semiannual" | "yearly";
   couponCode?: string | null;
+  addonIds?: string[];
 }): Promise<{ invoiceUrl?: string; error?: string; trial?: boolean }> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
@@ -140,6 +141,7 @@ export async function subscribeToDynamicPlan(params: {
   const { data, error } = await supabase.functions.invoke("asaas-create-subscription", {
     body: {
       dynamic_plan_id: params.dynamicPlanId,
+      addon_ids: params.addonIds ?? [],
       store_id: params.storeId,
       billing_cycle: params.billingCycle.toUpperCase(),
       coupon_code: params.couponCode ?? null,
