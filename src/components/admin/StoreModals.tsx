@@ -1,3 +1,4 @@
+import { resetStorePassword, type ResetResult } from '@/services/admin/storesService';
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Loader2, Mail, MessageCircle, X } from 'lucide-react';
@@ -94,12 +95,77 @@ function WhatsAppModal({ phone, message, onClose, onSend }: {
   );
 }
 
+function ResetPasswordModal({ storeId, storeName, contactName, whatsapp, onClose, onLogged }: {
+  storeId: string; storeName: string; contactName?: string | null; whatsapp?: string | null; onClose: () => void; onLogged?: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [res, setRes] = useState<ResetResult | null>(null);
+  const first = (contactName || '').trim().split(/\s+/)[0];
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      const r = await resetStorePassword(storeId);
+      setRes(r);
+      await logCommunication({ storeId, channel: 'email', recipient: r.email, subject: 'Redefinição de senha', message: 'Link de redefinição de senha enviado ao lojista.', status: r.email_sent ? 'sent' : 'failed', error: r.email_error || null }).catch(() => {});
+      onLogged?.();
+      if (r.email_sent) toast.success(`E-mail enviado para ${r.email}.`);
+      else toast.error(r.email_error || 'O e-mail não foi enviado. Use o WhatsApp.');
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro ao gerar o link.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sendWa = () => {
+    if (!res) return;
+    let n = digits(whatsapp || '');
+    if (n.length >= 10 && (n.length <= 11 || !n.startsWith('55'))) n = `55${n}`;
+    const msg = `Olá${first ? ` ${first}` : ''}, aqui é da equipe do SLL Hub. Use este link para criar uma nova senha de acesso (expira em pouco tempo): ${res.link}`;
+    window.open(`https://wa.me/${n}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+    logCommunication({ storeId, channel: 'whatsapp', recipient: n || 'sem número', message: 'Link de redefinição de senha enviado ao lojista.', status: 'opened' })
+      .then(() => onLogged?.()).catch(() => {});
+  };
+
+  return (
+    <Modal title={`Resetar senha de ${storeName}`} onClose={onClose}>
+      {!res ? (
+        <>
+          <p className="text-xs leading-relaxed text-slate-400">
+            Gera um link seguro de redefinição, de uso único e com validade curta, e envia por e-mail ao login do dono da loja.
+            Depois você pode enviar o mesmo link pelo WhatsApp. A senha atual não é alterada até o lojista criar a nova.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={onClose} className={GHOST}>Cancelar</button>
+            <button type="button" disabled={busy} onClick={run} className={PRIMARY}><Spin on={busy} /> Gerar e enviar por e-mail</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className={`rounded-lg px-3 py-2 text-xs font-semibold ${res.email_sent ? 'bg-emerald-500/10 text-emerald-300' : 'bg-rose-500/10 text-rose-300'}`}>
+            {res.email_sent ? `E-mail enviado para ${res.email}.` : (res.email_error || 'O e-mail não foi enviado.')}
+          </p>
+          <p className="text-xs text-slate-400">
+            {whatsapp ? 'Quer mandar também pelo WhatsApp? O WhatsApp abre com a mensagem pronta e você confirma o envio.' : 'Esta loja não tem WhatsApp cadastrado. Você pode escolher o contato na própria tela do WhatsApp.'}
+          </p>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={onClose} className={GHOST}>Fechar</button>
+            <button type="button" onClick={sendWa} className={PRIMARY}>Enviar link no WhatsApp</button>
+          </div>
+        </>
+      )}
+    </Modal>
+  );
+}
+
 export function ContactActions({ storeId, storeName, contactName, whatsapp, email, variant = 'icons', onLogged }: {
   storeId: string; storeName?: string | null; contactName?: string | null; whatsapp?: string | null; email?: string | null;
   variant?: 'icons' | 'buttons'; onLogged?: () => void;
 }) {
   const [mail, setMail] = useState(false);
   const [wa, setWa] = useState(false);
+  const [rp, setRp] = useState(false);
   const [busy, setBusy] = useState(false);
   const name = storeName || 'sua loja';
   const first = (contactName || '').trim().split(/\s+/)[0];
@@ -138,6 +204,7 @@ export function ContactActions({ storeId, storeName, contactName, whatsapp, emai
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => setWa(true)} className={`${BTN} flex items-center gap-2 bg-emerald-600 text-white`}><MessageCircle size={14} /> Enviar WhatsApp</button>
           <button type="button" onClick={() => setMail(true)} className={PRIMARY}><Mail size={14} /> Enviar E-mail</button>
+          <button type="button" onClick={() => setRp(true)} className={`${BTN} flex items-center gap-2 bg-white/10 text-slate-100 hover:bg-white/20`}>Resetar senha</button>
         </div>
       ) : (
         <div className="flex items-center gap-1">
@@ -150,6 +217,7 @@ export function ContactActions({ storeId, storeName, contactName, whatsapp, emai
         </div>
       )}
       {mail && <EmailModal to={email || ''} storeName={name} busy={busy} onClose={() => setMail(false)} onSend={sendMail} />}
+      {rp && <ResetPasswordModal storeId={storeId} storeName={name} contactName={contactName} whatsapp={whatsapp} onClose={() => setRp(false)} onLogged={onLogged} />}
       {wa && <WhatsAppModal phone={whatsapp || ''} message={defaultMsg} onClose={() => setWa(false)} onSend={sendWa} />}
     </>
   );

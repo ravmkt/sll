@@ -41,6 +41,7 @@ const Planos = lazy(() => import('./pages/planos/Planos'));
 const Checkout = lazy(() => import('./pages/checkout/CheckoutPage'));
 const PlanosGatePage = lazy(() => import('./pages/planos/PlanosGatePage'));
 const IntegrationPage = lazy(() => import('./pages/integracao/IntegrationPage'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
 const DicasNoah = lazy(() => import('./pages/dicas/DicasNoah'));
 const InstagramCallback = lazy(() => import('./pages/auth/InstagramCallback'));
@@ -277,6 +278,7 @@ function AppRoutes() {
         <Route path="/billing/plans" element={<Navigate to="/dashboard/planos" replace />} />
         <Route path="/billing/success" element={user ? <BillingSuccess /> : <Navigate to="/auth" replace />} />
         <Route path="/checkout/:id" element={user ? <CheckoutIdRedirect /> : <Navigate to="/auth" replace />} />
+        <Route path="/redefinir-senha" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes></>
     </Suspense>

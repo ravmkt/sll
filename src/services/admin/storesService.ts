@@ -218,3 +218,16 @@ export async function getStoreCommunications(storeId: string): Promise<CommData>
   const d = (data || {}) as Partial<CommData>;
   return { email_count: d.email_count ?? 0, whatsapp_count: d.whatsapp_count ?? 0, list: d.list ?? [] };
 }
+
+export type ResetResult = { email: string; link: string; email_sent: boolean; email_error?: string };
+
+export async function resetStorePassword(storeId: string): Promise<ResetResult> {
+  const { data, error } = await client.functions.invoke('admin-reset-store-password', { body: { store_id: storeId } });
+  if (error) {
+    let msg: string = error.message || 'Erro ao gerar o link.';
+    try { const b = await error.context.json(); msg = b?.error || msg; } catch { /* mantém a mensagem padrão */ }
+    throw new Error(msg);
+  }
+  if (data?.error) throw new Error(String(data.error));
+  return data as ResetResult;
+}
