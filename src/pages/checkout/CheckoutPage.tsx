@@ -167,7 +167,18 @@ export default function CheckoutPage() {
     const code = coupon.trim();
     if (!code || !plan) return;
     const { data, error } = await sb.rpc('validate_coupon', { p_code: code, p_plan_id: plan.id });
-    if (error || !data?.valid) { setApplied(null); toast.error(MSG.CUPOM_INVALIDO); return; }
+    if (error || !data?.valid) {
+      setApplied(null);
+      const R: Record<string, string> = {
+        not_found: 'Cupom não encontrado.',
+        expired: 'Este cupom expirou.',
+        exhausted: 'Este cupom esgotou.',
+        not_started: 'Este cupom ainda não está valendo.',
+        plan_not_allowed: 'Este cupom não vale para este plano.',
+      };
+      toast.error(error ? 'Erro ao validar o cupom: ' + (error as any).message : (R[(data as any)?.reason] ?? MSG.CUPOM_INVALIDO));
+      return;
+    }
     setApplied({ code, type: data.type, value: Number(data.value) });
     toast.success('Cupom aplicado.');
   };
