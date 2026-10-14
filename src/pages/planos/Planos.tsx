@@ -50,12 +50,14 @@ export default function Planos() {
   const [preAddons, setPreAddons] = useState<string[]>([]);
   const [openCombo, setOpenCombo] = useState<CatalogCombo | null>(null);
   const [comboHl, setComboHl] = useState<Record<string, string[]>>({});
+  const [comboSum, setComboSum] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!combos.length) return;
     let alive = true;
-    sb.from("dynamic_plans").select("id,modal_highlights").in("id", combos.map((c) => c.id)).then(({ data, error }: any) => {
+    sb.from("dynamic_plans").select("id,modal_highlights,combo_summary").in("id", combos.map((c) => c.id)).then(({ data, error }: any) => {
       if (!alive || error || !data) return;
+      setComboSum(Object.fromEntries((data as any[]).map((r) => [r.id, String(r.combo_summary ?? "").trim()])));
       setComboHl(Object.fromEntries((data as any[]).map((r) => [r.id, Array.isArray(r.modal_highlights) ? r.modal_highlights.map(String).filter(Boolean) : []])));
     });
     return () => { alive = false; };
@@ -253,6 +255,7 @@ export default function Planos() {
             combo={openCombo}
             initialCycle={cycle}
             highlights={comboHl[openCombo.id] ?? []}
+            summary={comboSum[openCombo.id] ?? ""}
             onClose={() => setOpenCombo(null)}
           />
         )}

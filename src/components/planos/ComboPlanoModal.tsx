@@ -18,8 +18,8 @@ const CYCLES: { key: PlanCycle; label: string; note: string }[] = [
 ];
 
 export default function ComboPlanoModal({
-  combo, initialCycle, highlights, onClose,
-}: { combo: CatalogCombo; initialCycle: PlanCycle; highlights: string[]; onClose: () => void }) {
+  combo, initialCycle, highlights, summary = "", onClose,
+}: { combo: CatalogCombo; initialCycle: PlanCycle; highlights: string[]; summary?: string; onClose: () => void }) {
   const navigate = useNavigate();
   const { storeId } = useLoja();
   const [cycle, setCycle] = useState<PlanCycle>(initialCycle);
@@ -63,19 +63,10 @@ export default function ComboPlanoModal({
           <X className="h-5 w-5" />
         </button>
 
-        <div className="space-y-6 bg-slate-50 p-6 md:max-h-[94vh] md:overflow-y-auto">
-          <div className="flex items-center gap-3">
-            <div className="flex gap-2">
-              {combo.modules.map((m) =>
-                m.logo_url ? (
-                  <img key={m.slug} src={m.logo_url} alt={m.name} className="h-12 w-12 rounded-xl object-contain" />
-                ) : (
-                  <span key={m.slug} className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0091ff]/10 text-lg font-black text-[#0091ff]">{m.name.charAt(0).toUpperCase()}</span>
-                )
-              )}
-            </div>
-            <h3 className="text-2xl font-black text-slate-900">{combo.plan_name}</h3>
-          </div>
+        <div className="flex flex-col gap-6 bg-slate-50 p-6 md:max-h-[94vh] md:min-h-[560px] md:overflow-y-auto">
+          <h3 className="text-left text-2xl font-black text-slate-900">{combo.plan_name}</h3>
+
+          {summary && <p className="max-w-3xl text-sm leading-relaxed text-slate-600">{summary}</p>}
 
           <div>
             <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-slate-500">O que está incluso</p>
@@ -88,8 +79,24 @@ export default function ComboPlanoModal({
             </ul>
           </div>
 
+          <div>
+            <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-slate-500">Aplicativos incluídos</p>
+            <div className="flex flex-wrap gap-4">
+              {combo.modules.map((m) => (
+                <div key={m.slug} className="flex w-20 flex-col items-center gap-1.5 text-center">
+                  {m.logo_url ? (
+                    <img src={m.logo_url} alt={m.name} className="h-16 w-16 rounded-2xl bg-white object-contain p-1.5 shadow-sm" />
+                  ) : (
+                    <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0091ff]/10 text-xl font-black text-[#0091ff]">{m.name.charAt(0).toUpperCase()}</span>
+                  )}
+                  <span className="text-[11px] font-bold leading-tight text-slate-700">{m.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {items.length > 0 && (
-            <div>
+            <div className="mt-auto">
               <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-slate-500">Turbine com add-ons (opcional)</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 {items.map((a) => {
