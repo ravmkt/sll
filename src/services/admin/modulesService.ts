@@ -88,3 +88,8 @@ export async function createHubModule(slug: string, name: string, status: string
   if (error) throw new Error(error.message);
   return data as string;
 }
+
+export async function reorderHubModules(slugs: string[]): Promise<void> {
+  const { error } = await sb.rpc('admin_reorder_hub_modules', { p_slugs: slugs });
+  if (error) throw new Error(error.message);
+}

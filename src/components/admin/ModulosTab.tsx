@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ChevronRight, Loader2, Plus } from 'lucide-react';
-import { getModulesOverview, type ModulesData } from '@/services/admin/modulesService';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronRight, GripVertical, Loader2, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { getModulesOverview, reorderHubModules, type ModulesData } from '@/services/admin/modulesService';
 import ModuloDetalhe from '@/components/admin/ModuloDetalhe';
 import NovoModuloModal from '@/components/admin/NovoModuloModal';
 import { CARD, SELECT, STATUS_LABEL, ModuleLogo, brl, int } from '@/components/admin/moduleUi';
@@ -14,6 +15,9 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [dragSlug, setDragSlug] = useState<string | null>(null);
+  const [overSlug, setOverSlug] = useState<string | null>(null);
+  const blocked = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -36,12 +40,44 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
     );
   }
 
+  // ativos sempre na frente; dentro do grupo vale a posição salva
+  const list = data
+    ? [...data.modules].sort(
+        (a, b) => (a.status === 'active' ? 0 : 1) - (b.status === 'active' ? 0 : 1) || (a.sort_order ?? 999) - (b.sort_order ?? 999),
+      )
+    : [];
+
+  const dropOn = async (target: (typeof list)[number]) => {
+    const src = list.find((x) => x.slug === dragSlug);
+    setOverSlug(null);
+    if (!src || !data || src.slug === target.slug) return;
+    if ((src.status === 'active') !== (target.status === 'active')) return;
+
+    const active = list.filter((x) => x.status === 'active');
+    const rest = list.filter((x) => x.status !== 'active');
+    const grp = src.status === 'active' ? active : rest;
+    const from = grp.findIndex((x) => x.slug === src.slug);
+    const to = grp.findIndex((x) => x.slug === target.slug);
+    const [moved] = grp.splice(from, 1);
+    grp.splice(to, 0, moved);
+
+    const next = [...active, ...rest].map((x, i) => ({ ...x, sort_order: i + 1 }));
+    setData({ ...data, modules: next });
+    try {
+      await reorderHubModules(next.map((x) => x.slug));
+      toast.success('Ordem da vitrine atualizada.');
+    } catch (e: any) {
+      toast.error(e?.message || 'Não foi possível salvar a ordem.');
+      load();
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
         <div>
           <h1 className="text-xl font-black text-white">Módulos</h1>
-          <p className="text-xs text-slate-500">Clique em um módulo para ver os detalhes e editar.</p>
+          <p className="text-xs text-slate-500">Clique para editar. Arraste as linhas para mudar a ordem da vitrine; módulos ativos ficam sempre na frente.</p>
         </div>
         <div className="flex items-center gap-2">
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
@@ -94,9 +130,49 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {data.modules.map((m) => (
-                  <tr key={m.slug} onClick={() => setSelected(m.slug)} className="cursor-pointer transition-colors hover:bg-white/5">
-                    <td className="px-3 py-3 font-bold text-slate-400">{m.sort_order}</td>
+                {list.map((m, idx) => {
+                  const isActive = m.status === 'active';
+                  const src = list.find((x) => x.slug === dragSlug);
+                  const valid = !!src && src.slug !== m.slug && (src.status === 'active') === isActive;
+                  return (
+                  <tr
+                    key={m.slug}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.effectAllowed = 'move';
+                      e.dataTransfer.setData('text/plain', m.slug);
+                      blocked.current = false;
+                      setDragSlug(m.slug);
+                    }}
+                    onDragOver={(e) => {
+                      if (!src) return;
+                      if ((src.status === 'active') === isActive) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        blocked.current = false;
+                        if (overSlug !== m.slug) setOverSlug(m.slug);
+                      } else {
+                        e.dataTransfer.dropEffect = 'none';
+                        blocked.current = true;
+                        if (overSlug) setOverSlug(null);
+                      }
+                    }}
+                    onDrop={(e) => { e.preventDefault(); dropOn(m); }}
+                    onDragEnd={() => {
+                      if (blocked.current) toast.info('Módulos ativos ficam sempre na frente dos demais.');
+                      blocked.current = false;
+                      setDragSlug(null);
+                      setOverSlug(null);
+                    }}
+                    onClick={() => setSelected(m.slug)}
+                    className={`cursor-pointer transition-colors hover:bg-white/5 ${dragSlug === m.slug ? 'opacity-40' : ''} ${valid && overSlug === m.slug ? 'bg-[#fd8539]/10 shadow-[inset_0_2px_0_#fd8539]' : ''}`}
+                  >
+                    <td className="px-3 py-3 font-bold text-slate-400">
+                      <div className="flex cursor-grab items-center gap-1.5 active:cursor-grabbing">
+                        <GripVertical size={14} className="text-slate-600" />
+                        {idx + 1}
+                      </div>
+                    </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-3">
                         <ModuleLogo url={m.logo_url} name={m.name} size={36} />
@@ -122,7 +198,8 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
                     <td className="px-3 py-3 text-right text-slate-300">{m.views === null ? '—' : int(m.views)}</td>
                     <td className="px-3 py-3 text-right text-slate-500"><ChevronRight size={16} /></td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
