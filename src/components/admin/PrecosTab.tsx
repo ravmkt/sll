@@ -9,6 +9,7 @@ import { createDynamicPlan, deleteDynamicPlan, getPlanSubscribers } from '@/serv
 import { listModules } from '@/services/admin/adminService';
 import CouponsManager from '@/components/admin/CouponsManager';
 import ComboCreator from '@/components/admin/ComboCreator';
+import AddonsAdminTab from '@/components/admin/AddonsAdminTab';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import ComboModulesEditor from '@/components/admin/ComboModulesEditor';
 import ComboDiscountCard from '@/components/admin/ComboDiscountCard';
@@ -497,7 +498,9 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
 
       {sub === 'custos' && <InfraCostsCard onChanged={costs.reload} />}
 
-      {sub === 'addons' && (addons === null ? (
+      {sub === 'addons' && <AddonsAdminTab />}
+
+      {false && sub === 'addons' && (addons === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
       ) : (
         <div className={`${CARD} overflow-x-auto`}>

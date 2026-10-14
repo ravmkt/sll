@@ -151,6 +151,12 @@ Deno.serve(async (req: Request) => {
     });
     if (addonErr) console.error("Erro ao ativar add-on:", addonErr);
   }
+  if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && body?.payment?.subscription) {
+    const { error: pendErr } = await supabase.rpc("activate_pending_addons", {
+      p_asaas_subscription_id: body.payment.subscription,
+    });
+    if (pendErr) console.error("Erro ao ativar add-ons do checkout:", pendErr);
+  }
   try {
     await supabase.from("admin_audit_logs").insert({
       action: `asaas_webhook:${eventId ?? "no-id"}`,
