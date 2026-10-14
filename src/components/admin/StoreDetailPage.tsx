@@ -3,19 +3,18 @@ import { useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  addBenefit, cancelSubscription, changePlan, deleteStore, getStoreFull, listPlans, setSubscriptionStatus, updateStore,
+  addBenefit, cancelSubscription, deleteStore, getStoreFull, listPlans, setSubscriptionStatus, updateStore,
   type AdminStoreFull, type PlanOption, type StoreStatus,
 } from '@/services/admin/storesService';
-import { Badge, CARD, ContactButtons, DeleteStoreModal, ICON, INPUT, brl, dt, dtt, mb, modLabel } from '@/components/admin/storeUi';
+import { Badge, CARD, DeleteStoreModal, ICON, INPUT, dt, dtt, modLabel } from '@/components/admin/storeUi';
+import { ContactActions } from '@/components/admin/StoreModals';
+import { AssinaturasTab, FinanceiroTab, IndicacoesTab, ResumoTab } from '@/components/admin/storeTabs';
 
 const TABS = [
   ['resumo', 'Resumo'], ['assinaturas', 'Assinaturas'], ['financeiro', 'Financeiro'], ['indicacoes', 'Indicações'],
   ['beneficios', 'Benefícios'], ['dados', 'Dados'], ['log', 'Log'],
 ] as const;
 
-const SUB_LABEL: Record<string, string> = {
-  active: 'Ativa', trialing: 'Trial', past_due: 'Em atraso', canceled: 'Cancelada', lifetime: 'Vitalícia', incomplete: 'Incompleta',
-};
 const ACTION_LABEL: Record<string, string> = {
   store_updated: 'Dados da loja editados',
   store_deleted: 'Loja excluída',
@@ -54,6 +53,8 @@ function friendlyAudit(
       if (d.kind === 'coupon') return { title: 'Cupom registrado', text: `Cupom "${d.value}" registrado.${note}` };
       return { title: 'Benefício aplicado', text: note.trim() };
     }
+    case 'subscription_created':
+      return { title: 'Assinatura criada', text: 'Módulo adicionado manualmente pelo Master.' };
     case 'subscription_plan_changed':
       return { title: 'Plano alterado', text: `Plano trocado para ${planNames[String(d.plan_id)] || 'outro plano'}.` };
     case 'subscription_status_changed': {
@@ -78,15 +79,6 @@ const FIELDS: [string, string][] = [
 const TH = 'px-3 py-2 text-[10px] uppercase tracking-wider text-slate-500';
 const BTN = 'rounded-lg px-3 py-1.5 text-[11px] font-bold disabled:opacity-40';
 
-function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className={CARD}>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
-      <p className="mt-1 text-xl font-black text-white">{value}</p>
-      {hint && <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>}
-    </div>
-  );
-}
 
 export default function StoreDetailPage({ storeId }: { storeId: string }) {
   const [params, setParams] = useSearchParams();
@@ -99,7 +91,6 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
   const [showDel, setShowDel] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
   const [ben, setBen] = useState({ kind: 'trial_days', value: '', note: '' });
-  const [planSel, setPlanSel] = useState<Record<string, string>>({});
   const [logFilter, setLogFilter] = useState<'all' | 'painel' | 'evento'>('all');
   const [showCode, setShowCode] = useState(false);
 
@@ -196,11 +187,6 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
   }
 
   const s = data.store;
-  const ev30 = data.events_30d || {};
-  const views30 = ev30.video_view || 0;
-  const clicks30 = (ev30.product_click || 0) + (ev30.whatsapp_click || 0);
-  const storageLabel = s.storage_limit_bytes ? `${mb(s.storage_used_bytes)} de ${mb(s.storage_limit_bytes)}` : mb(s.storage_used_bytes);
-  const contactEmail = s.owner_contact_email || s.owner_email || s.contact_email;
 
   return (
     <div className="space-y-5">
@@ -219,7 +205,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <ContactButtons whatsapp={s.whatsapp} email={contactEmail} size={18} />
+          <ContactActions storeId={storeId} storeName={s.name} contactName={s.contact_name} whatsapp={s.whatsapp} email={s.contact_email || s.owner_contact_email} />
           <button type="button" onClick={() => setShowDel(true)} className={`${BTN} flex items-center gap-2 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25`}>
             <Trash2 size={14} /> Excluir
           </button>
@@ -239,168 +225,12 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
         ))}
       </div>
 
-      {aba === 'resumo' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <Kpi label="Pago ao SLL" value={brl(data.paid_cents)} hint={`${data.paid_count} fatura(s) paga(s)`} />
-            <Kpi label="Em aberto" value={brl(data.open_cents)} hint={s.past_due_since ? `Atraso desde ${dt(s.past_due_since)}` : 'Sem atraso'} />
-            <Kpi label="Views (30 dias)" value={views30.toLocaleString('pt-BR')} hint={`${(data.events_total.video_view || 0).toLocaleString('pt-BR')} no total`} />
-            <Kpi label="Cliques (30 dias)" value={clicks30.toLocaleString('pt-BR')} hint={views30 ? `CTR ${((clicks30 / views30) * 100).toFixed(1).replace('.', ',')}%` : 'Sem views'} />
-            <Kpi label="Vídeos" value={String(data.videos_count)} />
-            <Kpi label="Armazenamento" value={storageLabel} />
-            <Kpi label="Indicadas" value={String(data.referrals.made_count)} hint={`Comissão: ${data.referrals.commission_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`} />
-            <Kpi label="Trial até" value={dt(s.trial_ends_at)} />
-          </div>
-          <div className={CARD}>
-            <p className="mb-2 text-sm font-bold text-white">Eventos nos últimos 30 dias</p>
-            <p className="mb-3 text-[11px] text-slate-500">Último evento do widget: {dtt(data.last_event_at)}</p>
-            <div className="flex flex-wrap gap-2">
-              {Object.keys(ev30).length === 0 && <span className="text-xs text-slate-500">Nenhum evento no período.</span>}
-              {Object.entries(ev30).map(([k, v]) => (
-                <span key={k} className="rounded-md bg-white/5 px-2 py-1 text-[11px] text-slate-300">{k}: <strong>{v}</strong></span>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {aba === 'resumo' && <ResumoTab storeId={storeId} data={data} />}
 
-      {aba === 'assinaturas' && (() => {
-        const atuais = data.subscriptions.filter((x) => x.is_current);
-        const historico = data.subscriptions.filter((x) => !x.is_current);
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <p className="text-sm font-bold text-white">Assinaturas atuais ({atuais.length})</p>
-              <div className={`${CARD} overflow-x-auto p-0`}>
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-white/10">
-                      <th className={TH}>Módulo</th><th className={TH}>Plano</th><th className={TH}>Status</th>
-                      <th className={TH}>Ciclo</th><th className={TH}>Criada em</th><th className={TH}>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {atuais.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">Nenhuma assinatura atual.</td></tr>}
-                    {atuais.map((sub) => {
-                      const sel = planSel[sub.id] ?? '';
-                      return (
-                        <tr key={sub.id}>
-                          <td className="px-3 py-3 font-bold text-white">{sub.module_key ? modLabel(sub.module_key) : 'Combo'}</td>
-                          <td className="px-3 py-3">
-                            <p className="mb-1 text-slate-300">{sub.plan_name || '—'}</p>
-                            <div className="flex gap-2">
-                              <select value={sel} onChange={(e) => setPlanSel({ ...planSel, [sub.id]: e.target.value })} className={`${INPUT} !w-44`}>
-                                <option value="">Trocar para…</option>
-                                {plans.filter((p) => !p.module_key || !sub.module_key || p.module_key === sub.module_key).map((p) => (
-                                  <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                              </select>
-                              <button type="button" disabled={busy || !sel} onClick={() => run(() => changePlan(sub.id, sel), 'Plano alterado.')} className={`${BTN} bg-[#fd8539] text-white`}>Salvar</button>
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 text-slate-300">{SUB_LABEL[sub.status] || sub.status}</td>
-                          <td className="px-3 py-3 text-slate-400">{sub.billing_cycle || '—'}</td>
-                          <td className="px-3 py-3 text-slate-400">{dt(sub.created_at)}</td>
-                          <td className="px-3 py-3">
-                            <div className="flex flex-wrap gap-1.5">
-                              {sub.status !== 'canceled' && <button type="button" disabled={busy} onClick={() => changeStatus(sub.id, 'canceled', sub.has_asaas)} className={`${BTN} bg-amber-500/15 text-amber-300`}>Cancelar</button>}
-                              {sub.status !== 'active' && <button type="button" disabled={busy} onClick={() => changeStatus(sub.id, 'active', sub.has_asaas)} className={`${BTN} bg-emerald-500/15 text-emerald-300`}>Ativar</button>}
-                              {sub.status !== 'lifetime' && <button type="button" disabled={busy} onClick={() => changeStatus(sub.id, 'lifetime', sub.has_asaas)} className={`${BTN} bg-sky-500/15 text-sky-300`}>Vitalício</button>}
-                            </div>
-                            {sub.has_asaas && <p className="mt-1 text-[10px] text-amber-400">Cobrança ativa no Asaas</p>}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+      {aba === 'assinaturas' && <AssinaturasTab storeId={storeId} data={data} plans={plans} busy={busy} onStatus={changeStatus} reload={() => load()} />}
+      {aba === 'financeiro' && <FinanceiroTab storeId={storeId} />}
 
-            <div className="space-y-2">
-              <p className="text-sm font-bold text-slate-400">Histórico ({historico.length})</p>
-              <div className={`${CARD} overflow-x-auto p-0`}>
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-white/10">
-                      <th className={TH}>Módulo</th><th className={TH}>Plano</th><th className={TH}>Status</th>
-                      <th className={TH}>Ciclo</th><th className={TH}>Criada em</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {historico.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-500">Sem histórico.</td></tr>}
-                    {historico.map((sub) => (
-                      <tr key={sub.id} className="opacity-60">
-                        <td className="px-3 py-2 font-bold text-white">{sub.module_key ? modLabel(sub.module_key) : 'Combo'}</td>
-                        <td className="px-3 py-2 text-slate-300">{sub.plan_name || '—'}</td>
-                        <td className="px-3 py-2 text-slate-300">{SUB_LABEL[sub.status] || sub.status}</td>
-                        <td className="px-3 py-2 text-slate-400">{sub.billing_cycle || '—'}</td>
-                        <td className="px-3 py-2 text-slate-400">{dt(sub.created_at)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-      {aba === 'financeiro' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
-            <Kpi label="Total pago" value={brl(data.paid_cents)} />
-            <Kpi label="Em aberto" value={brl(data.open_cents)} />
-            <Kpi label="Faturas pagas" value={String(data.paid_count)} />
-          </div>
-          <div className={`${CARD} overflow-x-auto p-0`}>
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className={TH}>Criada</th><th className={TH}>Descrição</th><th className={TH}>Valor</th>
-                  <th className={TH}>Status</th><th className={TH}>Vencimento</th><th className={TH}>Pago em</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {data.invoices.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">Sem faturas.</td></tr>}
-                {data.invoices.map((i) => (
-                  <tr key={i.id}>
-                    <td className="px-3 py-2 text-slate-400">{dt(i.created_at)}</td>
-                    <td className="px-3 py-2 text-slate-300">{i.description || '—'}</td>
-                    <td className="px-3 py-2 font-bold text-white">{brl(i.amount_cents)}</td>
-                    <td className="px-3 py-2 text-slate-300">{i.status}</td>
-                    <td className="px-3 py-2 text-slate-400">{dt(i.due_date)}</td>
-                    <td className="px-3 py-2 text-slate-400">{dt(i.paid_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {aba === 'indicacoes' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
-            <Kpi label="Lojas indicadas" value={String(data.referrals.made_count)} />
-            <Kpi label="Comissão acumulada" value={data.referrals.commission_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} />
-            <Kpi label="Indicada por" value={s.referred_by_name || '—'} />
-          </div>
-          <div className={`${CARD} overflow-x-auto p-0`}>
-            <table className="w-full text-left text-xs">
-              <thead><tr className="border-b border-white/10"><th className={TH}>Loja indicada</th><th className={TH}>Cadastro</th></tr></thead>
-              <tbody className="divide-y divide-white/5">
-                {data.referrals.list.length === 0 && <tr><td colSpan={2} className="px-4 py-8 text-center text-slate-500">Nenhuma indicação.</td></tr>}
-                {data.referrals.list.map((r) => (
-                  <tr key={r.id}>
-                    <td className="px-3 py-2 font-bold text-white">{r.name || 'Sem nome'}</td>
-                    <td className="px-3 py-2 text-slate-400">{dt(r.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {aba === 'indicacoes' && <IndicacoesTab storeId={storeId} />}
 
       {aba === 'beneficios' && (
         <div className="space-y-4">
