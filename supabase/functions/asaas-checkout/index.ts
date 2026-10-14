@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
       asaas_subscription_id: sub.data.id,
       billing_provider: "asaas",
       is_current: true,
-      pending_addon_ids: addonIds.length ? addonIds : null,
+      pending_addon_ids: addonIds,
       coupon_id: couponId,
     }).select("id").single();
     if (dbErr || !saved) {
