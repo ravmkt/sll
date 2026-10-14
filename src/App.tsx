@@ -25,6 +25,8 @@ import AdminMasterPage from '@/pages/admin/AdminMasterPage';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const BillingSuccess = lazy(() => import('./pages/checkout/BillingSuccess'));
+const CheckoutIdRedirect = lazy(() => import('./pages/checkout/CheckoutIdRedirect'));
 const Metricas = lazy(() => import('./pages/Metricas'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Vidlytics = lazy(() => import('./pages/modules/Vidlytics'));
@@ -36,7 +38,7 @@ const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
 const SettingsPage = lazy(() => import('./pages/configuracoes/SettingsPage'));
 const Assinaturas = lazy(() => import('./pages/assinaturas/Assinaturas'));
 const Planos = lazy(() => import('./pages/planos/Planos'));
-const Checkout = lazy(() => import('./pages/checkout/Checkout'));
+const Checkout = lazy(() => import('./pages/checkout/CheckoutPage'));
 const PlanosGatePage = lazy(() => import('./pages/planos/PlanosGatePage'));
 const IntegrationPage = lazy(() => import('./pages/integracao/IntegrationPage'));
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
@@ -272,6 +274,9 @@ function AppRoutes() {
             )
           }
         />
+        <Route path="/billing/plans" element={<Navigate to="/dashboard/planos" replace />} />
+        <Route path="/billing/success" element={user ? <BillingSuccess /> : <Navigate to="/auth" replace />} />
+        <Route path="/checkout/:id" element={user ? <CheckoutIdRedirect /> : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes></>
     </Suspense>
