@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ModulosTab from '@/components/admin/ModulosTab';
 import PrecosTab from '@/components/admin/PrecosTab';
@@ -13,6 +13,12 @@ export default function AdminMasterPage() {
   const [, setParams] = useSearchParams();
   const [planModule, setPlanModule] = useState<string | null>(null);
   const [tab, setTab] = useState<MasterTab>(() => { const t = new URLSearchParams(window.location.search).get('tab') as MasterTab | null; return t && ['dashboard','lojas','modulos','precos','marketing','noah','insights'].includes(t) ? t : 'dashboard'; });
+  // Sempre abre a aba no topo da pagina
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [tab]);
 
   const goTab = (t: MasterTab) => { setTab(t); setParams({ tab: t }); };
 
