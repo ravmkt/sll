@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   addBenefit, cancelSubscription, deleteStore, getStoreFull, listPlans, setSubscriptionStatus, updateStore,
@@ -79,6 +79,31 @@ const FIELDS: [string, string][] = [
 const TH = 'px-3 py-2 text-[10px] uppercase tracking-wider text-slate-500';
 const BTN = 'rounded-lg px-3 py-1.5 text-[11px] font-bold disabled:opacity-40';
 
+
+function IdChip({ id }: { id: string }) {
+  const [ok, setOk] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(id);
+      setOk(true);
+      toast.success('ID da loja copiado.');
+      setTimeout(() => setOk(false), 1500);
+    } catch {
+      toast.error('Não foi possível copiar o ID.');
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title="Copiar ID da loja"
+      className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-mono text-[11px] text-slate-300 hover:bg-white/10"
+    >
+      <span>{id}</span>
+      {ok ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} className={ICON} />}
+    </button>
+  );
+}
 
 export default function StoreDetailPage({ storeId }: { storeId: string }) {
   const [params, setParams] = useSearchParams();
@@ -199,6 +224,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-black text-white">{s.name || 'Sem nome'}</h1>
             <Badge status={status} />
+            <IdChip id={storeId} />
           </div>
           <p className="mt-1 text-xs text-slate-500">
             {s.url || 'sem URL'} · criada em {dt(s.created_at)} · login: {s.owner_email || '—'} · último acesso: {dtt(s.last_sign_in_at)}
