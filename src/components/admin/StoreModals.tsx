@@ -9,6 +9,7 @@ const LBL = 'text-[10px] font-bold uppercase tracking-wider text-slate-500';
 const BTN = 'rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40';
 const PRIMARY = `${BTN} flex items-center gap-2 bg-[#fd8539] text-white`;
 const GHOST = `${BTN} text-slate-300 hover:bg-white/10`;
+const planTxt = (p: PlanOption) => `${p.name || 'Sem nome'}${p.is_active === false ? ' (inativo)' : ''}`;
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
@@ -110,8 +111,7 @@ export function ChangePlanModal({ sub, plans, busy, onClose, onConfirm }: {
 }) {
   const [sel, setSel] = useState('');
   const isCombo = !sub.module_key || sub.module_key === 'bundle';
-  const options = plans.filter((p) => p.is_active !== false && p.name !== sub.plan_name
-    && (isCombo ? p.is_combo : !p.is_combo && p.module_key === sub.module_key));
+  const options = plans.filter((p) => p.name !== sub.plan_name && (isCombo ? p.is_combo : !p.is_combo && p.module_key === sub.module_key));
   return (
     <Modal title="Alterar plano" onClose={onClose}>
       <p className="text-xs text-slate-400">
@@ -121,7 +121,7 @@ export function ChangePlanModal({ sub, plans, busy, onClose, onConfirm }: {
         <span className={LBL}>Novo plano</span>
         <select value={sel} onChange={(e) => setSel(e.target.value)} className={INPUT}>
           <option value="">Selecione…</option>
-          {options.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {options.map((p) => <option key={p.id} value={p.id}>{planTxt(p)}</option>)}
         </select>
       </label>
       {sub.has_asaas && <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">Há cobrança ativa no Asaas: a troca não altera o valor já cobrado lá.</p>}
@@ -143,7 +143,7 @@ export function NewSubscriptionModal({ plans, busy, onClose, onCreate }: {
   const [status, setStatus] = useState('active');
   const mods = useMemo(() => Array.from(new Set(plans.filter((p) => !p.is_combo && p.module_key).map((p) => p.module_key as string))), [plans]);
   const hasCombo = plans.some((p) => p.is_combo);
-  const options = plans.filter((p) => p.is_active !== false && (module === 'bundle' ? p.is_combo : !p.is_combo && p.module_key === module));
+  const options = plans.filter((p) => (module === 'bundle' ? p.is_combo : !p.is_combo && p.module_key === module));
   return (
     <Modal title="Nova assinatura / ativar módulo" onClose={onClose}>
       <label className="block space-y-1">
@@ -158,7 +158,7 @@ export function NewSubscriptionModal({ plans, busy, onClose, onCreate }: {
         <span className={LBL}>Plano</span>
         <select value={planId} onChange={(e) => setPlanId(e.target.value)} disabled={!module} className={INPUT}>
           <option value="">Selecione…</option>
-          {options.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {options.map((p) => <option key={p.id} value={p.id}>{planTxt(p)}</option>)}
         </select>
       </label>
       <div className="grid grid-cols-2 gap-3">

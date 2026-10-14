@@ -14,8 +14,10 @@ export default function AdminMasterPage() {
   const [planModule, setPlanModule] = useState<string | null>(null);
   const [tab, setTab] = useState<MasterTab>(() => { const t = new URLSearchParams(window.location.search).get('tab') as MasterTab | null; return t && ['dashboard','lojas','modulos','precos','marketing','noah','insights'].includes(t) ? t : 'dashboard'; });
 
+  const goTab = (t: MasterTab) => { setTab(t); setParams({ tab: t }); };
+
   return (
-    <MasterLayout tab={tab} onTab={setTab}>
+    <MasterLayout tab={tab} onTab={goTab}>
       {tab === 'dashboard' ? (
         <DashboardTab />
       ) : tab === 'lojas' ? (
