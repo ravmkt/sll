@@ -200,8 +200,15 @@ export default function DashboardTab() {
   useEffect(() => { listModules().then((m) => { if (m.length) setMods(m); }).catch(() => {}); }, []);
   useEffect(() => { getModulesDistribution().then(setModDist).catch(() => setModDist([])); }, []);
   useEffect(() => {
-    sb.rpc('admin_saas_health').then(({ data: h, error: e }: any) => { if (e) setHealthErr(e.message); else setHealth(h as Health); });
-  }, []);
+    if (!range.start || !range.end || range.start > range.end) return;
+    let alive = true;
+    sb.rpc('admin_saas_health', { p_start: range.start, p_end: range.end, p_module: module || null })
+      .then(({ data: h, error: e }: any) => {
+        if (!alive) return;
+        if (e) setHealthErr(e.message); else { setHealthErr(''); setHealth(h as Health); }
+      });
+    return () => { alive = false; };
+  }, [range.start, range.end, module]);
 
   useEffect(() => {
     if (!range.start || !range.end || range.start > range.end) return;
@@ -309,13 +316,13 @@ export default function DashboardTab() {
 
       {/* SAUDE DO NEGOCIO */}
       <section className="space-y-3">
-        <Title color="text-emerald-400">Saúde do negócio</Title>
+        <Title color="text-emerald-400">{`Saúde do negócio${module ? ` · ${mods.find((m) => m.slug === module)?.name || module}` : ''}`}</Title>
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
           <Metric bd={BD.health} label="Lojas ativas" value={s ? int(s.active) : '—'} hint={s ? `de ${int(s.total)} no total` : ''} icon={Store} tone="bg-emerald-500/15 text-emerald-400" />
           <Metric bd={BD.health} label="Mensalidade recorrente" value={health ? brl(health.mrr_cents) : '—'} hint={health ? `Inclui ${brl(health.addon_mrr_cents)} de add-ons` : ''} icon={TrendingUp} tone="bg-emerald-500/15 text-emerald-400" />
           <Metric bd={BD.health} label="Ticket médio" value={health ? brl(health.arpu_cents) : '—'} hint={health ? `Por loja pagante (${health.active_stores})` : ''} icon={Users} tone="bg-emerald-500/15 text-emerald-400" />
-          <Metric bd={BD.health} label="Conversão de trial" value={conv === null ? '—' : `${conv}%`} hint={health ? `${health.trial_converted} de ${health.trial_ended} trials (90 dias)` : ''} icon={Percent} tone="bg-emerald-500/15 text-emerald-400" />
-          <Metric bd={BD.health} label="Cancelamentos (30 dias)" value={health ? String(health.churn_30d) : '—'} hint="Lojas que cancelaram" icon={TrendingDown} tone="bg-emerald-500/15 text-emerald-400" />
+          <Metric bd={BD.health} label="Conversão de trial" value={conv === null ? '—' : `${conv}%`} hint={health ? `${health.trial_converted} de ${health.trial_ended} trials no período` : ''} icon={Percent} tone="bg-emerald-500/15 text-emerald-400" />
+          <Metric bd={BD.health} label="Cancelamentos no período" value={health ? String(health.churn_30d) : '—'} hint="Lojas que cancelaram" icon={TrendingDown} tone="bg-emerald-500/15 text-emerald-400" />
         </div>
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
           <div className={`${card(BD.health)} xl:col-span-2`}>
