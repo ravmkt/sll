@@ -7,6 +7,7 @@ import {
 } from '@/services/admin/plansAdmin';
 import { createDynamicPlan, deleteDynamicPlan, getPlanSubscribers } from '@/services/admin/pricingService';
 import { listModules } from '@/services/admin/adminService';
+import { supabase } from '@/lib/supabase';
 import CouponsManager from '@/components/admin/CouponsManager';
 import ComboCreator from '@/components/admin/ComboCreator';
 import AddonsAdminTab from '@/components/admin/AddonsAdminTab';
@@ -59,6 +60,16 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
   const [newKey, setNewKey] = useState('');
   const [rec, setRec] = useState(plan?.is_recommended ?? false);
   const [active, setActive] = useState(plan?.is_active ?? false);
+  const [hl, setHl] = useState('');
+
+  useEffect(() => {
+    if (!plan) return;
+    (supabase as any).from('dynamic_plans').select('modal_highlights').eq('id', plan.id).maybeSingle()
+      .then(({ data }: any) => {
+        const a = data?.modal_highlights;
+        setHl(Array.isArray(a) ? a.map(String).join('\n') : '');
+      });
+  }, [plan?.id]);
   const [busy, setBusy] = useState(false);
 
   const setRow = (i: number, patch: Partial<Row>) => setRows((r) => r.map((x, j) => (j === i ? { ...x, ...patch } : x)));
@@ -95,6 +106,11 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
         if (!key) { toast.error('Informe a chave do plano (ex.: starter).'); setBusy(false); return; }
         await createDynamicPlan({ ...payload, module_slug: slug, plan_tier: key });
       }
+      const lines = hl.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 8);
+      const tierKey = plan ? plan.plan_tier : tier.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+      const q = (supabase as any).from('dynamic_plans').update({ modal_highlights: lines });
+      const { error: hErr } = await (plan ? q.eq('id', plan.id) : q.eq('module_slug', slug).eq('plan_tier', tierKey));
+      if (hErr) throw new Error(hErr.message);
       toast.success(plan ? 'Plano salvo.' : 'Plano criado.');
       onSaved();
       onClose();
@@ -168,6 +184,13 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
             <button type="button" onClick={() => addRow('bool')} className="shrink-0 cursor-pointer rounded-lg bg-white/5 px-2.5 py-2 text-[11px] font-bold text-slate-200 hover:bg-white/10">+ Sim/Não</button>
           </div>
         </div>
+
+        <label className="block space-y-1">
+          <span className={LABEL}>O que inclui no modal (um item por linha, até 8)</span>
+          <textarea value={hl} rows={5} onChange={(e) => setHl(e.target.value)} className={INPUT}
+            placeholder={'Até 20 vídeos ativos\nAté 25.000 visualizações/mês\nSuporte via WhatsApp'} />
+          <span className="block text-[10px] text-slate-600">Vazio = o modal monta a lista a partir dos limites do plano.</span>
+        </label>
 
         <div className="flex gap-5">
           <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={rec} onChange={(e) => setRec(e.target.checked)} /> Recomendado</label>

@@ -43,6 +43,21 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [modalDesc, setModalDesc] = useState('');
+  const [savingDesc, setSavingDesc] = useState(false);
+
+  useEffect(() => {
+    (supabase as any).from('hub_modules').select('modal_description').eq('slug', slug).maybeSingle()
+      .then(({ data }: any) => setModalDesc(String(data?.modal_description ?? '')));
+  }, [slug]);
+
+  const saveModalDesc = async () => {
+    setSavingDesc(true);
+    const { error: err } = await (supabase as any).from('hub_modules')
+      .update({ modal_description: modalDesc.trim() || null }).eq('slug', slug);
+    setSavingDesc(false);
+    if (err) toast.error(err.message); else toast.success('Resumo do modal salvo.');
+  };
   const { confirm, dialog } = useConfirm();
   const filled = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -190,6 +205,18 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
           uploading={uploading} saving={saving} onSave={save}
           footer={
             <div className="space-y-2">
+              <div className="space-y-2 rounded-2xl border border-slate-800 bg-[#111524] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Resumo do modal de planos</p>
+                <textarea value={modalDesc} maxLength={300} rows={3} onChange={(e) => setModalDesc(e.target.value)} className={INPUT}
+                  placeholder="Texto que aparece no topo do modal de compra deste módulo." />
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-slate-600">{modalDesc.length}/300. Vazio usa a descrição da vitrine. Vale ao vivo ao salvar.</span>
+                  <button type="button" disabled={savingDesc} onClick={saveModalDesc}
+                    className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-1.5 text-xs font-bold text-white disabled:opacity-40">
+                    {savingDesc ? 'Salvando…' : 'Salvar resumo'}
+                  </button>
+                </div>
+              </div>
               <StagingActionBar staging={staging} config={formCfg} disabled={uploading || !name.trim()} />
               <div className="flex justify-end">
                 <button
