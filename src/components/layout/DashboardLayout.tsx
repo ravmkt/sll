@@ -7,12 +7,14 @@ import { TopBar } from '@/components/layout/TopBar';
 import { Sidebar } from '@/components/layout/Sidebar';
 import PortalHeader from '@/components/layout/PortalHeader';
 import MarketingHost from '@/components/marketing/MarketingHost';
+import { useTouchStoreActivity } from '@/hooks/useTouchStoreActivity';
 
 const KEY = 'sll_sidebar_collapsed';
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { storeId } = useLoja() as { storeId: string | null };
+  useTouchStoreActivity();
   const mkLocation: 'vidlytics' | 'live' | 'home' = pathname.includes('vidlytics') ? 'vidlytics' : pathname.includes('live') ? 'live' : 'home';
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(KEY) === '1'; } catch { return false; }
