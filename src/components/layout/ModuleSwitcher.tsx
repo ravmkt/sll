@@ -3,7 +3,7 @@ import type { ElementType } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, Radio } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
-import { getActiveSubscriptions } from '@/services/subscriptions/getStoreSubscriptions';
+import { supabase } from '@/lib/supabase';
 import { getCatalogModules, type CatalogModule } from '@/services/plans/getCatalogShowcase';
 
 type Item = { key: string; name: string; category: string; path: string; icon: ElementType; logo?: string; soon?: boolean };
@@ -42,13 +42,9 @@ export function ModuleSwitcher() {
   useEffect(() => {
     if (!storeId) return;
     let alive = true;
-    getActiveSubscriptions(storeId).then((subs) => {
-      const keys = new Set<string>();
-      for (const s of subs) {
-        if (s.module_key && s.module_key !== 'bundle') keys.add(s.module_key);
-        else (s.plan?.modules ?? []).forEach((m) => keys.add(m));
-      }
-      const list = Array.from(keys);
+    (supabase as any).rpc('get_store_active_modules', { p_store_id: storeId }).then(({ data, error }: any) => {
+      if (error || !Array.isArray(data)) return;
+      const list = data as string[];
       cache.set(storeId, list);
       if (alive) setOwned(list);
     });
@@ -76,8 +72,8 @@ export function ModuleSwitcher() {
     const st = new Map(catalog.map((c) => [c.slug, c.status] as [string, string]));
     const list = SWITCHER_MODULES
       .filter((m) => st.get(m.key) !== 'hidden')
-      .filter((m) => owned.includes(m.key) || m.key === current.key || st.get(m.key) === 'coming_soon')
-      .map((m) => ({ ...withLogo(m), soon: m.soon || (st.get(m.key) === 'coming_soon' && !owned.includes(m.key)) }));
+      .filter((m) => owned.includes(m.key) || m.key === current.key)
+      .map((m) => ({ ...withLogo(m), soon: false }));
     return [withLogo(HOME), ...list];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [owned, current, catalog]);
