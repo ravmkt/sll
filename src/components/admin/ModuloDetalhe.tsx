@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ModulePlansCard from '@/components/admin/ModulePlansCard';
 import FeatureFlagsCard from '@/components/admin/FeatureFlagsCard';
 import ModuloVitrineEditor, { parseFeatures } from '@/components/admin/ModuloVitrineEditor';
+import StagingActionBar from '@/components/master/StagingActionBar';
+import { useStagingPublish } from '@/hooks/useStagingPublish';
 import {
   getModuleStores, getModulesOverview, updateHubModule, uploadModuleLogo,
   type ModuleOverview, type ModuleStoreRow,
@@ -13,6 +15,11 @@ import {
 } from '@/components/admin/moduleUi';
 
 const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
+
+type VitrineCfg = {
+  name: string; status: string; is_public_for_sale: boolean;
+  description: string; features: string[]; logo_url: string | null;
+};
 
 export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }: {
   slug: string; onBack: () => void; onOpenStore: (id: string) => void; onOpenPlans: (slug: string) => void;
@@ -70,7 +77,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
   const onFile = async (file: File | undefined) => {
     if (!file) return;
     setUploading(true);
-    try { setLogo(await uploadModuleLogo(slug, file)); toast.success('Logo enviado. Clique em Salvar para aplicar.'); }
+    try { setLogo(await uploadModuleLogo(slug, file)); toast.success('Logo enviado. Clique em Aplicar na Loja Teste.'); }
     catch (e: any) { toast.error(e?.message || 'Falha no envio do logo.'); }
     finally { setUploading(false); if (fileRef.current) fileRef.current.value = ''; }
   };
@@ -90,6 +97,34 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
       setSaving(false);
     }
   };
+
+  const liveCfg = useMemo<VitrineCfg | undefined>(() => (m ? {
+    name: m.name, status: m.status, is_public_for_sale: m.is_public_for_sale,
+    description: m.description ?? '', features: m.features ?? [], logo_url: m.logo_url ?? null,
+  } : undefined), [m]);
+
+  const formCfg: VitrineCfg = {
+    name: name.trim(), status, is_public_for_sale: status === 'active' ? pub : false,
+    description, features: parseFeatures(featuresText), logo_url: logo,
+  };
+
+  const staging = useStagingPublish<VitrineCfg>('module', slug, liveCfg, {
+    applyLive: async (c) => {
+      const logoArg = c.logo_url === (m?.logo_url ?? null) ? null : (c.logo_url ?? '');
+      await updateHubModule(slug, c.name, c.status, c.status === 'active' ? c.is_public_for_sale : false, Number(m?.sort_order) || 1, logoArg, c.description, c.features);
+    },
+    onSettled: (k) => { if (k !== 'save') void load(true); },
+  });
+
+  const draftApplied = useRef(false);
+  useEffect(() => {
+    if (!m || staging.loading || draftApplied.current) return;
+    draftApplied.current = true;
+    const d = staging.hasDraft ? staging.test : null;
+    if (!d) return;
+    setName(d.name); setStatus(d.status); setPub(!!d.is_public_for_sale);
+    setDescription(d.description ?? ''); setFeaturesText((d.features ?? []).join('\n')); setLogo(d.logo_url ?? null);
+  }, [m, staging.loading, staging.hasDraft, staging.test]);
 
   const term = q.trim().toLowerCase();
   const shown = (stores || []).filter((x) => !term || (x.name || '').toLowerCase().includes(term));
@@ -134,6 +169,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
           featuresText={featuresText} setFeaturesText={setFeaturesText}
           fileRef={fileRef} onFile={onFile}
           uploading={uploading} saving={saving} onSave={save}
+          footer={<StagingActionBar staging={staging} config={formCfg} disabled={uploading || !name.trim()} />}
         />
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="space-y-4 xl:col-span-2">

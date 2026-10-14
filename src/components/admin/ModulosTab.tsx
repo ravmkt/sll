@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { getModulesOverview, reorderHubModules, type ModulesData } from '@/services/admin/modulesService';
 import ModuloDetalhe from '@/components/admin/ModuloDetalhe';
 import NovoModuloModal from '@/components/admin/NovoModuloModal';
+import SandboxStoreSelect from '@/components/master/SandboxStoreSelect';
 import { CARD, SELECT, STATUS_LABEL, ModuleLogo, brl, int } from '@/components/admin/moduleUi';
 
 const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
@@ -95,6 +96,8 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
       {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
 
       {creating && <NovoModuloModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load(); }} />}
+
+      <SandboxStoreSelect />
 
       {data && (
         <>

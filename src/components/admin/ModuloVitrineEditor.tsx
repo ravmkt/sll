@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { ArrowRight, Check, ImagePlus, Loader2, Package, Trash2 } from 'lucide-react';
 import { CARD, INPUT, STATUS_LABEL } from '@/components/admin/moduleUi';
 
@@ -15,7 +15,7 @@ type Props = {
   featuresText: string; setFeaturesText: (v: string) => void;
   fileRef: RefObject<HTMLInputElement>;
   onFile: (f: File | undefined) => void;
-  uploading: boolean; saving: boolean; onSave: () => void;
+  uploading: boolean; saving?: boolean; onSave?: () => void; footer?: ReactNode;
 };
 
 export function parseFeatures(text: string): string[] {
@@ -151,12 +151,7 @@ export default function ModuloVitrineEditor(p: Props) {
           </div>
         </div>
       </div>
-
-      <div className="flex justify-end">
-        <button type="button" disabled={p.saving || p.uploading || !p.name.trim()} onClick={p.onSave} className="cursor-pointer rounded-lg bg-[#fd8539] px-6 py-2 text-xs font-bold text-white disabled:opacity-40">
-          {p.saving ? 'Salvando…' : 'Salvar alterações'}
-        </button>
-      </div>
+      {p.footer}
     </div>
   );
 }

@@ -65,6 +65,27 @@ async function loadModules(): Promise<ModuleRow[]> {
   }));
 }
 
+async function applyStaging(storeId: string, list: ModuleRow[]): Promise<ModuleRow[]> {
+  try {
+    const { data, error } = await sb.rpc('staging_module_overrides', { p_store_id: storeId });
+    if (error || !data) return list;
+    return list.map((m) => {
+      const o = (data as Record<string, any>)[m.slug];
+      if (!o) return m;
+      return {
+        ...m,
+        name: o.name ?? m.name,
+        status: o.status ?? m.status,
+        logo_url: o.logo_url !== undefined ? o.logo_url : m.logo_url,
+        description: o.description ?? m.description,
+        benefits: Array.isArray(o.features) ? o.features.map(String) : m.benefits,
+      };
+    });
+  } catch {
+    return list;
+  }
+}
+
 export function useDashboardData(storeId: string | null | undefined, range: Range) {
   const [data, setData] = useState<DashData>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -81,7 +102,7 @@ export function useDashboardData(storeId: string | null | undefined, range: Rang
         VidlyticsDatabaseService.getOverviewMetrics(storeId, range.start, range.end),
         sb.rpc('get_store_active_modules', { p_store_id: storeId }),
         getActiveSubscriptions(storeId),
-        loadModules(),
+        loadModules().then((l) => applyStaging(String(storeId), l)),
         AffiliateDatabaseService.getSummary(storeId),
         sb.from('referral_rewards').select('amount')
           .eq('referrer_store_id', storeId).neq('status', 'canceled')
