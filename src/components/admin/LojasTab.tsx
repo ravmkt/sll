@@ -1,22 +1,159 @@
 import StoreDetailPage from '@/components/admin/StoreDetailPage';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Eye, Loader2, Pencil, Power, Search, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye, KeyRound, Loader2, Mail, MessageCircle, MoreVertical, Pencil, Power, Search, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 import {
   deleteStore, listStores, setSubscriptionStatus,
   type AdminStoreRow, type StoreStatus,
 } from '@/services/admin/storesService';
-import { Badge, CARD, ContactButtons, DeleteStoreModal, ICON, dt, modLabel } from '@/components/admin/storeUi';
+import { Badge, CARD, DeleteStoreModal, ICON, modLabel } from '@/components/admin/storeUi';
 
-const BTN = 'rounded-lg p-1.5 transition-colors hover:bg-white/10 disabled:opacity-40';
+const sb = supabase as any;
+const TZ = 'America/Sao_Paulo';
+const MENU_W = 208;
 const CHIPS: { id: 'all' | StoreStatus; label: string }[] = [
   { id: 'all', label: 'Todas' },
-  { id: 'active', label: 'Adimplentes' },
-  { id: 'past_due', label: 'Inadimplentes' },
-  { id: 'trial', label: 'Em trial' },
+  { id: 'active', label: 'Ativas' },
   { id: 'inactive', label: 'Inativas' },
+  { id: 'trial', label: 'Em trial' },
+  { id: 'past_due', label: 'Inadimplentes' },
 ];
+const STATUS_ORDER: Record<StoreStatus, number> = { active: 0, trial: 1, past_due: 2, inactive: 3 };
+
+type SortKey = 'name' | 'created' | 'access' | 'status';
+type SortDir = 'asc' | 'desc';
+const DEFAULT_DIR: Record<SortKey, SortDir> = { name: 'asc', created: 'desc', access: 'desc', status: 'asc' };
+
+const ts = (v: string | null) => (v ? new Date(v).getTime() : 0);
+const fmtDate = (v: string | null) => (v ? new Date(v).toLocaleDateString('pt-BR', { timeZone: TZ }) : '—');
+const fmtFull = (v: string | null) => (v ? new Date(v).toLocaleString('pt-BR', { timeZone: TZ }) : 'Nunca acessou');
+
+function lastAccess(v: string | null): { text: string; stale: boolean } {
+  if (!v) return { text: 'Nunca acessou', stale: false };
+  const d = new Date(v);
+  const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((day(new Date()) - day(d)) / 86400000);
+  if (days <= 0) return { text: `Hoje às ${d.getHours()}h`, stale: false };
+  if (days === 1) return { text: `Ontem às ${d.getHours()}h`, stale: false };
+  return { text: `Há ${days} dias`, stale: days > 15 };
+}
+
+function Th({ label, k, sort, dir, onSort }: { label: string; k: SortKey; sort: SortKey; dir: SortDir; onSort: (k: SortKey) => void }) {
+  const active = sort === k;
+  return (
+    <th className="px-4 py-3" aria-sort={active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+      <button type="button" onClick={() => onSort(k)} className={`flex cursor-pointer items-center gap-1 uppercase tracking-wider transition-colors hover:text-white ${active ? 'text-white' : ''}`}>
+        {label}
+        {active ? (dir === 'asc' ? <ArrowUp size={12} className="text-[#fd8539]" /> : <ArrowDown size={12} className="text-[#fd8539]" />) : <ArrowUpDown size={12} className="opacity-40" />}
+      </button>
+    </th>
+  );
+}
+
+type MenuProps = {
+  r: AdminStoreRow;
+  busy: boolean;
+  onDetails: () => void;
+  onEdit: () => void;
+  onImpersonate: () => void;
+  onToggle: () => void;
+  onDelete: () => void;
+};
+
+function RowMenu({ r, busy, onDetails, onEdit, onImpersonate, onToggle, onDelete }: MenuProps) {
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pos) return;
+    const close = () => setPos(null);
+    const down = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (menuRef.current?.contains(t) || btnRef.current?.contains(t)) return;
+      close();
+    };
+    document.addEventListener('pointerdown', down);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => {
+      document.removeEventListener('pointerdown', down);
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
+  }, [pos]);
+
+  const toggleOpen = () => {
+    if (pos) { setPos(null); return; }
+    const b = btnRef.current?.getBoundingClientRect();
+    if (!b) return;
+    const left = Math.max(8, b.right - MENU_W);
+    setPos(b.bottom + 300 > window.innerHeight ? { bottom: window.innerHeight - b.top + 4, left } : { top: b.bottom + 4, left });
+  };
+
+  const item = (icon: ReactNode, label: string, fn: () => void, cls = 'text-slate-200') => (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={() => { setPos(null); fn(); }}
+      className={`flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold transition-colors hover:bg-white/5 ${cls}`}
+    >
+      {icon}{label}
+    </button>
+  );
+
+  let wa: string | null = null;
+  if (r.whatsapp) {
+    let digits = r.whatsapp.replace(/\D/g, '');
+    if (digits.length >= 10) { if (digits.length <= 11) digits = `55${digits}`; wa = `https://wa.me/${digits}`; }
+  }
+  const mail = r.owner_email || r.contact_email;
+  const cancel = r.status !== 'inactive';
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        aria-label="Ações da loja"
+        aria-haspopup="menu"
+        aria-expanded={!!pos}
+        disabled={busy}
+        onClick={toggleOpen}
+        className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-white/10 disabled:opacity-40"
+      >
+        {busy ? <Loader2 size={16} className="animate-spin text-slate-400" /> : <MoreVertical size={16} className={ICON} />}
+      </button>
+      {pos && (
+        <div
+          ref={menuRef}
+          role="menu"
+          style={{ position: 'fixed', top: pos.top, bottom: pos.bottom, left: pos.left, width: MENU_W }}
+          className="z-50 overflow-hidden rounded-xl border border-white/10 bg-[#111524] py-1 shadow-2xl shadow-black/50"
+        >
+          {item(<Eye size={14} className={ICON} />, 'Ver detalhes', onDetails)}
+          {item(<Pencil size={14} className={ICON} />, 'Editar dados', onEdit)}
+          {item(<KeyRound size={14} className="text-sky-400" />, 'Entrar na loja (gerar link)', onImpersonate)}
+          {item(<Power size={14} className={cancel ? 'text-amber-400' : 'text-emerald-400'} />, cancel ? 'Desligar plano' : 'Ligar plano', onToggle)}
+          {wa && (
+            <a href={wa} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={() => setPos(null)} className="flex w-full items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/5">
+              <MessageCircle size={14} className="text-emerald-400" /> WhatsApp
+            </a>
+          )}
+          {mail && (
+            <a href={`mailto:${mail}`} role="menuitem" onClick={() => setPos(null)} className="flex w-full items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/5">
+              <Mail size={14} className={ICON} /> E-mail
+            </a>
+          )}
+          <div className="my-1 border-t border-white/10" />
+          {item(<Trash2 size={14} />, 'Excluir loja', onDelete, 'text-rose-400')}
+        </div>
+      )}
+    </>
+  );
+}
 
 function LojasList() {
   const [, setParams] = useSearchParams();
@@ -25,6 +162,8 @@ function LojasList() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<'all' | StoreStatus>('all');
   const [mod, setMod] = useState('all');
+  const [sort, setSort] = useState<SortKey>('created');
+  const [dir, setDir] = useState<SortDir>('desc');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [del, setDel] = useState<AdminStoreRow | null>(null);
 
@@ -41,6 +180,11 @@ function LojasList() {
 
   useEffect(() => { load(); }, [load]);
 
+  const onSort = (k: SortKey) => {
+    if (k === sort) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSort(k); setDir(DEFAULT_DIR[k]); }
+  };
+
   const counts = useMemo(() => {
     const c: Record<'all' | StoreStatus, number> = { all: rows.length, active: 0, past_due: 0, trial: 0, inactive: 0 };
     rows.forEach((r) => { c[r.status] += 1; });
@@ -49,13 +193,22 @@ function LojasList() {
 
   const modules = useMemo(() => Array.from(new Set(rows.flatMap((r) => r.modules))).sort(), [rows]);
 
-  const filtered = useMemo(() => {
+  const visible = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return rows.filter((r) =>
+    const list = rows.filter((r) =>
       (status === 'all' || r.status === status) &&
       (mod === 'all' || r.modules.includes(mod)) &&
       (!term || [r.name, r.url, r.contact_email, r.owner_email].some((v) => (v || '').toLowerCase().includes(term))));
-  }, [rows, q, status, mod]);
+    const sign = dir === 'asc' ? 1 : -1;
+    return list.sort((a, b) => {
+      let p = 0;
+      if (sort === 'name') p = (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' });
+      else if (sort === 'created') p = ts(a.created_at) - ts(b.created_at);
+      else if (sort === 'access') p = ts(a.last_sign_in_at) - ts(b.last_sign_in_at);
+      else p = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+      return p * sign || ts(b.created_at) - ts(a.created_at);
+    });
+  }, [rows, q, status, mod, sort, dir]);
 
   const togglePlan = async (r: AdminStoreRow) => {
     if (r.is_lifetime) {
@@ -85,6 +238,28 @@ function LojasList() {
     }
   };
 
+  const impersonate = async (r: AdminStoreRow) => {
+    if (!window.confirm(`Gerar link de acesso como dono de "${r.name || 'esta loja'}"?\nA ação fica registrada no log de auditoria.`)) return;
+    setBusyId(r.id);
+    try {
+      const { data, error } = await sb.functions.invoke('admin-impersonate', {
+        body: { store_id: r.id, redirect_to: `${window.location.origin}/dashboard` },
+      });
+      if (error) {
+        let msg: string = error.message;
+        try { msg = (await error.context.json())?.error || msg; } catch { /* mantém */ }
+        throw new Error(msg);
+      }
+      if (!data?.link) throw new Error(data?.error || 'Link não gerado.');
+      await navigator.clipboard.writeText(data.link);
+      toast.success('Link copiado. Cole numa janela anônima: abrir neste navegador encerra a sua sessão Master.', { duration: 9000 });
+    } catch (e: any) {
+      toast.error(e?.message || 'Não foi possível gerar o link.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const confirmDelete = async () => {
     if (!del) return;
     setBusyId(del.id);
@@ -104,7 +279,7 @@ function LojasList() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-black text-white">Lojas</h1>
-        <p className="text-xs text-slate-500">{filtered.length} de {rows.length} lojas</p>
+        <p className="text-xs text-slate-500">{visible.length} de {rows.length} lojas</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -113,7 +288,7 @@ function LojasList() {
             key={c.id}
             type="button"
             onClick={() => setStatus(c.id)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+            className={`cursor-pointer rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
               status === c.id ? 'border-[#fd8539] bg-[#fd8539]/15 text-white' : 'border-white/10 text-slate-400 hover:text-white'
             }`}
           >
@@ -132,8 +307,8 @@ function LojasList() {
             className="w-full rounded-xl border border-white/10 bg-[#111524] py-2 pl-9 pr-3 text-xs text-white outline-none focus:border-[#fd8539]"
           />
         </div>
-        <select value={mod} onChange={(e) => setMod(e.target.value)} className="rounded-xl border border-white/10 bg-[#111524] px-3 py-2 text-xs text-white outline-none">
-          <option value="all">Todos os módulos</option>
+        <select value={mod} onChange={(e) => setMod(e.target.value)} className="cursor-pointer rounded-xl border border-white/10 bg-[#111524] px-3 py-2 text-xs text-white outline-none">
+          <option value="all">Todos os módulos e planos</option>
           {modules.map((m) => <option key={m} value={m}>{modLabel(m)}</option>)}
         </select>
       </div>
@@ -144,64 +319,77 @@ function LojasList() {
         ) : (
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-white/10 text-[10px] uppercase tracking-wider text-slate-500">
-                <th className="px-4 py-3">Loja</th>
-                <th className="px-4 py-3">Criada em</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Planos</th>
-                <th className="px-4 py-3">Aplicativos</th>
-                <th className="px-4 py-3">Indicações</th>
-                <th className="px-4 py-3 text-right">Ações</th>
+              <tr className="border-b border-white/10 text-[10px] text-slate-500">
+                <Th label="Loja" k="name" sort={sort} dir={dir} onSort={onSort} />
+                <Th label="Criada em" k="created" sort={sort} dir={dir} onSort={onSort} />
+                <Th label="Último acesso" k="access" sort={sort} dir={dir} onSort={onSort} />
+                <Th label="Status" k="status" sort={sort} dir={dir} onSort={onSort} />
+                <th className="px-4 py-3 uppercase tracking-wider">Planos &amp; módulos</th>
+                <th className="px-4 py-3 uppercase tracking-wider">Consumo IA</th>
+                <th className="px-4 py-3 text-right uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filtered.length === 0 && (
+              {visible.length === 0 && (
                 <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">Nenhuma loja encontrada.</td></tr>
               )}
-              {filtered.map((r) => (
-                <tr key={r.id} className="align-top hover:bg-white/5">
-                  <td className="px-4 py-3">
-                    <button type="button" onClick={() => open(r.id)} className="text-left font-bold text-white hover:text-[#fd8539]">
-                      {r.name || 'Sem nome'}
-                    </button>
-                    <p className="text-[11px] text-slate-500">{r.url || '—'}</p>
-                    <p className="text-[11px] text-slate-500">{r.owner_email || r.contact_email || 'sem e-mail'}</p>
-                  </td>
-                  <td className="px-4 py-3 text-slate-400">{dt(r.created_at)}</td>
-                  <td className="px-4 py-3">
-                    <Badge status={r.status} />
-                    {r.is_lifetime && <p className="mt-1 text-[10px] font-bold text-sky-300">Vitalícia</p>}
-                  </td>
-                  <td className="px-4 py-3 text-slate-300">
-                    {r.plans.length === 0 ? <span className="text-slate-600">—</span> : r.plans.map((p) => <p key={p}>{p}</p>)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {r.modules.length === 0 ? <span className="text-slate-600">—</span> : r.modules.map((m) => (
-                        <span key={m} className="rounded-md bg-white/5 px-2 py-0.5 text-[11px] text-slate-300">{modLabel(m)}</span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-slate-400"><strong className="text-slate-200">{r.referrals_made}</strong> indicadas</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-0.5">
-                      <button type="button" title="Detalhes" className={BTN} onClick={() => open(r.id)}><Eye size={16} className={ICON} /></button>
-                      <button type="button" title="Editar" className={BTN} onClick={() => open(r.id, 'dados')}><Pencil size={16} className={ICON} /></button>
-                      <button
-                        type="button"
-                        title={r.status === 'inactive' ? 'Ativar plano' : 'Cancelar plano'}
-                        disabled={busyId === r.id}
-                        className={BTN}
-                        onClick={() => togglePlan(r)}
-                      >
-                        <Power size={16} className={r.status === 'inactive' ? 'text-emerald-400' : 'text-amber-400'} />
-                      </button>
-                      <ContactButtons whatsapp={r.whatsapp} email={r.owner_email || r.contact_email} />
-                      <button type="button" title="Excluir" className={BTN} onClick={() => setDel(r)}><Trash2 size={16} className="text-rose-400" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {visible.map((r) => {
+                const acc = lastAccess(r.last_sign_in_at);
+                const badges = r.plans.length ? r.plans : r.modules.map((m) => modLabel(m));
+                return (
+                  <tr key={r.id} className="align-top hover:bg-white/5">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => open(r.id)} className="cursor-pointer text-left font-bold text-white hover:text-[#fd8539]">
+                          {r.name || 'Sem nome'}
+                        </button>
+                        {r.is_lifetime && (
+                          <span title="Conta vitalícia" className="inline-flex items-center gap-1 rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-bold text-sky-300">
+                            <Star size={10} className="fill-sky-300" /> Vitalícia
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500">{r.url || '—'}</p>
+                      <p className="text-[11px] text-slate-500">{r.owner_email || r.contact_email || 'sem e-mail'}</p>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-400">{fmtDate(r.created_at)}</td>
+                    <td className="whitespace-nowrap px-4 py-3" title={fmtFull(r.last_sign_in_at)}>
+                      {acc.stale ? (
+                        <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-300">{acc.text}</span>
+                      ) : (
+                        <span className={r.last_sign_in_at ? 'text-slate-300' : 'text-slate-600'}>{acc.text}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3"><Badge status={r.status} /></td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {badges.length === 0 ? <span className="text-slate-600">—</span> : badges.map((b) => (
+                          <span key={b} className="rounded-md bg-[#fd8539]/10 px-2 py-0.5 text-[11px] font-semibold text-[#fd8539]">{b}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3" title={`${r.ai_tokens.toLocaleString('pt-BR')} tokens · US$ ${Number(r.ai_cost_usd).toFixed(4)} no mês`}>
+                      {r.ai_interactions > 0 ? (
+                        <>
+                          <p className="font-bold text-slate-200">{r.ai_interactions.toLocaleString('pt-BR')} {r.ai_interactions === 1 ? 'interação' : 'interações'}</p>
+                          <p className="text-[11px] text-slate-500">{r.ai_tokens.toLocaleString('pt-BR')} tokens</p>
+                        </>
+                      ) : <span className="text-slate-600">—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <RowMenu
+                        r={r}
+                        busy={busyId === r.id}
+                        onDetails={() => open(r.id)}
+                        onEdit={() => open(r.id, 'dados')}
+                        onImpersonate={() => impersonate(r)}
+                        onToggle={() => togglePlan(r)}
+                        onDelete={() => setDel(r)}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

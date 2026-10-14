@@ -17,6 +17,9 @@ export type AdminStoreRow = {
   modules: string[];
   referrals_made: number;
   is_lifetime: boolean;
+  ai_interactions: number;
+  ai_tokens: number;
+  ai_cost_usd: number;
   subs: { id: string; status: string }[];
 };
 
