@@ -186,6 +186,8 @@ export default function DashboardTab() {
   const [error, setError] = useState('');
   const [healthErr, setHealthErr] = useState('');
   const [aiErr, setAiErr] = useState('');
+  const [origin, setOrigin] = useState<{ d: string; new: number; renewal: number; upfront: number }[]>([]);
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const prices = useMemo(loadPrices, []);
 
   const range = useMemo(() => {
@@ -220,6 +222,14 @@ export default function DashboardTab() {
     return () => { alive = false; };
   }, [range.start, range.end, module]);
 
+  useEffect(() => {
+    if (!range.start || !range.end || range.start > range.end) return;
+    let alive = true;
+    sb.rpc('admin_revenue_origin', { p_start: range.start, p_end: range.end, p_module: module || null })
+      .then(({ data: o }: any) => { if (alive) setOrigin(Array.isArray(o) ? o : []); });
+    return () => { alive = false; };
+  }, [range.start, range.end, module]);
+
   const s = data?.stores;
   const pie = s ? [
     { name: 'Ativas', value: s.active, color: '#10b981' },
@@ -236,8 +246,9 @@ export default function DashboardTab() {
 
   const totalAlerts = health ? health.alerts.near_limit.length + health.alerts.past_due.length + health.alerts.no_script.length : 0;
   const conv = health && health.trial_ended > 0 ? Math.round((health.trial_converted / health.trial_ended) * 100) : null;
-  const series = (health?.revenue_origin || []).map((r) => ({
-    label: `${r.d.slice(8, 10)}/${r.d.slice(5, 7)}`, total: r.new + r.renewal + r.upfront, new: r.new, renewal: r.renewal, upfront: r.upfront,
+  const monthly = (new Date(range.end).getTime() - new Date(range.start).getTime()) / 86400000 > 62;
+  const series = origin.map((r) => ({
+    label: monthly ? `${r.d.slice(5, 7)}/${r.d.slice(2, 4)}` : `${r.d.slice(8, 10)}/${r.d.slice(5, 7)}`, total: r.new + r.renewal + r.upfront, new: r.new, renewal: r.renewal, upfront: r.upfront,
   }));
 
   return (
@@ -308,7 +319,7 @@ export default function DashboardTab() {
         </div>
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
           <div className={`${card(BD.health)} xl:col-span-2`}>
-            <p className="mb-3 text-[15px] font-bold text-white">Receita por origem (30 dias)</p>
+            <p className="mb-3 text-[15px] font-bold text-white">Receita por origem</p>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -322,15 +333,19 @@ export default function DashboardTab() {
                   <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} tick={{ fill: '#64748b', fontSize: 11 }} />
                   <YAxis tickLine={false} axisLine={false} width={64} tick={{ fill: '#64748b', fontSize: 11 }} tickFormatter={(v) => `R$ ${Math.round(Number(v) / 100)}`} />
                   <Tooltip contentStyle={TOOLTIP} itemStyle={ITEM} labelStyle={ITEM} formatter={(v: any, n: any) => [brl(Number(v)), n]} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Area type="monotone" dataKey="total" name="Total" stroke="#10b981" strokeWidth={2.5} fill="url(#g-rev)" />
-                  <Area type="monotone" dataKey="new" name="Assinatura nova" stroke="#0094eb" strokeWidth={1.5} fill="none" />
-                  <Area type="monotone" dataKey="renewal" name="Renovação" stroke="#a855f7" strokeWidth={1.5} fill="none" />
-                  <Area type="monotone" dataKey="upfront" name="Anual/semestral à vista" stroke="#fd8539" strokeWidth={1.5} fill="none" />
+                  <Legend
+                    wrapperStyle={{ fontSize: 12, cursor: 'pointer' }}
+                    onClick={(o: any) => setHidden((h) => ({ ...h, [String(o.dataKey)]: !h[String(o.dataKey)] }))}
+                    formatter={(v: any, e: any) => <span style={{ opacity: hidden[String(e.dataKey)] ? 0.35 : 1 }}>{v}</span>}
+                  />
+                  <Area type="monotone" dataKey="total" hide={!!hidden.total} name="Total" stroke="#10b981" strokeWidth={2.5} fill="url(#g-rev)" />
+                  <Area type="monotone" dataKey="new" hide={!!hidden.new} name="Assinatura nova" stroke="#0094eb" strokeWidth={1.5} fill="none" />
+                  <Area type="monotone" dataKey="renewal" hide={!!hidden.renewal} name="Renovação" stroke="#a855f7" strokeWidth={1.5} fill="none" />
+                  <Area type="monotone" dataKey="upfront" hide={!!hidden.upfront} name="Anual/semestral à vista" stroke="#fd8539" strokeWidth={1.5} fill="none" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <p className="mt-2 text-xs text-slate-600">Sempre dos últimos 30 dias. Add-on contratado no checkout vai junto com a assinatura.</p>
+            <p className="mt-2 text-xs text-slate-600">Segue o período escolhido. Clique na legenda para ocultar ou mostrar cada curva. Add-on contratado no checkout vai junto com a assinatura.</p>
           </div>
           <PieCard bd={BD.health} title="Situação das lojas" items={pie} empty="Sem lojas para exibir." />
           <PieCard bd={BD.health} title="Lojas por módulo" items={modPie} empty="Sem assinaturas ativas." />
