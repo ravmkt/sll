@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ImagePlus, Loader2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ModulePlansCard from '@/components/admin/ModulePlansCard';
 import FeatureFlagsCard from '@/components/admin/FeatureFlagsCard';
+import ModuloVitrineEditor, { parseFeatures } from '@/components/admin/ModuloVitrineEditor';
 import {
   getModuleStores, getModulesOverview, updateHubModule, uploadModuleLogo,
   type ModuleOverview, type ModuleStoreRow,
 } from '@/services/admin/modulesService';
 import {
-  CARD, CYCLE_LABEL, INPUT, SELECT, STATUS_LABEL, SUB_LABEL, Kpi, ModuleLogo, bytes, brl, int,
+  CARD, CYCLE_LABEL, INPUT, SELECT, SUB_LABEL, Kpi, ModuleLogo, bytes, brl, int,
 } from '@/components/admin/moduleUi';
 
 const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
-const LABEL = 'text-[10px] font-bold uppercase tracking-wider text-slate-500';
 
 export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }: {
   slug: string; onBack: () => void; onOpenStore: (id: string) => void; onOpenPlans: (slug: string) => void;
@@ -80,7 +80,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
     setSaving(true);
     try {
       const logoArg = logo === (m.logo_url ?? null) ? null : (logo ?? '');
-      const feats = featuresText.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 6);
+      const feats = parseFeatures(featuresText);
       await updateHubModule(slug, name, status, status === 'active' ? pub : false, Number(sort) || 1, logoArg, description, feats);
       toast.success('Módulo atualizado.');
       await load(true);
@@ -122,6 +122,19 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
       {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
 
       {m && (
+        <>
+        <ModuloVitrineEditor
+          slug={slug}
+          name={name} setName={setName}
+          status={status} setStatus={setStatus}
+          pub={pub} setPub={setPub}
+          sort={sort} setSort={setSort}
+          logo={logo} setLogo={setLogo}
+          description={description} setDescription={setDescription}
+          featuresText={featuresText} setFeaturesText={setFeaturesText}
+          fileRef={fileRef} onFile={onFile}
+          uploading={uploading} saving={saving} onSave={save}
+        />
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="space-y-4 xl:col-span-2">
             <div className={`${CARD} space-y-3`}>
@@ -193,68 +206,11 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
           </div>
 
           <div className="space-y-4">
-            <div className={`${CARD} space-y-4`}>
-              <p className="text-sm font-bold text-white">Dados do módulo</p>
-
-              <div className="space-y-2">
-                <span className={LABEL}>Logo</span>
-                <div className="flex items-center gap-3">
-                  <ModuleLogo url={logo} name={name || m.name} size={56} />
-                  <div className="flex flex-col gap-1.5">
-                    <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
-                    <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-[11px] font-bold text-slate-200 hover:bg-white/10 disabled:opacity-40">
-                      {uploading ? <Loader2 size={12} className="animate-spin" /> : <ImagePlus size={12} />} Enviar imagem
-                    </button>
-                    {logo && (
-                      <button type="button" onClick={() => setLogo(null)} className="flex cursor-pointer items-center gap-1.5 text-[11px] text-slate-500 hover:text-rose-300">
-                        <Trash2 size={12} /> Remover logo
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <p className="text-[10px] text-slate-600">PNG, JPG, SVG ou WebP, até 2 MB. Fundo transparente fica melhor.</p>
-              </div>
-
-              <label className="block space-y-1">
-                <span className={LABEL}>Nome</span>
-                <input value={name} onChange={(e) => setName(e.target.value)} className={INPUT} />
-              </label>
-              <label className="block space-y-1">
-                <span className={LABEL}>Status</span>
-                <select value={status} onChange={(e) => setStatus(e.target.value)} className={INPUT}>
-                  <option value="active">{STATUS_LABEL.active}</option>
-                  <option value="coming_soon">{STATUS_LABEL.coming_soon}</option>
-                  <option value="hidden">{STATUS_LABEL.hidden}</option>
-                </select>
-              </label>
-              <label className="flex items-center gap-2 text-xs text-slate-300">
-                <input type="checkbox" checked={status === 'active' && pub} disabled={status !== 'active'} onChange={(e) => setPub(e.target.checked)} />
-                À venda para os lojistas {status !== 'active' && <span className="text-slate-500">(só módulos ativos)</span>}
-              </label>
-              <label className="block space-y-1">
-                <span className={LABEL}>Posição na lista</span>
-                <input type="number" min={1} value={sort} onChange={(e) => setSort(e.target.value)} className={INPUT} />
-                <span className="block text-[10px] text-slate-600">Os outros módulos se ajustam sozinhos, sem repetir posição.</span>
-              </label>
-              <label className="block space-y-1">
-                <span className={LABEL}>Descrição no card da vitrine</span>
-                <textarea value={description} maxLength={160} rows={2} onChange={(e) => setDescription(e.target.value)} className={INPUT} placeholder="Ex.: Transmissões ao vivo direto no seu e-commerce." />
-                <span className="block text-[10px] text-slate-600">{description.length}/160 caracteres.</span>
-              </label>
-              <label className="block space-y-1">
-                <span className={LABEL}>Benefícios (um por linha, até 6)</span>
-                <textarea value={featuresText} rows={4} onChange={(e) => setFeaturesText(e.target.value)} className={INPUT} placeholder={'Lives com produtos vinculados\nChat em tempo real\nTudo na página da sua loja'} />
-                <span className="block text-[10px] text-slate-600">Aparecem com o ✓ no card do módulo em breve. Em módulos ativos, o card mostra as métricas.</span>
-              </label>
-              <button type="button" disabled={saving || uploading || !name.trim()} onClick={save} className="w-full cursor-pointer rounded-lg bg-[#fd8539] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">
-                {saving ? 'Salvando…' : 'Salvar alterações'}
-              </button>
-            </div>
-
             <ModulePlansCard slug={slug} onManage={() => onOpenPlans(slug)} />
             <FeatureFlagsCard slug={slug} />
           </div>
         </div>
+        </>
       )}
     </div>
   );
