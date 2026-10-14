@@ -54,3 +54,46 @@ export async function getCatalogShowcase(): Promise<CatalogPlan[]> {
     price_annual_cents: Number(p.price_annual_cents ?? 0),
   })) as CatalogPlan[];
 }
+
+export type CatalogComboModule = {
+  slug: string;
+  name: string;
+  logo_url: string | null;
+  plan_name: string | null;
+  monthly_cents: number;
+  semiannual_cents: number;
+  annual_cents: number;
+};
+
+export type CatalogCombo = {
+  id: string;
+  plan_name: string;
+  plan_tier: string;
+  is_recommended: boolean;
+  sort_order: number;
+  price_monthly_cents: number;
+  price_semiannual_cents: number;
+  price_annual_cents: number;
+  modules: CatalogComboModule[];
+};
+
+// Combos ativos cujos modulos estao todos a venda (RPC get_catalog_combos)
+export async function getCatalogCombos(): Promise<CatalogCombo[]> {
+  const { data, error } = await sb.rpc("get_catalog_combos");
+  if (error) {
+    console.error("[getCatalogCombos]", error.message);
+    return [];
+  }
+  return ((data ?? []) as any[]).map((c) => ({
+    ...c,
+    price_monthly_cents: Number(c.price_monthly_cents ?? 0),
+    price_semiannual_cents: Number(c.price_semiannual_cents ?? 0),
+    price_annual_cents: Number(c.price_annual_cents ?? 0),
+    modules: ((c.modules ?? []) as any[]).map((m) => ({
+      ...m,
+      monthly_cents: Number(m.monthly_cents ?? 0),
+      semiannual_cents: Number(m.semiannual_cents ?? 0),
+      annual_cents: Number(m.annual_cents ?? 0),
+    })),
+  })) as CatalogCombo[];
+}

@@ -5,11 +5,17 @@ import { cn } from "@/lib/utils";
 import { useLoja } from "@/contexts/LojaContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { VidlyticsPlanCard, type PlanCycle } from "@/components/planos/VidlyticsPlanCard";
+import type { PlanCycle } from "@/components/planos/VidlyticsPlanCard";
+import ComboCards, { comboMaxPct } from "@/components/planos/ComboCards";
+import ModuloPlanoModal from "@/components/planos/ModuloPlanoModal";
+import PlanosFaq from "@/components/planos/PlanosFaq";
+import { CYCLE_MONTHS, brl, cycleCents } from "@/components/planos/planosShared";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   getCatalogModules,
   getCatalogShowcase,
+  getCatalogCombos,
+  type CatalogCombo,
   type CatalogModule,
   type CatalogPlan,
 } from "@/services/plans/getCatalogShowcase";
@@ -20,16 +26,9 @@ const CYCLES: { key: PlanCycle; label: string; badge?: string }[] = [
   { key: "yearly", label: "Anual", badge: "4 MESES GRÁTIS" },
 ];
 
-const CONTACT_WPP = (import.meta.env.VITE_CONTACT_WHATSAPP as string | undefined) || "";
-const CONTACT_URL = CONTACT_WPP
-  ? `https://wa.me/${CONTACT_WPP}?text=${encodeURIComponent("Olá! Quero um plano sob medida do Vidlytics.")}`
-  : undefined;
-
 type Cell = boolean | string | { ok: string };
 
 const COMPARE_COLS = ["Starter", "Pro", "Scale"];
-
-const TIER_RANK: Record<string, number> = { starter: 1, pro: 2, scale: 3 };
 
 const ADDONS = [
   { key: "videos_10", icon: Film, title: "+10 Vídeos Ativos", desc: "Adicione mais produtos com vídeos no seu e-commerce", cents: 2990 },
@@ -84,14 +83,17 @@ export default function Planos() {
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<CatalogPlan[]>([]);
   const [mods, setMods] = useState<CatalogModule[]>([]);
+  const [combos, setCombos] = useState<CatalogCombo[]>([]);
+  const [openMod, setOpenMod] = useState<string | null>(null);
   const [cycle, setCycle] = useState<PlanCycle>("monthly");
   // null = sem plano ativo no Vidlytics; tier pode ser null em assinaturas sem plano dinamico (ex.: vitalicia)
   const [current, setCurrent] = useState<{ tier: string | null } | null>(null);
 
   useEffect(() => {
-    Promise.all([getCatalogShowcase(), getCatalogModules()]).then(([list, m]) => {
+    Promise.all([getCatalogShowcase(), getCatalogModules(), getCatalogCombos()]).then(([list, m, cb]) => {
       setPlans(list);
       setMods(m);
+      setCombos(cb);
       setLoading(false);
     });
   }, []);
@@ -152,13 +154,18 @@ export default function Planos() {
 
   const soon = useMemo(() => mods.filter((m) => m.status === "coming_soon"), [mods]);
   const modBySlug = useMemo(() => new Map(mods.map((m) => [m.slug, m])), [mods]);
+  const byModule = useMemo(() => {
+    const g = new Map<string, CatalogPlan[]>();
+    plans.forEach((p) => g.set(p.module_slug, [...(g.get(p.module_slug) ?? []), p]));
+    return Array.from(g.entries());
+  }, [plans]);
 
-  function handleSelect(p: CatalogPlan) {
+  function handleCombo(c: CatalogCombo) {
     if (!storeId) {
       toast.error("Nenhuma loja ativa encontrada.");
       return;
     }
-    const qs = new URLSearchParams({ plan: p.id, cycle, module: p.module_slug });
+    const qs = new URLSearchParams({ plan: c.id, cycle, module: "bundle", mods: c.modules.map((m) => m.slug).join(",") });
     navigate(`/dashboard/checkout?${qs.toString()}`);
   }
 
@@ -214,35 +221,65 @@ export default function Planos() {
           </div>
         </div>
 
-        {plans.length === 0 ? (
+        {plans.length === 0 && combos.length === 0 && (
           <p className="text-center text-sm text-slate-500 pt-6">Nenhum plano disponível no momento.</p>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-4 max-w-5xl mx-auto">
-            {plans.map((p) => {
-              const mod = modBySlug.get(p.module_slug);
-              const tierKey = String(p.plan_tier || "").toLowerCase();
-              const isCurrent = !!current?.tier && current.tier === tierKey;
-              const isUpgrade = !!current?.tier && (TIER_RANK[tierKey] ?? 0) > (TIER_RANK[current.tier] ?? 0);
-              return (
-                <VidlyticsPlanCard
-                  key={p.id}
-                  tier={String(p.plan_tier || "").toLowerCase()}
-                  title={p.plan_name}
-                  moduleName={mod?.name || "Vidlytics"}
-                  logoUrl={mod?.logo_url ?? null}
-                  monthlyCents={p.price_monthly_cents}
-                  semiannualCents={p.price_semiannual_cents}
-                  annualCents={p.price_annual_cents}
-                  cycle={cycle}
-                  isPopular={String(p.plan_tier).toLowerCase() === "pro"}
-                  isCurrent={isCurrent}
-                  ctaLabel={isUpgrade ? "Fazer upgrade" : undefined}
-                  contactUrl={CONTACT_URL}
-                  onSelect={() => handleSelect(p)}
-                />
-              );
-            })}
-          </div>
+        )}
+
+        {combos.length > 0 && <ComboCards combos={combos} cycle={cycle} onSelect={handleCombo} />}
+
+        {byModule.length > 0 && (
+          <section className="max-w-5xl mx-auto space-y-5">
+            <div className="text-center space-y-1">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                {combos.length > 0 ? "Ou assine os módulos avulsos" : "Escolha o módulo"}
+              </h2>
+              <p className="text-sm font-medium text-slate-500">Clique no módulo para escolher o plano, o ciclo e os add-ons.</p>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              {byModule.map(([slug, list]) => {
+                const mod = modBySlug.get(slug);
+                const prices = list.map((p) => cycleCents(p, cycle) / CYCLE_MONTHS[cycle]).filter((v) => v > 0);
+                const from = prices.length ? Math.round(Math.min(...prices)) : 0;
+                return (
+                  <div key={slug} className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        {mod?.logo_url ? (
+                          <img src={mod.logo_url} alt={mod.name} className="h-11 w-11 rounded-xl object-contain" />
+                        ) : (
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-200 font-black text-slate-500">
+                            {(mod?.name || slug).charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <h3 className="text-lg font-black text-slate-900">{mod?.name || slug}</h3>
+                      </div>
+                      <p className="text-slate-900">
+                        <span className="text-xs font-bold text-slate-400">A partir de </span>
+                        <span className="text-2xl font-black tracking-tight">{brl(from)}</span>
+                        <span className="ml-1 text-xs font-bold text-slate-400">/mês</span>
+                      </p>
+                      <ul className="space-y-1">
+                        {list.map((p) => (
+                          <li key={p.id} className="flex justify-between text-xs font-medium text-slate-600">
+                            <span>{p.plan_name}</span>
+                            <span className="font-bold text-slate-800">{brl(Math.round(cycleCents(p, cycle) / CYCLE_MONTHS[cycle]))}/mês</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setOpenMod(slug)}
+                      className="mt-5 w-full rounded-2xl bg-[#0091ff] py-3 px-4 text-xs font-black uppercase tracking-wider text-white shadow-lg transition-all hover:bg-[#0070f3] hover:scale-[1.02]"
+                    >
+                      Escolher plano deste módulo
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-center text-xs font-medium text-slate-400">Novos módulos entram aqui automaticamente.</p>
+          </section>
         )}
 
         {plans.length > 0 && (
@@ -336,6 +373,26 @@ export default function Planos() {
             </div>
           </section>
         )}
+
+        <PlanosFaq />
+
+        {openMod && (() => {
+          const mp = byModule.find(([s]) => s === openMod);
+          if (!mp) return null;
+          const mod = modBySlug.get(openMod);
+          return (
+            <ModuloPlanoModal
+              key={openMod}
+              slug={openMod}
+              name={mod?.name || openMod}
+              logoUrl={mod?.logo_url ?? null}
+              plans={mp[1]}
+              initialCycle={cycle}
+              currentTier={openMod === "vidlytics" ? current?.tier ?? null : null}
+              onClose={() => setOpenMod(null)}
+            />
+          );
+        })()}
 
         {soon.length > 0 && (
           <div className="max-w-5xl mx-auto space-y-3">
