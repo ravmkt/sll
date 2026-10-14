@@ -43,6 +43,7 @@ export async function getCatalogShowcase(): Promise<CatalogPlan[]> {
     .select("id, plan_tier, plan_name, module_slug, price_monthly_cents, price_semiannual_cents, price_annual_cents, sort_order")
     .eq("is_active", true)
     .eq("is_combo", false)
+    .gt("price_monthly_cents", 0)
     .in("module_slug", slugs)
     .order("sort_order", { ascending: true });
   if (error) console.error("[getCatalogShowcase] dynamic_plans:", error.message);
@@ -95,5 +96,5 @@ export async function getCatalogCombos(): Promise<CatalogCombo[]> {
       semiannual_cents: Number(m.semiannual_cents ?? 0),
       annual_cents: Number(m.annual_cents ?? 0),
     })),
-  })) as CatalogCombo[];
+  })).filter((c: any) => c.price_monthly_cents > 0) as CatalogCombo[];
 }
