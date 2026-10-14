@@ -26,17 +26,20 @@ export const comboMaxPct = (combos: CatalogCombo[], cycle: PlanCycle) =>
 
 function Logo({ name, url }: { name: string; url: string | null }) {
   return url ? (
-    <img src={url} alt={name} title={name} className="h-9 w-9 shrink-0 rounded-lg object-contain" />
+    <img src={url} alt={name} title={name} className="h-14 w-14 shrink-0 rounded-xl object-contain" />
   ) : (
-    <span title={name} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#0091ff]/10 text-sm font-black text-[#0091ff]">
+    <span title={name} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#0091ff]/10 text-xl font-black text-[#0091ff]">
       {name.charAt(0).toUpperCase()}
     </span>
   );
 }
 
 export default function ComboCards({
-  combos, cycle, onSelect, highlights = {},
-}: { combos: CatalogCombo[]; cycle: PlanCycle; onSelect: (c: CatalogCombo) => void; highlights?: Record<string, string[]> }) {
+  combos, cycle, onSelect, highlights = {}, summaries = {},
+}: {
+  combos: CatalogCombo[]; cycle: PlanCycle; onSelect: (c: CatalogCombo) => void;
+  highlights?: Record<string, string[]>; summaries?: Record<string, string>;
+}) {
   const best = comboMaxPct(combos, cycle);
   const names = Array.from(new Set(combos.flatMap((c) => c.modules.map((m) => m.name))));
   const joined = names.length > 1 ? `${names.slice(0, -1).join(", ")} e ${names[names.length - 1]}` : names[0] ?? "os módulos";
@@ -57,6 +60,10 @@ export default function ComboCards({
         {combos.map((c) => {
           const k = calc(c, cycle);
           const pop = c.is_recommended;
+          const summary = (summaries[c.id] || "").trim();
+          const list = highlights[c.id]?.length
+            ? highlights[c.id].slice(0, 8)
+            : c.modules.map((m) => `${m.name}${m.plan_name ? " · " + m.plan_name : ""}`);
           return (
             <div
               key={c.id}
@@ -72,17 +79,13 @@ export default function ComboCards({
               )}
 
               <div className="flex items-start justify-between gap-2">
-                <div className="flex gap-1.5">
-                  {c.modules.map((m) => <Logo key={m.slug} name={m.name} url={m.logo_url} />)}
-                </div>
+                <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">{c.plan_name}</h3>
                 {k.pct > 0 && (
                   <span className="shrink-0 rounded-md bg-yellow-400 px-2 py-1 text-[10px] font-black uppercase text-slate-900">
                     Economize {k.pct}%
                   </span>
                 )}
               </div>
-
-              <h3 className="mt-3 text-lg font-black uppercase tracking-tight text-slate-900">{c.plan_name}</h3>
 
               <div className="mt-2">
                 {k.save > 0 && (
@@ -97,6 +100,8 @@ export default function ComboCards({
                 </p>
               </div>
 
+              {summary && <p className="mt-3 text-xs leading-relaxed text-slate-600">{summary}</p>}
+
               {k.save > 0 && (
                 <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
                   Você economiza {brl(Math.round(k.save / k.months))} por mês
@@ -105,17 +110,18 @@ export default function ComboCards({
               )}
 
               <ul className="mt-4 space-y-2 border-t border-slate-100 pt-3">
-                {(highlights[c.id]?.length
-                  ? highlights[c.id].slice(0, 4)
-                  : c.modules.map((m) => `${m.name}${m.plan_name ? " · " + m.plan_name : ""}`)
-                ).map((t) => (
+                {list.map((t) => (
                   <li key={t} className="flex items-start gap-2 text-xs font-medium text-slate-700">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 stroke-[3] text-emerald-500" />
                     <span>{t}</span>
                   </li>
                 ))}
               </ul>
+
               <div className="mt-auto pt-5">
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {c.modules.map((m) => <Logo key={m.slug} name={m.name} url={m.logo_url} />)}
+                </div>
                 <button
                   type="button"
                   onClick={() => onSelect(c)}

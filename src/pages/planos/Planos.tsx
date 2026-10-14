@@ -192,7 +192,7 @@ export default function Planos() {
         )}
 
         {/* 2. Combos */}
-        {combos.length > 0 && <ComboCards combos={combos} cycle={cycle} onSelect={handleCombo} highlights={comboHl} />}
+        {combos.length > 0 && <ComboCards combos={combos} cycle={cycle} onSelect={handleCombo} highlights={comboHl} summaries={comboSum} />}
 
         {/* 3. Modulos avulsos */}
         <ModuleCards byModule={byModule} mods={mods} cycle={cycle} onOpen={(s) => { setPreAddons([]); setOpenMod(s); }} />
