@@ -30,13 +30,19 @@ const ts = (v: string | null) => (v ? new Date(v).getTime() : 0);
 const fmtDate = (v: string | null) => (v ? new Date(v).toLocaleDateString('pt-BR', { timeZone: TZ }) : '—');
 const fmtFull = (v: string | null) => (v ? new Date(v).toLocaleString('pt-BR', { timeZone: TZ }) : 'Nunca acessou');
 
+const dayKey = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: TZ });
+function hm(d: Date) {
+  const p = new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
+  const h = p.find((x) => x.type === 'hour')?.value ?? '0';
+  const m = p.find((x) => x.type === 'minute')?.value ?? '00';
+  return `${Number(h)}h${m}`;
+}
 function lastAccess(v: string | null): { text: string; stale: boolean } {
   if (!v) return { text: 'Nunca acessou', stale: false };
   const d = new Date(v);
-  const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  const days = Math.round((day(new Date()) - day(d)) / 86400000);
-  if (days <= 0) return { text: `Hoje às ${d.getHours()}h`, stale: false };
-  if (days === 1) return { text: `Ontem às ${d.getHours()}h`, stale: false };
+  const days = Math.round((Date.parse(dayKey(new Date())) - Date.parse(dayKey(d))) / 86400000);
+  if (days <= 0) return { text: `Hoje às ${hm(d)}`, stale: false };
+  if (days === 1) return { text: `Ontem às ${hm(d)}`, stale: false };
   return { text: `Há ${days} dias`, stale: days > 15 };
 }
 
