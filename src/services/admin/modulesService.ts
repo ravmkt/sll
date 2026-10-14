@@ -9,6 +9,8 @@ export type ModuleOverview = {
   is_public_for_sale: boolean;
   sort_order: number;
   logo_url: string | null;
+  description: string | null;
+  features: string[] | null;
   access: number;
   paying: number;
   trial: number;
@@ -32,9 +34,14 @@ export async function getModulesOverview(days: number): Promise<ModulesData> {
   const { data, error } = await sb.rpc('admin_master_modules', { p_days: days });
   if (error) throw new Error(error.message);
   const res = data as ModulesData;
-  const { data: logos } = await sb.from('hub_modules').select('slug,logo_url');
-  const map = new Map<string, string | null>((logos || []).map((l: any) => [l.slug, l.logo_url ?? null]));
-  res.modules = res.modules.map((m) => ({ ...m, logo_url: map.get(m.slug) ?? null }));
+  const { data: logos } = await sb.from('hub_modules').select('slug,logo_url,description,features');
+  const map = new Map<string, any>((logos || []).map((l: any) => [l.slug, l]));
+  res.modules = res.modules.map((m) => ({
+    ...m,
+    logo_url: map.get(m.slug)?.logo_url ?? null,
+    description: map.get(m.slug)?.description ?? null,
+    features: Array.isArray(map.get(m.slug)?.features) ? map.get(m.slug).features : [],
+  }));
   return res;
 }
 
@@ -47,9 +54,11 @@ export async function getModuleStores(slug: string): Promise<ModuleStoreRow[]> {
 // logo: null = mantém, '' = remove, texto = nova URL
 export async function updateHubModule(
   slug: string, name: string, status: string, isPublic: boolean, sort: number, logo: string | null = null,
+  description: string | null = null, features: string[] | null = null,
 ): Promise<void> {
   const { error } = await sb.rpc('admin_update_hub_module', {
     p_slug: slug, p_name: name, p_status: status, p_public: isPublic, p_sort: sort, p_logo: logo,
+    p_description: description, p_features: features,
   });
   if (error) throw new Error(error.message);
 }

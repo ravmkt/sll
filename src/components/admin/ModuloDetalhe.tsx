@@ -29,6 +29,8 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
   const [pub, setPub] = useState(false);
   const [sort, setSort] = useState('1');
   const [logo, setLogo] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
+  const [featuresText, setFeaturesText] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const filled = useRef(false);
@@ -48,6 +50,8 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
         setPub(found.is_public_for_sale);
         setSort(String(found.sort_order ?? 1));
         setLogo(found.logo_url);
+        setDescription(found.description ?? '');
+        setFeaturesText((found.features ?? []).join('\n'));
         filled.current = true;
       }
     } catch (e: any) {
@@ -76,7 +80,8 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
     setSaving(true);
     try {
       const logoArg = logo === (m.logo_url ?? null) ? null : (logo ?? '');
-      await updateHubModule(slug, name, status, status === 'active' ? pub : false, Number(sort) || 1, logoArg);
+      const feats = featuresText.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 6);
+      await updateHubModule(slug, name, status, status === 'active' ? pub : false, Number(sort) || 1, logoArg, description, feats);
       toast.success('Módulo atualizado.');
       await load(true);
     } catch (e: any) {
@@ -230,6 +235,16 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
                 <span className={LABEL}>Posição na lista</span>
                 <input type="number" min={1} value={sort} onChange={(e) => setSort(e.target.value)} className={INPUT} />
                 <span className="block text-[10px] text-slate-600">Os outros módulos se ajustam sozinhos, sem repetir posição.</span>
+              </label>
+              <label className="block space-y-1">
+                <span className={LABEL}>Descrição no card da vitrine</span>
+                <textarea value={description} maxLength={160} rows={2} onChange={(e) => setDescription(e.target.value)} className={INPUT} placeholder="Ex.: Transmissões ao vivo direto no seu e-commerce." />
+                <span className="block text-[10px] text-slate-600">{description.length}/160 caracteres.</span>
+              </label>
+              <label className="block space-y-1">
+                <span className={LABEL}>Benefícios (um por linha, até 6)</span>
+                <textarea value={featuresText} rows={4} onChange={(e) => setFeaturesText(e.target.value)} className={INPUT} placeholder={'Lives com produtos vinculados\nChat em tempo real\nTudo na página da sua loja'} />
+                <span className="block text-[10px] text-slate-600">Aparecem com o ✓ no card do módulo em breve. Em módulos ativos, o card mostra as métricas.</span>
               </label>
               <button type="button" disabled={saving || uploading || !name.trim()} onClick={save} className="w-full cursor-pointer rounded-lg bg-[#fd8539] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">
                 {saving ? 'Salvando…' : 'Salvar alterações'}
