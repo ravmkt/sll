@@ -80,7 +80,7 @@ export type AdminStoreFull = {
   recent_events: { event_type: string; created_at: string; page_path: string | null }[];
 };
 
-export type PlanOption = { id: string; name: string | null; module_key: string | null };
+export type PlanOption = { id: string; name: string | null; module_key: string | null; is_combo?: boolean; is_active?: boolean };
 
 const client = supabase as any;
 
@@ -137,4 +137,43 @@ export async function cancelSubscription(subscriptionId: string): Promise<void> 
   if (data?.error) throw new Error(String(data.error));
   // Registra a ação no log do painel (o cancelamento já foi feito acima)
   try { await setSubscriptionStatus(subscriptionId, 'canceled'); } catch { /* já cancelada */ }
+}
+
+export type StorePeriod = {
+  events: Record<string, number>;
+  events_source: string | null;
+  invoices: AdminStoreFull['invoices'];
+  paid_cents: number;
+  paid_count: number;
+};
+export type ReferredStore = {
+  id: string; name: string | null; created_at: string; plan_name: string | null; status: StoreStatus; commission: number;
+};
+export type StoreReferrals = { referred_by: { id: string; name: string | null } | null; list: ReferredStore[] };
+
+export function getStorePeriod(storeId: string, days: number | null): Promise<StorePeriod> {
+  return call<StorePeriod>('admin_master_store_period', { p_store_id: storeId, p_days: days });
+}
+
+export function getStoreReferrals(storeId: string): Promise<StoreReferrals> {
+  return call<StoreReferrals>('admin_master_store_referrals', { p_store_id: storeId });
+}
+
+export function createSubscription(storeId: string, planId: string, moduleKey: string, cycle: string, status: string): Promise<string> {
+  return call<string>('admin_master_create_subscription', {
+    p_store_id: storeId, p_plan_id: planId, p_module_key: moduleKey, p_cycle: cycle, p_status: status,
+  });
+}
+
+export async function sendMasterEmail(storeId: string, subject: string, message: string): Promise<{ to: string }> {
+  const { data, error } = await client.functions.invoke('send-master-email', {
+    body: { store_id: storeId, subject, message },
+  });
+  if (error) {
+    let msg: string = error.message || 'Erro ao enviar o e-mail.';
+    try { const b = await error.context.json(); msg = b?.error || msg; } catch { /* mantém a mensagem padrão */ }
+    throw new Error(msg);
+  }
+  if (data?.error) throw new Error(String(data.error));
+  return data as { to: string };
 }
