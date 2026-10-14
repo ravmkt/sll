@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Check, Copy, CreditCard, Loader2, Lock, QrCode, ShieldCheck, X, Zap } from 'lucide-react';
+import { ArrowLeft, Check, Copy, CreditCard, Loader2, Lock, QrCode, ShieldCheck, BadgeCheck, X, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -324,13 +324,20 @@ export default function CheckoutPage() {
               </div>
 
               <div className="space-y-3 border-t border-slate-100 pt-4">
+                <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <BadgeCheck size={22} className="mt-0.5 shrink-0 text-emerald-600" />
+                  <div>
+                    <p className="text-sm font-black text-emerald-800">Garantia incondicional de 14 dias</p>
+                    <p className="text-xs text-emerald-700">Não gostou? Cancele em até 14 dias e receba o reembolso integral, sem burocracia.</p>
+                  </div>
+                </div>
                 <label className="flex cursor-pointer items-start gap-2.5 text-sm font-semibold">
                   <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1 h-4 w-4" />
                   Aceitar a renovação automática para garantir acesso contínuo
                 </label>
                 <p className="text-[11px] leading-relaxed text-slate-500">
                   Ao clicar em "Concordar e assinar", você autoriza a cobrança de {brl(total)} hoje e a renovação automática a cada {months === 1 ? 'mês' : `${months} meses`} no mesmo valor, até o cancelamento.
-                  Cancele a qualquer momento pelo painel, sem multa, e o acesso segue até o fim do período pago. Veja os <Link to="/termos" className="underline">Termos de Serviço</Link>.
+                  Cancele a qualquer momento pelo painel, sem multa. Garantia incondicional de 14 dias: se cancelar em até 14 dias após a assinatura, você recebe o reembolso integral do valor pago (solicite pelo suporte). Veja os <Link to="/termos" className="underline">Termos de Serviço</Link>.
                 </p>
                 <button type="button" disabled={!!pend || busy} onClick={submit}
                   className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[#3b63fb] py-3.5 text-sm font-bold text-white hover:bg-[#2f52d6] disabled:cursor-not-allowed disabled:opacity-40">
@@ -384,7 +391,7 @@ export default function CheckoutPage() {
           </div>
 
           <ul className="space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
-            {['Compra 100% segura', 'Cancele a qualquer momento direto pelo painel', 'Sem multa e sem fidelidade'].map((t) => (
+            {['Garantia de 14 dias com reembolso integral', 'Compra 100% segura', 'Cancele a qualquer momento direto pelo painel', 'Sem multa e sem fidelidade'].map((t) => (
               <li key={t} className="flex items-center gap-2"><ShieldCheck size={14} className="shrink-0 text-emerald-500" /> {t}</li>
             ))}
           </ul>

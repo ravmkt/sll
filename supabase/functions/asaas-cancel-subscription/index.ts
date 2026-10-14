@@ -192,6 +192,12 @@ Deno.serve(async (req) => {
           if (r.ok) {
             refunded = { payment_id: last.id, value: Number(last.value ?? 0) };
             try {
+              const { error: cErr } = await supabaseAdmin.rpc("cancel_referral_reward_by_payment", { p_payment_id: last.id });
+              if (cErr) console.error("cancelar comissao falhou", cErr);
+            } catch (e) {
+              console.error("cancelar comissao falhou", e);
+            }
+            try {
               await supabaseAdmin.from("admin_audit_logs").insert({
                 admin_id: user.id,
                 action: "subscription_refunded",
