@@ -10,6 +10,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { getDashboard, getModulesDistribution, listModules, type DashboardData, type ModuleSlice, type SeriesPoint } from '@/services/admin/adminService';
 import { getConsumption, type Consumption } from '@/services/admin/consumptionService';
+import InfraQuotaCards from '@/components/admin/InfraQuotaCards';
 import { EventsChart, StorageRanking, bytesFmt } from '@/components/admin/ConsumptionDetail';
 
 const sb: any = supabase;
@@ -186,6 +187,7 @@ export default function DashboardTab() {
   const [error, setError] = useState('');
   const [healthErr, setHealthErr] = useState('');
   const [aiErr, setAiErr] = useState('');
+  const [infra, setInfra] = useState<any>(null);
   const [origin, setOrigin] = useState<{ d: string; new: number; renewal: number; upfront: number }[]>([]);
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const prices = useMemo(loadPrices, []);
@@ -217,7 +219,7 @@ export default function DashboardTab() {
     setError('');
     Promise.all([
       getDashboard(range.start, range.end, module || null),
-      getConsumption(range.start, range.end, module || null).catch(() => null),
+      getConsumption(range.start, range.end, null).catch(() => null),
     ])
       .then(([d, c]) => { if (alive) { setData(d); setCons(c); } })
       .catch((e) => { if (alive) setError(e?.message || 'Erro ao carregar o dashboard.'); })
@@ -236,6 +238,14 @@ export default function DashboardTab() {
       .then(({ data: o }: any) => { if (alive) setOrigin(Array.isArray(o) ? o : []); });
     return () => { alive = false; };
   }, [range.start, range.end, module]);
+
+  useEffect(() => {
+    if (!range.start || !range.end || range.start > range.end) return;
+    let alive = true;
+    sb.rpc('admin_dashboard_metrics', { p_start: range.start, p_end: range.end, p_module: null })
+      .then(({ data: g }: any) => { if (alive && g) setInfra(g); });
+    return () => { alive = false; };
+  }, [range.start, range.end]);
 
   const s = data?.stores;
   const pie = s ? [
@@ -362,12 +372,13 @@ export default function DashboardTab() {
       {/* INFRAESTRUTURA E CUSTOS */}
       {data && (
         <section className="space-y-3">
-          <Title color="text-sky-400">Infraestrutura e custos</Title>
+          <Title color="text-sky-400">Infraestrutura e custos · sistema todo</Title>
+          <InfraQuotaCards />
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <Metric bd={BD.infra} label="Armazenamento total" value={bytesFmt(data.consumption.storage_bytes)} hint="Acumulado, não varia com o período" icon={HardDrive} tone="bg-sky-500/15 text-sky-400" />
+            <Metric bd={BD.infra} label="Armazenamento total" value={bytesFmt((infra?.consumption ?? data.consumption).storage_bytes)} hint="Acumulado, não varia com o período" icon={HardDrive} tone="bg-sky-500/15 text-sky-400" />
             <Metric bd={BD.infra} label="Vídeos hospedados" value={cons ? int(cons.videos_total) : '—'} hint={cons ? `${int(cons.videos_new)} novo(s) no período` : ''} icon={Film} tone="bg-sky-500/15 text-sky-400" />
-            <Metric bd={BD.infra} label="Views no período" value={int(data.consumption.views)} icon={Eye} tone="bg-sky-500/15 text-sky-400" />
-            <Metric bd={BD.infra} label="Eventos registrados" value={int(data.consumption.events)} hint="Chamadas ao track-event" icon={Zap} tone="bg-sky-500/15 text-sky-400" />
+            <Metric bd={BD.infra} label="Views no período" value={int((infra?.consumption ?? data.consumption).views)} icon={Eye} tone="bg-sky-500/15 text-sky-400" />
+            <Metric bd={BD.infra} label="Eventos registrados" value={int((infra?.consumption ?? data.consumption).events)} hint="Chamadas ao track-event" icon={Zap} tone="bg-sky-500/15 text-sky-400" />
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
