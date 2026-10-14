@@ -8,11 +8,12 @@ import {
 } from '@/services/admin/storesService';
 import { Badge, CARD, DeleteStoreModal, ICON, INPUT, dt, dtt, modLabel } from '@/components/admin/storeUi';
 import { ContactActions } from '@/components/admin/StoreModals';
+import { CommunicationTab } from '@/components/admin/CommunicationTab';
 import { AssinaturasTab, FinanceiroTab, IndicacoesTab, ResumoTab } from '@/components/admin/storeTabs';
 
 const TABS = [
   ['resumo', 'Resumo'], ['assinaturas', 'Assinaturas'], ['financeiro', 'Financeiro'], ['indicacoes', 'Indicações'],
-  ['beneficios', 'Benefícios'], ['dados', 'Dados'], ['log', 'Log'],
+  ['beneficios', 'Benefícios'], ['comunicacao', 'Comunicação'], ['dados', 'Dados'], ['log', 'Log'],
 ] as const;
 
 const ACTION_LABEL: Record<string, string> = {
@@ -296,6 +297,10 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
             </table>
           </div>
         </div>
+      )}
+
+      {aba === 'comunicacao' && (
+        <CommunicationTab storeId={storeId} storeName={s.name} contactName={s.contact_name} whatsapp={s.whatsapp} email={s.contact_email || s.owner_contact_email} />
       )}
 
       {aba === 'dados' && (
