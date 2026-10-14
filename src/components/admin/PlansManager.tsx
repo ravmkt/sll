@@ -198,7 +198,7 @@ export default function PlansManager() {
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Planos e add-ons</h1>
-        <p className="text-sm text-slate-500">Catálogo dinâmico. Alterações não mudam assinaturas já ativas.</p>
+        <p className="text-sm text-slate-500">Limites e módulos valem na hora para quem já assina. Preços só afetam novas assinaturas.</p>
       </div>
 
       {msg && (

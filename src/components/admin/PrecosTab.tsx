@@ -110,7 +110,7 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
           <h2 className="text-lg font-black text-white">{plan ? 'Editar plano' : 'Novo plano'}</h2>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-white"><X size={18} /></button>
         </div>
-        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">Alterações não mudam assinaturas já ativas.</p>
+        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">Limites e módulos valem na hora para quem já assina. Preços só afetam novas assinaturas.</p>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="space-y-1">

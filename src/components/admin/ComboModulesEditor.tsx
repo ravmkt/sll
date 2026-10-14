@@ -136,7 +136,7 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
           <h2 className="text-lg font-bold text-slate-100">Módulos de {combo.plan_name}</h2>
           <button type="button" onClick={onClose} className="text-sm text-slate-400 hover:text-slate-200">Fechar</button>
         </div>
-        <p className="rounded-md bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">Alterações não mudam assinaturas já ativas.</p>
+        <p className="rounded-md bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">Limites e módulos valem na hora para quem já assina. Preços só afetam novas assinaturas.</p>
         <p className="text-[11px] text-slate-500">
           Cada módulo mantém os limites do plano escolhido (não há soma entre módulos). Preencha um campo apenas para dar mais ou menos neste combo.
         </p>
