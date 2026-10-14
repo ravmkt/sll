@@ -25,8 +25,8 @@ import { CARD, INPUT, SELECT, brl, int } from '@/components/admin/moduleUi';
 type Mod = { slug: string; name: string };
 type Row = { key: string; kind: 'num' | 'bool'; val: string; on: boolean };
 
-const LABEL = 'text-[10px] font-bold uppercase tracking-wider text-slate-500';
-const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
+const LABEL = 'text-xs font-bold uppercase tracking-wider text-slate-500';
+const TH = 'px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-500';
 const LIMIT_LABEL: Record<string, string> = {
   views: 'Plays por mês', max_videos: 'Vídeos', max_pages: 'Páginas', storage_gb: 'Storage (GB)',
   tracking: 'Tracking', badge_removable: 'Remove o selo',
@@ -129,7 +129,7 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
           <h2 className="text-lg font-black text-white">{plan ? 'Editar plano' : 'Novo plano'}</h2>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-white"><X size={18} /></button>
         </div>
-        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">Limites e módulos valem na hora para quem já assina. Preços só afetam novas assinaturas.</p>
+        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-300">Limites e módulos valem na hora para quem já assina. Preços só afetam novas assinaturas.</p>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="space-y-1">
@@ -142,7 +142,7 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
           <label className="space-y-1">
             <span className={LABEL}>Chave do plano</span>
             <input value={plan ? plan.plan_tier : tier} onChange={(e) => setTier(e.target.value)} disabled={!!plan} placeholder="starter" className={INPUT} />
-            <span className="block text-[10px] text-slate-600">{plan ? 'Identificador interno. Não pode ser alterado.' : 'Identificador interno, sem espaços. Depois de criada, não muda.'}</span>
+            <span className="block text-xs text-slate-600">{plan ? 'Identificador interno. Não pode ser alterado.' : 'Identificador interno, sem espaços. Depois de criada, não muda.'}</span>
           </label>
         </div>
         <label className="block space-y-1">
@@ -155,23 +155,23 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
           <label className="space-y-1"><span className={LABEL}>Semestral (R$)</span><input value={ps} onChange={(e) => setPs(e.target.value)} className={INPUT} /></label>
           <label className="space-y-1"><span className={LABEL}>Anual (R$)</span><input value={pa} onChange={(e) => setPa(e.target.value)} className={INPUT} /></label>
         </div>
-        <p className="-mt-2 text-[10px] text-slate-600">Semestral e anual são o valor total cobrado no período.</p>
+        <p className="-mt-2 text-xs text-slate-600">Semestral e anual são o valor total cobrado no período.</p>
         {(() => {
           const mo = toCents(pm);
           const items = ([['Semestral', ps, 6], ['Anual', pa, 12]] as [string, string, number][])
             .map(([n, v, mths]) => [n, cycleInfo(toCents(v), mths, mo)] as const)
             .filter(([, t]) => t);
-          return items.length ? <p className="-mt-2 text-[11px] font-semibold text-emerald-400">{items.map(([n, t]) => `${n}: ${t}`).join('  |  ')}</p> : null;
+          return items.length ? <p className="-mt-2 text-[13px] font-semibold text-emerald-400">{items.map(([n, t]) => `${n}: ${t}`).join('  |  ')}</p> : null;
         })()}
 
         <div className="space-y-2">
           <p className={LABEL}>Limites e recursos</p>
-          {rows.length === 0 && <p className="text-xs text-slate-500">Nenhum limite. Adicione abaixo.</p>}
+          {rows.length === 0 && <p className="text-[13px] text-slate-500">Nenhum limite. Adicione abaixo.</p>}
           {rows.map((r, i) => (
             <div key={r.key} className="flex items-center gap-2">
-              <span className="w-40 shrink-0 truncate text-xs text-slate-300" title={r.key}>{LIMIT_LABEL[r.key] || r.key}</span>
+              <span className="w-40 shrink-0 truncate text-[13px] text-slate-300" title={r.key}>{LIMIT_LABEL[r.key] || r.key}</span>
               {r.kind === 'bool' ? (
-                <label className="flex flex-1 items-center gap-2 text-xs text-slate-400">
+                <label className="flex flex-1 items-center gap-2 text-[13px] text-slate-400">
                   <input type="checkbox" checked={r.on} onChange={(e) => setRow(i, { on: e.target.checked })} /> {r.on ? 'Sim' : 'Não'}
                 </label>
               ) : (
@@ -182,8 +182,8 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
           ))}
           <div className="flex items-center gap-2 pt-1">
             <input value={newKey} onChange={(e) => setNewKey(e.target.value)} placeholder="novo limite (ex.: lives_por_mes)" className={`${INPUT} flex-1`} />
-            <button type="button" onClick={() => addRow('num')} className="shrink-0 cursor-pointer rounded-lg bg-white/5 px-2.5 py-2 text-[11px] font-bold text-slate-200 hover:bg-white/10">+ Número</button>
-            <button type="button" onClick={() => addRow('bool')} className="shrink-0 cursor-pointer rounded-lg bg-white/5 px-2.5 py-2 text-[11px] font-bold text-slate-200 hover:bg-white/10">+ Sim/Não</button>
+            <button type="button" onClick={() => addRow('num')} className="shrink-0 cursor-pointer rounded-lg bg-white/5 px-2.5 py-2 text-[13px] font-bold text-slate-200 hover:bg-white/10">+ Número</button>
+            <button type="button" onClick={() => addRow('bool')} className="shrink-0 cursor-pointer rounded-lg bg-white/5 px-2.5 py-2 text-[13px] font-bold text-slate-200 hover:bg-white/10">+ Sim/Não</button>
           </div>
         </div>
 
@@ -191,22 +191,22 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
           <span className={LABEL}>O que inclui no modal (um item por linha, até 8)</span>
           <textarea value={hl} rows={5} onChange={(e) => setHl(e.target.value)} className={INPUT}
             placeholder={'Até 20 vídeos ativos\nAté 25.000 visualizações/mês\nSuporte via WhatsApp'} />
-          <span className="block text-[10px] text-slate-600">Vazio = o modal monta a lista a partir dos limites do plano.</span>
+          <span className="block text-xs text-slate-600">Vazio = o modal monta a lista a partir dos limites do plano.</span>
         </label>
 
         <label className="block space-y-1">
           <span className={LABEL}>Resumo do combo (texto curto no card e no modal)</span>
           <textarea value={cs} rows={3} onChange={(e) => setCs(e.target.value)} className={INPUT}
             placeholder="Ex.: Vídeos interativos e lives no mesmo plano, com preço menor que a soma dos avulsos." />
-          <span className="block text-[10px] text-slate-600">Usado nos planos do tipo combo. Vazio = não mostra resumo.</span>
+          <span className="block text-xs text-slate-600">Usado nos planos do tipo combo. Vazio = não mostra resumo.</span>
         </label>
 
         <div className="flex gap-5">
-          <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={rec} onChange={(e) => setRec(e.target.checked)} /> Recomendado</label>
-          <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Ativo (à venda)</label>
+          <label className="flex items-center gap-2 text-[13px] text-slate-300"><input type="checkbox" checked={rec} onChange={(e) => setRec(e.target.checked)} /> Recomendado</label>
+          <label className="flex items-center gap-2 text-[13px] text-slate-300"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Ativo (à venda)</label>
         </div>
 
-        <button type="button" disabled={busy} onClick={save} className="w-full cursor-pointer rounded-lg bg-[#fd8539] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">
+        <button type="button" disabled={busy} onClick={save} className="w-full cursor-pointer rounded-lg bg-[#fd8539] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40">
           {busy ? 'Salvando…' : plan ? 'Salvar alterações' : 'Criar plano'}
         </button>
       </div>
@@ -229,12 +229,12 @@ function AddonRow({ a, onSaved }: { a: PlanAddon; onSaved: () => void }) {
   };
   return (
     <tr>
-      <td className="px-3 py-2 font-mono text-[10px] text-slate-500">{a.module_slug} · {a.key}</td>
+      <td className="px-3 py-2 font-mono text-xs text-slate-500">{a.module_slug} · {a.key}</td>
       <td className="px-3 py-2"><input value={name} onChange={(e) => setName(e.target.value)} className={INPUT} /></td>
       <td className="w-32 px-3 py-2"><input value={price} onChange={(e) => setPrice(e.target.value)} className={INPUT} /></td>
       <td className="px-3 py-2"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /></td>
       <td className="px-3 py-2 text-right">
-        <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-[11px] font-bold text-white disabled:opacity-40">{busy ? '…' : 'Salvar'}</button>
+        <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">{busy ? '…' : 'Salvar'}</button>
       </td>
     </tr>
   );
@@ -321,7 +321,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
 
   const renderTable = (rows: DynamicPlan[], combo: boolean) => (
     <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#111524]">
-      <table className="w-full min-w-[980px] text-xs">
+      <table className="w-full min-w-[980px] text-[13px]">
         <thead className="border-b border-slate-800">
           <tr>
             <th className={TH}>Plano</th><th className={TH}>{combo ? 'Módulos incluídos' : 'Módulo'}</th>
@@ -334,45 +334,45 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
           {rows.map((p) => (
             <tr key={p.id} className={`hover:bg-white/5 ${combo ? 'shadow-[inset_4px_0_0_0_#facc15]' : ''}`}>
               <td className="px-3 py-3">
-                <p className="font-bold text-white">{p.plan_name} {p.is_recommended && <span className="ml-1 rounded-full bg-[#fd8539]/15 px-1.5 py-0.5 text-[9px] text-[#fd8539]">Recomendado</span>}</p>
-                <p className="font-mono text-[10px] text-slate-600">{p.plan_tier}</p>
+                <p className="font-bold text-white">{p.plan_name} {p.is_recommended && <span className="ml-1 rounded-full bg-[#fd8539]/15 px-1.5 py-0.5 text-[11px] text-[#fd8539]">Recomendado</span>}</p>
+                <p className="font-mono text-xs text-slate-600">{p.plan_tier}</p>
               </td>
               <td className="px-3 py-3">
                 {combo ? (
                   <div className="space-y-1">
-                    <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
+                    <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-xs font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
                     {comboLine(p.id).length > 0
-                      ? <p className="text-[10px] leading-snug text-amber-200/80">{comboLine(p.id).join(' + ')}</p>
-                      : <p className="text-[10px] text-rose-400">Sem módulos definidos</p>}
-                    <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer text-[10px] font-semibold text-amber-300 hover:underline">Editar módulos</button>
+                      ? <p className="text-xs leading-snug text-amber-200/80">{comboLine(p.id).join(' + ')}</p>
+                      : <p className="text-xs text-rose-400">Sem módulos definidos</p>}
+                    <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer text-xs font-semibold text-amber-300 hover:underline">Editar módulos</button>
                   </div>
                 ) : (
-                  <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-bold text-sky-300 ring-1 ring-sky-500/40">{modName.get(p.module_slug || '') || p.module_slug}</span>
+                  <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs font-bold text-sky-300 ring-1 ring-sky-500/40">{modName.get(p.module_slug || '') || p.module_slug}</span>
                 )}
               </td>
               <td className="px-3 py-3 text-center text-white">{brl(p.price_monthly_cents)}</td>
               <td className="px-3 py-3 text-center text-slate-300">
                 {brl(p.price_semiannual_cents)}
-                {cycleInfo(p.price_semiannual_cents, 6, p.price_monthly_cents) && <p className="text-[10px] font-semibold text-emerald-400">({cycleInfo(p.price_semiannual_cents, 6, p.price_monthly_cents)})</p>}
+                {cycleInfo(p.price_semiannual_cents, 6, p.price_monthly_cents) && <p className="text-xs font-semibold text-emerald-400">({cycleInfo(p.price_semiannual_cents, 6, p.price_monthly_cents)})</p>}
               </td>
               <td className="px-3 py-3 text-center text-slate-300">
                 {brl(p.price_annual_cents)}
-                {cycleInfo(p.price_annual_cents, 12, p.price_monthly_cents) && <p className="text-[10px] font-semibold text-emerald-400">({cycleInfo(p.price_annual_cents, 12, p.price_monthly_cents)})</p>}
+                {cycleInfo(p.price_annual_cents, 12, p.price_monthly_cents) && <p className="text-xs font-semibold text-emerald-400">({cycleInfo(p.price_annual_cents, 12, p.price_monthly_cents)})</p>}
               </td>
               <td className="px-3 py-3 text-center"><MarginBadge m={costs.marginOf(p)} /></td><td className="px-3 py-3 text-center font-semibold text-white">{int(subs[p.id])}</td>
               <td className="px-3 py-3 text-center">
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
               </td>
               <td className="px-3 py-3">
                 <div className="flex justify-center gap-1.5">
-                  <button type="button" onClick={() => setEditing(p)} className="cursor-pointer rounded-md bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:bg-white/10">Editar</button>
+                  <button type="button" onClick={() => setEditing(p)} className="cursor-pointer rounded-md bg-white/5 px-2.5 py-1 text-[13px] font-semibold text-slate-200 hover:bg-white/10">Editar</button>
                   <button type="button" disabled={togglingId === p.id} onClick={() => toggleActive(p)}
-                    className={`cursor-pointer rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-40 ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
+                    className={`cursor-pointer rounded-md px-2.5 py-1 text-[13px] font-semibold disabled:opacity-40 ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
                     {p.is_active ? 'Pausar' : 'Ativar'}
                   </button>
                   <button type="button" disabled={togglingId === p.id || (subs[p.id] || 0) > 0} onClick={() => removePlan(p)}
                     title={(subs[p.id] || 0) > 0 ? 'Plano com assinantes: use Pausar' : 'Excluir plano'}
-                    className="cursor-pointer rounded-md bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30">Excluir</button>
+                    className="cursor-pointer rounded-md bg-rose-500/15 px-2.5 py-1 text-[13px] font-semibold text-rose-300 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30">Excluir</button>
                 </div>
               </td>
             </tr>
@@ -390,7 +390,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
         <div className="flex min-h-[44px] flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-black text-white">Preços</h1>
-            <p className="text-xs text-slate-500">Planos, limites, add-ons, cupons e custos de cada módulo.</p>
+            <p className="text-[13px] text-slate-500">Planos, limites, add-ons, cupons e custos de cada módulo.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {sub === 'planos' && (
@@ -399,10 +399,10 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
                   <option value="">Todos os módulos</option>
                   {modules.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
                 </select>
-                <button type="button" onClick={() => setEditing('new')} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-xs font-bold text-white">
+                <button type="button" onClick={() => setEditing('new')} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-[13px] font-bold text-white">
                   <Plus size={14} /> Novo plano
                 </button>
-                <button type="button" onClick={() => setCreatingCombo(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-bold text-slate-900">
+                <button type="button" onClick={() => setCreatingCombo(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-yellow-400 px-3 py-1.5 text-[13px] font-bold text-slate-900">
                   <Plus size={14} /> Novo combo
                 </button>
               </>
@@ -412,7 +412,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
         <div className="inline-flex rounded-lg border border-slate-700 bg-[#0b0e1a] p-0.5">
           {TABS.map((t) => (
             <button key={t.id} type="button" onClick={() => setSub(t.id)}
-              className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${sub === t.id ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}>
+              className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${sub === t.id ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}>
               {t.label}
             </button>
           ))}
@@ -420,13 +420,13 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
       </div>
 
       {costs.fx && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] text-amber-200">
           ⚠️ Alerta Cambial: o dólar subiu para {costs.fx.rate.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} (média de 30 dias: {costs.fx.avg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}). As margens dos planos e combos foram recalculadas automaticamente com o novo câmbio.
         </div>
       )}
 
       {sub === 'planos' && costs.alerts.length > 0 && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] text-amber-200">
           <p className="font-bold">Atenção Rodrigo: {costs.alerts.length} {costs.alerts.length === 1 ? 'item está' : 'itens estão'} com margem abaixo de 50% no pior caso.</p>
           <ul className="mt-1 list-disc pl-4">
             {costs.alerts.slice(0, 6).map((a) => (
@@ -434,22 +434,22 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
             ))}
           </ul>
         </div>
-      )}{error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+      )}{error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[15px] text-rose-300">{error}</div>}
 
       {sub === 'planos' && (plans === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
       ) : filter ? (
         <div className="space-y-4">
-          <button type="button" onClick={() => setFilter('')} className="cursor-pointer text-xs font-semibold text-slate-400 hover:text-white">← Todos os módulos</button>
+          <button type="button" onClick={() => setFilter('')} className="cursor-pointer text-[13px] font-semibold text-slate-400 hover:text-white">← Todos os módulos</button>
           <section className="space-y-2">
-            <h2 className="text-sm font-bold text-sky-300">{modName.get(filter) || filter} <span className="ml-1 font-normal text-slate-500">({individuals.length} planos)</span></h2>
+            <h2 className="text-[15px] font-bold text-sky-300">{modName.get(filter) || filter} <span className="ml-1 font-normal text-slate-500">({individuals.length} planos)</span></h2>
             {renderTable(individuals, false)}
           </section>
         </div>
       ) : (
         <div className="space-y-8">
           <section data-sec="modulo-cards" className="space-y-3">
-            <h2 className="text-sm font-bold text-sky-300">Módulos</h2>
+            <h2 className="text-[15px] font-bold text-sky-300">Módulos</h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {modules.map((m) => {
                 const mp = (plans || []).filter((p) => !p.is_combo && p.module_slug === m.slug);
@@ -460,18 +460,18 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
                   <button key={m.slug} type="button" onClick={() => setFilter(m.slug)}
                     className="cursor-pointer rounded-2xl border border-slate-800 bg-[#111524] p-5 text-left transition-colors hover:border-sky-500/50 hover:bg-white/5">
                     <p className="text-base font-black text-white">{m.name}</p>
-                    <p className="mt-1 text-[11px] text-slate-500">{mp.length === 0 ? 'Nenhum plano ainda' : `${mp.length} ${mp.length === 1 ? 'plano' : 'planos'} · ${act.length} ativos`}</p>
+                    <p className="mt-1 text-[13px] text-slate-500">{mp.length === 0 ? 'Nenhum plano ainda' : `${mp.length} ${mp.length === 1 ? 'plano' : 'planos'} · ${act.length} ativos`}</p>
                     <div className="mt-4 flex items-end justify-between">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">A partir de</p>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">A partir de</p>
                         <p className="text-lg font-black text-sky-300">{min === null ? '—' : brl(min)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Assinantes</p>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Assinantes</p>
                         <p className="text-lg font-black text-white">{int(sc)}</p>
                       </div>
                     </div>
-                    <p className="mt-4 text-[11px] font-semibold text-sky-300">Gerenciar planos →</p>
+                    <p className="mt-4 text-[13px] font-semibold text-sky-300">Gerenciar planos →</p>
                   </button>
                 );
               })}
@@ -481,9 +481,9 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
           <ComboDiscountCard />
 
           <section className="space-y-3">
-            <h2 className="text-sm font-bold text-yellow-300">Combos <span className="ml-1 font-normal text-slate-500">({combos.length})</span></h2>
+            <h2 className="text-[15px] font-bold text-yellow-300">Combos <span className="ml-1 font-normal text-slate-500">({combos.length})</span></h2>
             {combos.length === 0 ? (
-              <p className="rounded-2xl border border-slate-800 bg-[#111524] px-4 py-8 text-center text-xs text-slate-500">Nenhum combo. Clique em "Novo combo".</p>
+              <p className="rounded-2xl border border-slate-800 bg-[#111524] px-4 py-8 text-center text-[13px] text-slate-500">Nenhum combo. Clique em "Novo combo".</p>
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {combos.map((p) => {
@@ -494,30 +494,30 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="text-base font-black text-white">{p.plan_name}</p>
-                          <p className="font-mono text-[10px] text-slate-600">{p.plan_tier}</p>
+                          <p className="font-mono text-xs text-slate-600">{p.plan_tier}</p>
                         </div>
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
                       </div>
                       <div className="mt-3 flex-1">
-                        <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
+                        <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-xs font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
                         {line.length > 0
-                          ? <p className="mt-2 text-xs leading-snug text-amber-200/80">{line.join(' + ')}</p>
-                          : <p className="mt-2 text-xs text-rose-400">Sem módulos definidos</p>}
+                          ? <p className="mt-2 text-[13px] leading-snug text-amber-200/80">{line.join(' + ')}</p>
+                          : <p className="mt-2 text-[13px] text-rose-400">Sem módulos definidos</p>}
                       </div>
                       <div onClick={(ev) => ev.stopPropagation()} className="mt-3 cursor-default">
                         <ComboPricing combo={p} list={costs.listPrices(p.id)} pct={costs.discounts[p.id] ?? 0} onChanged={() => { load(); costs.reload(); }} />
                       </div>
-                      <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-slate-500"><span>Margem</span><MarginBadge m={costs.marginOf(p)} /></div>
-                      <p className="mt-3 text-center text-[11px] text-slate-500">{int(subs[p.id])} assinantes</p>
+                      <div className="mt-2 flex items-center justify-center gap-2 text-[13px] text-slate-500"><span>Margem</span><MarginBadge m={costs.marginOf(p)} /></div>
+                      <p className="mt-3 text-center text-[13px] text-slate-500">{int(subs[p.id])} assinantes</p>
                       <div className="mt-3 flex flex-wrap justify-center gap-1.5" onClick={(ev) => ev.stopPropagation()}>
-                        <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer rounded-md bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-amber-300 hover:bg-white/10">Módulos</button>
+                        <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer rounded-md bg-white/5 px-2.5 py-1 text-[13px] font-semibold text-amber-300 hover:bg-white/10">Módulos</button>
                         <button type="button" disabled={togglingId === p.id} onClick={() => toggleActive(p)}
-                          className={`cursor-pointer rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-40 ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
+                          className={`cursor-pointer rounded-md px-2.5 py-1 text-[13px] font-semibold disabled:opacity-40 ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
                           {p.is_active ? 'Pausar' : 'Ativar'}
                         </button>
                         <button type="button" disabled={togglingId === p.id || (subs[p.id] || 0) > 0} onClick={() => removePlan(p)}
                           title={(subs[p.id] || 0) > 0 ? 'Combo com assinantes: use Pausar' : 'Excluir combo'}
-                          className="cursor-pointer rounded-md bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30">Excluir</button>
+                          className="cursor-pointer rounded-md bg-rose-500/15 px-2.5 py-1 text-[13px] font-semibold text-rose-300 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30">Excluir</button>
                       </div>
                     </div>
                   );
@@ -536,7 +536,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
       ) : (
         <div className={`${CARD} overflow-x-auto`}>
-          <table className="w-full min-w-[640px] text-xs">
+          <table className="w-full min-w-[640px] text-[13px]">
             <thead className="border-b border-slate-800">
               <tr><th className={TH}>Chave</th><th className={TH}>Nome</th><th className={TH}>Mensal (R$)</th><th className={TH}>Ativo</th><th className={TH} /></tr>
             </thead>

@@ -73,13 +73,13 @@ export function ModuleAccessPanel({ storeId }: { storeId: string }) {
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-900">Módulos da loja</h3>
-        <label className="flex items-center gap-2 text-xs text-slate-500">
+        <h3 className="text-[15px] font-bold text-slate-900">Módulos da loja</h3>
+        <label className="flex items-center gap-2 text-[13px] text-slate-500">
           Prazo ao liberar
           <select
             value={days}
             onChange={(e) => setDays(e.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs"
+            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[13px]"
           >
             <option value="">Sem prazo</option>
             <option value="t7">Teste de 7 dias</option><option value="t14">Teste de 14 dias</option><option value="30">30 dias</option>
@@ -89,10 +89,10 @@ export function ModuleAccessPanel({ storeId }: { storeId: string }) {
         </label>
       </div>
 
-      {msg && <p className={`mb-3 rounded-md px-3 py-2 text-xs ${msgStyle[msg.type]}`}>{msg.text}</p>}
+      {msg && <p className={`mb-3 rounded-md px-3 py-2 text-[13px] ${msgStyle[msg.type]}`}>{msg.text}</p>}
 
       {loading ? (
-        <p className="text-sm text-slate-500">Carregando...</p>
+        <p className="text-[15px] text-slate-500">Carregando...</p>
       ) : (
         <ul className="divide-y divide-slate-100">
           {mods.map((m) => {
@@ -100,12 +100,12 @@ export function ModuleAccessPanel({ storeId }: { storeId: string }) {
             return (
               <li key={m.module_key} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-slate-900">{LABELS[m.module_key]}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATE_STYLE[m.state]}`}>
+                  <span className="text-[15px] font-semibold text-slate-900">{LABELS[m.module_key]}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[13px] font-medium ${STATE_STYLE[m.state]}`}>
                     {STATE_TEXT[m.state]}{m.status === 'trialing' ? ' (teste)' : ''}
                   </span>
                   {m.ends_at && (
-                    <span className="text-xs text-slate-500">
+                    <span className="text-[13px] text-slate-500">
                       até {new Date(m.ends_at).toLocaleDateString('pt-BR')}
                     </span>
                   )}
@@ -114,7 +114,7 @@ export function ModuleAccessPanel({ storeId }: { storeId: string }) {
                   type="button"
                   disabled={locked || busy === m.module_key}
                   onClick={() => toggle(m)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 ${
+                  className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 ${
                     m.state === 'off' ? 'bg-[#0094eb]' : 'bg-red-600'
                   }`}
                 >

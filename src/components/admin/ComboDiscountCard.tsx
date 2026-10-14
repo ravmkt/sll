@@ -39,8 +39,8 @@ export default function ComboDiscountCard() {
   return (
     <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-[#111524] p-4">
       <div>
-        <h2 className="text-sm font-bold text-yellow-300">Desconto padrão dos combos</h2>
-        <p className="mt-0.5 text-[11px] text-slate-500">
+        <h2 className="text-[15px] font-bold text-yellow-300">Desconto padrão dos combos</h2>
+        <p className="mt-0.5 text-[13px] text-slate-500">
           Sugestão para novos combos e desconto do combo personalizado do cliente. Cada combo fixo tem o seu próprio desconto, editável no card.
         </p>
       </div>
@@ -48,14 +48,14 @@ export default function ComboDiscountCard() {
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="h-9 w-20 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-right text-sm text-slate-100 outline-none focus:border-[#0094eb]"
+          className="h-9 w-20 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-right text-[15px] text-slate-100 outline-none focus:border-[#0094eb]"
         />
-        <span className="text-sm text-slate-400">%</span>
+        <span className="text-[15px] text-slate-400">%</span>
         <button
           type="button"
           disabled={busy || !dirty}
           onClick={save}
-          className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-xs font-bold text-white disabled:opacity-40"
+          className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
         >
           {busy ? 'Salvando...' : 'Salvar'}
         </button>

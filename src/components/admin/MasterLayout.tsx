@@ -25,8 +25,8 @@ export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: 
             <ShieldCheck className="h-5 w-5 text-[#fd8539]" />
           </div>
           <div>
-            <p className="text-sm font-black leading-tight text-white">SLL Master</p>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">SuperAdmin</p>
+            <p className="text-[15px] font-black leading-tight text-white">SLL Master</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">SuperAdmin</p>
           </div>
         </div>
 
@@ -39,7 +39,7 @@ export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: 
                 key={it.id}
                 type="button"
                 onClick={() => onTab(it.id)}
-                className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-sm transition-colors ${
+                className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-[15px] transition-colors ${
                   on ? 'bg-[#0094eb] font-semibold text-white shadow-md shadow-[#0094eb]/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
@@ -54,7 +54,7 @@ export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: 
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
-            className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-[15px] text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
           >
             <ArrowLeft size={18} className="shrink-0 text-[#fd8539]" />
             Voltar ao SLL

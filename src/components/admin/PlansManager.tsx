@@ -14,11 +14,11 @@ const toReais = (c: number) => (c / 100).toFixed(2);
 const toCents = (v: string) => Math.round(Number(v.replace(',', '.')) * 100);
 const toNum = (v: string) => (v.trim() === '' ? null : Number(v));
 const toStr = (v: unknown) => (typeof v === 'number' ? String(v) : '');
-const inputCls = 'w-full rounded-md border border-slate-300 px-2 py-1 text-sm';
+const inputCls = 'w-full rounded-md border border-slate-300 px-2 py-1 text-[15px]';
 
 function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
-    <label className="block text-xs text-slate-500">
+    <label className="block text-[13px] text-slate-500">
       {label}
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={inputCls} />
     </label>
@@ -27,7 +27,7 @@ function Field({ label, value, onChange, placeholder }: { label: string; value: 
 
 function Check({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="flex items-center gap-2 text-xs text-slate-700">
+    <label className="flex items-center gap-2 text-[13px] text-slate-700">
       <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} />
       {label}
     </label>
@@ -89,7 +89,7 @@ function PlanEditor({ plan, onDone }: { plan: DynamicPlan; onDone: (m: Msg) => v
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase text-slate-400">
+        <span className="text-[13px] font-semibold uppercase text-slate-400">
           {plan.module_slug ?? 'combo'} · {plan.plan_tier}
         </span>
         <div className="flex gap-4">
@@ -119,7 +119,7 @@ function PlanEditor({ plan, onDone }: { plan: DynamicPlan; onDone: (m: Msg) => v
         type="button"
         onClick={save}
         disabled={saving}
-        className="mt-4 rounded-lg bg-[#0094eb] px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+        className="mt-4 rounded-lg bg-[#0094eb] px-4 py-1.5 text-[13px] font-semibold text-white disabled:opacity-40"
       >
         {saving ? 'Salvando...' : 'Salvar'}
       </button>
@@ -159,7 +159,7 @@ function AddonRow({ addon, onDone }: { addon: PlanAddon; onDone: (m: Msg) => voi
         type="button"
         onClick={save}
         disabled={saving}
-        className="rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+        className="rounded-lg bg-[#0094eb] px-3 py-1.5 text-[13px] font-semibold text-white disabled:opacity-40"
       >
         {saving ? '...' : 'Salvar'}
       </button>
@@ -198,17 +198,17 @@ export default function PlansManager() {
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Planos e add-ons</h1>
-        <p className="text-sm text-slate-500">Limites e módulos valem na hora para quem já assina. Preços só afetam novas assinaturas.</p>
+        <p className="text-[15px] text-slate-500">Limites e módulos valem na hora para quem já assina. Preços só afetam novas assinaturas.</p>
       </div>
 
       {msg && (
-        <p className={`rounded-md px-3 py-2 text-sm ${msg.type === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+        <p className={`rounded-md px-3 py-2 text-[15px] ${msg.type === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
           {msg.text}
         </p>
       )}
 
       {loading ? (
-        <p className="text-sm text-slate-500">Carregando...</p>
+        <p className="text-[15px] text-slate-500">Carregando...</p>
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-3">
@@ -217,7 +217,7 @@ export default function PlansManager() {
             ))}
           </div>
           <section className="rounded-xl border border-slate-200 bg-white p-4">
-            <h2 className="text-sm font-bold text-slate-900">Add-ons</h2>
+            <h2 className="text-[15px] font-bold text-slate-900">Add-ons</h2>
             <div className="divide-y divide-slate-100">
               {addons.map((a) => (
                 <AddonRow key={a.id} addon={a} onDone={done} />

@@ -12,8 +12,8 @@ import {
 } from '@/services/admin/infraUsageAdmin';
 
 const BOX = 'space-y-4 rounded-2xl border border-slate-800 bg-[#111524] p-5';
-const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 py-1.5 text-sm text-slate-100 outline-none focus:border-[#0094eb]';
-const LBL = 'text-[10px] font-bold uppercase tracking-wider text-slate-500';
+const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 py-1.5 text-[15px] text-slate-100 outline-none focus:border-[#0094eb]';
+const LBL = 'text-xs font-bold uppercase tracking-wider text-slate-500';
 
 const parse = (v?: string): number | null => {
   const t = (v ?? '').trim().replace(',', '.');
@@ -46,7 +46,7 @@ function Field({ label, value, onChange, hint }: { label: string; value: string;
     <label className="block space-y-1">
       <span className={LBL}>{label}</span>
       <input value={value} onChange={(e) => onChange(e.target.value)} className={IN} />
-      {hint && <span className="block text-[10px] text-slate-600">{hint}</span>}
+      {hint && <span className="block text-xs text-slate-600">{hint}</span>}
     </label>
   );
 }
@@ -54,8 +54,8 @@ function Field({ label, value, onChange, hint }: { label: string; value: string;
 function Stat({ t, v }: { t: string; v: string }) {
   return (
     <div className="text-center">
-      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{t}</p>
-      <p className="text-xs font-bold text-white">{v}</p>
+      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{t}</p>
+      <p className="text-[13px] font-bold text-white">{v}</p>
     </div>
   );
 }
@@ -115,7 +115,7 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
   }, [s, form]);
 
   if (loading) return <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />;
-  if (!s || !live) return <p className="text-xs text-rose-400">Configuração de custos não encontrada. Rode a migration de custos.</p>;
+  if (!s || !live) return <p className="text-[13px] text-rose-400">Configuração de custos não encontrada. Rode a migration de custos.</p>;
 
   const amt = (x: CustomCost) => num(exTxt[x.id] ?? String(x.amount));
   const extraBrl = customTotalBrl(extras.map((x) => ({ ...x, amount: amt(x) })), live.usd_to_brl_rate);
@@ -258,13 +258,13 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
     return (
       <div key={q.key} className="grid grid-cols-12 items-center gap-3 border-t border-white/5 py-2">
         <div className="col-span-12 md:col-span-3">
-          <p className="text-xs font-semibold text-white">{q.label}</p>
-          <p className="text-[10px] text-slate-500">{q.source === 'auto' ? 'Leitura automática' : 'Você informa o uso'} · {q.unit}</p>
+          <p className="text-[13px] font-semibold text-white">{q.label}</p>
+          <p className="text-xs text-slate-500">{q.source === 'auto' ? 'Leitura automática' : 'Você informa o uso'} · {q.unit}</p>
         </div>
         <div className="col-span-6 md:col-span-2">
           <p className={LBL}>Usado</p>
           {q.source === 'auto'
-            ? <p className="py-1.5 text-sm font-bold text-white">{fmt(used)}</p>
+            ? <p className="py-1.5 text-[15px] font-bold text-white">{fmt(used)}</p>
             : <input value={man[q.key] ?? ''} onChange={(e) => setMan((p) => ({ ...p, [q.key]: e.target.value }))} className={IN} />}
         </div>
         <div className="col-span-6 md:col-span-2">
@@ -275,7 +275,7 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
           <div className="h-2 overflow-hidden rounded-full bg-white/10">
             <div className={`h-full ${bar}`} style={{ width: `${Math.min(100, r * 100)}%` }} />
           </div>
-          <p className="mt-1 text-[10px] text-slate-500">{(r * 100).toFixed(0)}% da franquia{exc > 0 ? ` · excedente ${brl(exc)}` : ''}</p>
+          <p className="mt-1 text-xs text-slate-500">{(r * 100).toFixed(0)}% da franquia{exc > 0 ? ` · excedente ${brl(exc)}` : ''}</p>
         </div>
       </div>
     );
@@ -287,8 +287,8 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
       <section className={BOX}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-sm font-bold text-yellow-300">{title}</h2>
-            <p className="text-[11px] text-slate-500">Mensalidade {brl(r.base)} + excedente estimado {brl(r.over)}</p>
+            <h2 className="text-[15px] font-bold text-yellow-300">{title}</h2>
+            <p className="text-[13px] text-slate-500">Mensalidade {brl(r.base)} + excedente estimado {brl(r.over)}</p>
           </div>
           <div className="text-right">
             <p className={LBL}>Total do mês</p>
@@ -298,8 +298,8 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
         <div className="max-w-xs">
           <Field label="Plano pago (US$/mês)" value={form[planKey] ?? ''} onChange={(v) => set(planKey, v)} />
         </div>
-        <div>{rows.length ? rows.map(renderRow) : <p className="text-xs text-slate-500">Franquias não cadastradas. Rode o SQL A.</p>}</div>
-        <p className={`rounded-lg px-3 py-2 text-[11px] ${TIP_STYLE[tip.lv]}`}>{tip.text}</p>
+        <div>{rows.length ? rows.map(renderRow) : <p className="text-[13px] text-slate-500">Franquias não cadastradas. Rode o SQL A.</p>}</div>
+        <p className={`rounded-lg px-3 py-2 text-[13px] ${TIP_STYLE[tip.lv]}`}>{tip.text}</p>
       </section>
     );
   };
@@ -308,8 +308,8 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
     <div className="space-y-5">
       <section className={BOX}>
         <div>
-          <h2 className="text-sm font-bold text-yellow-300">Resumo do mês</h2>
-          <p className="mt-0.5 text-[11px] text-slate-500">Recalcula enquanto você digita. A margem dos planos usa só o custo fixo (sem excedente).</p>
+          <h2 className="text-[15px] font-bold text-yellow-300">Resumo do mês</h2>
+          <p className="mt-0.5 text-[13px] text-slate-500">Recalcula enquanto você digita. A margem dos planos usa só o custo fixo (sem excedente).</p>
         </div>
         <div className="grid grid-cols-2 gap-3 rounded-xl bg-white/5 p-3 md:grid-cols-6">
           <Stat t="Custo fixo" v={brl(c.fixedTotal)} />
@@ -319,28 +319,28 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
           <Stat t="Tráfego / GB" v={brl(c.trafficBrl, 4)} />
           <Stat t="Total com uso" v={brl(total)} />
         </div>
-        <p className="text-[10px] text-slate-600">Rateio = custo fixo ÷ maior valor entre lojas pagantes e o mínimo definido.</p>
+        <p className="text-xs text-slate-600">Rateio = custo fixo ÷ maior valor entre lojas pagantes e o mínimo definido.</p>
       </section>
 
       <section className={BOX}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-sm font-bold text-yellow-300">Câmbio</h2>
-            <p className="mt-0.5 text-[11px] text-slate-500">
+            <h2 className="text-[15px] font-bold text-yellow-300">Câmbio</h2>
+            <p className="mt-0.5 text-[13px] text-slate-500">
               {s.last_currency_sync_at ? `Última sincronização: ${new Date(s.last_currency_sync_at).toLocaleString('pt-BR')}.` : 'Ainda não sincronizado.'}
             </p>
           </div>
-          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${fresh ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}`}>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${fresh ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}`}>
             {fresh ? 'Sincronizado hoje' : 'Desatualizado'}
           </span>
         </div>
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-44"><Field label="Dólar (R$)" value={form.usd_to_brl_rate ?? ''} onChange={(v) => set('usd_to_brl_rate', v)} /></div>
-          <button type="button" disabled={busy} onClick={sync} className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 disabled:opacity-40">
+          <button type="button" disabled={busy} onClick={sync} className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-[13px] font-bold text-slate-200 hover:bg-white/10 disabled:opacity-40">
             Sincronizar câmbio agora
           </button>
         </div>
-        <label className="flex items-center gap-2 text-xs text-slate-300">
+        <label className="flex items-center gap-2 text-[13px] text-slate-300">
           <input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
           Sincronizar automaticamente todo dia (06:00 pelo servidor; se falhar, ao abrir o Master)
         </label>
@@ -352,8 +352,8 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
       <section className={BOX}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-sm font-bold text-yellow-300">Bunny (vídeos)</h2>
-            <p className="text-[11px] text-slate-500">Sem franquia: paga só pelo que usar.</p>
+            <h2 className="text-[15px] font-bold text-yellow-300">Bunny (vídeos)</h2>
+            <p className="text-[13px] text-slate-500">Sem franquia: paga só pelo que usar.</p>
           </div>
           <div className="text-right">
             <p className={LBL}>Total do mês</p>
@@ -366,13 +366,13 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
           <Field label="Storage (US$/GB)" value={form.storage_cost_usd_per_gb ?? ''} onChange={(v) => set('storage_cost_usd_per_gb', v)} />
           <Field label="Tráfego (US$/GB)" value={form.traffic_cost_usd_per_gb ?? ''} onChange={(v) => set('traffic_cost_usd_per_gb', v)} />
         </div>
-        <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-[11px] text-emerald-300">
+        <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-[13px] text-emerald-300">
           Com {fmt(num(form.mb_per_play))} MB por play, cada 1.000 plays consomem cerca de {fmt((1000 * num(form.mb_per_play)) / 1024)} GB e custam {brl(((1000 * num(form.mb_per_play)) / 1024) * c.trafficBrl)}.
         </p>
       </section>
 
       <section className={BOX}>
-        <h2 className="text-sm font-bold text-yellow-300">Outros custos e taxas</h2>
+        <h2 className="text-[15px] font-bold text-yellow-300">Outros custos e taxas</h2>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Field label="Gateway de pagamento (%)" value={form.gateway_fee_percent ?? ''} onChange={(v) => set('gateway_fee_percent', v)} />
           <Field label="Impostos / Simples Nacional (%)" value={form.tax_percent ?? ''} onChange={(v) => set('tax_percent', v)} />
@@ -381,15 +381,15 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
         <div className="space-y-2 border-t border-white/5 pt-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-bold text-white">Despesas operacionais e ferramentas</p>
-              <p className="text-[10px] text-slate-500">Entram no custo fixo e são rateadas entre as lojas. Em US$, convertidas pelo câmbio do dia.</p>
+              <p className="text-[13px] font-bold text-white">Despesas operacionais e ferramentas</p>
+              <p className="text-xs text-slate-500">Entram no custo fixo e são rateadas entre as lojas. Em US$, convertidas pelo câmbio do dia.</p>
             </div>
-            <button type="button" disabled={busy} onClick={addExtra} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-40">
+            <button type="button" disabled={busy} onClick={addExtra} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">
               <Plus size={14} /> Adicionar custo
             </button>
           </div>
 
-          {extras.length === 0 && <p className="py-3 text-center text-xs text-slate-500">Nenhuma despesa cadastrada.</p>}
+          {extras.length === 0 && <p className="py-3 text-center text-[13px] text-slate-500">Nenhuma despesa cadastrada.</p>}
 
           {extras.map((x) => (
             <div key={x.id} className={`grid grid-cols-12 items-end gap-2 border-t border-white/5 pt-2 ${x.is_active ? '' : 'opacity-50'}`}>
@@ -414,7 +414,7 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
               <label className="col-span-3 space-y-1 md:col-span-2">
                 <span className={LBL}>Valor mensal</span>
                 <input value={exTxt[x.id] ?? ''} onChange={(e) => setExTxt((p) => ({ ...p, [x.id]: e.target.value }))} className={IN} />
-                {x.currency === 'USD' && <span className="block text-[10px] text-slate-500">≈ {brl(amt(x) * rate)}</span>}
+                {x.currency === 'USD' && <span className="block text-xs text-slate-500">≈ {brl(amt(x) * rate)}</span>}
               </label>
               <label className="col-span-8 space-y-1 md:col-span-3">
                 <span className={LBL}>Observação / franquia</span>
@@ -422,7 +422,7 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
               </label>
               <div className="col-span-4 flex items-center justify-end gap-1.5 md:col-span-1">
                 <button type="button" onClick={() => toggleEx(x)} title={x.is_active ? 'Desativar' : 'Ativar'}
-                  className={`cursor-pointer rounded-md px-2 py-1.5 text-[10px] font-bold ${x.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>
+                  className={`cursor-pointer rounded-md px-2 py-1.5 text-xs font-bold ${x.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>
                   {x.is_active ? 'On' : 'Off'}
                 </button>
                 <button type="button" onClick={() => removeEx(x)} title="Excluir" className="cursor-pointer rounded-md bg-rose-500/15 p-1.5 text-rose-300 hover:bg-rose-500/25">
@@ -432,7 +432,7 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
             </div>
           ))}
 
-          <p className="border-t border-white/5 pt-2 text-right text-[11px] text-slate-400">
+          <p className="border-t border-white/5 pt-2 text-right text-[13px] text-slate-400">
             Total das despesas ativas: <b className="text-white">{brl(extraBrl)}</b> · edições só são gravadas em "Salvar custos"; adicionar, ativar e excluir gravam na hora.
           </p>
         </div>
@@ -440,7 +440,7 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
       </section>
 
       <section className={BOX}>
-        <h2 className="text-sm font-bold text-yellow-300">Premissas de cálculo</h2>
+        <h2 className="text-[15px] font-bold text-yellow-300">Premissas de cálculo</h2>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <Field label="MB por play" value={form.mb_per_play ?? ''} onChange={(v) => set('mb_per_play', v)} />
           <Field label="Uso realista (%)" value={form.realistic_usage_percent ?? ''} onChange={(v) => set('realistic_usage_percent', v)} />
@@ -448,7 +448,7 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
         </div>
       </section>
 
-      <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2.5 text-xs font-bold text-white disabled:opacity-40">
+      <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2.5 text-[13px] font-bold text-white disabled:opacity-40">
         {busy ? 'Salvando…' : 'Salvar custos'}
       </button>
     </div>

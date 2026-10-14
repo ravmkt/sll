@@ -134,15 +134,15 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
       <div className="max-h-[90vh] w-full max-w-2xl space-y-4 overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-100">Módulos de {combo.plan_name}</h2>
-          <button type="button" onClick={onClose} className="text-sm text-slate-400 hover:text-slate-200">Fechar</button>
+          <button type="button" onClick={onClose} className="text-[15px] text-slate-400 hover:text-slate-200">Fechar</button>
         </div>
-        <p className="rounded-md bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">Limites e módulos valem na hora para quem já assina. Preços só afetam novas assinaturas.</p>
-        <p className="text-[11px] text-slate-500">
+        <p className="rounded-md bg-amber-500/10 px-3 py-2 text-[13px] text-amber-300">Limites e módulos valem na hora para quem já assina. Preços só afetam novas assinaturas.</p>
+        <p className="text-[13px] text-slate-500">
           Cada módulo mantém os limites do plano escolhido (não há soma entre módulos). Preencha um campo apenas para dar mais ou menos neste combo.
         </p>
 
         {loading ? (
-          <p className="text-sm text-slate-400">Carregando...</p>
+          <p className="text-[15px] text-slate-400">Carregando...</p>
         ) : (
           <div className="space-y-2">
             {modules.filter((m) => m.status === 'active' || m.slug in picked).map((m) => {
@@ -153,7 +153,7 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
               return (
                 <div key={m.slug} className="space-y-2 rounded-md border border-slate-800 px-3 py-2">
                   <div className="flex items-center justify-between gap-3">
-                    <label className="flex items-center gap-2 text-xs text-slate-300">
+                    <label className="flex items-center gap-2 text-[13px] text-slate-300">
                       <input type="checkbox" checked={on} onChange={(e) => toggle(m.slug, e.target.checked)} />
                       {m.name}{m.status !== 'active' ? ` (${m.status})` : ''}
                     </label>
@@ -161,7 +161,7 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
                       <select
                         value={picked[m.slug]}
                         onChange={(e) => setPicked((p) => ({ ...p, [m.slug]: e.target.value }))}
-                        className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100"
+                        className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[13px] text-slate-100"
                       >
                         <option value="">Plano do módulo: maior ativo</option>
                         {(tiersByModule[m.slug] ?? []).map((t) => (
@@ -170,17 +170,17 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
                       </select>
                     )}
                   </div>
-                  {on && !plan && <p className="text-[11px] text-rose-400">Este módulo ainda não tem planos cadastrados.</p>}
+                  {on && !plan && <p className="text-[13px] text-rose-400">Este módulo ainda não tem planos cadastrados.</p>}
                   {on && plan && keys.length > 0 && (
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       {keys.map((k) => (
-                        <label key={k} className="block text-[11px] text-slate-400">
+                        <label key={k} className="block text-[13px] text-slate-400">
                           {label(k)}
                           <input
                             value={over[m.slug]?.[k] ?? ''}
                             onChange={(e) => setOv(m.slug, k, e.target.value)}
                             placeholder={fmt(lim[k])}
-                            className="mt-0.5 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100"
+                            className="mt-0.5 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[13px] text-slate-100"
                           />
                         </label>
                       ))}
@@ -192,14 +192,14 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
           </div>
         )}
 
-        <label className="flex items-center gap-2 text-xs text-slate-300">
+        <label className="flex items-center gap-2 text-[13px] text-slate-300">
           <input type="checkbox" checked={recalc} onChange={(e) => setRecalc(e.target.checked)} />
           Recalcular o preço do combo: soma dos planos com {discount === null ? '—' : String(discount).replace('.', ',')}% de desconto
         </label>
 
         {preview && discount !== null && (
           <div className="space-y-2 rounded-xl bg-white/5 p-3">
-            <p className="text-xs text-slate-300">
+            <p className="text-[13px] text-slate-300">
               Soma dos planos avulsos: <b>{brl(preview.m)}</b>/mês • Desconto: <b>{String(discount).replace('.', ',')}%</b>
               {!recalc && <span className="text-slate-500"> (a prévia só vale com "Recalcular" marcado)</span>}
             </p>
@@ -209,10 +209,10 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
                 const info = cycleInfo(fin, mths, after(preview.m, discount));
                 return (
                   <div key={n}>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{n}</p>
-                    <p className="text-[10px] text-slate-500 line-through">{brl(v)}</p>
-                    <p className="text-sm font-bold text-white">{brl(fin)}</p>
-                    {info && <p className="text-[10px] text-emerald-400">{info}</p>}
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{n}</p>
+                    <p className="text-xs text-slate-500 line-through">{brl(v)}</p>
+                    <p className="text-[15px] font-bold text-white">{brl(fin)}</p>
+                    {info && <p className="text-xs text-emerald-400">{info}</p>}
                   </div>
                 );
               })}
@@ -220,7 +220,7 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
           </div>
         )}
 
-        <button type="button" disabled={busy || loading} onClick={save} className="w-full rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">
+        <button type="button" disabled={busy || loading} onClick={save} className="w-full rounded-lg bg-[#0094eb] px-4 py-2 text-[15px] font-semibold text-white disabled:opacity-40">
           {busy ? 'Salvando...' : 'Salvar módulos'}
         </button>
       </div>

@@ -6,8 +6,8 @@ import { CATEGORIES, METRICS, OPERATORS, categoryLabel, type Operator, type Trig
 import { NICHES } from '@/components/onboarding/shared';
 import { deleteTip, listAllTips, saveTip, setTipStatus, type Tip, type TipInput } from '@/services/tipsService';
 
-const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#0094eb]';
-const LBL = 'mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-400';
+const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-[15px] text-slate-100 outline-none focus:border-[#0094eb]';
+const LBL = 'mb-1 block text-[13px] font-semibold uppercase tracking-wide text-slate-400';
 
 const EMPTY: TipInput = {
   title: '', content: '', category: 'conversao', niche: ['geral'], metric_trigger: null,
@@ -110,11 +110,11 @@ export default function TipsTab() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-black text-white">Dicas do Noah</h1>
-          <p className="text-xs text-slate-500">Cadastre dicas por nicho, categoria e gatilho de métrica. Aparecem em /dashboard/dicas.</p>
+          <p className="text-[13px] text-slate-500">Cadastre dicas por nicho, categoria e gatilho de métrica. Aparecem em /dashboard/dicas.</p>
         </div>
         <div className="flex items-center gap-2">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar..." className={`${IN} !w-48 !py-1.5`} />
-          <button type="button" onClick={openNew} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-2 text-xs font-bold text-white">
+          <button type="button" onClick={openNew} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-2 text-[13px] font-bold text-white">
             <Plus size={14} /> Nova dica
           </button>
         </div>
@@ -123,7 +123,7 @@ export default function TipsTab() {
       {form && (
         <div className="space-y-4 rounded-2xl border border-slate-800 bg-[#111524] p-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-yellow-300">{editId ? 'Editar dica' : 'Nova dica'}</h2>
+            <h2 className="text-[15px] font-bold text-yellow-300">{editId ? 'Editar dica' : 'Nova dica'}</h2>
             <button type="button" onClick={() => setForm(null)} className="cursor-pointer text-slate-400 hover:text-white"><X size={16} /></button>
           </div>
 
@@ -140,7 +140,7 @@ export default function TipsTab() {
               </select></label>
             <label className="block"><span className={LBL}>Tempo estimado (min)</span>
               <input value={minutes} onChange={(e) => setMinutes(e.target.value)} className={IN} /></label>
-            <div className="flex items-end gap-4 pb-2 text-xs text-slate-200">
+            <div className="flex items-end gap-4 pb-2 text-[13px] text-slate-200">
               <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={form.is_featured} onChange={(e) => set('is_featured', e.target.checked)} /> Destaque</label>
               <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={form.status} onChange={(e) => set('status', e.target.checked)} /> Ativa</label>
             </div>
@@ -153,7 +153,7 @@ export default function TipsTab() {
                 const on = form.niche.includes(n);
                 return (
                   <button key={n} type="button" onClick={() => toggleNiche(n)}
-                    className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold ${on ? 'border-[#0094eb] bg-[#0094eb]/20 text-sky-200' : 'border-slate-700 text-slate-400 hover:text-white'}`}>
+                    className={`cursor-pointer rounded-full border px-3 py-1 text-[13px] font-semibold ${on ? 'border-[#0094eb] bg-[#0094eb]/20 text-sky-200' : 'border-slate-700 text-slate-400 hover:text-white'}`}>
                     {n === 'geral' ? 'Geral (todos)' : n}
                   </button>
                 );
@@ -162,7 +162,7 @@ export default function TipsTab() {
           </div>
 
           <div className="space-y-2">
-            <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-200">
+            <label className="flex cursor-pointer items-center gap-2 text-[13px] text-slate-200">
               <input type="checkbox" checked={useTrigger} onChange={(e) => setUseTrigger(e.target.checked)} />
               Usar gatilho de métrica (dica vira Diagnóstico Prioritário quando a condição for verdadeira)
             </label>
@@ -187,8 +187,8 @@ export default function TipsTab() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setForm(null)} className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10">Cancelar</button>
-            <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-xs font-bold text-white disabled:opacity-40">
+            <button type="button" onClick={() => setForm(null)} className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-[13px] font-semibold text-slate-200 hover:bg-white/10">Cancelar</button>
+            <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-[13px] font-bold text-white disabled:opacity-40">
               {busy ? 'Salvando...' : 'Salvar dica'}
             </button>
           </div>
@@ -198,7 +198,7 @@ export default function TipsTab() {
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
       ) : shown.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-slate-800 bg-[#111524] py-10 text-center text-sm text-slate-500">Nenhuma dica cadastrada.</p>
+        <p className="rounded-2xl border border-dashed border-slate-800 bg-[#111524] py-10 text-center text-[15px] text-slate-500">Nenhuma dica cadastrada.</p>
       ) : (
         <div className="space-y-2">
           {shown.map((t) => (
@@ -206,15 +206,15 @@ export default function TipsTab() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   {t.is_featured && <Star size={13} className="fill-yellow-400 text-yellow-400" />}
-                  <p className="truncate text-sm font-semibold text-slate-100">{t.title}</p>
-                  <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-bold text-sky-300">{categoryLabel(t.category)}</span>
+                  <p className="truncate text-[15px] font-semibold text-slate-100">{t.title}</p>
+                  <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-xs font-bold text-sky-300">{categoryLabel(t.category)}</span>
                   {t.metric_trigger && (
-                    <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                    <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-bold text-amber-300">
                       {t.metric_trigger.metric} {t.metric_trigger.operator} {t.metric_trigger.value}
                     </span>
                   )}
                 </div>
-                <p className="mt-0.5 truncate text-xs text-slate-500">{(t.niche || []).join(', ')}</p>
+                <p className="mt-0.5 truncate text-[13px] text-slate-500">{(t.niche || []).join(', ')}</p>
               </div>
               <div className="flex items-center gap-1">
                 <button type="button" title={t.status ? 'Pausar' : 'Ativar'} onClick={() => toggle(t)} className="cursor-pointer rounded-lg p-2 text-slate-300 hover:bg-white/10">

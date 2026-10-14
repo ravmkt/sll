@@ -53,7 +53,7 @@ export default function ImageUpload({ kind, value, onChange }: { kind: 'banner' 
 
   return (
     <div className="md:col-span-2">
-      <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">
+      <label className="block text-[13px] font-semibold uppercase tracking-wide text-slate-400 mb-1">
         Imagem do {spec.label.toLowerCase()} — {spec.w} × {spec.h} px (PNG, JPG ou WebP, até 2 MB)
       </label>
       <input ref={ref} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
@@ -61,23 +61,23 @@ export default function ImageUpload({ kind, value, onChange }: { kind: 'banner' 
         <div className="space-y-2">
           <img src={value} alt="" className="w-full rounded-lg border border-slate-700 object-cover" style={{ aspectRatio: spec.w + ' / ' + spec.h, maxWidth: kind === 'popup' ? 360 : '100%' }} />
           <div className="flex gap-2">
-            <button type="button" disabled={busy} onClick={() => ref.current?.click()} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={() => ref.current?.click()} className="px-3 py-1.5 rounded-lg text-[13px] font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 disabled:opacity-50">
               {busy ? 'Enviando...' : 'Trocar imagem'}
             </button>
-            <button type="button" onClick={() => onChange('')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-300 hover:bg-slate-800">
+            <button type="button" onClick={() => onChange('')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[13px] font-semibold text-rose-300 hover:bg-slate-800">
               <Trash2 className="w-3.5 h-3.5" /> Remover
             </button>
           </div>
         </div>
       ) : (
         <button type="button" disabled={busy} onClick={() => ref.current?.click()}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-600 bg-slate-950 px-3 text-sm text-slate-300 hover:border-amber-500 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-600 bg-slate-950 px-3 text-[15px] text-slate-300 hover:border-amber-500 disabled:opacity-50"
           style={{ aspectRatio: spec.w + ' / ' + spec.h, maxHeight: 160 }}>
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
           {busy ? 'Enviando...' : 'Escolher imagem'}
         </button>
       )}
-      {err && <p className="mt-1 text-xs text-rose-400">{err}</p>}
+      {err && <p className="mt-1 text-[13px] text-rose-400">{err}</p>}
     </div>
   );
 }

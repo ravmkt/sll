@@ -16,7 +16,7 @@ import {
   CARD, CYCLE_LABEL, INPUT, SELECT, SUB_LABEL, Kpi, ModuleLogo, bytes, brl, int,
 } from '@/components/admin/moduleUi';
 
-const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
+const TH = 'px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-500';
 
 type VitrineCfg = {
   name: string; status: string; is_public_for_sale: boolean;
@@ -169,13 +169,13 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
     <div className="space-y-5">
       <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={onBack} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10">
+          <button type="button" onClick={onBack} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-[13px] font-bold text-slate-200 hover:bg-white/10">
             <ArrowLeft size={14} /> Módulos
           </button>
           {m && <ModuleLogo url={logo} name={name || m.name} size={40} />}
           <div>
             <h1 className="text-xl font-black text-white">{m?.name || 'Módulo'}</h1>
-            <p className="font-mono text-[10px] text-slate-600">{slug}</p>
+            <p className="font-mono text-xs text-slate-600">{slug}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -188,7 +188,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
         </div>
       </div>
 
-      {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+      {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[15px] text-rose-300">{error}</div>}
 
       {m && (
         <>
@@ -206,13 +206,13 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
           footer={
             <div className="space-y-2">
               <div className="space-y-2 rounded-2xl border border-slate-800 bg-[#111524] p-4">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Resumo do modal de planos</p>
+                <p className="text-[13px] font-bold uppercase tracking-wider text-slate-400">Resumo do modal de planos</p>
                 <textarea value={modalDesc} maxLength={300} rows={3} onChange={(e) => setModalDesc(e.target.value)} className={INPUT}
                   placeholder="Texto que aparece no topo do modal de compra deste módulo." />
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[10px] text-slate-600">{modalDesc.length}/300. Vazio usa a descrição da vitrine. Vale ao vivo ao salvar.</span>
+                  <span className="text-xs text-slate-600">{modalDesc.length}/300. Vazio usa a descrição da vitrine. Vale ao vivo ao salvar.</span>
                   <button type="button" disabled={savingDesc} onClick={saveModalDesc}
-                    className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-1.5 text-xs font-bold text-white disabled:opacity-40">
+                    className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">
                     {savingDesc ? 'Salvando…' : 'Salvar resumo'}
                   </button>
                 </div>
@@ -232,7 +232,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
                     await save();
                     if (staging.hasDraft) await staging.discard();
                   }}
-                  className="cursor-pointer rounded-lg bg-[#fd8539] px-5 py-2 text-xs font-bold text-white hover:opacity-90 disabled:opacity-40"
+                  className="cursor-pointer rounded-lg bg-[#fd8539] px-5 py-2 text-[13px] font-bold text-white hover:opacity-90 disabled:opacity-40"
                 >
                   {saving ? 'Salvando…' : 'Salvar direto ao vivo'}
                 </button>
@@ -243,7 +243,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="space-y-4 xl:col-span-2">
             <div className={`${CARD} space-y-3`}>
-              <p className="text-sm font-bold text-white">Lojas e receita</p>
+              <p className="text-[15px] font-bold text-white">Lojas e receita</p>
               <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                 <Kpi label="Com acesso" value={int(m.access)} />
                 <Kpi label="Pagantes" value={int(m.paying)} tone="text-emerald-300" />
@@ -255,7 +255,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
             </div>
 
             <div className={`${CARD} space-y-3`}>
-              <p className="text-sm font-bold text-white">Consumo e desempenho ({days} dias)</p>
+              <p className="text-[15px] font-bold text-white">Consumo e desempenho ({days} dias)</p>
               {measured ? (
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                   <Kpi label="Views" value={int(m.views)} />
@@ -266,25 +266,25 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
                   <Kpi label="Espaço" value={bytes(m.storage_bytes)} />
                 </div>
               ) : (
-                <p className="rounded-xl bg-white/[0.03] px-3 py-3 text-xs text-slate-500">O consumo deste módulo ainda não é medido.</p>
+                <p className="rounded-xl bg-white/[0.03] px-3 py-3 text-[13px] text-slate-500">O consumo deste módulo ainda não é medido.</p>
               )}
-              <p className={`text-[11px] ${m.errors ? 'text-rose-300' : 'text-slate-500'}`}>
+              <p className={`text-[13px] ${m.errors ? 'text-rose-300' : 'text-slate-500'}`}>
                 {m.errors ? `${int(m.errors)} erro(s) registrado(s) no período.` : 'Nenhum erro registrado no período.'}
               </p>
             </div>
 
             <div className={`${CARD} space-y-3`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-bold text-white">Lojas com acesso{stores ? ` (${stores.length})` : ''}</p>
+                <p className="text-[15px] font-bold text-white">Lojas com acesso{stores ? ` (${stores.length})` : ''}</p>
                 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filtrar loja..." className={`${INPUT} max-w-[220px]`} />
               </div>
               {stores === null ? (
                 <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
               ) : stores.length === 0 ? (
-                <p className="text-xs text-slate-500">Nenhuma loja com acesso.</p>
+                <p className="text-[13px] text-slate-500">Nenhuma loja com acesso.</p>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-slate-800">
-                  <table className="w-full min-w-[560px] text-xs">
+                  <table className="w-full min-w-[560px] text-[13px]">
                     <thead className="border-b border-slate-800">
                       <tr><th className={TH}>Loja</th><th className={TH}>Plano</th><th className={TH}>Ciclo</th><th className={TH}>Origem</th><th className={TH}>Status</th></tr>
                     </thead>
@@ -314,9 +314,9 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
             <ModulePlansCard slug={slug} onManage={() => onOpenPlans(slug)} />
             <FeatureFlagsCard slug={slug} />
             <div className="space-y-2 rounded-2xl border border-rose-500/30 bg-rose-500/5 p-4">
-              <p className="text-sm font-bold text-rose-300">Zona de perigo</p>
-              <p className="text-[11px] text-slate-500">Só é possível excluir módulos sem assinaturas e fora de combos. Nos demais casos, use o status "Oculto".</p>
-              <button type="button" disabled={deleting} onClick={removeModule} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white hover:bg-rose-500 disabled:opacity-40">
+              <p className="text-[15px] font-bold text-rose-300">Zona de perigo</p>
+              <p className="text-[13px] text-slate-500">Só é possível excluir módulos sem assinaturas e fora de combos. Nos demais casos, use o status "Oculto".</p>
+              <button type="button" disabled={deleting} onClick={removeModule} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-[13px] font-bold text-white hover:bg-rose-500 disabled:opacity-40">
                 {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} Excluir módulo
               </button>
             </div>

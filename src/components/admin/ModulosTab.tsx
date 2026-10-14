@@ -7,7 +7,7 @@ import NovoModuloModal from '@/components/admin/NovoModuloModal';
 import SandboxStoreSelect from '@/components/master/SandboxStoreSelect';
 import { CARD, SELECT, STATUS_LABEL, ModuleLogo, brl, int } from '@/components/admin/moduleUi';
 
-const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
+const TH = 'px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-500';
 
 export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: (id: string) => void; onOpenPlans: (slug: string) => void }) {
   const [days, setDays] = useState(30);
@@ -78,11 +78,11 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
       <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
         <div>
           <h1 className="text-xl font-black text-white">Módulos</h1>
-          <p className="text-xs text-slate-500">Clique para editar. Arraste as linhas para mudar a ordem da vitrine; módulos ativos ficam sempre na frente.</p>
+          <p className="text-[13px] text-slate-500">Clique para editar. Arraste as linhas para mudar a ordem da vitrine; módulos ativos ficam sempre na frente.</p>
         </div>
         <div className="flex items-center gap-2">
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
-          <button type="button" onClick={() => setCreating(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-2 text-xs font-bold text-white hover:opacity-90">
+          <button type="button" onClick={() => setCreating(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-2 text-[13px] font-bold text-white hover:opacity-90">
             <Plus size={14} /> Novo Módulo
           </button>
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
@@ -93,7 +93,7 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
         </div>
       </div>
 
-      {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+      {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[15px] text-rose-300">{error}</div>}
 
       {creating && <NovoModuloModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load(); }} />}
 
@@ -103,22 +103,22 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
         <>
           <div className={`${CARD} flex flex-wrap items-center gap-x-8 gap-y-2`}>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Combos (todos os módulos)</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Combos (todos os módulos)</p>
               <p className="text-lg font-black text-white">{int(data.bundle_stores)} loja(s)</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Receita mensal dos combos</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Receita mensal dos combos</p>
               <p className="text-lg font-black text-white">{brl(data.bundle_mrr)}</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Receita mensal total (MRR)</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Receita mensal total (MRR)</p>
               <p className="text-lg font-black text-[#fd8539]">{brl(data.modules.reduce((a, m) => a + (Number(m.mrr) || 0), 0) + (Number(data.bundle_mrr) || 0))}</p>
             </div>
-            <p className="text-[11px] text-slate-500">MRR total = módulos individuais + combos. Lojas com combo contam como acesso e pagante em cada módulo, mas a receita do combo não é dividida entre eles.</p>
+            <p className="text-[13px] text-slate-500">MRR total = módulos individuais + combos. Lojas com combo contam como acesso e pagante em cada módulo, mas a receita do combo não é dividida entre eles.</p>
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#111524]">
-            <table className="w-full min-w-[820px] text-xs">
+            <table className="w-full min-w-[820px] text-[13px]">
               <thead className="border-b border-slate-800">
                 <tr>
                   <th className={TH}>Ordem</th>
@@ -180,18 +180,18 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
                       <div className="flex items-center gap-3">
                         <ModuleLogo url={m.logo_url} name={m.name} size={36} />
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-white">{m.name}</p>
-                          <p className="font-mono text-[10px] text-slate-600">{m.slug}</p>
+                          <p className="truncate text-[15px] font-bold text-white">{m.name}</p>
+                          <p className="font-mono text-xs text-slate-600">{m.slug}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${m.status === 'active' ? 'bg-emerald-500/15 text-emerald-300' : m.status === 'hidden' ? 'bg-slate-500/15 text-slate-400' : 'bg-amber-500/15 text-amber-300'}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${m.status === 'active' ? 'bg-emerald-500/15 text-emerald-300' : m.status === 'hidden' ? 'bg-slate-500/15 text-slate-400' : 'bg-amber-500/15 text-amber-300'}`}>
                         {STATUS_LABEL[m.status] || m.status}
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${m.is_public_for_sale ? 'bg-sky-500/15 text-sky-300' : 'bg-slate-500/15 text-slate-400'}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${m.is_public_for_sale ? 'bg-sky-500/15 text-sky-300' : 'bg-slate-500/15 text-slate-400'}`}>
                         {m.is_public_for_sale ? 'À venda' : 'Fora de venda'}
                       </span>
                     </td>

@@ -20,7 +20,7 @@ type Form = {
 };
 
 const EMPTY: Form = { id: null, code: '', type: 'percentage', value: '', max: '', expires: '', planIds: [], active: true };
-const inputCls = 'w-full rounded-md border border-slate-300 px-2 py-1 text-sm';
+const inputCls = 'w-full rounded-md border border-slate-300 px-2 py-1 text-[15px]';
 const brl = (c: number) => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const fmtValue = (c: Coupon) => (c.discount_type === 'percentage' ? `${c.discount_value}%` : brl(c.discount_value));
 
@@ -112,58 +112,58 @@ export default function CouponsManager() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Cupons de desconto</h1>
-          <p className="text-sm text-slate-500">Valor fixo em reais; porcentagem de 1 a 100.</p>
+          <p className="text-[15px] text-slate-500">Valor fixo em reais; porcentagem de 1 a 100.</p>
         </div>
         <button
           type="button"
           onClick={() => { setMsg(null); setForm({ ...EMPTY }); }}
-          className="rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-semibold text-white"
+          className="rounded-lg bg-[#0094eb] px-4 py-2 text-[15px] font-semibold text-white"
         >
           Novo cupom
         </button>
       </div>
 
       {msg && (
-        <p className={`rounded-md px-3 py-2 text-sm ${msg.type === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+        <p className={`rounded-md px-3 py-2 text-[15px] ${msg.type === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
           {msg.text}
         </p>
       )}
 
       {form && (
         <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-          <h2 className="text-sm font-bold text-slate-900">{form.id ? 'Editar cupom' : 'Novo cupom'}</h2>
+          <h2 className="text-[15px] font-bold text-slate-900">{form.id ? 'Editar cupom' : 'Novo cupom'}</h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-            <label className="text-xs text-slate-500">Código
+            <label className="text-[13px] text-slate-500">Código
               <input value={form.code} onChange={(e) => set({ code: e.target.value.toUpperCase() })} className={inputCls} />
             </label>
-            <label className="text-xs text-slate-500">Tipo
+            <label className="text-[13px] text-slate-500">Tipo
               <select value={form.type} onChange={(e) => set({ type: e.target.value as Form['type'] })} className={inputCls}>
                 <option value="percentage">Porcentagem (%)</option>
                 <option value="fixed_amount">Valor fixo (R$)</option>
               </select>
             </label>
-            <label className="text-xs text-slate-500">{form.type === 'percentage' ? 'Desconto (%)' : 'Desconto (R$)'}
+            <label className="text-[13px] text-slate-500">{form.type === 'percentage' ? 'Desconto (%)' : 'Desconto (R$)'}
               <input value={form.value} onChange={(e) => set({ value: e.target.value })} className={inputCls} />
             </label>
-            <label className="text-xs text-slate-500">Máx. de usos
+            <label className="text-[13px] text-slate-500">Máx. de usos
               <input value={form.max} onChange={(e) => set({ max: e.target.value })} placeholder="vazio = ilimitado" className={inputCls} />
             </label>
-            <label className="text-xs text-slate-500">Expira em
+            <label className="text-[13px] text-slate-500">Expira em
               <input type="date" value={form.expires} onChange={(e) => set({ expires: e.target.value })} className={inputCls} />
             </label>
           </div>
           <div>
-            <p className="text-xs text-slate-500">Planos aceitos (nenhum marcado = todos)</p>
+            <p className="text-[13px] text-slate-500">Planos aceitos (nenhum marcado = todos)</p>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
               {plans.map((p) => (
-                <label key={p.id} className="flex items-center gap-2 text-xs text-slate-700">
+                <label key={p.id} className="flex items-center gap-2 text-[13px] text-slate-700">
                   <input type="checkbox" checked={form.planIds.includes(p.id)} onChange={() => togglePlan(p.id)} />
                   {p.name}
                 </label>
               ))}
             </div>
           </div>
-          <label className="flex items-center gap-2 text-xs text-slate-700">
+          <label className="flex items-center gap-2 text-[13px] text-slate-700">
             <input type="checkbox" checked={form.active} onChange={(e) => set({ active: e.target.checked })} />
             Ativo
           </label>
@@ -172,11 +172,11 @@ export default function CouponsManager() {
               type="button"
               disabled={saving}
               onClick={async () => { if (await submit(form)) setForm(null); }}
-              className="rounded-lg bg-[#0094eb] px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+              className="rounded-lg bg-[#0094eb] px-4 py-1.5 text-[13px] font-semibold text-white disabled:opacity-40"
             >
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
-            <button type="button" onClick={() => setForm(null)} className="rounded-lg bg-slate-100 px-4 py-1.5 text-xs font-semibold text-slate-700">
+            <button type="button" onClick={() => setForm(null)} className="rounded-lg bg-slate-100 px-4 py-1.5 text-[13px] font-semibold text-slate-700">
               Cancelar
             </button>
           </div>
@@ -184,8 +184,8 @@ export default function CouponsManager() {
       )}
 
       <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+        <table className="w-full text-left text-[15px]">
+          <thead className="bg-slate-50 text-[13px] uppercase text-slate-500">
             <tr>
               <th className="px-4 py-3">Código</th>
               <th className="px-4 py-3">Desconto</th>
@@ -211,11 +211,11 @@ export default function CouponsManager() {
                   <td className="px-4 py-3">{c.applicable_plan_ids?.length ? `${c.applicable_plan_ids.length} plano(s)` : 'Todos'}</td>
                   <td className="px-4 py-3">{c.expires_at ? new Date(c.expires_at).toLocaleDateString('pt-BR') : '—'}</td>
                   <td className="px-4 py-3">
-                    <span className={`rounded px-2 py-0.5 text-xs font-medium ${!c.is_active ? 'bg-slate-100 text-slate-600' : expired ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                    <span className={`rounded px-2 py-0.5 text-[13px] font-medium ${!c.is_active ? 'bg-slate-100 text-slate-600' : expired ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
                       {!c.is_active ? 'Inativo' : expired ? 'Expirado' : 'Ativo'}
                     </span>
                   </td>
-                  <td className="space-x-3 px-4 py-3 text-right text-xs">
+                  <td className="space-x-3 px-4 py-3 text-right text-[13px]">
                     <button type="button" onClick={() => { setMsg(null); setForm(toInput(c)); }} className="text-sky-600 underline">Editar</button>
                     <button type="button" onClick={() => toggle(c)} className="text-slate-600 underline">{c.is_active ? 'Desativar' : 'Ativar'}</button>
                   </td>

@@ -5,7 +5,7 @@ import { createCombo, listHubModules, type HubModule } from '@/services/admin/co
 import { cycleInfo } from '@/components/admin/cycleInfo';
 
 const sb: any = supabase;
-const inputCls = 'w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100';
+const inputCls = 'w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[15px] text-slate-100';
 const brl = (c: number) => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const after = (v: number, pct: number) => Math.round(v * (1 - pct / 100));
 
@@ -107,43 +107,43 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
       <div className="max-h-[90vh] w-full max-w-2xl space-y-4 overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-100">Novo combo</h2>
-          <button type="button" onClick={onClose} className="text-sm text-slate-400 hover:text-slate-200">Fechar</button>
+          <button type="button" onClick={onClose} className="text-[15px] text-slate-400 hover:text-slate-200">Fechar</button>
         </div>
 
-        {error && <p className="rounded-md bg-red-950 px-3 py-2 text-sm text-red-300">{error}</p>}
+        {error && <p className="rounded-md bg-red-950 px-3 py-2 text-[15px] text-red-300">{error}</p>}
 
         {loading ? (
-          <p className="text-sm text-slate-400">Carregando...</p>
+          <p className="text-[15px] text-slate-400">Carregando...</p>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3">
-              <label className="block text-xs text-slate-400">Nome
+              <label className="block text-[13px] text-slate-400">Nome
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Combo Master" className={inputCls} />
               </label>
-              <label className="block text-xs text-slate-400">Chave (única)
+              <label className="block text-[13px] text-slate-400">Chave (única)
                 <input value={tier} onChange={(e) => setTier(e.target.value)} placeholder="master" className={inputCls} />
               </label>
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Módulos do combo (mínimo 2)</p>
+              <p className="mb-2 text-[13px] font-bold uppercase tracking-wider text-slate-500">Módulos do combo (mínimo 2)</p>
               <div className="space-y-2">
                 {modules.filter((m) => m.status === 'active' || m.slug in picked).map((m) => {
                   const on = m.slug in picked;
                   const tiers = tiersByModule[m.slug] ?? [];
                   return (
                     <div key={m.slug} className="flex items-center justify-between gap-3 rounded-md border border-slate-800 px-3 py-2">
-                      <label className="flex items-center gap-2 text-xs text-slate-300">
+                      <label className="flex items-center gap-2 text-[13px] text-slate-300">
                         <input type="checkbox" checked={on} onChange={(e) => toggle(m.slug, e.target.checked)} />
                         {m.name}{m.status !== 'active' ? ` (${m.status})` : ''}
                       </label>
                       {on && (tiers.length > 0 ? (
                         <select value={picked[m.slug]} onChange={(e) => setPicked((p) => ({ ...p, [m.slug]: e.target.value }))}
-                          className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100">
+                          className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[13px] text-slate-100">
                           {tiers.map((t) => <option key={t.id} value={t.plan_tier}>{t.plan_name}</option>)}
                         </select>
                       ) : (
-                        <span className="text-[11px] text-rose-400">Sem planos cadastrados</span>
+                        <span className="text-[13px] text-rose-400">Sem planos cadastrados</span>
                       ))}
                     </div>
                   );
@@ -153,11 +153,11 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
 
             <div className="space-y-3 rounded-xl bg-white/5 p-3">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Preço do combo</p>
-                <label className="flex items-center gap-2 text-xs text-slate-300">
+                <p className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Preço do combo</p>
+                <label className="flex items-center gap-2 text-[13px] text-slate-300">
                   Desconto
                   <input value={disc} onChange={(e) => setDisc(e.target.value)}
-                    className="h-7 w-14 rounded-md border border-slate-700 bg-slate-950 px-2 text-right text-xs text-slate-100" />
+                    className="h-7 w-14 rounded-md border border-slate-700 bg-slate-950 px-2 text-right text-[13px] text-slate-100" />
                   %
                 </label>
               </div>
@@ -165,33 +165,33 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
                 <div className="grid grid-cols-3 gap-3 text-center">
                   {([['Mensal', list.m], ['Semestral', list.s], ['Anual', list.a]] as [string, number][]).map(([t, v]) => (
                     <div key={t}>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{t}</p>
-                      <p className="text-xs text-slate-500 line-through">{brl(v)}</p>
-                      <p className="text-sm font-bold text-white">{dOk ? brl(after(v, d)) : '—'}</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{t}</p>
+                      <p className="text-[13px] text-slate-500 line-through">{brl(v)}</p>
+                      <p className="text-[15px] font-bold text-white">{dOk ? brl(after(v, d)) : '—'}</p>
                       {dOk && t !== 'Mensal' && list && (() => {
                         const i = cycleInfo(after(v, d), t === 'Semestral' ? 6 : 12, after(list.m, d));
-                        return i ? <p className="text-[10px] text-emerald-400">{i}</p> : null;
+                        return i ? <p className="text-xs text-emerald-400">{i}</p> : null;
                       })()}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-[11px] text-slate-500">Escolha 2 ou mais módulos com plano para ver o preço cheio e o preço com desconto.</p>
+                <p className="text-[13px] text-slate-500">Escolha 2 ou mais módulos com plano para ver o preço cheio e o preço com desconto.</p>
               )}
               {list && dOk && (
-                <p className="text-xs text-slate-300">
+                <p className="text-[13px] text-slate-300">
                   Soma dos planos avulsos: <b>{brl(list.m)}</b>/mês • Desconto: <b>{d}%</b> • Preço final: <b>{brl(after(list.m, d))}</b>/mês
                 </p>
-              )}<p className="text-[10px] text-slate-600">Cada módulo mantém os limites do plano escolhido. Ajustes por módulo ficam em "Módulos" no card do combo.</p>
+              )}<p className="text-xs text-slate-600">Cada módulo mantém os limites do plano escolhido. Ajustes por módulo ficam em "Módulos" no card do combo.</p>
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={rec} onChange={(e) => setRec(e.target.checked)} /> Recomendado</label>
-              <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Ativo (visível para venda)</label>
+              <label className="flex items-center gap-2 text-[13px] text-slate-300"><input type="checkbox" checked={rec} onChange={(e) => setRec(e.target.checked)} /> Recomendado</label>
+              <label className="flex items-center gap-2 text-[13px] text-slate-300"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Ativo (visível para venda)</label>
             </div>
 
             <button type="button" onClick={save} disabled={saving}
-              className="rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">
+              className="rounded-lg bg-[#0094eb] px-4 py-2 text-[15px] font-semibold text-white disabled:opacity-40">
               {saving ? 'Criando...' : 'Criar combo'}
             </button>
           </>

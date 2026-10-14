@@ -14,8 +14,8 @@ import {
 type TabKey = 'visao' | 'banner' | 'popup' | 'email' | 'whatsapp' | 'promocao';
 
 const inputCls =
-  'w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500';
-const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1';
+  'w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-[15px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500';
+const labelCls = 'block text-[13px] font-semibold uppercase tracking-wide text-slate-400 mb-1';
 
 const toLocal = (iso: string | null) => {
   if (!iso) return '';
@@ -38,7 +38,7 @@ function statusOf(i: MktItem): { label: string; cls: string } {
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+      <p className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
       <p className="mt-1 text-2xl font-bold text-slate-100">{value}</p>
     </div>
   );
@@ -47,11 +47,11 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 function ChannelBlock({ title, icon, labels, note }: { title: string; icon: React.ReactNode; labels: string[]; note?: string }) {
   return (
     <div className="space-y-3">
-      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-100">{icon}{title}</h3>
+      <h3 className="flex items-center gap-2 text-[15px] font-bold text-slate-100">{icon}{title}</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {labels.map((l) => <Stat key={l} label={l} value={0} />)}
       </div>
-      {note && <p className="text-xs text-slate-500">{note}</p>}
+      {note && <p className="text-[13px] text-slate-500">{note}</p>}
     </div>
   );
 }
@@ -68,7 +68,7 @@ function Visao() {
 
   const block = (title: string, c: MktCounts | undefined) => (
     <div className="space-y-3">
-      <h3 className="text-sm font-bold text-slate-100">{title}</h3>
+      <h3 className="text-[15px] font-bold text-slate-100">{title}</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat label="Impressões" value={c?.impressions ?? 0} />
         <Stat label="Cliques" value={c?.clicks ?? 0} />
@@ -88,7 +88,7 @@ function Visao() {
           <option value={90}>Últimos 90 dias</option>
         </select>
       </div>
-      {err && <p className="text-sm text-rose-400">{err}</p>}
+      {err && <p className="text-[15px] text-rose-400">{err}</p>}
       {block('Banners', m?.banner)}
       {block('Popups', m?.popup)}
       <ChannelBlock
@@ -109,10 +109,10 @@ function DateTimeField({ label, value, onChange }: { label: string; value: strin
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</label>
+        <label className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">{label}</label>
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => onChange(new Date().toISOString())} className="text-[11px] font-bold text-amber-400 hover:text-amber-300">Agora</button>
-          {value && <button type="button" onClick={() => onChange(null)} className="text-[11px] font-semibold text-slate-500 hover:text-slate-300">Limpar</button>}
+          <button type="button" onClick={() => onChange(new Date().toISOString())} className="text-[13px] font-bold text-amber-400 hover:text-amber-300">Agora</button>
+          {value && <button type="button" onClick={() => onChange(null)} className="text-[13px] font-semibold text-slate-500 hover:text-slate-300">Limpar</button>}
         </div>
       </div>
       <input
@@ -157,16 +157,16 @@ function SlidesEditor({ slides, onChange }: { slides: MktSlide[]; onChange: (s: 
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <label className={labelCls + ' !mb-0'}>Imagens do banner</label>
-        <label className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+        <label className="flex items-center gap-2 text-[13px] text-slate-200 cursor-pointer">
           <input type="checkbox" checked={same} onChange={(e) => toggleSame(e.target.checked)} /> Usar as mesmas datas em todas
         </label>
       </div>
       {slides.map((s, idx) => (
         <div key={idx} className="rounded-lg border border-slate-800 bg-slate-950/50 p-3 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Imagem {idx + 1} de {slides.length}</p>
+            <p className="text-[13px] font-bold uppercase tracking-wide text-slate-400">Imagem {idx + 1} de {slides.length}</p>
             {slides.length > 1 && (
-              <button type="button" onClick={() => remove(idx)} className="text-[11px] font-semibold text-rose-400 hover:text-rose-300">Remover</button>
+              <button type="button" onClick={() => remove(idx)} className="text-[13px] font-semibold text-rose-400 hover:text-rose-300">Remover</button>
             )}
           </div>
           <ImageUpload kind="banner" value={s.image_url} onChange={(u) => setImage(idx, u)} />
@@ -176,10 +176,10 @@ function SlidesEditor({ slides, onChange }: { slides: MktSlide[]; onChange: (s: 
           </div>
         </div>
       ))}
-      <button type="button" onClick={add} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border border-slate-700 text-slate-200 hover:bg-slate-800">
+      <button type="button" onClick={add} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-bold border border-slate-700 text-slate-200 hover:bg-slate-800">
         <Plus className="w-4 h-4" /> Adicionar imagem
       </button>
-      <p className="text-[11px] text-slate-500">Cada imagem só aparece no carrossel dentro do período dela e do período geral do banner.</p>
+      <p className="text-[13px] text-slate-500">Cada imagem só aparece no carrossel dentro do período dela e do período geral do banner.</p>
     </div>
   );
 }
@@ -191,7 +191,7 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-100">{draft.id ? 'Editar' : 'Novo'} {draft.kind === 'banner' ? 'banner' : 'popup'}</h3>
+        <h3 className="text-[15px] font-bold text-slate-100">{draft.id ? 'Editar' : 'Novo'} {draft.kind === 'banner' ? 'banner' : 'popup'}</h3>
         <button type="button" onClick={onCancel} className="text-slate-400 hover:text-slate-100"><X className="w-4 h-4" /></button>
       </div>
       <div className="grid md:grid-cols-2 gap-3">
@@ -219,14 +219,14 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
               {Object.entries(FREQUENCY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select></div>
         )}
-        <label className="flex items-center gap-2 text-sm text-slate-200 mt-5">
+        <label className="flex items-center gap-2 text-[15px] text-slate-200 mt-5">
           <input type="checkbox" checked={draft.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Ativo
         </label>
       </div>
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">Cancelar</button>
+        <button type="button" onClick={onCancel} className="px-3 py-2 rounded-lg text-[15px] text-slate-300 hover:bg-slate-800">Cancelar</button>
         <button type="button" disabled={saving || !draft.title.trim()} onClick={onSave}
-          className="px-4 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 disabled:opacity-50">
+          className="px-4 py-2 rounded-lg text-[15px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 disabled:opacity-50">
           {saving ? 'Salvando...' : 'Salvar'}
         </button>
       </div>
@@ -267,14 +267,14 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
         <h2 className="text-base font-bold text-slate-100">{kind === 'banner' ? 'Banners' : 'Popups'}</h2>
         {!draft && (
           <button type="button" onClick={() => setDraft(newDraft(kind))}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 hover:bg-amber-400">
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[15px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400">
             <Plus className="w-4 h-4" /> Novo {kind === 'banner' ? 'banner' : 'popup'}
           </button>
         )}
       </div>
-      {err && <p className="text-sm text-rose-400">{err}</p>}
+      {err && <p className="text-[15px] text-rose-400">{err}</p>}
       {draft && <ItemForm draft={draft} onChange={setDraft} onCancel={() => setDraft(null)} onSave={save} saving={saving} />}
-      {items.length === 0 && !draft && <p className="text-sm text-slate-500">Nenhum item criado.</p>}
+      {items.length === 0 && !draft && <p className="text-[15px] text-slate-500">Nenhum item criado.</p>}
       <div className="space-y-2">
         {items.map((i) => {
           const st = statusOf(i);
@@ -282,15 +282,15 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
             <div key={i.id} className="rounded-xl border border-slate-800 bg-slate-900 p-3 flex flex-wrap items-center gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-slate-100 truncate">{i.title}</p>
-                  <span className={'text-[10px] font-bold px-2 py-0.5 rounded-full ' + st.cls}>{st.label}</span>
-                  {i.coupon_code && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">{i.coupon_code}</span>}
+                  <p className="text-[15px] font-semibold text-slate-100 truncate">{i.title}</p>
+                  <span className={'text-xs font-bold px-2 py-0.5 rounded-full ' + st.cls}>{st.label}</span>
+                  {i.coupon_code && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">{i.coupon_code}</span>}
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-[13px] text-slate-400">
                   {LOCATION_LABEL[i.location]} · {AUDIENCE_LABEL[i.audience]} · {fmtDate(i.starts_at)} → {fmtDate(i.ends_at)}
                 </p>
               </div>
-              <div className="text-xs text-slate-300 tabular-nums">
+              <div className="text-[13px] text-slate-300 tabular-nums">
                 {i.impressions} imp · {i.clicks} cliques · {ctr(i)} · {i.closes} fech.
               </div>
               <div className="flex items-center gap-1">
@@ -301,7 +301,7 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
                   <Pencil className="w-4 h-4" />
                 </button>
                 <button type="button" title="Excluir" onClick={() => remove(i.id)}
-                  className={'p-2 rounded-lg ' + (confirmId === i.id ? 'bg-rose-600 text-white text-xs font-bold px-3' : 'text-rose-400 hover:bg-slate-800')}>
+                  className={'p-2 rounded-lg ' + (confirmId === i.id ? 'bg-rose-600 text-white text-[13px] font-bold px-3' : 'text-rose-400 hover:bg-slate-800')}>
                   {confirmId === i.id ? 'Confirmar?' : <Trash2 className="w-4 h-4" />}
                 </button>
               </div>
@@ -354,19 +354,19 @@ function CouponPlanPicker({ plans, value, onChange }: {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <label className={labelCls + ' mb-0'}>Onde o cupom vale</label>
-        <span className="text-[11px] text-slate-400">
+        <span className="text-[13px] text-slate-400">
           {value.length === 0 ? 'Todos os planos' : value.length + (value.length === 1 ? ' plano selecionado' : ' planos selecionados')}
         </span>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={() => { setOpened([]); onChange([]); }}
-          className={'px-3 py-1.5 rounded-full text-xs font-bold border ' + (value.length === 0 && openGroups.length === 0 ? 'bg-amber-500 text-slate-950 border-amber-500' : 'border-slate-700 text-slate-300 hover:bg-slate-800')}>
+          className={'px-3 py-1.5 rounded-full text-[13px] font-bold border ' + (value.length === 0 && openGroups.length === 0 ? 'bg-amber-500 text-slate-950 border-amber-500' : 'border-slate-700 text-slate-300 hover:bg-slate-800')}>
           Todos os planos
         </button>
         {groups.map((g) => (
           <button key={g.key} type="button" onClick={() => toggleGroup(g)}
-            className={'px-3 py-1.5 rounded-full text-xs font-bold border ' + (isOpen(g) ? 'bg-amber-500 text-slate-950 border-amber-500' : 'border-slate-700 text-slate-300 hover:bg-slate-800')}>
+            className={'px-3 py-1.5 rounded-full text-[13px] font-bold border ' + (isOpen(g) ? 'bg-amber-500 text-slate-950 border-amber-500' : 'border-slate-700 text-slate-300 hover:bg-slate-800')}>
             {g.label}
           </button>
         ))}
@@ -377,7 +377,7 @@ function CouponPlanPicker({ plans, value, onChange }: {
         const all = ids.every((id) => value.includes(id));
         return (
           <div key={g.key} className="rounded-lg border border-slate-700 bg-slate-950 p-3 space-y-2">
-            <label className="flex cursor-pointer items-center gap-2 text-xs font-bold text-slate-100">
+            <label className="flex cursor-pointer items-center gap-2 text-[13px] font-bold text-slate-100">
               <input type="checkbox" checked={all}
                 onChange={() => onChange(all ? value.filter((v) => !ids.includes(v)) : Array.from(new Set([...value, ...ids])))} />
               {g.label}: todos os planos
@@ -386,7 +386,7 @@ function CouponPlanPicker({ plans, value, onChange }: {
               {g.items.map((pl) => {
                 const on = value.includes(pl.id);
                 return (
-                  <label key={pl.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs text-slate-200 hover:bg-slate-800">
+                  <label key={pl.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-[13px] text-slate-200 hover:bg-slate-800">
                     <input type="checkbox" checked={on}
                       onChange={() => onChange(on ? value.filter((x) => x !== pl.id) : [...value, pl.id])} />
                     <span className="truncate">{pl.name}</span>
@@ -398,7 +398,7 @@ function CouponPlanPicker({ plans, value, onChange }: {
         );
       })}
 
-      {emptyOpen && <p className="text-[11px] text-amber-400">Marque ao menos um plano. Sem nenhum marcado, o cupom vale para todos.</p>}
+      {emptyOpen && <p className="text-[13px] text-amber-400">Marque ao menos um plano. Sem nenhum marcado, o cupom vale para todos.</p>}
     </div>
   );
 }
@@ -450,19 +450,19 @@ function Cupom() {
         <h2 className="text-base font-bold text-slate-100">Cupons</h2>
         {!draft && (
           <button type="button" onClick={() => { setOk(null); setDraft(emptyCouponDraft()); }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 hover:bg-amber-400">
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[15px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400">
             <Plus className="w-4 h-4" /> Novo cupom
           </button>
         )}
       </div>
 
-      {err && <p className="text-sm text-rose-400">{err}</p>}
-      {ok && <p className="text-sm text-emerald-400">{ok}</p>}
+      {err && <p className="text-[15px] text-rose-400">{err}</p>}
+      {ok && <p className="text-[15px] text-emerald-400">{ok}</p>}
 
       {draft && (
         <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-100">{draft.id ? 'Editar cupom' : 'Novo cupom'}</h3>
+            <h3 className="text-[15px] font-bold text-slate-100">{draft.id ? 'Editar cupom' : 'Novo cupom'}</h3>
             <button type="button" onClick={() => setDraft(null)} className="text-slate-400 hover:text-slate-100"><X className="w-4 h-4" /></button>
           </div>
           <div className="grid md:grid-cols-3 gap-3">
@@ -478,18 +478,18 @@ function Cupom() {
             </div>
           </div>
           <CouponPlanPicker plans={plans} value={draft.applicable_plan_ids} onChange={(ids) => set('applicable_plan_ids', ids)} />
-          <p className="text-[11px] text-slate-500">Sem início, o cupom vale a partir de agora; sem fim, não expira.</p>
+          <p className="text-[13px] text-slate-500">Sem início, o cupom vale a partir de agora; sem fim, não expira.</p>
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setDraft(null)} className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">Cancelar</button>
+            <button type="button" onClick={() => setDraft(null)} className="px-3 py-2 rounded-lg text-[15px] text-slate-300 hover:bg-slate-800">Cancelar</button>
             <button type="button" disabled={saving || !draft.code.trim()} onClick={save}
-              className="px-4 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 disabled:opacity-50">
+              className="px-4 py-2 rounded-lg text-[15px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 disabled:opacity-50">
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
         </div>
       )}
 
-      {items.length === 0 && !draft && <p className="text-sm text-slate-500">Nenhum cupom criado.</p>}
+      {items.length === 0 && !draft && <p className="text-[15px] text-slate-500">Nenhum cupom criado.</p>}
 
       <div className="space-y-2">
         {items.map((c) => {
@@ -498,17 +498,17 @@ function Cupom() {
             <div key={c.id} className="rounded-xl border border-slate-800 bg-slate-900 p-3 flex flex-wrap items-center gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-slate-100 tracking-wider">{c.code}</p>
-                  <span className={'text-[10px] font-bold px-2 py-0.5 rounded-full ' + st.cls}>{st.label}</span>
+                  <p className="text-[15px] font-bold text-slate-100 tracking-wider">{c.code}</p>
+                  <span className={'text-xs font-bold px-2 py-0.5 rounded-full ' + st.cls}>{st.label}</span>
                   {c.applicable_plan_ids && c.applicable_plan_ids.length > 0 && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300">
                       {c.applicable_plan_ids.length} {c.applicable_plan_ids.length === 1 ? 'plano' : 'planos'}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-400">{fmtDate(c.starts_at)} → {c.expires_at ? fmtDate(c.expires_at) : 'sem fim'}</p>
+                <p className="text-[13px] text-slate-400">{fmtDate(c.starts_at)} → {c.expires_at ? fmtDate(c.expires_at) : 'sem fim'}</p>
               </div>
-              <div className="text-xs text-slate-300 tabular-nums text-right">
+              <div className="text-[13px] text-slate-300 tabular-nums text-right">
                 <p><b className="text-amber-300">{couponValue(c)}</b> de desconto</p>
                 <p>Usado {c.times_used} / {c.max_uses ?? 'ilimitado'}</p>
               </div>
@@ -549,7 +549,7 @@ export default function MarketingTab() {
       <div className="flex flex-wrap gap-1 border-b border-slate-800">
         {TABS.map((t) => (
           <button key={t.key} type="button" onClick={() => setTab(t.key)}
-            className={'flex items-center gap-1.5 px-3 py-2 text-sm font-semibold border-b-2 -mb-px ' +
+            className={'flex items-center gap-1.5 px-3 py-2 text-[15px] font-semibold border-b-2 -mb-px ' +
               (tab === t.key ? 'border-amber-500 text-amber-400' : 'border-transparent text-slate-400 hover:text-slate-200')}>
             {t.icon}{t.label}
           </button>

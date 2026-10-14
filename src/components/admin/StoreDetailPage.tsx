@@ -78,8 +78,8 @@ const FIELDS: [string, string][] = [
   ['name', 'Nome da loja'], ['url', 'URL da loja'], ['platform', 'Plataforma'], ['contact_name', 'Nome do contato'],
   ['contact_email', 'E-mail de contato'], ['owner_contact_email', 'E-mail do assinante'], ['whatsapp', 'WhatsApp (com DDD)'],
 ];
-const TH = 'px-3 py-2 text-[10px] uppercase tracking-wider text-slate-500';
-const BTN = 'rounded-lg px-3 py-1.5 text-[11px] font-bold disabled:opacity-40';
+const TH = 'px-3 py-2 text-xs uppercase tracking-wider text-slate-500';
+const BTN = 'rounded-lg px-3 py-1.5 text-[13px] font-bold disabled:opacity-40';
 
 
 function IdChip({ id }: { id: string }) {
@@ -99,7 +99,7 @@ function IdChip({ id }: { id: string }) {
       type="button"
       onClick={copy}
       title="Copiar ID da loja"
-      className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-mono text-[11px] text-slate-300 hover:bg-white/10"
+      className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-mono text-[13px] text-slate-300 hover:bg-white/10"
     >
       <span>{id}</span>
       {ok ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} className={ICON} />}
@@ -209,8 +209,8 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
   if (!data?.store) {
     return (
       <div className="space-y-3">
-        <button type="button" onClick={back} className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white"><ArrowLeft size={16} /> Voltar para Lojas</button>
-        <p className="text-sm text-slate-400">Loja não encontrada.</p>
+        <button type="button" onClick={back} className="flex items-center gap-2 text-[13px] font-bold text-slate-400 hover:text-white"><ArrowLeft size={16} /> Voltar para Lojas</button>
+        <p className="text-[15px] text-slate-400">Loja não encontrada.</p>
       </div>
     );
   }
@@ -219,7 +219,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={back} className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white">
+      <button type="button" onClick={back} className="flex items-center gap-2 text-[13px] font-bold text-slate-400 hover:text-white">
         <ArrowLeft size={16} /> Voltar para Lojas
       </button>
 
@@ -241,7 +241,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
               />
             )}
           </div>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-[13px] text-slate-500">
             {s.url || 'sem URL'} · criada em {dt(s.created_at)} · login: {s.owner_email || '—'} · último acesso: {dtt(s.last_sign_in_at)}
           </p>
         </div>
@@ -259,7 +259,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
             key={k}
             type="button"
             onClick={() => setAba(k)}
-            className={`border-b-2 px-4 py-2 text-xs font-bold transition-colors ${aba === k ? 'border-[#fd8539] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+            className={`border-b-2 px-4 py-2 text-[13px] font-bold transition-colors ${aba === k ? 'border-[#fd8539] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
           >
             {l}
           </button>
@@ -276,7 +276,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
       {aba === 'beneficios' && (
         <div className="space-y-4">
           <div className={`${CARD} space-y-3`}>
-            <p className="text-sm font-bold text-white">Aplicar benefício</p>
+            <p className="text-[15px] font-bold text-white">Aplicar benefício</p>
             <div className="grid gap-2 md:grid-cols-4">
               <select value={ben.kind} onChange={(e) => setBen({ ...ben, kind: e.target.value, value: '' })} className={INPUT}>
                 <option value="trial_days">Dias extras de trial</option>
@@ -292,10 +292,10 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
               <input value={ben.note} onChange={(e) => setBen({ ...ben, note: e.target.value })} placeholder="Observação (opcional)" className={INPUT} />
               <button type="button" disabled={busy} onClick={submitBenefit} className={`${BTN} bg-[#fd8539] text-white`}>Aplicar</button>
             </div>
-            <p className="text-[11px] text-slate-500">Dias de trial valem na hora. Desconto e cupom ficam registrados na loja, e o checkout ainda não os aplica sozinho.</p>
+            <p className="text-[13px] text-slate-500">Dias de trial valem na hora. Desconto e cupom ficam registrados na loja, e o checkout ainda não os aplica sozinho.</p>
           </div>
           <div className={`${CARD} overflow-x-auto p-0`}>
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-[13px]">
               <thead><tr className="border-b border-white/10"><th className={TH}>Data</th><th className={TH}>Tipo</th><th className={TH}>Valor</th><th className={TH}>Observação</th></tr></thead>
               <tbody className="divide-y divide-white/5">
                 {data.benefits.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">Nenhum benefício aplicado.</td></tr>}
@@ -321,7 +321,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
         <div className={`${CARD} max-w-2xl space-y-3`}>
           {FIELDS.map(([k, l]) => (
             <label key={k} className="block space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{l}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{l}</span>
               <input value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })} className={INPUT} />
             </label>
           ))}
@@ -344,14 +344,14 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
                 key={k}
                 type="button"
                 onClick={() => setLogFilter(k)}
-                className={`rounded-full border px-3 py-1 text-xs font-bold ${logFilter === k ? 'border-[#fd8539] bg-[#fd8539]/15 text-white' : 'border-white/10 text-slate-400'}`}
+                className={`rounded-full border px-3 py-1 text-[13px] font-bold ${logFilter === k ? 'border-[#fd8539] bg-[#fd8539]/15 text-white' : 'border-white/10 text-slate-400'}`}
               >
                 {l}
               </button>
             ))}
           </div>
           <div className={`${CARD} overflow-x-auto p-0`}>
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-[13px]">
               <thead><tr className="border-b border-white/10"><th className={TH}>Quando</th><th className={TH}>Origem</th><th className={TH}>O que</th><th className={TH}><label className="flex cursor-pointer items-center gap-2 normal-case tracking-normal"><input type="checkbox" checked={showCode} onChange={(e) => setShowCode(e.target.checked)} /> Detalhe · mostrar código técnico</label></th></tr></thead>
               <tbody className="divide-y divide-white/5">
                 {logRows.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">Sem registros.</td></tr>}
@@ -360,7 +360,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
                     <td className="whitespace-nowrap px-3 py-2 text-slate-400">{dtt(r.at)}</td>
                     <td className="px-3 py-2 text-slate-300">{r.src === 'painel' ? 'Painel' : 'Widget'}</td>
                     <td className="px-3 py-2 font-bold text-white">{r.title}</td>
-                    <td className="max-w-lg px-3 py-2 text-slate-300" title={r.detail}>{r.text || '—'}{showCode && r.detail && <span className="mt-1 block break-all font-mono text-[10px] text-slate-600">{r.detail}</span>}</td>
+                    <td className="max-w-lg px-3 py-2 text-slate-300" title={r.detail}>{r.text || '—'}{showCode && r.detail && <span className="mt-1 block break-all font-mono text-xs text-slate-600">{r.detail}</span>}</td>
                   </tr>
                 ))}
               </tbody>

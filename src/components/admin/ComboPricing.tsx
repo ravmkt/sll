@@ -18,7 +18,7 @@ export default function ComboPricing({ combo, list, pct, onChanged }: { combo: D
   const valid = Number.isFinite(n) && n >= 0 && n <= 90;
   const dirty = valid && n !== pct;
 
-  if (!list) return <p className="text-center text-[11px] text-rose-400">Defina 2 ou mais módulos com plano para precificar.</p>;
+  if (!list) return <p className="text-center text-[13px] text-rose-400">Defina 2 ou mais módulos com plano para precificar.</p>;
 
   const save = async () => {
     if (!valid) { toast.error('Informe um desconto entre 0 e 90.'); return; }
@@ -41,25 +41,25 @@ export default function ComboPricing({ combo, list, pct, onChanged }: { combo: D
       <div className="grid grid-cols-3 gap-2 text-center">
         {cols.map(([name, full, cur]) => (
           <div key={name}>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{name}</p>
-            <p className="text-[10px] text-slate-500 line-through">{brl(full)}</p>
-            <p className={`text-xs font-bold ${dirty ? 'text-sky-300' : 'text-white'}`}>{brl(dirty ? after(full, n) : cur)}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{name}</p>
+            <p className="text-xs text-slate-500 line-through">{brl(full)}</p>
+            <p className={`text-[13px] font-bold ${dirty ? 'text-sky-300' : 'text-white'}`}>{brl(dirty ? after(full, n) : cur)}</p>
             {name !== 'Mensal' && (() => {
               const v = dirty ? after(full, n) : cur;
               const m0 = dirty ? after(cols[0][1], n) : cols[0][2];
               const t = cycleInfo(v, name === 'Semestral' ? 6 : 12, m0);
-              return t ? <p className="text-[10px] text-emerald-400">{t}</p> : null;
+              return t ? <p className="text-xs text-emerald-400">{t}</p> : null;
             })()}
           </div>
         ))}
       </div>
       <div className="flex items-center justify-center gap-2">
-        <span className="text-[10px] text-slate-500">Desconto</span>
+        <span className="text-xs text-slate-500">Desconto</span>
         <input value={val} onChange={(e) => setVal(e.target.value)}
-          className="h-7 w-14 rounded-md border border-slate-700 bg-[#0b0e1a] px-2 text-right text-xs text-slate-100 outline-none focus:border-[#0094eb]" />
-        <span className="text-xs text-slate-400">%</span>
+          className="h-7 w-14 rounded-md border border-slate-700 bg-[#0b0e1a] px-2 text-right text-[13px] text-slate-100 outline-none focus:border-[#0094eb]" />
+        <span className="text-[13px] text-slate-400">%</span>
         <button type="button" disabled={busy || !dirty} onClick={save}
-          className="cursor-pointer rounded-md bg-[#0094eb] px-3 py-1 text-[11px] font-bold text-white disabled:opacity-40">
+          className="cursor-pointer rounded-md bg-[#0094eb] px-3 py-1 text-[13px] font-bold text-white disabled:opacity-40">
           {busy ? '…' : 'Aplicar'}
         </button>
       </div>

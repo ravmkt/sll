@@ -23,9 +23,9 @@ const bytes = (b: number) => {
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className={CARD}>
-      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="text-[13px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
       <p className="mt-1 text-2xl font-black text-white">{value}</p>
-      {hint && <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>}
+      {hint && <p className="mt-0.5 text-[13px] text-slate-500">{hint}</p>}
     </div>
   );
 }
@@ -47,7 +47,7 @@ export default function ConsumptionDetail({ start, end, module }: { start: strin
     return () => { alive = false; };
   }, [start, end, module]);
 
-  if (error) return <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>;
+  if (error) return <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[15px] text-rose-300">{error}</div>;
   if (!d) return loading ? <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" /> : null;
 
   const chart = Object.entries(d.events || {})
@@ -66,9 +66,9 @@ export default function ConsumptionDetail({ start, end, module }: { start: strin
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
         <div className={`${CARD} xl:col-span-2`}>
-          <p className="mb-3 text-sm font-bold text-white">Eventos por tipo</p>
+          <p className="mb-3 text-[15px] font-bold text-white">Eventos por tipo</p>
           {chart.length === 0 ? (
-            <p className="py-10 text-center text-xs text-slate-500">Nenhum evento no período.</p>
+            <p className="py-10 text-center text-[13px] text-slate-500">Nenhum evento no período.</p>
           ) : (
             <div style={{ height: Math.max(180, chart.length * 32) }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -85,16 +85,16 @@ export default function ConsumptionDetail({ start, end, module }: { start: strin
         </div>
 
         <div className={CARD}>
-          <p className="mb-3 text-sm font-bold text-white">Maiores em armazenamento</p>
+          <p className="mb-3 text-[15px] font-bold text-white">Maiores em armazenamento</p>
           {d.top_storage.length === 0 ? (
-            <p className="text-xs text-slate-500">Nenhuma loja com uso registrado.</p>
+            <p className="text-[13px] text-slate-500">Nenhuma loja com uso registrado.</p>
           ) : (
             <ul className="space-y-3">
               {d.top_storage.map((t, i) => {
                 const pct = t.limit ? Math.min(100, (t.used / t.limit) * 100) : null;
                 return (
                   <li key={t.id}>
-                    <div className="flex justify-between text-xs">
+                    <div className="flex justify-between text-[13px]">
                       <span className="truncate font-semibold text-slate-200">{i + 1}. {t.name || 'Sem nome'}</span>
                       <span className="ml-2 shrink-0 text-slate-400">{bytes(t.used)}{t.limit ? ` / ${bytes(t.limit)}` : ''}</span>
                     </div>

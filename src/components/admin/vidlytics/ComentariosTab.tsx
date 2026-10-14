@@ -208,20 +208,20 @@ export const ComentariosTab: React.FC = () => {
     switch (status) {
       case 'APROVADO':
         return (
-          <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[11px] font-extrabold tracking-wide">
+          <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[13px] font-extrabold tracking-wide">
             APROVADO
           </span>
         );
       case 'REJEITADO':
         return (
-          <span className="px-3 py-1 bg-rose-50 text-rose-500 border border-rose-100 rounded-full text-[11px] font-extrabold tracking-wide">
+          <span className="px-3 py-1 bg-rose-50 text-rose-500 border border-rose-100 rounded-full text-[13px] font-extrabold tracking-wide">
             REJEITADO
           </span>
         );
       case 'PENDENTE':
       default:
         return (
-          <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200/70 rounded-full text-[11px] font-extrabold tracking-wide">
+          <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200/70 rounded-full text-[13px] font-extrabold tracking-wide">
             PENDENTE
           </span>
         );
@@ -235,7 +235,7 @@ export const ComentariosTab: React.FC = () => {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`px-4 py-3 rounded-xl shadow-lg text-sm font-semibold text-white transform transition-all duration-300 ${
+            className={`px-4 py-3 rounded-xl shadow-lg text-[15px] font-semibold text-white transform transition-all duration-300 ${
               toast.type === 'success' ? 'bg-emerald-500' :
               toast.type === 'error' ? 'bg-rose-500' : 'bg-[#0094eb]'
             }`}
@@ -248,7 +248,7 @@ export const ComentariosTab: React.FC = () => {
       {/* 1. TÍTULO E SUBTÍTULO */}
       <div>
         <h2 className="text-2xl font-bold text-slate-800">Comentários</h2>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-[15px] text-slate-500 mt-1">
           Gerencie a interação dos clientes nos seus stories, responda dúvidas e modere comentários públicos.
         </p>
       </div>
@@ -262,19 +262,19 @@ export const ComentariosTab: React.FC = () => {
               <ShieldCheck size={18} />
             </div>
             <div>
-              <h3 className="text-xs font-bold text-slate-800 tracking-wider uppercase">
+              <h3 className="text-[13px] font-bold text-slate-800 tracking-wider uppercase">
                 Moderação de Conteúdo
               </h3>
-              <p className="text-[11px] text-slate-400">Controle de publicação na loja</p>
+              <p className="text-[13px] text-slate-400">Controle de publicação na loja</p>
             </div>
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-slate-50">
             <div>
-              <p className="text-xs font-semibold text-slate-700">
+              <p className="text-[13px] font-semibold text-slate-700">
                 {autoApprove ? 'Aprovação automática ativada' : 'Aprovação automática desativada'}
               </p>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-xs text-slate-400">
                 {autoApprove ? 'Comentários vão direto para a loja' : 'Requer aprovação prévia manual'}
               </p>
             </div>
@@ -299,10 +299,10 @@ export const ComentariosTab: React.FC = () => {
         {/* Card: Filtros & Busca (Compacto) */}
         <div className="lg:col-span-8 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
+            <span className="text-[13px] font-bold text-slate-400 tracking-wider uppercase">
               Filtros & Busca
             </span>
-            <span className="px-2.5 py-0.5 bg-blue-50 text-[#0094eb] text-[11px] font-bold rounded-full">
+            <span className="px-2.5 py-0.5 bg-blue-50 text-[#0094eb] text-[13px] font-bold rounded-full">
               {filteredComments.length} COMENTÁRIOS
             </span>
           </div>
@@ -316,7 +316,7 @@ export const ComentariosTab: React.FC = () => {
                 placeholder="Pesquisar autor ou texto..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-[13px] text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors"
               />
             </div>
 
@@ -325,7 +325,7 @@ export const ComentariosTab: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[#0094eb] transition-colors cursor-pointer"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-[13px] text-slate-700 focus:outline-none focus:border-[#0094eb] transition-colors cursor-pointer"
               >
                 <option value="TODOS">Todos os Status</option>
                 <option value="PENDENTE">Pendentes</option>
@@ -339,7 +339,7 @@ export const ComentariosTab: React.FC = () => {
               <select
                 value={videoFilter}
                 onChange={(e) => setVideoFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[#0094eb] transition-colors cursor-pointer truncate"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-[13px] text-slate-700 focus:outline-none focus:border-[#0094eb] transition-colors cursor-pointer truncate"
               >
                 <option value="TODOS">Todos os Vídeos</option>
                 <option value="Criação_de_Vídeo_Fashion_Editorial_Luxo.mp4">Fashion Editorial</option>
@@ -356,17 +356,17 @@ export const ComentariosTab: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 tracking-wider uppercase bg-slate-50/50">
+              <tr className="border-b border-slate-100 text-[13px] font-bold text-slate-400 tracking-wider uppercase bg-slate-50/50">
                 <th className="py-3.5 px-6 text-left w-64">AUTOR</th>
                 <th className="py-3.5 px-4 text-left">CONTEÚDO / VÍDEO</th>
                 <th className="py-3.5 px-4 text-center w-36">STATUS</th>
                 <th className="py-3.5 px-6 text-center w-36">AÇÕES</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
+            <tbody className="divide-y divide-slate-100 text-[15px]">
               {filteredComments.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-slate-400 text-xs">
+                  <td colSpan={4} className="py-12 text-center text-slate-400 text-[13px]">
                     Nenhum comentário encontrado com os filtros selecionados.
                   </td>
                 </tr>
@@ -380,15 +380,15 @@ export const ComentariosTab: React.FC = () => {
                           <div
                             className={`w-9 h-9 rounded-full ${
                               comment.avatarBgColor || 'bg-[#0094eb]'
-                            } text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm`}
+                            } text-white flex items-center justify-center font-bold text-[15px] shrink-0 shadow-sm`}
                           >
                             {comment.authorName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-800 text-sm leading-tight">
+                            <p className="font-bold text-slate-800 text-[15px] leading-tight">
                               {comment.authorName}
                             </p>
-                            <span className="text-[11px] text-slate-400 font-medium">
+                            <span className="text-[13px] text-slate-400 font-medium">
                               {comment.authorRole} • {comment.createdAt}
                             </span>
                           </div>
@@ -397,16 +397,16 @@ export const ComentariosTab: React.FC = () => {
 
                       {/* Conteúdo / Vídeo */}
                       <td className="py-4 px-4 text-left align-top">
-                        <p className="text-slate-800 text-sm font-medium">
+                        <p className="text-slate-800 text-[15px] font-medium">
                           "{comment.content}"
                         </p>
                         <div className="flex items-center gap-1 mt-1">
-                          <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                          <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
                             VÍDEO:
                           </span>
                           <a
                             href="#ver-video"
-                            className="text-xs font-semibold text-[#0094eb] hover:underline truncate max-w-[320px] md:max-w-md"
+                            className="text-[13px] font-semibold text-[#0094eb] hover:underline truncate max-w-[320px] md:max-w-md"
                           >
                             {comment.videoTitle}
                           </a>
@@ -480,15 +480,15 @@ export const ComentariosTab: React.FC = () => {
                                 <CornerDownRight size={16} className="text-slate-300 mt-0.5 shrink-0" />
                                 <div className="flex-1 bg-white border border-slate-100 rounded-xl p-3 shadow-sm">
                                   <div className="flex items-center justify-between mb-1">
-                                    <p className="text-xs font-bold text-[#0094eb]">
+                                    <p className="text-[13px] font-bold text-[#0094eb]">
                                       {reply.authorName}
-                                      <span className="ml-2 px-1.5 py-0.5 bg-blue-50 text-[#0094eb] text-[9px] rounded-full">
+                                      <span className="ml-2 px-1.5 py-0.5 bg-blue-50 text-[#0094eb] text-[11px] rounded-full">
                                         {reply.authorRole}
                                       </span>
                                     </p>
-                                    <span className="text-[10px] text-slate-400">{reply.createdAt}</span>
+                                    <span className="text-xs text-slate-400">{reply.createdAt}</span>
                                   </div>
-                                  <p className="text-sm text-slate-700">{reply.content}</p>
+                                  <p className="text-[15px] text-slate-700">{reply.content}</p>
                                 </div>
                               </div>
                             ))}
@@ -509,7 +509,7 @@ export const ComentariosTab: React.FC = () => {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-800">Responder comentário</h3>
+              <h3 className="text-[15px] font-bold text-slate-800">Responder comentário</h3>
               <button
                 type="button"
                 onClick={() => setReplyModalOpen(false)}
@@ -520,24 +520,24 @@ export const ComentariosTab: React.FC = () => {
             </div>
             <div className="p-5 space-y-4">
               <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                <p className="text-xs text-slate-500 mb-1">Comentário de <strong>{selectedComment.authorName}</strong></p>
-                <p className="text-sm text-slate-800">"{selectedComment.content}"</p>
+                <p className="text-[13px] text-slate-500 mb-1">Comentário de <strong>{selectedComment.authorName}</strong></p>
+                <p className="text-[15px] text-slate-800">"{selectedComment.content}"</p>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Sua resposta</label>
+                <label className="block text-[13px] font-semibold text-slate-700 mb-1.5">Sua resposta</label>
                 <textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Digite sua resposta ao cliente..."
                   rows={4}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors resize-none"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-[15px] text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors resize-none"
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setReplyModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="px-4 py-2 text-[13px] font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 >
                   Cancelar
                 </button>
@@ -545,7 +545,7 @@ export const ComentariosTab: React.FC = () => {
                   type="button"
                   onClick={handleSendReply}
                   disabled={!replyText.trim()}
-                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0094eb] hover:bg-[#0083d1] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold text-white bg-[#0094eb] hover:bg-[#0083d1] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
                 >
                   <Send size={14} />
                   Publicar resposta
@@ -565,7 +565,7 @@ export const ComentariosTab: React.FC = () => {
                 <AlertTriangle size={24} />
               </div>
               <h3 className="text-base font-bold text-slate-800 mb-1">Excluir comentário?</h3>
-              <p className="text-sm text-slate-500">
+              <p className="text-[15px] text-slate-500">
                 Você está prestes a excluir o comentário de <strong>{selectedComment.authorName}</strong>. Essa ação não poderá ser desfeita.
               </p>
             </div>
@@ -573,14 +573,14 @@ export const ComentariosTab: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setDeleteModalOpen(false)}
-                className="flex-1 px-4 py-2.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+                className="flex-1 px-4 py-2.5 text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
-                className="flex-1 px-4 py-2.5 text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-colors"
+                className="flex-1 px-4 py-2.5 text-[13px] font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-colors"
               >
                 Sim, excluir
               </button>

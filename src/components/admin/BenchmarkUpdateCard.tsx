@@ -38,8 +38,8 @@ export default function BenchmarkUpdateCard() {
   return (
     <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-[#111524] p-4">
       <div>
-        <h2 className="text-sm font-bold text-yellow-300">Benchmarks de mercado por setor</h2>
-        <p className="mt-0.5 text-[11px] text-slate-500">
+        <h2 className="text-[15px] font-bold text-yellow-300">Benchmarks de mercado por setor</h2>
+        <p className="mt-0.5 text-[13px] text-slate-500">
           {count} {count === 1 ? 'setor' : 'setores'} · última atualização:{' '}
           {last ? new Date(last).toLocaleString('pt-BR') : 'nunca'} · rotina automática em 1º de janeiro e 1º de julho.
         </p>
@@ -48,7 +48,7 @@ export default function BenchmarkUpdateCard() {
         type="button"
         disabled={busy}
         onClick={run}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-xs font-bold text-white disabled:opacity-40"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
       >
         {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
         Atualizar Benchmarks de Mercado

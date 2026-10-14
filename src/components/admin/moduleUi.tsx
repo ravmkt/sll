@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
 export const CARD = 'rounded-2xl border border-slate-800 bg-[#111524] p-4';
-export const INPUT = 'h-9 w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 text-xs text-slate-200 outline-none focus:border-[#0094eb]';
-export const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-xs text-slate-200 outline-none focus:border-[#0094eb]';
+export const INPUT = 'h-9 w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 text-[13px] text-slate-200 outline-none focus:border-[#0094eb]';
+export const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-[13px] text-slate-200 outline-none focus:border-[#0094eb]';
 
 export const STATUS_LABEL: Record<string, string> = { active: 'Ativo', coming_soon: 'Em breve', hidden: 'Oculto' };
 export const SUB_LABEL: Record<string, string> = { active: 'Ativa', trialing: 'Trial', past_due: 'Em atraso', lifetime: 'Vitalícia' };
@@ -18,7 +18,7 @@ export const bytes = (b: number | null | undefined) => {
 export function Kpi({ label, value, tone }: { label: string; value: ReactNode; tone?: string }) {
   return (
     <div className="rounded-xl bg-white/[0.03] px-3 py-2">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
       <p className={`mt-0.5 text-lg font-black ${tone || 'text-white'}`}>{value}</p>
     </div>
   );
@@ -29,7 +29,7 @@ export function ModuleLogo({ url, name, size = 40 }: { url: string | null; name:
   return url ? (
     <img src={url} alt={name} style={style} className="shrink-0 rounded-xl bg-white object-contain p-1" />
   ) : (
-    <div style={style} className="flex shrink-0 items-center justify-center rounded-xl bg-[#fd8539]/15 text-sm font-black text-[#fd8539]">
+    <div style={style} className="flex shrink-0 items-center justify-center rounded-xl bg-[#fd8539]/15 text-[15px] font-black text-[#fd8539]">
       {(name || '?').charAt(0).toUpperCase()}
     </div>
   );

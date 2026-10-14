@@ -10,9 +10,9 @@ import {
 
 const sb: any = supabase;
 
-const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#0094eb]';
-const LBL = 'mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400';
-const TH = 'px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500';
+const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-[15px] text-slate-100 outline-none focus:border-[#0094eb]';
+const LBL = 'mb-1 block text-[13px] font-semibold uppercase tracking-wider text-slate-400';
+const TH = 'px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-500';
 
 type Mod = { slug: string; name: string };
 
@@ -30,7 +30,7 @@ const num = (v: string) => Number(v.trim().replace(/\./g, '').replace(',', '.'))
 
 function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 text-sm text-slate-200">
+    <label className="flex cursor-pointer items-center gap-3 text-[15px] text-slate-200">
       <button type="button" role="switch" aria-checked={on} onClick={() => onChange(!on)}
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${on ? 'bg-emerald-500' : 'bg-slate-600'}`}>
         <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
@@ -124,14 +124,14 @@ export default function AddonsAdminTab() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-slate-500">Pacotes extras de recurso. Os marcados como upsell aparecem como Order Bump no checkout.</p>
-        <button type="button" onClick={openNew} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-4 py-2 text-xs font-bold text-white">
+        <p className="text-[13px] text-slate-500">Pacotes extras de recurso. Os marcados como upsell aparecem como Order Bump no checkout.</p>
+        <button type="button" onClick={openNew} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-4 py-2 text-[13px] font-bold text-white">
           <Plus size={14} /> Novo Add-on
         </button>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#111524]">
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-left text-[13px]">
           <thead className="border-b border-slate-800">
             <tr>
               <th className={TH}>Escopo / Chave</th><th className={TH}>Nome</th><th className={TH}>Recurso concedido</th>
@@ -145,17 +145,17 @@ export default function AddonsAdminTab() {
             {list.map((a) => (
               <tr key={a.id} className={a.is_active ? '' : 'opacity-50'}>
                 <td className="px-3 py-3">
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${a.scope === 'global' ? 'bg-violet-500/15 text-violet-300' : 'bg-sky-500/15 text-sky-300'}`}>{scopeName(a.scope)}</span>
-                  <p className="mt-1 font-mono text-[10px] text-slate-600">{a.slug}</p>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${a.scope === 'global' ? 'bg-violet-500/15 text-violet-300' : 'bg-sky-500/15 text-sky-300'}`}>{scopeName(a.scope)}</span>
+                  <p className="mt-1 font-mono text-xs text-slate-600">{a.slug}</p>
                 </td>
                 <td className="px-3 py-3 font-semibold text-slate-100">{a.name}</td>
                 <td className="px-3 py-3 text-slate-300">{formatGrant(a)}</td>
                 <td className="px-3 py-3 text-center font-bold text-white">{brl(a.price_monthly)}</td>
                 <td className="px-3 py-3 text-center">
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${a.is_upsell ? 'bg-amber-500/15 text-amber-300' : 'bg-slate-500/15 text-slate-400'}`}>{a.is_upsell ? 'Sim' : 'Não'}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${a.is_upsell ? 'bg-amber-500/15 text-amber-300' : 'bg-slate-500/15 text-slate-400'}`}>{a.is_upsell ? 'Sim' : 'Não'}</span>
                 </td>
                 <td className="px-3 py-3 text-center">
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${a.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{a.is_active ? 'Ativo' : 'Inativo'}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${a.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{a.is_active ? 'Ativo' : 'Inativo'}</span>
                 </td>
                 <td className="px-3 py-3">
                   <div className="flex justify-center gap-1">
@@ -196,12 +196,12 @@ export default function AddonsAdminTab() {
               <label className="block"><span className={LBL}>Quantidade concedida</span>
                 <input value={form.amount} onChange={(e) => set('amount', e.target.value)} className={IN} placeholder="10 ou 15000" inputMode="decimal" /></label>
             </div>
-            {form.target_resource === 'custom' && <p className="text-[11px] text-slate-500">Recurso personalizado não altera limites automaticamente.</p>}
+            {form.target_resource === 'custom' && <p className="text-[13px] text-slate-500">Recurso personalizado não altera limites automaticamente.</p>}
 
             <Switch on={form.is_active} onChange={(v) => set('is_active', v)} label={form.is_active ? 'Ativo' : 'Inativo'} />
 
             <div className="space-y-3 rounded-xl border border-slate-800 p-4">
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-100">
+              <label className="flex cursor-pointer items-center gap-2 text-[15px] font-semibold text-slate-100">
                 <input type="checkbox" checked={form.is_upsell} onChange={(e) => set('is_upsell', e.target.checked)} />
                 Oferecer como Upsell / Order Bump no Checkout
               </label>
@@ -219,8 +219,8 @@ export default function AddonsAdminTab() {
             </div>
 
             <div className="flex justify-end gap-2 border-t border-slate-800 pt-4">
-              <button type="button" disabled={busy} onClick={() => setForm(null)} className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10">Cancelar</button>
-              <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-xs font-bold text-white disabled:opacity-40">
+              <button type="button" disabled={busy} onClick={() => setForm(null)} className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-[13px] font-semibold text-slate-200 hover:bg-white/10">Cancelar</button>
+              <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-[13px] font-bold text-white disabled:opacity-40">
                 {busy ? 'Salvando...' : 'Salvar add-on'}
               </button>
             </div>

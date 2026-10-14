@@ -9,9 +9,9 @@ import {
 import { Badge, CARD, brl, dt, mb, modLabel } from '@/components/admin/storeUi';
 import { ChangePlanModal, NewSubscriptionModal } from '@/components/admin/StoreModals';
 
-const TH = 'px-3 py-2 text-[10px] uppercase tracking-wider text-slate-500';
-const BTN = 'rounded-lg px-3 py-1.5 text-[11px] font-bold disabled:opacity-40';
-const SEL = 'rounded-lg border border-white/10 bg-[#0b0f1c] px-3 py-1.5 text-xs text-white outline-none focus:border-[#fd8539]';
+const TH = 'px-3 py-2 text-xs uppercase tracking-wider text-slate-500';
+const BTN = 'rounded-lg px-3 py-1.5 text-[13px] font-bold disabled:opacity-40';
+const SEL = 'rounded-lg border border-white/10 bg-[#0b0f1c] px-3 py-1.5 text-[13px] text-white outline-none focus:border-[#fd8539]';
 const SUB_LABEL: Record<string, string> = {
   active: 'Ativa', trialing: 'Trial', past_due: 'Em atraso', canceled: 'Cancelada', lifetime: 'Vitalícia', incomplete: 'Incompleta',
 };
@@ -25,9 +25,9 @@ const num = (n: number) => n.toLocaleString('pt-BR');
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className={CARD}>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
       <p className="mt-1 text-xl font-black text-white">{value}</p>
-      {hint && <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>}
+      {hint && <p className="mt-0.5 text-[13px] text-slate-500">{hint}</p>}
     </div>
   );
 }
@@ -67,7 +67,7 @@ export function ResumoTab({ storeId, data }: { storeId: string; data: AdminStore
   return (
     <div className={`space-y-4 ${loading ? 'opacity-60' : ''}`}>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-slate-500">Último evento do widget: {data.last_event_at ? new Date(data.last_event_at).toLocaleString('pt-BR') : '—'}</p>
+        <p className="text-[13px] text-slate-500">Último evento do widget: {data.last_event_at ? new Date(data.last_event_at).toLocaleString('pt-BR') : '—'}</p>
         <PeriodSelect value={sel} onChange={setSel} options={RES_PERIODS} />
       </div>
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -81,11 +81,11 @@ export function ResumoTab({ storeId, data }: { storeId: string; data: AdminStore
         <Kpi label="Trial até" value={dt(s.trial_ends_at)} />
       </div>
       <div className={CARD}>
-        <p className="mb-3 text-sm font-bold text-white">Eventos por tipo</p>
+        <p className="mb-3 text-[15px] font-bold text-white">Eventos por tipo</p>
         <div className="flex flex-wrap gap-2">
-          {Object.keys(ev).length === 0 && <span className="text-xs text-slate-500">Nenhum evento no período.</span>}
+          {Object.keys(ev).length === 0 && <span className="text-[13px] text-slate-500">Nenhum evento no período.</span>}
           {Object.entries(ev).map(([k, v]) => (
-            <span key={k} className="rounded-md bg-white/5 px-2 py-1 text-[11px] text-slate-300">{k}: <strong>{v}</strong></span>
+            <span key={k} className="rounded-md bg-white/5 px-2 py-1 text-[13px] text-slate-300">{k}: <strong>{v}</strong></span>
           ))}
         </div>
       </div>
@@ -118,17 +118,17 @@ export function AssinaturasTab({ storeId, data, plans, busy, onStatus, reload }:
     setMenu(null);
     onStatus(sub.id, to, sub.has_asaas);
   };
-  const item = 'block w-full px-3 py-2 text-left text-xs hover:bg-white/10';
+  const item = 'block w-full px-3 py-2 text-left text-[13px] hover:bg-white/10';
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-bold text-white">Assinaturas atuais ({atuais.length})</p>
+          <p className="text-[15px] font-bold text-white">Assinaturas atuais ({atuais.length})</p>
           <button type="button" onClick={() => setAdding(true)} className={`${BTN} flex items-center gap-1.5 bg-[#fd8539] text-white`}><Plus size={14} /> Nova assinatura / Ativar módulo</button>
         </div>
         <div className={`${CARD} overflow-x-auto p-0`}>
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-[13px]">
             <thead>
               <tr className="border-b border-white/10">
                 <th className={TH}>Módulo</th><th className={TH}>Plano</th><th className={TH}>Status</th>
@@ -153,7 +153,7 @@ export function AssinaturasTab({ storeId, data, plans, busy, onStatus, reload }:
                     >
                       Ações <ChevronDown size={12} />
                     </button>
-                    {sub.has_asaas && <p className="mt-1 text-[10px] text-amber-400">Cobrança ativa no Asaas</p>}
+                    {sub.has_asaas && <p className="mt-1 text-xs text-amber-400">Cobrança ativa no Asaas</p>}
                   </td>
                 </tr>
               ))}
@@ -163,9 +163,9 @@ export function AssinaturasTab({ storeId, data, plans, busy, onStatus, reload }:
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-bold text-slate-400">Histórico ({historico.length})</p>
+        <p className="text-[15px] font-bold text-slate-400">Histórico ({historico.length})</p>
         <div className={`${CARD} overflow-x-auto p-0`}>
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-[13px]">
             <thead>
               <tr className="border-b border-white/10">
                 <th className={TH}>Módulo</th><th className={TH}>Plano</th><th className={TH}>Status</th><th className={TH}>Ciclo</th><th className={TH}>Criada em</th>
@@ -233,7 +233,7 @@ export function FinanceiroTab({ storeId }: { storeId: string }) {
         <Kpi label="Faturas no período" value={String(list.length)} />
       </div>
       <div className={`${CARD} overflow-x-auto p-0`}>
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-left text-[13px]">
           <thead>
             <tr className="border-b border-white/10">
               <th className={TH}>Data</th><th className={TH}>Descrição</th><th className={TH}>Valor</th>
@@ -249,7 +249,7 @@ export function FinanceiroTab({ storeId }: { storeId: string }) {
                   <td className="px-3 py-2 text-slate-400">{dt(i.created_at)}</td>
                   <td className="px-3 py-2 text-slate-300">{i.description || '—'}</td>
                   <td className="px-3 py-2 font-bold text-white">{brl(i.amount_cents)}</td>
-                  <td className="px-3 py-2"><span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${st.cls}`}>{st.label}</span></td>
+                  <td className="px-3 py-2"><span className={`rounded-full px-2 py-0.5 text-[13px] font-bold ${st.cls}`}>{st.label}</span></td>
                   <td className="px-3 py-2 text-slate-400">{dt(i.due_date)}</td>
                   <td className="px-3 py-2 text-slate-400">{dt(i.paid_at)}</td>
                 </tr>
@@ -282,7 +282,7 @@ export function IndicacoesTab({ storeId }: { storeId: string }) {
         <Kpi label="Indicada por" value={d?.referred_by?.name || 'Cadastro Direto / Orgânico'} />
       </div>
       <div className={`${CARD} overflow-x-auto p-0`}>
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-left text-[13px]">
           <thead>
             <tr className="border-b border-white/10">
               <th className={TH}>Loja</th><th className={TH}>Plano</th><th className={TH}>Status</th>

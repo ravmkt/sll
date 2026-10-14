@@ -49,16 +49,16 @@ function FlagItem({ f, onChanged }: { f: FeatureFlag; onChanged: () => void }) {
         <button type="button" onClick={() => setOpen((o) => !o)} className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left">
           <ChevronDown size={14} className={`shrink-0 text-slate-500 transition-transform ${open ? '' : '-rotate-90'}`} />
           <span className="min-w-0">
-            <span className="block truncate text-xs font-bold text-white">{f.name}</span>
-            <span className="block truncate font-mono text-[10px] text-slate-600">{f.key}{f.mode === 'stores' ? ` · ${f.stores.length} loja(s)` : ''}</span>
+            <span className="block truncate text-[13px] font-bold text-white">{f.name}</span>
+            <span className="block truncate font-mono text-xs text-slate-600">{f.key}{f.mode === 'stores' ? ` · ${f.stores.length} loja(s)` : ''}</span>
           </span>
         </button>
-        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${MODE_STYLE[f.mode]}`}>{f.mode === 'stores' ? 'Beta' : MODE_LABEL[f.mode]}</span>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${MODE_STYLE[f.mode]}`}>{f.mode === 'stores' ? 'Beta' : MODE_LABEL[f.mode]}</span>
       </div>
 
       {open && (
         <div className="mt-3 space-y-3 pl-6">
-          {f.description && <p className="text-[11px] text-slate-500">{f.description}</p>}
+          {f.description && <p className="text-[13px] text-slate-500">{f.description}</p>}
           <div className="flex items-center gap-2">
             <select value={f.mode} disabled={busy} onChange={(e) => changeMode(e.target.value as FlagMode)} className={`${INPUT} flex-1`}>
               {(Object.keys(MODE_LABEL) as FlagMode[]).map((m) => <option key={m} value={m}>{MODE_LABEL[m]}</option>)}
@@ -69,11 +69,11 @@ function FlagItem({ f, onChanged }: { f: FeatureFlag; onChanged: () => void }) {
           {f.mode === 'stores' && (
             <div className="space-y-2">
               {f.stores.length === 0 ? (
-                <p className="text-[11px] text-slate-500">Nenhuma loja no beta ainda.</p>
+                <p className="text-[13px] text-slate-500">Nenhuma loja no beta ainda.</p>
               ) : (
                 <ul className="flex flex-wrap gap-1.5">
                   {f.stores.map((s) => (
-                    <li key={s.id} className="flex items-center gap-1 rounded-full bg-violet-500/15 px-2 py-0.5 text-[11px] text-violet-200">
+                    <li key={s.id} className="flex items-center gap-1 rounded-full bg-violet-500/15 px-2 py-0.5 text-[13px] text-violet-200">
                       {s.name || 'Sem nome'}
                       <button type="button" disabled={busy} onClick={() => run(() => setFlagStore(f.id, s.id, false))} className="cursor-pointer hover:text-white"><X size={11} /></button>
                     </li>
@@ -89,10 +89,10 @@ function FlagItem({ f, onChanged }: { f: FeatureFlag; onChanged: () => void }) {
                         type="button"
                         disabled={busy || inFlag.has(s.id)}
                         onClick={() => run(() => setFlagStore(f.id, s.id, true)).then(() => { setSearch(''); setResults([]); })}
-                        className="flex w-full cursor-pointer items-center justify-between px-3 py-1.5 text-left text-xs text-slate-200 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex w-full cursor-pointer items-center justify-between px-3 py-1.5 text-left text-[13px] text-slate-200 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <span className="truncate">{s.name}</span>
-                        <span className="shrink-0 text-[10px] text-slate-500">{inFlag.has(s.id) ? 'já adicionada' : 'adicionar'}</span>
+                        <span className="shrink-0 text-xs text-slate-500">{inFlag.has(s.id) ? 'já adicionada' : 'adicionar'}</span>
                       </button>
                     </li>
                   ))}
@@ -138,8 +138,8 @@ export default function FeatureFlagsCard({ slug }: { slug: string }) {
   return (
     <div className={`${CARD} space-y-3`}>
       <div className="flex items-center justify-between">
-        <p className="flex items-center gap-2 text-sm font-bold text-white"><Flag size={14} className="text-[#fd8539]" /> Feature flags</p>
-        <button type="button" onClick={() => setAdding((a) => !a)} className="flex cursor-pointer items-center gap-1 rounded-lg bg-white/5 px-2.5 py-1 text-[11px] font-bold text-slate-200 hover:bg-white/10">
+        <p className="flex items-center gap-2 text-[15px] font-bold text-white"><Flag size={14} className="text-[#fd8539]" /> Feature flags</p>
+        <button type="button" onClick={() => setAdding((a) => !a)} className="flex cursor-pointer items-center gap-1 rounded-lg bg-white/5 px-2.5 py-1 text-[13px] font-bold text-slate-200 hover:bg-white/10">
           <Plus size={12} /> Nova
         </button>
       </div>
@@ -149,7 +149,7 @@ export default function FeatureFlagsCard({ slug }: { slug: string }) {
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome (ex.: Novo player)" className={INPUT} />
           <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="chave_tecnica (ex.: novo_player)" className={`${INPUT} font-mono`} />
           <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Descrição (opcional)" className={INPUT} />
-          <button type="button" disabled={busy || !name.trim() || !key.trim()} onClick={create} className="w-full cursor-pointer rounded-lg bg-[#fd8539] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-40">
+          <button type="button" disabled={busy || !name.trim() || !key.trim()} onClick={create} className="w-full cursor-pointer rounded-lg bg-[#fd8539] px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">
             {busy ? 'Criando…' : 'Criar flag'}
           </button>
         </div>
@@ -158,7 +158,7 @@ export default function FeatureFlagsCard({ slug }: { slug: string }) {
       {flags === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
       ) : flags.length === 0 ? (
-        <p className="text-xs text-slate-500">Nenhuma flag neste módulo. Crie uma para liberar um recurso beta.</p>
+        <p className="text-[13px] text-slate-500">Nenhuma flag neste módulo. Crie uma para liberar um recurso beta.</p>
       ) : (
         <ul className="divide-y divide-white/5">
           {flags.map((f) => <FlagItem key={f.id} f={f} onChanged={load} />)}

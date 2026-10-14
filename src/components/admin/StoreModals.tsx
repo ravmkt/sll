@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 import { sendMasterEmail, logCommunication, getCancelPreview, type AdminSub, type CancelPreview, type PlanOption } from '@/services/admin/storesService';
 import { ICON, INPUT, digits, modLabel } from '@/components/admin/storeUi';
 
-const LBL = 'text-[10px] font-bold uppercase tracking-wider text-slate-500';
-const BTN = 'rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40';
+const LBL = 'text-xs font-bold uppercase tracking-wider text-slate-500';
+const BTN = 'rounded-lg px-4 py-2 text-[13px] font-bold disabled:opacity-40';
 const PRIMARY = `${BTN} flex items-center gap-2 bg-[#fd8539] text-white`;
 const GHOST = `${BTN} text-slate-300 hover:bg-white/10`;
 const planTxt = (p: PlanOption) => `${p.name || 'Sem nome'}${p.is_active === false ? ' (inativo)' : ''}`;
@@ -47,7 +47,7 @@ function EmailModal({ to, storeName, busy, onClose, onSend }: {
       <label className="block space-y-1">
         <span className={LBL}>Destinatário</span>
         <input type="email" value={dest} onChange={(e) => setDest(e.target.value)} className={`${INPUT} ${dest && !destOk ? 'border-rose-500' : ''}`} placeholder="email@dominio.com" />
-        {dest && !destOk && <span className="block text-[11px] text-rose-400">Informe um e-mail válido.</span>}
+        {dest && !destOk && <span className="block text-[13px] text-rose-400">Informe um e-mail válido.</span>}
       </label>
       <label className="block space-y-1">
         <span className={LBL}>Assunto</span>
@@ -57,7 +57,7 @@ function EmailModal({ to, storeName, busy, onClose, onSend }: {
         <span className={LBL}>Mensagem</span>
         <textarea value={message} maxLength={10000} rows={7} onChange={(e) => setMessage(e.target.value)} className={INPUT} />
       </label>
-      {pend.length > 0 && <p className="text-[11px] text-slate-500">Falta preencher: {pend.join(', ')}.</p>}
+      {pend.length > 0 && <p className="text-[13px] text-slate-500">Falta preencher: {pend.join(', ')}.</p>}
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onClose} className={GHOST}>Cancelar</button>
         <button type="button" disabled={!ok || busy} onClick={() => onSend(dest.trim(), subject.trim(), message.trim())} className={PRIMARY}><Spin on={busy} /> Enviar E-mail</button>
@@ -78,14 +78,14 @@ function WhatsAppModal({ phone, message, onClose, onSend }: {
       <label className="block space-y-1">
         <span className={LBL}>Número</span>
         <input value={num} onChange={(e) => setNum(e.target.value)} className={`${INPUT} ${num && !numOk ? 'border-rose-500' : ''}`} placeholder="(41) 99999-9999" />
-        {num && !numOk && <span className="block text-[11px] text-rose-400">Informe o número com DDD.</span>}
+        {num && !numOk && <span className="block text-[13px] text-rose-400">Informe o número com DDD.</span>}
       </label>
       <label className="block space-y-1">
         <span className={LBL}>Mensagem</span>
         <textarea value={msg} maxLength={2000} rows={6} onChange={(e) => setMsg(e.target.value)} className={INPUT} />
       </label>
-      {pend.length > 0 && <p className="text-[11px] text-slate-500">Falta preencher: {pend.join(', ')}.</p>}
-      <p className="text-[11px] text-slate-500">O WhatsApp abre com a mensagem pronta. Você confirma o envio por lá.</p>
+      {pend.length > 0 && <p className="text-[13px] text-slate-500">Falta preencher: {pend.join(', ')}.</p>}
+      <p className="text-[13px] text-slate-500">O WhatsApp abre com a mensagem pronta. Você confirma o envio por lá.</p>
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onClose} className={GHOST}>Cancelar</button>
         <button type="button" disabled={!numOk || !msgOk} onClick={() => onSend(num, msg.trim())} className={PRIMARY}>Abrir WhatsApp</button>
@@ -178,10 +178,10 @@ export function CancelSubscriptionModal({ subscriptionId, onClose, onConfirm }: 
   return (
     <Modal title="Cancelar assinatura" onClose={onClose}>
       {loading && <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-slate-400" /></div>}
-      {err && <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-[11px] text-rose-300">{err} Você ainda pode cancelar sem estorno.</p>}
+      {err && <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-[13px] text-rose-300">{err} Você ainda pode cancelar sem estorno.</p>}
 
       {info && (
-        <div className={`rounded-lg px-3 py-2 text-xs font-semibold ${info.within_guarantee ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-300'}`}>
+        <div className={`rounded-lg px-3 py-2 text-[13px] font-semibold ${info.within_guarantee ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-300'}`}>
           Assinado {daysTxt} ·{' '}
           {info.within_guarantee
             ? `Dentro do prazo de ${info.guarantee_days} dias de garantia`
@@ -191,26 +191,26 @@ export function CancelSubscriptionModal({ subscriptionId, onClose, onConfirm }: 
 
       {info && (
         lp ? (
-          <p className="text-xs text-slate-400">
+          <p className="text-[13px] text-slate-400">
             Última cobrança paga: <b className="text-white">{money(lp.value)}</b>
             {lp.date ? ` em ${fmtDate(lp.date)}` : ''}{lp.billing_type ? ` (${lp.billing_type === 'CREDIT_CARD' ? 'cartão' : lp.billing_type === 'PIX' ? 'Pix' : lp.billing_type})` : ''}.
           </p>
         ) : (
-          <p className="text-xs text-slate-500">Nenhuma cobrança paga encontrada. Não há o que estornar.</p>
+          <p className="text-[13px] text-slate-500">Nenhuma cobrança paga encontrada. Não há o que estornar.</p>
         )
       )}
 
-      <label className={`flex items-start gap-2 rounded-lg border border-white/10 px-3 py-2.5 text-sm ${lp ? 'cursor-pointer text-slate-200' : 'cursor-not-allowed text-slate-600'}`}>
+      <label className={`flex items-start gap-2 rounded-lg border border-white/10 px-3 py-2.5 text-[15px] ${lp ? 'cursor-pointer text-slate-200' : 'cursor-not-allowed text-slate-600'}`}>
         <input type="checkbox" checked={refund} disabled={!lp} onChange={(e) => setRefund(e.target.checked)} className="mt-0.5" />
         <span>Sim, realizar estorno integral{lp ? ` (${money(lp.value)})` : ''}</span>
       </label>
 
       {refund && info && !info.within_guarantee && (
-        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">
+        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-300">
           Esta assinatura está fora do prazo de garantia. O estorno é uma decisão sua e fica registrado no log de auditoria.
         </p>
       )}
-      <p className="text-[11px] text-slate-500">
+      <p className="text-[13px] text-slate-500">
         O cancelamento interrompe as próximas cobranças. O estorno é feito no Asaas e não pode ser desfeito por aqui.
       </p>
 
@@ -232,7 +232,7 @@ export function ChangePlanModal({ sub, plans, busy, onClose, onConfirm }: {
   const options = plans.filter((p) => p.name !== sub.plan_name && (isCombo ? p.is_combo : !p.is_combo && p.module_key === sub.module_key));
   return (
     <Modal title="Alterar plano" onClose={onClose}>
-      <p className="text-xs text-slate-400">
+      <p className="text-[13px] text-slate-400">
         Módulo: <b className="text-white">{isCombo ? 'Combo' : modLabel(sub.module_key as string)}</b> · plano atual: <b className="text-white">{sub.plan_name || '—'}</b>
       </p>
       <label className="block space-y-1">
@@ -242,7 +242,7 @@ export function ChangePlanModal({ sub, plans, busy, onClose, onConfirm }: {
           {options.map((p) => <option key={p.id} value={p.id}>{planTxt(p)}</option>)}
         </select>
       </label>
-      {sub.has_asaas && <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">Há cobrança ativa no Asaas: a troca não altera o valor já cobrado lá.</p>}
+      {sub.has_asaas && <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-300">Há cobrança ativa no Asaas: a troca não altera o valor já cobrado lá.</p>}
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onClose} className={GHOST}>Cancelar</button>
         <button type="button" disabled={!sel || busy} onClick={() => onConfirm(sel)} className={PRIMARY}><Spin on={busy} /> Confirmar troca</button>
@@ -297,7 +297,7 @@ export function NewSubscriptionModal({ plans, busy, onClose, onCreate }: {
           </select>
         </label>
       </div>
-      <p className="text-[11px] text-slate-500">Cria a assinatura manualmente, sem cobrança no Asaas. Para um módulo que já existe, use Ações &gt; Alterar plano.</p>
+      <p className="text-[13px] text-slate-500">Cria a assinatura manualmente, sem cobrança no Asaas. Para um módulo que já existe, use Ações &gt; Alterar plano.</p>
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onClose} className={GHOST}>Cancelar</button>
         <button type="button" disabled={!module || !planId || busy} onClick={() => onCreate(module === 'bundle' ? '' : module, planId, cycle, status)} className={PRIMARY}><Spin on={busy} /> Criar assinatura</button>

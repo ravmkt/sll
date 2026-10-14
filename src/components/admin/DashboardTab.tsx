@@ -36,7 +36,7 @@ const bytes = (b: number) => {
 };
 
 const CARD = 'rounded-2xl border border-slate-800 bg-[#111524] p-4';
-const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-xs text-slate-200 outline-none focus:border-[#0094eb]';
+const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-[13px] text-slate-200 outline-none focus:border-[#0094eb]';
 const ITEM = { color: '#e2e8f0', fontSize: 12 };
 const TOOLTIP = { background: '#0b0e1a', border: '1px solid #1e293b', borderRadius: 12, color: '#e2e8f0', fontSize: 12 };
 
@@ -52,9 +52,9 @@ function Metric({ label, value, hint, icon: Icon, tone }: { label: string; value
   return (
     <div className={`${CARD} flex items-start justify-between gap-3`}>
       <div className="min-w-0">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+        <p className="text-[13px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
         <p className="mt-1 truncate text-2xl font-black text-white">{value}</p>
-        {hint && <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>}
+        {hint && <p className="mt-0.5 text-[13px] text-slate-500">{hint}</p>}
       </div>
       <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${TONES[tone]}`}>
         <Icon className="h-4 w-4" />
@@ -71,7 +71,7 @@ function Chart({ title, data, gran, color, money }: { title: string; data: Serie
   const gid = `g-${color.replace('#', '')}`;
   return (
     <div className={`${CARD} flex flex-col`}>
-      <p className="mb-3 text-sm font-bold text-white">{title}</p>
+      <p className="mb-3 text-[15px] font-bold text-white">{title}</p>
       <div className="relative min-h-[14rem] flex-1">
         <div className="absolute inset-0">
         <ResponsiveContainer width="100%" height="100%">
@@ -108,8 +108,8 @@ function PieTip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div style={TOOLTIP} className="px-3 py-2">
-      <p className="text-xs font-bold text-white">{payload[0].name}</p>
-      <p className="text-xs text-slate-300">{payload[0].value} loja(s)</p>
+      <p className="text-[13px] font-bold text-white">{payload[0].name}</p>
+      <p className="text-[13px] text-slate-300">{payload[0].value} loja(s)</p>
     </div>
   );
 }
@@ -170,13 +170,13 @@ export default function DashboardTab() {
       <div className="sticky top-0 z-30 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
         <div>
           <h1 className="text-xl font-black text-white">Dashboard</h1>
-          <p className="text-xs text-slate-500">Visão geral do ecossistema SLL.</p>
+          <p className="text-[13px] text-slate-500">Visão geral do ecossistema SLL.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {periodo === 'custom' && (
             <>
               <input type="date" value={cs} max={ce} onChange={(e) => setCs(e.target.value)} className={SELECT} />
-              <span className="text-xs text-slate-500">até</span>
+              <span className="text-[13px] text-slate-500">até</span>
               <input type="date" value={ce} min={cs} onChange={(e) => setCe(e.target.value)} className={SELECT} />
             </>
           )}
@@ -186,7 +186,7 @@ export default function DashboardTab() {
                 key={p.key}
                 type="button"
                 onClick={() => setPeriodo(p.key)}
-                className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${
                   periodo === p.key ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -202,12 +202,12 @@ export default function DashboardTab() {
         </div>
       </div>
 
-      {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+      {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[15px] text-rose-300">{error}</div>}
 
       {data && s && (
         <>
           <section className="space-y-3">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Lojas</h2>
+            <h2 className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Lojas</h2>
             <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
               <Metric label="Lojas ativas" value={int(s.active)} hint={`de ${int(s.total)} no total`} icon={Store} tone="green" />
               <Metric label="Em trial" value={int(s.trial)} icon={Hourglass} tone="blue" />
@@ -218,7 +218,7 @@ export default function DashboardTab() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Financeiro</h2>
+            <h2 className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Financeiro</h2>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <Metric label="Faturamento no período" value={brl(data.revenue)} hint="Faturas pagas" icon={Banknote} tone="green" />
               <Metric label="Total dos inadimplentes" value={brl(data.past_due_total)} hint="Cobrança em aberto" icon={AlertTriangle} tone="red" />
@@ -229,10 +229,10 @@ export default function DashboardTab() {
                 <Chart title="Faturamento" data={data.revenue_series} gran={data.granularity} color="#10b981" money />
               </div>
               <div className={CARD}>
-                <p className="mb-3 text-sm font-bold text-white">Situação das lojas</p>
+                <p className="mb-3 text-[15px] font-bold text-white">Situação das lojas</p>
                 <div className="h-56">
                   {pie.length === 0 ? (
-                    <p className="pt-20 text-center text-xs text-slate-500">Sem lojas para exibir.</p>
+                    <p className="pt-20 text-center text-[13px] text-slate-500">Sem lojas para exibir.</p>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -246,17 +246,17 @@ export default function DashboardTab() {
                 </div>
                 <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1">
                   {pie.map((p) => (
-                    <span key={p.name} className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <span key={p.name} className="inline-flex items-center gap-1.5 text-[13px] text-slate-400">
                       <span className="h-2 w-2 rounded-full" style={{ background: p.color }} /> {p.name} ({p.value})
                     </span>
                   ))}
                 </div>
               </div>
               <div className={CARD}>
-                <p className="mb-3 text-sm font-bold text-white">Lojas por módulo</p>
+                <p className="mb-3 text-[15px] font-bold text-white">Lojas por módulo</p>
                 <div className="h-56">
                   {modPie.length === 0 ? (
-                    <p className="pt-20 text-center text-xs text-slate-500">Sem assinaturas ativas.</p>
+                    <p className="pt-20 text-center text-[13px] text-slate-500">Sem assinaturas ativas.</p>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -270,7 +270,7 @@ export default function DashboardTab() {
                 </div>
                 <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1">
                   {modPie.map((p) => (
-                    <span key={p.name} className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <span key={p.name} className="inline-flex items-center gap-1.5 text-[13px] text-slate-400">
                       <span className="h-2 w-2 rounded-full" style={{ background: p.color }} /> {p.name} ({p.value})
                     </span>
                   ))}
@@ -280,7 +280,7 @@ export default function DashboardTab() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Consumo (custos)</h2>
+            <h2 className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Consumo (custos)</h2>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <Metric label="Views no período" value={int(data.consumption.views)} icon={Eye} tone="blue" />
               <Metric label="Eventos registrados" value={int(data.consumption.events)} hint="Chamadas ao track-event" icon={Zap} tone="orange" />
@@ -291,18 +291,18 @@ export default function DashboardTab() {
                 <Chart title="Views" data={data.views_series} gran={data.granularity} color="#0094eb" />
               </div>
               <div className={CARD}>
-                <p className="mb-3 flex items-center gap-2 text-sm font-bold text-white">
+                <p className="mb-3 flex items-center gap-2 text-[15px] font-bold text-white">
                   <Database className="h-4 w-4 text-[#fd8539]" /> Maiores consumidores
                 </p>
                 {data.top_stores.length === 0 ? (
-                  <p className="text-xs text-slate-500">Nenhuma visualização no período.</p>
+                  <p className="text-[13px] text-slate-500">Nenhuma visualização no período.</p>
                 ) : (
                   <ul className="space-y-2.5">
                     {data.top_stores.map((t, i) => {
                       const max = data.top_stores[0].views || 1;
                       return (
                         <li key={t.id}>
-                          <div className="flex justify-between text-xs">
+                          <div className="flex justify-between text-[13px]">
                             <span className="truncate font-semibold text-slate-200">{i + 1}. {t.name}</span>
                             <span className="ml-2 shrink-0 text-slate-400">{int(t.views)}</span>
                           </div>
@@ -318,7 +318,7 @@ export default function DashboardTab() {
             </div>
             <ConsumptionDetail start={range.start} end={range.end} module={module || null} />
             {module && module !== 'vidlytics' && (
-              <p className="text-[11px] text-slate-500">O consumo detalhado deste módulo ainda não é medido; os dados acima são do Vidlytics.</p>
+              <p className="text-[13px] text-slate-500">O consumo detalhado deste módulo ainda não é medido; os dados acima são do Vidlytics.</p>
             )}
           </section>
         </>

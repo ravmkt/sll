@@ -38,7 +38,7 @@ function ConfirmDialog({ opts, onResult }: { opts: ConfirmOptions; onResult: (ok
           </div>
           <div className="space-y-1">
             <h3 className="text-base font-black text-white">{opts.title}</h3>
-            {opts.message && <div className="text-xs leading-relaxed text-slate-400">{opts.message}</div>}
+            {opts.message && <div className="text-[13px] leading-relaxed text-slate-400">{opts.message}</div>}
           </div>
         </div>
         <div className="flex justify-end gap-2">
@@ -46,14 +46,14 @@ function ConfirmDialog({ opts, onResult }: { opts: ConfirmOptions; onResult: (ok
             type="button"
             autoFocus
             onClick={() => onResult(false)}
-            className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+            className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-[13px] font-semibold text-slate-200 hover:bg-white/10"
           >
             {opts.cancelLabel || 'Cancelar'}
           </button>
           <button
             type="button"
             onClick={() => onResult(true)}
-            className={`cursor-pointer rounded-lg px-4 py-2 text-xs font-bold text-white ${danger ? 'bg-rose-600 hover:bg-rose-500' : 'bg-[#0094eb] hover:bg-sky-500'}`}
+            className={`cursor-pointer rounded-lg px-4 py-2 text-[13px] font-bold text-white ${danger ? 'bg-rose-600 hover:bg-rose-500' : 'bg-[#0094eb] hover:bg-sky-500'}`}
           >
             {opts.confirmLabel || 'Confirmar'}
           </button>

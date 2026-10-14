@@ -104,7 +104,7 @@ function RowMenu({ r, busy, onDetails, onEdit, onImpersonate, onToggle, onDelete
       type="button"
       role="menuitem"
       onClick={() => { setPos(null); fn(); }}
-      className={`flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold transition-colors hover:bg-white/5 ${cls}`}
+      className={`flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-[13px] font-semibold transition-colors hover:bg-white/5 ${cls}`}
     >
       {icon}{label}
     </button>
@@ -144,12 +144,12 @@ function RowMenu({ r, busy, onDetails, onEdit, onImpersonate, onToggle, onDelete
           {item(<KeyRound size={14} className="text-sky-400" />, 'Entrar na loja (gerar link)', onImpersonate)}
           {item(<Power size={14} className={cancel ? 'text-amber-400' : 'text-emerald-400'} />, cancel ? 'Desligar plano' : 'Ligar plano', onToggle)}
           {wa && (
-            <a href={wa} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={() => setPos(null)} className="flex w-full items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/5">
+            <a href={wa} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={() => setPos(null)} className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] font-semibold text-slate-200 transition-colors hover:bg-white/5">
               <MessageCircle size={14} className="text-emerald-400" /> WhatsApp
             </a>
           )}
           {mail && (
-            <a href={`mailto:${mail}`} role="menuitem" onClick={() => setPos(null)} className="flex w-full items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/5">
+            <a href={`mailto:${mail}`} role="menuitem" onClick={() => setPos(null)} className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] font-semibold text-slate-200 transition-colors hover:bg-white/5">
               <Mail size={14} className={ICON} /> E-mail
             </a>
           )}
@@ -285,7 +285,7 @@ function LojasList() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-black text-white">Lojas</h1>
-        <p className="text-xs text-slate-500">{visible.length} de {rows.length} lojas</p>
+        <p className="text-[13px] text-slate-500">{visible.length} de {rows.length} lojas</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -294,7 +294,7 @@ function LojasList() {
             key={c.id}
             type="button"
             onClick={() => setStatus(c.id)}
-            className={`cursor-pointer rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+            className={`cursor-pointer rounded-full border px-3 py-1.5 text-[13px] font-bold transition-colors ${
               status === c.id ? 'border-[#fd8539] bg-[#fd8539]/15 text-white' : 'border-white/10 text-slate-400 hover:text-white'
             }`}
           >
@@ -310,10 +310,10 @@ function LojasList() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar por nome, URL ou e-mail"
-            className="w-full rounded-xl border border-white/10 bg-[#111524] py-2 pl-9 pr-3 text-xs text-white outline-none focus:border-[#fd8539]"
+            className="w-full rounded-xl border border-white/10 bg-[#111524] py-2 pl-9 pr-3 text-[13px] text-white outline-none focus:border-[#fd8539]"
           />
         </div>
-        <select value={mod} onChange={(e) => setMod(e.target.value)} className="cursor-pointer rounded-xl border border-white/10 bg-[#111524] px-3 py-2 text-xs text-white outline-none">
+        <select value={mod} onChange={(e) => setMod(e.target.value)} className="cursor-pointer rounded-xl border border-white/10 bg-[#111524] px-3 py-2 text-[13px] text-white outline-none">
           <option value="all">Todos os módulos e planos</option>
           {modules.map((m) => <option key={m} value={m}>{modLabel(m)}</option>)}
         </select>
@@ -323,9 +323,9 @@ function LojasList() {
         {loading ? (
           <div className="flex h-40 items-center justify-center"><Loader2 className={`h-6 w-6 animate-spin ${ICON}`} /></div>
         ) : (
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-[13px]">
             <thead>
-              <tr className="border-b border-white/10 text-[10px] text-slate-500">
+              <tr className="border-b border-white/10 text-xs text-slate-500">
                 <Th label="Loja" k="name" sort={sort} dir={dir} onSort={onSort} />
                 <Th label="Criada em" k="created" sort={sort} dir={dir} onSort={onSort} />
                 <Th label="Último acesso" k="access" sort={sort} dir={dir} onSort={onSort} />
@@ -350,18 +350,18 @@ function LojasList() {
                           {r.name || 'Sem nome'}
                         </button>
                         {r.is_lifetime && (
-                          <span title="Conta vitalícia" className="inline-flex items-center gap-1 rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-bold text-sky-300">
+                          <span title="Conta vitalícia" className="inline-flex items-center gap-1 rounded-full bg-sky-500/15 px-2 py-0.5 text-xs font-bold text-sky-300">
                             <Star size={10} className="fill-sky-300" /> Vitalícia
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-500">{r.url || '—'}</p>
-                      <p className="text-[11px] text-slate-500">{r.owner_email || r.contact_email || 'sem e-mail'}</p>
+                      <p className="text-[13px] text-slate-500">{r.url || '—'}</p>
+                      <p className="text-[13px] text-slate-500">{r.owner_email || r.contact_email || 'sem e-mail'}</p>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-400">{fmtDate(r.created_at)}</td>
                     <td className="whitespace-nowrap px-4 py-3" title={fmtFull(r.last_sign_in_at)}>
                       {acc.stale ? (
-                        <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-300">{acc.text}</span>
+                        <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[13px] font-bold text-amber-300">{acc.text}</span>
                       ) : (
                         <span className={r.last_sign_in_at ? 'text-slate-300' : 'text-slate-600'}>{acc.text}</span>
                       )}
@@ -370,7 +370,7 @@ function LojasList() {
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {badges.length === 0 ? <span className="text-slate-600">—</span> : badges.map((b) => (
-                          <span key={b} className="rounded-md bg-[#fd8539]/10 px-2 py-0.5 text-[11px] font-semibold text-[#fd8539]">{b}</span>
+                          <span key={b} className="rounded-md bg-[#fd8539]/10 px-2 py-0.5 text-[13px] font-semibold text-[#fd8539]">{b}</span>
                         ))}
                       </div>
                     </td>
@@ -378,7 +378,7 @@ function LojasList() {
                       {r.ai_interactions > 0 ? (
                         <>
                           <p className="font-bold text-slate-200">{r.ai_interactions.toLocaleString('pt-BR')} {r.ai_interactions === 1 ? 'interação' : 'interações'}</p>
-                          <p className="text-[11px] text-slate-500">{r.ai_tokens.toLocaleString('pt-BR')} tokens</p>
+                          <p className="text-[13px] text-slate-500">{r.ai_tokens.toLocaleString('pt-BR')} tokens</p>
                         </>
                       ) : <span className="text-slate-600">—</span>}
                     </td>
