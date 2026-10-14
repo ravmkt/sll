@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import type { DynamicPlan } from '@/services/admin/plansAdmin';
 import type { Prices } from '@/services/admin/costsAdmin';
+import { cycleInfo } from '@/components/admin/cycleInfo';
 
 const sb: any = supabase;
 const brl = (c: number) => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -43,6 +44,12 @@ export default function ComboPricing({ combo, list, pct, onChanged }: { combo: D
             <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{name}</p>
             <p className="text-[10px] text-slate-500 line-through">{brl(full)}</p>
             <p className={`text-xs font-bold ${dirty ? 'text-sky-300' : 'text-white'}`}>{brl(dirty ? after(full, n) : cur)}</p>
+            {name !== 'Mensal' && (() => {
+              const v = dirty ? after(full, n) : cur;
+              const m0 = dirty ? after(cols[0][1], n) : cols[0][2];
+              const t = cycleInfo(v, name === 'Semestral' ? 6 : 12, m0);
+              return t ? <p className="text-[10px] text-emerald-400">{t}</p> : null;
+            })()}
           </div>
         ))}
       </div>

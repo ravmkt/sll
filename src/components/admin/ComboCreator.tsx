@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { listDynamicPlans, type DynamicPlan } from '@/services/admin/plansAdmin';
 import { createCombo, listHubModules, type HubModule } from '@/services/admin/combosAdmin';
+import { cycleInfo } from '@/components/admin/cycleInfo';
 
 const sb: any = supabase;
 const inputCls = 'w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100';
@@ -127,7 +128,7 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
             <div>
               <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Módulos do combo (mínimo 2)</p>
               <div className="space-y-2">
-                {modules.map((m) => {
+                {modules.filter((m) => m.status === 'active' || m.slug in picked).map((m) => {
                   const on = m.slug in picked;
                   const tiers = tiersByModule[m.slug] ?? [];
                   return (
@@ -167,13 +168,21 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{t}</p>
                       <p className="text-xs text-slate-500 line-through">{brl(v)}</p>
                       <p className="text-sm font-bold text-white">{dOk ? brl(after(v, d)) : '—'}</p>
+                      {dOk && t !== 'Mensal' && list && (() => {
+                        const i = cycleInfo(after(v, d), t === 'Semestral' ? 6 : 12, after(list.m, d));
+                        return i ? <p className="text-[10px] text-emerald-400">{i}</p> : null;
+                      })()}
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-[11px] text-slate-500">Escolha 2 ou mais módulos com plano para ver o preço cheio e o preço com desconto.</p>
               )}
-              <p className="text-[10px] text-slate-600">Cada módulo mantém os limites do plano escolhido. Ajustes por módulo ficam em "Módulos" no card do combo.</p>
+              {list && dOk && (
+                <p className="text-xs text-slate-300">
+                  Soma dos planos avulsos: <b>{brl(list.m)}</b>/mês • Desconto: <b>{d}%</b> • Preço final: <b>{brl(after(list.m, d))}</b>/mês
+                </p>
+              )}<p className="text-[10px] text-slate-600">Cada módulo mantém os limites do plano escolhido. Ajustes por módulo ficam em "Módulos" no card do combo.</p>
             </div>
 
             <div className="flex flex-wrap gap-4">

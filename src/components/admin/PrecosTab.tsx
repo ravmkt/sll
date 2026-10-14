@@ -14,6 +14,7 @@ import ComboModulesEditor from '@/components/admin/ComboModulesEditor';
 import ComboDiscountCard from '@/components/admin/ComboDiscountCard';
 import ComboPricing from '@/components/admin/ComboPricing';
 import MarginBadge from '@/components/admin/MarginBadge';
+import { cycleInfo } from '@/components/admin/cycleInfo';
 import InfraCostsCard from '@/components/admin/InfraCostsCard';
 import { usePricingCosts } from '@/hooks/admin/usePricingCosts';
 import { listAllComboModules, type ComboModuleRow } from '@/services/admin/combosAdmin';
@@ -136,6 +137,13 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
           <label className="space-y-1"><span className={LABEL}>Anual (R$)</span><input value={pa} onChange={(e) => setPa(e.target.value)} className={INPUT} /></label>
         </div>
         <p className="-mt-2 text-[10px] text-slate-600">Semestral e anual são o valor total cobrado no período.</p>
+        {(() => {
+          const mo = toCents(pm);
+          const items = ([['Semestral', ps, 6], ['Anual', pa, 12]] as [string, string, number][])
+            .map(([n, v, mths]) => [n, cycleInfo(toCents(v), mths, mo)] as const)
+            .filter(([, t]) => t);
+          return items.length ? <p className="-mt-2 text-[11px] font-semibold text-emerald-400">{items.map(([n, t]) => `${n}: ${t}`).join('  |  ')}</p> : null;
+        })()}
 
         <div className="space-y-2">
           <p className={LABEL}>Limites e recursos</p>
@@ -383,7 +391,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
           <p className="font-bold">Atenção Rodrigo: {costs.alerts.length} {costs.alerts.length === 1 ? 'item está' : 'itens estão'} com margem abaixo de 50% no pior caso.</p>
           <ul className="mt-1 list-disc pl-4">
             {costs.alerts.slice(0, 6).map((a) => (
-              <li key={a.plan.id}>{a.plan.plan_name}: {a.margin.worst === null ? '—' : `${(a.margin.worst * 100).toFixed(0)}%`}. Avalie ajustar os limites ou revisar o preço.</li>
+              <li key={a.plan.id}><button type="button" onClick={() => setEditing(a.plan)} className="cursor-pointer font-bold underline underline-offset-2 hover:opacity-80">{a.plan.plan_name}</button>: {a.margin.worst === null ? '—' : `${(a.margin.worst * 100).toFixed(0)}%`}. Avalie ajustar os limites ou revisar o preço.</li>
             ))}
           </ul>
         </div>

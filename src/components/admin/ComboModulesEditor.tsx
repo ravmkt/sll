@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { listDynamicPlans, type DynamicPlan } from '@/services/admin/plansAdmin';
 import { listComboModules, listHubModules, setComboModules, type HubModule } from '@/services/admin/combosAdmin';
+import { cycleInfo } from '@/components/admin/cycleInfo';
 
 const sb: any = supabase;
 
@@ -18,6 +19,9 @@ const numericKeys = (lim: Record<string, unknown>) =>
 const fmt = (v: unknown) => (v === null ? 'ilimitado' : typeof v === 'number' ? v.toLocaleString('pt-BR') : '');
 
 type Over = Record<string, Record<string, string>>;
+
+const brl = (c: number) => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const after = (v: number, pct: number) => Math.round(v * (1 - pct / 100));
 
 export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo: DynamicPlan; onClose: () => void; onSaved: () => void }) {
   const [modules, setModules] = useState<HubModule[]>([]);
@@ -69,6 +73,18 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
     const base = act.length ? act : list;
     return base.reduce<DynamicPlan | null>((b, p) => (!b || p.price_monthly_cents > b.price_monthly_cents ? p : b), null);
   };
+
+  const preview = (() => {
+    const slugs = Object.keys(picked);
+    if (slugs.length < 2) return null;
+    const sel = slugs.map((s) => planFor(s, picked[s]));
+    if (sel.some((p) => !p)) return null;
+    return {
+      m: sel.reduce((t, p) => t + p!.price_monthly_cents, 0),
+      s: sel.reduce((t, p) => t + p!.price_semiannual_cents, 0),
+      a: sel.reduce((t, p) => t + p!.price_annual_cents, 0),
+    };
+  })();
 
   const toggle = (slug: string, on: boolean) =>
     setPicked((prev) => {
@@ -129,7 +145,7 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
           <p className="text-sm text-slate-400">Carregando...</p>
         ) : (
           <div className="space-y-2">
-            {modules.map((m) => {
+            {modules.filter((m) => m.status === 'active' || m.slug in picked).map((m) => {
               const on = m.slug in picked;
               const plan = on ? planFor(m.slug, picked[m.slug]) : null;
               const lim = (plan?.limits_config ?? {}) as Record<string, unknown>;
@@ -180,6 +196,29 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
           <input type="checkbox" checked={recalc} onChange={(e) => setRecalc(e.target.checked)} />
           Recalcular o preço do combo: soma dos planos com {discount === null ? '—' : String(discount).replace('.', ',')}% de desconto
         </label>
+
+        {preview && discount !== null && (
+          <div className="space-y-2 rounded-xl bg-white/5 p-3">
+            <p className="text-xs text-slate-300">
+              Soma dos planos avulsos: <b>{brl(preview.m)}</b>/mês • Desconto: <b>{String(discount).replace('.', ',')}%</b>
+              {!recalc && <span className="text-slate-500"> (a prévia só vale com "Recalcular" marcado)</span>}
+            </p>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {([['Mensal', preview.m, 1], ['Semestral', preview.s, 6], ['Anual', preview.a, 12]] as [string, number, number][]).map(([n, v, mths]) => {
+                const fin = after(v, discount);
+                const info = cycleInfo(fin, mths, after(preview.m, discount));
+                return (
+                  <div key={n}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{n}</p>
+                    <p className="text-[10px] text-slate-500 line-through">{brl(v)}</p>
+                    <p className="text-sm font-bold text-white">{brl(fin)}</p>
+                    {info && <p className="text-[10px] text-emerald-400">{info}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <button type="button" disabled={busy || loading} onClick={save} className="w-full rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">
           {busy ? 'Salvando...' : 'Salvar módulos'}
