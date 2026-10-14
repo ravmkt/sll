@@ -26,7 +26,9 @@ export type CouponDraft = {
   applicable_plan_ids: string[];
 };
 
-export type CouponPlanOption = { id: string; label: string };
+export type CouponPlanOption = { id: string; name: string; group: string; groupLabel: string };
+
+const MODULE_LABEL: Record<string, string> = { vidlytics: 'Vidlytics', live_commerce: 'Stream Sell' };
 
 export const emptyCouponDraft = (): CouponDraft => ({
   code: '', value: '10', max_uses: '', starts_at: null, expires_at: null, applicable_plan_ids: [],
@@ -52,7 +54,9 @@ export async function listCouponPlanOptions(): Promise<CouponPlanOption[]> {
   if (error) throw new Error(error.message);
   return ((data ?? []) as any[]).map((p) => ({
     id: p.id as string,
-    label: p.is_combo ? `Combo · ${p.plan_name}` : `${p.module_slug} · ${p.plan_name}`,
+    name: String(p.plan_name),
+    group: p.is_combo ? '__combos' : String(p.module_slug),
+    groupLabel: p.is_combo ? 'Combos' : (MODULE_LABEL[p.module_slug] ?? String(p.module_slug)),
   }));
 }
 

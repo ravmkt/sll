@@ -327,6 +327,82 @@ const couponValue = (c: MktCoupon) =>
     ? c.discount_value + '%'
     : (c.discount_value / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+function CouponPlanPicker({ plans, value, onChange }: {
+  plans: CouponPlanOption[]; value: string[]; onChange: (ids: string[]) => void;
+}) {
+  const [opened, setOpened] = useState<string[]>([]);
+  const groups = Array.from(new Map(plans.map((p) => [p.group, p.groupLabel])).entries())
+    .map(([key, label]) => ({ key, label, items: plans.filter((p) => p.group === key) }));
+  const isOpen = (g: { key: string; items: CouponPlanOption[] }) =>
+    opened.includes(g.key) || g.items.some((i) => value.includes(i.id));
+
+  const toggleGroup = (g: { key: string; items: CouponPlanOption[] }) => {
+    const ids = g.items.map((i) => i.id);
+    if (isOpen(g)) {
+      setOpened((o) => o.filter((k) => k !== g.key));
+      onChange(value.filter((v) => !ids.includes(v)));
+    } else {
+      setOpened((o) => [...o, g.key]);
+      onChange(Array.from(new Set([...value, ...ids])));
+    }
+  };
+
+  const openGroups = groups.filter(isOpen);
+  const emptyOpen = openGroups.length > 0 && value.length === 0;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <label className={labelCls + ' mb-0'}>Onde o cupom vale</label>
+        <span className="text-[11px] text-slate-400">
+          {value.length === 0 ? 'Todos os planos' : value.length + (value.length === 1 ? ' plano selecionado' : ' planos selecionados')}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => { setOpened([]); onChange([]); }}
+          className={'px-3 py-1.5 rounded-full text-xs font-bold border ' + (value.length === 0 && openGroups.length === 0 ? 'bg-amber-500 text-slate-950 border-amber-500' : 'border-slate-700 text-slate-300 hover:bg-slate-800')}>
+          Todos os planos
+        </button>
+        {groups.map((g) => (
+          <button key={g.key} type="button" onClick={() => toggleGroup(g)}
+            className={'px-3 py-1.5 rounded-full text-xs font-bold border ' + (isOpen(g) ? 'bg-amber-500 text-slate-950 border-amber-500' : 'border-slate-700 text-slate-300 hover:bg-slate-800')}>
+            {g.label}
+          </button>
+        ))}
+      </div>
+
+      {openGroups.map((g) => {
+        const ids = g.items.map((i) => i.id);
+        const all = ids.every((id) => value.includes(id));
+        return (
+          <div key={g.key} className="rounded-lg border border-slate-700 bg-slate-950 p-3 space-y-2">
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-bold text-slate-100">
+              <input type="checkbox" checked={all}
+                onChange={() => onChange(all ? value.filter((v) => !ids.includes(v)) : Array.from(new Set([...value, ...ids])))} />
+              {g.label}: todos os planos
+            </label>
+            <div className="grid gap-1 pl-5 sm:grid-cols-2 lg:grid-cols-3">
+              {g.items.map((pl) => {
+                const on = value.includes(pl.id);
+                return (
+                  <label key={pl.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs text-slate-200 hover:bg-slate-800">
+                    <input type="checkbox" checked={on}
+                      onChange={() => onChange(on ? value.filter((x) => x !== pl.id) : [...value, pl.id])} />
+                    <span className="truncate">{pl.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      {emptyOpen && <p className="text-[11px] text-amber-400">Marque ao menos um plano. Sem nenhum marcado, o cupom vale para todos.</p>}
+    </div>
+  );
+}
+
 function Cupom() {
   const [items, setItems] = useState<MktCoupon[]>([]);
   const [plans, setPlans] = useState<CouponPlanOption[]>([]);
@@ -401,27 +477,7 @@ function Cupom() {
               <DateTimeField label="Fim da validade" value={draft.expires_at} onChange={(x) => set('expires_at', x)} />
             </div>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className={labelCls}>Limitar a planos (nenhum marcado = vale para todos)</label>
-              {draft.applicable_plan_ids.length > 0 && (
-                <button type="button" onClick={() => set('applicable_plan_ids', [])} className="text-[11px] text-slate-400 hover:text-slate-100">Limpar</button>
-              )}
-            </div>
-            <div className="grid max-h-48 gap-1 overflow-y-auto rounded-lg border border-slate-700 bg-slate-950 p-2 sm:grid-cols-2">
-              {plans.length === 0 && <p className="text-xs text-slate-500">Nenhum plano ativo encontrado.</p>}
-              {plans.map((pl) => {
-                const on = draft.applicable_plan_ids.includes(pl.id);
-                return (
-                  <label key={pl.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs text-slate-200 hover:bg-slate-800">
-                    <input type="checkbox" checked={on}
-                      onChange={() => set('applicable_plan_ids', on ? draft.applicable_plan_ids.filter((x) => x !== pl.id) : [...draft.applicable_plan_ids, pl.id])} />
-                    <span className="truncate">{pl.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
+          <CouponPlanPicker plans={plans} value={draft.applicable_plan_ids} onChange={(ids) => set('applicable_plan_ids', ids)} />
           <p className="text-[11px] text-slate-500">Sem início, o cupom vale a partir de agora; sem fim, não expira.</p>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setDraft(null)} className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">Cancelar</button>
