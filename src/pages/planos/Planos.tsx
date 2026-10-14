@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useLoja } from "@/contexts/LojaContext";
 import type { PlanCycle } from "@/components/planos/VidlyticsPlanCard";
 import ComboCards from "@/components/planos/ComboCards";
+import ComboPlanoModal from "@/components/planos/ComboPlanoModal";
 import ModuleCards from "@/components/planos/ModuleCards";
 import ModuloPlanoModal from "@/components/planos/ModuloPlanoModal";
 import PlanosFaq from "@/components/planos/PlanosFaq";
@@ -47,6 +48,18 @@ export default function Planos() {
   const [cycle, setCycle] = useState<PlanCycle>("monthly");
   const [openMod, setOpenMod] = useState<string | null>(null);
   const [preAddons, setPreAddons] = useState<string[]>([]);
+  const [openCombo, setOpenCombo] = useState<CatalogCombo | null>(null);
+  const [comboHl, setComboHl] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    if (!combos.length) return;
+    let alive = true;
+    sb.from("dynamic_plans").select("id,modal_highlights").in("id", combos.map((c) => c.id)).then(({ data, error }: any) => {
+      if (!alive || error || !data) return;
+      setComboHl(Object.fromEntries((data as any[]).map((r) => [r.id, Array.isArray(r.modal_highlights) ? r.modal_highlights.map(String).filter(Boolean) : []])));
+    });
+    return () => { alive = false; };
+  }, [combos]);
   const [current, setCurrent] = useState<{ tier: string | null } | null>(null);
 
   useEffect(() => {
@@ -108,9 +121,7 @@ export default function Planos() {
   }, [loading, params, byModule]);
 
   function handleCombo(c: CatalogCombo) {
-    if (!storeId) { toast.error("Nenhuma loja ativa encontrada."); return; }
-    const qs = new URLSearchParams({ plan: c.id, cycle, module: "bundle", mods: c.modules.map((m) => m.slug).join(",") });
-    navigate(`/dashboard/checkout?${qs.toString()}`);
+    setOpenCombo(c);
   }
 
   function handleAddon(a: AddonRow) {
@@ -179,7 +190,7 @@ export default function Planos() {
         )}
 
         {/* 2. Combos */}
-        {combos.length > 0 && <ComboCards combos={combos} cycle={cycle} onSelect={handleCombo} />}
+        {combos.length > 0 && <ComboCards combos={combos} cycle={cycle} onSelect={handleCombo} highlights={comboHl} />}
 
         {/* 3. Modulos avulsos */}
         <ModuleCards byModule={byModule} mods={mods} cycle={cycle} onOpen={(s) => { setPreAddons([]); setOpenMod(s); }} />
@@ -235,6 +246,16 @@ export default function Planos() {
 
         {/* 5. FAQ */}
         <PlanosFaq />
+
+        {openCombo && (
+          <ComboPlanoModal
+            key={openCombo.id}
+            combo={openCombo}
+            initialCycle={cycle}
+            highlights={comboHl[openCombo.id] ?? []}
+            onClose={() => setOpenCombo(null)}
+          />
+        )}
 
         {openMod && openPlans && (
           <ModuloPlanoModal

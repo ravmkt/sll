@@ -35,8 +35,8 @@ function Logo({ name, url }: { name: string; url: string | null }) {
 }
 
 export default function ComboCards({
-  combos, cycle, onSelect,
-}: { combos: CatalogCombo[]; cycle: PlanCycle; onSelect: (c: CatalogCombo) => void }) {
+  combos, cycle, onSelect, highlights = {},
+}: { combos: CatalogCombo[]; cycle: PlanCycle; onSelect: (c: CatalogCombo) => void; highlights?: Record<string, string[]> }) {
   const best = comboMaxPct(combos, cycle);
   const names = Array.from(new Set(combos.flatMap((c) => c.modules.map((m) => m.name))));
   const joined = names.length > 1 ? `${names.slice(0, -1).join(", ")} e ${names[names.length - 1]}` : names[0] ?? "os módulos";
@@ -105,14 +105,16 @@ export default function ComboCards({
               )}
 
               <ul className="mt-4 space-y-2 border-t border-slate-100 pt-3">
-                {c.modules.map((m) => (
-                  <li key={m.slug} className="flex items-start gap-2 text-xs font-medium text-slate-700">
+                {(highlights[c.id]?.length
+                  ? highlights[c.id].slice(0, 4)
+                  : c.modules.map((m) => `${m.name}${m.plan_name ? " · " + m.plan_name : ""}`)
+                ).map((t) => (
+                  <li key={t} className="flex items-start gap-2 text-xs font-medium text-slate-700">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 stroke-[3] text-emerald-500" />
-                    <span><b>{m.name}</b>{m.plan_name ? ` · ${m.plan_name}` : ""}</span>
+                    <span>{t}</span>
                   </li>
                 ))}
               </ul>
-
               <div className="mt-auto pt-5">
                 <button
                   type="button"
