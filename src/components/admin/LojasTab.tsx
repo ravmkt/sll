@@ -197,7 +197,20 @@ function LojasList() {
     return c;
   }, [rows]);
 
-  const modules = useMemo(() => Array.from(new Set(rows.flatMap((r) => r.modules))).sort(), [rows]);
+  const [modNames, setModNames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    sb.from('hub_modules').select('slug,name').then(({ data }: any) =>
+      setModNames(Object.fromEntries((data || []).map((m: any) => [m.slug, m.name]))));
+  }, []);
+  const modCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    rows.forEach((r) => r.modules.forEach((m) => { c[m] = (c[m] || 0) + 1; }));
+    return c;
+  }, [rows]);
+  const modules = useMemo(
+    () => Object.keys(modCounts).filter((m) => m in modNames).sort((a, b) => modNames[a].localeCompare(modNames[b], 'pt-BR')),
+    [modCounts, modNames],
+  );
 
   const visible = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -314,8 +327,8 @@ function LojasList() {
           />
         </div>
         <select value={mod} onChange={(e) => setMod(e.target.value)} className="cursor-pointer rounded-xl border border-white/10 bg-[#111524] px-3 py-2 text-[13px] text-white outline-none">
-          <option value="all">Todos os módulos e planos</option>
-          {modules.map((m) => <option key={m} value={m}>{modLabel(m)}</option>)}
+          <option value="all">Todos os módulos</option>
+          {modules.map((m) => <option key={m} value={m}>{modNames[m] || modLabel(m)} ({modCounts[m]})</option>)}
         </select>
       </div>
 
@@ -341,7 +354,7 @@ function LojasList() {
               )}
               {visible.map((r) => {
                 const acc = lastAccess(r.last_sign_in_at);
-                const badges = r.plans.length ? r.plans : r.modules.map((m) => modLabel(m));
+                const badges = r.plans.length ? r.plans : r.modules.map((m) => modNames[m] || modLabel(m));
                 return (
                   <tr key={r.id} className="align-top hover:bg-white/5">
                     <td className="px-4 py-3">
