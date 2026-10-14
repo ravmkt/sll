@@ -36,10 +36,10 @@ function bullets(l?: Record<string, any>): string[] {
 }
 
 export default function ModuloPlanoModal({
-  slug, name, logoUrl, plans, initialCycle, currentTier, onClose,
+  slug, name, logoUrl, plans, initialCycle, currentTier, onClose, initialAddons,
 }: {
   slug: string; name: string; logoUrl: string | null; plans: CatalogPlan[];
-  initialCycle: PlanCycle; currentTier: string | null; onClose: () => void;
+  initialCycle: PlanCycle; currentTier: string | null; onClose: () => void; initialAddons?: string[];
 }) {
   const navigate = useNavigate();
   const { storeId } = useLoja();
@@ -55,7 +55,7 @@ export default function ModuloPlanoModal({
     () => (sorted.find((p) => !isCur(p) && tierOf(p) === "pro") ?? sorted.find((p) => !isCur(p)) ?? sorted[0])?.id ?? ""
   );
   const [cycle, setCycle] = useState<PlanCycle>(initialCycle);
-  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [sel, setSel] = useState<Set<string>>(new Set(initialAddons ?? []));
   const [desc, setDesc] = useState("");
   const [hasSummary, setHasSummary] = useState(false);
   const [incl, setIncl] = useState<string[]>([]);
