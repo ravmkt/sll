@@ -11,6 +11,7 @@ export type MktCoupon = {
   times_used: number;
   starts_at: string | null;
   expires_at: string | null;
+  applicable_plan_ids: string[] | null;
   is_active: boolean;
   created_at: string;
 };
@@ -22,17 +23,37 @@ export type CouponDraft = {
   max_uses: string;
   starts_at: string | null;
   expires_at: string | null;
+  applicable_plan_ids: string[];
 };
 
-export const emptyCouponDraft = (): CouponDraft => ({ code: '', value: '10', max_uses: '', starts_at: null, expires_at: null });
+export type CouponPlanOption = { id: string; label: string };
+
+export const emptyCouponDraft = (): CouponDraft => ({
+  code: '', value: '10', max_uses: '', starts_at: null, expires_at: null, applicable_plan_ids: [],
+});
 
 export async function listMktCoupons(): Promise<MktCoupon[]> {
   const { data, error } = await sb
     .from('discount_coupons')
-    .select('id,code,discount_type,discount_value,max_uses,times_used,starts_at,expires_at,is_active,created_at')
+    .select('id,code,discount_type,discount_value,max_uses,times_used,starts_at,expires_at,applicable_plan_ids,is_active,created_at')
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as MktCoupon[];
+}
+
+export async function listCouponPlanOptions(): Promise<CouponPlanOption[]> {
+  const { data, error } = await sb
+    .from('dynamic_plans')
+    .select('id,plan_name,module_slug,is_combo,is_active')
+    .eq('is_active', true)
+    .order('is_combo', { ascending: false })
+    .order('module_slug', { ascending: true })
+    .order('plan_name', { ascending: true });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as any[]).map((p) => ({
+    id: p.id as string,
+    label: p.is_combo ? `Combo · ${p.plan_name}` : `${p.module_slug} · ${p.plan_name}`,
+  }));
 }
 
 export async function saveMktCoupon(d: CouponDraft): Promise<void> {
@@ -44,6 +65,7 @@ export async function saveMktCoupon(d: CouponDraft): Promise<void> {
       max_uses: d.max_uses.trim() === '' ? null : Number(d.max_uses),
       starts_at: d.starts_at,
       expires_at: d.expires_at,
+      applicable_plan_ids: d.applicable_plan_ids,
     },
   });
   if (error) throw new Error(error.message);

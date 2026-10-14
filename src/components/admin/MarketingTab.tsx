@@ -7,8 +7,8 @@ import {
 } from '@/services/admin/marketingAdmin';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import {
-  deleteMktCoupon, emptyCouponDraft, listMktCoupons, saveMktCoupon, setMktCouponActive,
-  type CouponDraft, type MktCoupon,
+  deleteMktCoupon, emptyCouponDraft, listCouponPlanOptions, listMktCoupons, saveMktCoupon, setMktCouponActive,
+  type CouponDraft, type CouponPlanOption, type MktCoupon,
 } from '@/services/admin/couponsMarketing';
 
 type TabKey = 'visao' | 'banner' | 'popup' | 'email' | 'whatsapp' | 'promocao';
@@ -329,6 +329,7 @@ const couponValue = (c: MktCoupon) =>
 
 function Cupom() {
   const [items, setItems] = useState<MktCoupon[]>([]);
+  const [plans, setPlans] = useState<CouponPlanOption[]>([]);
   const [draft, setDraft] = useState<CouponDraft | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -336,6 +337,7 @@ function Cupom() {
   const { confirm, dialog } = useConfirm();
 
   const load = useCallback(() => {
+    listCouponPlanOptions().then(setPlans).catch(() => {});
     listMktCoupons().then(setItems).catch((e) => setErr(e?.message || 'Erro ao carregar cupons'));
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -399,7 +401,28 @@ function Cupom() {
               <DateTimeField label="Fim da validade" value={draft.expires_at} onChange={(x) => set('expires_at', x)} />
             </div>
           </div>
-          <p className="text-[11px] text-slate-500">Vale para todos os planos. Sem início, o cupom vale a partir de agora; sem fim, não expira.</p>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className={labelCls}>Limitar a planos (nenhum marcado = vale para todos)</label>
+              {draft.applicable_plan_ids.length > 0 && (
+                <button type="button" onClick={() => set('applicable_plan_ids', [])} className="text-[11px] text-slate-400 hover:text-slate-100">Limpar</button>
+              )}
+            </div>
+            <div className="grid max-h-48 gap-1 overflow-y-auto rounded-lg border border-slate-700 bg-slate-950 p-2 sm:grid-cols-2">
+              {plans.length === 0 && <p className="text-xs text-slate-500">Nenhum plano ativo encontrado.</p>}
+              {plans.map((pl) => {
+                const on = draft.applicable_plan_ids.includes(pl.id);
+                return (
+                  <label key={pl.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs text-slate-200 hover:bg-slate-800">
+                    <input type="checkbox" checked={on}
+                      onChange={() => set('applicable_plan_ids', on ? draft.applicable_plan_ids.filter((x) => x !== pl.id) : [...draft.applicable_plan_ids, pl.id])} />
+                    <span className="truncate">{pl.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500">Sem início, o cupom vale a partir de agora; sem fim, não expira.</p>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setDraft(null)} className="px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">Cancelar</button>
             <button type="button" disabled={saving || !draft.code.trim()} onClick={save}
@@ -421,6 +444,11 @@ function Cupom() {
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-slate-100 tracking-wider">{c.code}</p>
                   <span className={'text-[10px] font-bold px-2 py-0.5 rounded-full ' + st.cls}>{st.label}</span>
+                  {c.applicable_plan_ids && c.applicable_plan_ids.length > 0 && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300">
+                      {c.applicable_plan_ids.length} {c.applicable_plan_ids.length === 1 ? 'plano' : 'planos'}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-400">{fmtDate(c.starts_at)} → {c.expires_at ? fmtDate(c.expires_at) : 'sem fim'}</p>
               </div>
@@ -432,7 +460,7 @@ function Cupom() {
                 <button type="button" title={c.is_active ? 'Pausar' : 'Ativar'} onClick={() => toggle(c)} className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
                   {c.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                 </button>
-                <button type="button" title="Editar" onClick={() => { setOk(null); setDraft({ id: c.id, code: c.code, value: String(c.discount_value), max_uses: c.max_uses === null ? '' : String(c.max_uses), starts_at: c.starts_at, expires_at: c.expires_at }); }}
+                <button type="button" title="Editar" onClick={() => { setOk(null); setDraft({ id: c.id, code: c.code, value: String(c.discount_value), max_uses: c.max_uses === null ? '' : String(c.max_uses), starts_at: c.starts_at, expires_at: c.expires_at, applicable_plan_ids: c.applicable_plan_ids ?? [] }); }}
                   className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
                   <Pencil className="w-4 h-4" />
                 </button>
