@@ -1,90 +1,106 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ElementType } from 'react';
 import {
-  Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Area, AreaChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import {
-  Database, Eye, Film, HardDrive, Loader2, Percent, Store, TrendingDown, TrendingUp, Users, Zap,
+  AlertTriangle, Bot, CheckCircle2, Coins, Database, Eye, Film, HardDrive, Loader2, MessageSquare, Percent,
+  Store, TrendingDown, TrendingUp, Users, Zap,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getDashboard, getModulesDistribution, listModules, type DashboardData, type ModuleSlice, type SeriesPoint } from '@/services/admin/adminService';
-import ConsumptionDetail from '@/components/admin/ConsumptionDetail';
-import { HealthAlerts, HealthOrigin, useHealth } from '@/components/admin/DashboardHealth';
+import { getConsumption, type Consumption } from '@/services/admin/consumptionService';
+import { EventsChart, StorageRanking, bytesFmt } from '@/components/admin/ConsumptionDetail';
 
 const sb: any = supabase;
 
 type Periodo = 'today' | '7' | '30' | '90' | 'custom';
-
 const PERIODOS: { key: Periodo; label: string }[] = [
-  { key: 'today', label: 'Hoje' },
-  { key: '7', label: '7 dias' },
-  { key: '30', label: '30 dias' },
-  { key: '90', label: '90 dias' },
-  { key: 'custom', label: 'Personalizado' },
+  { key: 'today', label: 'Hoje' }, { key: '7', label: '7 dias' }, { key: '30', label: '30 dias' },
+  { key: '90', label: '90 dias' }, { key: 'custom', label: 'Personalizado' },
 ];
+const FALLBACK_MODULES = [{ slug: 'vidlytics', name: 'Vidlytics' }, { slug: 'live_commerce', name: 'Live Commerce' }];
 
-const FALLBACK_MODULES = [
-  { slug: 'vidlytics', name: 'Vidlytics' },
-  { slug: 'live_commerce', name: 'Live Commerce' },
-];
+type AlertRow = { id: string; name: string; what: string; pct?: number; days?: number };
+type Health = {
+  mrr_cents: number; addon_mrr_cents: number; active_stores: number; arpu_cents: number;
+  churn_30d: number; trial_ended: number; trial_converted: number;
+  alerts: { near_limit: AlertRow[]; past_due: AlertRow[]; no_script: AlertRow[] };
+  revenue_origin: { d: string; new: number; renewal: number; upfront: number }[];
+};
+type AiRow = { id: string | null; name: string; calls: number; tokens: number; prompt_tokens: number; completion_tokens: number };
+type Ai = { calls: number; prompt_tokens: number; completion_tokens: number; total_tokens: number; stores: number; top: AiRow[] };
+type Prices = { inUsd: number; outUsd: number; brl: number };
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 const brl = (cents: number) => ((cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const int = (n: number) => (n || 0).toLocaleString('pt-BR');
-const bytes = (b: number) => {
-  if (!b) return '0 MB';
-  const mb = b / 1048576;
-  return mb < 1024 ? `${mb.toFixed(1).replace('.', ',')} MB` : `${(mb / 1024).toFixed(2).replace('.', ',')} GB`;
-};
+const money = (v: number) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 4 });
+const int = (n: number) => (Number(n) || 0).toLocaleString('pt-BR');
 
-const CARD = 'rounded-2xl border border-slate-800 bg-[#111524] p-4';
 const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-[13px] text-slate-200 outline-none focus:border-[#0094eb]';
 const ITEM = { color: '#e2e8f0', fontSize: 12 };
 const TOOLTIP = { background: '#0b0e1a', border: '1px solid #1e293b', borderRadius: 12, color: '#e2e8f0', fontSize: 12 };
-const ICON_TONE = 'bg-[#fd8539]/15 text-[#fd8539]';
-const MOD_COLORS = ['#fd8539', '#0094eb', '#10b981', '#a855f7', '#f43f5e', '#eab308', '#06b6d4', '#ec4899', '#84cc16', '#6366f1', '#14b8a6', '#f97316'];
 
-function Metric({ label, value, hint, icon: Icon }: { label: string; value: string; hint?: string; icon: ElementType }) {
+// Borda por setor
+const BD = {
+  alert: 'border-amber-500/50',
+  health: 'border-emerald-500/50',
+  infra: 'border-sky-500/50',
+  engage: 'border-violet-500/50',
+};
+const card = (bd: string) => `rounded-2xl border ${bd} bg-[#111524] p-4`;
+
+const PRICES_KEY = 'noah_prices_v1';
+function loadPrices(): Prices {
+  try {
+    const p = JSON.parse(localStorage.getItem(PRICES_KEY) || '');
+    if (p && [p.inUsd, p.outUsd, p.brl].every((x) => typeof x === 'number' && x >= 0)) return p;
+  } catch { /* usa o padrao */ }
+  return { inUsd: 0.1, outUsd: 0.4, brl: 5.5 };
+}
+
+function Metric({ label, value, hint, icon: Icon, tone, bd }: { label: string; value: string; hint?: string; icon: ElementType; tone: string; bd: string }) {
   return (
-    <div className={`${CARD} flex items-start justify-between gap-3`}>
+    <div className={`${card(bd)} flex items-start justify-between gap-3`}>
       <div className="min-w-0">
         <p className="text-[13px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
         <p className="mt-1 truncate text-2xl font-black text-white">{value}</p>
         {hint && <p className="mt-0.5 text-[13px] text-slate-500">{hint}</p>}
       </div>
-      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${ICON_TONE}`}>
-        <Icon className="h-4 w-4" />
-      </div>
+      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tone}`}><Icon className="h-4 w-4" /></div>
     </div>
   );
 }
 
-function Chart({ title, data, gran, color }: { title: string; data: SeriesPoint[]; gran: 'day' | 'month'; color: string }) {
+function Title({ children, color }: { children: string; color: string }) {
+  return <h2 className={`text-[13px] font-bold uppercase tracking-wider ${color}`}>{children}</h2>;
+}
+
+function ViewsChart({ data, gran, bd }: { data: SeriesPoint[]; gran: 'day' | 'month'; bd: string }) {
   const rows = data.map((p) => {
     const [y, m, d] = p.d.split('-');
     return { label: gran === 'month' ? `${m}/${y.slice(2)}` : `${d}/${m}`, v: p.v };
   });
-  const gid = `g-${color.replace('#', '')}`;
   return (
-    <div className={`${CARD} flex flex-col`}>
-      <p className="mb-3 text-[15px] font-bold text-white">{title}</p>
+    <div className={`${card(bd)} flex flex-col`}>
+      <p className="mb-3 text-[15px] font-bold text-white">Views</p>
       <div className="relative min-h-[14rem] flex-1">
         <div className="absolute inset-0">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={color} stopOpacity={0.4} />
-                  <stop offset="95%" stopColor={color} stopOpacity={0.02} />
+                <linearGradient id="g-views" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#0094eb" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#0094eb" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148,163,184,0.15)" />
               <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} tick={{ fill: '#64748b', fontSize: 10 }} />
-              <YAxis tickLine={false} axisLine={false} width={64} tick={{ fill: '#64748b', fontSize: 10 }} tickFormatter={(v) => int(Number(v))} />
-              <Tooltip contentStyle={TOOLTIP} itemStyle={ITEM} labelStyle={ITEM} formatter={(v: any) => [int(Number(v)), title]} />
-              <Area type="monotone" dataKey="v" stroke={color} strokeWidth={2.5} fill={`url(#${gid})`} />
+              <YAxis tickLine={false} axisLine={false} width={56} tick={{ fill: '#64748b', fontSize: 10 }} tickFormatter={(v) => int(Number(v))} />
+              <Tooltip contentStyle={TOOLTIP} itemStyle={ITEM} labelStyle={ITEM} formatter={(v: any) => [int(Number(v)), 'Views']} />
+              <Area type="monotone" dataKey="v" stroke="#0094eb" strokeWidth={2.5} fill="url(#g-views)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -93,38 +109,33 @@ function Chart({ title, data, gran, color }: { title: string; data: SeriesPoint[
   );
 }
 
-function PieTip({ active, payload }: any) {
-  if (!active || !payload?.length) return null;
+function PieCard({ title, items, empty, bd }: { title: string; items: { name: string; value: number; color: string }[]; empty: string; bd: string }) {
   return (
-    <div style={TOOLTIP} className="px-3 py-2">
-      <p className="text-[13px] font-bold text-white">{payload[0].name}</p>
-      <p className="text-[13px] text-slate-300">{payload[0].value} loja(s)</p>
-    </div>
-  );
-}
-
-type Slice = { name: string; value: number; color: string };
-
-function PieCard({ title, slices, empty }: { title: string; slices: Slice[]; empty: string }) {
-  return (
-    <div className={CARD}>
+    <div className={card(bd)}>
       <p className="mb-3 text-[15px] font-bold text-white">{title}</p>
       <div className="h-56">
-        {slices.length === 0 ? (
+        {items.length === 0 ? (
           <p className="pt-20 text-center text-[13px] text-slate-500">{empty}</p>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={slices} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2} stroke="none">
-                {slices.map((p) => <Cell key={p.name} fill={p.color} />)}
+              <Pie data={items} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={2} stroke="none">
+                {items.map((p) => <Cell key={p.name} fill={p.color} />)}
               </Pie>
-              <Tooltip content={<PieTip />} />
+              <Tooltip
+                content={({ active, payload }: any) => active && payload?.length ? (
+                  <div style={TOOLTIP} className="px-3 py-2">
+                    <p className="text-[13px] font-bold text-white">{payload[0].name}</p>
+                    <p className="text-[13px] text-slate-300">{payload[0].value} loja(s)</p>
+                  </div>
+                ) : null}
+              />
             </PieChart>
           </ResponsiveContainer>
         )}
       </div>
       <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1">
-        {slices.map((p) => (
+        {items.map((p) => (
           <span key={p.name} className="inline-flex items-center gap-1.5 text-[13px] text-slate-400">
             <span className="h-2 w-2 rounded-full" style={{ background: p.color }} /> {p.name} ({p.value})
           </span>
@@ -134,12 +145,29 @@ function PieCard({ title, slices, empty }: { title: string; slices: Slice[]; emp
   );
 }
 
-function Block({ title, children }: { title: string; children: React.ReactNode }) {
+function AlertBox({ title, rows, detail }: { title: string; rows: AlertRow[]; detail: (r: AlertRow) => string }) {
+  const open = (id: string) => { window.location.href = `/admin-master?tab=lojas&loja=${id}`; };
   return (
-    <section className="space-y-3">
-      <h2 className="text-[13px] font-bold uppercase tracking-wider text-slate-500">{title}</h2>
-      {children}
-    </section>
+    <div className="rounded-xl border border-slate-800 bg-[#0b0e1a] p-3">
+      <p className="mb-2 flex items-center gap-2 text-[13px] font-bold text-white">
+        {title}
+        <span className={`rounded-full px-2 py-0.5 text-xs ${rows.length ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/15 text-emerald-300'}`}>{rows.length}</span>
+      </p>
+      {rows.length === 0 ? (
+        <p className="text-[13px] text-slate-500">Nenhuma loja.</p>
+      ) : (
+        <ul className="space-y-1">
+          {rows.map((r, i) => (
+            <li key={`${r.id}-${r.what}-${i}`}>
+              <button type="button" onClick={() => open(r.id)} className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] hover:bg-white/5">
+                <span className="truncate font-semibold text-slate-200">{r.name}</span>
+                <span className="shrink-0 text-xs text-amber-300">{detail(r)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -150,11 +178,15 @@ export default function DashboardTab() {
   const [module, setModule] = useState('');
   const [mods, setMods] = useState(FALLBACK_MODULES);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [cons, setCons] = useState<Consumption | null>(null);
+  const [health, setHealth] = useState<Health | null>(null);
+  const [ai, setAi] = useState<Ai | null>(null);
+  const [modDist, setModDist] = useState<ModuleSlice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [modDist, setModDist] = useState<ModuleSlice[]>([]);
-  const [videos, setVideos] = useState<number | null>(null);
-  const { h, err: healthErr } = useHealth();
+  const [healthErr, setHealthErr] = useState('');
+  const [aiErr, setAiErr] = useState('');
+  const prices = useMemo(loadPrices, []);
 
   const range = useMemo(() => {
     if (periodo === 'custom') return { start: cs, end: ce };
@@ -163,11 +195,10 @@ export default function DashboardTab() {
     return { start: ymd(start), end: ymd(end) };
   }, [periodo, cs, ce]);
 
+  useEffect(() => { listModules().then((m) => { if (m.length) setMods(m); }).catch(() => {}); }, []);
+  useEffect(() => { getModulesDistribution().then(setModDist).catch(() => setModDist([])); }, []);
   useEffect(() => {
-    listModules().then((m) => { if (m.length) setMods(m); }).catch(() => { /* usa a lista padrao */ });
-    getModulesDistribution().then(setModDist).catch(() => setModDist([]));
-    sb.schema('vidlytics').from('vid_videos').select('id', { count: 'exact', head: true })
-      .then(({ count, error: e }: any) => setVideos(e ? null : count ?? 0));
+    sb.rpc('admin_saas_health').then(({ data: h, error: e }: any) => { if (e) setHealthErr(e.message); else setHealth(h as Health); });
   }, []);
 
   useEffect(() => {
@@ -175,28 +206,42 @@ export default function DashboardTab() {
     let alive = true;
     setLoading(true);
     setError('');
-    getDashboard(range.start, range.end, module || null)
-      .then((d) => { if (alive) setData(d); })
+    Promise.all([
+      getDashboard(range.start, range.end, module || null),
+      getConsumption(range.start, range.end, module || null).catch(() => null),
+    ])
+      .then(([d, c]) => { if (alive) { setData(d); setCons(c); } })
       .catch((e) => { if (alive) setError(e?.message || 'Erro ao carregar o dashboard.'); })
       .finally(() => { if (alive) setLoading(false); });
+    sb.rpc('admin_ai_usage', { p_start: range.start, p_end: range.end }).then(({ data: a, error: e }: any) => {
+      if (!alive) return;
+      if (e) { setAiErr(e.message); setAi(null); } else { setAiErr(''); setAi(a as Ai); }
+    });
     return () => { alive = false; };
   }, [range.start, range.end, module]);
 
   const s = data?.stores;
-  const pie: Slice[] = s
-    ? [
-        { name: 'Ativas', value: s.active, color: '#10b981' },
-        { name: 'Trial', value: s.trial, color: '#0094eb' },
-        { name: 'Inadimplentes', value: s.past_due, color: '#f43f5e' },
-        { name: 'Inativas', value: s.inactive, color: '#64748b' },
-      ].filter((p) => p.value > 0)
-    : [];
-  const modPie: Slice[] = modDist.map((m, i) => ({ name: m.name, value: m.stores, color: MOD_COLORS[i % MOD_COLORS.length] }));
-  const conv = h && h.trial_ended > 0 ? Math.round((h.trial_converted / h.trial_ended) * 100) : null;
+  const pie = s ? [
+    { name: 'Ativas', value: s.active, color: '#10b981' },
+    { name: 'Trial', value: s.trial, color: '#0094eb' },
+    { name: 'Inadimplentes', value: s.past_due, color: '#f43f5e' },
+    { name: 'Inativas', value: s.inactive, color: '#64748b' },
+  ].filter((p) => p.value > 0) : [];
+  const COLORS = ['#fd8539', '#0094eb', '#10b981', '#a855f7', '#f43f5e', '#eab308', '#06b6d4', '#ec4899', '#84cc16', '#6366f1'];
+  const modPie = modDist.map((m, i) => ({ name: m.name, value: m.stores, color: COLORS[i % COLORS.length] }));
+
+  const cost = (p: number, c: number) => ((p / 1e6) * prices.inUsd + (c / 1e6) * prices.outUsd) * prices.brl;
+  const aiCost = ai ? cost(ai.prompt_tokens, ai.completion_tokens) : 0;
+  const aiAvg = ai && ai.stores > 0 ? aiCost / ai.stores : 0;
+
+  const totalAlerts = health ? health.alerts.near_limit.length + health.alerts.past_due.length + health.alerts.no_script.length : 0;
+  const conv = health && health.trial_ended > 0 ? Math.round((health.trial_converted / health.trial_ended) * 100) : null;
+  const series = (health?.revenue_origin || []).map((r) => ({
+    label: `${r.d.slice(8, 10)}/${r.d.slice(5, 7)}`, total: r.new + r.renewal + r.upfront, new: r.new, renewal: r.renewal, upfront: r.upfront,
+  }));
 
   return (
     <div className="space-y-6">
-      {/* Cabecalho unico: os filtros controlam a pagina inteira */}
       <div className="sticky top-0 z-30 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
         <div>
           <h1 className="text-xl font-black text-white">Dashboard</h1>
@@ -212,14 +257,8 @@ export default function DashboardTab() {
           )}
           <div className="inline-flex rounded-lg border border-slate-700 bg-[#0b0e1a] p-0.5">
             {PERIODOS.map((p) => (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => setPeriodo(p.key)}
-                className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${
-                  periodo === p.key ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
+              <button key={p.key} type="button" onClick={() => setPeriodo(p.key)}
+                className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${periodo === p.key ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}>
                 {p.label}
               </button>
             ))}
@@ -233,79 +272,154 @@ export default function DashboardTab() {
       </div>
 
       {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[15px] text-rose-300">{error}</div>}
-      {healthErr && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[13px] text-rose-300">Saúde do negócio: {healthErr}</div>}
 
-      {/* Bloco 1: alertas */}
-      {h && <HealthAlerts h={h} />}
+      {/* ALERTAS */}
+      <section className={`${card(BD.alert)} space-y-3`}>
+        <div className="flex items-center gap-2">
+          {totalAlerts ? <AlertTriangle className="h-4 w-4 text-amber-400" /> : <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+          <h2 className="text-sm font-bold text-white">Central de alertas</h2>
+          <span className="text-[13px] text-slate-500">{health ? (totalAlerts ? `${totalAlerts} ponto(s) pedem atenção` : 'Tudo certo por aqui') : ''}</span>
+        </div>
+        {healthErr ? (
+          <p className="text-[13px] text-rose-300">Não foi possível carregar os alertas: {healthErr}</p>
+        ) : !health ? (
+          <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+              <AlertBox title="Perto do limite (90%+)" rows={health.alerts.near_limit} detail={(r) => `${r.what} ${r.pct}%`} />
+              <AlertBox title="Pagamento em atraso" rows={health.alerts.past_due} detail={(r) => `${r.days ?? 0} dia(s)`} />
+              <AlertBox title="Sem script há 48h+" rows={health.alerts.no_script} detail={(r) => `${r.days ?? 0} dia(s) de conta`} />
+            </div>
+            <p className="text-xs text-slate-600">Quem está perto do limite é oportunidade de vender add-on.</p>
+          </>
+        )}
+      </section>
 
-      {data && s && (
-        <>
-          {/* Bloco 2: saude do negocio e financas */}
-          <Block title="Saúde do negócio">
-            <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
-              <Metric label="Lojas ativas" value={int(s.active)} hint={`${int(s.trial)} em trial · ${int(s.inactive)} inativas`} icon={Store} />
-              <Metric label="MRR" value={h ? brl(h.mrr_cents) : '—'} hint={h ? `Inclui ${brl(h.addon_mrr_cents)} de add-ons` : 'Recorrência mensal'} icon={TrendingUp} />
-              <Metric label="Ticket médio (ARPU)" value={h ? brl(h.arpu_cents) : '—'} hint={h ? `Por loja pagante (${h.active_stores})` : 'Por loja pagante'} icon={Users} />
-              <Metric label="Conversão de trial" value={conv === null ? '—' : `${conv}%`} hint={h ? `${h.trial_converted} de ${h.trial_ended} trials (90 dias)` : 'Trials em 90 dias'} icon={Percent} />
-              <Metric label="Churn (30 dias)" value={h ? String(h.churn_30d) : '—'} hint="Lojas que cancelaram" icon={TrendingDown} />
+      {/* SAUDE DO NEGOCIO */}
+      <section className="space-y-3">
+        <Title color="text-emerald-400">Saúde do negócio</Title>
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+          <Metric bd={BD.health} label="Lojas ativas" value={s ? int(s.active) : '—'} hint={s ? `de ${int(s.total)} no total` : ''} icon={Store} tone="bg-emerald-500/15 text-emerald-400" />
+          <Metric bd={BD.health} label="Mensalidade recorrente" value={health ? brl(health.mrr_cents) : '—'} hint={health ? `Inclui ${brl(health.addon_mrr_cents)} de add-ons` : ''} icon={TrendingUp} tone="bg-emerald-500/15 text-emerald-400" />
+          <Metric bd={BD.health} label="Ticket médio" value={health ? brl(health.arpu_cents) : '—'} hint={health ? `Por loja pagante (${health.active_stores})` : ''} icon={Users} tone="bg-emerald-500/15 text-emerald-400" />
+          <Metric bd={BD.health} label="Conversão de trial" value={conv === null ? '—' : `${conv}%`} hint={health ? `${health.trial_converted} de ${health.trial_ended} trials (90 dias)` : ''} icon={Percent} tone="bg-emerald-500/15 text-emerald-400" />
+          <Metric bd={BD.health} label="Cancelamentos (30 dias)" value={health ? String(health.churn_30d) : '—'} hint="Lojas que cancelaram" icon={TrendingDown} tone="bg-emerald-500/15 text-emerald-400" />
+        </div>
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
+          <div className={`${card(BD.health)} xl:col-span-2`}>
+            <p className="mb-3 text-[15px] font-bold text-white">Receita por origem (30 dias)</p>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="g-rev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148,163,184,0.15)" />
+                  <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} tick={{ fill: '#64748b', fontSize: 11 }} />
+                  <YAxis tickLine={false} axisLine={false} width={64} tick={{ fill: '#64748b', fontSize: 11 }} tickFormatter={(v) => `R$ ${Math.round(Number(v) / 100)}`} />
+                  <Tooltip contentStyle={TOOLTIP} itemStyle={ITEM} labelStyle={ITEM} formatter={(v: any, n: any) => [brl(Number(v)), n]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Area type="monotone" dataKey="total" name="Total" stroke="#10b981" strokeWidth={2.5} fill="url(#g-rev)" />
+                  <Area type="monotone" dataKey="new" name="Assinatura nova" stroke="#0094eb" strokeWidth={1.5} fill="none" />
+                  <Area type="monotone" dataKey="renewal" name="Renovação" stroke="#a855f7" strokeWidth={1.5} fill="none" />
+                  <Area type="monotone" dataKey="upfront" name="Anual/semestral à vista" stroke="#fd8539" strokeWidth={1.5} fill="none" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
-              <div className="flex xl:col-span-2 [&>div]:flex-1">
-                {h ? <HealthOrigin h={h} /> : <div className={`${CARD} flex min-h-[18rem] flex-1 items-center justify-center`}><Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" /></div>}
-              </div>
-              <PieCard title="Situação das lojas" slices={pie} empty="Sem lojas para exibir." />
-              <PieCard title="Lojas por módulo" slices={modPie} empty="Sem assinaturas ativas." />
-            </div>
-          </Block>
+            <p className="mt-2 text-xs text-slate-600">Sempre dos últimos 30 dias. Add-on contratado no checkout vai junto com a assinatura.</p>
+          </div>
+          <PieCard bd={BD.health} title="Situação das lojas" items={pie} empty="Sem lojas para exibir." />
+          <PieCard bd={BD.health} title="Lojas por módulo" items={modPie} empty="Sem assinaturas ativas." />
+        </div>
+      </section>
 
-          {/* Bloco 3: infraestrutura e consumo */}
-          <Block title="Infraestrutura e consumo">
-            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-              <Metric label="Armazenamento total" value={bytes(data.consumption.storage_bytes)} hint="Acumulado, não varia com o período" icon={HardDrive} />
-              <Metric label="Vídeos hospedados" value={videos === null ? '—' : int(videos)} hint="Total na plataforma" icon={Film} />
-              <Metric label="Views no período" value={int(data.consumption.views)} hint="Visualizações entregues" icon={Eye} />
-              <Metric label="Eventos registrados" value={int(data.consumption.events)} hint="Chamadas ao track-event" icon={Zap} />
-            </div>
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
-              <div className="flex xl:col-span-2 [&>div]:flex-1">
-                <Chart title="Views" data={data.views_series} gran={data.granularity} color="#0094eb" />
-              </div>
-              <div className={CARD}>
-                <p className="mb-3 flex items-center gap-2 text-[15px] font-bold text-white">
-                  <Database className="h-4 w-4 text-[#fd8539]" /> Maiores consumidores (views)
-                </p>
-                {data.top_stores.length === 0 ? (
-                  <p className="text-[13px] text-slate-500">Nenhuma visualização no período.</p>
-                ) : (
-                  <ul className="space-y-2.5">
-                    {data.top_stores.map((t, i) => {
-                      const max = data.top_stores[0].views || 1;
-                      return (
-                        <li key={t.id}>
-                          <div className="flex justify-between text-[13px]">
-                            <span className="truncate font-semibold text-slate-200">{i + 1}. {t.name}</span>
-                            <span className="ml-2 shrink-0 text-slate-400">{int(t.views)}</span>
-                          </div>
-                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-800">
-                            <div className="h-full rounded-full bg-gradient-to-r from-[#0094eb] to-[#fd8539]" style={{ width: `${Math.max(4, (t.views / max) * 100)}%` }} />
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            </div>
-            {module && module !== 'vidlytics' && (
-              <p className="text-[13px] text-slate-500">O consumo detalhado deste módulo ainda não é medido; os dados acima são do Vidlytics.</p>
-            )}
-          </Block>
+      {/* INFRAESTRUTURA E CUSTOS */}
+      {data && (
+        <section className="space-y-3">
+          <Title color="text-sky-400">Infraestrutura e custos</Title>
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <Metric bd={BD.infra} label="Armazenamento total" value={bytesFmt(data.consumption.storage_bytes)} hint="Acumulado, não varia com o período" icon={HardDrive} tone="bg-sky-500/15 text-sky-400" />
+            <Metric bd={BD.infra} label="Vídeos hospedados" value={cons ? int(cons.videos_total) : '—'} hint={cons ? `${int(cons.videos_new)} novo(s) no período` : ''} icon={Film} tone="bg-sky-500/15 text-sky-400" />
+            <Metric bd={BD.infra} label="Views no período" value={int(data.consumption.views)} icon={Eye} tone="bg-sky-500/15 text-sky-400" />
+            <Metric bd={BD.infra} label="Eventos registrados" value={int(data.consumption.events)} hint="Chamadas ao track-event" icon={Zap} tone="bg-sky-500/15 text-sky-400" />
+          </div>
 
-          {/* Bloco 4: engajamento (detalhe de consumo e eventos por tipo) */}
-          <Block title="Engajamento e valor gerado">
-            <ConsumptionDetail start={range.start} end={range.end} module={module || null} />
-          </Block>
-        </>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <Metric bd={BD.infra} label="Consumo de IA" value={ai ? money(aiCost) : '—'} hint={ai ? `${int(ai.total_tokens)} tokens (estimativa)` : (aiErr ? 'Rode o SQL admin_ai_usage' : '')} icon={Coins} tone="bg-sky-500/15 text-sky-400" />
+            <Metric bd={BD.infra} label="Mensagens da IA" value={ai ? int(ai.calls) : '—'} hint="Respostas do Noah no período" icon={MessageSquare} tone="bg-sky-500/15 text-sky-400" />
+            <Metric bd={BD.infra} label="Custo de IA por loja" value={ai ? money(aiAvg) : '—'} hint={ai ? `Média entre ${int(ai.stores)} loja(s) que usaram` : ''} icon={Bot} tone="bg-sky-500/15 text-sky-400" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+            <div className="flex xl:col-span-2 [&>div]:flex-1"><ViewsChart bd={BD.infra} data={data.views_series} gran={data.granularity} /></div>
+            <div className={card(BD.infra)}>
+              <p className="mb-3 flex items-center gap-2 text-[15px] font-bold text-white"><Database className="h-4 w-4 text-sky-400" /> Maiores consumidores de views</p>
+              {data.top_stores.length === 0 ? (
+                <p className="text-[13px] text-slate-500">Nenhuma visualização no período.</p>
+              ) : (
+                <ul className="space-y-2.5">
+                  {data.top_stores.map((t, i) => {
+                    const max = data.top_stores[0].views || 1;
+                    return (
+                      <li key={t.id}>
+                        <div className="flex justify-between text-[13px]">
+                          <span className="truncate font-semibold text-slate-200">{i + 1}. {t.name}</span>
+                          <span className="ml-2 shrink-0 text-slate-400">{int(t.views)}</span>
+                        </div>
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-800">
+                          <div className="h-full rounded-full bg-gradient-to-r from-[#0094eb] to-[#06b6d4]" style={{ width: `${Math.max(4, (t.views / max) * 100)}%` }} />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+            {cons && <StorageRanking d={cons} card={card(BD.infra)} />}
+            <div className={card(BD.infra)}>
+              <p className="mb-3 flex items-center gap-2 text-[15px] font-bold text-white"><Bot className="h-4 w-4 text-sky-400" /> Maiores consumidores de IA</p>
+              {!ai || ai.top.length === 0 ? (
+                <p className="text-[13px] text-slate-500">{aiErr ? 'Consumo de IA indisponível.' : 'Nenhuma chamada de IA no período.'}</p>
+              ) : (
+                <ul className="space-y-2.5">
+                  {ai.top.map((t, i) => {
+                    const max = ai.top[0].tokens || 1;
+                    return (
+                      <li key={`${t.id}-${i}`}>
+                        <div className="flex justify-between text-[13px]">
+                          <span className="truncate font-semibold text-slate-200">{i + 1}. {t.name}</span>
+                          <span className="ml-2 shrink-0 text-slate-400">{int(t.calls)} msg · {money(cost(t.prompt_tokens, t.completion_tokens))}</span>
+                        </div>
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-800">
+                          <div className="h-full rounded-full bg-gradient-to-r from-[#0094eb] to-[#06b6d4]" style={{ width: `${Math.max(4, (t.tokens / max) * 100)}%` }} />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <p className="mt-3 text-xs text-slate-600">Hoje só o Noah (Suporte). Preços do cálculo ficam em Suporte Noah.</p>
+            </div>
+          </div>
+          {module && module !== 'vidlytics' && (
+            <p className="text-[13px] text-slate-500">O consumo detalhado deste módulo ainda não é medido; os dados acima são do Vidlytics.</p>
+          )}
+        </section>
+      )}
+
+      {/* ENGAJAMENTO */}
+      {cons && (
+        <section className="space-y-3">
+          <Title color="text-violet-400">Engajamento e valor gerado</Title>
+          <EventsChart d={cons} card={card(BD.engage)} />
+        </section>
       )}
     </div>
   );
