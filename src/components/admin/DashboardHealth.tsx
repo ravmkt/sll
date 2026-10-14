@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { ElementType } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, CheckCircle2, Loader2, Percent, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 const sb: any = supabase;
 
-type AlertRow = { id: string; name: string; what: string; pct?: number; days?: number };
-type Health = {
+export type AlertRow = { id: string; name: string; what: string; pct?: number; days?: number };
+export type Health = {
   mrr_cents: number; addon_mrr_cents: number; active_stores: number; arpu_cents: number;
   churn_30d: number; trial_ended: number; trial_converted: number;
   alerts: { near_limit: AlertRow[]; past_due: AlertRow[]; no_script: AlertRow[] };
@@ -18,17 +17,16 @@ const CARD = 'rounded-2xl border border-slate-800 bg-[#111524] p-4';
 const brl = (c: number) => ((c || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const TOOLTIP = { background: '#0b0e1a', border: '1px solid #1e293b', borderRadius: 12, color: '#e2e8f0', fontSize: 13 };
 
-function Metric({ label, value, hint, icon: Icon, tone }: { label: string; value: string; hint: string; icon: ElementType; tone: string }) {
-  return (
-    <div className={`${CARD} flex items-start justify-between gap-3`}>
-      <div className="min-w-0">
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
-        <p className="mt-1 truncate text-2xl font-black text-white">{value}</p>
-        <p className="mt-0.5 text-[13px] text-slate-500">{hint}</p>
-      </div>
-      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tone}`}><Icon className="h-4 w-4" /></div>
-    </div>
-  );
+export function useHealth() {
+  const [h, setH] = useState<Health | null>(null);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    sb.rpc('admin_saas_health').then(({ data, error }: any) => {
+      if (error) setErr(error.message);
+      else setH(data as Health);
+    });
+  }, []);
+  return { h, err };
 }
 
 function AlertBox({ title, rows, detail, onOpen }: { title: string; rows: AlertRow[]; detail: (r: AlertRow) => string; onOpen: (id: string) => void }) {
@@ -56,56 +54,33 @@ function AlertBox({ title, rows, detail, onOpen }: { title: string; rows: AlertR
   );
 }
 
-export default function DashboardHealth() {
-  const [h, setH] = useState<Health | null>(null);
-  const [err, setErr] = useState('');
-
-  useEffect(() => {
-    sb.rpc('admin_saas_health').then(({ data, error }: any) => {
-      if (error) setErr(error.message);
-      else setH(data as Health);
-    });
-  }, []);
-
-  // Abre a ficha da loja na aba Lojas
+export function HealthAlerts({ h }: { h: Health }) {
   const open = (id: string) => { window.location.href = `/admin-master?tab=lojas&loja=${id}`; };
-
-  if (err) return <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[13px] text-rose-300">Saúde do negócio: {err}</div>;
-  if (!h) return <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />;
-
   const total = h.alerts.near_limit.length + h.alerts.past_due.length + h.alerts.no_script.length;
-  const conv = h.trial_ended > 0 ? Math.round((h.trial_converted / h.trial_ended) * 100) : null;
-  const series = h.revenue_origin.map((r) => ({ ...r, label: `${r.d.slice(8, 10)}/${r.d.slice(5, 7)}` }));
-
   return (
-    <div className="space-y-6">
-      <section className={`${CARD} space-y-3`}>
-        <div className="flex items-center gap-2">
-          {total ? <AlertTriangle className="h-4 w-4 text-amber-400" /> : <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
-          <h2 className="text-sm font-bold text-white">Central de alertas</h2>
-          <span className="text-[13px] text-slate-500">{total ? `${total} ponto(s) pedem atenção` : 'Tudo certo por aqui'}</span>
-        </div>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <AlertBox title="Perto do limite (90%+)" rows={h.alerts.near_limit} detail={(r) => `${r.what} ${r.pct}%`} onOpen={open} />
-          <AlertBox title="Pagamento em atraso" rows={h.alerts.past_due} detail={(r) => `${r.days ?? 0} dia(s)`} onOpen={open} />
-          <AlertBox title="Sem script há 48h+" rows={h.alerts.no_script} detail={(r) => `${r.days ?? 0} dia(s) de conta`} onOpen={open} />
-        </div>
-        <p className="text-xs text-slate-600">Quem está perto do limite é oportunidade de vender add-on.</p>
-      </section>
+    <section className={`${CARD} space-y-3`}>
+      <div className="flex items-center gap-2">
+        {total ? <AlertTriangle className="h-4 w-4 text-amber-400" /> : <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+        <h2 className="text-sm font-bold text-white">Central de alertas</h2>
+        <span className="text-[13px] text-slate-500">{total ? `${total} ponto(s) pedem atenção` : 'Tudo certo por aqui'}</span>
+      </div>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <AlertBox title="Perto do limite (90%+)" rows={h.alerts.near_limit} detail={(r) => `${r.what} ${r.pct}%`} onOpen={open} />
+        <AlertBox title="Pagamento em atraso" rows={h.alerts.past_due} detail={(r) => `${r.days ?? 0} dia(s)`} onOpen={open} />
+        <AlertBox title="Sem script há 48h+" rows={h.alerts.no_script} detail={(r) => `${r.days ?? 0} dia(s) de conta`} onOpen={open} />
+      </div>
+      <p className="text-xs text-slate-600">Quem está perto do limite é oportunidade de vender add-on.</p>
+    </section>
+  );
+}
 
-      <section className="space-y-3">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Saúde do negócio</h2>
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <Metric label="MRR" value={brl(h.mrr_cents)} hint={`Recorrência mensal (inclui ${brl(h.addon_mrr_cents)} de add-ons)`} icon={TrendingUp} tone="bg-emerald-500/15 text-emerald-400" />
-          <Metric label="Ticket médio (ARPU)" value={brl(h.arpu_cents)} hint={`Por loja pagante (${h.active_stores})`} icon={Users} tone="bg-[#0094eb]/15 text-[#0094eb]" />
-          <Metric label="Churn (30 dias)" value={String(h.churn_30d)} hint="Lojas que cancelaram" icon={TrendingDown} tone="bg-rose-500/15 text-rose-400" />
-          <Metric label="Conversão de trial" value={conv === null ? '—' : `${conv}%`} hint={`${h.trial_converted} de ${h.trial_ended} trials (90 dias)`} icon={Percent} tone="bg-[#fd8539]/15 text-[#fd8539]" />
-        </div>
-      </section>
-
-      <section className={CARD}>
-        <p className="mb-3 text-sm font-bold text-white">Receita por origem (30 dias)</p>
-        <div className="h-64">
+export function HealthOrigin({ h }: { h: Health }) {
+  const series = h.revenue_origin.map((r) => ({ ...r, label: `${r.d.slice(8, 10)}/${r.d.slice(5, 7)}` }));
+  return (
+    <div className={`${CARD} flex flex-col`}>
+      <p className="mb-3 text-[15px] font-bold text-white">Receita por origem (últimos 30 dias)</p>
+      <div className="relative min-h-[16rem] flex-1">
+        <div className="absolute inset-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148,163,184,0.15)" />
@@ -119,8 +94,8 @@ export default function DashboardHealth() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <p className="mt-2 text-xs text-slate-600">Add-on contratado no checkout vai junto com a assinatura. Hoje não dá para separá-lo no gráfico.</p>
-      </section>
+      </div>
+      <p className="mt-2 text-xs text-slate-600">Add-on contratado no checkout vai junto com a assinatura e não é separado no gráfico. Este gráfico não segue o filtro de período.</p>
     </div>
   );
 }

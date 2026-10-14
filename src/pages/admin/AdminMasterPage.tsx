@@ -4,7 +4,6 @@ import ModulosTab from '@/components/admin/ModulosTab';
 import PrecosTab from '@/components/admin/PrecosTab';
 import { MasterLayout, type MasterTab } from '@/components/admin/MasterLayout';
 import DashboardTab from '@/components/admin/DashboardTab';
-import DashboardHealth from '@/components/admin/DashboardHealth';
 import LojasTab from '@/components/admin/LojasTab';
 import MarketingTab from '@/components/admin/MarketingTab';
 import NoahSupportTab from '@/components/master/NoahSupportTab';
@@ -20,7 +19,7 @@ export default function AdminMasterPage() {
   return (
     <MasterLayout tab={tab} onTab={goTab}>
       {tab === 'dashboard' ? (
-        <div className="space-y-6"><DashboardHealth /><DashboardTab /></div>
+        <DashboardTab />
       ) : tab === 'lojas' ? (
         <LojasTab />
       ) : tab === 'noah' ? (
