@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 
 const sb: any = supabase;
@@ -23,6 +25,7 @@ export function useStagingPublish<T extends Record<string, any> = Record<string,
   fallbackLive?: T,
   opts: StagingOpts<T> = {},
 ) {
+  const { storeId: myStoreId } = useLoja() as { storeId: string | null };
   const [serverLive, setServerLive] = useState<T | null>(null);
   const [test, setTest] = useState<T | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
@@ -107,9 +110,10 @@ export function useStagingPublish<T extends Record<string, any> = Record<string,
     if (error) return showError(error.message);
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) return showError('Nenhuma Loja Teste definida. Escolha uma na aba Módulos do Master.');
-    if (!row.url) return showError(`A loja "${row.name}" não tem URL cadastrada.`);
-    const url = /^https?:\/\//i.test(row.url) ? row.url : `https://${row.url}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    if (String(row.id) !== String(myStoreId ?? '')) {
+      toast.info(`Você está logado em outra loja. Para ver o rascunho, entre com a conta da loja "${row.name}".`);
+    }
+    window.open(`${window.location.origin}/dashboard`, '_blank', 'noopener,noreferrer');
   };
 
   const status: StagingStatus = hasDraft ? 'modified' : 'live';
