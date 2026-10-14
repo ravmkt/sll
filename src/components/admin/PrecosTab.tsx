@@ -318,8 +318,14 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
                 )}
               </td>
               <td className="px-3 py-3 text-center text-white">{brl(p.price_monthly_cents)}</td>
-              <td className="px-3 py-3 text-center text-slate-300">{brl(p.price_semiannual_cents)}</td>
-              <td className="px-3 py-3 text-center text-slate-300">{brl(p.price_annual_cents)}</td>
+              <td className="px-3 py-3 text-center text-slate-300">
+                {brl(p.price_semiannual_cents)}
+                {cycleInfo(p.price_semiannual_cents, 6, p.price_monthly_cents) && <p className="text-[10px] font-semibold text-emerald-400">({cycleInfo(p.price_semiannual_cents, 6, p.price_monthly_cents)})</p>}
+              </td>
+              <td className="px-3 py-3 text-center text-slate-300">
+                {brl(p.price_annual_cents)}
+                {cycleInfo(p.price_annual_cents, 12, p.price_monthly_cents) && <p className="text-[10px] font-semibold text-emerald-400">({cycleInfo(p.price_annual_cents, 12, p.price_monthly_cents)})</p>}
+              </td>
               <td className="px-3 py-3 text-center"><MarginBadge m={costs.marginOf(p)} /></td><td className="px-3 py-3 text-center font-semibold text-white">{int(subs[p.id])}</td>
               <td className="px-3 py-3 text-center">
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
