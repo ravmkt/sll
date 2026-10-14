@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronRight, Loader2, Plus } from 'lucide-react';
 import { getModulesOverview, type ModulesData } from '@/services/admin/modulesService';
 import ModuloDetalhe from '@/components/admin/ModuloDetalhe';
+import NovoModuloModal from '@/components/admin/NovoModuloModal';
 import { CARD, SELECT, STATUS_LABEL, ModuleLogo, brl, int } from '@/components/admin/moduleUi';
 
 const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
@@ -12,6 +13,7 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,6 +45,9 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
         </div>
         <div className="flex items-center gap-2">
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
+          <button type="button" onClick={() => setCreating(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-2 text-xs font-bold text-white hover:opacity-90">
+            <Plus size={14} /> Novo Módulo
+          </button>
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
             <option value={7}>Últimos 7 dias</option>
             <option value={30}>Últimos 30 dias</option>
@@ -52,6 +57,8 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
       </div>
 
       {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+
+      {creating && <NovoModuloModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load(); }} />}
 
       {data && (
         <>
@@ -64,7 +71,11 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Receita mensal dos combos</p>
               <p className="text-lg font-black text-white">{brl(data.bundle_mrr)}</p>
             </div>
-            <p className="text-[11px] text-slate-500">Lojas com combo contam como acesso em cada módulo. A receita do combo não é dividida entre eles.</p>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Receita mensal total (MRR)</p>
+              <p className="text-lg font-black text-[#fd8539]">{brl(data.modules.reduce((a, m) => a + (Number(m.mrr) || 0), 0) + (Number(data.bundle_mrr) || 0))}</p>
+            </div>
+            <p className="text-[11px] text-slate-500">MRR total = módulos individuais + combos. Lojas com combo contam como acesso e pagante em cada módulo, mas a receita do combo não é dividida entre eles.</p>
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#111524]">

@@ -22,6 +22,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
   const [stores, setStores] = useState<ModuleStoreRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [q, setQ] = useState('');
 
   const [name, setName] = useState('');
   const [status, setStatus] = useState('active');
@@ -85,6 +86,8 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
     }
   };
 
+  const term = q.trim().toLowerCase();
+  const shown = (stores || []).filter((x) => !term || (x.name || '').toLowerCase().includes(term));
   const measured = !!m && m.events !== null;
   const ctr = m && m.views ? ((Number(m.clicks) || 0) / m.views) * 100 : 0;
 
@@ -148,7 +151,10 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
             </div>
 
             <div className={`${CARD} space-y-3`}>
-              <p className="text-sm font-bold text-white">Lojas com acesso</p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-bold text-white">Lojas com acesso{stores ? ` (${stores.length})` : ''}</p>
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filtrar loja..." className={`${INPUT} max-w-[220px]`} />
+              </div>
               {stores === null ? (
                 <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
               ) : stores.length === 0 ? (
@@ -160,9 +166,14 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
                       <tr><th className={TH}>Loja</th><th className={TH}>Plano</th><th className={TH}>Ciclo</th><th className={TH}>Origem</th><th className={TH}>Status</th></tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {stores.map((s) => (
+                      {shown.length === 0 && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">Nenhuma loja encontrada.</td></tr>}
+                      {shown.map((s) => (
                         <tr key={s.id} onClick={() => onOpenStore(s.id)} className="cursor-pointer hover:bg-white/5">
-                          <td className="px-3 py-2 font-bold text-white">{s.name || 'Sem nome'}</td>
+                          <td className="px-3 py-2">
+                            <button type="button" onClick={(e) => { e.stopPropagation(); onOpenStore(s.id); }} className="cursor-pointer text-left font-bold text-white underline-offset-2 hover:text-[#fd8539] hover:underline">
+                              {s.name || 'Sem nome'}
+                            </button>
+                          </td>
                           <td className="px-3 py-2 text-slate-300">{s.plan_name || '—'}</td>
                           <td className="px-3 py-2 text-slate-400">{s.billing_cycle ? CYCLE_LABEL[s.billing_cycle] || s.billing_cycle : '—'}</td>
                           <td className="px-3 py-2 text-slate-400">{s.via_combo ? 'Combo' : 'Individual'}</td>

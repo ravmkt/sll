@@ -63,3 +63,19 @@ export async function uploadModuleLogo(slug: string, file: File): Promise<string
   if (error) throw new Error(error.message);
   return sb.storage.from('module-logos').getPublicUrl(path).data.publicUrl as string;
 }
+
+export type PlanStat = { plan_id: string; total: number; paying: number; trial: number; lifetime: number; past_due: number };
+
+export async function getModulePlanStats(slug: string): Promise<Record<string, PlanStat>> {
+  const { data, error } = await sb.rpc('admin_module_plan_stats', { p_slug: slug });
+  if (error) throw new Error(error.message);
+  return Object.fromEntries(((data || []) as PlanStat[]).map((r) => [r.plan_id, r]));
+}
+
+export async function createHubModule(slug: string, name: string, status: string, isPublic: boolean): Promise<string> {
+  const { data, error } = await sb.rpc('admin_create_hub_module', {
+    p_slug: slug, p_name: name, p_status: status, p_public: isPublic,
+  });
+  if (error) throw new Error(error.message);
+  return data as string;
+}
