@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Check, Copy, Loader2, Trash2 } from 'lucide-react';
+import { CancelSubscriptionModal } from '@/components/admin/StoreModals';
 import { toast } from 'sonner';
 import {
   addBenefit, cancelSubscription, deleteStore, getStoreFull, listPlans, setSubscriptionStatus, updateStore,
@@ -107,6 +108,7 @@ function IdChip({ id }: { id: string }) {
 }
 
 export default function StoreDetailPage({ storeId }: { storeId: string }) {
+  const [cancelTarget, setCancelTarget] = useState<string | null>(null);
   const [params, setParams] = useSearchParams();
   const aba = params.get('aba') || 'resumo';
 
@@ -179,7 +181,8 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
       ? '\nA cobrança também será cancelada no Asaas.'
       : '\nHá cobrança no Asaas: isso não altera o Asaas.';
     if (!window.confirm(`${label} esta assinatura?${aviso}`)) return;
-    run(() => (to === 'canceled' ? cancelSubscription(id) : setSubscriptionStatus(id, to)), 'Assinatura atualizada.');
+    if (to === 'canceled') { setCancelTarget(id); return; }
+    run(() => setSubscriptionStatus(id, to), 'Assinatura atualizada.');
   };
 
   const confirmDelete = async () => {
@@ -226,6 +229,17 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
             <h1 className="text-2xl font-black text-white">{s.name || 'Sem nome'}</h1>
             <Badge status={status} />
             <IdChip id={storeId} />
+            {cancelTarget && (
+              <CancelSubscriptionModal
+                subscriptionId={cancelTarget}
+                onClose={() => setCancelTarget(null)}
+                onConfirm={(refund) => {
+                  const id = cancelTarget;
+                  setCancelTarget(null);
+                  run(() => cancelSubscription(id, refund), refund ? 'Assinatura cancelada e cobrança estornada.' : 'Assinatura atualizada.');
+                }}
+              />
+            )}
           </div>
           <p className="mt-1 text-xs text-slate-500">
             {s.url || 'sem URL'} · criada em {dt(s.created_at)} · login: {s.owner_email || '—'} · último acesso: {dtt(s.last_sign_in_at)}

@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Loader2, Mail, MessageCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { sendMasterEmail, logCommunication, type AdminSub, type PlanOption } from '@/services/admin/storesService';
+import { sendMasterEmail, logCommunication, getCancelPreview, type AdminSub, type CancelPreview, type PlanOption } from '@/services/admin/storesService';
 import { ICON, INPUT, digits, modLabel } from '@/components/admin/storeUi';
 
 const LBL = 'text-[10px] font-bold uppercase tracking-wider text-slate-500';
@@ -154,6 +154,76 @@ export function ContactActions({ storeId, storeName, contactName, whatsapp, emai
     </>
   );
 }
+export function CancelSubscriptionModal({ subscriptionId, onClose, onConfirm }: {
+  subscriptionId: string; onClose: () => void; onConfirm: (refund: boolean) => void;
+}) {
+  const [info, setInfo] = useState<CancelPreview | null>(null);
+  const [err, setErr] = useState('');
+  const [refund, setRefund] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    getCancelPreview(subscriptionId)
+      .then((i) => { if (alive) setInfo(i); })
+      .catch((e: any) => { if (alive) setErr(e?.message || 'Não foi possível consultar a assinatura.'); });
+    return () => { alive = false; };
+  }, [subscriptionId]);
+
+  const money = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmtDate = (d: string | null) => (d ? d.slice(0, 10).split('-').reverse().join('/') : '');
+  const lp = info?.last_payment ?? null;
+  const loading = !info && !err;
+  const daysTxt = !info ? '' : info.days === 0 ? 'hoje' : `há ${info.days} ${info.days === 1 ? 'dia' : 'dias'}`;
+
+  return (
+    <Modal title="Cancelar assinatura" onClose={onClose}>
+      {loading && <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-slate-400" /></div>}
+      {err && <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-[11px] text-rose-300">{err} Você ainda pode cancelar sem estorno.</p>}
+
+      {info && (
+        <div className={`rounded-lg px-3 py-2 text-xs font-semibold ${info.within_guarantee ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-300'}`}>
+          Assinado {daysTxt} ·{' '}
+          {info.within_guarantee
+            ? `Dentro do prazo de ${info.guarantee_days} dias de garantia`
+            : 'Fora do prazo de garantia'}
+        </div>
+      )}
+
+      {info && (
+        lp ? (
+          <p className="text-xs text-slate-400">
+            Última cobrança paga: <b className="text-white">{money(lp.value)}</b>
+            {lp.date ? ` em ${fmtDate(lp.date)}` : ''}{lp.billing_type ? ` (${lp.billing_type === 'CREDIT_CARD' ? 'cartão' : lp.billing_type === 'PIX' ? 'Pix' : lp.billing_type})` : ''}.
+          </p>
+        ) : (
+          <p className="text-xs text-slate-500">Nenhuma cobrança paga encontrada. Não há o que estornar.</p>
+        )
+      )}
+
+      <label className={`flex items-start gap-2 rounded-lg border border-white/10 px-3 py-2.5 text-sm ${lp ? 'cursor-pointer text-slate-200' : 'cursor-not-allowed text-slate-600'}`}>
+        <input type="checkbox" checked={refund} disabled={!lp} onChange={(e) => setRefund(e.target.checked)} className="mt-0.5" />
+        <span>Sim, realizar estorno integral{lp ? ` (${money(lp.value)})` : ''}</span>
+      </label>
+
+      {refund && info && !info.within_guarantee && (
+        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">
+          Esta assinatura está fora do prazo de garantia. O estorno é uma decisão sua e fica registrado no log de auditoria.
+        </p>
+      )}
+      <p className="text-[11px] text-slate-500">
+        O cancelamento interrompe as próximas cobranças. O estorno é feito no Asaas e não pode ser desfeito por aqui.
+      </p>
+
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={onClose} className={GHOST}>Voltar</button>
+        <button type="button" disabled={loading} onClick={() => onConfirm(refund && !!lp)} className={`${BTN} bg-rose-600 text-white`}>
+          {refund && lp ? 'Cancelar e estornar' : 'Cancelar assinatura'}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 export function ChangePlanModal({ sub, plans, busy, onClose, onConfirm }: {
   sub: AdminSub; plans: PlanOption[]; busy: boolean; onClose: () => void; onConfirm: (planId: string) => void;
 }) {

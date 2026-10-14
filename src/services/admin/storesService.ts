@@ -122,10 +122,17 @@ export async function addBenefit(storeId: string, kind: string, value: string, n
   await call<null>('admin_master_add_benefit', { p_store_id: storeId, p_kind: kind, p_value: value, p_note: note });
 }
 
-export async function cancelSubscription(subscriptionId: string): Promise<void> {
-  const { data, error } = await client.functions.invoke('asaas-cancel-subscription', {
-    body: { subscription_id: subscriptionId },
-  });
+export type CancelPreview = {
+  created_at: string;
+  days: number;
+  guarantee_days: number;
+  within_guarantee: boolean;
+  already_canceled: boolean;
+  last_payment: { id: string; value: number; date: string | null; billing_type: string | null } | null;
+};
+
+async function invokeCancel(body: Record<string, unknown>): Promise<any> {
+  const { data, error } = await client.functions.invoke('asaas-cancel-subscription', { body });
   if (error) {
     let msg: string = error.message || 'Erro ao cancelar a assinatura.';
     try {
@@ -135,8 +142,18 @@ export async function cancelSubscription(subscriptionId: string): Promise<void> 
     throw new Error(msg);
   }
   if (data?.error) throw new Error(String(data.error));
+  return data;
+}
+
+export async function getCancelPreview(subscriptionId: string): Promise<CancelPreview> {
+  return (await invokeCancel({ subscription_id: subscriptionId, preview: true })) as CancelPreview;
+}
+
+export async function cancelSubscription(subscriptionId: string, refund = false): Promise<void> {
+  const d = await invokeCancel({ subscription_id: subscriptionId, refund });
   // Registra a ação no log do painel (o cancelamento já foi feito acima)
   try { await setSubscriptionStatus(subscriptionId, 'canceled'); } catch { /* já cancelada */ }
+  if (d?.refund_error) throw new Error(`Assinatura cancelada, mas o estorno falhou: ${d.refund_error}`);
 }
 
 export type StorePeriod = {
