@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
+import { useConfirm } from '@/components/admin/ConfirmDialog';
 import ModulePlansCard from '@/components/admin/ModulePlansCard';
 import FeatureFlagsCard from '@/components/admin/FeatureFlagsCard';
 import ModuloVitrineEditor, { parseFeatures } from '@/components/admin/ModuloVitrineEditor';
@@ -40,6 +42,8 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
   const [featuresText, setFeaturesText] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const { confirm, dialog } = useConfirm();
   const filled = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -96,6 +100,21 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
     } finally {
       setSaving(false);
     }
+  };
+
+  const removeModule = async () => {
+    const ok = await confirm({
+      title: 'Excluir módulo',
+      message: `"${m?.name || slug}" e seus planos e add-ons serão apagados. Essa ação não pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+    });
+    if (!ok) return;
+    setDeleting(true);
+    const { error: err } = await (supabase as any).rpc('admin_delete_hub_module', { p_slug: slug });
+    setDeleting(false);
+    if (err) { toast.error(err.message); return; }
+    toast.success('Módulo excluído.');
+    onBack();
   };
 
   const liveCfg = useMemo<VitrineCfg | undefined>(() => (m ? {
@@ -244,6 +263,14 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
           <div className="space-y-4">
             <ModulePlansCard slug={slug} onManage={() => onOpenPlans(slug)} />
             <FeatureFlagsCard slug={slug} />
+            <div className="space-y-2 rounded-2xl border border-rose-500/30 bg-rose-500/5 p-4">
+              <p className="text-sm font-bold text-rose-300">Zona de perigo</p>
+              <p className="text-[11px] text-slate-500">Só é possível excluir módulos sem assinaturas e fora de combos. Nos demais casos, use o status "Oculto".</p>
+              <button type="button" disabled={deleting} onClick={removeModule} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white hover:bg-rose-500 disabled:opacity-40">
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} Excluir módulo
+              </button>
+            </div>
+            {dialog}
           </div>
         </div>
         </>
