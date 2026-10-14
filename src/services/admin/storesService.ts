@@ -165,9 +165,9 @@ export function createSubscription(storeId: string, planId: string, moduleKey: s
   });
 }
 
-export async function sendMasterEmail(storeId: string, subject: string, message: string): Promise<{ to: string }> {
+export async function sendMasterEmail(storeId: string, subject: string, message: string, to?: string): Promise<{ to: string }> {
   const { data, error } = await client.functions.invoke('send-master-email', {
-    body: { store_id: storeId, subject, message },
+    body: { store_id: storeId, subject, message, to: to?.trim() || undefined },
   });
   if (error) {
     let msg: string = error.message || 'Erro ao enviar o e-mail.';
