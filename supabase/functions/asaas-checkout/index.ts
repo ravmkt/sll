@@ -219,6 +219,7 @@ Deno.serve(async (req) => {
       coupon_id: couponId,
     }).select("id").single();
     if (dbErr || !saved) {
+      console.error("asaas-checkout DB_ERROR:", JSON.stringify(dbErr));
       await asaas(`/subscriptions/${sub.data.id}`, "DELETE");
       return json({ error: "DB_ERROR", message: "Não foi possível registrar a assinatura." }, 500);
     }
