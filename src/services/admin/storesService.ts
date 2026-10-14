@@ -177,3 +177,27 @@ export async function sendMasterEmail(storeId: string, to: string, subject: stri
   if (data?.error) throw new Error(String(data.error));
   return data as { to: string };
 }
+
+export type CommItem = {
+  id: string; channel: 'email' | 'whatsapp'; recipient: string; subject: string | null;
+  message: string; status: 'sent' | 'failed' | 'opened'; error: string | null; created_at: string;
+};
+export type CommData = { email_count: number; whatsapp_count: number; list: CommItem[] };
+
+export async function logCommunication(p: {
+  storeId: string; channel: 'email' | 'whatsapp'; recipient: string; subject?: string | null;
+  message: string; status: 'sent' | 'failed' | 'opened'; error?: string | null;
+}): Promise<void> {
+  const { error } = await client.rpc('admin_master_log_communication', {
+    p_store_id: p.storeId, p_channel: p.channel, p_recipient: p.recipient,
+    p_subject: p.subject ?? null, p_message: p.message, p_status: p.status, p_error: p.error ?? null,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function getStoreCommunications(storeId: string): Promise<CommData> {
+  const { data, error } = await client.rpc('admin_master_store_communications', { p_store_id: storeId });
+  if (error) throw new Error(error.message);
+  const d = (data || {}) as Partial<CommData>;
+  return { email_count: d.email_count ?? 0, whatsapp_count: d.whatsapp_count ?? 0, list: d.list ?? [] };
+}

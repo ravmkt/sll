@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Loader2, Mail, MessageCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { sendMasterEmail, type AdminSub, type PlanOption } from '@/services/admin/storesService';
+import { sendMasterEmail, logCommunication, type AdminSub, type PlanOption } from '@/services/admin/storesService';
 import { ICON, INPUT, digits, modLabel } from '@/components/admin/storeUi';
 
 const LBL = 'text-[10px] font-bold uppercase tracking-wider text-slate-500';
@@ -11,7 +11,7 @@ const PRIMARY = `${BTN} flex items-center gap-2 bg-[#fd8539] text-white`;
 const GHOST = `${BTN} text-slate-300 hover:bg-white/10`;
 const planTxt = (p: PlanOption) => `${p.name || 'Sem nome'}${p.is_active === false ? ' (inativo)' : ''}`;
 
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
       <div className="w-full max-w-md space-y-4 rounded-2xl border border-white/10 bg-[#0b0f1c] p-5" onClick={(e) => e.stopPropagation()}>
@@ -65,34 +65,68 @@ function EmailModal({ to, storeName, busy, onClose, onSend }: {
     </Modal>
   );
 }
-export function ContactActions({ storeId, storeName, contactName, whatsapp, email }: {
-  storeId: string; storeName?: string | null; contactName?: string | null; whatsapp?: string | null; email?: string | null;
+function WhatsAppModal({ phone, message, onClose, onSend }: {
+  phone: string; message: string; onClose: () => void; onSend: (phone: string, msg: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [num, setNum] = useState(phone);
+  const [msg, setMsg] = useState(message);
+  const numOk = digits(num).length >= 10;
+  const msgOk = msg.trim().length >= 3;
+  const pend = [!numOk && 'número com DDD', !msgOk && 'mensagem'].filter(Boolean);
+  return (
+    <Modal title="Enviar WhatsApp" onClose={onClose}>
+      <label className="block space-y-1">
+        <span className={LBL}>Número</span>
+        <input value={num} onChange={(e) => setNum(e.target.value)} className={`${INPUT} ${num && !numOk ? 'border-rose-500' : ''}`} placeholder="(41) 99999-9999" />
+        {num && !numOk && <span className="block text-[11px] text-rose-400">Informe o número com DDD.</span>}
+      </label>
+      <label className="block space-y-1">
+        <span className={LBL}>Mensagem</span>
+        <textarea value={msg} maxLength={2000} rows={6} onChange={(e) => setMsg(e.target.value)} className={INPUT} />
+      </label>
+      {pend.length > 0 && <p className="text-[11px] text-slate-500">Falta preencher: {pend.join(', ')}.</p>}
+      <p className="text-[11px] text-slate-500">O WhatsApp abre com a mensagem pronta. Você confirma o envio por lá.</p>
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={onClose} className={GHOST}>Cancelar</button>
+        <button type="button" disabled={!numOk || !msgOk} onClick={() => onSend(num, msg.trim())} className={PRIMARY}>Abrir WhatsApp</button>
+      </div>
+    </Modal>
+  );
+}
+
+export function ContactActions({ storeId, storeName, contactName, whatsapp, email, variant = 'icons', onLogged }: {
+  storeId: string; storeName?: string | null; contactName?: string | null; whatsapp?: string | null; email?: string | null;
+  variant?: 'icons' | 'buttons'; onLogged?: () => void;
+}) {
+  const [mail, setMail] = useState(false);
+  const [wa, setWa] = useState(false);
   const [busy, setBusy] = useState(false);
   const name = storeName || 'sua loja';
+  const first = (contactName || '').trim().split(/\s+/)[0];
+  const defaultMsg = `Olá${first ? ` ${first}` : ''}, aqui é da equipe do SLL Hub. Estou entrando em contato referente à sua loja ${name}.`;
 
-  const openWa = () => {
-    let n = digits(whatsapp);
-    if (!n) { toast.error('Nenhum WhatsApp cadastrado na aba Dados desta loja.'); return; }
+  const sendWa = (phone: string, message: string) => {
+    let n = digits(phone);
     if (n.length <= 11 || !n.startsWith('55')) n = `55${n}`;
-    const first = (contactName || '').trim().split(/\s+/)[0];
-    const msg = `Olá${first ? ` ${first}` : ''}, aqui é da equipe do SLL Hub. Estou entrando em contato referente à sua loja ${name}.`;
-    window.open(`https://wa.me/${n}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+    window.open(`https://wa.me/${n}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+    setWa(false);
+    logCommunication({ storeId, channel: 'whatsapp', recipient: n, message, status: 'opened' })
+      .then(() => onLogged?.())
+      .catch((e: any) => toast.error(e?.message || 'Não foi possível registrar no histórico.'));
   };
 
-  const openMail = () => {
-    setOpen(true);
-  };
-
-  const send = async (to: string, subject: string, message: string) => {
+  const sendMail = async (to: string, subject: string, message: string) => {
     setBusy(true);
     try {
       const r = await sendMasterEmail(storeId, to, subject, message);
+      await logCommunication({ storeId, channel: 'email', recipient: r?.to || to, subject, message, status: 'sent' }).catch(() => {});
       toast.success(`E-mail enviado para ${r?.to || to}.`);
-      setOpen(false);
+      setMail(false);
+      onLogged?.();
     } catch (e: any) {
+      await logCommunication({ storeId, channel: 'email', recipient: to, subject, message, status: 'failed', error: e?.message || 'Erro ao enviar' }).catch(() => {});
       toast.error(e?.message || 'Erro ao enviar o e-mail.');
+      onLogged?.();
     } finally {
       setBusy(false);
     }
@@ -100,19 +134,26 @@ export function ContactActions({ storeId, storeName, contactName, whatsapp, emai
 
   return (
     <>
-      <div className="flex items-center gap-1">
-        <button type="button" onClick={openWa} title="WhatsApp (suporte)" className="rounded-lg p-1.5 hover:bg-white/10">
-          <MessageCircle size={18} className={whatsapp ? ICON : 'text-slate-700'} />
-        </button>
-        <button type="button" onClick={openMail} title={email || 'Sem e-mail'} className="rounded-lg p-1.5 hover:bg-white/10">
-          <Mail size={18} className={email ? ICON : 'text-slate-700'} />
-        </button>
-      </div>
-      {open && <EmailModal to={email || ''} storeName={name} busy={busy} onClose={() => setOpen(false)} onSend={send} />}
+      {variant === 'buttons' ? (
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => setWa(true)} className={`${BTN} flex items-center gap-2 bg-emerald-600 text-white`}><MessageCircle size={14} /> Enviar WhatsApp</button>
+          <button type="button" onClick={() => setMail(true)} className={PRIMARY}><Mail size={14} /> Enviar E-mail</button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={() => setWa(true)} title="WhatsApp (suporte)" className="rounded-lg p-1.5 hover:bg-white/10">
+            <MessageCircle size={18} className={whatsapp ? ICON : 'text-slate-700'} />
+          </button>
+          <button type="button" onClick={() => setMail(true)} title={email || 'Sem e-mail'} className="rounded-lg p-1.5 hover:bg-white/10">
+            <Mail size={18} className={email ? ICON : 'text-slate-700'} />
+          </button>
+        </div>
+      )}
+      {mail && <EmailModal to={email || ''} storeName={name} busy={busy} onClose={() => setMail(false)} onSend={sendMail} />}
+      {wa && <WhatsAppModal phone={whatsapp || ''} message={defaultMsg} onClose={() => setWa(false)} onSend={sendWa} />}
     </>
   );
 }
-
 export function ChangePlanModal({ sub, plans, busy, onClose, onConfirm }: {
   sub: AdminSub; plans: PlanOption[]; busy: boolean; onClose: () => void; onConfirm: (planId: string) => void;
 }) {
