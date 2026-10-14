@@ -188,7 +188,30 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
           featuresText={featuresText} setFeaturesText={setFeaturesText}
           fileRef={fileRef} onFile={onFile}
           uploading={uploading} saving={saving} onSave={save}
-          footer={<StagingActionBar staging={staging} config={formCfg} disabled={uploading || !name.trim()} />}
+          footer={
+            <div className="space-y-2">
+              <StagingActionBar staging={staging} config={formCfg} disabled={uploading || !name.trim()} />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  disabled={saving || uploading || !name.trim()}
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: 'Salvar direto ao vivo',
+                      message: 'As alterações vão para todas as lojas agora, sem passar pela Loja Teste.',
+                      confirmLabel: 'Salvar ao vivo',
+                    });
+                    if (!ok) return;
+                    await save();
+                    if (staging.hasDraft) await staging.discard();
+                  }}
+                  className="cursor-pointer rounded-lg bg-[#fd8539] px-5 py-2 text-xs font-bold text-white hover:opacity-90 disabled:opacity-40"
+                >
+                  {saving ? 'Salvando…' : 'Salvar direto ao vivo'}
+                </button>
+              </div>
+            </div>
+          }
         />
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="space-y-4 xl:col-span-2">
