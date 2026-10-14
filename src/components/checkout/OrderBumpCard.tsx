@@ -15,6 +15,8 @@ export interface Upsell {
   scope: string;
   upsell_headline: string | null;
   upsell_module_target: string | null;
+  target_resource?: string | null;
+  resource_amount?: number | null;
 }
 
 const brl = (n: number) => (n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -27,7 +29,7 @@ export function useUpsells(modules: string[]) {
   useEffect(() => {
     let alive = true;
     sb.from('addons')
-      .select('id,name,description,price_monthly,scope,upsell_headline,upsell_module_target')
+      .select('*')
       .eq('is_active', true)
       .eq('is_upsell', true)
       .order('price_monthly')
@@ -37,7 +39,7 @@ export function useUpsells(modules: string[]) {
         setItems(
           ((data || []) as any[])
             .map((r) => ({ ...r, price_monthly: Number(r.price_monthly) }) as Upsell)
-            .filter((a) => (a.scope === 'global' || mods.includes(a.scope)) && (a.upsell_module_target === 'all' || (a.upsell_module_target && mods.includes(a.upsell_module_target)))),
+            .filter((a) => (a.scope === 'global' || mods.includes(a.scope)) && (!a.upsell_module_target || a.upsell_module_target === 'all' || mods.includes(a.upsell_module_target))),
         );
       });
     return () => { alive = false; };

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, Eye, Film, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLoja } from "@/contexts/LojaContext";
 import { supabase } from "@/lib/supabase";
@@ -9,6 +9,9 @@ import type { PlanCycle } from "@/components/planos/VidlyticsPlanCard";
 import ComboCards, { comboMaxPct } from "@/components/planos/ComboCards";
 import ModuloPlanoModal from "@/components/planos/ModuloPlanoModal";
 import PlanosFaq from "@/components/planos/PlanosFaq";
+import { addonIcon } from "@/components/planos/addonIcon";
+import { brl } from "@/components/planos/planosShared";
+import { bumpTotal, useUpsells } from "@/components/checkout/OrderBumpCard";
 import ModuleCards from "@/components/planos/ModuleCards";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
@@ -30,10 +33,6 @@ type Cell = boolean | string | { ok: string };
 
 const COMPARE_COLS = ["Starter", "Pro", "Scale"];
 
-const ADDONS = [
-  { key: "videos_10", icon: Film, title: "+10 Vídeos Ativos", desc: "Adicione mais produtos com vídeos no seu e-commerce", cents: 2990 },
-  { key: "views_25k", icon: Eye, title: "+25.000 Visualizações", desc: "Aumente sua franquia mensal para picos de campanhas e tráfego", cents: 3990 },
-];
 
 const COMPARE: { group: string; rows: { label: string; v: [Cell, Cell, Cell] }[] }[] = [
   {
@@ -87,7 +86,7 @@ export default function Planos() {
   const [openMod, setOpenMod] = useState<string | null>(null);
   const [cycle, setCycle] = useState<PlanCycle>("monthly");
   // null = sem plano ativo no Vidlytics; tier pode ser null em assinaturas sem plano dinamico (ex.: vitalicia)
-  const [current, setCurrent] = useState<{ tier: string | null } | null>(null);
+  const [current, setCurrent] = useState<{ tier: string | null; planId: string | null } | null>(null);
 
   useEffect(() => {
     Promise.all([getCatalogShowcase(), getCatalogModules(), getCatalogCombos()]).then(([list, m, cb]) => {
@@ -119,37 +118,29 @@ export default function Planos() {
         const { data: dp } = await sb.from("dynamic_plans").select("plan_tier").eq("id", sub.dynamic_plan_id).maybeSingle();
         tier = dp?.plan_tier ? String(dp.plan_tier).toLowerCase() : null;
       }
-      if (alive) setCurrent({ tier });
+      if (alive) setCurrent({ tier, planId: sub.dynamic_plan_id ?? null });
     })();
     return () => { alive = false; };
   }, [storeId]);
 
-  const [busyAddon, setBusyAddon] = useState<string | null>(null);
+  const addons = useUpsells(["vidlytics"]);
+  const [selAddons, setSelAddons] = useState<Set<string>>(new Set());
 
-  async function handleAddon(key: string) {
-    if (!current) {
-      toast.warning("Selecione um plano base primeiro para contratar add-ons.");
-      return;
-    }
-    if (!storeId) {
-      toast.error("Nenhuma loja ativa encontrada.");
-      return;
-    }
-    setBusyAddon(key);
-    const { data, error } = await supabase.functions.invoke("asaas-create-addon", {
-      body: { store_id: storeId, addon_key: key },
+  const toggleAddon = (id: string) =>
+    setSelAddons((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
     });
-    let body: any = data;
-    if (error && (error as any).context) {
-      try { body = await (error as any).context.json(); } catch (_) {}
-    }
-    setBusyAddon(null);
-    if (error || body?.error) {
-      toast.error(body?.message || body?.error || "Não foi possível contratar o pacote.");
-      return;
-    }
-    if (body?.invoice_url) window.open(body.invoice_url, "_blank", "noopener");
-    toast.success("Pacote criado. Conclua o pagamento para liberar a capacidade extra.");
+
+  function goAddons() {
+    if (!storeId) { toast.error("Nenhuma loja ativa encontrada."); return; }
+    if (!current?.planId) { toast.warning("Selecione um plano base primeiro para contratar add-ons."); return; }
+    const qs = new URLSearchParams({
+      plan: current.planId, cycle, module: "vidlytics", mods: "vidlytics",
+      addons: Array.from(selAddons).join(","),
+    });
+    navigate(`/dashboard/checkout?${qs.toString()}`);
   }
 
   const soon = useMemo(() => mods.filter((m) => m.status === "coming_soon"), [mods]);
@@ -229,8 +220,65 @@ export default function Planos() {
 
                 <ModuleCards byModule={byModule} mods={mods} onOpen={setOpenMod} />
 
+        {addons.length > 0 && (
+          <section className="max-w-5xl mx-auto space-y-5 pt-4">
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Turbine sua conta com Add-ons</h2>
+              <p className="text-sm font-medium text-slate-500">
+                Precisa de mais capacidade sem trocar de plano? Selecione os pacotes e siga para o checkout.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {addons.map((a) => {
+                const Icon = addonIcon(a);
+                const on = selAddons.has(a.id);
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => toggleAddon(a.id)}
+                    className={cn(
+                      "flex cursor-pointer flex-col gap-2 rounded-3xl border-2 bg-white p-5 text-left shadow-sm transition-all hover:shadow-md",
+                      on ? "border-[#fd8539] bg-[#fd8539]/5" : "border-slate-200"
+                    )}
+                  >
+                    <span className="flex items-center justify-between">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0091ff]/10 text-[#0091ff]">
+                        <Icon size={22} />
+                      </span>
+                      <span className={cn("flex h-5 w-5 items-center justify-center rounded-md border-2", on ? "border-[#fd8539] bg-[#fd8539] text-white" : "border-slate-300")}>
+                        {on && <Check size={12} strokeWidth={3} />}
+                      </span>
+                    </span>
+                    <h3 className="text-base font-black text-slate-900">{a.upsell_headline || a.name}</h3>
+                    {a.description && <p className="text-xs font-medium leading-relaxed text-slate-500">{a.description}</p>}
+                    <p className="mt-auto text-slate-900">
+                      <span className="text-2xl font-black tracking-tight">{brl(Math.round(a.price_monthly * 100))}</span>
+                      <span className="ml-1 text-xs font-bold text-slate-400">/ mês</span>
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+            {selAddons.size > 0 && (
+              <div className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-[#fd8539]/40 bg-[#fd8539]/5 p-4 sm:flex-row">
+                <p className="text-sm font-bold text-slate-800">
+                  {selAddons.size} add-on(s) selecionado(s) · {brl(Math.round(bumpTotal(addons, selAddons, cycle) * 100))} no ciclo {CYCLES.find((c) => c.key === cycle)?.label.toLowerCase()}
+                </p>
+                <button
+                  type="button"
+                  onClick={goAddons}
+                  className="cursor-pointer rounded-full bg-[#3b63fb] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#2f52d6]"
+                >
+                  Continuar para o checkout
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
         {plans.length > 0 && (
-          <section className="max-w-5xl mx-auto space-y-6 pt-8">
+          <section className="max-w-5xl mx-auto pt-4"><details className="rounded-3xl border border-slate-200 bg-white shadow-sm"><summary className="cursor-pointer select-none px-6 py-4 text-center text-sm font-black uppercase tracking-wider text-slate-700">Comparar todos os recursos do Vidlytics</summary><div className="space-y-6 p-4">
             <div className="text-center space-y-2">
               <p className="text-xs font-black uppercase tracking-widest text-[#0091ff]">{"\u2014"} COMPARATIVO</p>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -280,45 +328,7 @@ export default function Planos() {
                 ))}
               </table>
             </div>
-
-            <div className="space-y-5 pt-6">
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Turbine sua conta com Add-ons</h2>
-                <p className="text-sm font-medium text-slate-500">
-                  Precisa de mais capacidade sem trocar de plano? Adicione pacotes extras à sua assinatura a qualquer momento.
-                </p>
-              </div>
-              <div className="grid gap-5 sm:grid-cols-2 max-w-3xl mx-auto">
-                {ADDONS.map((a) => {
-                  const Icon = a.icon;
-                  return (
-                    <div key={a.key} className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                      <div className="space-y-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0091ff]/10 text-[#0091ff]">
-                          <Icon size={22} />
-                        </div>
-                        <h3 className="text-lg font-black text-slate-900">{a.title}</h3>
-                        <p className="text-xs font-medium leading-relaxed text-slate-500">{a.desc}</p>
-                        <p className="text-slate-900">
-                          <span className="text-2xl font-black tracking-tight">
-                            {(a.cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                          </span>
-                          <span className="ml-1 text-xs font-bold text-slate-400">/ mês</span>
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleAddon(a.key)} disabled={busyAddon === a.key}
-                        className="mt-5 w-full rounded-2xl bg-[#0091ff] py-3 px-4 text-xs font-black uppercase tracking-wider text-white shadow-lg transition-all hover:bg-[#0070f3] hover:scale-[1.02] cursor-pointer"
-                      >
-                        Contratar Pacote
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
+</div></details></section>
         )}
 
         <PlanosFaq />

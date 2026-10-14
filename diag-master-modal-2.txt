@@ -1,0 +1,844 @@
+##### src\components\admin\ModuloDetalhe.tsx
+1: import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+2: import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
+3: import { toast } from 'sonner';
+4: import { supabase } from '@/lib/supabase';
+5: import { useConfirm } from '@/components/admin/ConfirmDialog';
+6: import ModulePlansCard from '@/components/admin/ModulePlansCard';
+7: import FeatureFlagsCard from '@/components/admin/FeatureFlagsCard';
+8: import ModuloVitrineEditor, { parseFeatures } from '@/components/admin/ModuloVitrineEditor';
+9: import StagingActionBar from '@/components/master/StagingActionBar';
+10: import { useStagingPublish } from '@/hooks/useStagingPublish';
+11: import {
+12:   getModuleStores, getModulesOverview, updateHubModule, uploadModuleLogo,
+13:   type ModuleOverview, type ModuleStoreRow,
+14: } from '@/services/admin/modulesService';
+15: import {
+16:   CARD, CYCLE_LABEL, INPUT, SELECT, SUB_LABEL, Kpi, ModuleLogo, bytes, brl, int,
+17: } from '@/components/admin/moduleUi';
+18: 
+19: const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
+20: 
+21: type VitrineCfg = {
+22:   name: string; status: string; is_public_for_sale: boolean;
+23:   description: string; features: string[]; logo_url: string | null;
+24: };
+25: 
+26: export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }: {
+27:   slug: string; onBack: () => void; onOpenStore: (id: string) => void; onOpenPlans: (slug: string) => void;
+28: }) {
+29:   const [days, setDays] = useState(30);
+30:   const [m, setM] = useState<ModuleOverview | null>(null);
+31:   const [stores, setStores] = useState<ModuleStoreRow[] | null>(null);
+32:   const [loading, setLoading] = useState(true);
+33:   const [error, setError] = useState('');
+34:   const [q, setQ] = useState('');
+35: 
+36:   const [name, setName] = useState('');
+37:   const [status, setStatus] = useState('active');
+38:   const [pub, setPub] = useState(false);
+39:   const [sort, setSort] = useState('1');
+40:   const [logo, setLogo] = useState<string | null>(null);
+41:   const [description, setDescription] = useState('');
+42:   const [featuresText, setFeaturesText] = useState('');
+43:   const [saving, setSaving] = useState(false);
+44:   const [uploading, setUploading] = useState(false);
+45:   const [deleting, setDeleting] = useState(false);
+46:   const { confirm, dialog } = useConfirm();
+47:   const filled = useRef(false);
+48:   const fileRef = useRef<HTMLInputElement>(null);
+49: 
+50:   const load = useCallback(async (fill: boolean) => {
+51:     setLoading(true);
+52:     setError('');
+53:     try {
+54:       const res = await getModulesOverview(days);
+55:       const found = res.modules.find((x) => x.slug === slug) || null;
+56:       if (!found) { setError('Módulo não encontrado.'); return; }
+57:       setM(found);
+58:       if (fill || !filled.current) {
+59:         setName(found.name);
+60:         setStatus(found.status);
+61:         setPub(found.is_public_for_sale);
+62:         setSort(String(found.sort_order ?? 1));
+63:         setLogo(found.logo_url);
+64:         setDescription(found.description ?? '');
+65:         setFeaturesText((found.features ?? []).join('\n'));
+66:         filled.current = true;
+67:       }
+68:     } catch (e: any) {
+69:       setError(e?.message || 'Erro ao carregar o módulo.');
+70:     } finally {
+71:       setLoading(false);
+72:     }
+73:   }, [days, slug]);
+74: 
+75:   useEffect(() => { load(false); }, [load]);
+76: 
+77:   useEffect(() => {
+78:     getModuleStores(slug).then(setStores).catch((e: any) => { toast.error(e?.message || 'Erro ao listar lojas.'); setStores([]); });
+79:   }, [slug]);
+80: 
+81:   const onFile = async (file: File | undefined) => {
+82:     if (!file) return;
+83:     setUploading(true);
+84:     try { setLogo(await uploadModuleLogo(slug, file)); toast.success('Logo enviado. Clique em Aplicar na Loja Teste.'); }
+85:     catch (e: any) { toast.error(e?.message || 'Falha no envio do logo.'); }
+86:     finally { setUploading(false); if (fileRef.current) fileRef.current.value = ''; }
+87:   };
+88: 
+89:   const save = async () => {
+90:     if (!m) return;
+91:     setSaving(true);
+92:     try {
+93:       const logoArg = logo === (m.logo_url ?? null) ? null : (logo ?? '');
+94:       const feats = parseFeatures(featuresText);
+95:       await updateHubModule(slug, name, status, status === 'active' ? pub : false, Number(sort) || 1, logoArg, description, feats);
+96:       toast.success('Módulo atualizado.');
+97:       await load(true);
+98:     } catch (e: any) {
+99:       toast.error(e?.message || 'Não foi possível salvar.');
+100:     } finally {
+101:       setSaving(false);
+102:     }
+103:   };
+104: 
+105:   const removeModule = async () => {
+106:     const ok = await confirm({
+107:       title: 'Excluir módulo',
+108:       message: `"${m?.name || slug}" e seus planos e add-ons serão apagados. Essa ação não pode ser desfeita.`,
+109:       confirmLabel: 'Excluir',
+110:     });
+111:     if (!ok) return;
+112:     setDeleting(true);
+113:     const { error: err } = await (supabase as any).rpc('admin_delete_hub_module', { p_slug: slug });
+114:     setDeleting(false);
+115:     if (err) { toast.error(err.message); return; }
+116:     toast.success('Módulo excluído.');
+117:     onBack();
+118:   };
+119: 
+120:   const liveCfg = useMemo<VitrineCfg | undefined>(() => (m ? {
+121:     name: m.name, status: m.status, is_public_for_sale: m.is_public_for_sale,
+122:     description: m.description ?? '', features: m.features ?? [], logo_url: m.logo_url ?? null,
+123:   } : undefined), [m]);
+124: 
+125:   const formCfg: VitrineCfg = {
+126:     name: name.trim(), status, is_public_for_sale: status === 'active' ? pub : false,
+127:     description, features: parseFeatures(featuresText), logo_url: logo,
+128:   };
+129: 
+130:   const staging = useStagingPublish<VitrineCfg>('module', slug, liveCfg, {
+131:     applyLive: async (c) => {
+132:       const logoArg = c.logo_url === (m?.logo_url ?? null) ? null : (c.logo_url ?? '');
+133:       await updateHubModule(slug, c.name, c.status, c.status === 'active' ? c.is_public_for_sale : false, Number(m?.sort_order) || 1, logoArg, c.description, c.features);
+134:     },
+135:     onSettled: (k) => { if (k !== 'save') void load(true); },
+136:   });
+137: 
+138:   const draftApplied = useRef(false);
+139:   useEffect(() => {
+140:     if (!m || staging.loading || draftApplied.current) return;
+141:     draftApplied.current = true;
+142:     const d = staging.hasDraft ? staging.test : null;
+143:     if (!d) return;
+144:     setName(d.name); setStatus(d.status); setPub(!!d.is_public_for_sale);
+145:     setDescription(d.description ?? ''); setFeaturesText((d.features ?? []).join('\n')); setLogo(d.logo_url ?? null);
+146:   }, [m, staging.loading, staging.hasDraft, staging.test]);
+147: 
+148:   const term = q.trim().toLowerCase();
+149:   const shown = (stores || []).filter((x) => !term || (x.name || '').toLowerCase().includes(term));
+150:   const measured = !!m && m.events !== null;
+151:   const ctr = m && m.views ? ((Number(m.clicks) || 0) / m.views) * 100 : 0;
+152: 
+153:   return (
+154:     <div className="space-y-5">
+155:       <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
+156:         <div className="flex items-center gap-3">
+157:           <button type="button" onClick={onBack} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10">
+158:             <ArrowLeft size={14} /> Módulos
+159:           </button>
+160:           {m && <ModuleLogo url={logo} name={name || m.name} size={40} />}
+161:           <div>
+162:             <h1 className="text-xl font-black text-white">{m?.name || 'Módulo'}</h1>
+163:             <p className="font-mono text-[10px] text-slate-600">{slug}</p>
+164:           </div>
+165:         </div>
+166:         <div className="flex items-center gap-2">
+167:           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
+168:           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
+169:             <option value={7}>Últimos 7 dias</option>
+170:             <option value={30}>Últimos 30 dias</option>
+171:             <option value={90}>Últimos 90 dias</option>
+172:           </select>
+173:         </div>
+174:       </div>
+175: 
+176:       {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+177: 
+178:       {m && (
+179:         <>
+180:         <ModuloVitrineEditor
+181:           slug={slug}
+182:           name={name} setName={setName}
+183:           status={status} setStatus={setStatus}
+184:           pub={pub} setPub={setPub}
+185:           sort={sort} setSort={setSort}
+186:           logo={logo} setLogo={setLogo}
+187:           description={description} setDescription={setDescription}
+188:           featuresText={featuresText} setFeaturesText={setFeaturesText}
+189:           fileRef={fileRef} onFile={onFile}
+190:           uploading={uploading} saving={saving} onSave={save}
+191:           footer={
+192:             <div className="space-y-2">
+193:               <StagingActionBar staging={staging} config={formCfg} disabled={uploading || !name.trim()} />
+194:               <div className="flex justify-end">
+195:                 <button
+196:                   type="button"
+197:                   disabled={saving || uploading || !name.trim()}
+198:                   onClick={async () => {
+199:                     const ok = await confirm({
+200:                       title: 'Salvar direto ao vivo',
+201:                       message: 'As alterações vão para todas as lojas agora, sem passar pela Loja Teste.',
+202:                       confirmLabel: 'Salvar ao vivo',
+203:                     });
+204:                     if (!ok) return;
+205:                     await save();
+206:                     if (staging.hasDraft) await staging.discard();
+207:                   }}
+208:                   className="cursor-pointer rounded-lg bg-[#fd8539] px-5 py-2 text-xs font-bold text-white hover:opacity-90 disabled:opacity-40"
+209:                 >
+210:                   {saving ? 'Salvando…' : 'Salvar direto ao vivo'}
+211:                 </button>
+212:               </div>
+213:             </div>
+214:           }
+215:         />
+216:         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+217:           <div className="space-y-4 xl:col-span-2">
+218:             <div className={`${CARD} space-y-3`}>
+219:               <p className="text-sm font-bold text-white">Lojas e receita</p>
+220:               <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+221:                 <Kpi label="Com acesso" value={int(m.access)} />
+222:                 <Kpi label="Pagantes" value={int(m.paying)} tone="text-emerald-300" />
+223:                 <Kpi label="Em trial" value={int(m.trial)} tone="text-sky-300" />
+224:                 <Kpi label="Inadimplentes" value={int(m.past_due)} tone={m.past_due ? 'text-rose-300' : undefined} />
+225:                 <Kpi label="Vitalícias" value={int(m.lifetime)} />
+226:                 <Kpi label="Receita mensal" value={brl(m.mrr)} />
+227:               </div>
+228:             </div>
+229: 
+230:             <div className={`${CARD} space-y-3`}>
+231:               <p className="text-sm font-bold text-white">Consumo e desempenho ({days} dias)</p>
+232:               {measured ? (
+233:                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+234:                   <Kpi label="Views" value={int(m.views)} />
+235:                   <Kpi label="Cliques" value={int(m.clicks)} />
+236:                   <Kpi label="CTR" value={`${ctr.toFixed(1).replace('.', ',')}%`} />
+237:                   <Kpi label="Lojas ativas" value={int(m.active_stores)} />
+238:                   <Kpi label="Vídeos" value={int(m.videos)} />
+239:                   <Kpi label="Espaço" value={bytes(m.storage_bytes)} />
+240:                 </div>
+241:               ) : (
+242:                 <p className="rounded-xl bg-white/[0.03] px-3 py-3 text-xs text-slate-500">O consumo deste módulo ainda não é medido.</p>
+243:               )}
+244:               <p className={`text-[11px] ${m.errors ? 'text-rose-300' : 'text-slate-500'}`}>
+245:                 {m.errors ? `${int(m.errors)} erro(s) registrado(s) no período.` : 'Nenhum erro registrado no período.'}
+246:               </p>
+247:             </div>
+248: 
+249:             <div className={`${CARD} space-y-3`}>
+250:               <div className="flex flex-wrap items-center justify-between gap-2">
+251:                 <p className="text-sm font-bold text-white">Lojas com acesso{stores ? ` (${stores.length})` : ''}</p>
+252:                 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filtrar loja..." className={`${INPUT} max-w-[220px]`} />
+253:               </div>
+254:               {stores === null ? (
+255:                 <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
+256:               ) : stores.length === 0 ? (
+257:                 <p className="text-xs text-slate-500">Nenhuma loja com acesso.</p>
+258:               ) : (
+259:                 <div className="overflow-x-auto rounded-xl border border-slate-800">
+260:                   <table className="w-full min-w-[560px] text-xs">
+261:                     <thead className="border-b border-slate-800">
+262:                       <tr><th className={TH}>Loja</th><th className={TH}>Plano</th><th className={TH}>Ciclo</th><th className={TH}>Origem</th><th className={TH}>Status</th></tr>
+263:                     </thead>
+264:                     <tbody className="divide-y divide-white/5">
+265:                       {shown.length === 0 && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">Nenhuma loja encontrada.</td></tr>}
+266:                       {shown.map((s) => (
+267:                         <tr key={s.id} onClick={() => onOpenStore(s.id)} className="cursor-pointer hover:bg-white/5">
+268:                           <td className="px-3 py-2">
+269:                             <button type="button" onClick={(e) => { e.stopPropagation(); onOpenStore(s.id); }} className="cursor-pointer text-left font-bold text-white underline-offset-2 hover:text-[#fd8539] hover:underline">
+270:                               {s.name || 'Sem nome'}
+271:                             </button>
+272:                           </td>
+273:                           <td className="px-3 py-2 text-slate-300">{s.plan_name || '—'}</td>
+274:                           <td className="px-3 py-2 text-slate-400">{s.billing_cycle ? CYCLE_LABEL[s.billing_cycle] || s.billing_cycle : '—'}</td>
+275:                           <td className="px-3 py-2 text-slate-400">{s.via_combo ? 'Combo' : 'Individual'}</td>
+276:                           <td className="px-3 py-2 text-slate-300">{SUB_LABEL[s.status] || s.status}</td>
+277:                         </tr>
+278:                       ))}
+279:                     </tbody>
+280:                   </table>
+281:                 </div>
+282:               )}
+283:             </div>
+284:           </div>
+285: 
+286:           <div className="space-y-4">
+287:             <ModulePlansCard slug={slug} onManage={() => onOpenPlans(slug)} />
+288:             <FeatureFlagsCard slug={slug} />
+289:             <div className="space-y-2 rounded-2xl border border-rose-500/30 bg-rose-500/5 p-4">
+290:               <p className="text-sm font-bold text-rose-300">Zona de perigo</p>
+291:               <p className="text-[11px] text-slate-500">Só é possível excluir módulos sem assinaturas e fora de combos. Nos demais casos, use o status "Oculto".</p>
+292:               <button type="button" disabled={deleting} onClick={removeModule} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white hover:bg-rose-500 disabled:opacity-40">
+293:                 {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} Excluir módulo
+294:               </button>
+295:             </div>
+296:             {dialog}
+297:           </div>
+298:         </div>
+299:         </>
+300:       )}
+301:     </div>
+302:   );
+303: }
+##### src\components\admin\PrecosTab.tsx
+1: import { useCallback, useEffect, useMemo, useState } from 'react';
+2: import { Loader2, Plus, X } from 'lucide-react';
+3: import { toast } from 'sonner';
+4: import {
+5:   listDynamicPlans, listPlanAddons, updateDynamicPlan, updatePlanAddon,
+6:   type DynamicPlan, type PlanAddon,
+7: } from '@/services/admin/plansAdmin';
+8: import { createDynamicPlan, deleteDynamicPlan, getPlanSubscribers } from '@/services/admin/pricingService';
+9: import { listModules } from '@/services/admin/adminService';
+10: import CouponsManager from '@/components/admin/CouponsManager';
+11: import ComboCreator from '@/components/admin/ComboCreator';
+12: import AddonsAdminTab from '@/components/admin/AddonsAdminTab';
+13: import { useConfirm } from '@/components/admin/ConfirmDialog';
+14: import ComboModulesEditor from '@/components/admin/ComboModulesEditor';
+15: import ComboDiscountCard from '@/components/admin/ComboDiscountCard';
+16: import ComboPricing from '@/components/admin/ComboPricing';
+17: import MarginBadge from '@/components/admin/MarginBadge';
+18: import { cycleInfo } from '@/components/admin/cycleInfo';
+19: import InfraCostsCard from '@/components/admin/InfraCostsCard';
+20: import { usePricingCosts } from '@/hooks/admin/usePricingCosts';
+21: import { listAllComboModules, type ComboModuleRow } from '@/services/admin/combosAdmin';
+22: import { CARD, INPUT, SELECT, brl, int } from '@/components/admin/moduleUi';
+23: 
+24: type Mod = { slug: string; name: string };
+25: type Row = { key: string; kind: 'num' | 'bool'; val: string; on: boolean };
+26: 
+27: const LABEL = 'text-[10px] font-bold uppercase tracking-wider text-slate-500';
+28: const TH = 'px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500';
+29: const LIMIT_LABEL: Record<string, string> = {
+30:   views: 'Plays por mês', max_videos: 'Vídeos', max_pages: 'Páginas', storage_gb: 'Storage (GB)',
+31:   tracking: 'Tracking', badge_removable: 'Remove o selo',
+32: };
+33: 
+34: const toReais = (c: number) => ((Number(c) || 0) / 100).toFixed(2).replace('.', ',');
+35: const toCents = (v: string) => Math.round(Number(v.replace(',', '.')) * 100);
+36: 
+37: function splitLimits(lim: Record<string, unknown> | null | undefined) {
+38:   const rows: Row[] = [];
+39:   const extra: Record<string, unknown> = {};
+40:   Object.entries(lim || {}).forEach(([key, v]) => {
+41:     if (typeof v === 'boolean') rows.push({ key, kind: 'bool', val: '', on: v });
+42:     else if (v === null || typeof v === 'number') rows.push({ key, kind: 'num', val: v === null ? '' : String(v), on: false });
+43:     else extra[key] = v;
+44:   });
+45:   return { rows, extra };
+46: }
+47: 
+48: function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
+49:   plan: DynamicPlan | null; modules: Mod[]; defaultModule: string; onClose: () => void; onSaved: () => void;
+50: }) {
+51:   const init = splitLimits(plan?.limits_config as Record<string, unknown> | null);
+52:   const [slug, setSlug] = useState(plan ? (plan.module_slug || '') : (defaultModule || modules[0]?.slug || ''));
+53:   const [tier, setTier] = useState(plan?.plan_tier || '');
+54:   const [name, setName] = useState(plan?.plan_name || '');
+55:   const [pm, setPm] = useState(toReais(plan?.price_monthly_cents ?? 0));
+56:   const [ps, setPs] = useState(toReais(plan?.price_semiannual_cents ?? 0));
+57:   const [pa, setPa] = useState(toReais(plan?.price_annual_cents ?? 0));
+58:   const [rows, setRows] = useState<Row[]>(init.rows);
+59:   const [newKey, setNewKey] = useState('');
+60:   const [rec, setRec] = useState(plan?.is_recommended ?? false);
+61:   const [active, setActive] = useState(plan?.is_active ?? false);
+62:   const [busy, setBusy] = useState(false);
+63: 
+64:   const setRow = (i: number, patch: Partial<Row>) => setRows((r) => r.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+65:   const addRow = (kind: 'num' | 'bool') => {
+66:     const key = newKey.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+67:     if (!key) { toast.error('Informe o nome do limite (ex.: lives_por_mes).'); return; }
+68:     if (rows.some((r) => r.key === key)) { toast.error('Esse limite já existe.'); return; }
+69:     setRows((r) => [...r, { key, kind, val: '', on: false }]);
+70:     setNewKey('');
+71:   };
+72: 
+73:   const save = async () => {
+74:     const cents = [toCents(pm), toCents(ps), toCents(pa)];
+75:     if (!name.trim() || cents.some((c) => !Number.isFinite(c) || c < 0)) { toast.error('Confira o nome e os preços.'); return; }
+76:     const limits: Record<string, unknown> = { ...init.extra };
+77:     for (const r of rows) {
+78:       if (r.kind === 'bool') { limits[r.key] = r.on; continue; }
+79:       const t = r.val.trim();
+80:       if (t === '') { limits[r.key] = null; continue; }
+81:       const n = Number(t.replace(',', '.'));
+82:       if (!Number.isFinite(n) || n < 0) { toast.error(`Valor inválido em "${LIMIT_LABEL[r.key] || r.key}".`); return; }
+83:       limits[r.key] = n;
+84:     }
+85:     const payload = {
+86:       plan_name: name.trim(),
+87:       price_monthly_cents: cents[0], price_semiannual_cents: cents[1], price_annual_cents: cents[2],
+88:       limits_config: limits, is_recommended: rec, is_active: active,
+89:     };
+90:     setBusy(true);
+91:     try {
+92:       if (plan) await updateDynamicPlan(plan.id, payload);
+93:       else {
+94:         const key = tier.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+95:         if (!key) { toast.error('Informe a chave do plano (ex.: starter).'); setBusy(false); return; }
+96:         await createDynamicPlan({ ...payload, module_slug: slug, plan_tier: key });
+97:       }
+98:       toast.success(plan ? 'Plano salvo.' : 'Plano criado.');
+99:       onSaved();
+100:       onClose();
+101:     } catch (e: any) {
+102:       toast.error(e?.message || 'Não foi possível salvar.');
+103:       setBusy(false);
+104:     }
+105:   };
+106: 
+107:   return (
+108:     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+109:       <div className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl border border-slate-700 bg-[#0f1322] p-5" onClick={(e) => e.stopPropagation()}>
+110:         <div className="flex items-center justify-between">
+111:           <h2 className="text-lg font-black text-white">{plan ? 'Editar plano' : 'Novo plano'}</h2>
+112:           <button type="button" onClick={onClose} className="text-slate-400 hover:text-white"><X size={18} /></button>
+113:         </div>
+114:         <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">Limites e módulos valem na hora para quem já assina. Preços só afetam novas assinaturas.</p>
+115: 
+116:         <div className="grid grid-cols-2 gap-3">
+117:           <label className="space-y-1">
+118:             <span className={LABEL}>Módulo</span>
+119:             <select value={slug} onChange={(e) => setSlug(e.target.value)} disabled={!!plan} className={INPUT}>
+120:               {plan?.is_combo && <option value="">Combo</option>}
+121:               {modules.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
+122:             </select>
+123:           </label>
+124:           <label className="space-y-1">
+125:             <span className={LABEL}>Chave do plano</span>
+126:             <input value={plan ? plan.plan_tier : tier} onChange={(e) => setTier(e.target.value)} disabled={!!plan} placeholder="starter" className={INPUT} />
+127:             <span className="block text-[10px] text-slate-600">{plan ? 'Identificador interno. Não pode ser alterado.' : 'Identificador interno, sem espaços. Depois de criada, não muda.'}</span>
+128:           </label>
+129:         </div>
+130:         <label className="block space-y-1">
+131:           <span className={LABEL}>Nome</span>
+132:           <input value={name} onChange={(e) => setName(e.target.value)} className={INPUT} />
+133:         </label>
+134: 
+135:         <div className="grid grid-cols-3 gap-3">
+136:           <label className="space-y-1"><span className={LABEL}>Mensal (R$)</span><input value={pm} onChange={(e) => setPm(e.target.value)} className={INPUT} /></label>
+137:           <label className="space-y-1"><span className={LABEL}>Semestral (R$)</span><input value={ps} onChange={(e) => setPs(e.target.value)} className={INPUT} /></label>
+138:           <label className="space-y-1"><span className={LABEL}>Anual (R$)</span><input value={pa} onChange={(e) => setPa(e.target.value)} className={INPUT} /></label>
+139:         </div>
+140:         <p className="-mt-2 text-[10px] text-slate-600">Semestral e anual são o valor total cobrado no período.</p>
+141:         {(() => {
+142:           const mo = toCents(pm);
+143:           const items = ([['Semestral', ps, 6], ['Anual', pa, 12]] as [string, string, number][])
+144:             .map(([n, v, mths]) => [n, cycleInfo(toCents(v), mths, mo)] as const)
+145:             .filter(([, t]) => t);
+146:           return items.length ? <p className="-mt-2 text-[11px] font-semibold text-emerald-400">{items.map(([n, t]) => `${n}: ${t}`).join('  |  ')}</p> : null;
+147:         })()}
+148: 
+149:         <div className="space-y-2">
+150:           <p className={LABEL}>Limites e recursos</p>
+151:           {rows.length === 0 && <p className="text-xs text-slate-500">Nenhum limite. Adicione abaixo.</p>}
+152:           {rows.map((r, i) => (
+153:             <div key={r.key} className="flex items-center gap-2">
+154:               <span className="w-40 shrink-0 truncate text-xs text-slate-300" title={r.key}>{LIMIT_LABEL[r.key] || r.key}</span>
+155:               {r.kind === 'bool' ? (
+156:                 <label className="flex flex-1 items-center gap-2 text-xs text-slate-400">
+157:                   <input type="checkbox" checked={r.on} onChange={(e) => setRow(i, { on: e.target.checked })} /> {r.on ? 'Sim' : 'Não'}
+158:                 </label>
+159:               ) : (
+160:                 <input value={r.val} onChange={(e) => setRow(i, { val: e.target.value })} placeholder="vazio = ilimitado" className={`${INPUT} flex-1`} />
+161:               )}
+162:               <button type="button" onClick={() => setRows((x) => x.filter((_, j) => j !== i))} className="text-slate-600 hover:text-rose-300"><X size={14} /></button>
+163:             </div>
+164:           ))}
+165:           <div className="flex items-center gap-2 pt-1">
+166:             <input value={newKey} onChange={(e) => setNewKey(e.target.value)} placeholder="novo limite (ex.: lives_por_mes)" className={`${INPUT} flex-1`} />
+167:             <button type="button" onClick={() => addRow('num')} className="shrink-0 cursor-pointer rounded-lg bg-white/5 px-2.5 py-2 text-[11px] font-bold text-slate-200 hover:bg-white/10">+ Número</button>
+168:             <button type="button" onClick={() => addRow('bool')} className="shrink-0 cursor-pointer rounded-lg bg-white/5 px-2.5 py-2 text-[11px] font-bold text-slate-200 hover:bg-white/10">+ Sim/Não</button>
+169:           </div>
+170:         </div>
+171: 
+172:         <div className="flex gap-5">
+173:           <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={rec} onChange={(e) => setRec(e.target.checked)} /> Recomendado</label>
+174:           <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Ativo (à venda)</label>
+175:         </div>
+176: 
+177:         <button type="button" disabled={busy} onClick={save} className="w-full cursor-pointer rounded-lg bg-[#fd8539] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">
+178:           {busy ? 'Salvando…' : plan ? 'Salvar alterações' : 'Criar plano'}
+179:         </button>
+180:       </div>
+181:     </div>
+182:   );
+183: }
+184: 
+185: function AddonRow({ a, onSaved }: { a: PlanAddon; onSaved: () => void }) {
+186:   const [name, setName] = useState(a.name);
+187:   const [price, setPrice] = useState(toReais(a.price_monthly_cents));
+188:   const [active, setActive] = useState(a.is_active);
+189:   const [busy, setBusy] = useState(false);
+190:   const save = async () => {
+191:     const cents = toCents(price);
+192:     if (!name.trim() || !Number.isFinite(cents) || cents < 0) { toast.error('Confira nome e preço.'); return; }
+193:     setBusy(true);
+194:     try { await updatePlanAddon(a.id, { name: name.trim(), price_monthly_cents: cents, is_active: active }); toast.success('Add-on salvo.'); onSaved(); }
+195:     catch (e: any) { toast.error(e?.message || 'Erro ao salvar.'); }
+196:     finally { setBusy(false); }
+197:   };
+198:   return (
+199:     <tr>
+200:       <td className="px-3 py-2 font-mono text-[10px] text-slate-500">{a.module_slug} · {a.key}</td>
+201:       <td className="px-3 py-2"><input value={name} onChange={(e) => setName(e.target.value)} className={INPUT} /></td>
+202:       <td className="w-32 px-3 py-2"><input value={price} onChange={(e) => setPrice(e.target.value)} className={INPUT} /></td>
+203:       <td className="px-3 py-2"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /></td>
+204:       <td className="px-3 py-2 text-right">
+205:         <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-[11px] font-bold text-white disabled:opacity-40">{busy ? '…' : 'Salvar'}</button>
+206:       </td>
+207:     </tr>
+208:   );
+209: }
+210: 
+211: export default function PrecosTab({ initialModule }: { initialModule: string | null }) {
+212:   const [sub, setSub] = useState<'planos' | 'addons' | 'cupons' | 'custos'>('planos');
+213:   const [filter, setFilter] = useState(initialModule || '');
+214:   const [modules, setModules] = useState<Mod[]>([]);
+215:   const [plans, setPlans] = useState<DynamicPlan[] | null>(null);
+216:   const [addons, setAddons] = useState<PlanAddon[] | null>(null);
+217:   const [subs, setSubs] = useState<Record<string, number>>({});
+218:   const [error, setError] = useState('');
+219:   const [editing, setEditing] = useState<DynamicPlan | 'new' | null>(null);
+220:   const [creatingCombo, setCreatingCombo] = useState(false);
+221:   const [comboMods, setComboMods] = useState<ComboModuleRow[]>([]);
+222:   const [editingMods, setEditingMods] = useState<DynamicPlan | null>(null);
+223:   const [togglingId, setTogglingId] = useState<string | null>(null);
+224:   const { confirm, dialog } = useConfirm();
+225:   const costs = usePricingCosts(plans, comboMods);
+226: 
+227:   const load = useCallback(async () => {
+228:     setError('');
+229:     try {
+230:       const [p, a, s, m, cm] = await Promise.all([listDynamicPlans(), listPlanAddons(), getPlanSubscribers(), listModules(), listAllComboModules().catch(() => [] as ComboModuleRow[])]);
+231:       setPlans(p); setAddons(a); setSubs(s); setModules(m); setComboMods(cm);
+232:     } catch (e: any) { setError(e?.message || 'Erro ao carregar os preços.'); }
+233:   }, []);
+234: 
+235:   useEffect(() => { load(); }, [load]);
+236: 
+237:   const modName = useMemo(() => new Map(modules.map((m) => [m.slug, m.name])), [modules]);
+238:   const filtered = (plans || []).filter((p) =>
+239:     !filter || (p.is_combo ? comboMods.some((r) => r.plan_id === p.id && r.module_slug === filter) : p.module_slug === filter));
+240:   const individuals = filtered.filter((p) => !p.is_combo);
+241:   const combos = filtered.filter((p) => p.is_combo);
+242:   const comboLine = (id: string) =>
+243:     comboMods
+244:       .filter((r) => r.plan_id === id)
+245:       .map((r) => {
+246:         const planName = r.member_tier
+247:           ? (plans || []).find((x) => !x.is_combo && x.module_slug === r.module_slug && x.plan_tier === r.member_tier)?.plan_name
+248:           : null;
+249:         return planName || modName.get(r.module_slug) || r.module_slug;
+250:       });
+251:   const toggleActive = async (p: DynamicPlan) => {
+252:     setTogglingId(p.id);
+253:     try {
+254:       await updateDynamicPlan(p.id, {
+255:         plan_name: p.plan_name,
+256:         price_monthly_cents: p.price_monthly_cents,
+257:         price_semiannual_cents: p.price_semiannual_cents,
+258:         price_annual_cents: p.price_annual_cents,
+259:         limits_config: p.limits_config ?? {},
+260:         is_recommended: p.is_recommended,
+261:         is_active: !p.is_active,
+262:       });
+263:       toast.success(p.is_active ? 'Plano pausado.' : 'Plano ativado.');
+264:       await load();
+265:     } catch (e: any) {
+266:       toast.error(e?.message || 'Não foi possível alterar o status.');
+267:     } finally {
+268:       setTogglingId(null);
+269:     }
+270:   };
+271: 
+272:   const removePlan = async (p: DynamicPlan) => {
+273:     if (!(await confirm({
+274:       title: p.is_combo ? 'Excluir combo' : 'Excluir plano',
+275:       message: `"${p.plan_name}" será apagado e essa ação não pode ser desfeita.`,
+276:       confirmLabel: 'Excluir',
+277:     }))) return;
+278:     setTogglingId(p.id);
+279:     try {
+280:       await deleteDynamicPlan(p.id);
+281:       toast.success('Plano excluído.');
+282:       await load();
+283:     } catch (e: any) {
+284:       toast.error(e?.message || 'Não foi possível excluir.');
+285:     } finally {
+286:       setTogglingId(null);
+287:     }
+288:   };
+289: 
+290:   const renderTable = (rows: DynamicPlan[], combo: boolean) => (
+291:     <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#111524]">
+292:       <table className="w-full min-w-[980px] text-xs">
+293:         <thead className="border-b border-slate-800">
+294:           <tr>
+295:             <th className={TH}>Plano</th><th className={TH}>{combo ? 'Módulos incluídos' : 'Módulo'}</th>
+296:             <th className={`${TH} text-center`}>Mensal</th><th className={`${TH} text-center`}>Semestral</th><th className={`${TH} text-center`}>Anual</th>
+297:             <th className={`${TH} text-center`}>Margem</th><th className={`${TH} text-center`}>Assinantes</th><th className={`${TH} text-center`}>Status</th><th className={`${TH} text-center`}>Ações</th>
+298:           </tr>
+299:         </thead>
+300:         <tbody className="divide-y divide-white/5">
+301:           {rows.length === 0 && <tr><td colSpan={9} className="px-3 py-8 text-center text-slate-500">{combo ? 'Nenhum combo. Clique em "Novo combo".' : 'Nenhum plano. Clique em "Novo plano".'}</td></tr>}
+302:           {rows.map((p) => (
+303:             <tr key={p.id} className={`hover:bg-white/5 ${combo ? 'shadow-[inset_4px_0_0_0_#facc15]' : ''}`}>
+304:               <td className="px-3 py-3">
+305:                 <p className="font-bold text-white">{p.plan_name} {p.is_recommended && <span className="ml-1 rounded-full bg-[#fd8539]/15 px-1.5 py-0.5 text-[9px] text-[#fd8539]">Recomendado</span>}</p>
+306:                 <p className="font-mono text-[10px] text-slate-600">{p.plan_tier}</p>
+307:               </td>
+308:               <td className="px-3 py-3">
+309:                 {combo ? (
+310:                   <div className="space-y-1">
+311:                     <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
+312:                     {comboLine(p.id).length > 0
+313:                       ? <p className="text-[10px] leading-snug text-amber-200/80">{comboLine(p.id).join(' + ')}</p>
+314:                       : <p className="text-[10px] text-rose-400">Sem módulos definidos</p>}
+315:                     <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer text-[10px] font-semibold text-amber-300 hover:underline">Editar módulos</button>
+316:                   </div>
+317:                 ) : (
+318:                   <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-bold text-sky-300 ring-1 ring-sky-500/40">{modName.get(p.module_slug || '') || p.module_slug}</span>
+319:                 )}
+320:               </td>
+321:               <td className="px-3 py-3 text-center text-white">{brl(p.price_monthly_cents)}</td>
+322:               <td className="px-3 py-3 text-center text-slate-300">
+323:                 {brl(p.price_semiannual_cents)}
+324:                 {cycleInfo(p.price_semiannual_cents, 6, p.price_monthly_cents) && <p className="text-[10px] font-semibold text-emerald-400">({cycleInfo(p.price_semiannual_cents, 6, p.price_monthly_cents)})</p>}
+325:               </td>
+326:               <td className="px-3 py-3 text-center text-slate-300">
+327:                 {brl(p.price_annual_cents)}
+328:                 {cycleInfo(p.price_annual_cents, 12, p.price_monthly_cents) && <p className="text-[10px] font-semibold text-emerald-400">({cycleInfo(p.price_annual_cents, 12, p.price_monthly_cents)})</p>}
+329:               </td>
+330:               <td className="px-3 py-3 text-center"><MarginBadge m={costs.marginOf(p)} /></td><td className="px-3 py-3 text-center font-semibold text-white">{int(subs[p.id])}</td>
+331:               <td className="px-3 py-3 text-center">
+332:                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
+333:               </td>
+334:               <td className="px-3 py-3">
+335:                 <div className="flex justify-center gap-1.5">
+336:                   <button type="button" onClick={() => setEditing(p)} className="cursor-pointer rounded-md bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:bg-white/10">Editar</button>
+337:                   <button type="button" disabled={togglingId === p.id} onClick={() => toggleActive(p)}
+338:                     className={`cursor-pointer rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-40 ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
+339:                     {p.is_active ? 'Pausar' : 'Ativar'}
+340:                   </button>
+341:                   <button type="button" disabled={togglingId === p.id || (subs[p.id] || 0) > 0} onClick={() => removePlan(p)}
+342:                     title={(subs[p.id] || 0) > 0 ? 'Plano com assinantes: use Pausar' : 'Excluir plano'}
+343:                     className="cursor-pointer rounded-md bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30">Excluir</button>
+344:                 </div>
+345:               </td>
+346:             </tr>
+347:           ))}
+348:         </tbody>
+349:       </table>
+350:     </div>
+351:   );
+352: 
+353:   const TABS: { id: typeof sub; label: string }[] = [{ id: 'planos', label: 'Planos' }, { id: 'addons', label: 'Add-ons' }, { id: 'cupons', label: 'Cupons' }, { id: 'custos', label: 'Custos' }];
+354: 
+355:   return (
+356:     <div className="space-y-5">
+357:       <div className="sticky top-0 z-20 -mx-6 -mt-6 space-y-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
+358:         <div className="flex min-h-[44px] flex-wrap items-center justify-between gap-3">
+359:           <div>
+360:             <h1 className="text-xl font-black text-white">Preços</h1>
+361:             <p className="text-xs text-slate-500">Planos, limites, add-ons, cupons e custos de cada módulo.</p>
+362:           </div>
+363:           <div className="flex flex-wrap items-center gap-2">
+364:             {sub === 'planos' && (
+365:               <>
+366:                 <select value={filter} onChange={(e) => setFilter(e.target.value)} className={`${SELECT} cursor-pointer`}>
+367:                   <option value="">Todos os módulos</option>
+368:                   {modules.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
+369:                 </select>
+370:                 <button type="button" onClick={() => setEditing('new')} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-xs font-bold text-white">
+371:                   <Plus size={14} /> Novo plano
+372:                 </button>
+373:                 <button type="button" onClick={() => setCreatingCombo(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-bold text-slate-900">
+374:                   <Plus size={14} /> Novo combo
+375:                 </button>
+376:               </>
+377:             )}
+378:           </div>
+379:         </div>
+380:         <div className="inline-flex rounded-lg border border-slate-700 bg-[#0b0e1a] p-0.5">
+381:           {TABS.map((t) => (
+382:             <button key={t.id} type="button" onClick={() => setSub(t.id)}
+383:               className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${sub === t.id ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}>
+384:               {t.label}
+385:             </button>
+386:           ))}
+387:         </div>
+388:       </div>
+389: 
+390:       {costs.fx && (
+391:         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+392:           ⚠️ Alerta Cambial: o dólar subiu para {costs.fx.rate.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} (média de 30 dias: {costs.fx.avg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}). As margens dos planos e combos foram recalculadas automaticamente com o novo câmbio.
+393:         </div>
+394:       )}
+395: 
+396:       {sub === 'planos' && costs.alerts.length > 0 && (
+397:         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+398:           <p className="font-bold">Atenção Rodrigo: {costs.alerts.length} {costs.alerts.length === 1 ? 'item está' : 'itens estão'} com margem abaixo de 50% no pior caso.</p>
+399:           <ul className="mt-1 list-disc pl-4">
+400:             {costs.alerts.slice(0, 6).map((a) => (
+401:               <li key={a.plan.id}><button type="button" onClick={() => setEditing(a.plan)} className="cursor-pointer font-bold underline underline-offset-2 hover:opacity-80">{a.plan.plan_name}</button>: {a.margin.worst === null ? '—' : `${(a.margin.worst * 100).toFixed(0)}%`}. Avalie ajustar os limites ou revisar o preço.</li>
+402:             ))}
+403:           </ul>
+404:         </div>
+405:       )}{error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+406: 
+407:       {sub === 'planos' && (plans === null ? (
+408:         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
+409:       ) : filter ? (
+410:         <div className="space-y-4">
+411:           <button type="button" onClick={() => setFilter('')} className="cursor-pointer text-xs font-semibold text-slate-400 hover:text-white">← Todos os módulos</button>
+412:           <section className="space-y-2">
+413:             <h2 className="text-sm font-bold text-sky-300">{modName.get(filter) || filter} <span className="ml-1 font-normal text-slate-500">({individuals.length} planos)</span></h2>
+414:             {renderTable(individuals, false)}
+415:           </section>
+416:         </div>
+417:       ) : (
+418:         <div className="space-y-8">
+419:           <section data-sec="modulo-cards" className="space-y-3">
+420:             <h2 className="text-sm font-bold text-sky-300">Módulos</h2>
+421:             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+422:               {modules.map((m) => {
+423:                 const mp = (plans || []).filter((p) => !p.is_combo && p.module_slug === m.slug);
+424:                 const act = mp.filter((p) => p.is_active);
+425:                 const min = act.length ? Math.min(...act.map((p) => p.price_monthly_cents)) : null;
+426:                 const sc = mp.reduce((sum, p) => sum + (subs[p.id] || 0), 0);
+427:                 return (
+428:                   <button key={m.slug} type="button" onClick={() => setFilter(m.slug)}
+429:                     className="cursor-pointer rounded-2xl border border-slate-800 bg-[#111524] p-5 text-left transition-colors hover:border-sky-500/50 hover:bg-white/5">
+430:                     <p className="text-base font-black text-white">{m.name}</p>
+431:                     <p className="mt-1 text-[11px] text-slate-500">{mp.length === 0 ? 'Nenhum plano ainda' : `${mp.length} ${mp.length === 1 ? 'plano' : 'planos'} · ${act.length} ativos`}</p>
+432:                     <div className="mt-4 flex items-end justify-between">
+433:                       <div>
+434:                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">A partir de</p>
+435:                         <p className="text-lg font-black text-sky-300">{min === null ? '—' : brl(min)}</p>
+436:                       </div>
+437:                       <div className="text-right">
+438:                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Assinantes</p>
+439:                         <p className="text-lg font-black text-white">{int(sc)}</p>
+440:                       </div>
+441:                     </div>
+442:                     <p className="mt-4 text-[11px] font-semibold text-sky-300">Gerenciar planos →</p>
+443:                   </button>
+444:                 );
+445:               })}
+446:             </div>
+447:           </section>
+448: 
+449:           <ComboDiscountCard />
+450: 
+451:           <section className="space-y-3">
+452:             <h2 className="text-sm font-bold text-yellow-300">Combos <span className="ml-1 font-normal text-slate-500">({combos.length})</span></h2>
+453:             {combos.length === 0 ? (
+454:               <p className="rounded-2xl border border-slate-800 bg-[#111524] px-4 py-8 text-center text-xs text-slate-500">Nenhum combo. Clique em "Novo combo".</p>
+455:             ) : (
+456:               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+457:                 {combos.map((p) => {
+458:                   const line = comboLine(p.id);
+459:                   return (
+460:                     <div key={p.id} onClick={() => setEditing(p)}
+461:                       className="flex min-h-[270px] cursor-pointer flex-col rounded-2xl border border-slate-800 bg-[#111524] p-5 shadow-[inset_4px_0_0_0_#facc15] transition-colors hover:bg-white/5">
+462:                       <div className="flex items-start justify-between gap-2">
+463:                         <div>
+464:                           <p className="text-base font-black text-white">{p.plan_name}</p>
+465:                           <p className="font-mono text-[10px] text-slate-600">{p.plan_tier}</p>
+466:                         </div>
+467:                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
+468:                       </div>
+469:                       <div className="mt-3 flex-1">
+470:                         <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
+471:                         {line.length > 0
+472:                           ? <p className="mt-2 text-xs leading-snug text-amber-200/80">{line.join(' + ')}</p>
+473:                           : <p className="mt-2 text-xs text-rose-400">Sem módulos definidos</p>}
+474:                       </div>
+475:                       <div onClick={(ev) => ev.stopPropagation()} className="mt-3 cursor-default">
+476:                         <ComboPricing combo={p} list={costs.listPrices(p.id)} pct={costs.discounts[p.id] ?? 0} onChanged={() => { load(); costs.reload(); }} />
+477:                       </div>
+478:                       <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-slate-500"><span>Margem</span><MarginBadge m={costs.marginOf(p)} /></div>
+479:                       <p className="mt-3 text-center text-[11px] text-slate-500">{int(subs[p.id])} assinantes</p>
+480:                       <div className="mt-3 flex flex-wrap justify-center gap-1.5" onClick={(ev) => ev.stopPropagation()}>
+481:                         <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer rounded-md bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-amber-300 hover:bg-white/10">Módulos</button>
+482:                         <button type="button" disabled={togglingId === p.id} onClick={() => toggleActive(p)}
+483:                           className={`cursor-pointer rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-40 ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
+484:                           {p.is_active ? 'Pausar' : 'Ativar'}
+485:                         </button>
+486:                         <button type="button" disabled={togglingId === p.id || (subs[p.id] || 0) > 0} onClick={() => removePlan(p)}
+487:                           title={(subs[p.id] || 0) > 0 ? 'Combo com assinantes: use Pausar' : 'Excluir combo'}
+488:                           className="cursor-pointer rounded-md bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30">Excluir</button>
+489:                       </div>
+490:                     </div>
+491:                   );
+492:                 })}
+493:               </div>
+494:             )}
+495:           </section>
+496:         </div>
+497:       ))}
+498: 
+499:       {sub === 'custos' && <InfraCostsCard onChanged={costs.reload} />}
+500: 
+501:       {sub === 'addons' && <AddonsAdminTab />}
+502: 
+503:       {false && sub === 'addons' && (addons === null ? (
+504:         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
+505:       ) : (
+506:         <div className={`${CARD} overflow-x-auto`}>
+507:           <table className="w-full min-w-[640px] text-xs">
+508:             <thead className="border-b border-slate-800">
+509:               <tr><th className={TH}>Chave</th><th className={TH}>Nome</th><th className={TH}>Mensal (R$)</th><th className={TH}>Ativo</th><th className={TH} /></tr>
+510:             </thead>
+511:             <tbody className="divide-y divide-white/5">
+512:               {addons.length === 0 && <tr><td colSpan={5} className="px-3 py-8 text-center text-slate-500">Nenhum add-on cadastrado.</td></tr>}
+513:               {addons.map((a) => <AddonRow key={a.id} a={a} onSaved={load} />)}
+514:             </tbody>
+515:           </table>
+516:         </div>
+517:       ))}
+518: 
+519:       {sub === 'cupons' && <div className="overflow-hidden rounded-2xl bg-white"><CouponsManager /></div>}
+520: 
+521:       {dialog}
+522:       {creatingCombo && <ComboCreator onCreated={load} onClose={() => setCreatingCombo(false)} />}
+523: 
+524:       {editingMods && <ComboModulesEditor combo={editingMods} onClose={() => setEditingMods(null)} onSaved={load} />}
+525: 
+526:       {editing && (
+527:         <PlanDrawer
+528:           key={editing === 'new' ? 'new' : editing.id}
+529:           plan={editing === 'new' ? null : editing}
+530:           modules={modules}
+531:           defaultModule={filter}
+532:           onClose={() => setEditing(null)}
+533:           onSaved={load}
+534:         />
+535:       )}
+536:     </div>
+537:   );
+538: }
+##### colunas novas ja criadas no banco? (confira no SQL abaixo)

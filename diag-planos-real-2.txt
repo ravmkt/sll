@@ -1,0 +1,1064 @@
+##### src\pages\planos\Planos.tsx
+1: import { useEffect, useMemo, useState } from "react";
+2: import { useNavigate } from "react-router-dom";
+3: import { ArrowLeft, Check, Eye, Film, Loader2 } from "lucide-react";
+4: import { cn } from "@/lib/utils";
+5: import { useLoja } from "@/contexts/LojaContext";
+6: import { supabase } from "@/lib/supabase";
+7: import { toast } from "sonner";
+8: import { VidlyticsPlanCard, type PlanCycle } from "@/components/planos/VidlyticsPlanCard";
+9: import { DashboardLayout } from "@/components/layout/DashboardLayout";
+10: import {
+11:   getCatalogModules,
+12:   getCatalogShowcase,
+13:   type CatalogModule,
+14:   type CatalogPlan,
+15: } from "@/services/plans/getCatalogShowcase";
+16: 
+17: const CYCLES: { key: PlanCycle; label: string; badge?: string }[] = [
+18:   { key: "monthly", label: "Mensal" },
+19:   { key: "semiannual", label: "Semestral", badge: "17% OFF" },
+20:   { key: "yearly", label: "Anual", badge: "4 MESES GRÁTIS" },
+21: ];
+22: 
+23: const CONTACT_WPP = (import.meta.env.VITE_CONTACT_WHATSAPP as string | undefined) || "";
+24: const CONTACT_URL = CONTACT_WPP
+25:   ? `https://wa.me/${CONTACT_WPP}?text=${encodeURIComponent("Olá! Quero um plano sob medida do Vidlytics.")}`
+26:   : undefined;
+27: 
+28: type Cell = boolean | string | { ok: string };
+29: 
+30: const COMPARE_COLS = ["Starter", "Pro", "Scale"];
+31: 
+32: const TIER_RANK: Record<string, number> = { starter: 1, pro: 2, scale: 3 };
+33: 
+34: const ADDONS = [
+35:   { key: "videos_10", icon: Film, title: "+10 Vídeos Ativos", desc: "Adicione mais produtos com vídeos no seu e-commerce", cents: 2990 },
+36:   { key: "views_25k", icon: Eye, title: "+25.000 Visualizações", desc: "Aumente sua franquia mensal para picos de campanhas e tráfego", cents: 3990 },
+37: ];
+38: 
+39: const COMPARE: { group: string; rows: { label: string; v: [Cell, Cell, Cell] }[] }[] = [
+40:   {
+41:     group: "Capacidade e consumo",
+42:     rows: [
+43:       { label: "Vídeos ativos simultâneos", v: ["5 vídeos", "20 vídeos", "50 vídeos"] },
+44:       { label: "Franquia de visualizações mensais", v: ["5.000 views", "25.000 views", "60.000 views"] },
+45:       {
+46:         label: "Formatos liberados (Flutuante, Stories, Carrossel, Grade)",
+47:         v: [{ ok: "Todos" }, { ok: "Todos" }, { ok: "Todos" }],
+48:       },
+49:     ],
+50:   },
+51:   {
+52:     group: "Conversão e inteligência",
+53:     rows: [
+54:       { label: "Botão Comprar via WhatsApp (com link do produto)", v: [true, true, true] },
+55:       { label: "Métricas básicas (visualizações e cliques no vídeo)", v: [true, true, true] },
+56:       { label: "Rastreamento de vendas e faturamento gerado por vídeo", v: [false, true, true] },
+57:       { label: "Remoção da marca d'água (Player 100% White-label)", v: [false, true, true] },
+58:     ],
+59:   },
+60:   {
+61:     group: "Atendimento e suporte",
+62:     rows: [
+63:       { label: "Suporte por e-mail", v: [true, true, true] },
+64:       { label: "Suporte direto via WhatsApp com especialista", v: [false, true, true] },
+65:     ],
+66:   },
+67: ];
+68: 
+69: function CompareCell({ v }: { v: Cell }) {
+70:   if (v === true) return <Check className="mx-auto h-5 w-5 stroke-[3] text-emerald-500" />;
+71:   if (v === false) return <span className="text-slate-300">{"\u2014"}</span>;
+72:   if (typeof v === "string") return <span className="font-bold text-slate-800">{v}</span>;
+73:   return (
+74:     <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
+75:       <Check className="h-4 w-4 stroke-[3] text-emerald-500" />
+76:       {v.ok}
+77:     </span>
+78:   );
+79: }
+80: 
+81: export default function Planos() {
+82:   const navigate = useNavigate();
+83:   const { storeId } = useLoja();
+84:   const [loading, setLoading] = useState(true);
+85:   const [plans, setPlans] = useState<CatalogPlan[]>([]);
+86:   const [mods, setMods] = useState<CatalogModule[]>([]);
+87:   const [cycle, setCycle] = useState<PlanCycle>("monthly");
+88:   // null = sem plano ativo no Vidlytics; tier pode ser null em assinaturas sem plano dinamico (ex.: vitalicia)
+89:   const [current, setCurrent] = useState<{ tier: string | null } | null>(null);
+90: 
+91:   useEffect(() => {
+92:     Promise.all([getCatalogShowcase(), getCatalogModules()]).then(([list, m]) => {
+93:       setPlans(list);
+94:       setMods(m);
+95:       setLoading(false);
+96:     });
+97:   }, []);
+98: 
+99:   useEffect(() => {
+100:     if (!storeId) return;
+101:     let alive = true;
+102:     (async () => {
+103:       const sb: any = supabase;
+104:       const { data: sub } = await sb
+105:         .from("subscriptions")
+106:         .select("dynamic_plan_id, status")
+107:         .eq("store_id", storeId)
+108:         .eq("module_key", "vidlytics")
+109:         .eq("is_current", true)
+110:         .in("status", ["active", "past_due", "lifetime"])
+111:         .limit(1)
+112:         .maybeSingle();
+113:       if (!alive) return;
+114:       if (!sub) { setCurrent(null); return; }
+115:       let tier: string | null = null;
+116:       if (sub.dynamic_plan_id) {
+117:         const { data: dp } = await sb.from("dynamic_plans").select("plan_tier").eq("id", sub.dynamic_plan_id).maybeSingle();
+118:         tier = dp?.plan_tier ? String(dp.plan_tier).toLowerCase() : null;
+119:       }
+120:       if (alive) setCurrent({ tier });
+121:     })();
+122:     return () => { alive = false; };
+123:   }, [storeId]);
+124: 
+125:   const [busyAddon, setBusyAddon] = useState<string | null>(null);
+126: 
+127:   async function handleAddon(key: string) {
+128:     if (!current) {
+129:       toast.warning("Selecione um plano base primeiro para contratar add-ons.");
+130:       return;
+131:     }
+132:     if (!storeId) {
+133:       toast.error("Nenhuma loja ativa encontrada.");
+134:       return;
+135:     }
+136:     setBusyAddon(key);
+137:     const { data, error } = await supabase.functions.invoke("asaas-create-addon", {
+138:       body: { store_id: storeId, addon_key: key },
+139:     });
+140:     let body: any = data;
+141:     if (error && (error as any).context) {
+142:       try { body = await (error as any).context.json(); } catch (_) {}
+143:     }
+144:     setBusyAddon(null);
+145:     if (error || body?.error) {
+146:       toast.error(body?.message || body?.error || "Não foi possível contratar o pacote.");
+147:       return;
+148:     }
+149:     if (body?.invoice_url) window.open(body.invoice_url, "_blank", "noopener");
+150:     toast.success("Pacote criado. Conclua o pagamento para liberar a capacidade extra.");
+151:   }
+152: 
+153:   const soon = useMemo(() => mods.filter((m) => m.status === "coming_soon"), [mods]);
+154:   const modBySlug = useMemo(() => new Map(mods.map((m) => [m.slug, m])), [mods]);
+155: 
+156:   function handleSelect(p: CatalogPlan) {
+157:     if (!storeId) {
+158:       toast.error("Nenhuma loja ativa encontrada.");
+159:       return;
+160:     }
+161:     const qs = new URLSearchParams({ plan: p.id, cycle, module: p.module_slug });
+162:     navigate(`/dashboard/checkout?${qs.toString()}`);
+163:   }
+164: 
+165:   if (loading) {
+166:     return (
+167:       <DashboardLayout>
+168:         <div className="flex min-h-[60vh] items-center justify-center">
+169:           <Loader2 className="h-8 w-8 animate-spin text-[#0091ff]" />
+170:         </div>
+171:       </DashboardLayout>
+172:     );
+173:   }
+174: 
+175:   return (
+176:     <DashboardLayout>
+177:       <div className="mx-auto max-w-6xl space-y-8 pb-20">
+178:         <button
+179:           type="button"
+180:           onClick={() => navigate("/dashboard/assinaturas")}
+181:           className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-[#0091ff] transition-colors mb-2"
+182:         >
+183:           <ArrowLeft size={16} />
+184:           Voltar para Minhas Assinaturas
+185:         </button>
+186: 
+187:         <div className="text-center max-w-2xl mx-auto space-y-4">
+188:           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+189:             Escolha o plano ideal para sua loja
+190:           </h1>
+191:           <p className="text-sm font-medium text-slate-500">Escolha o plano e o ciclo de cobrança.</p>
+192: 
+193:           <div className="flex justify-center pt-2">
+194:             <div className="inline-flex flex-wrap items-center justify-center gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/50">
+195:               {CYCLES.map((c) => (
+196:                 <button
+197:                   key={c.key}
+198:                   type="button"
+199:                   onClick={() => setCycle(c.key)}
+200:                   className={cn(
+201:                     "flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl transition-all",
+202:                     cycle === c.key ? "bg-white text-[#0091ff] shadow-sm" : "text-slate-400 hover:text-slate-600"
+203:                   )}
+204:                 >
+205:                   {c.label}
+206:                   {c.badge && (
+207:                     <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+208:                       {c.badge}
+209:                     </span>
+210:                   )}
+211:                 </button>
+212:               ))}
+213:             </div>
+214:           </div>
+215:         </div>
+216: 
+217:         {plans.length === 0 ? (
+218:           <p className="text-center text-sm text-slate-500 pt-6">Nenhum plano disponível no momento.</p>
+219:         ) : (
+220:           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-4 max-w-5xl mx-auto">
+221:             {plans.map((p) => {
+222:               const mod = modBySlug.get(p.module_slug);
+223:               const tierKey = String(p.plan_tier || "").toLowerCase();
+224:               const isCurrent = !!current?.tier && current.tier === tierKey;
+225:               const isUpgrade = !!current?.tier && (TIER_RANK[tierKey] ?? 0) > (TIER_RANK[current.tier] ?? 0);
+226:               return (
+227:                 <VidlyticsPlanCard
+228:                   key={p.id}
+229:                   tier={String(p.plan_tier || "").toLowerCase()}
+230:                   title={p.plan_name}
+231:                   moduleName={mod?.name || "Vidlytics"}
+232:                   logoUrl={mod?.logo_url ?? null}
+233:                   monthlyCents={p.price_monthly_cents}
+234:                   semiannualCents={p.price_semiannual_cents}
+235:                   annualCents={p.price_annual_cents}
+236:                   cycle={cycle}
+237:                   isPopular={String(p.plan_tier).toLowerCase() === "pro"}
+238:                   isCurrent={isCurrent}
+239:                   ctaLabel={isUpgrade ? "Fazer upgrade" : undefined}
+240:                   contactUrl={CONTACT_URL}
+241:                   onSelect={() => handleSelect(p)}
+242:                 />
+243:               );
+244:             })}
+245:           </div>
+246:         )}
+247: 
+248:         {plans.length > 0 && (
+249:           <section className="max-w-5xl mx-auto space-y-6 pt-8">
+250:             <div className="text-center space-y-2">
+251:               <p className="text-xs font-black uppercase tracking-widest text-[#0091ff]">{"\u2014"} COMPARATIVO</p>
+252:               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+253:                 Compare todos os recursos do Vidlytics
+254:               </h2>
+255:               <p className="text-sm font-medium text-slate-500">
+256:                 Veja exatamente o que cada plano oferece para acelerar as vendas da sua loja.
+257:               </p>
+258:             </div>
+259: 
+260:             <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+261:               <table className="w-full min-w-[560px] text-sm">
+262:                 <thead>
+263:                   <tr className="border-b border-slate-200">
+264:                     <th className="px-5 py-4 text-left" />
+265:                     {COMPARE_COLS.map((c, i) => (
+266:                       <th
+267:                         key={c}
+268:                         className={cn(
+269:                           "px-4 py-4 text-center text-xs font-black uppercase tracking-wider",
+270:                           i === 1 ? "bg-orange-50 text-[#fd8539]" : "text-slate-700"
+271:                         )}
+272:                       >
+273:                         {c}
+274:                       </th>
+275:                     ))}
+276:                   </tr>
+277:                 </thead>
+278:                 {COMPARE.map((g) => (
+279:                   <tbody key={g.group} className="divide-y divide-slate-100">
+280:                     <tr className="bg-slate-50">
+281:                       <td colSpan={4} className="px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-500">
+282:                         {g.group}
+283:                       </td>
+284:                     </tr>
+285:                     {g.rows.map((r) => (
+286:                       <tr key={r.label}>
+287:                         <td className="px-5 py-3.5 text-xs font-bold text-slate-700">{r.label}</td>
+288:                         {r.v.map((cell, i) => (
+289:                           <td key={i} className={cn("px-4 py-3.5 text-center text-xs", i === 1 && "bg-orange-50/40")}>
+290:                             <CompareCell v={cell} />
+291:                           </td>
+292:                         ))}
+293:                       </tr>
+294:                     ))}
+295:                   </tbody>
+296:                 ))}
+297:               </table>
+298:             </div>
+299: 
+300:             <div className="space-y-5 pt-6">
+301:               <div className="text-center space-y-2">
+302:                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Turbine sua conta com Add-ons</h2>
+303:                 <p className="text-sm font-medium text-slate-500">
+304:                   Precisa de mais capacidade sem trocar de plano? Adicione pacotes extras à sua assinatura a qualquer momento.
+305:                 </p>
+306:               </div>
+307:               <div className="grid gap-5 sm:grid-cols-2 max-w-3xl mx-auto">
+308:                 {ADDONS.map((a) => {
+309:                   const Icon = a.icon;
+310:                   return (
+311:                     <div key={a.key} className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+312:                       <div className="space-y-3">
+313:                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0091ff]/10 text-[#0091ff]">
+314:                           <Icon size={22} />
+315:                         </div>
+316:                         <h3 className="text-lg font-black text-slate-900">{a.title}</h3>
+317:                         <p className="text-xs font-medium leading-relaxed text-slate-500">{a.desc}</p>
+318:                         <p className="text-slate-900">
+319:                           <span className="text-2xl font-black tracking-tight">
+320:                             {(a.cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+321:                           </span>
+322:                           <span className="ml-1 text-xs font-bold text-slate-400">/ mês</span>
+323:                         </p>
+324:                       </div>
+325:                       <button
+326:                         type="button"
+327:                         onClick={() => handleAddon(a.key)} disabled={busyAddon === a.key}
+328:                         className="mt-5 w-full rounded-2xl bg-[#0091ff] py-3 px-4 text-xs font-black uppercase tracking-wider text-white shadow-lg transition-all hover:bg-[#0070f3] hover:scale-[1.02] cursor-pointer"
+329:                       >
+330:                         Contratar Pacote
+331:                       </button>
+332:                     </div>
+333:                   );
+334:                 })}
+335:               </div>
+336:             </div>
+337:           </section>
+338:         )}
+339: 
+340:         {soon.length > 0 && (
+341:           <div className="max-w-5xl mx-auto space-y-3">
+342:             <h2 className="text-center text-xs font-black uppercase tracking-wider text-slate-400">Em breve</h2>
+343:             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+344:               {soon.map((m) => (
+345:                 <div
+346:                   key={m.slug}
+347:                   className="flex items-center justify-between gap-3 rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-5"
+348:                 >
+349:                   <div className="flex min-w-0 items-center gap-3">
+350:                     {m.logo_url ? (
+351:                       <img src={m.logo_url} alt={m.name} className="h-9 w-9 shrink-0 rounded-xl bg-white object-contain p-1" />
+352:                     ) : (
+353:                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-sm font-black text-slate-500">
+354:                         {m.name.charAt(0).toUpperCase()}
+355:                       </div>
+356:                     )}
+357:                     <p className="truncate text-sm font-black uppercase tracking-tight text-slate-700">{m.name}</p>
+358:                   </div>
+359:                   <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-700">
+360:                     Em breve
+361:                   </span>
+362:                 </div>
+363:               ))}
+364:             </div>
+365:           </div>
+366:         )}
+367:       </div>
+368:     </DashboardLayout>
+369:   );
+370: }
+##### src\pages\checkout\Checkout.tsx
+1: import { useEffect, useMemo, useState } from 'react';
+2: import { useNavigate, useSearchParams } from 'react-router-dom';
+3: import { ArrowLeft, CheckCircle2, Loader2, Tag } from 'lucide-react';
+4: import { toast } from 'sonner';
+5: import { supabase } from '@/lib/supabase';
+6: import { useLoja } from '@/contexts/LojaContext';
+7: import { DashboardLayout } from '@/components/layout/DashboardLayout';
+8: import { getPlansShowcase, getPriceForCycle, subscribeToPlan, subscribeToDynamicPlan, type Plan, type PlanPrice } from '@/services/plans/getPlansShowcase';
+9: 
+10: type Cycle = 'monthly' | 'semiannual' | 'yearly';
+11: type Person = 'pf' | 'pj';
+12: 
+13: const sb: any = supabase;
+14: const CYCLE_LABEL: Record<Cycle, string> = { monthly: 'Mensal', semiannual: 'Semestral', yearly: 'Anual' };
+15: const brl = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+16: const digits = (v: string) => v.replace(/\D/g, '');
+17: 
+18: const ERR: Record<string, string> = {
+19:   SESSAO_EXPIRADA: 'Sessão expirada. Faça login novamente.',
+20:   MODULE_ALREADY_SUBSCRIBED: 'Você já possui este módulo ativo na sua loja.',
+21:   TRIAL_ACTIVE: 'Seu teste deste módulo já está ativo.',
+22:   DB_ERROR: 'Não foi possível registrar a assinatura. Tente novamente.',
+23:   CUPOM_INVALIDO: 'Cupom inválido ou esgotado.',
+24:   CUPOM_VALOR_MINIMO: 'O valor final ficaria abaixo do mínimo de R$ 5,00.',
+25:   DADOS_FISCAIS_OBRIGATORIOS: 'Preencha os dados de faturamento.',
+26:   ASAAS_CUSTOMER_ERROR: 'O Asaas recusou os dados. Confira CPF/CNPJ, CEP e telefone.',
+27:   ASAAS_SUBSCRIPTION_ERROR: 'O Asaas recusou a assinatura. Tente novamente em instantes.',
+28: };
+29: const COUPON_REASON: Record<string, string> = {
+30:   not_found: 'Cupom não encontrado.',
+31:   expired: 'Este cupom expirou.',
+32:   exhausted: 'Este cupom esgotou.',
+33:   not_started: 'Este cupom ainda não está valendo.',
+34:   plan_not_allowed: 'Este cupom não vale para este plano.',
+35: };
+36: 
+37: function validCpf(v: string) {
+38:   const d = digits(v);
+39:   if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
+40:   for (const t of [9, 10]) {
+41:     let s = 0;
+42:     for (let i = 0; i < t; i++) s += Number(d[i]) * (t + 1 - i);
+43:     if (((s * 10) % 11) % 10 !== Number(d[t])) return false;
+44:   }
+45:   return true;
+46: }
+47: function validCnpj(v: string) {
+48:   const d = digits(v);
+49:   if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;
+50:   const calc = (n: number) => {
+51:     let s = 0, p = n - 7;
+52:     for (let i = 0; i < n; i++) { s += Number(d[i]) * p--; if (p < 2) p = 9; }
+53:     const r = s % 11;
+54:     return r < 2 ? 0 : 11 - r;
+55:   };
+56:   return calc(12) === Number(d[12]) && calc(13) === Number(d[13]);
+57: }
+58: const maskDoc = (v: string, t: Person) => {
+59:   const d = digits(v).slice(0, t === 'pf' ? 11 : 14);
+60:   return t === 'pf'
+61:     ? d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+62:     : d.replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+63: };
+64: const maskCep = (v: string) => digits(v).slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
+65: const maskPhone = (v: string) => {
+66:   const d = digits(v).slice(0, 11);
+67:   return d.length > 10 ? d.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : d.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '');
+68: };
+69: 
+70: const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0091ff]';
+71: const labelCls = 'block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1';
+72: 
+73: type Form = {
+74:   type: Person; name: string; doc: string; email: string; phone: string;
+75:   cep: string; address: string; number: string; complement: string; neighborhood: string; city: string; state: string;
+76: };
+77: const emptyForm: Form = { type: 'pf', name: '', doc: '', email: '', phone: '', cep: '', address: '', number: '', complement: '', neighborhood: '', city: '', state: '' };
+78: 
+79: type Applied = { code: string; type: 'percentage' | 'fixed_amount'; value: number };
+80: 
+81: const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+82: 
+83: // Resolve plano de dynamic_plans por uuid ou por tier (starter/pro/scale) + modulo
+84: async function resolveDynamic(key: string | null, moduleKey: string | null): Promise<{ plan: Plan; prices: PlanPrice[] } | null> {
+85:   if (!key) return null;
+86:   let q = sb.from('dynamic_plans')
+87:     .select('id, plan_tier, plan_name, module_slug, is_active, price_monthly_cents, price_semiannual_cents, price_annual_cents')
+88:     .eq('is_active', true);
+89:   q = UUID_RE.test(key) ? q.eq('id', key) : q.eq('plan_tier', key).eq('module_slug', moduleKey ?? 'vidlytics').eq('is_combo', false);
+90:   const { data, error } = await q.limit(1).maybeSingle();
+91:   if (error || !data) return null;
+92:   const plan = {
+93:     id: data.id, slug: data.plan_tier, name: data.plan_name, description: null,
+94:     price_cents: data.price_monthly_cents, modules: data.module_slug ? [data.module_slug] : [],
+95:     is_popular: false, is_active: true, sort_order: 0, views_limit: 0, storage_limit_bytes: 0,
+96:     pages_limit: 0, videos_limit: null, allows_live: null,
+97:   } as Plan;
+98:   const prices: PlanPrice[] = [
+99:     { plan_id: data.id, billing_cycle: 'monthly', price_cents: data.price_monthly_cents, is_active: true },
+100:     { plan_id: data.id, billing_cycle: 'semiannual', price_cents: data.price_semiannual_cents, is_active: true },
+101:     { plan_id: data.id, billing_cycle: 'yearly', price_cents: data.price_annual_cents, is_active: true },
+102:   ];
+103:   return { plan, prices };
+104: }
+105: 
+106: export default function Checkout() {
+107:   const navigate = useNavigate();
+108:   const [params] = useSearchParams();
+109:   const { storeId } = useLoja();
+110: 
+111:   const planId = params.get('plan');
+112:   const cycle = (['monthly', 'semiannual', 'yearly'].includes(params.get('cycle') ?? '') ? params.get('cycle') : 'monthly') as Cycle;
+113:   const moduleKey = params.get('module');
+114: 
+115:   const [loading, setLoading] = useState(true);
+116:   const [plan, setPlan] = useState<Plan | null>(null);
+117:   const [prices, setPrices] = useState<PlanPrice[]>([]);
+118:   const [f, setF] = useState<Form>(emptyForm);
+119:   const [couponInput, setCouponInput] = useState('');
+120:   const [applied, setApplied] = useState<Applied | null>(null);
+121:   const [couponMsg, setCouponMsg] = useState<string | null>(null);
+122:   const [couponBusy, setCouponBusy] = useState(false);
+123:   const [cepBusy, setCepBusy] = useState(false);
+124:   const [errors, setErrors] = useState<Record<string, string>>({});
+125:   const [submitting, setSubmitting] = useState(false);
+126:   const [dynamic, setDynamic] = useState(false);
+127:   const [trialEligible, setTrialEligible] = useState(false);
+128: 
+129:   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
+130: 
+131:   useEffect(() => {
+132:     getPlansShowcase().then(async ({ plans, prices }) => {
+133:       let found: Plan | null = plans.find((p) => p.id === planId) ?? null;
+134:       let pr: PlanPrice[] = prices;
+135:       if (!found) {
+136:         const r = await resolveDynamic(planId, moduleKey);
+137:         if (r) { found = r.plan; pr = r.prices; setDynamic(true); }
+138:       }
+139:       setPlan(found);
+140:       setPrices(pr);
+141:       setLoading(false);
+142:     });
+143:   }, [planId]);
+144: 
+145:   useEffect(() => {
+146:     if (!storeId) return;
+147:     sb.from('billing_info').select('*').eq('store_id', storeId).maybeSingle().then(({ data }: any) => {
+148:       if (!data) return;
+149:       setF({
+150:         type: data.person_type === 'pj' || digits(data.cnpj_cpf ?? '').length === 14 ? 'pj' : 'pf',
+151:         name: data.legal_name ?? '', doc: data.cnpj_cpf ?? '', email: data.email ?? '', phone: data.phone ?? '',
+152:         cep: data.cep ?? '', address: data.address ?? '', number: data.number ?? '', complement: data.complement ?? '',
+153:         neighborhood: data.neighborhood ?? '', city: data.city ?? '', state: data.state ?? '',
+154:       });
+155:     });
+156:   }, [storeId]);
+157: 
+158:   const trialModule = plan ? (plan.modules.length === 1 ? plan.modules[0] : moduleKey) : null;
+159:   useEffect(() => {
+160:     if (!storeId || !trialModule || trialModule === 'bundle') { setTrialEligible(false); return; }
+161:     let alive = true;
+162:     sb.from('subscriptions').select('status,module_key').eq('store_id', storeId).then(({ data }: any) => {
+163:       if (!alive) return;
+164:       const rows: any[] = data ?? [];
+165:       const hadModule = rows.some((r) => r.module_key === trialModule && r.status !== 'incomplete');
+166:       const hasPaid = rows.some((r) => ['active', 'lifetime', 'past_due'].includes(r.status));
+167:       setTrialEligible(!hadModule && hasPaid);
+168:     });
+169:     return () => { alive = false; };
+170:   }, [storeId, trialModule]);
+171: 
+172:   const priceCents = plan ? getPriceForCycle(plan.id, cycle, prices, plan.price_cents) : 0;
+173:   const discountCents = useMemo(() => {
+174:     if (!applied) return 0;
+175:     const d = applied.type === 'percentage' ? Math.round((priceCents * applied.value) / 100) : applied.value;
+176:     return Math.min(Math.max(d, 0), priceCents);
+177:   }, [applied, priceCents]);
+178:   const finalCents = priceCents - discountCents;
+179: 
+180:   async function applyCoupon() {
+181:     const code = couponInput.trim();
+182:     if (!code || !plan) return;
+183:     setCouponBusy(true); setCouponMsg(null);
+184:     const { data, error } = await sb.rpc('validate_coupon', { p_code: code, p_plan_id: plan.id });
+185:     setCouponBusy(false);
+186:     if (error || !data?.valid) {
+187:       setApplied(null);
+188:       setCouponMsg(COUPON_REASON[data?.reason] ?? 'Não foi possível validar o cupom.');
+189:       return;
+190:     }
+191:     const d = data.type === 'percentage' ? Math.round((priceCents * Number(data.value)) / 100) : Number(data.value);
+192:     if (priceCents - Math.min(d, priceCents) < 500) {
+193:       setApplied(null);
+194:       setCouponMsg('O valor final ficaria abaixo do mínimo de R$ 5,00.');
+195:       return;
+196:     }
+197:     setApplied({ code: code.toUpperCase(), type: data.type, value: Number(data.value) });
+198:   }
+199: 
+200:   async function lookupCep(value: string) {
+201:     const d = digits(value);
+202:     if (d.length !== 8) return;
+203:     setCepBusy(true);
+204:     try {
+205:       const r = await fetch(`https://viacep.com.br/ws/${d}/json/`);
+206:       const j = await r.json();
+207:       if (j.erro) { setErrors((e) => ({ ...e, cep: 'CEP não encontrado.' })); return; }
+208:       setErrors((e) => { const { cep, ...rest } = e; return rest; });
+209:       setF((x) => ({ ...x, address: j.logradouro || x.address, neighborhood: j.bairro || x.neighborhood, city: j.localidade || x.city, state: j.uf || x.state }));
+210:     } catch { /* o usuário preenche manualmente */ }
+211:     finally { setCepBusy(false); }
+212:   }
+213: 
+214:   function validate() {
+215:     const e: Record<string, string> = {};
+216:     if (!f.name.trim()) e.name = 'Informe o nome ou razão social.';
+217:     if (f.type === 'pf' ? !validCpf(f.doc) : !validCnpj(f.doc)) e.doc = f.type === 'pf' ? 'CPF inválido.' : 'CNPJ inválido.';
+218:     if (!/^\S+@\S+\.\S+$/.test(f.email)) e.email = 'E-mail inválido.';
+219:     if (digits(f.phone).length < 10) e.phone = 'Telefone inválido.';
+220:     if (digits(f.cep).length !== 8) e.cep = 'CEP inválido.';
+221:     if (!f.address.trim()) e.address = 'Informe o endereço.';
+222:     if (!f.number.trim()) e.number = 'Informe o número.';
+223:     if (!f.neighborhood.trim()) e.neighborhood = 'Informe o bairro.';
+224:     if (!f.city.trim()) e.city = 'Informe a cidade.';
+225:     if (f.state.trim().length !== 2) e.state = 'UF inválida.';
+226:     setErrors(e);
+227:     return Object.keys(e).length === 0;
+228:   }
+229: 
+230:   async function submit() {
+231:     if (!storeId || !plan) return;
+232:     if (!validate()) { toast.error('Confira os campos destacados.'); return; }
+233:     setSubmitting(true);
+234:     const { error: upErr } = await sb.from('billing_info').upsert({
+235:       store_id: storeId, person_type: f.type, legal_name: f.name.trim(), cnpj_cpf: digits(f.doc),
+236:       email: f.email.trim(), phone: digits(f.phone), cep: digits(f.cep), address: f.address.trim(),
+237:       number: f.number.trim(), complement: f.complement.trim() || null, neighborhood: f.neighborhood.trim(),
+238:       city: f.city.trim(), state: f.state.trim().toUpperCase(),
+239:     }, { onConflict: 'store_id' });
+240:     if (upErr) { setSubmitting(false); toast.error('Não foi possível salvar os dados: ' + upErr.message); return; }
+241: 
+242:     const result = dynamic
+243:       ? await subscribeToDynamicPlan({ storeId, dynamicPlanId: plan.id, billingCycle: cycle, couponCode: applied?.code ?? null })
+244:       : await subscribeToPlan({ storeId, planId: plan.id, billingCycle: cycle, moduleKey, couponCode: applied?.code ?? null });
+245:     if (result.error) {
+246:       setSubmitting(false);
+247:       if (result.error === 'TRIAL_ACTIVE' && result.invoiceUrl) {
+248:         toast.info('Seu teste já está ativo. Abrindo a fatura...');
+249:         window.location.href = result.invoiceUrl;
+250:         return;
+251:       }
+252:       toast.error(ERR[result.error] ?? result.error);
+253:       return;
+254:     }
+255:     if (result.trial) {
+256:       toast.success('Teste de 7 dias ativado! A fatura fica disponível em Minhas Assinaturas.');
+257:       window.location.assign('/dashboard'); // recarrega para a tarja ler o novo trial
+258:       return;
+259:     }
+260:     if (result.invoiceUrl) {
+261:       toast.success('Redirecionando para o pagamento...');
+262:       window.location.href = result.invoiceUrl;
+263:       return;
+264:     }
+265:     setSubmitting(false);
+266:     toast.success('Assinatura criada. A fatura aparece em Minhas Assinaturas.');
+267:     navigate('/dashboard/assinaturas');
+268:   }
+269: 
+270:   const field = (k: keyof Form, label: string, opts?: { span?: string; mask?: (v: string) => string; placeholder?: string; onBlur?: () => void }) => (
+271:     <div className={opts?.span}>
+272:       <label className={labelCls}>{label}</label>
+273:       <input
+274:         className={inputCls + (errors[k] ? ' !border-rose-400' : '')}
+275:         value={f[k] as string}
+276:         placeholder={opts?.placeholder}
+277:         onBlur={opts?.onBlur}
+278:         onChange={(e) => set(k, (opts?.mask ? opts.mask(e.target.value) : e.target.value) as never)}
+279:       />
+280:       {errors[k] && <p className="mt-1 text-[11px] text-rose-500">{errors[k]}</p>}
+281:     </div>
+282:   );
+283: 
+284:   if (loading) {
+285:     return (
+286:       <DashboardLayout>
+287:         <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[#0091ff]" /></div>
+288:       </DashboardLayout>
+289:     );
+290:   }
+291: 
+292:   if (!plan) {
+293:     return (
+294:       <DashboardLayout>
+295:         <div className="mx-auto max-w-lg py-20 text-center space-y-4">
+296:           <p className="text-slate-600">Plano não encontrado.</p>
+297:           <button type="button" onClick={() => navigate('/dashboard/planos')} className="text-sm font-bold text-[#0091ff]">Voltar para os planos</button>
+298:         </div>
+299:       </DashboardLayout>
+300:     );
+301:   }
+302: 
+303:   return (
+304:     <DashboardLayout>
+305:       <div className="mx-auto max-w-5xl space-y-6 pb-20">
+306:         <button type="button" onClick={() => navigate('/dashboard/planos')}
+307:           className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-[#0091ff]">
+308:           <ArrowLeft size={16} /> Voltar para os planos
+309:         </button>
+310:         <h1 className="text-2xl font-black text-slate-900">Finalizar assinatura</h1>
+311: 
+312:         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+313:           <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
+314:             <h2 className="text-sm font-black text-slate-900">Dados de faturamento (nota fiscal)</h2>
+315:             <div className="flex gap-2">
+316:               {(['pf', 'pj'] as Person[]).map((t) => (
+317:                 <button key={t} type="button" onClick={() => setF((x) => ({ ...x, type: t, doc: '' }))}
+318:                   className={'px-4 py-2 rounded-xl text-xs font-black border ' + (f.type === t ? 'bg-[#0091ff] text-white border-[#0091ff]' : 'bg-white text-slate-500 border-slate-200')}>
+319:                   {t === 'pf' ? 'Pessoa física' : 'Pessoa jurídica'}
+320:                 </button>
+321:               ))}
+322:             </div>
+323:             <div className="grid gap-3 sm:grid-cols-2">
+324:               {field('name', f.type === 'pf' ? 'Nome completo' : 'Razão social', { span: 'sm:col-span-2' })}
+325:               {field('doc', f.type === 'pf' ? 'CPF' : 'CNPJ', { mask: (v) => maskDoc(v, f.type) })}
+326:               {field('phone', 'Telefone / WhatsApp', { mask: maskPhone, placeholder: '(41) 99999-9999' })}
+327:               {field('email', 'E-mail para a nota fiscal', { span: 'sm:col-span-2' })}
+328:               <div>
+329:                 <label className={labelCls}>CEP {cepBusy && <Loader2 className="inline h-3 w-3 animate-spin" />}</label>
+330:                 <input className={inputCls + (errors.cep ? ' !border-rose-400' : '')} value={f.cep} placeholder="00000-000"
+331:                   onChange={(e) => { const v = maskCep(e.target.value); set('cep', v); if (digits(v).length === 8) lookupCep(v); }} />
+332:                 {errors.cep && <p className="mt-1 text-[11px] text-rose-500">{errors.cep}</p>}
+333:               </div>
+334:               {field('address', 'Endereço')}
+335:               {field('number', 'Número')}
+336:               {field('complement', 'Complemento (opcional)')}
+337:               {field('neighborhood', 'Bairro')}
+338:               {field('city', 'Cidade')}
+339:               {field('state', 'UF', { mask: (v) => v.toUpperCase().slice(0, 2) })}
+340:             </div>
+341:           </div>
+342: 
+343:           <div className="space-y-4">
+344:             <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+345:               <h2 className="text-sm font-black text-slate-900">Resumo</h2>
+346:               <div className="flex justify-between text-sm"><span className="text-slate-600">{plan.name}</span><span className="font-semibold">{CYCLE_LABEL[cycle]}</span></div>
+347:               <div className="flex justify-between text-sm"><span className="text-slate-600">Valor</span><span>{brl(priceCents)}</span></div>
+348:               {discountCents > 0 && (
+349:                 <div className="flex justify-between text-sm text-emerald-600"><span>Cupom {applied?.code}</span><span>- {brl(discountCents)}</span></div>
+350:               )}
+351:               <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-black text-slate-900"><span>Total</span><span>{brl(finalCents)}</span></div>
+352:               {trialEligible && (
+353:                 <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+354:                   Teste grátis de 7 dias. A primeira cobrança vence em {new Date(Date.now() + 7 * 86400000).toLocaleDateString('pt-BR')}.
+355:                 </p>
+356:               )}
+357:             </div>
+358: 
+359:             <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-2">
+360:               <label className={labelCls}><Tag className="inline h-3 w-3 mr-1" />Cupom de desconto</label>
+361:               <div className="flex gap-2">
+362:                 <input className={inputCls + ' uppercase'} value={couponInput} placeholder="BLACK10"
+363:                   onChange={(e) => { setCouponInput(e.target.value); if (applied) setApplied(null); setCouponMsg(null); }} />
+364:                 <button type="button" disabled={couponBusy || !couponInput.trim()} onClick={applyCoupon}
+365:                   className="px-4 rounded-xl bg-slate-900 text-white text-xs font-black disabled:opacity-50">
+366:                   {couponBusy ? '...' : 'Aplicar'}
+367:                 </button>
+368:               </div>
+369:               {applied && <p className="flex items-center gap-1 text-xs text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5" /> Cupom aplicado.</p>}
+370:               {couponMsg && <p className="text-xs text-rose-500">{couponMsg}</p>}
+371:             </div>
+372: 
+373:             <button type="button" disabled={submitting} onClick={submit}
+374:               className="w-full rounded-2xl bg-[#0091ff] py-3 text-sm font-black text-white hover:bg-[#0080e0] disabled:opacity-60">
+375:               {submitting ? 'Processando...' : trialEligible ? 'Iniciar teste de 7 dias' : 'Ir para o pagamento'}
+376:             </button>
+377:             <p className="text-center text-[11px] text-slate-400">O pagamento é feito no ambiente seguro do Asaas.</p>
+378:           </div>
+379:         </div>
+380:       </div>
+381:     </DashboardLayout>
+382:   );
+383: }
+##### src\services\plans\getCatalogShowcase.ts
+1: import { supabase } from "@/lib/supabase";
+2: 
+3: export type CatalogPlan = {
+4:   id: string;
+5:   plan_tier: string;
+6:   plan_name: string;
+7:   module_slug: string;
+8:   price_monthly_cents: number;
+9:   price_semiannual_cents: number;
+10:   price_annual_cents: number;
+11:   sort_order: number;
+12: };
+13: 
+14: export type CatalogModule = {
+15:   slug: string;
+16:   name: string;
+17:   status: "active" | "coming_soon";
+18:   is_public_for_sale: boolean;
+19:   logo_url: string | null;
+20:   sort_order: number;
+21: };
+22: 
+23: const sb: any = supabase;
+24: 
+25: // Modulos visiveis ao lojista (ativos e em breve). Os ocultos nunca chegam aqui.
+26: export async function getCatalogModules(): Promise<CatalogModule[]> {
+27:   const { data, error } = await sb.rpc("get_catalog_modules");
+28:   if (error) {
+29:     console.error("[getCatalogModules]", error.message);
+30:     return [];
+31:   }
+32:   return (data ?? []) as CatalogModule[];
+33: }
+34: 
+35: // Planos de venda: apenas modulos ativos e "a venda"
+36: export async function getCatalogShowcase(): Promise<CatalogPlan[]> {
+37:   const mods = await getCatalogModules();
+38:   const slugs = mods.filter((m) => m.status === "active" && m.is_public_for_sale).map((m) => m.slug);
+39:   if (!slugs.length) return [];
+40: 
+41:   const { data, error } = await sb
+42:     .from("dynamic_plans")
+43:     .select("id, plan_tier, plan_name, module_slug, price_monthly_cents, price_semiannual_cents, price_annual_cents, sort_order")
+44:     .eq("is_active", true)
+45:     .eq("is_combo", false)
+46:     .in("module_slug", slugs)
+47:     .order("sort_order", { ascending: true });
+48:   if (error) console.error("[getCatalogShowcase] dynamic_plans:", error.message);
+49: 
+50:   return (data ?? []).map((p: any) => ({
+51:     ...p,
+52:     price_monthly_cents: Number(p.price_monthly_cents ?? 0),
+53:     price_semiannual_cents: Number(p.price_semiannual_cents ?? 0),
+54:     price_annual_cents: Number(p.price_annual_cents ?? 0),
+55:   })) as CatalogPlan[];
+56: }
+##### src\services\plans\getPlansShowcase.ts
+1: import { supabase } from "@/lib/supabase";
+2: 
+3: export type PlanPrice = {
+4:   plan_id: string;
+5:   billing_cycle: "monthly" | "semiannual" | "yearly";
+6:   price_cents: number;
+7:   is_active: boolean;
+8: };
+9: 
+10: export type Plan = {
+11:   id: string;
+12:   slug: string;
+13:   name: string;
+14:   description: string | null;
+15:   price_cents: number;
+16:   modules: string[];
+17:   is_popular: boolean;
+18:   is_active: boolean;
+19:   sort_order: number;
+20:   views_limit: number;
+21:   storage_limit_bytes: number;
+22:   pages_limit: number;
+23:   videos_limit: number | null;
+24:   allows_live: boolean | null;
+25: };
+26: 
+27: export type PlanObjective = {
+28:   id: string;
+29:   slug: string;
+30:   name: string;
+31:   description: string | null;
+32:   plan_id: string;
+33:   sort_order: number;
+34:   is_active: boolean;
+35:   modules: string[];
+36: };
+37: 
+38: export type PlanKind = "individual" | "objective" | "total";
+39: 
+40: export function getPlanKind(slug: string): PlanKind {
+41:   if (slug.startsWith("individual-")) return "individual";
+42:   if (slug === "pacote-total") return "total";
+43:   return "objective";
+44: }
+45: 
+46: export async function getPlansShowcase(): Promise<{
+47:   plans: Plan[];
+48:   prices: PlanPrice[];
+49:   objectives: PlanObjective[];
+50: }> {
+51:   const [{ data: plans, error: plansErr }, { data: prices, error: pricesErr }, { data: objectives, error: objErr }] =
+52:     await Promise.all([
+53:       supabase.from("plans").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
+54:       supabase.from("plan_prices").select("*").eq("is_active", true),
+55:       supabase
+56:         .from("plan_objectives")
+57:         .select("*, plan_objective_modules(module_key)")
+58:         .eq("is_active", true)
+59:         .order("sort_order", { ascending: true }),
+60:     ]);
+61: 
+62:   if (plansErr) console.error("[getPlansShowcase] plans:", plansErr.message);
+63:   if (pricesErr) console.error("[getPlansShowcase] prices:", pricesErr.message);
+64:   if (objErr) console.error("[getPlansShowcase] objectives:", objErr.message);
+65: 
+66:   const normalizedObjectives: PlanObjective[] = (objectives ?? []).map((o: any) => ({
+67:     id: o.id,
+68:     slug: o.slug,
+69:     name: o.name,
+70:     description: o.description,
+71:     plan_id: o.plan_id,
+72:     sort_order: o.sort_order,
+73:     is_active: o.is_active,
+74:     modules: (o.plan_objective_modules ?? []).map((m: any) => m.module_key),
+75:   }));
+76: 
+77:   return {
+78:     plans: (plans ?? []) as Plan[],
+79:     prices: (prices ?? []) as PlanPrice[],
+80:     objectives: normalizedObjectives,
+81:   };
+82: }
+83: 
+84: export function getPriceForCycle(
+85:   planId: string,
+86:   cycle: "monthly" | "semiannual" | "yearly",
+87:   prices: PlanPrice[],
+88:   fallbackCents: number
+89: ): number {
+90:   const found = prices.find((p) => p.plan_id === planId && p.billing_cycle === cycle);
+91:   return found ? found.price_cents : fallbackCents;
+92: }
+93: 
+94: export async function subscribeToPlan(params: {
+95:   storeId: string;
+96:   planId: string;
+97:   billingCycle: "monthly" | "semiannual" | "yearly";
+98:   moduleKey?: string | null; couponCode?: string | null;
+99: }): Promise<{ invoiceUrl?: string; error?: string; trial?: boolean }> {
+100:   const { data: sessionData } = await supabase.auth.getSession();
+101:   const accessToken = sessionData.session?.access_token;
+102: 
+103:   if (!accessToken) {
+104:     return { error: "SESSAO_EXPIRADA" };
+105:   }
+106: 
+107:   const { data, error } = await supabase.functions.invoke("asaas-create-subscription", {
+108:     body: {
+109:       plan_id: params.planId,
+110:       store_id: params.storeId,
+111:       billing_cycle: params.billingCycle.toUpperCase(),
+112:       module_key: params.moduleKey ?? null, coupon_code: params.couponCode ?? null,
+113:     },
+114:     headers: { Authorization: `Bearer ${accessToken}` },
+115:   });
+116: 
+117:   let body = data;
+118:   if (error && (error as any).context) {
+119:     try {
+120:       body = await (error as any).context.json();
+121:     } catch (_) {}
+122:   }
+123: 
+124:   if (error || body?.error) {
+125:     return { error: body?.message || body?.error || "ERRO_DESCONHECIDO", invoiceUrl: body?.invoice_url };
+126:   }
+127: 
+128:   return { invoiceUrl: body?.invoice_url, trial: !!body?.trial };
+129: }
+130: export async function subscribeToDynamicPlan(params: {
+131:   storeId: string;
+132:   dynamicPlanId: string;
+133:   billingCycle: "monthly" | "semiannual" | "yearly";
+134:   couponCode?: string | null;
+135: }): Promise<{ invoiceUrl?: string; error?: string; trial?: boolean }> {
+136:   const { data: sessionData } = await supabase.auth.getSession();
+137:   const accessToken = sessionData.session?.access_token;
+138:   if (!accessToken) return { error: "SESSAO_EXPIRADA" };
+139: 
+140:   const { data, error } = await supabase.functions.invoke("asaas-create-subscription", {
+141:     body: {
+142:       dynamic_plan_id: params.dynamicPlanId,
+143:       store_id: params.storeId,
+144:       billing_cycle: params.billingCycle.toUpperCase(),
+145:       coupon_code: params.couponCode ?? null,
+146:     },
+147:     headers: { Authorization: `Bearer ${accessToken}` },
+148:   });
+149: 
+150:   let body = data;
+151:   if (error && (error as any).context) {
+152:     try {
+153:       body = await (error as any).context.json();
+154:     } catch (_) {}
+155:   }
+156:   if (error || body?.error) {
+157:     return { error: body?.message || body?.error || "ERRO_DESCONHECIDO", invoiceUrl: body?.invoice_url };
+158:   }
+159:   return { invoiceUrl: body?.invoice_url, trial: !!body?.trial };
+160: }
+##### src\components\checkout\OrderBumpCard.tsx
+1: import { useEffect, useMemo, useState } from 'react';
+2: import { Check, Zap } from 'lucide-react';
+3: import { supabase } from '@/lib/supabase';
+4: 
+5: const sb: any = supabase;
+6: 
+7: export type Cycle = 'monthly' | 'semiannual' | 'yearly';
+8: export const CYCLE_MONTHS: Record<Cycle, number> = { monthly: 1, semiannual: 6, yearly: 12 };
+9: 
+10: export interface Upsell {
+11:   id: string;
+12:   name: string;
+13:   description: string | null;
+14:   price_monthly: number;
+15:   scope: string;
+16:   upsell_headline: string | null;
+17:   upsell_module_target: string | null;
+18: }
+19: 
+20: const brl = (n: number) => (n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+21: 
+22: // Add-ons de upsell compativeis com os modulos que estao sendo assinados
+23: export function useUpsells(modules: string[]) {
+24:   const [items, setItems] = useState<Upsell[]>([]);
+25:   const key = modules.join('|');
+26: 
+27:   useEffect(() => {
+28:     let alive = true;
+29:     sb.from('addons')
+30:       .select('id,name,description,price_monthly,scope,upsell_headline,upsell_module_target')
+31:       .eq('is_active', true)
+32:       .eq('is_upsell', true)
+33:       .order('price_monthly')
+34:       .then(({ data }: any) => {
+35:         if (!alive) return;
+36:         const mods = key ? key.split('|') : [];
+37:         setItems(
+38:           ((data || []) as any[])
+39:             .map((r) => ({ ...r, price_monthly: Number(r.price_monthly) }) as Upsell)
+40:             .filter((a) => (a.scope === 'global' || mods.includes(a.scope)) && (a.upsell_module_target === 'all' || (a.upsell_module_target && mods.includes(a.upsell_module_target)))),
+41:         );
+42:       });
+43:     return () => { alive = false; };
+44:   }, [key]);
+45: 
+46:   return items;
+47: }
+48: 
+49: // Valor extra a cobrar no ciclo escolhido, em reais
+50: export const bumpTotal = (items: Upsell[], selected: Set<string>, cycle: Cycle) =>
+51:   items.filter((a) => selected.has(a.id)).reduce((s, a) => s + a.price_monthly * CYCLE_MONTHS[cycle], 0);
+52: 
+53: export default function OrderBumpCard({ modules, cycle, selected, onChange }: {
+54:   modules: string[]; cycle: Cycle; selected: Set<string>; onChange: (next: Set<string>) => void;
+55: }) {
+56:   const items = useUpsells(modules);
+57:   const months = CYCLE_MONTHS[cycle];
+58:   const toggle = (id: string) => {
+59:     const next = new Set(selected);
+60:     if (next.has(id)) next.delete(id); else next.add(id);
+61:     onChange(next);
+62:   };
+63:   const total = useMemo(() => bumpTotal(items, selected, cycle), [items, selected, cycle]);
+64: 
+65:   if (items.length === 0) return null;
+66: 
+67:   return (
+68:     <div className="space-y-2">
+69:       {items.map((a) => {
+70:         const on = selected.has(a.id);
+71:         return (
+72:           <button key={a.id} type="button" onClick={() => toggle(a.id)}
+73:             className={`flex w-full cursor-pointer items-start gap-3 rounded-2xl border-2 border-dashed p-4 text-left transition-colors ${on ? 'border-[#fd8539] bg-[#fd8539]/10' : 'border-[#fd8539]/50 bg-white hover:bg-[#fd8539]/5'}`}>
+74:             <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 ${on ? 'border-[#fd8539] bg-[#fd8539] text-white' : 'border-slate-300 bg-white'}`}>
+75:               {on && <Check size={13} strokeWidth={3} />}
+76:             </span>
+77:             <span className="min-w-0 flex-1">
+78:               <span className="flex items-center gap-1.5 text-sm font-black text-slate-900"><Zap size={14} className="text-[#fd8539]" /> {a.upsell_headline || a.name}</span>
+79:               <span className="mt-0.5 block text-xs text-slate-600">{a.name}{a.description ? `: ${a.description}` : ''}</span>
+80:               <span className="mt-1 block text-xs font-bold text-[#c2571a]">
+81:                 {brl(a.price_monthly)}/mês{months > 1 ? ` · ${brl(a.price_monthly * months)} a cada ${months} meses` : ''}
+82:               </span>
+83:             </span>
+84:           </button>
+85:         );
+86:       })}
+87:       {total > 0 && <p className="text-right text-xs font-semibold text-slate-600">Total dos add-ons neste ciclo: {brl(total)}</p>}
+88:     </div>
+89:   );
+90: }

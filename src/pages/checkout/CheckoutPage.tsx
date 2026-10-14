@@ -236,7 +236,7 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
       <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-8">
-        <Link to="/dashboard"><img src="/assets/sll-logotipo.png" alt="SLL Hub" className="h-8 w-auto object-contain" /></Link>
+        <Link to="/dashboard"><img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="h-8 w-auto object-contain" /></Link>
         <Link to="/dashboard/planos" className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#0094eb]"><ArrowLeft size={14} /> Voltar aos planos</Link>
       </header>
 

@@ -1,0 +1,823 @@
+##### src\pages\checkout\Checkout.tsx
+1: import { useEffect, useMemo, useState } from 'react';
+2: import { useNavigate, useSearchParams } from 'react-router-dom';
+3: import { ArrowLeft, CheckCircle2, Loader2, Tag } from 'lucide-react';
+4: import { toast } from 'sonner';
+5: import { supabase } from '@/lib/supabase';
+6: import { useLoja } from '@/contexts/LojaContext';
+7: import { DashboardLayout } from '@/components/layout/DashboardLayout';
+8: import { getPlansShowcase, getPriceForCycle, subscribeToPlan, subscribeToDynamicPlan, type Plan, type PlanPrice } from '@/services/plans/getPlansShowcase';
+9: 
+10: type Cycle = 'monthly' | 'semiannual' | 'yearly';
+11: type Person = 'pf' | 'pj';
+12: 
+13: const sb: any = supabase;
+14: const CYCLE_LABEL: Record<Cycle, string> = { monthly: 'Mensal', semiannual: 'Semestral', yearly: 'Anual' };
+15: const brl = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+16: const digits = (v: string) => v.replace(/\D/g, '');
+17: 
+18: const ERR: Record<string, string> = {
+19:   SESSAO_EXPIRADA: 'Sessão expirada. Faça login novamente.',
+20:   MODULE_ALREADY_SUBSCRIBED: 'Você já possui este módulo ativo na sua loja.',
+21:   TRIAL_ACTIVE: 'Seu teste deste módulo já está ativo.',
+22:   DB_ERROR: 'Não foi possível registrar a assinatura. Tente novamente.',
+23:   CUPOM_INVALIDO: 'Cupom inválido ou esgotado.',
+24:   CUPOM_VALOR_MINIMO: 'O valor final ficaria abaixo do mínimo de R$ 5,00.',
+25:   DADOS_FISCAIS_OBRIGATORIOS: 'Preencha os dados de faturamento.',
+26:   ASAAS_CUSTOMER_ERROR: 'O Asaas recusou os dados. Confira CPF/CNPJ, CEP e telefone.',
+27:   ASAAS_SUBSCRIPTION_ERROR: 'O Asaas recusou a assinatura. Tente novamente em instantes.',
+28: };
+29: const COUPON_REASON: Record<string, string> = {
+30:   not_found: 'Cupom não encontrado.',
+31:   expired: 'Este cupom expirou.',
+32:   exhausted: 'Este cupom esgotou.',
+33:   not_started: 'Este cupom ainda não está valendo.',
+34:   plan_not_allowed: 'Este cupom não vale para este plano.',
+35: };
+36: 
+37: function validCpf(v: string) {
+38:   const d = digits(v);
+39:   if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
+40:   for (const t of [9, 10]) {
+41:     let s = 0;
+42:     for (let i = 0; i < t; i++) s += Number(d[i]) * (t + 1 - i);
+43:     if (((s * 10) % 11) % 10 !== Number(d[t])) return false;
+44:   }
+45:   return true;
+46: }
+47: function validCnpj(v: string) {
+48:   const d = digits(v);
+49:   if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;
+50:   const calc = (n: number) => {
+51:     let s = 0, p = n - 7;
+52:     for (let i = 0; i < n; i++) { s += Number(d[i]) * p--; if (p < 2) p = 9; }
+53:     const r = s % 11;
+54:     return r < 2 ? 0 : 11 - r;
+55:   };
+56:   return calc(12) === Number(d[12]) && calc(13) === Number(d[13]);
+57: }
+58: const maskDoc = (v: string, t: Person) => {
+59:   const d = digits(v).slice(0, t === 'pf' ? 11 : 14);
+60:   return t === 'pf'
+61:     ? d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+62:     : d.replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+63: };
+64: const maskCep = (v: string) => digits(v).slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
+65: const maskPhone = (v: string) => {
+66:   const d = digits(v).slice(0, 11);
+67:   return d.length > 10 ? d.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : d.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '');
+68: };
+69: 
+70: const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0091ff]';
+71: const labelCls = 'block text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-1';
+72: 
+73: type Form = {
+74:   type: Person; name: string; doc: string; email: string; phone: string;
+75:   cep: string; address: string; number: string; complement: string; neighborhood: string; city: string; state: string;
+76: };
+77: const emptyForm: Form = { type: 'pf', name: '', doc: '', email: '', phone: '', cep: '', address: '', number: '', complement: '', neighborhood: '', city: '', state: '' };
+78: 
+79: type Applied = { code: string; type: 'percentage' | 'fixed_amount'; value: number };
+80: 
+81: const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+82: 
+83: // Resolve plano de dynamic_plans por uuid ou por tier (starter/pro/scale) + modulo
+84: async function resolveDynamic(key: string | null, moduleKey: string | null): Promise<{ plan: Plan; prices: PlanPrice[] } | null> {
+85:   if (!key) return null;
+86:   let q = sb.from('dynamic_plans')
+87:     .select('id, plan_tier, plan_name, module_slug, is_active, price_monthly_cents, price_semiannual_cents, price_annual_cents')
+88:     .eq('is_active', true);
+89:   q = UUID_RE.test(key) ? q.eq('id', key) : q.eq('plan_tier', key).eq('module_slug', moduleKey ?? 'vidlytics').eq('is_combo', false);
+90:   const { data, error } = await q.limit(1).maybeSingle();
+91:   if (error || !data) return null;
+92:   const plan = {
+93:     id: data.id, slug: data.plan_tier, name: data.plan_name, description: null,
+94:     price_cents: data.price_monthly_cents, modules: data.module_slug ? [data.module_slug] : [],
+95:     is_popular: false, is_active: true, sort_order: 0, views_limit: 0, storage_limit_bytes: 0,
+96:     pages_limit: 0, videos_limit: null, allows_live: null,
+97:   } as Plan;
+98:   const prices: PlanPrice[] = [
+99:     { plan_id: data.id, billing_cycle: 'monthly', price_cents: data.price_monthly_cents, is_active: true },
+100:     { plan_id: data.id, billing_cycle: 'semiannual', price_cents: data.price_semiannual_cents, is_active: true },
+101:     { plan_id: data.id, billing_cycle: 'yearly', price_cents: data.price_annual_cents, is_active: true },
+102:   ];
+103:   return { plan, prices };
+104: }
+105: 
+106: export default function Checkout() {
+107:   const navigate = useNavigate();
+108:   const [params] = useSearchParams();
+109:   const { storeId } = useLoja();
+110: 
+111:   const planId = params.get('plan');
+112:   const cycle = (['monthly', 'semiannual', 'yearly'].includes(params.get('cycle') ?? '') ? params.get('cycle') : 'monthly') as Cycle;
+113:   const moduleKey = params.get('module');
+114: 
+115:   const [loading, setLoading] = useState(true);
+116:   const [plan, setPlan] = useState<Plan | null>(null);
+117:   const [prices, setPrices] = useState<PlanPrice[]>([]);
+118:   const [f, setF] = useState<Form>(emptyForm);
+119:   const [couponInput, setCouponInput] = useState('');
+120:   const [applied, setApplied] = useState<Applied | null>(null);
+121:   const [couponMsg, setCouponMsg] = useState<string | null>(null);
+122:   const [couponBusy, setCouponBusy] = useState(false);
+123:   const [cepBusy, setCepBusy] = useState(false);
+124:   const [errors, setErrors] = useState<Record<string, string>>({});
+125:   const [submitting, setSubmitting] = useState(false);
+126:   const [dynamic, setDynamic] = useState(false);
+127:   const [trialEligible, setTrialEligible] = useState(false);
+128: 
+129:   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
+130: 
+131:   useEffect(() => {
+132:     getPlansShowcase().then(async ({ plans, prices }) => {
+133:       let found: Plan | null = plans.find((p) => p.id === planId) ?? null;
+134:       let pr: PlanPrice[] = prices;
+135:       if (!found) {
+136:         const r = await resolveDynamic(planId, moduleKey);
+137:         if (r) { found = r.plan; pr = r.prices; setDynamic(true); }
+138:       }
+139:       setPlan(found);
+140:       setPrices(pr);
+141:       setLoading(false);
+142:     });
+143:   }, [planId]);
+144: 
+145:   useEffect(() => {
+146:     if (!storeId) return;
+147:     sb.from('billing_info').select('*').eq('store_id', storeId).maybeSingle().then(({ data }: any) => {
+148:       if (!data) return;
+149:       setF({
+150:         type: data.person_type === 'pj' || digits(data.cnpj_cpf ?? '').length === 14 ? 'pj' : 'pf',
+151:         name: data.legal_name ?? '', doc: data.cnpj_cpf ?? '', email: data.email ?? '', phone: data.phone ?? '',
+152:         cep: data.cep ?? '', address: data.address ?? '', number: data.number ?? '', complement: data.complement ?? '',
+153:         neighborhood: data.neighborhood ?? '', city: data.city ?? '', state: data.state ?? '',
+154:       });
+155:     });
+156:   }, [storeId]);
+157: 
+158:   const trialModule = plan ? (plan.modules.length === 1 ? plan.modules[0] : moduleKey) : null;
+159:   useEffect(() => {
+160:     if (!storeId || !trialModule || trialModule === 'bundle') { setTrialEligible(false); return; }
+161:     let alive = true;
+162:     sb.from('subscriptions').select('status,module_key').eq('store_id', storeId).then(({ data }: any) => {
+163:       if (!alive) return;
+164:       const rows: any[] = data ?? [];
+165:       const hadModule = rows.some((r) => r.module_key === trialModule && r.status !== 'incomplete');
+166:       const hasPaid = rows.some((r) => ['active', 'lifetime', 'past_due'].includes(r.status));
+167:       setTrialEligible(!hadModule && hasPaid);
+168:     });
+169:     return () => { alive = false; };
+170:   }, [storeId, trialModule]);
+171: 
+172:   const priceCents = plan ? getPriceForCycle(plan.id, cycle, prices, plan.price_cents) : 0;
+173:   const discountCents = useMemo(() => {
+174:     if (!applied) return 0;
+175:     const d = applied.type === 'percentage' ? Math.round((priceCents * applied.value) / 100) : applied.value;
+176:     return Math.min(Math.max(d, 0), priceCents);
+177:   }, [applied, priceCents]);
+178:   const finalCents = priceCents - discountCents;
+179: 
+180:   async function applyCoupon() {
+181:     const code = couponInput.trim();
+182:     if (!code || !plan) return;
+183:     setCouponBusy(true); setCouponMsg(null);
+184:     const { data, error } = await sb.rpc('validate_coupon', { p_code: code, p_plan_id: plan.id });
+185:     setCouponBusy(false);
+186:     if (error || !data?.valid) {
+187:       setApplied(null);
+188:       setCouponMsg(COUPON_REASON[data?.reason] ?? 'Não foi possível validar o cupom.');
+189:       return;
+190:     }
+191:     const d = data.type === 'percentage' ? Math.round((priceCents * Number(data.value)) / 100) : Number(data.value);
+192:     if (priceCents - Math.min(d, priceCents) < 500) {
+193:       setApplied(null);
+194:       setCouponMsg('O valor final ficaria abaixo do mínimo de R$ 5,00.');
+195:       return;
+196:     }
+197:     setApplied({ code: code.toUpperCase(), type: data.type, value: Number(data.value) });
+198:   }
+199: 
+200:   async function lookupCep(value: string) {
+201:     const d = digits(value);
+202:     if (d.length !== 8) return;
+203:     setCepBusy(true);
+204:     try {
+205:       const r = await fetch(`https://viacep.com.br/ws/${d}/json/`);
+206:       const j = await r.json();
+207:       if (j.erro) { setErrors((e) => ({ ...e, cep: 'CEP não encontrado.' })); return; }
+208:       setErrors((e) => { const { cep, ...rest } = e; return rest; });
+209:       setF((x) => ({ ...x, address: j.logradouro || x.address, neighborhood: j.bairro || x.neighborhood, city: j.localidade || x.city, state: j.uf || x.state }));
+210:     } catch { /* o usuário preenche manualmente */ }
+211:     finally { setCepBusy(false); }
+212:   }
+213: 
+214:   function validate() {
+215:     const e: Record<string, string> = {};
+216:     if (!f.name.trim()) e.name = 'Informe o nome ou razão social.';
+217:     if (f.type === 'pf' ? !validCpf(f.doc) : !validCnpj(f.doc)) e.doc = f.type === 'pf' ? 'CPF inválido.' : 'CNPJ inválido.';
+218:     if (!/^\S+@\S+\.\S+$/.test(f.email)) e.email = 'E-mail inválido.';
+219:     if (digits(f.phone).length < 10) e.phone = 'Telefone inválido.';
+220:     if (digits(f.cep).length !== 8) e.cep = 'CEP inválido.';
+221:     if (!f.address.trim()) e.address = 'Informe o endereço.';
+222:     if (!f.number.trim()) e.number = 'Informe o número.';
+223:     if (!f.neighborhood.trim()) e.neighborhood = 'Informe o bairro.';
+224:     if (!f.city.trim()) e.city = 'Informe a cidade.';
+225:     if (f.state.trim().length !== 2) e.state = 'UF inválida.';
+226:     setErrors(e);
+227:     return Object.keys(e).length === 0;
+228:   }
+229: 
+230:   async function submit() {
+231:     if (!storeId || !plan) return;
+232:     if (!validate()) { toast.error('Confira os campos destacados.'); return; }
+233:     setSubmitting(true);
+234:     const { error: upErr } = await sb.from('billing_info').upsert({
+235:       store_id: storeId, person_type: f.type, legal_name: f.name.trim(), cnpj_cpf: digits(f.doc),
+236:       email: f.email.trim(), phone: digits(f.phone), cep: digits(f.cep), address: f.address.trim(),
+237:       number: f.number.trim(), complement: f.complement.trim() || null, neighborhood: f.neighborhood.trim(),
+238:       city: f.city.trim(), state: f.state.trim().toUpperCase(),
+239:     }, { onConflict: 'store_id' });
+240:     if (upErr) { setSubmitting(false); toast.error('Não foi possível salvar os dados: ' + upErr.message); return; }
+241: 
+242:     const result = dynamic
+243:       ? await subscribeToDynamicPlan({ storeId, dynamicPlanId: plan.id, billingCycle: cycle, couponCode: applied?.code ?? null })
+244:       : await subscribeToPlan({ storeId, planId: plan.id, billingCycle: cycle, moduleKey, couponCode: applied?.code ?? null });
+245:     if (result.error) {
+246:       setSubmitting(false);
+247:       if (result.error === 'TRIAL_ACTIVE' && result.invoiceUrl) {
+248:         toast.info('Seu teste já está ativo. Abrindo a fatura...');
+249:         window.location.href = result.invoiceUrl;
+250:         return;
+251:       }
+252:       toast.error(ERR[result.error] ?? result.error);
+253:       return;
+254:     }
+255:     if (result.trial) {
+256:       toast.success('Teste de 7 dias ativado! A fatura fica disponível em Minhas Assinaturas.');
+257:       window.location.assign('/dashboard'); // recarrega para a tarja ler o novo trial
+258:       return;
+259:     }
+260:     if (result.invoiceUrl) {
+261:       toast.success('Redirecionando para o pagamento...');
+262:       window.location.href = result.invoiceUrl;
+263:       return;
+264:     }
+265:     setSubmitting(false);
+266:     toast.success('Assinatura criada. A fatura aparece em Minhas Assinaturas.');
+267:     navigate('/dashboard/assinaturas');
+268:   }
+269: 
+270:   const field = (k: keyof Form, label: string, opts?: { span?: string; mask?: (v: string) => string; placeholder?: string; onBlur?: () => void }) => (
+271:     <div className={opts?.span}>
+272:       <label className={labelCls}>{label}</label>
+273:       <input
+274:         className={inputCls + (errors[k] ? ' !border-rose-400' : '')}
+275:         value={f[k] as string}
+276:         placeholder={opts?.placeholder}
+277:         onBlur={opts?.onBlur}
+278:         onChange={(e) => set(k, (opts?.mask ? opts.mask(e.target.value) : e.target.value) as never)}
+279:       />
+280:       {errors[k] && <p className="mt-1 text-[11px] text-rose-500">{errors[k]}</p>}
+281:     </div>
+282:   );
+283: 
+284:   if (loading) {
+285:     return (
+286:       <DashboardLayout>
+287:         <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[#0091ff]" /></div>
+288:       </DashboardLayout>
+289:     );
+290:   }
+291: 
+292:   if (!plan) {
+293:     return (
+294:       <DashboardLayout>
+295:         <div className="mx-auto max-w-lg py-20 text-center space-y-4">
+296:           <p className="text-slate-600">Plano não encontrado.</p>
+297:           <button type="button" onClick={() => navigate('/dashboard/planos')} className="text-sm font-bold text-[#0091ff]">Voltar para os planos</button>
+298:         </div>
+299:       </DashboardLayout>
+300:     );
+301:   }
+302: 
+303:   return (
+304:     <DashboardLayout>
+305:       <div className="mx-auto max-w-5xl space-y-6 pb-20">
+306:         <button type="button" onClick={() => navigate('/dashboard/planos')}
+307:           className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-[#0091ff]">
+308:           <ArrowLeft size={16} /> Voltar para os planos
+309:         </button>
+310:         <h1 className="text-2xl font-black text-slate-900">Finalizar assinatura</h1>
+311: 
+312:         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+313:           <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
+314:             <h2 className="text-sm font-black text-slate-900">Dados de faturamento (nota fiscal)</h2>
+315:             <div className="flex gap-2">
+316:               {(['pf', 'pj'] as Person[]).map((t) => (
+317:                 <button key={t} type="button" onClick={() => setF((x) => ({ ...x, type: t, doc: '' }))}
+318:                   className={'px-4 py-2 rounded-xl text-xs font-black border ' + (f.type === t ? 'bg-[#0091ff] text-white border-[#0091ff]' : 'bg-white text-slate-500 border-slate-200')}>
+319:                   {t === 'pf' ? 'Pessoa física' : 'Pessoa jurídica'}
+320:                 </button>
+321:               ))}
+322:             </div>
+323:             <div className="grid gap-3 sm:grid-cols-2">
+324:               {field('name', f.type === 'pf' ? 'Nome completo' : 'Razão social', { span: 'sm:col-span-2' })}
+325:               {field('doc', f.type === 'pf' ? 'CPF' : 'CNPJ', { mask: (v) => maskDoc(v, f.type) })}
+326:               {field('phone', 'Telefone / WhatsApp', { mask: maskPhone, placeholder: '(41) 99999-9999' })}
+327:               {field('email', 'E-mail para a nota fiscal', { span: 'sm:col-span-2' })}
+328:               <div>
+329:                 <label className={labelCls}>CEP {cepBusy && <Loader2 className="inline h-3 w-3 animate-spin" />}</label>
+330:                 <input className={inputCls + (errors.cep ? ' !border-rose-400' : '')} value={f.cep} placeholder="00000-000"
+331:                   onChange={(e) => { const v = maskCep(e.target.value); set('cep', v); if (digits(v).length === 8) lookupCep(v); }} />
+332:                 {errors.cep && <p className="mt-1 text-[11px] text-rose-500">{errors.cep}</p>}
+333:               </div>
+334:               {field('address', 'Endereço')}
+335:               {field('number', 'Número')}
+336:               {field('complement', 'Complemento (opcional)')}
+337:               {field('neighborhood', 'Bairro')}
+338:               {field('city', 'Cidade')}
+339:               {field('state', 'UF', { mask: (v) => v.toUpperCase().slice(0, 2) })}
+340:             </div>
+341:           </div>
+342: 
+343:           <div className="space-y-4">
+344:             <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+345:               <h2 className="text-sm font-black text-slate-900">Resumo</h2>
+346:               <div className="flex justify-between text-sm"><span className="text-slate-600">{plan.name}</span><span className="font-semibold">{CYCLE_LABEL[cycle]}</span></div>
+347:               <div className="flex justify-between text-sm"><span className="text-slate-600">Valor</span><span>{brl(priceCents)}</span></div>
+348:               {discountCents > 0 && (
+349:                 <div className="flex justify-between text-sm text-emerald-600"><span>Cupom {applied?.code}</span><span>- {brl(discountCents)}</span></div>
+350:               )}
+351:               <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-black text-slate-900"><span>Total</span><span>{brl(finalCents)}</span></div>
+352:               {trialEligible && (
+353:                 <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+354:                   Teste grátis de 7 dias. A primeira cobrança vence em {new Date(Date.now() + 7 * 86400000).toLocaleDateString('pt-BR')}.
+355:                 </p>
+356:               )}
+357:             </div>
+358: 
+359:             <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-2">
+360:               <label className={labelCls}><Tag className="inline h-3 w-3 mr-1" />Cupom de desconto</label>
+361:               <div className="flex gap-2">
+362:                 <input className={inputCls + ' uppercase'} value={couponInput} placeholder="BLACK10"
+363:                   onChange={(e) => { setCouponInput(e.target.value); if (applied) setApplied(null); setCouponMsg(null); }} />
+364:                 <button type="button" disabled={couponBusy || !couponInput.trim()} onClick={applyCoupon}
+365:                   className="px-4 rounded-xl bg-slate-900 text-white text-xs font-black disabled:opacity-50">
+366:                   {couponBusy ? '...' : 'Aplicar'}
+367:                 </button>
+368:               </div>
+369:               {applied && <p className="flex items-center gap-1 text-xs text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5" /> Cupom aplicado.</p>}
+370:               {couponMsg && <p className="text-xs text-rose-500">{couponMsg}</p>}
+371:             </div>
+372: 
+373:             <button type="button" disabled={submitting} onClick={submit}
+374:               className="w-full rounded-2xl bg-[#0091ff] py-3 text-sm font-black text-white hover:bg-[#0080e0] disabled:opacity-60">
+375:               {submitting ? 'Processando...' : trialEligible ? 'Iniciar teste de 7 dias' : 'Ir para o pagamento'}
+376:             </button>
+377:             <p className="text-center text-[11px] text-slate-400">O pagamento é feito no ambiente seguro do Asaas.</p>
+378:           </div>
+379:         </div>
+380:       </div>
+381:     </DashboardLayout>
+382:   );
+383: }
+##### supabase\functions\asaas-create-subscription\index.ts
+1: import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+2: 
+3: const ASAAS_ENV = Deno.env.get("ASAAS_ENV") ?? "sandbox";
+4: const IS_PROD = ASAAS_ENV === "production";
+5: const ASAAS_API_URL = IS_PROD
+6:   ? "https://api.asaas.com/v3"
+7:   : "https://api-sandbox.asaas.com/v3";
+8: const ASAAS_API_KEY = (IS_PROD
+9:   ? Deno.env.get("ASAAS_API_KEY")
+10:   : Deno.env.get("ASAAS_API_KEY_SANDBOX"))!;
+11: const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+12: const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+13: 
+14: const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+15: 
+16: interface RequestBody {
+17:   store_id: string;
+18:   plan_id: string;
+19:   billing_cycle: "MONTHLY" | "SEMIANNUAL" | "YEARLY";
+20:   module_key?: string | null;
+21:   coupon_code?: string | null;
+22:   dynamic_plan_id?: string | null;
+23: }
+24: 
+25: const CYCLE_MAP: Record<string, string> = {
+26:   MONTHLY: "MONTHLY",
+27:   SEMIANNUAL: "SEMIANNUALLY",
+28:   YEARLY: "YEARLY",
+29: };
+30: 
+31: const corsHeaders = {
+32:   "Access-Control-Allow-Origin": "*",
+33:   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+34:   "Access-Control-Allow-Methods": "POST, OPTIONS",
+35: };
+36: 
+37: function jsonResponse(body: unknown, status = 200) {
+38:   return new Response(JSON.stringify(body), {
+39:     status,
+40:     headers: { ...corsHeaders, "Content-Type": "application/json" },
+41:   });
+42: }
+43: 
+44: Deno.serve(async (req) => {
+45:   let reservedCouponId: string | null = null;
+46:   const release = async () => {
+47:     if (!reservedCouponId) return;
+48:     await supabaseAdmin.rpc("release_coupon", { p_coupon_id: reservedCouponId });
+49:     reservedCouponId = null;
+50:   };
+51:   try {
+52:     if (req.method === "OPTIONS") {
+53:       return new Response("ok", { headers: corsHeaders });
+54:     }
+55: 
+56:     if (req.method !== "POST") {
+57:       return jsonResponse({ error: "METHOD_NOT_ALLOWED" }, 405);
+58:     }
+59: 
+60:     // 1. Valida o JWT do usuário autenticado
+61:     const authHeader = req.headers.get("Authorization") ?? "";
+62:     const token = authHeader.replace("Bearer ", "");
+63:     if (!token) {
+64:       return jsonResponse({ error: "NAO_AUTENTICADO" }, 401);
+65:     }
+66: 
+67:     const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
+68:     if (userErr || !userData?.user) {
+69:       return jsonResponse({ error: "NAO_AUTENTICADO" }, 401);
+70:     }
+71: 
+72:     const body: RequestBody = await req.json();
+73:     const { store_id, plan_id, billing_cycle, module_key, coupon_code, dynamic_plan_id } = body;
+74: 
+75:     if (!store_id || (!plan_id && !dynamic_plan_id) || !billing_cycle) {
+76:       return jsonResponse({ error: "CAMPOS_OBRIGATORIOS_FALTANTES" }, 400);
+77:     }
+78: 
+79:     // 2. Confirma que a loja pertence ao usuário autenticado
+80:     const { data: store, error: storeErr } = await supabaseAdmin
+81:       .from("stores")
+82:       .select("id, owner_user_id, contact_name, owner_contact_email")
+83:       .eq("id", store_id)
+84:       .maybeSingle();
+85: 
+86:     if (storeErr || !store || store.owner_user_id !== userData.user.id) {
+87:       return jsonResponse({ error: "LOJA_INVALIDA" }, 403);
+88:     }
+89: 
+90:     // 3. Busca dados fiscais obrigatórios (CPF/CNPJ)
+91:     const { data: billingInfo } = await supabaseAdmin
+92:       .from("billing_info")
+93:       .select("*")
+94:       .eq("store_id", store_id)
+95:       .maybeSingle();
+96: 
+97:     if (!billingInfo?.cnpj_cpf) {
+98:       return jsonResponse(
+99:         {
+100:           error: "DADOS_FISCAIS_OBRIGATORIOS",
+101:           message: "Preencha seus dados de faturamento (CPF/CNPJ) antes de assinar.",
+102:         },
+103:         400
+104:       );
+105:     }
+106: 
+107:     // 4. Plano e preço do ciclo escolhido (dinâmico ou legado)
+108:     let dyn: {
+109:       id: string; plan_name: string; is_combo: boolean; module_slug: string | null; is_active: boolean;
+110:       price_monthly_cents: number; price_semiannual_cents: number; price_annual_cents: number;
+111:     } | null = null;
+112:     let planName = "";
+113:     let priceCents = 0;
+114: 
+115:     if (dynamic_plan_id) {
+116:       const { data: d } = await supabaseAdmin
+117:         .from("dynamic_plans")
+118:         .select("id, plan_name, is_combo, module_slug, is_active, price_monthly_cents, price_semiannual_cents, price_annual_cents")
+119:         .eq("id", dynamic_plan_id)
+120:         .maybeSingle();
+121:       if (!d || !d.is_active) {
+122:         return jsonResponse({ error: "PLANO_INVALIDO" }, 400);
+123:       }
+124:       dyn = d;
+125:       planName = d.plan_name;
+126:       priceCents =
+127:         billing_cycle === "MONTHLY" ? d.price_monthly_cents
+128:         : billing_cycle === "SEMIANNUAL" ? d.price_semiannual_cents
+129:         : d.price_annual_cents;
+130:       if (!priceCents || priceCents < 500) {
+131:         return jsonResponse({ error: "PLANO_INVALIDO" }, 400);
+132:       }
+133:     } else {
+134:       const { data: plan, error: planErr } = await supabaseAdmin
+135:         .from("plans")
+136:         .select("id, name, price_cents")
+137:         .eq("id", plan_id)
+138:         .maybeSingle();
+139:       if (planErr || !plan) {
+140:         return jsonResponse({ error: "PLANO_INVALIDO" }, 400);
+141:       }
+142:       planName = plan.name;
+143:       priceCents = plan.price_cents;
+144:       const { data: priceRow } = await supabaseAdmin
+145:         .from("plan_prices")
+146:         .select("price_cents")
+147:         .eq("plan_id", plan_id)
+148:         .eq("billing_cycle", billing_cycle.toLowerCase())
+149:         .eq("is_active", true)
+150:         .maybeSingle();
+151:       if (priceRow?.price_cents) {
+152:         priceCents = priceRow.price_cents;
+153:       }
+154:     }
+155: 
+156:     let discountCents = 0;
+157:     if (coupon_code && coupon_code.trim()) {
+158:       const { data: v, error: vErr } = await supabaseAdmin.rpc("validate_coupon", {
+159:         p_code: coupon_code.trim(),
+160:         p_plan_id: dynamic_plan_id ?? plan_id,
+161:       });
+162:       if (vErr || !v?.valid) {
+163:         return jsonResponse({ error: "CUPOM_INVALIDO", reason: v?.reason ?? "erro_validacao" }, 400);
+164:       }
+165:       discountCents =
+166:         v.type === "percentage"
+167:           ? Math.round((priceCents * Number(v.value)) / 100)
+168:           : Number(v.value);
+169:       discountCents = Math.min(Math.max(discountCents, 0), priceCents);
+170:       if (priceCents - discountCents < 500) {
+171:         return jsonResponse(
+172:           { error: "CUPOM_VALOR_MINIMO", message: "O valor final ficaria abaixo do mínimo de R$ 5,00." },
+173:           400
+174:         );
+175:       }
+176:       const { data: redeemed } = await supabaseAdmin.rpc("redeem_coupon", { p_coupon_id: v.coupon_id });
+177:       if (redeemed !== true) {
+178:         return jsonResponse({ error: "CUPOM_INVALIDO", reason: "exhausted" }, 400);
+179:       }
+180:       reservedCouponId = v.coupon_id;
+181:     }
+182: 
+183:     const value = (priceCents - discountCents) / 100;
+184:     const asaasCycle = CYCLE_MAP[billing_cycle] ?? "MONTHLY";
+185: 
+186:     // 4.5 Resolve o módulo pelo plano (não confia no cliente) e bloqueia duplicidade
+187:     let resolvedModuleKey: string | null = null;
+188:     let blockKeys: string[] = [];
+189: 
+190:     if (dyn) {
+191:       if (dyn.is_combo) {
+192:         const { data: cm } = await supabaseAdmin
+193:           .from("combo_modules")
+194:           .select("module_slug")
+195:           .eq("plan_id", dyn.id);
+196:         blockKeys = (cm ?? []).map((r: any) => r.module_slug);
+197:         if (blockKeys.length < 2) {
+198:           await release();
+199:           return jsonResponse({ error: "COMBO_INVALIDO" }, 400);
+200:         }
+201:         resolvedModuleKey = "bundle";
+202:       } else {
+203:         resolvedModuleKey = dyn.module_slug;
+204:         blockKeys = dyn.module_slug ? [dyn.module_slug] : [];
+205:       }
+206:     } else {
+207:       const { data: planRow } = await supabaseAdmin
+208:         .from("plans")
+209:         .select("modules")
+210:         .eq("id", plan_id)
+211:         .maybeSingle();
+212:       const planModules: string[] = Array.isArray(planRow?.modules) ? planRow.modules : [];
+213:       resolvedModuleKey = planModules.length === 1 ? planModules[0] : (module_key ?? null);
+214:       blockKeys = resolvedModuleKey ? [resolvedModuleKey] : [];
+215:     }
+216: 
+217:     if (blockKeys.length > 0) {
+218:       const { data: dupSub } = await supabaseAdmin
+219:         .from("subscriptions")
+220:         .select("id, status, module_key")
+221:         .eq("store_id", store_id)
+222:         .in("module_key", [...blockKeys, "bundle"])
+223:         .in("status", ["active", "past_due", "lifetime"])
+224:         .limit(1)
+225:         .maybeSingle();
+226:       if (dupSub) {
+227:         await release();
+228:         return jsonResponse({ error: "MODULE_ALREADY_SUBSCRIBED", module_key: dupSub.module_key, status: dupSub.status }, 409);
+229:       }
+230:     }
+231: 
+232:     // 4.6 Trial de 7 dias por modulo (1x por loja/modulo, so para quem ja tem plano pago)
+233:     const TRIAL_DAYS = 7;
+234:     let trialDays = 0;
+235:     let existingTrial: { id: string; asaas_subscription_id: string | null; current_period_end: string | null } | null = null;
+236: 
+237:     if (resolvedModuleKey && resolvedModuleKey !== "bundle") {
+238:       const { data: hist } = await supabaseAdmin
+239:         .from("subscriptions")
+240:         .select("id")
+241:         .eq("store_id", store_id)
+242:         .eq("module_key", resolvedModuleKey)
+243:         .neq("status", "incomplete")
+244:         .limit(1);
+245:       const { data: paidSubs } = await supabaseAdmin
+246:         .from("subscriptions")
+247:         .select("id")
+248:         .eq("store_id", store_id)
+249:         .in("status", ["active", "lifetime", "past_due"])
+250:         .limit(1);
+251:       if (!(hist && hist.length > 0) && paidSubs && paidSubs.length > 0) trialDays = TRIAL_DAYS;
+252: 
+253:       const { data: tr } = await supabaseAdmin
+254:         .from("subscriptions")
+255:         .select("id, asaas_subscription_id, current_period_end")
+256:         .eq("store_id", store_id)
+257:         .eq("module_key", resolvedModuleKey)
+258:         .eq("status", "trialing")
+259:         .order("created_at", { ascending: false })
+260:         .limit(1)
+261:         .maybeSingle();
+262:       existingTrial = tr ?? null;
+263: 
+264:       // Trial ativo com fatura no Asaas: devolve a fatura existente em vez de criar outra assinatura
+265:       if (tr?.asaas_subscription_id && tr.current_period_end && new Date(tr.current_period_end) > new Date()) {
+266:         let url: string | null = null;
+267:         try {
+268:           const pr = await fetch(`${ASAAS_API_URL}/subscriptions/${tr.asaas_subscription_id}/payments`, {
+269:             headers: { access_token: ASAAS_API_KEY },
+270:           });
+271:           const pj = await pr.json();
+272:           url = pj?.data?.[0]?.invoiceUrl ?? null;
+273:         } catch (_) { /* melhor esforco */ }
+274:         await release();
+275:         return jsonResponse({ error: "TRIAL_ACTIVE", invoice_url: url, trial_ends_at: tr.current_period_end }, 409);
+276:       }
+277:     }
+278: 
+279:     // 5. Reaproveita asaas_customer_id se já existir para esta loja
+280:     const { data: existingSub } = await supabaseAdmin
+281:       .from("subscriptions")
+282:       .select("asaas_customer_id")
+283:       .eq("store_id", store_id)
+284:       .not("asaas_customer_id", "is", null)
+285:       .order("created_at", { ascending: false })
+286:       .limit(1)
+287:       .maybeSingle();
+288: 
+289:     let asaasCustomerId = existingSub?.asaas_customer_id;
+290: 
+291:     if (!asaasCustomerId) {
+292:       const customerRes = await fetch(`${ASAAS_API_URL}/customers`, {
+293:         method: "POST",
+294:         headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
+295:         body: JSON.stringify({
+296:           name: billingInfo.legal_name || store.contact_name || "Cliente SLL",
+297:           cpfCnpj: billingInfo.cnpj_cpf,
+298:           email: billingInfo.email || store.owner_contact_email,
+299:           mobilePhone: billingInfo.phone,
+300:           postalCode: billingInfo.cep,
+301:           address: billingInfo.address,
+302:           addressNumber: billingInfo.number,
+303:           complement: billingInfo.complement,
+304:           province: billingInfo.neighborhood,
+305:           externalReference: store_id,
+306:         }),
+307:       });
+308: 
+309:       const customerData = await customerRes.json();
+310:       if (!customerRes.ok) {
+311:         await release();
+312:         return jsonResponse({ error: "ASAAS_CUSTOMER_ERROR", details: customerData }, 400);
+313:       }
+314:       asaasCustomerId = customerData.id;
+315:     }
+316: 
+317:     // PATCH_CUSTOMER_UPDATE: mantém os dados fiscais do cliente no Asaas atualizados
+318:     if (existingSub?.asaas_customer_id) {
+319:       try {
+320:         await fetch(`${ASAAS_API_URL}/customers/${asaasCustomerId}`, {
+321:           method: "POST",
+322:           headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
+323:           body: JSON.stringify({
+324:             name: billingInfo.legal_name || store.contact_name || "Cliente SLL",
+325:             cpfCnpj: billingInfo.cnpj_cpf,
+326:             email: billingInfo.email || store.owner_contact_email,
+327:             mobilePhone: billingInfo.phone,
+328:             postalCode: billingInfo.cep,
+329:             address: billingInfo.address,
+330:             addressNumber: billingInfo.number,
+331:             complement: billingInfo.complement,
+332:             province: billingInfo.neighborhood,
+333:           }),
+334:         });
+335:       } catch (_) { /* melhor esforco */ }
+336:     }
+337: 
+338:     // 6. Cria a subscription no Asaas
+339:     const nextDueDate = new Date();
+340:     nextDueDate.setDate(nextDueDate.getDate() + (trialDays || 1));
+341: 
+342:     const subRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+343:       method: "POST",
+344:       headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
+345:       body: JSON.stringify({
+346:         customer: asaasCustomerId,
+347:         billingType: "UNDEFINED",
+348:         nextDueDate: nextDueDate.toISOString().slice(0, 10),
+349:         value,
+350:         cycle: asaasCycle,
+351:         description: `${planName}${module_key ? ` (${module_key})` : ""} - SLL Hub`,
+352:         externalReference: store_id,
+353:       }),
+354:     });
+355: 
+356:     const subData = await subRes.json();
+357:     if (!subRes.ok) {
+358:       await release();
+359:       return jsonResponse({ error: "ASAAS_SUBSCRIPTION_ERROR", details: subData }, 400);
+360:     }
+361: 
+362:     // 7. Busca o link de pagamento da primeira fatura gerada
+363:     let invoiceUrl: string | null = null;
+364:     try {
+365:       const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}/payments`, {
+366:         headers: { access_token: ASAAS_API_KEY },
+367:       });
+368:       const paymentsData = await paymentsRes.json();
+369:       invoiceUrl = paymentsData?.data?.[0]?.invoiceUrl ?? null;
+370:     } catch (_) {
+371:       // Se falhar, o cliente pode acessar depois via histórico de faturas
+372:     }
+373: 
+374:     // 8. Grava a assinatura em public.subscriptions (uma linha por módulo/plano)
+375:     const periodEnd = new Date();
+376:     if (billing_cycle === "MONTHLY") periodEnd.setMonth(periodEnd.getMonth() + 1);
+377:     if (billing_cycle === "SEMIANNUAL") periodEnd.setMonth(periodEnd.getMonth() + 6);
+378:     if (billing_cycle === "YEARLY") periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+379:     if (trialDays > 0) periodEnd.setTime(Date.now() + trialDays * 86400000);
+380: 
+381:     const { data: savedSub, error: dbError } = await supabaseAdmin
+382:       .from("subscriptions")
+383:       .insert({
+384:         store_id,
+385:         plan_id: dyn ? null : plan_id,
+386:             dynamic_plan_id: dyn ? dyn.id : null,
+387:             combo_kind: dyn?.is_combo ? "fixed" : null,
+388:             module_key: resolvedModuleKey,
+389:         billing_cycle: billing_cycle.toLowerCase(),
+390:         status: trialDays > 0 ? "trialing" : "incomplete",
+391:         current_period_start: new Date().toISOString(),
+392:         current_period_end: periodEnd.toISOString(),
+393:         asaas_customer_id: asaasCustomerId,
+394:         asaas_subscription_id: subData.id,
+395:         billing_provider: "asaas",
+396:         coupon_id: reservedCouponId,
+397:         coupon_discount_cents: discountCents > 0 ? discountCents : null,
+398:         is_current: true,
+399:       })
+400:       .select()
+401:       .single();
+402: 
+403:     if (dbError) {
+404:       try {
+405:         await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}`, {
+406:           method: "DELETE",
+407:           headers: { access_token: ASAAS_API_KEY },
+408:         });
+409:       } catch (_) { /* melhor esforco */ }
+410:       await release();
+411:       return jsonResponse({ error: "DB_ERROR", details: dbError }, 500);
+412:     }
+413: 
+414:     // Substitui o trial anterior (vencido ou manual) pela nova assinatura
+415:     if (existingTrial) {
+416:       await supabaseAdmin
+417:         .from("subscriptions")
+418:         .update({ status: "canceled", is_current: false, canceled_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+419:         .eq("id", existingTrial.id);
+420:       if (existingTrial.asaas_subscription_id) {
+421:         try {
+422:           await fetch(`${ASAAS_API_URL}/subscriptions/${existingTrial.asaas_subscription_id}`, {
+423:             method: "DELETE",
+424:             headers: { access_token: ASAAS_API_KEY },
+425:           });
+426:         } catch (_) { /* melhor esforco */ }
+427:       }
+428:     }
+429: 
+430:     return jsonResponse({ success: true, subscription: savedSub, invoice_url: invoiceUrl, discount_cents: discountCents, trial: trialDays > 0, trial_days: trialDays });
+431:   } catch (err) {
+432:     await release();
+433:     return jsonResponse({ error: "UNEXPECTED_ERROR", details: String(err) }, 500);
+434:   }
+435: });
+##### subscribeToDynamicPlan / subscribeToPlan
+94: export async function subscribeToPlan(params: {
+130: export async function subscribeToDynamicPlan(params: {

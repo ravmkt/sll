@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Check, Lock, X, Zap } from "lucide-react";
+import { Check, Lock, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -10,6 +10,7 @@ import { bumpTotal, useUpsells } from "@/components/checkout/OrderBumpCard";
 import type { PlanCycle } from "@/components/planos/VidlyticsPlanCard";
 import type { CatalogPlan } from "@/services/plans/getCatalogShowcase";
 import { CYCLE_MONTHS, brl, cycleCents } from "@/components/planos/planosShared";
+import { addonIcon } from "@/components/planos/addonIcon";
 
 const sb: any = supabase;
 
@@ -139,7 +140,7 @@ export default function ModuloPlanoModal({
           )}
 
           <div>
-            <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-slate-500">Compare e escolha o plano</p>
+            <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-slate-500">1. Escolha o plano</p>
             <div className="grid gap-3 sm:grid-cols-3">
               {sorted.map((p) => {
                 const on = p.id === planId;
@@ -187,27 +188,33 @@ export default function ModuloPlanoModal({
           </div>
 
           {items.length > 0 && (
-            <div className="rounded-2xl border border-[#fd8539]/40 bg-[#fd8539]/5 p-4">
-              <p className="mb-3 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-[#c2571a]">
-                <Zap size={13} /> Turbine seu plano: adicione ao carrinho
-              </p>
-              <div className="grid gap-2 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-slate-500">2. Turbine com add-ons (opcional)</p>
+              <div className="grid gap-3 sm:grid-cols-3">
                 {items.map((a) => {
                   const on = sel.has(a.id);
+                  const Icon = addonIcon(a);
                   return (
                     <button
                       key={a.id}
                       type="button"
                       onClick={() => toggle(a.id)}
-                      className={cn("flex w-full cursor-pointer items-start gap-2.5 rounded-xl border-2 bg-white p-3 text-left transition-colors", on ? "border-[#fd8539] bg-[#fd8539]/10" : "border-slate-200 hover:border-[#fd8539]/60")}
+                      className={cn(
+                        "flex cursor-pointer flex-col gap-2 rounded-2xl border-2 bg-white p-4 text-left transition-colors",
+                        on ? "border-[#fd8539] bg-[#fd8539]/5" : "border-slate-200 hover:border-[#fd8539]/60"
+                      )}
                     >
-                      <span className={cn("mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2", on ? "border-[#fd8539] bg-[#fd8539] text-white" : "border-slate-300 bg-white")}>
-                        {on && <Check size={11} strokeWidth={3} />}
+                      <span className="flex items-center justify-between">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fd8539]/10 text-[#fd8539]">
+                          <Icon size={18} />
+                        </span>
+                        <span className={cn("flex h-5 w-5 items-center justify-center rounded border-2", on ? "border-[#fd8539] bg-[#fd8539] text-white" : "border-slate-300 bg-white")}>
+                          {on && <Check size={12} strokeWidth={3} />}
+                        </span>
                       </span>
-                      <span className="min-w-0 text-xs leading-snug text-slate-700">
-                        <b className="block text-slate-900">{a.upsell_headline || a.name}</b>
-                        <span className="font-bold text-[#c2571a]">+ {brl(Math.round(a.price_monthly * 100))}/mês</span>
-                      </span>
+                      <b className="text-sm text-slate-900">{a.upsell_headline || a.name}</b>
+                      {a.description && <span className="text-[11px] leading-snug text-slate-500">{a.description}</span>}
+                      <span className="mt-auto text-xs font-black text-[#c2571a]">+ {brl(Math.round(a.price_monthly * 100))}/mês</span>
                     </button>
                   );
                 })}

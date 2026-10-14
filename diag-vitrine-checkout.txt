@@ -1,0 +1,945 @@
+== arquivos de planos e checkout
+src\pages\planos\Planos.tsx  (374 linhas)
+src\pages\planos\PlanosGatePage.tsx  (85 linhas)
+src\components\planos\ComboCards.tsx  (114 linhas)
+src\components\planos\ModuleCards.tsx  (84 linhas)
+src\components\planos\ModuloPlanoModal.tsx  (275 linhas)
+src\components\planos\PlanCard.tsx  (119 linhas)
+src\components\planos\PlanosFaq.tsx  (55 linhas)
+src\components\planos\planosShared.ts  (13 linhas)
+src\components\planos\VidlyticsPlanCard.tsx  (167 linhas)
+src\pages\checkout\BillingSuccess.tsx  (52 linhas)
+src\pages\checkout\Checkout.tsx  (400 linhas)
+src\pages\checkout\CheckoutIdRedirect.tsx  (10 linhas)
+src\pages\checkout\CheckoutPage.tsx  (384 linhas)
+src\components\checkout\OrderBumpCard.tsx  (90 linhas)
+##### src\pages\planos\Planos.tsx
+1: import { useEffect, useMemo, useState } from "react";
+2: import { useNavigate } from "react-router-dom";
+3: import { ArrowLeft, Check, Eye, Film, Loader2 } from "lucide-react";
+4: import { cn } from "@/lib/utils";
+5: import { useLoja } from "@/contexts/LojaContext";
+6: import { supabase } from "@/lib/supabase";
+7: import { toast } from "sonner";
+8: import type { PlanCycle } from "@/components/planos/VidlyticsPlanCard";
+9: import ComboCards, { comboMaxPct } from "@/components/planos/ComboCards";
+10: import ModuloPlanoModal from "@/components/planos/ModuloPlanoModal";
+11: import PlanosFaq from "@/components/planos/PlanosFaq";
+12: import ModuleCards from "@/components/planos/ModuleCards";
+13: import { DashboardLayout } from "@/components/layout/DashboardLayout";
+14: import {
+15:   getCatalogModules,
+16:   getCatalogShowcase,
+17:   getCatalogCombos,
+18:   type CatalogCombo,
+19:   type CatalogModule,
+20:   type CatalogPlan,
+21: } from "@/services/plans/getCatalogShowcase";
+23: const CYCLES: { key: PlanCycle; label: string; badge?: string }[] = [
+24:   { key: "monthly", label: "Mensal" },
+25:   { key: "semiannual", label: "Semestral", badge: "17% OFF" },
+26:   { key: "yearly", label: "Anual", badge: "4 MESES GRÁTIS" },
+27: ];
+29: type Cell = boolean | string | { ok: string };
+31: const COMPARE_COLS = ["Starter", "Pro", "Scale"];
+33: const ADDONS = [
+34:   { key: "videos_10", icon: Film, title: "+10 Vídeos Ativos", desc: "Adicione mais produtos com vídeos no seu e-commerce", cents: 2990 },
+35:   { key: "views_25k", icon: Eye, title: "+25.000 Visualizações", desc: "Aumente sua franquia mensal para picos de campanhas e tráfego", cents: 3990 },
+36: ];
+38: const COMPARE: { group: string; rows: { label: string; v: [Cell, Cell, Cell] }[] }[] = [
+39:   {
+40:     group: "Capacidade e consumo",
+41:     rows: [
+42:       { label: "Vídeos ativos simultâneos", v: ["5 vídeos", "20 vídeos", "50 vídeos"] },
+43:       { label: "Franquia de visualizações mensais", v: ["5.000 views", "25.000 views", "60.000 views"] },
+44:       {
+45:         label: "Formatos liberados (Flutuante, Stories, Carrossel, Grade)",
+46:         v: [{ ok: "Todos" }, { ok: "Todos" }, { ok: "Todos" }],
+47:       },
+48:     ],
+49:   },
+50:   {
+51:     group: "Conversão e inteligência",
+52:     rows: [
+53:       { label: "Botão Comprar via WhatsApp (com link do produto)", v: [true, true, true] },
+54:       { label: "Métricas básicas (visualizações e cliques no vídeo)", v: [true, true, true] },
+55:       { label: "Rastreamento de vendas e faturamento gerado por vídeo", v: [false, true, true] },
+56:       { label: "Remoção da marca d'água (Player 100% White-label)", v: [false, true, true] },
+57:     ],
+58:   },
+59:   {
+60:     group: "Atendimento e suporte",
+61:     rows: [
+62:       { label: "Suporte por e-mail", v: [true, true, true] },
+63:       { label: "Suporte direto via WhatsApp com especialista", v: [false, true, true] },
+64:     ],
+65:   },
+66: ];
+68: function CompareCell({ v }: { v: Cell }) {
+69:   if (v === true) return <Check className="mx-auto h-5 w-5 stroke-[3] text-emerald-500" />;
+70:   if (v === false) return <span className="text-slate-300">{"\u2014"}</span>;
+71:   if (typeof v === "string") return <span className="font-bold text-slate-800">{v}</span>;
+72:   return (
+73:     <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
+74:       <Check className="h-4 w-4 stroke-[3] text-emerald-500" />
+75:       {v.ok}
+76:     </span>
+77:   );
+78: }
+80: export default function Planos() {
+81:   const navigate = useNavigate();
+82:   const { storeId } = useLoja();
+83:   const [loading, setLoading] = useState(true);
+84:   const [plans, setPlans] = useState<CatalogPlan[]>([]);
+85:   const [mods, setMods] = useState<CatalogModule[]>([]);
+86:   const [combos, setCombos] = useState<CatalogCombo[]>([]);
+87:   const [openMod, setOpenMod] = useState<string | null>(null);
+88:   const [cycle, setCycle] = useState<PlanCycle>("monthly");
+89:   // null = sem plano ativo no Vidlytics; tier pode ser null em assinaturas sem plano dinamico (ex.: vitalicia)
+90:   const [current, setCurrent] = useState<{ tier: string | null } | null>(null);
+92:   useEffect(() => {
+93:     Promise.all([getCatalogShowcase(), getCatalogModules(), getCatalogCombos()]).then(([list, m, cb]) => {
+94:       setPlans(list);
+95:       setMods(m);
+96:       setCombos(cb);
+97:       setLoading(false);
+98:     });
+99:   }, []);
+101:   useEffect(() => {
+102:     if (!storeId) return;
+103:     let alive = true;
+104:     (async () => {
+105:       const sb: any = supabase;
+106:       const { data: sub } = await sb
+107:         .from("subscriptions")
+108:         .select("dynamic_plan_id, status")
+109:         .eq("store_id", storeId)
+110:         .eq("module_key", "vidlytics")
+111:         .eq("is_current", true)
+112:         .in("status", ["active", "past_due", "lifetime"])
+113:         .limit(1)
+114:         .maybeSingle();
+115:       if (!alive) return;
+116:       if (!sub) { setCurrent(null); return; }
+117:       let tier: string | null = null;
+118:       if (sub.dynamic_plan_id) {
+119:         const { data: dp } = await sb.from("dynamic_plans").select("plan_tier").eq("id", sub.dynamic_plan_id).maybeSingle();
+120:         tier = dp?.plan_tier ? String(dp.plan_tier).toLowerCase() : null;
+121:       }
+122:       if (alive) setCurrent({ tier });
+123:     })();
+124:     return () => { alive = false; };
+125:   }, [storeId]);
+127:   const [busyAddon, setBusyAddon] = useState<string | null>(null);
+129:   async function handleAddon(key: string) {
+130:     if (!current) {
+131:       toast.warning("Selecione um plano base primeiro para contratar add-ons.");
+132:       return;
+133:     }
+134:     if (!storeId) {
+135:       toast.error("Nenhuma loja ativa encontrada.");
+136:       return;
+137:     }
+138:     setBusyAddon(key);
+139:     const { data, error } = await supabase.functions.invoke("asaas-create-addon", {
+140:       body: { store_id: storeId, addon_key: key },
+141:     });
+142:     let body: any = data;
+143:     if (error && (error as any).context) {
+144:       try { body = await (error as any).context.json(); } catch (_) {}
+145:     }
+146:     setBusyAddon(null);
+147:     if (error || body?.error) {
+148:       toast.error(body?.message || body?.error || "Não foi possível contratar o pacote.");
+149:       return;
+150:     }
+151:     if (body?.invoice_url) window.open(body.invoice_url, "_blank", "noopener");
+152:     toast.success("Pacote criado. Conclua o pagamento para liberar a capacidade extra.");
+153:   }
+155:   const soon = useMemo(() => mods.filter((m) => m.status === "coming_soon"), [mods]);
+156:   const modBySlug = useMemo(() => new Map(mods.map((m) => [m.slug, m])), [mods]);
+157:   const byModule = useMemo(() => {
+158:     const g = new Map<string, CatalogPlan[]>();
+159:     plans.forEach((p) => g.set(p.module_slug, [...(g.get(p.module_slug) ?? []), p]));
+160:     return Array.from(g.entries());
+161:   }, [plans]);
+163:   function handleCombo(c: CatalogCombo) {
+164:     if (!storeId) {
+165:       toast.error("Nenhuma loja ativa encontrada.");
+166:       return;
+167:     }
+168:     const qs = new URLSearchParams({ plan: c.id, cycle, module: "bundle", mods: c.modules.map((m) => m.slug).join(",") });
+169:     navigate(`/dashboard/checkout?${qs.toString()}`);
+170:   }
+172:   if (loading) {
+173:     return (
+174:       <DashboardLayout>
+175:         <div className="flex min-h-[60vh] items-center justify-center">
+176:           <Loader2 className="h-8 w-8 animate-spin text-[#0091ff]" />
+177:         </div>
+178:       </DashboardLayout>
+179:     );
+180:   }
+182:   return (
+183:     <DashboardLayout>
+184:       <div className="mx-auto max-w-6xl space-y-8 pb-20">
+185:         <button
+186:           type="button"
+187:           onClick={() => navigate("/dashboard/assinaturas")}
+188:           className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-[#0091ff] transition-colors mb-2"
+189:         >
+190:           <ArrowLeft size={16} />
+191:           Voltar para Minhas Assinaturas
+192:         </button>
+194:         <div className="text-center max-w-2xl mx-auto space-y-4">
+195:           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+196:             Escolha o plano ideal para sua loja
+197:           </h1>
+198:           <p className="text-sm font-medium text-slate-500">Escolha o plano e o ciclo de cobrança.</p>
+200:           <div className="flex justify-center pt-2">
+201:             <div className="inline-flex flex-wrap items-center justify-center gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/50">
+202:               {CYCLES.map((c) => (
+203:                 <button
+204:                   key={c.key}
+205:                   type="button"
+206:                   onClick={() => setCycle(c.key)}
+207:                   className={cn(
+208:                     "flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl transition-all",
+209:                     cycle === c.key ? "bg-white text-[#0091ff] shadow-sm" : "text-slate-400 hover:text-slate-600"
+210:                   )}
+211:                 >
+212:                   {c.label}
+213:                   {c.badge && (
+214:                     <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+215:                       {c.badge}
+216:                     </span>
+217:                   )}
+218:                 </button>
+219:               ))}
+220:             </div>
+221:           </div>
+222:         </div>
+224:         {plans.length === 0 && combos.length === 0 && (
+225:           <p className="text-center text-sm text-slate-500 pt-6">Nenhum plano disponível no momento.</p>
+226:         )}
+228:         {combos.length > 0 && <ComboCards combos={combos} cycle={cycle} onSelect={handleCombo} />}
+230:                 <ModuleCards byModule={byModule} mods={mods} onOpen={setOpenMod} />
+232:         {plans.length > 0 && (
+233:           <section className="max-w-5xl mx-auto space-y-6 pt-8">
+234:             <div className="text-center space-y-2">
+235:               <p className="text-xs font-black uppercase tracking-widest text-[#0091ff]">{"\u2014"} COMPARATIVO</p>
+236:               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+237:                 Compare todos os recursos do Vidlytics
+238:               </h2>
+239:               <p className="text-sm font-medium text-slate-500">
+240:                 Veja exatamente o que cada plano oferece para acelerar as vendas da sua loja.
+241:               </p>
+242:             </div>
+244:             <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+245:               <table className="w-full min-w-[560px] text-sm">
+246:                 <thead>
+247:                   <tr className="border-b border-slate-200">
+248:                     <th className="px-5 py-4 text-left" />
+249:                     {COMPARE_COLS.map((c, i) => (
+250:                       <th
+251:                         key={c}
+252:                         className={cn(
+253:                           "px-4 py-4 text-center text-xs font-black uppercase tracking-wider",
+254:                           i === 1 ? "bg-orange-50 text-[#fd8539]" : "text-slate-700"
+255:                         )}
+256:                       >
+257:                         {c}
+258:                       </th>
+259:                     ))}
+260:                   </tr>
+261:                 </thead>
+262:                 {COMPARE.map((g) => (
+263:                   <tbody key={g.group} className="divide-y divide-slate-100">
+264:                     <tr className="bg-slate-50">
+265:                       <td colSpan={4} className="px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-500">
+266:                         {g.group}
+267:                       </td>
+268:                     </tr>
+269:                     {g.rows.map((r) => (
+270:                       <tr key={r.label}>
+271:                         <td className="px-5 py-3.5 text-xs font-bold text-slate-700">{r.label}</td>
+272:                         {r.v.map((cell, i) => (
+273:                           <td key={i} className={cn("px-4 py-3.5 text-center text-xs", i === 1 && "bg-orange-50/40")}>
+274:                             <CompareCell v={cell} />
+275:                           </td>
+276:                         ))}
+277:                       </tr>
+278:                     ))}
+279:                   </tbody>
+280:                 ))}
+281:               </table>
+282:             </div>
+284:             <div className="space-y-5 pt-6">
+285:               <div className="text-center space-y-2">
+286:                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Turbine sua conta com Add-ons</h2>
+287:                 <p className="text-sm font-medium text-slate-500">
+288:                   Precisa de mais capacidade sem trocar de plano? Adicione pacotes extras à sua assinatura a qualquer momento.
+289:                 </p>
+290:               </div>
+291:               <div className="grid gap-5 sm:grid-cols-2 max-w-3xl mx-auto">
+292:                 {ADDONS.map((a) => {
+293:                   const Icon = a.icon;
+294:                   return (
+295:                     <div key={a.key} className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+296:                       <div className="space-y-3">
+297:                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0091ff]/10 text-[#0091ff]">
+298:                           <Icon size={22} />
+299:                         </div>
+300:                         <h3 className="text-lg font-black text-slate-900">{a.title}</h3>
+301:                         <p className="text-xs font-medium leading-relaxed text-slate-500">{a.desc}</p>
+302:                         <p className="text-slate-900">
+303:                           <span className="text-2xl font-black tracking-tight">
+304:                             {(a.cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+305:                           </span>
+306:                           <span className="ml-1 text-xs font-bold text-slate-400">/ mês</span>
+307:                         </p>
+308:                       </div>
+309:                       <button
+310:                         type="button"
+311:                         onClick={() => handleAddon(a.key)} disabled={busyAddon === a.key}
+312:                         className="mt-5 w-full rounded-2xl bg-[#0091ff] py-3 px-4 text-xs font-black uppercase tracking-wider text-white shadow-lg transition-all hover:bg-[#0070f3] hover:scale-[1.02] cursor-pointer"
+313:                       >
+314:                         Contratar Pacote
+315:                       </button>
+316:                     </div>
+317:                   );
+318:                 })}
+319:               </div>
+320:             </div>
+321:           </section>
+322:         )}
+324:         <PlanosFaq />
+326:         {openMod && (() => {
+327:           const mp = byModule.find(([s]) => s === openMod);
+328:           if (!mp) return null;
+329:           const mod = modBySlug.get(openMod);
+330:           return (
+331:             <ModuloPlanoModal
+332:               key={openMod}
+333:               slug={openMod}
+334:               name={mod?.name || openMod}
+335:               logoUrl={mod?.logo_url ?? null}
+336:               plans={mp[1]}
+337:               initialCycle={cycle}
+338:               currentTier={openMod === "vidlytics" ? current?.tier ?? null : null}
+339:               onClose={() => setOpenMod(null)}
+340:             />
+341:           );
+342:         })()}
+344:         {soon.length > 0 && (
+345:           <div className="max-w-5xl mx-auto space-y-3">
+346:             <h2 className="text-center text-xs font-black uppercase tracking-wider text-slate-400">Em breve</h2>
+347:             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+348:               {soon.map((m) => (
+349:                 <div
+350:                   key={m.slug}
+351:                   className="flex items-center justify-between gap-3 rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-5"
+352:                 >
+353:                   <div className="flex min-w-0 items-center gap-3">
+354:                     {m.logo_url ? (
+355:                       <img src={m.logo_url} alt={m.name} className="h-9 w-9 shrink-0 rounded-xl bg-white object-contain p-1" />
+356:                     ) : (
+357:                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-sm font-black text-slate-500">
+358:                         {m.name.charAt(0).toUpperCase()}
+359:                       </div>
+360:                     )}
+361:                     <p className="truncate text-sm font-black uppercase tracking-tight text-slate-700">{m.name}</p>
+362:                   </div>
+363:                   <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-700">
+364:                     Em breve
+365:                   </span>
+366:                 </div>
+367:               ))}
+368:             </div>
+369:           </div>
+370:         )}
+371:       </div>
+372:     </DashboardLayout>
+373:   );
+374: }
+##### src\components\planos\ModuloPlanoModal.tsx
+1: import { useEffect, useMemo, useState } from "react";
+2: import { createPortal } from "react-dom";
+3: import { useNavigate } from "react-router-dom";
+4: import { Check, Lock, X, Zap } from "lucide-react";
+5: import { toast } from "sonner";
+6: import { cn } from "@/lib/utils";
+7: import { supabase } from "@/lib/supabase";
+8: import { useLoja } from "@/contexts/LojaContext";
+9: import { bumpTotal, useUpsells } from "@/components/checkout/OrderBumpCard";
+10: import type { PlanCycle } from "@/components/planos/VidlyticsPlanCard";
+11: import type { CatalogPlan } from "@/services/plans/getCatalogShowcase";
+12: import { CYCLE_MONTHS, brl, cycleCents } from "@/components/planos/planosShared";
+14: const sb: any = supabase;
+16: const CYCLES: { key: PlanCycle; label: string; note: string }[] = [
+17:   { key: "monthly", label: "Mensal", note: "Cancele a qualquer momento, sem taxa." },
+18:   { key: "semiannual", label: "Semestral", note: "Cobrança única a cada 6 meses." },
+19:   { key: "yearly", label: "Anual", note: "Cobrança única por ano. O melhor preço." },
+20: ];
+22: const nf = (n: number) => n.toLocaleString("pt-BR");
+24: // Fallback: monta a lista a partir dos limites do plano quando o Master nao preencheu os destaques
+25: function bullets(l?: Record<string, any>): string[] {
+26:   if (!l) return [];
+27:   const out: string[] = [];
+28:   if ("max_videos" in l) out.push(l.max_videos === null ? "Vídeos ilimitados" : `Até ${nf(Number(l.max_videos))} vídeos ativos`);
+29:   if ("views" in l) out.push(l.views === null ? "Visualizações ilimitadas" : `Até ${nf(Number(l.views))} visualizações/mês`);
+30:   if ("max_pages" in l) out.push(l.max_pages === null ? "Páginas ilimitadas" : `Até ${nf(Number(l.max_pages))} páginas com vídeo`);
+31:   if ("storage_gb" in l) out.push(l.storage_gb === null ? "Armazenamento ilimitado" : `${nf(Number(l.storage_gb))} GB de armazenamento`);
+32:   if (l.tracking === true) out.push("Rastreamento de vendas por vídeo");
+33:   if (l.badge_removable === true) out.push("Sem marca d'água");
+34:   return out;
+35: }
+37: export default function ModuloPlanoModal({
+38:   slug, name, logoUrl, plans, initialCycle, currentTier, onClose,
+39: }: {
+40:   slug: string; name: string; logoUrl: string | null; plans: CatalogPlan[];
+41:   initialCycle: PlanCycle; currentTier: string | null; onClose: () => void;
+42: }) {
+43:   const navigate = useNavigate();
+44:   const { storeId } = useLoja();
+46:   const sorted = useMemo(() => {
+47:     const priced = plans.filter((p) => p.price_monthly_cents > 0);
+48:     return [...(priced.length ? priced : plans)].sort((a, b) => a.price_monthly_cents - b.price_monthly_cents);
+49:   }, [plans]);
+50:   const tierOf = (p: CatalogPlan) => String(p.plan_tier || "").toLowerCase();
+51:   const isCur = (p: CatalogPlan) => !!currentTier && tierOf(p) === currentTier;
+53:   const [planId, setPlanId] = useState(
+54:     () => (sorted.find((p) => !isCur(p) && tierOf(p) === "pro") ?? sorted.find((p) => !isCur(p)) ?? sorted[0])?.id ?? ""
+55:   );
+56:   const [cycle, setCycle] = useState<PlanCycle>(initialCycle);
+57:   const [sel, setSel] = useState<Set<string>>(new Set());
+58:   const [desc, setDesc] = useState("");
+59:   const [hasSummary, setHasSummary] = useState(false);
+60:   const [incl, setIncl] = useState<string[]>([]);
+61:   const [limits, setLimits] = useState<Record<string, Record<string, any>>>({});
+62:   const [hl, setHl] = useState<Record<string, string[]>>({});
+63:   const items = useUpsells([slug]);
+65:   useEffect(() => {
+66:     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+67:     window.addEventListener("keydown", onKey);
+68:     const prev = document.body.style.overflow;
+69:     document.body.style.overflow = "hidden";
+70:     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+71:   }, [onClose]);
+73:   useEffect(() => {
+74:     let alive = true;
+75:     sb.from("hub_modules").select("*").eq("slug", slug).maybeSingle().then(({ data }: any) => {
+76:       if (!alive || !data) return;
+77:       const summary = String(data.modal_description || "").trim();
+78:       setHasSummary(!!summary);
+79:       setDesc(summary || String(data.description || ""));
+80:       const f = Array.isArray(data.features) && data.features.length ? data.features : Array.isArray(data.benefits) ? data.benefits : [];
+81:       setIncl(f.map(String));
+82:     });
+83:     (async () => {
+84:       const ids = sorted.map((p) => p.id);
+85:       let r: any = await sb.from("dynamic_plans").select("id,limits_config,modal_highlights").in("id", ids);
+86:       if (r.error) r = await sb.from("dynamic_plans").select("id,limits_config").in("id", ids);
+87:       if (!alive || !r.data) return;
+88:       const rows = r.data as any[];
+89:       setLimits(Object.fromEntries(rows.map((x) => [x.id, x.limits_config || {}])));
+90:       setHl(Object.fromEntries(rows.map((x) => [x.id, Array.isArray(x.modal_highlights) ? x.modal_highlights.map(String).filter(Boolean) : []])));
+91:     })();
+92:     return () => { alive = false; };
+93:   }, [slug, sorted]);
+95:   const plan = sorted.find((p) => p.id === planId);
+96:   const months = CYCLE_MONTHS[cycle];
+97:   const planCents = plan ? cycleCents(plan, cycle) : 0;
+98:   const addonsCents = Math.round(bumpTotal(items, sel, cycle) * 100);
+99:   const total = planCents + addonsCents;
+101:   const toggle = (id: string) =>
+102:     setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+104:   function proceed() {
+105:     if (!plan) return;
+106:     if (!storeId) { toast.error("Nenhuma loja ativa encontrada."); return; }
+107:     const qs = new URLSearchParams({ plan: plan.id, cycle, module: slug, mods: slug });
+108:     if (sel.size > 0) qs.set("addons", Array.from(sel).join(","));
+109:     navigate(`/dashboard/checkout?${qs.toString()}`);
+110:   }
+112:   return createPortal(
+113:     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-3 sm:p-5" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Planos do ${name}`}>
+114:       <div className="relative grid max-h-[94vh] w-full max-w-[1280px] overflow-y-auto rounded-2xl bg-white shadow-2xl md:grid-cols-[1.9fr_1fr] md:overflow-hidden" onClick={(e) => e.stopPropagation()}>
+115:         <button type="button" onClick={onClose} aria-label="Fechar" className="absolute right-3 top-3 z-10 cursor-pointer rounded-full p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900">
+116:           <X className="h-5 w-5" />
+117:         </button>
+119:         {/* Esquerda: modulo, comparativo e upsell */}
+120:         <div className="space-y-6 bg-slate-50 p-6 md:max-h-[94vh] md:overflow-y-auto">
+121:           <div className="flex items-center gap-4">
+122:             {logoUrl ? (
+123:               <img src={logoUrl} alt={name} className="h-16 max-w-[220px] object-contain object-left" />
+124:             ) : (
+125:               <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-200 text-xl font-black text-slate-500">{name.charAt(0).toUpperCase()}</div>
+126:             )}
+127:             <h3 className="text-2xl font-black text-slate-900">{name}</h3>
+128:           </div>
+130:           {desc && <p className="max-w-3xl text-sm leading-relaxed text-slate-600">{desc}</p>}
+131:           {!hasSummary && incl.length > 0 && (
+132:             <ul className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+133:               {incl.map((f) => (
+134:                 <li key={f} className="flex items-start gap-2 text-xs font-medium text-slate-700">
+135:                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 stroke-[3] text-emerald-500" /> {f}
+136:                 </li>
+137:               ))}
+138:             </ul>
+139:           )}
+141:           <div>
+142:             <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-slate-500">Compare e escolha o plano</p>
+143:             <div className="grid gap-3 sm:grid-cols-3">
+144:               {sorted.map((p) => {
+145:                 const on = p.id === planId;
+146:                 const cur = isCur(p);
+147:                 const pop = tierOf(p) === "pro";
+148:                 const list = hl[p.id]?.length ? hl[p.id] : bullets(limits[p.id]);
+149:                 return (
+150:                   <div
+151:                     key={p.id}
+152:                     className={cn(
+153:                       "relative flex flex-col rounded-2xl border-2 bg-white p-4 transition-colors",
+154:                       on ? "border-[#3b63fb] shadow-md" : "border-slate-200",
+155:                       cur && "opacity-60"
+156:                     )}
+157:                   >
+158:                     {pop && <span className="absolute -top-2.5 left-3 rounded-full bg-[#fd8539] px-2 py-0.5 text-[9px] font-black uppercase text-white">Mais popular</span>}
+159:                     <p className="text-sm font-black uppercase tracking-wide text-slate-900">{String(p.plan_tier || p.plan_name)}</p>
+160:                     <p className="mt-1 text-slate-900">
+161:                       <span className="text-xl font-black">{brl(Math.round(cycleCents(p, cycle) / months))}</span>
+162:                       <span className="text-xs font-bold text-slate-500">/mês</span>
+163:                     </p>
+164:                     <ul className="mt-3 flex-1 space-y-1.5">
+165:                       {list.length === 0 && <li className="text-[11px] text-slate-400">Detalhes do plano em breve.</li>}
+166:                       {list.map((f) => (
+167:                         <li key={f} className="flex items-start gap-1.5 text-[11px] font-medium leading-snug text-slate-700">
+168:                           <Check className="mt-0.5 h-3 w-3 shrink-0 stroke-[3] text-emerald-500" /> {f}
+169:                         </li>
+170:                       ))}
+171:                     </ul>
+172:                     <button
+173:                       type="button"
+174:                       disabled={cur}
+175:                       onClick={() => setPlanId(p.id)}
+176:                       className={cn(
+177:                         "mt-4 w-full cursor-pointer rounded-full py-2 text-xs font-bold transition-colors disabled:cursor-not-allowed",
+178:                         on ? "bg-[#3b63fb] text-white" : "border border-slate-300 text-slate-700 hover:border-[#3b63fb] hover:text-[#3b63fb]"
+179:                       )}
+180:                     >
+181:                       {cur ? "Plano atual" : on ? "Selecionado" : "Escolher"}
+182:                     </button>
+183:                   </div>
+184:                 );
+185:               })}
+186:             </div>
+187:           </div>
+189:           {items.length > 0 && (
+190:             <div className="rounded-2xl border border-[#fd8539]/40 bg-[#fd8539]/5 p-4">
+191:               <p className="mb-3 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-[#c2571a]">
+192:                 <Zap size={13} /> Turbine seu plano: adicione ao carrinho
+193:               </p>
+194:               <div className="grid gap-2 sm:grid-cols-2">
+195:                 {items.map((a) => {
+196:                   const on = sel.has(a.id);
+197:                   return (
+198:                     <button
+199:                       key={a.id}
+200:                       type="button"
+201:                       onClick={() => toggle(a.id)}
+202:                       className={cn("flex w-full cursor-pointer items-start gap-2.5 rounded-xl border-2 bg-white p-3 text-left transition-colors", on ? "border-[#fd8539] bg-[#fd8539]/10" : "border-slate-200 hover:border-
+203:                     >
+204:                       <span className={cn("mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2", on ? "border-[#fd8539] bg-[#fd8539] text-white" : "border-slate-300 bg-white")}>
+205:                         {on && <Check size={11} strokeWidth={3} />}
+206:                       </span>
+207:                       <span className="min-w-0 text-xs leading-snug text-slate-700">
+208:                         <b className="block text-slate-900">{a.upsell_headline || a.name}</b>
+209:                         <span className="font-bold text-[#c2571a]">+ {brl(Math.round(a.price_monthly * 100))}/mês</span>
+210:                       </span>
+211:                     </button>
+212:                   );
+213:                 })}
+214:               </div>
+215:             </div>
+216:           )}
+217:         </div>
+219:         {/* Direita: assinatura e resumo */}
+220:         <div className="flex flex-col gap-4 p-6 md:max-h-[94vh] md:overflow-y-auto">
+221:           <p className="pr-8 text-sm font-black text-slate-900">Escolha uma assinatura</p>
+223:           <div className="space-y-2">
+224:             {CYCLES.map((c) => {
+225:               const cents = plan ? cycleCents(plan, c.key) : 0;
+226:               const m = CYCLE_MONTHS[c.key];
+227:               const monthlyTotal = plan ? plan.price_monthly_cents * m : 0;
+228:               const save = monthlyTotal - cents;
+229:               const on = cycle === c.key;
+230:               return (
+231:                 <button
+232:                   key={c.key}
+233:                   type="button"
+234:                   onClick={() => setCycle(c.key)}
+235:                   className={cn("w-full cursor-pointer rounded-xl border-2 p-3 text-left transition-colors", on ? "border-[#3b63fb] bg-blue-50/40" : "border-slate-200 hover:border-slate-300")}
+236:                 >
+237:                   <div className="flex items-center justify-between">
+238:                     <span className="text-xs font-bold text-slate-700">{c.label}</span>
+239:                     {c.key !== "monthly" && save > 0 && (
+240:                       <span className="rounded bg-emerald-500 px-1.5 py-0.5 text-[9px] font-black uppercase text-white">Economize {Math.round((save / monthlyTotal) * 100)}%</span>
+241:                     )}
+242:                   </div>
+243:                   <p className="text-slate-900">
+244:                     <span className="text-xs text-slate-500">R$ </span>
+245:                     <span className="text-2xl font-black">{brl(Math.round(cents / m)).replace("R$", "").trim()}</span>
+246:                     <span className="text-xs text-slate-500">/mês</span>
+247:                   </p>
+248:                   <p className="text-[11px] text-slate-500">
+249:                     {c.note}{c.key !== "monthly" ? ` Total ${brl(cents)}.` : ""}
+250:                   </p>
+251:                 </button>
+252:               );
+253:             })}
+254:           </div>
+256:           <div className="mt-auto space-y-3">
+257:             <div className="space-y-1 rounded-xl bg-slate-50 p-3 text-xs">
+258:               <div className="flex justify-between"><span className="text-slate-600">{plan?.plan_name ?? "-"}</span><b>{brl(planCents)}</b></div>
+259:               {items.filter((a) => sel.has(a.id)).map((a) => (
+260:                 <div key={a.id} className="flex justify-between"><span className="text-slate-600">{a.name}</span><b>{brl(Math.round(a.price_monthly * 100 * months))}</b></div>
+261:               ))}
+262:               <div className="flex justify-between border-t border-slate-200 pt-1.5 text-sm font-black text-slate-900"><span>Total</span><span>{brl(total)}</span></div>
+263:               <p className="text-[10px] text-slate-400">Cupom e teste grátis no próximo passo.</p>
+264:             </div>
+265:             <button type="button" onClick={proceed} disabled={!plan} className="w-full cursor-pointer rounded-full bg-[#3b63fb] py-3 text-sm font-bold text-white hover:bg-[#2f52d6] disabled:opacity-50">
+266:               Continuar
+267:             </button>
+268:             <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500"><Lock className="h-3 w-3" /> Compra segura</p>
+269:           </div>
+270:         </div>
+271:       </div>
+272:     </div>,
+273:     document.body
+274:   );
+275: }
+##### src\components\planos\ComboCards.tsx
+1: import { Check } from "lucide-react";
+2: import { cn } from "@/lib/utils";
+3: import type { PlanCycle } from "@/components/planos/VidlyticsPlanCard";
+4: import type { CatalogCombo } from "@/services/plans/getCatalogShowcase";
+5: import { CYCLE_MONTHS, brl, cycleCents } from "@/components/planos/planosShared";
+7: const CYCLE_TEXT: Record<PlanCycle, string> = { monthly: "Cobrado mensalmente", semiannual: "Cobrado a cada 6 meses", yearly: "Cobrado uma vez por ano" };
+9: function calc(c: CatalogCombo, cycle: PlanCycle) {
+10:   const months = CYCLE_MONTHS[cycle];
+11:   const combo = cycleCents(c, cycle);
+12:   const sum = c.modules.reduce(
+13:     (s, m) => s + (cycle === "monthly" ? m.monthly_cents : cycle === "semiannual" ? m.semiannual_cents : m.annual_cents),
+14:     0
+15:   );
+16:   const save = sum > combo ? sum - combo : 0;
+17:   return { months, combo, sum, save, pct: sum > 0 ? Math.round((save / sum) * 100) : 0 };
+18: }
+20: export const comboMaxPct = (combos: CatalogCombo[], cycle: PlanCycle) =>
+21:   Math.max(0, ...combos.map((c) => calc(c, cycle).pct));
+23: export default function ComboCards({
+24:   combos, cycle, onSelect,
+25: }: { combos: CatalogCombo[]; cycle: PlanCycle; onSelect: (c: CatalogCombo) => void }) {
+26:   const best = comboMaxPct(combos, cycle);
+27:   return (
+28:     <section className="max-w-5xl mx-auto space-y-5">
+29:       <div className="text-center space-y-1">
+30:         {best > 0 && (
+31:           <span className="inline-block rounded-full bg-yellow-400 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-slate-900">
+32:             Economize até {best}%
+33:           </span>
+34:         )}
+35:         <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Combos: mais módulos, preço menor</h2>
+36:         <p className="text-sm font-medium text-slate-500">Leve vários módulos em um único plano e pague menos que nas assinaturas avulsas.</p>
+37:       </div>
+39:       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+40:         {combos.map((c) => {
+41:           const k = calc(c, cycle);
+42:           return (
+43:             <div
+44:               key={c.id}
+45:               className={cn(
+46:                 "relative flex flex-col overflow-hidden rounded-2xl border-2 bg-white p-5 shadow-sm transition-shadow hover:shadow-xl",
+47:                 c.is_recommended ? "border-[#fd8539]" : "border-yellow-400"
+48:               )}
+49:             >
+50:               {k.pct > 0 && (
+51:                 <span className="absolute right-0 top-0 rounded-bl-xl bg-yellow-400 px-3 py-1.5 text-xs font-black text-slate-900">
+52:                   Economize {k.pct}%
+53:                 </span>
+54:               )}
+56:               <div className="flex gap-2">
+57:                 {c.modules.map((m) =>
+58:                   m.logo_url ? (
+59:                     <img key={m.slug} src={m.logo_url} alt={m.name} title={m.name} className="h-11 w-11 rounded-xl object-contain" />
+60:                   ) : (
+61:                     <div key={m.slug} title={m.name} className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0091ff]/10 font-black text-[#0091ff]">
+62:                       {m.name.charAt(0).toUpperCase()}
+63:                     </div>
+64:                   )
+65:                 )}
+66:               </div>
+68:               <h3 className="mt-3 text-base font-black text-slate-900">{c.plan_name}</h3>
+69:               {c.is_recommended && <span className="mt-1 w-fit rounded-full bg-[#fd8539] px-2 py-0.5 text-[10px] font-black uppercase text-white">Mais popular</span>}
+71:               <div className="mt-2">
+72:                 {k.save > 0 && (
+73:                   <p className="text-sm font-bold text-red-600 line-through">{brl(Math.round(k.sum / k.months))}/mês</p>
+74:                 )}
+75:                 <p className="text-slate-900">
+76:                   <span className="text-3xl font-black tracking-tight">{brl(Math.round(k.combo / k.months))}</span>
+77:                   <span className="text-sm font-bold text-slate-500">/mês</span>
+78:                 </p>
+79:                 <p className="text-xs italic text-slate-500">
+80:                   {CYCLE_TEXT[cycle]}{k.months > 1 ? ` (${brl(k.combo)})` : ""}
+81:                 </p>
+82:               </div>
+84:               {k.save > 0 && (
+85:                 <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
+86:                   Você economiza {brl(Math.round(k.save / k.months))} por mês ({brl(k.save)} a cada {k.months === 1 ? "mês" : `${k.months} meses`}).
+87:                 </p>
+88:               )}
+90:               <ul className="mt-3 space-y-1.5">
+91:                 {c.modules.map((m) => (
+92:                   <li key={m.slug} className="flex items-start gap-2 text-xs font-medium text-slate-700">
+93:                     <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 stroke-[3] text-emerald-500" />
+94:                     <span><b>{m.name}</b>{m.plan_name ? ` · ${m.plan_name}` : ""}</span>
+95:                   </li>
+96:                 ))}
+97:               </ul>
+99:               <div className="mt-auto pt-5">
+100:                 <button
+101:                   type="button"
+102:                   onClick={() => onSelect(c)}
+103:                   className="w-full cursor-pointer rounded-full bg-[#3b63fb] py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#2f52d6]"
+104:                 >
+105:                   Economize agora
+106:                 </button>
+107:               </div>
+108:             </div>
+109:           );
+110:         })}
+111:       </div>
+112:     </section>
+113:   );
+114: }
+##### src\services\plans\getCatalogShowcase.ts
+1: import { supabase } from "@/lib/supabase";
+3: export type CatalogPlan = {
+4:   id: string;
+5:   plan_tier: string;
+6:   plan_name: string;
+7:   module_slug: string;
+8:   price_monthly_cents: number;
+9:   price_semiannual_cents: number;
+10:   price_annual_cents: number;
+11:   sort_order: number;
+12: };
+14: export type CatalogModule = {
+15:   slug: string;
+16:   name: string;
+17:   status: "active" | "coming_soon";
+18:   is_public_for_sale: boolean;
+19:   logo_url: string | null;
+20:   sort_order: number;
+21: };
+23: const sb: any = supabase;
+25: // Modulos visiveis ao lojista (ativos e em breve). Os ocultos nunca chegam aqui.
+26: export async function getCatalogModules(): Promise<CatalogModule[]> {
+27:   const { data, error } = await sb.rpc("get_catalog_modules");
+28:   if (error) {
+29:     console.error("[getCatalogModules]", error.message);
+30:     return [];
+31:   }
+32:   return (data ?? []) as CatalogModule[];
+33: }
+35: // Planos de venda: apenas modulos ativos e "a venda"
+36: export async function getCatalogShowcase(): Promise<CatalogPlan[]> {
+37:   const mods = await getCatalogModules();
+38:   const slugs = mods.filter((m) => m.status === "active" && m.is_public_for_sale).map((m) => m.slug);
+39:   if (!slugs.length) return [];
+41:   const { data, error } = await sb
+42:     .from("dynamic_plans")
+43:     .select("id, plan_tier, plan_name, module_slug, price_monthly_cents, price_semiannual_cents, price_annual_cents, sort_order")
+44:     .eq("is_active", true)
+45:     .eq("is_combo", false)
+46:     .gt("price_monthly_cents", 0)
+47:     .in("module_slug", slugs)
+48:     .order("sort_order", { ascending: true });
+49:   if (error) console.error("[getCatalogShowcase] dynamic_plans:", error.message);
+51:   return (data ?? []).map((p: any) => ({
+52:     ...p,
+53:     price_monthly_cents: Number(p.price_monthly_cents ?? 0),
+54:     price_semiannual_cents: Number(p.price_semiannual_cents ?? 0),
+55:     price_annual_cents: Number(p.price_annual_cents ?? 0),
+56:   })) as CatalogPlan[];
+57: }
+59: export type CatalogComboModule = {
+60:   slug: string;
+61:   name: string;
+62:   logo_url: string | null;
+63:   plan_name: string | null;
+64:   monthly_cents: number;
+65:   semiannual_cents: number;
+66:   annual_cents: number;
+67: };
+69: export type CatalogCombo = {
+70:   id: string;
+71:   plan_name: string;
+72:   plan_tier: string;
+73:   is_recommended: boolean;
+74:   sort_order: number;
+75:   price_monthly_cents: number;
+76:   price_semiannual_cents: number;
+77:   price_annual_cents: number;
+78:   modules: CatalogComboModule[];
+79: };
+81: // Combos ativos cujos modulos estao todos a venda (RPC get_catalog_combos)
+82: export async function getCatalogCombos(): Promise<CatalogCombo[]> {
+83:   const { data, error } = await sb.rpc("get_catalog_combos");
+84:   if (error) {
+85:     console.error("[getCatalogCombos]", error.message);
+86:     return [];
+87:   }
+88:   return ((data ?? []) as any[]).map((c) => ({
+89:     ...c,
+90:     price_monthly_cents: Number(c.price_monthly_cents ?? 0),
+91:     price_semiannual_cents: Number(c.price_semiannual_cents ?? 0),
+92:     price_annual_cents: Number(c.price_annual_cents ?? 0),
+93:     modules: ((c.modules ?? []) as any[]).map((m) => ({
+94:       ...m,
+95:       monthly_cents: Number(m.monthly_cents ?? 0),
+96:       semiannual_cents: Number(m.semiannual_cents ?? 0),
+97:       annual_cents: Number(m.annual_cents ?? 0),
+98:     })),
+99:   })).filter((c: any) => c.price_monthly_cents > 0) as CatalogCombo[];
+100: }
+##### CheckoutPage.tsx: logo, upsell e addons
+9: import { CYCLE_MONTHS, bumpTotal, useUpsells, type Cycle } from '@/components/checkout/OrderBumpCard';
+23: ADDON_INDISPONIVEL: 'Um dos add-ons não está mais disponível. Remova-o e tente de novo.',
+60: type Mod = { slug: string; name: string; logo_url: string | null };
+81: const [sel, setSel] = useState<Set<string>>(new Set((sp.get('addons') || '').split(',').filter((x) => UUID.test(x))));
+82: const upsells = useUpsells(slugs);
+111: const { data: hm } = list.length ? await sb.from('hub_modules').select('slug,name,logo_url').in('slug', list) : { data: [] };
+159: const bumpIds = upsells.filter((a) => sel.has(a.id)).map((a) => a.id);
+162: const addonCents = Math.round(bumpTotal(upsells, new Set(bumpIds), cycle) * 100);
+163: const total = Math.max(0, planCents - discount + addonCents);
+200: selected_addon_ids: bumpIds, coupon_code: applied?.code ?? null,
+239: <Link to="/dashboard"><img src="/assets/sll-logotipo.png" alt="SLL Hub" className="h-8 w-auto object-contain" /></Link>
+245: {upsells.length > 0 && !pix && (
+247: <h2 className="mb-4 text-lg font-black">Ofertas adicionais, selecionadas especialmente para você</h2>
+249: {upsells.map((a) => {
+281: <img src={`data:image/png;base64,${pix.image}`} alt="QR Code Pix" className="mx-auto h-52 w-52" />
+345: {mods.map((m) => m.logo_url
+346: ? <img key={m.slug} src={m.logo_url} alt={m.name} className="h-9 w-9 rounded-lg object-contain" />
+353: {upsells.filter((a) => sel.has(a.id)).map((a) => (
+369: <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{brl(planCents + addonCents)}</span></div>
+##### src\components\checkout\OrderBumpCard.tsx
+1: import { useEffect, useMemo, useState } from 'react';
+2: import { Check, Zap } from 'lucide-react';
+3: import { supabase } from '@/lib/supabase';
+5: const sb: any = supabase;
+7: export type Cycle = 'monthly' | 'semiannual' | 'yearly';
+8: export const CYCLE_MONTHS: Record<Cycle, number> = { monthly: 1, semiannual: 6, yearly: 12 };
+10: export interface Upsell {
+11:   id: string;
+12:   name: string;
+13:   description: string | null;
+14:   price_monthly: number;
+15:   scope: string;
+16:   upsell_headline: string | null;
+17:   upsell_module_target: string | null;
+18: }
+20: const brl = (n: number) => (n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+22: // Add-ons de upsell compativeis com os modulos que estao sendo assinados
+23: export function useUpsells(modules: string[]) {
+24:   const [items, setItems] = useState<Upsell[]>([]);
+25:   const key = modules.join('|');
+27:   useEffect(() => {
+28:     let alive = true;
+29:     sb.from('addons')
+30:       .select('id,name,description,price_monthly,scope,upsell_headline,upsell_module_target')
+31:       .eq('is_active', true)
+32:       .eq('is_upsell', true)
+33:       .order('price_monthly')
+34:       .then(({ data }: any) => {
+35:         if (!alive) return;
+36:         const mods = key ? key.split('|') : [];
+37:         setItems(
+38:           ((data || []) as any[])
+39:             .map((r) => ({ ...r, price_monthly: Number(r.price_monthly) }) as Upsell)
+40:             .filter((a) => (a.scope === 'global' || mods.includes(a.scope)) && (a.upsell_module_target === 'all' || (a.upsell_module_target && mods.includes(a.upsell_module_target)))),
+41:         );
+42:       });
+43:     return () => { alive = false; };
+44:   }, [key]);
+46:   return items;
+47: }
+49: // Valor extra a cobrar no ciclo escolhido, em reais
+50: export const bumpTotal = (items: Upsell[], selected: Set<string>, cycle: Cycle) =>
+51:   items.filter((a) => selected.has(a.id)).reduce((s, a) => s + a.price_monthly * CYCLE_MONTHS[cycle], 0);
+53: export default function OrderBumpCard({ modules, cycle, selected, onChange }: {
+54:   modules: string[]; cycle: Cycle; selected: Set<string>; onChange: (next: Set<string>) => void;
+55: }) {
+56:   const items = useUpsells(modules);
+57:   const months = CYCLE_MONTHS[cycle];
+58:   const toggle = (id: string) => {
+59:     const next = new Set(selected);
+60:     if (next.has(id)) next.delete(id); else next.add(id);
+61:     onChange(next);
+62:   };
+63:   const total = useMemo(() => bumpTotal(items, selected, cycle), [items, selected, cycle]);
+65:   if (items.length === 0) return null;
+67:   return (
+68:     <div className="space-y-2">
+69:       {items.map((a) => {
+70:         const on = selected.has(a.id);
+71:         return (
+72:           <button key={a.id} type="button" onClick={() => toggle(a.id)}
+73:             className={`flex w-full cursor-pointer items-start gap-3 rounded-2xl border-2 border-dashed p-4 text-left transition-colors ${on ? 'border-[#fd8539] bg-[#fd8539]/10' : 'border-[#fd8539]/50 bg-white hover:bg-[
+74:             <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 ${on ? 'border-[#fd8539] bg-[#fd8539] text-white' : 'border-slate-300 bg-white'}`}>
+75:               {on && <Check size={13} strokeWidth={3} />}
+76:             </span>
+77:             <span className="min-w-0 flex-1">
+78:               <span className="flex items-center gap-1.5 text-sm font-black text-slate-900"><Zap size={14} className="text-[#fd8539]" /> {a.upsell_headline || a.name}</span>
+79:               <span className="mt-0.5 block text-xs text-slate-600">{a.name}{a.description ? `: ${a.description}` : ''}</span>
+80:               <span className="mt-1 block text-xs font-bold text-[#c2571a]">
+81:                 {brl(a.price_monthly)}/mês{months > 1 ? ` · ${brl(a.price_monthly * months)} a cada ${months} meses` : ''}
+82:               </span>
+83:             </span>
+84:           </button>
+85:         );
+86:       })}
+87:       {total > 0 && <p className="text-right text-xs font-semibold text-slate-600">Total dos add-ons neste ciclo: {brl(total)}</p>}
+88:     </div>
+89:   );
+90: }
+##### logos existentes em public
+\assets\clube-sll-logo-ico.png
+\assets\clube-sll-logo-quadrado.png
+\assets\clube-sll-logo-wide.png
+\assets\dica-do-noah-logo-ico.png
+\assets\dica-do-noah-logo-quadrado.png
+\assets\dica-do-noah-logo-wide.png
+\assets\fitmatch-logo-ico.png
+\assets\fitmatch-logo-quadrado.png
+\assets\fitmatch-logo-wide.png
+\assets\gamifly-logo-ico.png
+\assets\gamifly-logo-quadrado.png
+\assets\gamifly-logo-wide.png
+\assets\lucroup-logo-ico.png
+\assets\lucroup-logo-quadrado.png
+\assets\lucroup-logo-wide.png
+\assets\sll-academy-logo-ico.png
+\assets\sll-academy-logo-quadrado.png
+\assets\sll-academy-logo-wide.png
+\assets\sll-hub-logo-ico.png
+\assets\sll-hub-logo-quadrado.png
+\assets\sll-hub-logo-wide.png
+\assets\stream-sell-logo-ico.png
+\assets\stream-sell-logo-quadrado.png
+\assets\stream-sell-logo-wide.png
+\assets\vidlytics-logo-ico.png
+\assets\vidlytics-logo-quadrado.png
+\assets\vidlytics-logo-wide.png
+\clube-sll-logo.png
+##### texto de teste no modal/Master
