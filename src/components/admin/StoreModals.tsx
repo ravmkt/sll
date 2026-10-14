@@ -29,17 +29,25 @@ function Spin({ on }: { on: boolean }) {
   return on ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null;
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 function EmailModal({ to, storeName, busy, onClose, onSend }: {
-  to: string; storeName: string; busy: boolean; onClose: () => void; onSend: (s: string, m: string) => void;
+  to: string; storeName: string; busy: boolean; onClose: () => void; onSend: (to: string, s: string, m: string) => void;
 }) {
+  const [dest, setDest] = useState(to);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const ok = subject.trim().length >= 3 && message.trim().length >= 10;
+  const destOk = EMAIL_RE.test(dest.trim());
+  const subjOk = subject.trim().length >= 3;
+  const msgOk = message.trim().length >= 10;
+  const ok = destOk && subjOk && msgOk;
+  const pend = [!destOk && 'e-mail do destinatário válido', !subjOk && 'assunto (mín. 3 caracteres)', !msgOk && 'mensagem (mín. 10 caracteres)'].filter(Boolean);
   return (
     <Modal title={`E-mail para ${storeName}`} onClose={onClose}>
       <label className="block space-y-1">
         <span className={LBL}>Destinatário</span>
-        <input value={to} disabled readOnly className={`${INPUT} cursor-not-allowed opacity-60`} />
+        <input type="email" value={dest} onChange={(e) => setDest(e.target.value)} className={`${INPUT} ${dest && !destOk ? 'border-rose-500' : ''}`} placeholder="email@dominio.com" />
+        {dest && !destOk && <span className="block text-[11px] text-rose-400">Informe um e-mail válido.</span>}
       </label>
       <label className="block space-y-1">
         <span className={LBL}>Assunto</span>
@@ -49,14 +57,14 @@ function EmailModal({ to, storeName, busy, onClose, onSend }: {
         <span className={LBL}>Mensagem</span>
         <textarea value={message} maxLength={10000} rows={7} onChange={(e) => setMessage(e.target.value)} className={INPUT} />
       </label>
+      {pend.length > 0 && <p className="text-[11px] text-slate-500">Falta preencher: {pend.join(', ')}.</p>}
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onClose} className={GHOST}>Cancelar</button>
-        <button type="button" disabled={!ok || busy} onClick={() => onSend(subject.trim(), message.trim())} className={PRIMARY}><Spin on={busy} /> Enviar E-mail</button>
+        <button type="button" disabled={!ok || busy} onClick={() => onSend(dest.trim(), subject.trim(), message.trim())} className={PRIMARY}><Spin on={busy} /> Enviar E-mail</button>
       </div>
     </Modal>
   );
 }
-
 export function ContactActions({ storeId, storeName, contactName, whatsapp, email }: {
   storeId: string; storeName?: string | null; contactName?: string | null; whatsapp?: string | null; email?: string | null;
 }) {
@@ -74,15 +82,14 @@ export function ContactActions({ storeId, storeName, contactName, whatsapp, emai
   };
 
   const openMail = () => {
-    if (!email) { toast.error('Nenhum e-mail de contato cadastrado na aba Dados desta loja.'); return; }
     setOpen(true);
   };
 
-  const send = async (subject: string, message: string) => {
+  const send = async (to: string, subject: string, message: string) => {
     setBusy(true);
     try {
-      const r = await sendMasterEmail(storeId, subject, message);
-      toast.success(`E-mail enviado para ${r?.to || email}.`);
+      const r = await sendMasterEmail(storeId, to, subject, message);
+      toast.success(`E-mail enviado para ${r?.to || to}.`);
       setOpen(false);
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao enviar o e-mail.');
@@ -101,7 +108,7 @@ export function ContactActions({ storeId, storeName, contactName, whatsapp, emai
           <Mail size={18} className={email ? ICON : 'text-slate-700'} />
         </button>
       </div>
-      {open && email && <EmailModal to={email} storeName={name} busy={busy} onClose={() => setOpen(false)} onSend={send} />}
+      {open && <EmailModal to={email || ''} storeName={name} busy={busy} onClose={() => setOpen(false)} onSend={send} />}
     </>
   );
 }
