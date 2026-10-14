@@ -61,12 +61,14 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
   const [rec, setRec] = useState(plan?.is_recommended ?? false);
   const [active, setActive] = useState(plan?.is_active ?? false);
   const [hl, setHl] = useState('');
+  const [cs, setCs] = useState('');
 
   useEffect(() => {
     if (!plan) return;
-    (supabase as any).from('dynamic_plans').select('modal_highlights').eq('id', plan.id).maybeSingle()
+    (supabase as any).from('dynamic_plans').select('modal_highlights,combo_summary').eq('id', plan.id).maybeSingle()
       .then(({ data }: any) => {
         const a = data?.modal_highlights;
+        setCs(String(data?.combo_summary ?? ''));
         setHl(Array.isArray(a) ? a.map(String).join('\n') : '');
       });
   }, [plan?.id]);
@@ -108,7 +110,7 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
       }
       const lines = hl.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 8);
       const tierKey = plan ? plan.plan_tier : tier.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-      const q = (supabase as any).from('dynamic_plans').update({ modal_highlights: lines });
+      const q = (supabase as any).from('dynamic_plans').update({ modal_highlights: lines, combo_summary: cs.trim() || null });
       const { error: hErr } = await (plan ? q.eq('id', plan.id) : q.eq('module_slug', slug).eq('plan_tier', tierKey));
       if (hErr) throw new Error(hErr.message);
       toast.success(plan ? 'Plano salvo.' : 'Plano criado.');
@@ -190,6 +192,13 @@ function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
           <textarea value={hl} rows={5} onChange={(e) => setHl(e.target.value)} className={INPUT}
             placeholder={'Até 20 vídeos ativos\nAté 25.000 visualizações/mês\nSuporte via WhatsApp'} />
           <span className="block text-[10px] text-slate-600">Vazio = o modal monta a lista a partir dos limites do plano.</span>
+        </label>
+
+        <label className="block space-y-1">
+          <span className={LABEL}>Resumo do combo (texto curto no card e no modal)</span>
+          <textarea value={cs} rows={3} onChange={(e) => setCs(e.target.value)} className={INPUT}
+            placeholder="Ex.: Vídeos interativos e lives no mesmo plano, com preço menor que a soma dos avulsos." />
+          <span className="block text-[10px] text-slate-600">Usado nos planos do tipo combo. Vazio = não mostra resumo.</span>
         </label>
 
         <div className="flex gap-5">
