@@ -8,6 +8,7 @@ import { bumpTotal, useUpsells } from "@/components/checkout/OrderBumpCard";
 import type { PlanCycle } from "@/components/planos/VidlyticsPlanCard";
 import type { CatalogPlan } from "@/services/plans/getCatalogShowcase";
 import { CYCLE_MONTHS, brl, cycleCents } from "@/components/planos/planosShared";
+import ComparePlans from "@/components/planos/ComparePlans";
 
 const CYCLES: { key: PlanCycle; label: string; badge?: string }[] = [
   { key: "monthly", label: "Mensal" },
@@ -87,7 +88,7 @@ export default function ModuloPlanoModal({
       aria-label={`Planos do ${name}`}
     >
       <div
-        className="grid max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl md:grid-cols-[1.3fr_1fr]"
+        className="grid max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl md:grid-cols-[1.6fr_1fr]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="space-y-6 overflow-y-auto p-6">
@@ -131,6 +132,14 @@ export default function ModuloPlanoModal({
               );
             })}
           </div>
+
+          <ComparePlans
+            slug={slug}
+            plans={sorted}
+            selectedId={planId}
+            onSelect={(id) => setPlanId(id)}
+            isCurrent={isCur}
+          />
 
           {items.length > 0 && (
             <div className="space-y-2">
