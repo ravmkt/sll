@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Check, Lock, X, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -20,7 +21,7 @@ const CYCLES: { key: PlanCycle; label: string; note: string }[] = [
 
 const nf = (n: number) => n.toLocaleString("pt-BR");
 
-// Monta a lista "o que inclui" a partir dos limites do plano (editados no Master)
+// Fallback: monta a lista a partir dos limites do plano quando o Master nao preencheu os destaques
 function bullets(l?: Record<string, any>): string[] {
   if (!l) return [];
   const out: string[] = [];
@@ -55,28 +56,39 @@ export default function ModuloPlanoModal({
   const [cycle, setCycle] = useState<PlanCycle>(initialCycle);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [desc, setDesc] = useState("");
+  const [hasSummary, setHasSummary] = useState(false);
   const [incl, setIncl] = useState<string[]>([]);
   const [limits, setLimits] = useState<Record<string, Record<string, any>>>({});
+  const [hl, setHl] = useState<Record<string, string[]>>({});
   const items = useUpsells([slug]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
   }, [onClose]);
 
   useEffect(() => {
     let alive = true;
     sb.from("hub_modules").select("*").eq("slug", slug).maybeSingle().then(({ data }: any) => {
       if (!alive || !data) return;
-      setDesc(String(data.description || ""));
+      const summary = String(data.modal_description || "").trim();
+      setHasSummary(!!summary);
+      setDesc(summary || String(data.description || ""));
       const f = Array.isArray(data.features) && data.features.length ? data.features : Array.isArray(data.benefits) ? data.benefits : [];
       setIncl(f.map(String));
     });
-    sb.from("dynamic_plans").select("id,limits_config").in("id", sorted.map((p) => p.id)).then(({ data }: any) => {
-      if (!alive || !data) return;
-      setLimits(Object.fromEntries((data as any[]).map((r) => [r.id, r.limits_config || {}])));
-    });
+    (async () => {
+      const ids = sorted.map((p) => p.id);
+      let r: any = await sb.from("dynamic_plans").select("id,limits_config,modal_highlights").in("id", ids);
+      if (r.error) r = await sb.from("dynamic_plans").select("id,limits_config").in("id", ids);
+      if (!alive || !r.data) return;
+      const rows = r.data as any[];
+      setLimits(Object.fromEntries(rows.map((x) => [x.id, x.limits_config || {}])));
+      setHl(Object.fromEntries(rows.map((x) => [x.id, Array.isArray(x.modal_highlights) ? x.modal_highlights.map(String).filter(Boolean) : []])));
+    })();
     return () => { alive = false; };
   }, [slug, sorted]);
 
@@ -97,25 +109,26 @@ export default function ModuloPlanoModal({
     navigate(`/dashboard/checkout?${qs.toString()}`);
   }
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-3" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Planos do ${name}`}>
-      <div className="relative grid max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl md:grid-cols-[1.7fr_1fr]" onClick={(e) => e.stopPropagation()}>
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-3 sm:p-5" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Planos do ${name}`}>
+      <div className="relative grid max-h-[94vh] w-full max-w-[1280px] overflow-y-auto rounded-2xl bg-white shadow-2xl md:grid-cols-[1.9fr_1fr] md:overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <button type="button" onClick={onClose} aria-label="Fechar" className="absolute right-3 top-3 z-10 cursor-pointer rounded-full p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900">
           <X className="h-5 w-5" />
         </button>
 
-        {/* Esquerda: modulo + comparativo */}
-        <div className="space-y-5 overflow-y-auto bg-slate-50 p-6">
-          <div className="flex items-center gap-3">
+        {/* Esquerda: modulo, comparativo e upsell */}
+        <div className="space-y-6 bg-slate-50 p-6 md:max-h-[94vh] md:overflow-y-auto">
+          <div className="flex items-center gap-4">
             {logoUrl ? (
-              <img src={logoUrl} alt={name} className="h-12 w-12 rounded-xl object-contain" />
+              <img src={logoUrl} alt={name} className="h-16 max-w-[220px] object-contain object-left" />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-200 text-lg font-black text-slate-500">{name.charAt(0).toUpperCase()}</div>
+              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-200 text-xl font-black text-slate-500">{name.charAt(0).toUpperCase()}</div>
             )}
             <h3 className="text-2xl font-black text-slate-900">{name}</h3>
           </div>
-          {desc && <p className="text-sm leading-relaxed text-slate-600">{desc}</p>}
-          {incl.length > 0 && (
+
+          {desc && <p className="max-w-3xl text-sm leading-relaxed text-slate-600">{desc}</p>}
+          {!hasSummary && incl.length > 0 && (
             <ul className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
               {incl.map((f) => (
                 <li key={f} className="flex items-start gap-2 text-xs font-medium text-slate-700">
@@ -132,7 +145,7 @@ export default function ModuloPlanoModal({
                 const on = p.id === planId;
                 const cur = isCur(p);
                 const pop = tierOf(p) === "pro";
-                const list = bullets(limits[p.id]);
+                const list = hl[p.id]?.length ? hl[p.id] : bullets(limits[p.id]);
                 return (
                   <div
                     key={p.id}
@@ -172,10 +185,39 @@ export default function ModuloPlanoModal({
               })}
             </div>
           </div>
+
+          {items.length > 0 && (
+            <div className="rounded-2xl border border-[#fd8539]/40 bg-[#fd8539]/5 p-4">
+              <p className="mb-3 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-[#c2571a]">
+                <Zap size={13} /> Turbine seu plano: adicione ao carrinho
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {items.map((a) => {
+                  const on = sel.has(a.id);
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => toggle(a.id)}
+                      className={cn("flex w-full cursor-pointer items-start gap-2.5 rounded-xl border-2 bg-white p-3 text-left transition-colors", on ? "border-[#fd8539] bg-[#fd8539]/10" : "border-slate-200 hover:border-[#fd8539]/60")}
+                    >
+                      <span className={cn("mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2", on ? "border-[#fd8539] bg-[#fd8539] text-white" : "border-slate-300 bg-white")}>
+                        {on && <Check size={11} strokeWidth={3} />}
+                      </span>
+                      <span className="min-w-0 text-xs leading-snug text-slate-700">
+                        <b className="block text-slate-900">{a.upsell_headline || a.name}</b>
+                        <span className="font-bold text-[#c2571a]">+ {brl(Math.round(a.price_monthly * 100))}/mês</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Direita: assinatura */}
-        <div className="flex flex-col gap-4 overflow-y-auto p-6">
+        {/* Direita: assinatura e resumo */}
+        <div className="flex flex-col gap-4 p-6 md:max-h-[94vh] md:overflow-y-auto">
           <p className="pr-8 text-sm font-black text-slate-900">Escolha uma assinatura</p>
 
           <div className="space-y-2">
@@ -211,31 +253,6 @@ export default function ModuloPlanoModal({
             })}
           </div>
 
-          {items.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-[11px] font-black uppercase tracking-wider text-slate-500">Turbine com add-ons (opcional)</p>
-              {items.map((a) => {
-                const on = sel.has(a.id);
-                return (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => toggle(a.id)}
-                    className={cn("flex w-full cursor-pointer items-start gap-2 rounded-xl border-2 border-dashed p-2.5 text-left", on ? "border-[#fd8539] bg-[#fd8539]/10" : "border-[#fd8539]/50 hover:bg-[#fd8539]/5")}
-                  >
-                    <span className={cn("mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2", on ? "border-[#fd8539] bg-[#fd8539] text-white" : "border-slate-300 bg-white")}>
-                      {on && <Check size={11} strokeWidth={3} />}
-                    </span>
-                    <span className="min-w-0 text-[11px] leading-snug text-slate-700">
-                      <b className="flex items-center gap-1 text-slate-900"><Zap size={12} className="text-[#fd8539]" /> {a.upsell_headline || a.name}</b>
-                      <span className="text-[#c2571a]">{brl(Math.round(a.price_monthly * 100))}/mês</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           <div className="mt-auto space-y-3">
             <div className="space-y-1 rounded-xl bg-slate-50 p-3 text-xs">
               <div className="flex justify-between"><span className="text-slate-600">{plan?.plan_name ?? "-"}</span><b>{brl(planCents)}</b></div>
@@ -252,6 +269,7 @@ export default function ModuloPlanoModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

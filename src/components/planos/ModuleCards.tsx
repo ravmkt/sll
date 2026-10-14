@@ -32,14 +32,10 @@ export default function ModuleCards({ byModule, mods, onOpen }: Props) {
           return (
             <div key={slug} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-lg">
               {mod?.logo_url ? (
-                <img src={mod.logo_url} alt={name} className="h-14 w-14 rounded-xl object-contain" />
+                <img src={mod.logo_url} alt={name} className="mb-1 h-20 max-w-[240px] self-start object-contain object-left" />
               ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#0091ff]/10 text-2xl font-black text-[#0091ff]">
-                  {name.charAt(0).toUpperCase()}
-                </div>
+                <h3 className="text-xl font-black text-slate-900">{name}</h3>
               )}
-
-              <h3 className="mt-3 text-base font-black text-slate-900">{name}</h3>
 
               {base ? (
                 <div className="mt-1">
