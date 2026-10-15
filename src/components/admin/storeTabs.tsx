@@ -73,6 +73,7 @@ export function ResumoTab({ storeId, data }: { storeId: string; data: AdminStore
   const views = ev.video_view || 0;
   const clicks = (ev.product_click || 0) + (ev.whatsapp_click || 0);
   const total = Object.values(ev).reduce((a, b) => a + (Number(b) || 0), 0);
+  const maxEv = Math.max(1, ...Object.values(ev).map((x) => Number(x) || 0));
   const storage = s.storage_limit_bytes ? `${mb(s.storage_used_bytes)} de ${mb(s.storage_limit_bytes)}` : mb(s.storage_used_bytes);
   return (
     <div className={`space-y-4 ${loading ? 'opacity-60' : ''}`}>
@@ -96,10 +97,16 @@ export function ResumoTab({ storeId, data }: { storeId: string; data: AdminStore
       </div>
       <div className={CARD}>
         <p className="mb-3 text-[15px] font-bold text-white">Eventos por tipo</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="space-y-2">
           {Object.keys(ev).length === 0 && <span className="text-[13px] text-slate-500">Nenhum evento no período.</span>}
-          {Object.entries(ev).map(([k, v]) => (
-            <span key={k} className="rounded-md bg-white/5 px-2 py-1 text-[13px] text-slate-300">{k}: <strong>{v}</strong></span>
+          {Object.entries(ev).sort((a, b) => Number(b[1]) - Number(a[1])).map(([k, v]) => (
+            <div key={k} className="flex items-center gap-3">
+              <span className="w-40 shrink-0 truncate text-[13px] text-slate-300">{k}</span>
+              <div className="h-3 flex-1 overflow-hidden rounded-full bg-white/5">
+                <div className="h-full rounded-full bg-violet-500" style={{ width: `${Math.max(2, ((Number(v) || 0) / maxEv) * 100)}%` }} />
+              </div>
+              <strong className="w-14 shrink-0 text-right text-[13px] text-white">{v}</strong>
+            </div>
           ))}
         </div>
       </div>

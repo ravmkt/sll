@@ -318,7 +318,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
               <input value={ben.note} onChange={(e) => setBen({ ...ben, note: e.target.value })} placeholder="Observação (opcional)" className={INPUT} />
               <button type="button" disabled={busy} onClick={submitBenefit} className={`${BTN} bg-[#fd8539] text-white`}>Aplicar</button>
             </div>
-            <p className="text-[13px] text-slate-500">Dias de trial valem na hora. Desconto e cupom ficam registrados na loja, e o checkout ainda não os aplica sozinho.</p>
+            <p className="text-[13px] text-slate-500">Dias de trial valem na hora. O desconto é aplicado automaticamente na próxima cobrança e vale pelos meses informados.</p>
           </div>
           <div className={`${CARD} overflow-x-auto p-0`}>
             <table className="w-full text-left text-[13px]">
