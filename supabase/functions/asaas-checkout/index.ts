@@ -133,6 +133,25 @@ Deno.serve(async (req) => {
       discountCents = q.type === "percentage" ? Math.round((priceCents * Number(q.value)) / 100) : Math.min(priceCents, Number(q.value));
       couponId = q.coupon_id ?? null;
     }
+    // 7b) Beneficio de desconto (%) concedido no Master. Nao soma com cupom: vale o maior.
+    let benefit: { id: string; pct: number; months: number | null } | null = null;
+    {
+      const { data: bn } = await admin
+        .from("admin_store_benefits")
+        .select("id, value, months")
+        .eq("store_id", store_id).eq("kind", "discount_percent").eq("consumed", false)
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      const pct = Number(bn?.value);
+      if (bn && Number.isFinite(pct) && pct > 0 && pct <= 100) {
+        const bd = Math.round((priceCents * pct) / 100);
+        if (bd > discountCents) {
+          benefit = { id: bn.id, pct, months: bn.months ?? null };
+          discountCents = bd;
+          couponId = null;
+        }
+      }
+    }
+    const fullValueCents = priceCents + addonCents;
     const totalCents = priceCents - discountCents + addonCents;
     if (totalCents < 500) return json({ error: "VALOR_INVALIDO" }, 400);
 
@@ -217,6 +236,10 @@ Deno.serve(async (req) => {
       is_current: true,
       pending_addon_ids: addonIds,
       coupon_id: couponId,
+      benefit_id: benefit?.id ?? null,
+      benefit_discount_percent: benefit?.pct ?? null,
+      benefit_months_left: benefit?.months ? Math.ceil(benefit.months / MONTHS[cycle]) : null,
+      benefit_full_value_cents: benefit ? fullValueCents : null,
     }).select("id").single();
     if (dbErr || !saved) {
       console.error("asaas-checkout DB_ERROR:", JSON.stringify(dbErr));
@@ -224,6 +247,7 @@ Deno.serve(async (req) => {
       return json({ error: "DB_ERROR", message: "Não foi possível registrar a assinatura." }, 500);
     }
     if (couponId) await admin.rpc("redeem_coupon", { p_coupon_id: couponId });
+    if (benefit) await admin.from("admin_store_benefits").update({ consumed: true }).eq("id", benefit.id);
 
     // 13) PIX: devolve o QR Code para exibir na propria tela
     let pix: { payload: string; image: string; expires_at: string | null } | null = null;
