@@ -215,7 +215,7 @@ async function syncInvoice(eventType: string, payment: any, sub: Sub | null) {
 
   const { data: inv, error: invErr } = await supabase
     .from("invoices")
-    .select("id, status")
+    .select("id, status, payment_method, invoice_url")
     .eq("asaas_payment_id", paymentId)
     .maybeSingle();
   if (invErr) {
@@ -226,6 +226,15 @@ async function syncInvoice(eventType: string, payment: any, sub: Sub | null) {
   const now = new Date().toISOString();
 
   if (inv) {
+    // meio real so aparece apos o cliente escolher a forma de pagamento (antes vem UNDEFINED)
+    const bt = payment?.billingType as string | undefined;
+    const meta: Record<string, unknown> = {};
+    if (bt && bt !== "UNDEFINED" && inv.payment_method !== bt) meta.payment_method = bt;
+    if (payment?.invoiceUrl && !inv.invoice_url) meta.invoice_url = payment.invoiceUrl;
+    if (Object.keys(meta).length > 0) {
+      const { error: metaErr } = await supabase.from("invoices").update({ ...meta, updated_at: now }).eq("id", inv.id);
+      if (metaErr) console.error("Erro ao atualizar meio/link da invoice:", metaErr);
+    }
     if (inv.status === target || inv.status === "refunded") return;
     // evento atrasado/fora de ordem nao desfaz uma fatura ja paga
     if (inv.status === "paid" && target !== "refunded") return;

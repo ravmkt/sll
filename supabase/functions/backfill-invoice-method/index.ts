@@ -22,8 +22,8 @@ Deno.serve(async (req) => {
 
   const { data: rows, error } = await admin
     .from("invoices")
-    .select("id, asaas_payment_id")
-    .is("payment_method", null)
+    .select("id, asaas_payment_id, payment_method")
+    .or("payment_method.is.null,and(payment_method.eq.UNDEFINED,status.eq.paid)")
     .not("asaas_payment_id", "is", null)
     .limit(60);
   if (error) return json({ error: "DB_ERROR", details: error.message }, 500);
@@ -39,16 +39,22 @@ Deno.serve(async (req) => {
       continue;
     }
     const p = await res.json().catch(() => ({}));
+    const bt = p.billingType as string | undefined;
+    if (!bt || bt === "UNDEFINED") {
+      // Asaas ainda nao tem o meio real: grava UNDEFINED so se estava vazio
+      if (r.payment_method == null) await admin.from("invoices").update({ payment_method: "UNDEFINED", invoice_url: p.invoiceUrl ?? null }).eq("id", r.id);
+      continue;
+    }
     const { error: upErr } = await admin
       .from("invoices")
-      .update({ payment_method: p.billingType ?? "UNKNOWN", invoice_url: p.invoiceUrl ?? null })
+      .update({ payment_method: bt, invoice_url: p.invoiceUrl ?? null })
       .eq("id", r.id);
     if (upErr) failed.push(String(r.asaas_payment_id)); else updated++;
   }
 
   const { count } = await admin
     .from("invoices").select("id", { count: "exact", head: true })
-    .is("payment_method", null).not("asaas_payment_id", "is", null);
+    .or("payment_method.is.null,and(payment_method.eq.UNDEFINED,status.eq.paid)").not("asaas_payment_id", "is", null);
 
   return json({ updated, failed, remaining: count ?? 0 });
 });
