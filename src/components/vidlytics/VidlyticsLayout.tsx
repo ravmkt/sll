@@ -35,7 +35,7 @@ interface VidlyticsLayoutProps {
 const SLL_MODULES = [
   { id: "hub", name: "Painel Central SLL", path: "/" },
   { id: "vidlytics", name: "Vidlytics (Shoppable Video)", path: "/vidlytics" },
-  { id: "live_commerce", name: "Live Commerce", path: "/live-commerce" },
+  { id: "live_commerce", name: "Stream Sell", path: "/live-commerce" },
   { id: "pdv", name: "PDV Integrado", path: "/pdv" },
   { id: "ia_consultant", name: "Consultor IA", path: "/ia-consultant" },
   { id: "social_proof", name: "Prova Social", path: "/social-proof" },

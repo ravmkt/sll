@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const MODULE_LABELS: Record<string, string> = {
   vidlytics: "Vidlytics",
-  live_commerce: "Live E-commerce",
+  live_commerce: "Stream Sell",
   pdv: "PDV",
 };
 

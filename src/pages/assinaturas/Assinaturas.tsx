@@ -10,6 +10,7 @@ import {
 } from "@/services/subscriptions/getStoreSubscriptions";
 import { SubscriptionModuleCard } from "@/components/assinaturas/SubscriptionModuleCard";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import MyAddonsCard from "@/components/billing/MyAddonsCard";
 
 export default function Assinaturas() {
   const { user } = useAuth();
@@ -89,6 +90,8 @@ export default function Assinaturas() {
                 <SubscriptionModuleCard key={sub.id} sub={sub} onCanceled={load} />
               ))}
             </div>
+
+            {storeId && <MyAddonsCard storeId={storeId} />}
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 flex items-center justify-between">
               <div>

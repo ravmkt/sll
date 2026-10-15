@@ -20,7 +20,7 @@ const PERIODOS: { key: Periodo; label: string }[] = [
   { key: 'today', label: 'Hoje' }, { key: '7', label: '7 dias' }, { key: '30', label: '30 dias' },
   { key: '90', label: '90 dias' }, { key: 'custom', label: 'Personalizado' },
 ];
-const FALLBACK_MODULES = [{ slug: 'vidlytics', name: 'Vidlytics' }, { slug: 'live_commerce', name: 'Live Commerce' }];
+const FALLBACK_MODULES = [{ slug: 'vidlytics', name: 'Vidlytics' }, { slug: 'live_commerce', name: 'Stream Sell' }];
 
 type AlertRow = { id: string; name: string; what: string; pct?: number; days?: number };
 type Health = {

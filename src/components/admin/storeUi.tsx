@@ -17,7 +17,7 @@ export const STATUS_STYLE: Record<StoreStatus, string> = {
 };
 
 export const MODULE_LABEL: Record<string, string> = {
-  vidlytics: 'Vidlytics', live_commerce: 'Live Commerce', gamification: 'Gamificação', reviews: 'Avaliações',
+  vidlytics: 'Vidlytics', live_commerce: 'Stream Sell', gamification: 'Gamificação', reviews: 'Avaliações',
 };
 export const modLabel = (k: string) => MODULE_LABEL[k] || k;
 

@@ -168,7 +168,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
                 <div className="flex items-center gap-2 text-emerald-700">
                   <Gift size={16} className="shrink-0" />
-                  <p className="text-xs font-bold">Próximo módulo: Live Commerce</p>
+                  <p className="text-xs font-bold">Próximo módulo: Stream Sell</p>
                 </div>
                 <Link
                   to="/dashboard/planos"
@@ -203,7 +203,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             <>
               <Link
                 to="/dashboard/planos"
-                title="Próximo módulo: Live Commerce"
+                title="Próximo módulo: Stream Sell"
                 className="flex items-center justify-center rounded-lg bg-emerald-50 p-2 text-emerald-700 hover:bg-emerald-100"
               >
                 <Gift size={18} />

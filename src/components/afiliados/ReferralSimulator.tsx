@@ -17,9 +17,9 @@ type SimPlan = { id: string; name: string; price: number; module: string };
 
 const MODULE_LABELS: Record<string, string> = {
   vidlytics: "Vidlytics",
-  live: "Live Commerce",
-  livecommerce: "Live Commerce",
-  live_commerce: "Live Commerce",
+  live: "Stream Sell",
+  livecommerce: "Stream Sell",
+  live_commerce: "Stream Sell",
   pdv: "Pdv",
   bundle: "Pacote completo",
 };

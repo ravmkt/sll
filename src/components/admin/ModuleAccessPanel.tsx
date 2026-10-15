@@ -8,7 +8,7 @@ import {
 
 const LABELS: Record<ModuleKey, string> = {
   vidlytics: 'Vidlytics',
-  live_commerce: 'Live Commerce',
+  live_commerce: 'Stream Sell',
 };
 
 const STATE_TEXT: Record<StoreModule['state'], string> = {

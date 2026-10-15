@@ -44,7 +44,7 @@ export const LOCATION_LABEL: Record<MktLocation, string> = {
   all: 'Todos os locais',
   home: 'Home do SLL',
   vidlytics: 'Vidlytics',
-  live: 'Live Commerce',
+  live: 'Stream Sell',
 };
 export const AUDIENCE_LABEL: Record<MktAudience, string> = {
   all: 'Todos os lojistas',

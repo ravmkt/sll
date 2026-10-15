@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Layers, 
@@ -38,7 +38,7 @@ export function ModuleSelectorDropdown() {
     },
     {
       id: 'live-commerce',
-      name: 'Live E-commerce',
+      name: 'Stream Sell',
       category: 'Transmissões Ao Vivo',
       path: '/dashboard/modules/live-commerce',
       icon: Radio,

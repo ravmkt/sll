@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { validateManager, validateStore, type WizardData } from './shared';
 
 const sb: any = supabase;
-const MODULE_NAMES: Record<string, string> = { vidlytics: 'Vidlytics', live_commerce: 'Live Commerce' };
+const MODULE_NAMES: Record<string, string> = { vidlytics: 'Vidlytics', live_commerce: 'Stream Sell' };
 
 function Row({ ok, label, hint }: { ok: boolean; label: string; hint?: string }) {
   return (
