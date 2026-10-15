@@ -130,6 +130,7 @@ Deno.serve(async (req) => {
 
     // 7) Cupom (desconto sobre o plano; fixed_amount em centavos)
     let couponId: string | null = null;
+    let couponCharges: number | null = null;
     let discountCents = 0;
     const code = String(b.coupon_code ?? "").trim();
     if (code) {
@@ -137,6 +138,8 @@ Deno.serve(async (req) => {
       if (!q?.valid) return json({ error: "CUPOM_INVALIDO" }, 400);
       discountCents = q.type === "percentage" ? Math.round((priceCents * Number(q.value)) / 100) : Math.min(priceCents, Number(q.value));
       couponId = q.coupon_id ?? null;
+      if (q.duration_type === "first_invoice") couponCharges = 1;
+      else if (q.duration_type === "months" && Number(q.duration_months) > 0) couponCharges = Math.ceil(Number(q.duration_months) / MONTHS[cycle]);
     }
     // 7b) Beneficio de desconto (%) concedido no Master. Nao soma com cupom: vale o maior.
     let benefit: { id: string; pct: number; months: number | null } | null = null;
@@ -252,8 +255,8 @@ Deno.serve(async (req) => {
       coupon_id: couponId,
       benefit_id: benefit?.id ?? null,
       benefit_discount_percent: benefit?.pct ?? null,
-      benefit_months_left: benefit?.months ? Math.ceil(benefit.months / MONTHS[cycle]) : null,
-      benefit_full_value_cents: benefit ? fullValueCents : null,
+      benefit_months_left: benefit ? (benefit.months ? Math.ceil(benefit.months / MONTHS[cycle]) : null) : couponCharges,
+      benefit_full_value_cents: (benefit || couponCharges) ? fullValueCents : null,
     }).select("id").single();
     if (dbErr || !saved) {
       console.error("asaas-checkout DB_ERROR:", JSON.stringify(dbErr));

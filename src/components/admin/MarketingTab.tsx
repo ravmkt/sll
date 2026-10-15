@@ -7,8 +7,8 @@ import {
 } from '@/services/admin/marketingAdmin';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import {
-  deleteMktCoupon, emptyCouponDraft, listCouponPlanOptions, listMktCoupons, saveMktCoupon, setMktCouponActive,
-  type CouponDraft, type CouponPlanOption, type MktCoupon,
+  deleteMktCoupon, couponToDraft, emptyCouponDraft, listCouponPlanOptions, listMktCoupons, saveMktCoupon, setMktCouponActive,
+  type CouponDraft, type CouponDuration, type CouponPlanOption, type CouponType, type MktCoupon,
 } from '@/services/admin/couponsMarketing';
 
 type TabKey = 'visao' | 'banner' | 'popup' | 'email' | 'whatsapp' | 'promocao';
@@ -313,6 +313,12 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
   );
 }
 
+function durationLabel(c: MktCoupon): string {
+  if (c.duration_type === 'first_invoice') return '1ª fatura';
+  if (c.duration_type === 'months') return c.duration_months + (c.duration_months === 1 ? ' mês' : ' meses');
+  return 'para sempre';
+}
+
 function couponStatus(c: MktCoupon): { label: string; cls: string } {
   const now = Date.now();
   if (!c.is_active) return { label: 'Pausado', cls: 'bg-slate-700 text-slate-200' };
@@ -468,11 +474,28 @@ function Cupom() {
           <div className="grid md:grid-cols-3 gap-3">
             <div><label className={labelCls}>Código</label>
               <input className={inputCls} value={draft.code} onChange={(e) => set('code', e.target.value.toUpperCase())} placeholder="BLACK10" /></div>
-            <div><label className={labelCls}>Desconto (%)</label>
+            <div><label className={labelCls}>Tipo de desconto</label>
+                  <select className={inputCls} value={draft.discount_type} onChange={(e) => set('discount_type', e.target.value as CouponType)}>
+                    <option value="percentage">Porcentagem (%)</option>
+                    <option value="fixed_amount">Valor fixo (R$)</option>
+                  </select></div>
+                <div><label className={labelCls}>{draft.discount_type === 'percentage' ? 'Desconto (%)' : 'Desconto (R$)'}</label>
               <input className={inputCls} value={draft.value} onChange={(e) => set('value', e.target.value)} /></div>
             <div><label className={labelCls}>Limite de usos (vazio = ilimitado)</label>
               <input className={inputCls} value={draft.max_uses} onChange={(e) => set('max_uses', e.target.value)} /></div>
             <div className="md:col-span-3 grid grid-cols-2 gap-3">
+                  <div><label className={labelCls}>Duração do desconto</label>
+                    <select className={inputCls} value={draft.duration_type} onChange={(e) => set('duration_type', e.target.value as CouponDuration)}>
+                      <option value="first_invoice">Apenas na 1ª fatura</option>
+                      <option value="months">Por X meses</option>
+                      <option value="forever">Para sempre (recorrente)</option>
+                    </select></div>
+                  {draft.duration_type === 'months' && (
+                    <div><label className={labelCls}>Quantidade de meses</label>
+                      <input className={inputCls} value={draft.duration_months} onChange={(e) => set('duration_months', e.target.value.replace(/\D/g, ''))} placeholder="3" /></div>
+                  )}
+                </div>
+                <div className="md:col-span-3 grid grid-cols-2 gap-3">
               <DateTimeField label="Início da validade" value={draft.starts_at} onChange={(x) => set('starts_at', x)} />
               <DateTimeField label="Fim da validade" value={draft.expires_at} onChange={(x) => set('expires_at', x)} />
             </div>
@@ -509,14 +532,14 @@ function Cupom() {
                 <p className="text-[13px] text-slate-400">{fmtDate(c.starts_at)} → {c.expires_at ? fmtDate(c.expires_at) : 'sem fim'}</p>
               </div>
               <div className="text-[13px] text-slate-300 tabular-nums text-right">
-                <p><b className="text-amber-300">{couponValue(c)}</b> de desconto</p>
+                <p><b className="text-amber-300">{couponValue(c)}</b> de desconto · {durationLabel(c)}</p>
                 <p>Usado {c.times_used} / {c.max_uses ?? 'ilimitado'}</p>
               </div>
               <div className="flex items-center gap-1">
                 <button type="button" title={c.is_active ? 'Pausar' : 'Ativar'} onClick={() => toggle(c)} className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
                   {c.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                 </button>
-                <button type="button" title="Editar" onClick={() => { setOk(null); setDraft({ id: c.id, code: c.code, value: String(c.discount_value), max_uses: c.max_uses === null ? '' : String(c.max_uses), starts_at: c.starts_at, expires_at: c.expires_at, applicable_plan_ids: c.applicable_plan_ids ?? [] }); }}
+                <button type="button" title="Editar" onClick={() => { setOk(null); setDraft(couponToDraft(c)); }}
                   className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
                   <Pencil className="w-4 h-4" />
                 </button>
