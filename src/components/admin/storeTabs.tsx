@@ -1,3 +1,5 @@
+import { supabase as sbRef } from '@/lib/supabase';
+import { Copy as CopyIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, Plus } from 'lucide-react';
@@ -278,8 +280,26 @@ export function IndicacoesTab({ storeId }: { storeId: string }) {
   }, [storeId]);
   const list = d?.list || [];
   const commission = list.reduce((a, r) => a + (Number(r.commission) || 0), 0);
+  const [code, setCode] = useState<string | null>(null);
+  useEffect(() => {
+    (sbRef as any).from('stores').select('referral_code').eq('id', storeId).maybeSingle()
+      .then(({ data }: any) => setCode(data?.referral_code || ''));
+  }, [storeId]);
+  const link = code ? `${window.location.origin}/?ref=${code}` : '';
   return (
     <div className="space-y-4">
+      <div className={`${CARD} flex flex-wrap items-center gap-3`}>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs uppercase tracking-wider text-slate-500">Link de indicação da loja</p>
+          <p className="truncate font-mono text-[13px] text-slate-200">{code === null ? 'Carregando...' : link || 'Esta loja ainda não tem código de indicação.'}</p>
+        </div>
+        {link && (
+          <button type="button" className={`${BTN} flex items-center gap-1.5 bg-white/10 text-slate-200 hover:bg-white/20`}
+            onClick={() => navigator.clipboard.writeText(link).then(() => toast.success('Link copiado.')).catch(() => toast.error('Não foi possível copiar.'))}>
+            <CopyIcon size={13} /> Copiar link
+          </button>
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
         <Kpi label="Lojas indicadas" value={String(list.length)} />
         <Kpi label="Comissão acumulada" value={commission.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} />
