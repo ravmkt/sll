@@ -8,13 +8,8 @@ import {
 import { createDynamicPlan, deleteDynamicPlan, getPlanSubscribers } from '@/services/admin/pricingService';
 import { listModules } from '@/services/admin/adminService';
 import { supabase } from '@/lib/supabase';
-import CouponsManager from '@/components/admin/CouponsManager';
-import ComboCreator from '@/components/admin/ComboCreator';
 import AddonsAdminTab from '@/components/admin/AddonsAdminTab';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
-import ComboModulesEditor from '@/components/admin/ComboModulesEditor';
-import ComboDiscountCard from '@/components/admin/ComboDiscountCard';
-import ComboPricing from '@/components/admin/ComboPricing';
 import MarginBadge from '@/components/admin/MarginBadge';
 import { cycleInfo } from '@/components/admin/cycleInfo';
 import InfraCostsCard from '@/components/admin/InfraCostsCard';
@@ -46,7 +41,7 @@ function splitLimits(lim: Record<string, unknown> | null | undefined) {
   return { rows, extra };
 }
 
-function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
+export function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
   plan: DynamicPlan | null; modules: Mod[]; defaultModule: string; onClose: () => void; onSaved: () => void;
 }) {
   const init = splitLimits(plan?.limits_config as Record<string, unknown> | null);
@@ -241,7 +236,7 @@ function AddonRow({ a, onSaved }: { a: PlanAddon; onSaved: () => void }) {
 }
 
 export default function PrecosTab({ initialModule }: { initialModule: string | null }) {
-  const [sub, setSub] = useState<'planos' | 'addons' | 'cupons' | 'custos'>('planos');
+  const [sub, setSub] = useState<'planos' | 'addons' | 'custos'>('planos');
   const [filter, setFilter] = useState(initialModule || '');
   const [modules, setModules] = useState<Mod[]>([]);
   const [plans, setPlans] = useState<DynamicPlan[] | null>(null);
@@ -249,9 +244,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   const [subs, setSubs] = useState<Record<string, number>>({});
   const [error, setError] = useState('');
   const [editing, setEditing] = useState<DynamicPlan | 'new' | null>(null);
-  const [creatingCombo, setCreatingCombo] = useState(false);
   const [comboMods, setComboMods] = useState<ComboModuleRow[]>([]);
-  const [editingMods, setEditingMods] = useState<DynamicPlan | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
   const costs = usePricingCosts(plans, comboMods);
@@ -270,16 +263,6 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   const filtered = (plans || []).filter((p) =>
     !filter || (p.is_combo ? comboMods.some((r) => r.plan_id === p.id && r.module_slug === filter) : p.module_slug === filter));
   const individuals = filtered.filter((p) => !p.is_combo);
-  const combos = filtered.filter((p) => p.is_combo);
-  const comboLine = (id: string) =>
-    comboMods
-      .filter((r) => r.plan_id === id)
-      .map((r) => {
-        const planName = r.member_tier
-          ? (plans || []).find((x) => !x.is_combo && x.module_slug === r.module_slug && x.plan_tier === r.member_tier)?.plan_name
-          : null;
-        return planName || modName.get(r.module_slug) || r.module_slug;
-      });
   const toggleActive = async (p: DynamicPlan) => {
     setTogglingId(p.id);
     try {
@@ -338,17 +321,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
                 <p className="font-mono text-xs text-slate-600">{p.plan_tier}</p>
               </td>
               <td className="px-3 py-3">
-                {combo ? (
-                  <div className="space-y-1">
-                    <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-xs font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
-                    {comboLine(p.id).length > 0
-                      ? <p className="text-xs leading-snug text-amber-200/80">{comboLine(p.id).join(' + ')}</p>
-                      : <p className="text-xs text-rose-400">Sem módulos definidos</p>}
-                    <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer text-xs font-semibold text-amber-300 hover:underline">Editar módulos</button>
-                  </div>
-                ) : (
                   <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs font-bold text-sky-300 ring-1 ring-sky-500/40">{modName.get(p.module_slug || '') || p.module_slug}</span>
-                )}
               </td>
               <td className="px-3 py-3 text-center text-white">{brl(p.price_monthly_cents)}</td>
               <td className="px-3 py-3 text-center text-slate-300">
@@ -382,7 +355,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
     </div>
   );
 
-  const TABS: { id: typeof sub; label: string }[] = [{ id: 'planos', label: 'Planos' }, { id: 'addons', label: 'Add-ons' }, { id: 'cupons', label: 'Cupons' }, { id: 'custos', label: 'Custos' }];
+  const TABS: { id: typeof sub; label: string }[] = [{ id: 'planos', label: 'Planos' }, { id: 'addons', label: 'Add-ons' }, { id: 'custos', label: 'Custos' }];
 
   return (
     <div className="space-y-5">
@@ -390,7 +363,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
         <div className="flex min-h-[44px] flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-black text-white">Preços</h1>
-            <p className="text-[13px] text-slate-500">Planos, limites, add-ons, cupons e custos de cada módulo.</p>
+            <p className="text-[13px] text-slate-500">Planos, limites, add-ons e custos de cada módulo.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {sub === 'planos' && (
@@ -401,9 +374,6 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
                 </select>
                 <button type="button" onClick={() => setEditing('new')} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-[13px] font-bold text-white">
                   <Plus size={14} /> Novo plano
-                </button>
-                <button type="button" onClick={() => setCreatingCombo(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-yellow-400 px-3 py-1.5 text-[13px] font-bold text-slate-900">
-                  <Plus size={14} /> Novo combo
                 </button>
               </>
             )}
@@ -478,53 +448,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
             </div>
           </section>
 
-          <ComboDiscountCard />
 
-          <section className="space-y-3">
-            <h2 className="text-[15px] font-bold text-yellow-300">Combos <span className="ml-1 font-normal text-slate-500">({combos.length})</span></h2>
-            {combos.length === 0 ? (
-              <p className="rounded-2xl border border-slate-800 bg-[#111524] px-4 py-8 text-center text-[13px] text-slate-500">Nenhum combo. Clique em "Novo combo".</p>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {combos.map((p) => {
-                  const line = comboLine(p.id);
-                  return (
-                    <div key={p.id} onClick={() => setEditing(p)}
-                      className="flex min-h-[270px] cursor-pointer flex-col rounded-2xl border border-slate-800 bg-[#111524] p-5 shadow-[inset_4px_0_0_0_#facc15] transition-colors hover:bg-white/5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-base font-black text-white">{p.plan_name}</p>
-                          <p className="font-mono text-xs text-slate-600">{p.plan_tier}</p>
-                        </div>
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>{p.is_active ? 'Ativo' : 'Pausado'}</span>
-                      </div>
-                      <div className="mt-3 flex-1">
-                        <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-xs font-extrabold uppercase tracking-wider text-slate-900">Combo</span>
-                        {line.length > 0
-                          ? <p className="mt-2 text-[13px] leading-snug text-amber-200/80">{line.join(' + ')}</p>
-                          : <p className="mt-2 text-[13px] text-rose-400">Sem módulos definidos</p>}
-                      </div>
-                      <div onClick={(ev) => ev.stopPropagation()} className="mt-3 cursor-default">
-                        <ComboPricing combo={p} list={costs.listPrices(p.id)} pct={costs.discounts[p.id] ?? 0} onChanged={() => { load(); costs.reload(); }} />
-                      </div>
-                      <div className="mt-2 flex items-center justify-center gap-2 text-[13px] text-slate-500"><span>Margem</span><MarginBadge m={costs.marginOf(p)} /></div>
-                      <p className="mt-3 text-center text-[13px] text-slate-500">{int(subs[p.id])} assinantes</p>
-                      <div className="mt-3 flex flex-wrap justify-center gap-1.5" onClick={(ev) => ev.stopPropagation()}>
-                        <button type="button" onClick={() => setEditingMods(p)} className="cursor-pointer rounded-md bg-white/5 px-2.5 py-1 text-[13px] font-semibold text-amber-300 hover:bg-white/10">Módulos</button>
-                        <button type="button" disabled={togglingId === p.id} onClick={() => toggleActive(p)}
-                          className={`cursor-pointer rounded-md px-2.5 py-1 text-[13px] font-semibold disabled:opacity-40 ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
-                          {p.is_active ? 'Pausar' : 'Ativar'}
-                        </button>
-                        <button type="button" disabled={togglingId === p.id || (subs[p.id] || 0) > 0} onClick={() => removePlan(p)}
-                          title={(subs[p.id] || 0) > 0 ? 'Combo com assinantes: use Pausar' : 'Excluir combo'}
-                          className="cursor-pointer rounded-md bg-rose-500/15 px-2.5 py-1 text-[13px] font-semibold text-rose-300 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30">Excluir</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
         </div>
       ))}
 
@@ -548,12 +472,9 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
         </div>
       ))}
 
-      {sub === 'cupons' && <div className="overflow-hidden rounded-2xl bg-white"><CouponsManager /></div>}
 
       {dialog}
-      {creatingCombo && <ComboCreator onCreated={load} onClose={() => setCreatingCombo(false)} />}
 
-      {editingMods && <ComboModulesEditor combo={editingMods} onClose={() => setEditingMods(null)} onSaved={load} />}
 
       {editing && (
         <PlanDrawer
