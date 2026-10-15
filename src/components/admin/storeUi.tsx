@@ -24,7 +24,11 @@ export const modLabel = (k: string) => MODULE_LABEL[k] || k;
 export const brl = (cents: number) => ((cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 export const dt = (v?: string | null) => (v ? new Date(v).toLocaleDateString('pt-BR') : '—');
 export const dtt = (v?: string | null) => (v ? new Date(v).toLocaleString('pt-BR') : '—');
-export const mb = (b?: number | null) => `${((b || 0) / 1024 / 1024).toFixed(1)} MB`;
+export const mb = (b?: number | null) => {
+  const m = (b || 0) / 1024 / 1024;
+  if (m < 1024) return `${m.toFixed(1).replace('.', ',')} MB`;
+  return `${(m / 1024).toFixed(1).replace(/\.0$/, '').replace('.', ',')} GB`;
+};
 export const digits = (v?: string | null) => (v || '').replace(/\D/g, '');
 
 export function Badge({ status }: { status: StoreStatus }) {

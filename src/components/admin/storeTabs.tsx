@@ -78,7 +78,11 @@ export function ResumoTab({ storeId, data }: { storeId: string; data: AdminStore
         <Kpi label="Eventos" value={num(total)} />
         <Kpi label="Armazenamento" value={storage} hint="uso atual (sem histórico)" />
         <Kpi label="Vídeos" value={String(data.videos_count)} hint="total na loja" />
-        <Kpi label="Trial até" value={dt(s.trial_ends_at)} />
+        {(s as any).plan_kind === 'lifetime'
+          ? <Kpi label="Plano" value="Vitalício" />
+          : (s as any).plan_kind === 'paid'
+            ? <Kpi label="Plano" value="Assinatura ativa" />
+            : <Kpi label="Trial até" value={dt(s.trial_ends_at)} />}
       </div>
       <div className={CARD}>
         <p className="mb-3 text-[15px] font-bold text-white">Eventos por tipo</p>
@@ -142,7 +146,7 @@ export function AssinaturasTab({ storeId, data, plans, busy, onStatus, reload }:
                   <td className="px-3 py-3 font-bold text-white">{subModule(sub)}</td>
                   <td className="px-3 py-3 text-slate-300">{sub.plan_name || '—'}</td>
                   <td className="px-3 py-3 text-slate-300">{SUB_LABEL[sub.status] || sub.status}</td>
-                  <td className="px-3 py-3 text-slate-400">{CYCLE_LABEL[sub.billing_cycle || ''] || sub.billing_cycle || '—'}</td>
+                  <td className="px-3 py-3 text-slate-400">{sub.status === 'lifetime' ? 'Vitalício' : (CYCLE_LABEL[sub.billing_cycle || ''] || sub.billing_cycle || '—')}</td>
                   <td className="px-3 py-3 text-slate-400">{dt(sub.created_at)}</td>
                   <td className="px-3 py-3">
                     <button
@@ -178,7 +182,7 @@ export function AssinaturasTab({ storeId, data, plans, busy, onStatus, reload }:
                   <td className="px-3 py-2 font-bold text-white">{subModule(sub)}</td>
                   <td className="px-3 py-2 text-slate-300">{sub.plan_name || '—'}</td>
                   <td className="px-3 py-2 text-slate-300">{SUB_LABEL[sub.status] || sub.status}</td>
-                  <td className="px-3 py-2 text-slate-400">{CYCLE_LABEL[sub.billing_cycle || ''] || sub.billing_cycle || '—'}</td>
+                  <td className="px-3 py-2 text-slate-400">{sub.status === 'lifetime' ? 'Vitalício' : (CYCLE_LABEL[sub.billing_cycle || ''] || sub.billing_cycle || '—')}</td>
                   <td className="px-3 py-2 text-slate-400">{dt(sub.created_at)}</td>
                 </tr>
               ))}
