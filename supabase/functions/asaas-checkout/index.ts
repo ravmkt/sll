@@ -112,15 +112,20 @@ Deno.serve(async (req) => {
 
     // 6) Add-ons (preco validado no servidor)
     let addonCents = 0;
+    let oneTimeCents = 0;
+    let oneTimeNames = "";
     if (addonIds.length) {
       const { data: ads } = await admin
-        .from("addons").select("id, price_monthly, scope, upsell_module_target")
+        .from("addons").select("id, name, price_monthly, scope, upsell_module_target, billing_type")
         .in("id", addonIds).eq("is_active", true).eq("is_upsell", true);
       const ok = (ads ?? []).filter((a: any) =>
         (a.scope === "global" || blockKeys.includes(a.scope)) &&
         (a.upsell_module_target === "all" || blockKeys.includes(a.upsell_module_target)));
       if (ok.length !== addonIds.length) return json({ error: "ADDON_INDISPONIVEL" }, 400);
-      addonCents = ok.reduce((s: number, a: any) => s + Math.round(Number(a.price_monthly) * 100 * MONTHS[cycle]), 0);
+      addonCents = ok.filter((a: any) => a.billing_type !== "one_time").reduce((s: number, a: any) => s + Math.round(Number(a.price_monthly) * 100 * MONTHS[cycle]), 0);
+      const otAds = ok.filter((a: any) => a.billing_type === "one_time");
+      oneTimeCents = otAds.reduce((s: number, a: any) => s + Math.round(Number(a.price_monthly) * 100), 0);
+      oneTimeNames = otAds.map((a: any) => a.name).join(" + ");
     }
 
     // 7) Cupom (desconto sobre o plano; fixed_amount em centavos)
@@ -152,7 +157,8 @@ Deno.serve(async (req) => {
       }
     }
     const fullValueCents = priceCents + addonCents;
-    const totalCents = priceCents - discountCents + addonCents;
+    const recurringCents = priceCents - discountCents + addonCents;
+    const totalCents = recurringCents + oneTimeCents;
     if (totalCents < 500) return json({ error: "VALOR_INVALIDO" }, 400);
 
     // 8) Limpa tentativa anterior incompleta do mesmo modulo
@@ -194,13 +200,18 @@ Deno.serve(async (req) => {
     // 11) Assinatura no Asaas (cartao cobra na hora; PIX gera QR)
     const today = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
     const ip = (req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "0.0.0.0";
+    const brlC = (c: number) => "R$ " + (c / 100).toFixed(2).replace(".", ",");
+    const baseDesc = `${dyn.plan_name} - SLL Hub`;
+    const firstDesc = oneTimeCents > 0
+      ? `Assinatura ${dyn.plan_name} (${brlC(recurringCents)}) + Setup/Add-on ${oneTimeNames} (${brlC(oneTimeCents)}) - SLL Hub`
+      : baseDesc;
     const payload: Record<string, unknown> = {
       customer: customerId,
       billingType: method,
       nextDueDate: today,
       value: totalCents / 100,
       cycle: ASAAS_CYCLE[cycle],
-      description: `${dyn.plan_name} - SLL Hub`,
+      description: firstDesc,
       externalReference: store_id,
     };
     if (card) {
@@ -235,6 +246,9 @@ Deno.serve(async (req) => {
       billing_provider: "asaas",
       is_current: true,
       pending_addon_ids: addonIds,
+      one_time_pending_cents: oneTimeCents,
+      recurring_value_cents: oneTimeCents > 0 ? recurringCents : null,
+      recurring_description: oneTimeCents > 0 ? baseDesc : null,
       coupon_id: couponId,
       benefit_id: benefit?.id ?? null,
       benefit_discount_percent: benefit?.pct ?? null,

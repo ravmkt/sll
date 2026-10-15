@@ -182,6 +182,9 @@ Deno.serve(async (req) => {
     }
 
     let value = (priceCents - discountCents) / 100;
+    let oneTimeCents = 0;
+    let oneTimeNames = "";
+    let recurringCents = priceCents - discountCents;
     const asaasCycle = CYCLE_MAP[billing_cycle] ?? "MONTHLY";
 
     // 4.5 Resolve o módulo pelo plano (não confia no cliente) e bloqueia duplicidade
@@ -239,7 +242,7 @@ Deno.serve(async (req) => {
       }
       const { data: ads } = await supabaseAdmin
         .from("addons")
-        .select("id, price_monthly, scope, upsell_module_target")
+        .select("id, name, price_monthly, scope, upsell_module_target, billing_type")
         .in("id", addonIds)
         .eq("is_active", true)
         .eq("is_upsell", true);
@@ -251,8 +254,12 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "ADDON_INDISPONIVEL" }, 400);
       }
       const addonMonths = billing_cycle === "SEMIANNUAL" ? 6 : billing_cycle === "YEARLY" ? 12 : 1;
-      const addonCents = okAds.reduce((s: number, a: any) => s + Math.round(Number(a.price_monthly) * 100 * addonMonths), 0);
-      value = (priceCents - discountCents + addonCents) / 100;
+      const addonCents = okAds.filter((a: any) => a.billing_type !== "one_time").reduce((s: number, a: any) => s + Math.round(Number(a.price_monthly) * 100 * addonMonths), 0);
+      const otAds = okAds.filter((a: any) => a.billing_type === "one_time");
+      oneTimeCents = otAds.reduce((s: number, a: any) => s + Math.round(Number(a.price_monthly) * 100), 0);
+      oneTimeNames = otAds.map((a: any) => a.name).join(" + ");
+      recurringCents = priceCents - discountCents + addonCents;
+      value = (recurringCents + oneTimeCents) / 100;
     }
 
     // 4.6 Trial de 7 dias por modulo (1x por loja/modulo, so para quem ja tem plano pago)
@@ -365,6 +372,11 @@ Deno.serve(async (req) => {
     const nextDueDate = new Date();
     nextDueDate.setDate(nextDueDate.getDate() + (trialDays || 1));
 
+    const brlC = (c: number) => "R$ " + (c / 100).toFixed(2).replace(".", ",");
+    const baseDesc = `${planName}${module_key ? ` (${module_key})` : ""} - SLL Hub`;
+    const firstDesc = oneTimeCents > 0
+      ? `Assinatura ${planName} (${brlC(recurringCents)}) + Setup/Add-on ${oneTimeNames} (${brlC(oneTimeCents)}) - SLL Hub`
+      : baseDesc;
     const subRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
@@ -374,7 +386,7 @@ Deno.serve(async (req) => {
         nextDueDate: nextDueDate.toISOString().slice(0, 10),
         value,
         cycle: asaasCycle,
-        description: `${planName}${module_key ? ` (${module_key})` : ""} - SLL Hub`,
+        description: firstDesc,
         externalReference: store_id,
       }),
     });
@@ -423,6 +435,9 @@ Deno.serve(async (req) => {
         coupon_discount_cents: discountCents > 0 ? discountCents : null,
         is_current: true,
         pending_addon_ids: addonIds.length > 0 ? addonIds : null,
+        one_time_pending_cents: oneTimeCents,
+        recurring_value_cents: oneTimeCents > 0 ? recurringCents : null,
+        recurring_description: oneTimeCents > 0 ? baseDesc : null,
       })
       .select()
       .single();

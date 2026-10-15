@@ -1,4 +1,4 @@
-##### src\services\admin\addonsAdmin.ts
+##### addonsAdmin.ts
 1: import { supabase } from '@/lib/supabase';
 2: 
 3: const sb: any = supabase;
@@ -80,7 +80,7 @@
 79:   const { error } = await sb.from('addons').delete().eq('id', id);
 80:   if (error) throw new Error(error.message);
 81: }
-##### supabase\functions\asaas-create-addon\index.ts
+##### asaas-create-addon
 1: import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 2: 
 3: const IS_PROD = (Deno.env.get("ASAAS_ENV") ?? "sandbox") === "production";
@@ -202,7 +202,7 @@
 119:     return json({ error: "UNEXPECTED_ERROR", details: String(err) }, 500);
 120:   }
 121: });
-##### supabase\functions\asaas-webhook\index.ts
+##### asaas-webhook
 1: import { createClient } from "jsr:@supabase/supabase-js@2";
 2: 
 3: const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -471,7 +471,7 @@
 266:   });
 267:   if (error) console.error("Erro ao criar invoice:", error);
 268: }
-##### supabase\migrations\20261121_addons_order_bump.sql (tabelas + activate_pending_addons)
+##### migration order bump
 1: create table if not exists public.addons (
 2:   id uuid primary key default gen_random_uuid(),
 3:   slug text unique not null,

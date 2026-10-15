@@ -1,4 +1,4 @@
-##### supabase\functions\asaas-checkout\index.ts (contexto de addon)
+##### asaas-checkout (contexto de addon)
   F:\RODRIGO VICENTE\DYAD\sll-hub\supabase\functions\asaas-checkout\index.ts:15:
   F:\RODRIGO VICENTE\DYAD\sll-hub\supabase\functions\asaas-checkout\index.ts:16:const digits = (v: unknown) => String(v ?? "").replace(/\D/g, "");
   F:\RODRIGO VICENTE\DYAD\sll-hub\supabase\functions\asaas-checkout\index.ts:17:const MONTHS: Record<string, number> = { MONTHLY: 1, SEMIANNUAL: 6, YEARLY: 12 };
@@ -85,7 +85,7 @@
   F:\RODRIGO VICENTE\DYAD\sll-hub\supabase\functions\asaas-checkout\index.ts:242:      benefit_full_value_cents: benefit ? fullValueCents : null,
   F:\RODRIGO VICENTE\DYAD\sll-hub\supabase\functions\asaas-checkout\index.ts:243:    }).select("id").single();
   F:\RODRIGO VICENTE\DYAD\sll-hub\supabase\functions\asaas-checkout\index.ts:244:    if (dbErr || !saved) {
-##### supabase\functions\asaas-create-subscription\index.ts (contexto de addon)
+##### asaas-create-subscription (contexto de addon)
   F:\RODRIGO VICENTE\DYAD\sll-hub\supabase\functions\asaas-create-subscription\index.ts:16:interface RequestBody {
   F:\RODRIGO VICENTE\DYAD\sll-hub\supabase\functions\asaas-create-subscription\index.ts:17:  store_id: string;
   F:\RODRIGO VICENTE\DYAD\sll-hub\supabase\functions\asaas-create-subscription\index.ts:18:  plan_id: string;

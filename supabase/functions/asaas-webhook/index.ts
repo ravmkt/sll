@@ -127,6 +127,29 @@ Deno.serve(async (req: Request) => {
       console.error("[asaas-webhook] Erro ao chamar send-subscription-email:", e);
     }
   }
+  // 3.6) Add-on avulso: so apos pagamento confirmado/recebido (nunca PAYMENT_CREATED). Idempotente via settle_one_time_charge.
+  if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && asaasSubscriptionId && ASAAS_KEY) {
+    try {
+      const { data: rec } = await supabase.rpc("settle_one_time_charge", { p_asaas_subscription_id: asaasSubscriptionId });
+      if (rec && typeof rec.recurring_cents === "number" && rec.recurring_cents >= 500) {
+        const putBody: Record<string, unknown> = { value: rec.recurring_cents / 100, updatePendingPayments: true };
+        if (rec.description) putBody.description = rec.description;
+        const r = await fetch(`${ASAAS_URL}/subscriptions/${asaasSubscriptionId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", access_token: ASAAS_KEY },
+          body: JSON.stringify(putBody),
+        });
+        const rb = await r.text();
+        console.log("[asaas-webhook] valor recorrente restaurado (avulso)", asaasSubscriptionId, r.status);
+        if (!r.ok) {
+          console.error("[asaas-webhook] falha ao restaurar valor recorrente:", rb);
+          await supabase.from("admin_audit_logs").insert({ action: `one_time_revert_failed:${asaasSubscriptionId}`, details: { status: r.status, body: rb, recurring_cents: rec.recurring_cents } });
+        }
+      }
+    } catch (e) {
+      console.error("[asaas-webhook] erro no add-on avulso:", e);
+    }
+  }
   // 3.7) Beneficio de desconto com validade: conta 1 cobranca por pagamento e volta ao valor cheio no fim
   if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && sub?.id && asaasSubscriptionId && asaasPaymentId) {
     try {
