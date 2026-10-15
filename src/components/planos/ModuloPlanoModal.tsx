@@ -214,7 +214,7 @@ export default function ModuloPlanoModal({
                       </span>
                       <b className="text-sm text-slate-900">{a.upsell_headline || a.name}</b>
                       {a.description && <span className="text-[11px] leading-snug text-slate-500">{a.description}</span>}
-                      <span className="mt-auto text-xs font-black text-[#c2571a]">+ {brl(Math.round(a.price_monthly * 100))}/mês</span>
+                      <span className="mt-auto text-xs font-black text-[#c2571a]">+ {brl(Math.round(a.price_monthly * 100))}{a.billing_type === 'one_time' ? ' · pagamento único' : '/mês'}</span>
                     </button>
                   );
                 })}
@@ -264,7 +264,7 @@ export default function ModuloPlanoModal({
             <div className="space-y-1 rounded-xl bg-slate-50 p-3 text-xs">
               <div className="flex justify-between"><span className="text-slate-600">{plan?.plan_name ?? "-"}</span><b>{brl(planCents)}</b></div>
               {items.filter((a) => sel.has(a.id)).map((a) => (
-                <div key={a.id} className="flex justify-between"><span className="text-slate-600">{a.name}</span><b>{brl(Math.round(a.price_monthly * 100 * months))}</b></div>
+                <div key={a.id} className="flex justify-between"><span className="text-slate-600">{a.name}</span><b>{brl(Math.round(a.price_monthly * 100 * (a.billing_type === 'one_time' ? 1 : months)))}</b></div>
               ))}
               <div className="flex justify-between border-t border-slate-200 pt-1.5 text-sm font-black text-slate-900"><span>Total</span><span>{brl(total)}</span></div>
               <p className="text-[10px] text-slate-400">Cupom e teste grátis no próximo passo.</p>

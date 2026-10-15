@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
-import { CYCLE_MONTHS, bumpTotal, useUpsells, type Cycle } from '@/components/checkout/OrderBumpCard';
+import { CYCLE_MONTHS, bumpRecurring, bumpTotal, useUpsells, type Cycle } from '@/components/checkout/OrderBumpCard';
 import { brl } from '@/components/planos/planosShared';
 
 const sb: any = supabase;
@@ -161,6 +161,7 @@ export default function CheckoutPage() {
   const discount = !applied ? 0 : applied.type === 'percentage' ? Math.round((planCents * applied.value) / 100) : Math.min(planCents, applied.value);
   const addonCents = Math.round(bumpTotal(upsells, new Set(bumpIds), cycle) * 100);
   const total = Math.max(0, planCents - discount + addonCents);
+  const renewalCents = Math.max(0, planCents - discount + Math.round(bumpRecurring(upsells, new Set(bumpIds), cycle) * 100));
   const renewal = useMemo(() => { const d = new Date(); d.setMonth(d.getMonth() + months); return d.toLocaleDateString('pt-BR'); }, [months]);
 
   const applyCoupon = async () => {
@@ -265,7 +266,7 @@ export default function CheckoutPage() {
                         <p className="flex items-center gap-1.5 text-sm font-black"><Zap size={14} className="text-[#fd8539]" /> {a.upsell_headline || a.name}</p>
                         <p className="mt-0.5 text-xs text-slate-500">{a.name}{a.description ? `: ${a.description}` : ''}</p>
                       </div>
-                      <p className="text-sm font-black">{brl(Math.round(a.price_monthly * 100))}<span className="text-xs font-semibold text-slate-400">/mês</span></p>
+                      <p className="text-sm font-black">{brl(Math.round(a.price_monthly * 100))}<span className="text-xs font-semibold text-slate-400">{a.billing_type === 'one_time' ? ' · único' : '/mês'}</span></p>
                       <button type="button" onClick={() => setSel((s) => { const n = new Set(s); if (n.has(a.id)) n.delete(a.id); else n.add(a.id); return n; })}
                         className={`cursor-pointer rounded-full border px-4 py-1.5 text-xs font-bold ${on ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-slate-800 text-slate-800 hover:bg-slate-50'}`}>
                         {on ? <span className="flex items-center gap-1"><Check size={13} /> Adicionado · Remover</span> : 'Selecionar'}
@@ -336,7 +337,7 @@ export default function CheckoutPage() {
                   Aceitar a renovação automática para garantir acesso contínuo
                 </label>
                 <p className="text-[11px] leading-relaxed text-slate-500">
-                  Ao clicar em "Concordar e assinar", você autoriza a cobrança de {brl(total)} hoje e a renovação automática a cada {months === 1 ? 'mês' : `${months} meses`} no mesmo valor, até o cancelamento.
+                  Ao clicar em "Concordar e assinar", você autoriza a cobrança de {brl(total)} hoje e a renovação automática a cada {months === 1 ? 'mês' : `${months} meses`} no valor de {brl(renewalCents)}, até o cancelamento.
                   Cancele a qualquer momento pelo painel, sem multa. Garantia incondicional de 14 dias: se cancelar em até 14 dias após a assinatura, você recebe o reembolso integral do valor pago (solicite pelo suporte). Veja os <Link to="/termos" className="underline">Termos de Serviço</Link>.
                 </p>
                 <button type="button" disabled={!!pend || busy} onClick={submit}
@@ -371,7 +372,7 @@ export default function CheckoutPage() {
           {upsells.filter((a) => sel.has(a.id)).map((a) => (
             <div key={a.id} className="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
               <p className="min-w-0 flex-1 text-sm font-semibold leading-tight">{a.name}</p>
-              <p className="text-sm font-black">{brl(Math.round(a.price_monthly * 100 * months))}</p>
+              <p className="text-sm font-black">{brl(Math.round(a.price_monthly * 100 * (a.billing_type === 'one_time' ? 1 : months)))}</p>
               {!pix && <button type="button" aria-label="Remover" onClick={() => setSel((s) => { const n = new Set(s); n.delete(a.id); return n; })} className="cursor-pointer text-slate-400 hover:text-rose-500"><X size={15} /></button>}
             </div>
           ))}
@@ -387,7 +388,7 @@ export default function CheckoutPage() {
             <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{brl(planCents + addonCents)}</span></div>
             {discount > 0 && <div className="flex justify-between font-semibold text-emerald-600"><span>Desconto ({applied?.code})</span><span>- {brl(discount)}</span></div>}
             <div className="flex items-end justify-between pt-1"><span className="text-base font-black">Total hoje</span><span className="text-2xl font-black">{brl(total)}</span></div>
-            <p className="text-[11px] text-slate-500">Próxima renovação em {renewal} no valor de {brl(total)}.</p>
+            <p className="text-[11px] text-slate-500">Próxima renovação em {renewal} no valor de {brl(renewalCents)}.</p>
           </div>
 
           <ul className="space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">

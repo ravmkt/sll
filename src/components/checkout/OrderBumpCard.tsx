@@ -53,6 +53,10 @@ export function useUpsells(modules: string[]) {
 export const bumpTotal = (items: Upsell[], selected: Set<string>, cycle: Cycle) =>
   items.filter((a) => selected.has(a.id)).reduce((s, a) => s + a.price_monthly * (a.billing_type === 'one_time' ? 1 : CYCLE_MONTHS[cycle]), 0);
 
+// Valor que se repete na renovacao (ignora add-ons avulsos), em reais
+export const bumpRecurring = (items: Upsell[], selected: Set<string>, cycle: Cycle) =>
+  items.filter((a) => selected.has(a.id) && a.billing_type !== 'one_time').reduce((s, a) => s + a.price_monthly * CYCLE_MONTHS[cycle], 0);
+
 export default function OrderBumpCard({ modules, cycle, selected, onChange }: {
   modules: string[]; cycle: Cycle; selected: Set<string>; onChange: (next: Set<string>) => void;
 }) {
