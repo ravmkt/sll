@@ -22,9 +22,9 @@ const CHIPS: { id: 'all' | StoreStatus; label: string }[] = [
 ];
 const STATUS_ORDER: Record<StoreStatus, number> = { active: 0, trial: 1, past_due: 2, inactive: 3 };
 
-type SortKey = 'name' | 'created' | 'access' | 'status';
+type SortKey = 'name' | 'created' | 'access' | 'status' | 'plans' | 'ai' | 'storage';
 type SortDir = 'asc' | 'desc';
-const DEFAULT_DIR: Record<SortKey, SortDir> = { name: 'asc', created: 'desc', access: 'desc', status: 'asc' };
+const DEFAULT_DIR: Record<SortKey, SortDir> = { name: 'asc', created: 'desc', access: 'desc', status: 'asc', plans: 'asc', ai: 'desc', storage: 'desc' };
 
 const ts = (v: string | null) => (v ? new Date(v).getTime() : 0);
 const fmtDate = (v: string | null) => (v ? new Date(v).toLocaleDateString('pt-BR', { timeZone: TZ }) : '—');
@@ -219,15 +219,24 @@ function LojasList() {
       (mod === 'all' || r.modules.includes(mod)) &&
       (!term || [r.name, r.url, r.contact_email, r.owner_email].some((v) => (v || '').toLowerCase().includes(term))));
     const sign = dir === 'asc' ? 1 : -1;
+    const planKey = (r: AdminStoreRow) =>
+      r.plans[0] || (r.modules[0] ? (modNames[r.modules[0]] || modLabel(r.modules[0])) : '\uffff');
+    const storagePct = (r: AdminStoreRow) => {
+      const lim = Number(r.storage_limit_bytes) || 0;
+      return lim > 0 ? (Number(r.storage_used_bytes) || 0) / lim : -1;
+    };
     return list.sort((a, b) => {
       let p = 0;
       if (sort === 'name') p = (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' });
       else if (sort === 'created') p = ts(a.created_at) - ts(b.created_at);
       else if (sort === 'access') p = ts(a.last_sign_in_at) - ts(b.last_sign_in_at);
+      else if (sort === 'plans') p = planKey(a).localeCompare(planKey(b), 'pt-BR', { sensitivity: 'base' });
+      else if (sort === 'ai') p = (a.ai_interactions || 0) - (b.ai_interactions || 0);
+      else if (sort === 'storage') p = storagePct(a) - storagePct(b);
       else p = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
       return p * sign || ts(b.created_at) - ts(a.created_at);
     });
-  }, [rows, q, status, mod, sort, dir]);
+  }, [rows, q, status, mod, sort, dir, modNames]);
 
   const togglePlan = async (r: AdminStoreRow) => {
     if (r.is_lifetime) {
@@ -343,9 +352,9 @@ function LojasList() {
                 <Th label="Criada em" k="created" sort={sort} dir={dir} onSort={onSort} />
                 <Th label="Último acesso" k="access" sort={sort} dir={dir} onSort={onSort} />
                 <Th label="Status" k="status" sort={sort} dir={dir} onSort={onSort} />
-                <th className="px-4 py-3 uppercase tracking-wider">Planos &amp; módulos</th>
-                <th className="px-4 py-3 uppercase tracking-wider">Consumo IA</th>
-                <th className="px-4 py-3 uppercase tracking-wider">Storage</th>
+                <Th label="Planos &amp; módulos" k="plans" sort={sort} dir={dir} onSort={onSort} />
+                <Th label="Consumo IA" k="ai" sort={sort} dir={dir} onSort={onSort} />
+                <Th label="Storage" k="storage" sort={sort} dir={dir} onSort={onSort} />
                 <th className="px-4 py-3 text-right uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
