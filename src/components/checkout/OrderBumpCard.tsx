@@ -15,6 +15,7 @@ export interface Upsell {
   scope: string;
   upsell_headline: string | null;
   upsell_module_target: string | null;
+  billing_type?: 'recurring' | 'one_time';
   target_resource?: string | null;
   resource_amount?: number | null;
 }
@@ -50,7 +51,7 @@ export function useUpsells(modules: string[]) {
 
 // Valor extra a cobrar no ciclo escolhido, em reais
 export const bumpTotal = (items: Upsell[], selected: Set<string>, cycle: Cycle) =>
-  items.filter((a) => selected.has(a.id)).reduce((s, a) => s + a.price_monthly * CYCLE_MONTHS[cycle], 0);
+  items.filter((a) => selected.has(a.id)).reduce((s, a) => s + a.price_monthly * (a.billing_type === 'one_time' ? 1 : CYCLE_MONTHS[cycle]), 0);
 
 export default function OrderBumpCard({ modules, cycle, selected, onChange }: {
   modules: string[]; cycle: Cycle; selected: Set<string>; onChange: (next: Set<string>) => void;
@@ -80,7 +81,9 @@ export default function OrderBumpCard({ modules, cycle, selected, onChange }: {
               <span className="flex items-center gap-1.5 text-sm font-black text-slate-900"><Zap size={14} className="text-[#fd8539]" /> {a.upsell_headline || a.name}</span>
               <span className="mt-0.5 block text-xs text-slate-600">{a.name}{a.description ? `: ${a.description}` : ''}</span>
               <span className="mt-1 block text-xs font-bold text-[#c2571a]">
-                {brl(a.price_monthly)}/mês{months > 1 ? ` · ${brl(a.price_monthly * months)} a cada ${months} meses` : ''}
+                {a.billing_type === 'one_time'
+                  ? `${brl(a.price_monthly)} · pagamento único`
+                  : `${brl(a.price_monthly)}/mês${months > 1 ? ` · ${brl(a.price_monthly * months)} a cada ${months} meses` : ''}`}
               </span>
             </span>
           </button>

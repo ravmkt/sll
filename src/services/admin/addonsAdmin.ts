@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 const sb: any = supabase;
 
 export type Resource = 'storage_gb' | 'plays' | 'videos' | 'custom';
+export type BillingType = 'recurring' | 'one_time';
+export const BILLING_LABEL: Record<BillingType, string> = { recurring: 'Recorrente (mensal)', one_time: 'Cobrança única' };
 
 export interface Addon {
   id: string;
@@ -17,10 +19,11 @@ export interface Addon {
   upsell_headline: string | null;
   upsell_module_target: string | null;
   is_active: boolean;
+  billing_type: BillingType;
   created_at: string;
 }
 
-export type AddonInput = Omit<Addon, 'id' | 'slug' | 'created_at'>;
+export type AddonInput = Omit<Addon, 'id' | 'slug' | 'created_at' | 'billing_type'> & { billing_type?: BillingType };
 
 export const RESOURCE_LABEL: Record<Resource, string> = {
   storage_gb: 'Armazenamento (GB)',
