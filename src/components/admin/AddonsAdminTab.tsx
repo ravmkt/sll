@@ -18,12 +18,12 @@ type Mod = { slug: string; name: string };
 
 type Form = {
   name: string; description: string; scope: string; target_resource: Resource; amount: string; price: string;
-  is_active: boolean; is_upsell: boolean; upsell_module_target: string; upsell_headline: string;
+  is_active: boolean; is_upsell: boolean; upsell_module_target: string; upsell_headline: string; billing_type: 'recurring' | 'one_time';
 };
 
 const EMPTY: Form = {
   name: '', description: '', scope: 'global', target_resource: 'storage_gb', amount: '', price: '',
-  is_active: true, is_upsell: false, upsell_module_target: 'all', upsell_headline: '',
+  is_active: true, is_upsell: false, upsell_module_target: 'all', upsell_headline: '', billing_type: 'recurring',
 };
 
 const num = (v: string) => Number(v.trim().replace(/\./g, '').replace(',', '.'));
@@ -73,7 +73,7 @@ export default function AddonsAdminTab() {
     setForm({
       name: a.name, description: a.description ?? '', scope: a.scope, target_resource: a.target_resource,
       amount: String(a.resource_amount).replace('.', ','), price: String(a.price_monthly).replace('.', ','),
-      is_active: a.is_active, is_upsell: a.is_upsell,
+      is_active: a.is_active, is_upsell: a.is_upsell, billing_type: a.billing_type ?? 'recurring',
       upsell_module_target: a.upsell_module_target ?? 'all', upsell_headline: a.upsell_headline ?? '',
     });
   };
@@ -102,6 +102,7 @@ export default function AddonsAdminTab() {
       upsell_headline: form.is_upsell ? form.upsell_headline.trim() : null,
       upsell_module_target: form.is_upsell ? form.upsell_module_target : null,
       is_active: form.is_active,
+      billing_type: form.billing_type,
     };
     setBusy(true);
     try {
@@ -135,7 +136,7 @@ export default function AddonsAdminTab() {
           <thead className="border-b border-slate-800">
             <tr>
               <th className={TH}>Escopo / Chave</th><th className={TH}>Nome</th><th className={TH}>Recurso concedido</th>
-              <th className={`${TH} text-center`}>Mensal (R$)</th><th className={`${TH} text-center`}>Upsell</th>
+              <th className={`${TH} text-center`}>Preço (R$)</th><th className={`${TH} text-center`}>Upsell</th>
               <th className={`${TH} text-center`}>Status</th><th className={`${TH} text-center`}>Ações</th>
             </tr>
           </thead>
@@ -150,7 +151,7 @@ export default function AddonsAdminTab() {
                 </td>
                 <td className="px-3 py-3 font-semibold text-slate-100">{a.name}</td>
                 <td className="px-3 py-3 text-slate-300">{formatGrant(a)}</td>
-                <td className="px-3 py-3 text-center font-bold text-white">{brl(a.price_monthly)}</td>
+                <td className="px-3 py-3 text-center font-bold text-white">{brl(a.price_monthly)}<span className="block text-xs font-normal text-slate-500">{a.billing_type === 'one_time' ? 'avulso' : '/mês'}</span></td>
                 <td className="px-3 py-3 text-center">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${a.is_upsell ? 'bg-amber-500/15 text-amber-300' : 'bg-slate-500/15 text-slate-400'}`}>{a.is_upsell ? 'Sim' : 'Não'}</span>
                 </td>
@@ -187,11 +188,16 @@ export default function AddonsAdminTab() {
                 <select value={form.scope} onChange={(e) => set('scope', e.target.value)} className={`${IN} cursor-pointer`}>
                   {scopes.map((s) => <option key={s.slug} value={s.slug}>{s.name}</option>)}
                 </select></label>
-              <label className="block"><span className={LBL}>Preço mensal (R$)</span>
+              <label className="block"><span className={LBL}>{form.billing_type === 'one_time' ? 'Preço único (R$)' : 'Preço mensal (R$)'}</span>
                 <input value={form.price} onChange={(e) => set('price', e.target.value)} className={IN} placeholder="19,90" inputMode="decimal" /></label>
               <label className="block"><span className={LBL}>Recurso incrementado</span>
                 <select value={form.target_resource} onChange={(e) => set('target_resource', e.target.value as Resource)} className={`${IN} cursor-pointer`}>
                   {(Object.keys(RESOURCE_LABEL) as Resource[]).map((r) => <option key={r} value={r}>{RESOURCE_LABEL[r]}</option>)}
+                </select></label>
+              <label className="block"><span className={LBL}>Cobrança</span>
+                <select value={form.billing_type} onChange={(e) => set('billing_type', e.target.value as 'recurring' | 'one_time')} className={`${IN} cursor-pointer`}>
+                  <option value="recurring">Recorrente (mensal)</option>
+                  <option value="one_time">Avulsa (pagamento único)</option>
                 </select></label>
               <label className="block"><span className={LBL}>Quantidade concedida</span>
                 <input value={form.amount} onChange={(e) => set('amount', e.target.value)} className={IN} placeholder="10 ou 15000" inputMode="decimal" /></label>

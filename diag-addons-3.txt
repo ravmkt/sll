@@ -1,0 +1,61 @@
+##### onde o checkout usa quote_addons / pending_addon_ids / activate_pending_addons
+src\components\checkout\OrderBumpCard.tsx:53: export const bumpTotal = (items: Upsell[], selected: Set<string>, cycle: Cycle) =>
+src\components\checkout\OrderBumpCard.tsx:56: export default function OrderBumpCard({ modules, cycle, selected, onChange }: {
+src\components\checkout\OrderBumpCard.tsx:66: const total = useMemo(() => bumpTotal(items, selected, cycle), [items, selected, cycle]);
+src\components\planos\ComboPlanoModal.tsx:8: import { bumpTotal, useUpsells } from "@/components/checkout/OrderBumpCard";
+src\components\planos\ComboPlanoModal.tsx:42: const addonsCents = Math.round(bumpTotal(items, sel, cycle) * 100);
+src\components\planos\ModuloPlanoModal.tsx:9: import { bumpTotal, useUpsells } from "@/components/checkout/OrderBumpCard";
+src\components\planos\ModuloPlanoModal.tsx:99: const addonsCents = Math.round(bumpTotal(items, sel, cycle) * 100);
+src\pages\checkout\Checkout.tsx:9: import OrderBumpCard, { bumpTotal, useUpsells } from '@/components/checkout/OrderBumpCard';
+src\pages\checkout\Checkout.tsx:187: const bumpCents = Math.round(bumpTotal(upsells, new Set(bumpIds), cycle) * 100);
+src\pages\checkout\Checkout.tsx:387: <OrderBumpCard modules={bumpModules} cycle={cycle} selected={bump} onChange={setBump} />
+src\pages\checkout\CheckoutPage.tsx:9: import { CYCLE_MONTHS, bumpTotal, useUpsells, type Cycle } from '@/components/checkout/OrderBumpCard';
+src\pages\checkout\CheckoutPage.tsx:162: const addonCents = Math.round(bumpTotal(upsells, new Set(bumpIds), cycle) * 100);
+supabase\functions\asaas-checkout\index.ts:237: pending_addon_ids: addonIds,
+supabase\functions\asaas-create-subscription\index.ts:425: pending_addon_ids: addonIds.length > 0 ? addonIds : null,
+supabase\functions\asaas-webhook\index.ts:194: const { error: pendErr } = await supabase.rpc("activate_pending_addons", {
+supabase\migrations\20261121_addons_order_bump.sql:77: alter table public.subscriptions add column if not exists pending_addon_ids uuid[] not null default '{}';
+supabase\migrations\20261121_addons_order_bump.sql:196: create or replace function public.quote_addons(p_addon_ids uuid[], p_cycle text)
+supabase\migrations\20261121_addons_order_bump.sql:215: grant execute on function public.quote_addons(uuid[], text) to authenticated, service_role;
+supabase\migrations\20261121_addons_order_bump.sql:218: create or replace function public.activate_pending_addons(p_asaas_subscription_id text)
+supabase\migrations\20261121_addons_order_bump.sql:223: select id, store_id, pending_addon_ids into s
+supabase\migrations\20261121_addons_order_bump.sql:225: if not found or coalesce(cardinality(s.pending_addon_ids), 0) = 0 then return 0; end if;
+supabase\migrations\20261121_addons_order_bump.sql:228: select s.store_id, a.id, 1, 'active', s.id from public.addons a where a.id = any(s.pending_addon_ids)
+supabase\migrations\20261121_addons_order_bump.sql:232: update public.subscriptions set pending_addon_ids = '{}' where id = s.id;
+supabase\migrations\20261121_addons_order_bump.sql:236: revoke all on function public.activate_pending_addons(text) from public, anon, authenticated;
+supabase\migrations\20261121_addons_order_bump.sql:237: grant execute on function public.activate_pending_addons(text) to service_role;
+supabase\migrations\20261122_addons_billing_type.sql:5: create or replace function public.quote_addons(p_addon_ids uuid[], p_cycle text)
+supabase\migrations\20261122_addons_billing_type.sql:32: grant execute on function public.quote_addons(uuid[], text) to authenticated, service_role;
+##### edge functions
+_shared
+admin-impersonate
+admin-reset-store-password
+asaas-cancel-subscription
+asaas-checkout
+asaas-create-addon
+asaas-create-subscription
+asaas-invoice-docs
+asaas-webhook
+backfill-invoice-method
+cancel-stale-checkouts
+get-instagram-media
+get-tiktok-media
+import-instagram-video
+import-tiktok-video
+instagram-auth
+noah-admin
+noah-support
+proxy-xml
+send-billing-emails
+send-cancel-email
+send-master-email
+send-payment-reminder
+send-subscription-email
+send-welcome-email
+tiktok-oauth-callback
+tiktok-oauth-start
+track-event
+update-sector-benchmarks
+yampi-import
+yampi-sync
+youtube-playlist
