@@ -118,8 +118,8 @@ export async function deleteStore(storeId: string): Promise<void> {
   await call<null>('admin_master_store_delete', { p_store_id: storeId });
 }
 
-export async function addBenefit(storeId: string, kind: string, value: string, note: string): Promise<void> {
-  await call<null>('admin_master_add_benefit', { p_store_id: storeId, p_kind: kind, p_value: value, p_note: note });
+export async function addBenefit(storeId: string, kind: string, value: string, note: string, months: number | null = null): Promise<void> {
+  await call<null>('admin_master_add_benefit', { p_store_id: storeId, p_kind: kind, p_value: value, p_note: note, p_months: months });
 }
 
 export type CancelPreview = {

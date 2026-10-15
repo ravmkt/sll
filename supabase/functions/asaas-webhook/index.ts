@@ -5,6 +5,9 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const WEBHOOK_TOKEN = Deno.env.get("ASAAS_WEBHOOK_TOKEN")!;
 const WEBHOOK_TOKEN_SANDBOX = Deno.env.get("ASAAS_WEBHOOK_TOKEN_SANDBOX")!;
 const INTERNAL_SECRET = Deno.env.get("INTERNAL_TEST_SECRET") ?? "";
+const IS_PROD = (Deno.env.get("ASAAS_ENV") ?? "sandbox") === "production";
+const ASAAS_URL = IS_PROD ? "https://api.asaas.com/v3" : "https://api-sandbox.asaas.com/v3";
+const ASAAS_KEY = (IS_PROD ? Deno.env.get("ASAAS_API_KEY") : Deno.env.get("ASAAS_API_KEY_SANDBOX")) ?? "";
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
@@ -124,6 +127,42 @@ Deno.serve(async (req: Request) => {
       console.error("[asaas-webhook] Erro ao chamar send-subscription-email:", e);
     }
   }
+  // 3.7) Beneficio de desconto com validade: conta 1 cobranca por pagamento e volta ao valor cheio no fim
+  if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && sub?.id && asaasSubscriptionId && asaasPaymentId) {
+    try {
+      const tickKey = `benefit_tick:${asaasPaymentId}`;
+      const { data: done } = await supabase.from("admin_audit_logs").select("id").eq("action", tickKey).maybeSingle();
+      if (!done) {
+        const { data: bs } = await supabase
+          .from("subscriptions")
+          .select("benefit_months_left, benefit_full_value_cents")
+          .eq("id", sub.id)
+          .maybeSingle();
+        const left = bs?.benefit_months_left;
+        if (typeof left === "number" && left > 0) {
+          await supabase.from("admin_audit_logs").insert({ action: tickKey, details: { subscription_id: sub.id, left_before: left } });
+          const newLeft = left - 1;
+          await supabase.from("subscriptions").update({ benefit_months_left: newLeft, updated_at: new Date().toISOString() }).eq("id", sub.id);
+          if (newLeft === 0 && bs?.benefit_full_value_cents && ASAAS_KEY) {
+            const r = await fetch(`${ASAAS_URL}/subscriptions/${asaasSubscriptionId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json", access_token: ASAAS_KEY },
+              body: JSON.stringify({ value: bs.benefit_full_value_cents / 100, updatePendingPayments: true }),
+            });
+            const rb = await r.text();
+            console.log("[asaas-webhook] valor cheio restaurado", sub.id, r.status);
+            if (!r.ok) {
+              console.error("[asaas-webhook] falha ao restaurar valor cheio:", rb);
+              await supabase.from("admin_audit_logs").insert({ action: `benefit_revert_failed:${sub.id}`, details: { status: r.status, body: rb } });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[asaas-webhook] erro no beneficio de desconto:", e);
+    }
+  }
+
   // 4) Comissao de indicacao
   if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && asaasPaymentId && sub) {
     const paidValue = Number(payment?.value ?? 0);

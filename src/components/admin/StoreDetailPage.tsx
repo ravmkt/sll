@@ -133,6 +133,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
   const [busy, setBusy] = useState(false);
   const [showDel, setShowDel] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [benMonths, setBenMonths] = useState('');
   const [ben, setBen] = useState({ kind: 'trial_days', value: '', note: '' });
   const [logFilter, setLogFilter] = useState<'all' | 'painel' | 'evento'>('all');
   const [showCode, setShowCode] = useState(false);
@@ -215,7 +216,8 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
   const submitBenefit = () => {
     if (!ben.value.trim()) { toast.error('Informe o valor do benefício.'); return; }
     run(async () => {
-      await addBenefit(storeId, ben.kind, ben.value.trim(), ben.note);
+      await addBenefit(storeId, ben.kind, ben.value.trim(), ben.note, ben.kind === 'discount_percent' && /^\d+$/.test(benMonths.trim()) ? Number(benMonths.trim()) : null);
+      setBenMonths('');
       setBen({ kind: ben.kind, value: '', note: '' });
     }, 'Benefício aplicado.');
   };
@@ -298,6 +300,15 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
                 <option value="discount_percent">Desconto (%)</option>
                 <option value="coupon">Cupom</option>
               </select>
+              {ben.kind === 'discount_percent' && (
+                <input
+                  value={benMonths}
+                  onChange={(e) => setBenMonths(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                  inputMode="numeric"
+                  placeholder="Meses de desconto (vazio = sem prazo)"
+                  className="w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#0094eb]"
+                />
+              )}
               <input
                 value={ben.value}
                 onChange={(e) => setBen({ ...ben, value: e.target.value })}
