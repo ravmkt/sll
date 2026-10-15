@@ -388,7 +388,20 @@ export default function CheckoutPage() {
             <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{brl(planCents + addonCents)}</span></div>
             {discount > 0 && <div className="flex justify-between font-semibold text-emerald-600"><span>Desconto ({applied?.code})</span><span>- {brl(discount)}</span></div>}
             <div className="flex items-end justify-between pt-1"><span className="text-base font-black">Total hoje</span><span className="text-2xl font-black">{brl(total)}</span></div>
-            <p className="text-[11px] text-slate-500">Próxima renovação em {renewal} no valor de {brl(renewalCents)}.</p>
+            {total !== renewalCents ? (
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+                <p className="font-black">Atenção: o valor de hoje não se repete</p>
+                <p>Hoje você paga <strong>{brl(total)}</strong>, incluindo <strong>{brl(total - renewalCents)}</strong> de pagamento único.</p>
+                <p>
+                  A partir de <strong>{renewal}</strong>, a renovação será de <strong className="text-sm">{brl(renewalCents)}</strong>
+                  {months === 1 ? '/mês' : ` a cada ${months} meses`}.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs font-semibold text-slate-700">
+                Próxima renovação em <strong>{renewal}</strong> no valor de <strong>{brl(renewalCents)}</strong>.
+              </p>
+            )}
           </div>
 
           <ul className="space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
