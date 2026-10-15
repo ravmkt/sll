@@ -6,7 +6,7 @@ export const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 
 
 export const STATUS_LABEL: Record<string, string> = { active: 'Ativo', coming_soon: 'Em breve', hidden: 'Oculto' };
 export const SUB_LABEL: Record<string, string> = { active: 'Ativa', trialing: 'Trial', past_due: 'Em atraso', lifetime: 'Vitalícia' };
-export const CYCLE_LABEL: Record<string, string> = { monthly: 'Mensal', semiannual: 'Semestral', annual: 'Anual' };
+export const CYCLE_LABEL: Record<string, string> = { monthly: 'Mensal', semiannual: 'Semestral', annual: 'Anual', yearly: 'Anual' };
 
 export const int = (n: number | null | undefined) => (Number(n) || 0).toLocaleString('pt-BR');
 export const brl = (cents: number | null | undefined) => ((Number(cents) || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
