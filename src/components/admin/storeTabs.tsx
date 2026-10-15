@@ -282,8 +282,8 @@ export function IndicacoesTab({ storeId }: { storeId: string }) {
   const commission = list.reduce((a, r) => a + (Number(r.commission) || 0), 0);
   const [code, setCode] = useState<string | null>(null);
   useEffect(() => {
-    (sbRef as any).from('stores').select('referral_code').eq('id', storeId).maybeSingle()
-      .then(({ data }: any) => setCode(data?.referral_code || ''));
+    (sbRef as any).rpc('admin_master_store_referral_code', { p_store_id: storeId })
+      .then(({ data }: any) => setCode(typeof data === 'string' ? data : ''));
   }, [storeId]);
   const link = code ? `${window.location.origin}/?ref=${code}` : '';
   return (

@@ -74,6 +74,21 @@ function friendlyAudit(
     }
   }
 }
+const PLATFORMS = ['Nuvemshop', 'Shopify', 'Yampi', 'Tray', 'WooCommerce', 'Vtex', 'Loja Física/Outra'];
+const canonPlatform = (v: string) => PLATFORMS.find((p) => p.toLowerCase() === (v || '').trim().toLowerCase()) ?? (v || '');
+const onlyDigits = (v: string) => (v || '').replace(/\D/g, '');
+// Mostra no formato (41) 99999-9999; ignora o 55 do país quando vier gravado
+const maskBr = (v: string) => {
+  let d = onlyDigits(v);
+  if (d.length > 11 && d.startsWith('55')) d = d.slice(2);
+  d = d.slice(0, 11);
+  if (!d) return '';
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+};
+
 const FIELDS: [string, string][] = [
   ['name', 'Nome da loja'], ['url', 'URL da loja'], ['platform', 'Plataforma'], ['contact_name', 'Nome do contato'],
   ['contact_email', 'E-mail de contato'], ['owner_contact_email', 'E-mail do assinante'], ['whatsapp', 'WhatsApp (com DDD)'],
@@ -322,7 +337,18 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
           {FIELDS.map(([k, l]) => (
             <label key={k} className="block space-y-1">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{l}</span>
-              <input value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })} className={INPUT} />
+              {k === 'platform' ? (
+                <select value={canonPlatform(form[k] || '')} onChange={(e) => setForm({ ...form, [k]: e.target.value })} className={`${INPUT} cursor-pointer`}>
+                  <option value="">Selecione a plataforma</option>
+                  {(PLATFORMS.includes(canonPlatform(form[k] || '')) || !form[k] ? PLATFORMS : [canonPlatform(form[k] || ''), ...PLATFORMS]).map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              ) : k === 'whatsapp' ? (
+                <input inputMode="tel" value={maskBr(form[k] || '')} onChange={(e) => setForm({ ...form, [k]: onlyDigits(e.target.value).slice(0, 11) })} placeholder="(41) 99999-9999" className={INPUT} />
+              ) : (
+                <input value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })} className={INPUT} />
+              )}
             </label>
           ))}
           <button
