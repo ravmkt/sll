@@ -43,6 +43,9 @@ function PeriodSelect({ value, onChange, options }: { value: string; onChange: (
   );
 }
 
+const payMethod = (m: string | null | undefined) =>
+  ({ CREDIT_CARD: 'Cartão', DEBIT_CARD: 'Débito', PIX: 'Pix', BOLETO: 'Boleto' } as Record<string, string>)[String(m || '').toUpperCase()] || '—';
+
 function usePeriod(storeId: string, sel: string) {
   const [per, setPer] = useState<StorePeriod | null>(null);
   const [loading, setLoading] = useState(true);
@@ -244,11 +247,11 @@ export function FinanceiroTab({ storeId }: { storeId: string }) {
           <thead>
             <tr className="border-b border-white/10">
               <th className={TH}>Data</th><th className={TH}>Descrição</th><th className={TH}>Valor</th>
-              <th className={TH}>Status</th><th className={TH}>Vencimento</th><th className={TH}>Pago em</th><th className={TH}>Docs</th>
+              <th className={TH}>Status</th><th className={TH}>Vencimento</th><th className={TH}>Pago em</th><th className={TH}>Meio</th><th className={TH}>Docs</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {list.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-500">Sem faturas no período.</td></tr>}
+            {list.length === 0 && <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-500">Sem faturas no período.</td></tr>}
             {list.map((i) => {
               const st = invState(i);
               return (
@@ -259,6 +262,7 @@ export function FinanceiroTab({ storeId }: { storeId: string }) {
                   <td className="px-3 py-2"><span className={`rounded-full px-2 py-0.5 text-[13px] font-bold ${st.cls}`}>{st.label}</span></td>
                   <td className="px-3 py-2 text-slate-400">{dt(i.due_date)}</td>
                   <td className="px-3 py-2 text-slate-400">{dt(i.paid_at)}</td>
+                  <td className="px-3 py-2 text-slate-300">{payMethod(i.payment_method)}</td>
                   <td className="px-3 py-2"><InvoiceDocs invoiceId={i.id} label={`${brl(i.amount_cents)} · ${dt(i.created_at)}`} /></td>
                 </tr>
               );

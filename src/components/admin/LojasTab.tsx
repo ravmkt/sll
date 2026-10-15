@@ -345,12 +345,13 @@ function LojasList() {
                 <Th label="Status" k="status" sort={sort} dir={dir} onSort={onSort} />
                 <th className="px-4 py-3 uppercase tracking-wider">Planos &amp; módulos</th>
                 <th className="px-4 py-3 uppercase tracking-wider">Consumo IA</th>
+                <th className="px-4 py-3 uppercase tracking-wider">Storage</th>
                 <th className="px-4 py-3 text-right uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {visible.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">Nenhuma loja encontrada.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-slate-500">Nenhuma loja encontrada.</td></tr>
               )}
               {visible.map((r) => {
                 const acc = lastAccess(r.last_sign_in_at);
@@ -395,6 +396,7 @@ function LojasList() {
                         </>
                       ) : <span className="text-slate-600">—</span>}
                     </td>
+                    <td className="px-4 py-3"><StorageCell used={r.storage_used_bytes} limit={r.storage_limit_bytes} /></td>
                     <td className="px-4 py-3 text-right">
                       <RowMenu
                         r={r}
@@ -417,6 +419,28 @@ function LojasList() {
       {del && (
         <DeleteStoreModal name={del.name || 'excluir'} busy={busyId === del.id} onCancel={() => setDel(null)} onConfirm={confirmDelete} />
       )}
+    </div>
+  );
+}
+
+function fmtBytes(b: number | null | undefined) {
+  const n = Number(b) || 0;
+  const mb = n / 1048576;
+  return mb < 1024 ? `${mb.toFixed(mb < 10 ? 1 : 0).replace('.', ',')} MB` : `${(mb / 1024).toFixed(1).replace('.', ',')} GB`;
+}
+
+function StorageCell({ used, limit }: { used: number | null; limit: number | null }) {
+  const u = Number(used) || 0;
+  const lim = Number(limit) || 0;
+  if (!lim) return <span className="text-[13px] text-slate-400">{u > 0 ? fmtBytes(u) : '—'}</span>;
+  const pct = Math.min(100, (u / lim) * 100);
+  const bar = pct >= 90 ? 'bg-rose-500' : pct >= 70 ? 'bg-amber-400' : 'bg-sky-500';
+  return (
+    <div className="w-36" title={`${fmtBytes(u)} de ${fmtBytes(lim)} (${pct.toFixed(0)}%)`}>
+      <p className="text-[13px] text-slate-300">{fmtBytes(u)} <span className="text-slate-500">de {fmtBytes(lim)}</span></p>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div className={`h-full ${bar}`} style={{ width: `${Math.max(pct, u > 0 ? 3 : 0)}%` }} />
+      </div>
     </div>
   );
 }

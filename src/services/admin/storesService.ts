@@ -16,6 +16,8 @@ export type AdminStoreRow = {
   plans: string[];
   modules: string[];
   referrals_made: number;
+  storage_used_bytes: number | null;
+  storage_limit_bytes: number | null;
   is_lifetime: boolean;
   ai_interactions: number;
   ai_tokens: number;
@@ -62,6 +64,8 @@ export type AdminStoreFull = {
     paid_at: string | null;
     description: string | null;
     created_at: string;
+    payment_method: string | null;
+    invoice_url: string | null;
   }[];
   paid_cents: number;
   open_cents: number;
