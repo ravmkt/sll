@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { getModulesOverview, reorderHubModules, type ModulesData } from '@/services/admin/modulesService';
 import ModuloDetalhe from '@/components/admin/ModuloDetalhe';
 import NovoModuloModal from '@/components/admin/NovoModuloModal';
+import ComboSection from '@/components/admin/ComboSection';
 import SandboxStoreSelect from '@/components/master/SandboxStoreSelect';
 import { CARD, SELECT, STATUS_LABEL, ModuleLogo, brl, int } from '@/components/admin/moduleUi';
 
@@ -16,6 +17,7 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [view, setView] = useState<'modulos' | 'combos'>('modulos');
   const [dragSlug, setDragSlug] = useState<string | null>(null);
   const [overSlug, setOverSlug] = useState<string | null>(null);
   const blocked = useRef(false);
@@ -99,7 +101,17 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
 
       <SandboxStoreSelect />
 
-      {data && (
+      <div className="flex gap-2">
+        {([['modulos', 'Módulos individuais'], ['combos', 'Combos']] as const).map(([k, l]) => (
+          <button key={k} type="button" onClick={() => setView(k)}
+            className={`cursor-pointer rounded-lg px-4 py-2 text-[13px] font-bold ${view === k ? 'bg-[#fd8539] text-white' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}>
+            {l}
+          </button>
+        ))}
+      </div>
+      {view === 'combos' && <ComboSection />}
+
+      {data && view === 'modulos' && (
         <>
           <div className={`${CARD} flex flex-wrap items-center gap-x-8 gap-y-2`}>
             <div>
