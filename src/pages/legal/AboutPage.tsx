@@ -12,7 +12,7 @@ export default function AboutPage() {
       <h2 className="text-xl font-semibold mt-8 mb-2">O que você pode fazer</h2>
       <ul className="list-disc space-y-1 pl-6">
         <li><strong>Vidlytics:</strong> vídeos interativos, stories, carrosséis e widgets com produtos e analytics de reprodução, cliques e conversão.</li>
-        <li><strong>Live Commerce:</strong> transmissões ao vivo com chat e produtos vinculados ao catálogo.</li>
+        <li><strong>Stream Sell:</strong> transmissões ao vivo com chat e produtos vinculados ao catálogo.</li>
         <li><strong>Métricas:</strong> painéis para acompanhar o desempenho dos vídeos e das lives na sua loja.</li>
       </ul>
       <h2 className="text-xl font-semibold mt-8 mb-2">Por que pedimos login com Google</h2>

@@ -74,7 +74,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
           </div>
           {isExpanded && (
             <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
-              Live Commerce
+              Stream Sell
             </span>
           )}
         </div>

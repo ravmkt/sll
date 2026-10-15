@@ -202,7 +202,7 @@ export default function LiveAdmin() {
           onClick={() => navigate('/live-commerce')}
           className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700"
         >
-          Voltar para Live Commerce
+          Voltar para Stream Sell
         </button>
       </div>
     );
@@ -212,7 +212,7 @@ export default function LiveAdmin() {
         return (
           <div className="flex flex-col items-center justify-center h-screen w-full bg-[#0a0f1d] text-slate-300 gap-3">
             <AlertTriangle className="w-8 h-8 text-amber-500" />
-            <p className="text-sm">Seu plano atual não inclui o módulo Live Commerce.</p>
+            <p className="text-sm">Seu plano atual não inclui o módulo Stream Sell.</p>
             <button
               onClick={() => navigate('/billing')}
               className="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg"

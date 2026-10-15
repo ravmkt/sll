@@ -18,9 +18,9 @@ const esc = (v: string) =>
 
 const MODULE_LABEL: Record<string, string> = {
   vidlytics: "Vidlytics",
-  live_commerce: "Live Commerce",
-  livecommerce: "Live Commerce",
-  live: "Live Commerce",
+  live_commerce: "Stream Sell",
+  livecommerce: "Stream Sell",
+  live: "Stream Sell",
   pdv: "PDV",
 };
 

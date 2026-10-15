@@ -57,7 +57,7 @@ export default function PlanosGatePage() {
           </div>
           <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80">
             <div className="text-[#fd8539] mb-2"><Zap size={22} /></div>
-            <h4 className="font-semibold text-sm mb-1 text-white">Live E-commerce</h4>
+            <h4 className="font-semibold text-sm mb-1 text-white">Stream Sell</h4>
             <p className="text-xs text-slate-400">Lives interativas com carrinho em tempo real para picos de venda.</p>
           </div>
           <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80">

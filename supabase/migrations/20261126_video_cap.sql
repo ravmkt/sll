@@ -2,7 +2,6 @@ alter table vidlytics.vid_videos
   add column if not exists paused_by_quota boolean not null default false,
   add column if not exists keep_on_downgrade boolean not null default false;
 
--- Pausa o excedente (nunca deleta) e reativa o que o sistema pausou quando o limite volta
 create or replace function public.enforce_video_cap(p_store_id uuid)
 returns integer
 language plpgsql
@@ -58,7 +57,6 @@ create trigger trg_store_addons_cap
   after insert or update of status or delete on public.store_addons
   for each row execute function public.trg_enforce_cap_from_store_addon();
 
--- Lista para o lojista escolher quais videos manter
 create or replace function public.list_store_videos_cap(p_store_id uuid)
 returns table (id uuid, title text, thumbnail_url text, active boolean, paused_by_quota boolean, keep_on_downgrade boolean)
 language plpgsql

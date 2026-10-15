@@ -135,7 +135,7 @@ function LiveCommerceContent() {
         setProducts((prods || []) as any);
         await Promise.all([loadLives(activeStoreId), loadAppearance(activeStoreId)]);
       } catch (err: any) {
-        toast.error("Erro ao carregar dados do Live Commerce: " + (err?.message || ""));
+        toast.error("Erro ao carregar dados do Stream Sell: " + (err?.message || ""));
       } finally {
         setLoading(false);
       }
@@ -256,7 +256,7 @@ function LiveCommerceContent() {
             <Radio className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Live Commerce</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Stream Sell</h1>
             <p className="text-muted-foreground text-sm">
               Programe, divulgue e gerencie todas as suas lives em um só lugar.
             </p>
@@ -282,7 +282,7 @@ function LiveCommerceContent() {
             <div>
               <h3 className="font-semibold text-foreground">Recurso Exclusivo dos Planos Pro e Scale</h3>
               <p className="text-sm text-muted-foreground">
-                Seu plano atual ({planName || "Starter"}) não inclui Live Commerce.
+                Seu plano atual ({planName || "Starter"}) não inclui Stream Sell.
               </p>
             </div>
           </div>
