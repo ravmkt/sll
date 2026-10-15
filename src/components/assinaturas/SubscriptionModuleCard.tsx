@@ -6,7 +6,7 @@ import { cancelSubscription } from "@/services/subscriptions/getStoreSubscriptio
 
 const MODULE_LABELS: Record<string, string> = {
   vidlytics: "Vidlytics",
-  live_commerce: "Live E-commerce",
+  live_commerce: "Stream Sell",
   pdv: "PDV",
   gamification: "Gamificação",
   bundle: "Combo Master",
@@ -75,6 +75,11 @@ export function SubscriptionModuleCard({ sub, onCanceled }: { sub: StoreSubscrip
           R$ {priceReais}
           <span className="text-xs font-bold text-slate-400"> /{cycleLabel}</span>
         </p>
+        {((sub as any).addons_cents ?? 0) > 0 && (
+          <p className="mt-1 text-[11px] font-bold text-slate-500">
+            + R$ {(((sub as any).addons_cents as number) / 100).toFixed(2).replace(".", ",")} em complementos
+          </p>
+        )}
         {sub.is_prorated && (
           <p className="mt-1 text-[11px] font-bold text-amber-600">
             Cobrança proporcional até o vencimento — ajusta no próximo ciclo.

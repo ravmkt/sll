@@ -159,6 +159,7 @@ async function enrichSubscriptions(rows: any): Promise<any> {
       return {
         ...s,
         plan_name: dp.plan_name,
+        price_cents: Number(planCents) || 0,
         addons_cents: addonsCents,
         plan: {
           ...(s.plan ?? {}),
