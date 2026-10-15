@@ -25,7 +25,7 @@ export type StoreSubscription = {
   } | null;
 };
 
-export async function getActiveSubscriptions(storeId: string): Promise<StoreSubscription[]> {
+async function getActiveSubscriptionsBase(storeId: string): Promise<StoreSubscription[]> {
   const { data, error } = await supabase
     .from("subscriptions")
     .select(
@@ -92,5 +92,85 @@ export async function cancelSubscription(subscriptionId: string): Promise<void> 
   const result = await res.json();
   if (!res.ok) {
     throw new Error(result?.error ?? "Erro ao cancelar assinatura.");
+  }
+}
+
+export async function getActiveSubscriptions(...args: Parameters<typeof getActiveSubscriptionsBase>): Promise<Awaited<ReturnType<typeof getActiveSubscriptionsBase>>> {
+  const rows = await getActiveSubscriptionsBase(...args);
+  return (await enrichSubscriptions(rows as any)) as any;
+}
+
+// ---------- Nome, preco e total reais (planos dinamicos + add-ons recorrentes) ----------
+const CYCLE_MONTHS: Record<string, number> = { monthly: 1, semiannual: 6, yearly: 12, annual: 12 };
+
+async function enrichSubscriptions(rows: any): Promise<any> {
+  if (!Array.isArray(rows) || rows.length === 0) return rows;
+  try {
+    const sb: any = supabase;
+    const ids = rows.map((r: any) => r?.id).filter(Boolean);
+    if (!ids.length) return rows;
+
+    const { data: raw } = await sb
+      .from('subscriptions')
+      .select('id, store_id, dynamic_plan_id, billing_cycle, module_key')
+      .in('id', ids);
+    const meta = new Map<string, any>((raw || []).map((r: any) => [r.id, r]));
+
+    const planIds = Array.from(new Set((raw || []).map((r: any) => r.dynamic_plan_id).filter(Boolean)));
+    const plans = new Map<string, any>();
+    if (planIds.length) {
+      const { data } = await sb
+        .from('dynamic_plans')
+        .select('id, plan_name, is_combo, module_slug, price_monthly_cents, price_semiannual_cents, price_annual_cents')
+        .in('id', planIds);
+      (data || []).forEach((p: any) => plans.set(p.id, p));
+    }
+
+    // Add-ons recorrentes ativos e nao agendados para cancelamento
+    const storeId = (raw || [])[0]?.store_id;
+    let addons: any[] = [];
+    if (storeId) {
+      const { data } = await sb
+        .from('store_addons')
+        .select('*, addon:addons(price_monthly)')
+        .eq('store_id', storeId)
+        .eq('status', 'active');
+      addons = (data || []).filter((a: any) => a.cancel_at_period_end !== true);
+    }
+    const firstDynamicSubId = (raw || []).find((r: any) => r.dynamic_plan_id)?.id;
+
+    return rows.map((s: any) => {
+      const m = meta.get(s?.id);
+      const dp = m?.dynamic_plan_id ? plans.get(m.dynamic_plan_id) : null;
+      if (!dp) return s;
+
+      const cycle = String(m.billing_cycle || 'monthly').toLowerCase();
+      const months = CYCLE_MONTHS[cycle] ?? 1;
+      const planCents =
+        cycle === 'semiannual' ? dp.price_semiannual_cents
+        : cycle === 'yearly' || cycle === 'annual' ? dp.price_annual_cents
+        : dp.price_monthly_cents;
+
+      const addonsCents = addons
+        .filter((a: any) => a.subscription_id === s.id || (!a.subscription_id && s.id === firstDynamicSubId))
+        .reduce((sum: number, a: any) => sum + Math.round(Number(a.addon?.price_monthly ?? 0) * 100 * months) * (Number(a.quantity) || 1), 0);
+
+      const modules = s.plan?.modules ?? (dp.is_combo ? [] : dp.module_slug ? [dp.module_slug] : []);
+      return {
+        ...s,
+        plan_name: dp.plan_name,
+        addons_cents: addonsCents,
+        plan: {
+          ...(s.plan ?? {}),
+          name: dp.plan_name,
+          modules,
+          base_price_cents: Number(planCents) || 0,
+          price_cents: (Number(planCents) || 0) + addonsCents,
+        },
+      };
+    });
+  } catch (e) {
+    console.error('[subscriptions] enriquecimento falhou:', e);
+    return rows;
   }
 }
