@@ -109,6 +109,7 @@ function FlagItem({ f, onChanged }: { f: FeatureFlag; onChanged: () => void }) {
 export default function FeatureFlagsCard({ slug }: { slug: string }) {
   const [flags, setFlags] = useState<FeatureFlag[] | null>(null);
   const [adding, setAdding] = useState(false);
+  const [show, setShow] = useState(false);
   const [key, setKey] = useState('');
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
@@ -138,13 +139,13 @@ export default function FeatureFlagsCard({ slug }: { slug: string }) {
   return (
     <div className={`${CARD} space-y-3`}>
       <div className="flex items-center justify-between">
-        <p className="flex items-center gap-2 text-[15px] font-bold text-white"><Flag size={14} className="text-[#fd8539]" /> Feature flags</p>
-        <button type="button" onClick={() => setAdding((a) => !a)} className="flex cursor-pointer items-center gap-1 rounded-lg bg-white/5 px-2.5 py-1 text-[13px] font-bold text-slate-200 hover:bg-white/10">
+        <button type="button" onClick={() => setShow((s) => !s)} className="flex cursor-pointer items-center gap-2 text-[15px] font-bold text-white"><ChevronDown size={14} className={`text-slate-500 transition-transform ${show ? '' : '-rotate-90'}`} /><Flag size={14} className="text-[#fd8539]" /> Feature flags{flags ? ` (${flags.length})` : ''}</button>
+        <button type="button" onClick={() => { setShow(true); setAdding((a) => !a); }} className="flex cursor-pointer items-center gap-1 rounded-lg bg-white/5 px-2.5 py-1 text-[13px] font-bold text-slate-200 hover:bg-white/10">
           <Plus size={12} /> Nova
         </button>
       </div>
 
-      {adding && (
+      {show && adding && (
         <div className="space-y-2 rounded-xl bg-white/[0.03] p-3">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome (ex.: Novo player)" className={INPUT} />
           <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="chave_tecnica (ex.: novo_player)" className={`${INPUT} font-mono`} />
@@ -155,7 +156,7 @@ export default function FeatureFlagsCard({ slug }: { slug: string }) {
         </div>
       )}
 
-      {flags === null ? (
+      {!show ? null : flags === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
       ) : flags.length === 0 ? (
         <p className="text-[13px] text-slate-500">Nenhuma flag neste módulo. Crie uma para liberar um recurso beta.</p>

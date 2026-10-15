@@ -298,7 +298,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
                             </button>
                           </td>
                           <td className="px-3 py-2 text-slate-300">{s.plan_name || '—'}</td>
-                          <td className="px-3 py-2 text-slate-400">{s.billing_cycle ? CYCLE_LABEL[s.billing_cycle] || s.billing_cycle : '—'}</td>
+                          <td className="px-3 py-2 text-slate-400">{s.status === 'lifetime' ? 'Vitalício' : s.billing_cycle ? CYCLE_LABEL[s.billing_cycle] || s.billing_cycle : '—'}</td>
                           <td className="px-3 py-2 text-slate-400">{s.via_combo ? 'Combo' : 'Individual'}</td>
                           <td className="px-3 py-2 text-slate-300">{SUB_LABEL[s.status] || s.status}</td>
                         </tr>
