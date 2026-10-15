@@ -73,7 +73,7 @@ function Visao() {
         <Stat label="Impressões" value={c?.impressions ?? 0} />
         <Stat label="Cliques" value={c?.clicks ?? 0} />
         <Stat label="CTR" value={c ? ctr(c) : '0,0%'} />
-        <Stat label="Fechamentos" value={c?.closes ?? 0} />
+        <Stat label="Dispensados" value={c?.closes ?? 0} />
       </div>
     </div>
   );
@@ -291,7 +291,7 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
                 </p>
               </div>
               <div className="text-[13px] text-slate-300 tabular-nums">
-                {i.impressions} imp · {i.clicks} cliques · {ctr(i)} · {i.closes} fech.
+                {i.impressions} imp · {i.clicks} cliques · {ctr(i)} · {i.closes} disp.
               </div>
               <div className="flex items-center gap-1">
                 <button type="button" title={i.is_active ? 'Pausar' : 'Ativar'} onClick={() => toggle(i)} className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
