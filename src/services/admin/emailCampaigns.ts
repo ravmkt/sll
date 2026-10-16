@@ -13,7 +13,30 @@ export interface EmailCampaign {
   failed: number;
   created_at: string;
   finished_at: string | null;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  bounced: number;
+  complained: number;
 }
+
+export interface EmailSendRow {
+  email: string;
+  status: 'sent' | 'failed';
+  error: string | null;
+  delivered_at: string | null;
+  opened_at: string | null;
+  clicked_at: string | null;
+  bounced_at: string | null;
+  complained_at: string | null;
+  open_count: number;
+  click_count: number;
+}
+
+export interface EmailMetrics {
+  sent: number; failed: number; delivered: number; opened: number; clicked: number; bounced: number; complained: number;
+}
+export const EMPTY_EMAIL_METRICS: EmailMetrics = { sent: 0, failed: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, complained: 0 };
 
 export interface SendResult { ok: boolean; to?: string; total?: number; sent?: number; failed?: number }
 
@@ -21,6 +44,12 @@ export async function listCampaigns(): Promise<EmailCampaign[]> {
   const { data, error } = await supabase.rpc('admin_email_campaigns_list');
   if (error) throw error;
   return (data || []) as EmailCampaign[];
+}
+
+export async function getCampaignDetail(id: string): Promise<{ campaign: EmailCampaign; sends: EmailSendRow[] }> {
+  const { data, error } = await supabase.rpc('admin_email_campaign_detail', { p_id: id });
+  if (error) throw error;
+  return data as { campaign: EmailCampaign; sends: EmailSendRow[] };
 }
 
 export async function countRecipients(audience: MktAudience, storeId: string | null): Promise<number> {
@@ -50,11 +79,11 @@ const ymd = (d: Date) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-export async function getEmailMetrics(days: number): Promise<{ sent: number; failed: number }> {
+export async function getEmailMetrics(days: number): Promise<EmailMetrics> {
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - (days - 1));
   const { data, error } = await supabase.rpc('admin_email_metrics', { p_start: ymd(start), p_end: ymd(end) });
   if (error) throw error;
-  return { sent: Number((data as any)?.sent ?? 0), failed: Number((data as any)?.failed ?? 0) };
+  return { ...EMPTY_EMAIL_METRICS, ...((data as Partial<EmailMetrics>) || {}) };
 }

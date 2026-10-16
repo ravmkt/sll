@@ -1,6 +1,6 @@
 import ImageUpload from '@/components/admin/ImageUpload';
 import EmailCampaigns from '@/components/admin/EmailCampaigns';
-import { getEmailMetrics } from '@/services/admin/emailCampaigns';
+import { getEmailMetrics, EMPTY_EMAIL_METRICS, type EmailMetrics } from '@/services/admin/emailCampaigns';
 import { LinkPicker, StorePicker } from '@/components/admin/MarketingPickers';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Megaphone, Plus, Trash2, Pencil, Pause, Play, Mail, MessageCircle, Tag, X, BarChart3, Image as ImageIcon, LayoutTemplate } from 'lucide-react';
@@ -65,7 +65,7 @@ function ChannelBlock({ title, icon, labels, note, values }: { title: string; ic
 function Visao() {
   const [days, setDays] = useState(30);
   const [m, setM] = useState<MktMetrics | null>(null);
-  const [em, setEm] = useState<{ sent: number; failed: number }>({ sent: 0, failed: 0 });
+  const [em, setEm] = useState<EmailMetrics>(EMPTY_EMAIL_METRICS);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -102,8 +102,8 @@ function Visao() {
           {block('Avisos do sistema', m?.notice)}
       <ChannelBlock
         title="E-mail marketing" icon={<Mail className="w-4 h-4" />}
-        labels={['Enviados', 'Abertos', 'Clicados', 'Respondidos']}
-        values={[em.sent]} note="Enviados reais. Abertos e clicados dependem do webhook do Resend."
+        labels={['Enviados', 'Abertos', 'Clicados', 'Rejeitados']}
+        values={[em.sent, em.opened, em.clicked, em.bounced + em.failed]} note="Dados do Resend. Abertura e clique dependem do rastreamento ativo no domínio."
       />
       <ChannelBlock
         title="WhatsApp marketing" icon={<MessageCircle className="w-4 h-4" />}
