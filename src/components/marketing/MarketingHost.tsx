@@ -59,6 +59,18 @@ export default function MarketingHost({ storeId, location, showBanner = true, sh
     });
   }, [banner, popup, notice, storeId]);
 
+  const noticeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = document.documentElement;
+    const el = noticeRef.current;
+    if (!notice || !el) { root.style.setProperty('--notice-h', '0px'); return; }
+    const apply = () => root.style.setProperty('--notice-h', el.offsetHeight + 'px');
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => { ro.disconnect(); root.style.setProperty('--notice-h', '0px'); };
+  }, [notice]);
+
   const close = (i: ActiveItem) => {
     if (storeId) track(i.id, storeId, 'close');
     setClosed(i.id);
@@ -112,7 +124,7 @@ export default function MarketingHost({ storeId, location, showBanner = true, sh
         </div>
       )}
       {notice && (
-            <div className={'fixed top-0 inset-x-0 z-[95] flex items-center gap-3 px-4 py-2 text-sm shadow-lg ' + (NOTICE_CLS[notice.notice_style ?? 'info'] ?? NOTICE_CLS.info)} role="alert">
+            <div ref={noticeRef} style={{ top: 'var(--trial-h, 0px)' }} className={'fixed inset-x-0 z-[95] flex items-center gap-3 px-4 py-2 text-sm shadow-lg ' + (NOTICE_CLS[notice.notice_style ?? 'info'] ?? NOTICE_CLS.info)} role="alert">
               <p className="min-w-0 flex-1 text-center font-semibold">{notice.body || notice.title}</p>
               {notice.cta_url && (
                 <button type="button" onClick={() => go(notice)} className="shrink-0 rounded-md bg-black/20 px-3 py-1 text-xs font-bold hover:bg-black/30">
