@@ -1,3 +1,0 @@
-F:\RODRIGO VICENTE\DYAD\vidlytics\vidlytics\backup-src-20260919-172331\pages\StoragePage.tsx:1854: Insira links do Pinterest, YouTube, Panda Video, Bunny CDN ou link direto.
-F:\RODRIGO VICENTE\DYAD\vidlytics\vidlytics\src\pages\StoragePage.tsx:1854: Insira links do Pinterest, YouTube, Panda Video, Bunny CDN ou link direto.
-F:\RODRIGO VICENTE\DYAD\vidlytics\vidlytics - BK 19-09\src\pages\StoragePage.tsx:1854: Insira links do Pinterest, YouTube, Panda Video, Bunny CDN ou link direto.
