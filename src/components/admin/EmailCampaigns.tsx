@@ -190,8 +190,10 @@ function NewEmailModal({ onClose, onSent }: { onClose: () => void; onSent: (msg:
   });
   const add = (t: BlockType) => setBlocks((bs) => [...bs, newBlock(t)]);
 
-  const valid = subject.trim() !== '' && hasContent(blocks) && (audience !== 'store' || !!storeId);
+  const btnSemLink = blocks.some((b) => b.type === 'button' && b.text.trim() !== '' && !/^(https?:\/\/|mailto:)/i.test(b.url.trim()));
+  const valid = subject.trim() !== '' && hasContent(blocks) && !btnSemLink && (audience !== 'store' || !!storeId);
   const html = buildEmailHtml(blocks);
+  const htmlPreview = buildEmailHtml(blocks, true);
 
   const run = async (test: boolean) => {
     if (!test) {
@@ -232,7 +234,8 @@ function NewEmailModal({ onClose, onSent }: { onClose: () => void; onSent: (msg:
 
             <div>
               <label className={labelCls}>Conteúdo</label>
-              <p className="mb-2 text-[13px] text-slate-500">O logo no topo e a assinatura no final são adicionados automaticamente.</p>
+              <p className="mb-2 text-[13px] text-slate-500">A assinatura com o logo do SLL Hub é adicionada automaticamente no final.</p>
+              {btnSemLink && <p className="mb-2 text-[13px] text-amber-400">Preencha o link do botão (começando com https://) para poder enviar.</p>}
               <div className="space-y-2">
                 {blocks.map((b, i) => (
                   <BlockCard key={b.id} b={b} i={i} total={blocks.length}
@@ -253,7 +256,7 @@ function NewEmailModal({ onClose, onSent }: { onClose: () => void; onSent: (msg:
 
           <div>
             <label className={labelCls}>Pré-visualização</label>
-            <HtmlFrame html={previewHtml(html)} height={560} />
+            <HtmlFrame html={previewHtml(htmlPreview)} height={560} />
           </div>
         </div>
 
