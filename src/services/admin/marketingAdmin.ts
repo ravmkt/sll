@@ -41,7 +41,7 @@ export interface MktItem extends MktDraft {
 }
 
 export interface MktCounts { impressions: number; clicks: number; closes: number }
-export type MktMetrics = Record<'banner' | 'popup', MktCounts>;
+export type MktMetrics = Record<MktKind, MktCounts>;
 
 export const LOCATION_LABEL: Record<MktLocation, string> = {
   all: 'Todos os locais',
@@ -106,5 +106,5 @@ export async function getMetrics(days: number): Promise<MktMetrics> {
   if (error) throw error;
   const zero = { impressions: 0, clicks: 0, closes: 0 };
   const raw = (data || {}) as Partial<MktMetrics>;
-  return { banner: { ...zero, ...raw.banner }, popup: { ...zero, ...raw.popup } };
+  return { banner: { ...zero, ...raw.banner }, popup: { ...zero, ...raw.popup }, notice: { ...zero, ...raw.notice } };
 }

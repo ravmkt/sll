@@ -95,6 +95,7 @@ function Visao() {
       {err && <p className="text-[15px] text-rose-400">{err}</p>}
       {block('Banners', m?.banner)}
       {block('Popups', m?.popup)}
+          {block('Avisos do sistema', m?.notice)}
       <ChannelBlock
         title="E-mail marketing" icon={<Mail className="w-4 h-4" />}
         labels={['Enviados', 'Abertos', 'Clicados', 'Respondidos']}
@@ -188,6 +189,57 @@ function SlidesEditor({ slides, onChange }: { slides: MktSlide[]; onChange: (s: 
   );
 }
 
+const NOTICE_PREVIEW: Record<NoticeStyle, string> = {
+  info: 'bg-blue-600 text-white',
+  warning: 'bg-amber-400 text-slate-900',
+  urgent: 'bg-red-600 text-white',
+};
+
+function ItemPreview({ draft }: { draft: MktDraft }) {
+  const wrap = (child: React.ReactNode, note?: string) => (
+    <div className="md:col-span-2 space-y-1">
+      <label className={labelCls}>Pré-visualização</label>
+      {child}
+      {note && <p className="text-[13px] text-slate-500">{note}</p>}
+    </div>
+  );
+
+  if (draft.kind === 'notice') {
+    const txt = draft.body.trim() || 'Sua mensagem aparece aqui.';
+    return wrap(
+      <div className="overflow-hidden rounded-lg border border-slate-700 bg-white">
+        <div className={'flex items-center gap-3 px-4 py-2 text-sm ' + NOTICE_PREVIEW[draft.notice_style ?? 'info']}>
+          <p className="min-w-0 flex-1 text-center font-semibold">{txt}</p>
+          {draft.cta_url && <span className="shrink-0 rounded-md bg-black/20 px-3 py-1 text-xs font-bold">{draft.cta_label || 'Saiba mais'}</span>}
+          <X className="w-4 h-4 shrink-0" />
+        </div>
+        <div className="flex h-10 items-center border-b border-slate-200 px-4 text-xs font-bold text-slate-400">SLLhub</div>
+        <div className="h-10 bg-slate-50" />
+      </div>,
+      'A barra fica fixa no topo do painel do lojista.'
+    );
+  }
+
+  if (draft.kind === 'banner') {
+    const imgs = (draft.slides ?? []).filter((s) => s.image_url);
+    if (imgs.length === 0) return null;
+    return wrap(
+      <div className="overflow-hidden rounded-lg border border-slate-700 bg-white">
+        <img src={imgs[0].image_url} alt="" className="w-full" style={{ aspectRatio: '1200 / 150', objectFit: 'cover' }} />
+        <div className="h-10 bg-slate-50" />
+      </div>,
+      imgs.length > 1 ? 'Mostrando a imagem 1 de ' + imgs.length + ' do carrossel.' : undefined
+    );
+  }
+
+  if (!draft.image_url) return null;
+  return wrap(
+    <div className="flex items-center justify-center rounded-lg border border-slate-700 bg-black/60 p-4">
+      <img src={draft.image_url} alt="" className="w-full max-w-[360px] rounded-lg" style={{ aspectRatio: '900 / 600', objectFit: 'cover' }} />
+    </div>
+  );
+}
+
 function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
   draft: MktDraft; onChange: (d: MktDraft) => void; onCancel: () => void; onSave: () => void; saving: boolean;
 }) {
@@ -219,7 +271,8 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
                   <ImageUpload kind={draft.kind as 'popup'} value={draft.image_url} onChange={(u) => set('image_url', u)} />
                 )
             )}
-        <div><label className={labelCls}>{draft.kind === 'notice' ? 'Link do botão (opcional)' : 'Link ao clicar na imagem'}</label>
+        <ItemPreview draft={draft} />
+            <div><label className={labelCls}>{draft.kind === 'notice' ? 'Link do botão (opcional)' : 'Link ao clicar na imagem'}</label>
           <LinkPicker value={draft.cta_url} onChange={(v) => set('cta_url', v)} /></div>
         <div><label className={labelCls}>Local de exibição</label>
           <select className={inputCls} value={draft.location} onChange={(e) => set('location', e.target.value as MktLocation)}>
