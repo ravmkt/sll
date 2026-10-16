@@ -1,9 +1,10 @@
 import ImageUpload from '@/components/admin/ImageUpload';
+import { LinkPicker, StorePicker } from '@/components/admin/MarketingPickers';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Megaphone, Plus, Trash2, Pencil, Pause, Play, Mail, MessageCircle, Tag, X, BarChart3, Image as ImageIcon, LayoutTemplate } from 'lucide-react';
 import {
-  AUDIENCE_LABEL, FREQUENCY_LABEL, LOCATION_LABEL, deleteItem, emptyDraft, getMetrics, listItems, saveItem,
-  type MktAudience, type MktCounts, type MktSlide, type MktDraft, type MktFrequency, type MktItem, type MktKind, type MktLocation, type MktMetrics,
+  AUDIENCE_LABEL, FREQUENCY_LABEL, LOCATION_LABEL, NOTICE_STYLE_LABEL, deleteItem, emptyDraft, getMetrics, listItems, saveItem,
+  type MktAudience, type NoticeStyle, type MktCounts, type MktSlide, type MktDraft, type MktFrequency, type MktItem, type MktKind, type MktLocation, type MktMetrics,
 } from '@/services/admin/marketingAdmin';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import {
@@ -11,7 +12,10 @@ import {
   type CouponDraft, type CouponDuration, type CouponPlanOption, type CouponType, type MktCoupon,
 } from '@/services/admin/couponsMarketing';
 
-type TabKey = 'visao' | 'banner' | 'popup' | 'email' | 'whatsapp' | 'promocao';
+type TabKey = 'visao' | 'banner' | 'popup' | 'aviso' | 'email' | 'whatsapp' | 'promocao';
+
+const KIND_TITLE: Record<MktKind, string> = { banner: 'Banners', popup: 'Popups', notice: 'Avisos do sistema' };
+const KIND_NOUN: Record<MktKind, string> = { banner: 'banner', popup: 'popup', notice: 'aviso' };
 
 const inputCls =
   'w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-[15px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500';
@@ -191,7 +195,7 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[15px] font-bold text-slate-100">{draft.id ? 'Editar' : 'Novo'} {draft.kind === 'banner' ? 'banner' : 'popup'}</h3>
+        <h3 className="text-[15px] font-bold text-slate-100">{draft.id ? 'Editar' : 'Novo'} {KIND_NOUN[draft.kind]}</h3>
         <button type="button" onClick={onCancel} className="text-slate-400 hover:text-slate-100"><X className="w-4 h-4" /></button>
       </div>
       <div className="grid md:grid-cols-2 gap-3">
@@ -200,10 +204,23 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
         {draft.kind === 'banner' ? (
               <div className="md:col-span-2"><SlidesEditor key={draft.id ?? 'novo'} slides={draft.slides ?? []} onChange={(s) => set('slides', s)} /></div>
             ) : (
-              <ImageUpload kind={draft.kind} value={draft.image_url} onChange={(u) => set('image_url', u)} />
+              draft.kind === 'notice' ? (
+                  <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
+                    <div><label className={labelCls}>Tipo do aviso</label>
+                      <select className={inputCls} value={draft.notice_style ?? 'info'} onChange={(e) => set('notice_style', e.target.value as NoticeStyle)}>
+                        {Object.entries(NOTICE_STYLE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      </select></div>
+                    <div><label className={labelCls}>Texto do botão (opcional)</label>
+                      <input className={inputCls} value={draft.cta_label} onChange={(e) => set('cta_label', e.target.value)} placeholder="Saiba mais" /></div>
+                    <div className="md:col-span-2"><label className={labelCls}>Mensagem do aviso</label>
+                      <textarea rows={2} className={inputCls} value={draft.body} onChange={(e) => set('body', e.target.value)} placeholder="Estaremos em manutenção hoje às 23h." /></div>
+                  </div>
+                ) : (
+                  <ImageUpload kind={draft.kind as 'popup'} value={draft.image_url} onChange={(u) => set('image_url', u)} />
+                )
             )}
-        <div><label className={labelCls}>Link ao clicar na imagem</label>
-          <input className={inputCls} value={draft.cta_url} onChange={(e) => set('cta_url', e.target.value)} placeholder="/precos ou https://..." /></div>
+        <div><label className={labelCls}>{draft.kind === 'notice' ? 'Link do botão (opcional)' : 'Link ao clicar na imagem'}</label>
+          <LinkPicker value={draft.cta_url} onChange={(v) => set('cta_url', v)} /></div>
         <div><label className={labelCls}>Local de exibição</label>
           <select className={inputCls} value={draft.location} onChange={(e) => set('location', e.target.value as MktLocation)}>
             {Object.entries(LOCATION_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -213,7 +230,10 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
             {Object.entries(AUDIENCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
             <DateTimeField label="Início" value={draft.starts_at} onChange={(x) => set('starts_at', x)} /><DateTimeField label="Fim" value={draft.ends_at} onChange={(x) => set('ends_at', x)} /></div>
-        {draft.kind === 'popup' && (
+        {draft.audience === 'store' && (
+              <StorePicker value={draft.store_id} onChange={(id) => set('store_id', id)} />
+            )}
+            {draft.kind === 'popup' && (
           <div><label className={labelCls}>Frequência</label>
             <select className={inputCls} value={draft.frequency} onChange={(e) => set('frequency', e.target.value as MktFrequency)}>
               {Object.entries(FREQUENCY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -264,11 +284,11 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-slate-100">{kind === 'banner' ? 'Banners' : 'Popups'}</h2>
+        <h2 className="text-base font-bold text-slate-100">{KIND_TITLE[kind]}</h2>
         {!draft && (
           <button type="button" onClick={() => setDraft(newDraft(kind))}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[15px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400">
-            <Plus className="w-4 h-4" /> Novo {kind === 'banner' ? 'banner' : 'popup'}
+            <Plus className="w-4 h-4" /> Novo {KIND_NOUN[kind]}
           </button>
         )}
       </div>
@@ -559,6 +579,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'visao', label: 'Métricas', icon: <BarChart3 className="w-4 h-4" /> },
   { key: 'banner', label: 'Banners', icon: <ImageIcon className="w-4 h-4" /> },
   { key: 'popup', label: 'Popups', icon: <LayoutTemplate className="w-4 h-4" /> },
+  { key: 'aviso', label: 'Avisos', icon: <Megaphone className="w-4 h-4" /> },
   { key: 'email', label: 'E-mail', icon: <Mail className="w-4 h-4" /> },
   { key: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="w-4 h-4" /> },
   { key: 'promocao', label: 'Cupom', icon: <Tag className="w-4 h-4" /> },
@@ -581,6 +602,7 @@ export default function MarketingTab() {
       {tab === 'visao' && <Visao />}
       {tab === 'banner' && <ItemsPanel kind="banner" />}
       {tab === 'popup' && <ItemsPanel kind="popup" />}
+          {tab === 'aviso' && <ItemsPanel kind="notice" />}
       {tab === 'email' && (
         <ChannelBlock title="E-mail marketing" icon={<Mail className="w-4 h-4" />} labels={['Enviados', 'Abertos', 'Clicados', 'Respondidos']}
           note="Envio de e-mail ainda não conectado. Precisa de um provedor (ex.: Resend, SendGrid) para medir abertura e resposta." />

@@ -4,6 +4,12 @@ import { fetchActive, track, type ActiveItem } from '@/services/marketingPublic'
 
 type Loc = 'home' | 'vidlytics' | 'live';
 
+const NOTICE_CLS: Record<string, string> = {
+  info: 'bg-blue-600 text-white',
+  warning: 'bg-amber-400 text-slate-900',
+  urgent: 'bg-red-600 text-white',
+};
+
 const today = () => new Date().toISOString().slice(0, 10);
 const seenOk = (i: ActiveItem) => {
   try {
@@ -24,7 +30,7 @@ const setClosed = (id: string) => {
   try { sessionStorage.setItem('mk:closed:' + id, '1'); } catch { /* ignora */ }
 };
 
-export default function MarketingHost({ storeId, location, showBanner = true }: { storeId?: string | null; location: Loc; showBanner?: boolean }) {
+export default function MarketingHost({ storeId, location, showBanner = true, showNotice = true }: { storeId?: string | null; location: Loc; showBanner?: boolean; showNotice?: boolean }) {
   const [items, setItems] = useState<ActiveItem[]>([]);
   const [closed, setClosedState] = useState<Set<string>>(new Set());
   const counted = useRef<Set<string>>(new Set());
@@ -34,23 +40,24 @@ export default function MarketingHost({ storeId, location, showBanner = true }: 
     let alive = true;
     fetchActive(storeId, location).then((list) => {
       if (!alive) return;
-      setItems(list.filter((i) => i.kind === 'banner' || seenOk(i)));
+      setItems(list.filter((i) => i.kind === 'banner' || i.kind === 'notice' || seenOk(i)));
     });
     return () => { alive = false; };
   }, [storeId, location]);
 
   const banner = !showBanner ? undefined : items.find((i) => i.kind === 'banner' && !closed.has(i.id) && !wasClosed(i.id));
   const popup = items.find((i) => i.kind === 'popup' && !closed.has(i.id));
+  const notice = !showNotice ? undefined : items.find((i) => i.kind === 'notice' && !closed.has(i.id) && !wasClosed(i.id));
 
   useEffect(() => {
     if (!storeId) return;
-    [banner, popup].forEach((i) => {
+    [banner, popup, notice].forEach((i) => {
       if (!i || counted.current.has(i.id)) return;
       counted.current.add(i.id);
       track(i.id, storeId, 'impression');
       if (i.kind === 'popup') markSeen(i);
     });
-  }, [banner, popup, storeId]);
+  }, [banner, popup, notice, storeId]);
 
   const close = (i: ActiveItem) => {
     if (storeId) track(i.id, storeId, 'close');
@@ -104,7 +111,20 @@ export default function MarketingHost({ storeId, location, showBanner = true }: 
           )}
         </div>
       )}
-      {popup && (
+      {notice && (
+            <div className={'fixed top-0 inset-x-0 z-[95] flex items-center gap-3 px-4 py-2 text-sm shadow-lg ' + (NOTICE_CLS[notice.notice_style ?? 'info'] ?? NOTICE_CLS.info)} role="alert">
+              <p className="min-w-0 flex-1 text-center font-semibold">{notice.body || notice.title}</p>
+              {notice.cta_url && (
+                <button type="button" onClick={() => go(notice)} className="shrink-0 rounded-md bg-black/20 px-3 py-1 text-xs font-bold hover:bg-black/30">
+                  {notice.cta_label || 'Saiba mais'}
+                </button>
+              )}
+              <button type="button" aria-label="Fechar aviso" onClick={() => close(notice)} className="shrink-0 rounded-full p-1 hover:bg-black/20">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          {popup && (
         <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4" onClick={() => close(popup)} role="dialog" aria-modal="true" aria-label={popup.title}>
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <button type="button" aria-label="Fechar" onClick={() => close(popup)} className="absolute right-3 top-3 z-10 p-1 rounded-full bg-white/90 text-slate-500 hover:text-slate-900">

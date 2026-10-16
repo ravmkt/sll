@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 
 export interface ActiveItem {
   id: string;
-  kind: 'banner' | 'popup';
+  kind: 'banner' | 'popup' | 'notice';
   slide?: number;
   title: string;
   body: string | null;
@@ -11,6 +11,7 @@ export interface ActiveItem {
   cta_url: string | null;
   coupon_code: string | null;
   frequency: 'once' | 'session' | 'daily' | 'always';
+  notice_style?: 'info' | 'warning' | 'urgent' | null;
 }
 
 export async function fetchActive(storeId: string, location: 'home' | 'vidlytics' | 'live'): Promise<ActiveItem[]> {

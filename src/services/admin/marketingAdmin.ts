@@ -1,8 +1,9 @@
 import { supabase } from '@/lib/supabase';
 
-export type MktKind = 'banner' | 'popup';
+export type MktKind = 'banner' | 'popup' | 'notice';
+export type NoticeStyle = 'info' | 'warning' | 'urgent';
 export type MktLocation = 'all' | 'home' | 'vidlytics' | 'live';
-export type MktAudience = 'all' | 'past_due' | 'trial';
+export type MktAudience = 'all' | 'past_due' | 'trial' | 'store';
 export type MktFrequency = 'once' | 'session' | 'daily' | 'always';
 
 export interface MktSlide {
@@ -23,6 +24,8 @@ export interface MktDraft {
   coupon_code: string;
   location: MktLocation;
   audience: MktAudience;
+  store_id?: string | null;
+  notice_style?: NoticeStyle;
   frequency: MktFrequency;
   starts_at: string | null;
   ends_at: string | null;
@@ -38,7 +41,7 @@ export interface MktItem extends MktDraft {
 }
 
 export interface MktCounts { impressions: number; clicks: number; closes: number }
-export type MktMetrics = Record<MktKind, MktCounts>;
+export type MktMetrics = Record<'banner' | 'popup', MktCounts>;
 
 export const LOCATION_LABEL: Record<MktLocation, string> = {
   all: 'Todos os locais',
@@ -50,6 +53,12 @@ export const AUDIENCE_LABEL: Record<MktAudience, string> = {
   all: 'Todos os lojistas',
   past_due: 'Inadimplentes',
   trial: 'Em período de teste',
+  store: 'Loja específica',
+};
+export const NOTICE_STYLE_LABEL: Record<NoticeStyle, string> = {
+  info: 'Informativo (azul)',
+  warning: 'Manutenção / atenção (amarelo)',
+  urgent: 'Urgente (vermelho)',
 };
 export const FREQUENCY_LABEL: Record<MktFrequency, string> = {
   session: 'Uma vez por sessão',
