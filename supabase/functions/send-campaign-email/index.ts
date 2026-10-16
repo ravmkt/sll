@@ -18,11 +18,12 @@ async function sign(storeId: string, secret: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-function render(message: string, unsubUrl: string | null): string {
+function finalize(html: string, unsubUrl: string | null): string {
   const foot = unsubUrl
-    ? `<p style="font-size:12px;color:#64748b">Não quer mais receber nossas novidades? <a href="${unsubUrl}" style="color:#64748b">Cancelar inscrição</a></p>`
+    ? `Não quer mais receber nossas novidades? <a href="${unsubUrl}" style="color:#64748b">Cancelar inscrição</a>`
     : '';
-  return `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1e293b">${esc(message).replace(/\n/g, '<br>')}<hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0"><p style="font-size:12px;color:#64748b">Equipe SLL Hub</p>${foot}</div>`;
+  if (html.includes('%%UNSUB%%')) return html.replace('%%UNSUB%%', foot);
+  return foot ? html + `<p style="font-size:12px;color:#64748b;text-align:center">${foot}</p>` : html;
 }
 
 Deno.serve(async (req) => {
@@ -41,11 +42,18 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const subject = String(body?.subject || '').trim().slice(0, 200);
-    const message = String(body?.message || '').trim().slice(0, 10000);
+    const text = String(body?.text || body?.message || '').trim().slice(0, 10000);
+    let html = String(body?.html || '').trim();
     const audience = String(body?.audience || 'all');
     const storeId = body?.store_id ? String(body.store_id) : null;
     const test = body?.test === true;
-    if (!subject || !message) return json({ error: 'Informe assunto e mensagem.' }, 400);
+    if (!subject) return json({ error: 'Informe o assunto.' }, 400);
+    if (!html) {
+      if (!text) return json({ error: 'Informe o conteúdo do e-mail.' }, 400);
+      html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1e293b">${esc(text).replace(/\n/g, '<br>')}<p>%%UNSUB%%</p></div>`;
+    }
+    if (html.length > 300000) return json({ error: 'E-mail grande demais.' }, 400);
+    if (/<script/i.test(html)) return json({ error: 'HTML inválido.' }, 400);
     if (!AUDIENCES.includes(audience)) return json({ error: 'Público inválido.' }, 400);
     if (audience === 'store' && !storeId) return json({ error: 'Escolha a loja que vai receber.' }, 400);
 
@@ -58,7 +66,7 @@ Deno.serve(async (req) => {
       if (!adminEmail) return json({ error: 'Seu usuário não tem e-mail para receber o teste.' }, 400);
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST', headers,
-        body: JSON.stringify({ from, to: [adminEmail], subject: '[TESTE] ' + subject, html: render(message, null), text: message }),
+        body: JSON.stringify({ from, to: [adminEmail], subject: '[TESTE] ' + subject, html: finalize(html, null), text }),
       });
       if (!res.ok) return json({ error: `Resend recusou o teste (HTTP ${res.status}). ${(await res.text()).slice(0, 200)}` }, 502);
       return json({ ok: true, to: adminEmail });
@@ -72,7 +80,7 @@ Deno.serve(async (req) => {
     if (recipients.length > MAX_RECIPIENTS) return json({ error: `Limite de ${MAX_RECIPIENTS} destinatários por campanha.` }, 400);
 
     const { data: camp, error: campErr } = await admin.from('marketing_email_campaigns')
-      .insert({ subject, message, audience, store_id: audience === 'store' ? storeId : null, status: 'sending', total: recipients.length, created_by: adminId })
+      .insert({ subject, message: text || subject, html, audience, store_id: audience === 'store' ? storeId : null, status: 'sending', total: recipients.length, created_by: adminId })
       .select('id').single();
     if (campErr || !camp) return json({ error: 'Erro ao criar a campanha: ' + (campErr?.message || '') }, 500);
 
@@ -84,8 +92,8 @@ Deno.serve(async (req) => {
         const u = `${url}/functions/v1/email-unsubscribe?s=${r.store_id}&t=${await sign(r.store_id, serviceKey)}`;
         return {
           from, to: [r.email], subject,
-          html: render(message, u),
-          text: `${message}\n\nCancelar inscrição: ${u}`,
+          html: finalize(html, u),
+          text: `${text}\n\nCancelar inscrição: ${u}`,
           headers: { 'List-Unsubscribe': `<${u}>` },
         };
       }));

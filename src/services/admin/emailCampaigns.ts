@@ -5,6 +5,7 @@ export interface EmailCampaign {
   id: string;
   subject: string;
   message: string;
+  html?: string | null;
   audience: MktAudience;
   store_id: string | null;
   status: 'sending' | 'sent' | 'partial' | 'failed';
@@ -40,16 +41,27 @@ export const EMPTY_EMAIL_METRICS: EmailMetrics = { sent: 0, failed: 0, delivered
 
 export interface SendResult { ok: boolean; to?: string; total?: number; sent?: number; failed?: number }
 
+const n = (v: unknown) => Number(v ?? 0) || 0;
+const norm = (c: any): EmailCampaign => ({
+  ...c,
+  total: n(c.total), sent: n(c.sent), failed: n(c.failed),
+  delivered: n(c.delivered), opened: n(c.opened), clicked: n(c.clicked), bounced: n(c.bounced), complained: n(c.complained),
+});
+
 export async function listCampaigns(): Promise<EmailCampaign[]> {
   const { data, error } = await supabase.rpc('admin_email_campaigns_list');
   if (error) throw error;
-  return (data || []) as EmailCampaign[];
+  return ((data || []) as any[]).map(norm);
 }
 
 export async function getCampaignDetail(id: string): Promise<{ campaign: EmailCampaign; sends: EmailSendRow[] }> {
   const { data, error } = await supabase.rpc('admin_email_campaign_detail', { p_id: id });
   if (error) throw error;
-  return data as { campaign: EmailCampaign; sends: EmailSendRow[] };
+  const d = data as any;
+  return {
+    campaign: norm(d.campaign),
+    sends: ((d.sends || []) as any[]).map((s) => ({ ...s, open_count: n(s.open_count), click_count: n(s.click_count) })),
+  };
 }
 
 export async function countRecipients(audience: MktAudience, storeId: string | null): Promise<number> {
@@ -58,9 +70,9 @@ export async function countRecipients(audience: MktAudience, storeId: string | n
   return Number(data ?? 0);
 }
 
-export async function sendCampaign(p: { subject: string; message: string; audience: MktAudience; storeId: string | null; test: boolean }): Promise<SendResult> {
+export async function sendCampaign(p: { subject: string; html: string; text: string; audience: MktAudience; storeId: string | null; test: boolean }): Promise<SendResult> {
   const { data, error } = await supabase.functions.invoke('send-campaign-email', {
-    body: { subject: p.subject, message: p.message, audience: p.audience, store_id: p.audience === 'store' ? p.storeId : null, test: p.test },
+    body: { subject: p.subject, html: p.html, text: p.text, audience: p.audience, store_id: p.audience === 'store' ? p.storeId : null, test: p.test },
   });
   if (error) {
     let msg = error.message;
@@ -74,8 +86,18 @@ export async function sendCampaign(p: { subject: string; message: string; audien
   return data as SendResult;
 }
 
+export async function uploadEmailImage(file: File): Promise<string> {
+  if (file.size > 3 * 1024 * 1024) throw new Error('Imagem acima de 3 MB.');
+  if (!/^image\/(png|jpe?g|gif|webp)$/.test(file.type)) throw new Error('Use PNG, JPG, GIF ou WEBP.');
+  const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+  const path = `${new Date().getFullYear()}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from('email-assets').upload(path, file, { contentType: file.type, cacheControl: '31536000' });
+  if (error) throw error;
+  return supabase.storage.from('email-assets').getPublicUrl(path).data.publicUrl;
+}
+
 const ymd = (d: Date) => {
-  const p = (n: number) => String(n).padStart(2, '0');
+  const p = (x: number) => String(x).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
@@ -85,5 +107,9 @@ export async function getEmailMetrics(days: number): Promise<EmailMetrics> {
   start.setDate(start.getDate() - (days - 1));
   const { data, error } = await supabase.rpc('admin_email_metrics', { p_start: ymd(start), p_end: ymd(end) });
   if (error) throw error;
-  return { ...EMPTY_EMAIL_METRICS, ...((data as Partial<EmailMetrics>) || {}) };
+  const d = (data || {}) as Record<string, unknown>;
+  return {
+    sent: n(d.sent), failed: n(d.failed), delivered: n(d.delivered), opened: n(d.opened),
+    clicked: n(d.clicked), bounced: n(d.bounced), complained: n(d.complained),
+  };
 }
