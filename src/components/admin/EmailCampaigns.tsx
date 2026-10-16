@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Eye, Mail, Plus, Send, Trash2, Upload, X } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Eye, Mail, Plus, Send, Trash2, Upload, X } from 'lucide-react';
 import { AUDIENCE_LABEL, type MktAudience } from '@/services/admin/marketingAdmin';
 import {
   EMPTY_EMAIL_METRICS, countRecipients, getCampaignDetail, getEmailMetrics, listCampaigns, sendCampaign, uploadEmailImage,
   type EmailCampaign, type EmailMetrics, type EmailSendRow,
 } from '@/services/admin/emailCampaigns';
-import { BLOCK_LABEL, buildEmailHtml, buildEmailText, hasContent, newBlock, previewHtml, type BlockType, type EmailBlock } from '@/services/admin/emailBuilder';
+import { BLOCK_LABEL, buildEmailHtml, buildEmailText, hasContent, newBlock, previewHtml, type Align, type BlockType, type EmailBlock } from '@/services/admin/emailBuilder';
 import { StorePicker } from '@/components/admin/MarketingPickers';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 
@@ -60,6 +60,26 @@ function HtmlFrame({ html, height }: { html: string; height: number }) {
   return <iframe title="Pré-visualização" sandbox="" srcDoc={html} style={{ height }} className="w-full rounded-lg border-0 bg-white" />;
 }
 
+const BUTTON_COLORS = ['#f59e0b', '#0094eb', '#10b981', '#ef4444', '#0f172a', '#7c3aed'];
+
+function AlignPicker({ value, onChange }: { value: Align; onChange: (a: Align) => void }) {
+  const opts: { v: Align; Icon: typeof AlignLeft; label: string }[] = [
+    { v: 'left', Icon: AlignLeft, label: 'Esquerda' },
+    { v: 'center', Icon: AlignCenter, label: 'Centro' },
+    { v: 'right', Icon: AlignRight, label: 'Direita' },
+  ];
+  return (
+    <div className="inline-flex overflow-hidden rounded-lg border border-slate-700">
+      {opts.map(({ v, Icon, label }) => (
+        <button key={v} type="button" title={label} aria-label={label} onClick={() => onChange(v)}
+          className={'px-2.5 py-1.5 ' + (value === v ? 'bg-amber-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800')}>
+          <Icon className="h-4 w-4" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function BlockCard({ b, i, total, onChange, onMove, onRemove }: {
   b: EmailBlock; i: number; total: number;
   onChange: (p: Partial<EmailBlock>) => void; onMove: (d: -1 | 1) => void; onRemove: () => void;
@@ -87,13 +107,36 @@ function BlockCard({ b, i, total, onChange, onMove, onRemove }: {
         </div>
       </div>
 
-      {b.type === 'heading' && <input className={inputCls} value={b.text} onChange={(e) => onChange({ text: e.target.value })} placeholder="Título do e-mail" />}
-      {b.type === 'text' && <textarea rows={5} className={inputCls} value={b.text} onChange={(e) => onChange({ text: e.target.value })} placeholder="Escreva o texto. Quebras de linha são mantidas." />}
+      {b.type === 'heading' && (
+        <div className="space-y-2">
+          <input className={inputCls} value={b.text} onChange={(e) => onChange({ text: e.target.value })} placeholder="Título do e-mail" />
+          <AlignPicker value={b.align} onChange={(a) => onChange({ align: a })} />
+        </div>
+      )}
+      {b.type === 'text' && (
+        <div className="space-y-2">
+          <textarea rows={5} className={inputCls} value={b.text} onChange={(e) => onChange({ text: e.target.value })} placeholder="Escreva o texto. Quebras de linha são mantidas." />
+          <AlignPicker value={b.align} onChange={(a) => onChange({ align: a })} />
+        </div>
+      )}
       {b.type === 'button' && (
-        <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
-          <input className={inputCls} value={b.text} onChange={(e) => onChange({ text: e.target.value })} placeholder="Texto do botão" />
-          <input className={inputCls} value={b.url} onChange={(e) => onChange({ url: e.target.value })} placeholder="https://..." />
-          <input type="color" aria-label="Cor do botão" value={b.color} onChange={(e) => onChange({ color: e.target.value })} className="h-10 w-12 cursor-pointer rounded-lg border border-slate-700 bg-slate-950" />
+        <div className="space-y-2">
+          <div className="grid gap-2 md:grid-cols-2">
+            <input className={inputCls} value={b.text} onChange={(e) => onChange({ text: e.target.value })} placeholder="Texto do botão" />
+            <input className={inputCls} value={b.url} onChange={(e) => onChange({ url: e.target.value })} placeholder="https://..." />
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <AlignPicker value={b.align} onChange={(a) => onChange({ align: a })} />
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] text-slate-400">Cor</span>
+              {BUTTON_COLORS.map((c) => (
+                <button key={c} type="button" aria-label={c} onClick={() => onChange({ color: c })} style={{ background: c }}
+                  className={'h-7 w-7 rounded-full border-2 ' + (b.color.toLowerCase() === c ? 'border-white' : 'border-transparent')} />
+              ))}
+              <input type="color" aria-label="Outra cor" value={b.color} onChange={(e) => onChange({ color: e.target.value })}
+                className="h-8 w-10 cursor-pointer rounded-lg border border-slate-700 bg-slate-950" />
+            </div>
+          </div>
         </div>
       )}
       {b.type === 'image' && (
