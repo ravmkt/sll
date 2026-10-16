@@ -45,7 +45,7 @@ export function LinkPicker({ value, onChange }: { value: string; onChange: (v: s
   );
 }
 
-type StoreRow = { id: string; contact_name: string | null; owner_contact_email: string | null };
+type StoreRow = { id: string; name: string | null; contact_name: string | null; owner_contact_email: string | null };
 
 export function StorePicker({ value, onChange }: { value: string | null | undefined; onChange: (id: string | null) => void }) {
   const [stores, setStores] = useState<StoreRow[]>([]);
@@ -53,10 +53,7 @@ export function StorePicker({ value, onChange }: { value: string | null | undefi
 
   useEffect(() => {
     (supabase as any)
-      .from('stores')
-      .select('id,contact_name,owner_contact_email')
-      .order('contact_name', { ascending: true })
-      .limit(1000)
+      .rpc('admin_stores_picker')
       .then(({ data, error }: any) => {
         if (error) setErr(error.message);
         else setStores((data ?? []) as StoreRow[]);
@@ -65,12 +62,12 @@ export function StorePicker({ value, onChange }: { value: string | null | undefi
 
   return (
     <div className="md:col-span-2">
-      <label className={labelCls}>Loja que vai receber</label>
+      <label className={labelCls}>Loja que vai receber ({stores.length})</label>
       <select className={inputCls} value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}>
         <option value="">Selecione a loja...</option>
         {stores.map((s) => (
           <option key={s.id} value={s.id}>
-            {(s.contact_name || 'Sem nome') + (s.owner_contact_email ? ' (' + s.owner_contact_email + ')' : '')}
+            {(s.name || s.contact_name || 'Sem nome') + (s.owner_contact_email ? ' (' + s.owner_contact_email + ')' : ' (sem e-mail)')}
           </option>
         ))}
       </select>
