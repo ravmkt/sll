@@ -1,4 +1,6 @@
 import ImageUpload from '@/components/admin/ImageUpload';
+import EmailCampaigns from '@/components/admin/EmailCampaigns';
+import { getEmailMetrics } from '@/services/admin/emailCampaigns';
 import { LinkPicker, StorePicker } from '@/components/admin/MarketingPickers';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Megaphone, Plus, Trash2, Pencil, Pause, Play, Mail, MessageCircle, Tag, X, BarChart3, Image as ImageIcon, LayoutTemplate } from 'lucide-react';
@@ -48,12 +50,12 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function ChannelBlock({ title, icon, labels, note }: { title: string; icon: React.ReactNode; labels: string[]; note?: string }) {
+function ChannelBlock({ title, icon, labels, note, values }: { title: string; icon: React.ReactNode; labels: string[]; note?: string; values?: number[] }) {
   return (
     <div className="space-y-3">
       <h3 className="flex items-center gap-2 text-[15px] font-bold text-slate-100">{icon}{title}</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {labels.map((l) => <Stat key={l} label={l} value={0} />)}
+        {labels.map((l, n) => <Stat key={l} label={l} value={values?.[n] ?? 0} />)}
       </div>
       {note && <p className="text-[13px] text-slate-500">{note}</p>}
     </div>
@@ -63,11 +65,13 @@ function ChannelBlock({ title, icon, labels, note }: { title: string; icon: Reac
 function Visao() {
   const [days, setDays] = useState(30);
   const [m, setM] = useState<MktMetrics | null>(null);
+  const [em, setEm] = useState<{ sent: number; failed: number }>({ sent: 0, failed: 0 });
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     setErr(null);
     getMetrics(days).then(setM).catch((e) => setErr(e?.message || 'Erro ao carregar métricas'));
+    getEmailMetrics(days).then(setEm).catch(() => {});
   }, [days]);
 
   const block = (title: string, c: MktCounts | undefined) => (
@@ -99,7 +103,7 @@ function Visao() {
       <ChannelBlock
         title="E-mail marketing" icon={<Mail className="w-4 h-4" />}
         labels={['Enviados', 'Abertos', 'Clicados', 'Respondidos']}
-        note="Zerado até conectar um provedor de e-mail."
+        values={[em.sent]} note="Enviados reais. Abertos e clicados dependem do webhook do Resend."
       />
       <ChannelBlock
         title="WhatsApp marketing" icon={<MessageCircle className="w-4 h-4" />}
@@ -656,7 +660,8 @@ export default function MarketingTab() {
       {tab === 'banner' && <ItemsPanel kind="banner" />}
       {tab === 'popup' && <ItemsPanel kind="popup" />}
           {tab === 'aviso' && <ItemsPanel kind="notice" />}
-      {tab === 'email' && (
+      {tab === 'email' && <EmailCampaigns />}
+          {false && (
         <ChannelBlock title="E-mail marketing" icon={<Mail className="w-4 h-4" />} labels={['Enviados', 'Abertos', 'Clicados', 'Respondidos']}
           note="Envio de e-mail ainda não conectado. Precisa de um provedor (ex.: Resend, SendGrid) para medir abertura e resposta." />
       )}

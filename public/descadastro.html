@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Cancelar inscrição - SLL Hub</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f8fafc;color:#1e293b;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
+.box{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:32px;max-width:420px;text-align:center}
+h1{font-size:20px;margin:0 0 8px}p{font-size:15px;line-height:1.5;color:#475569;margin:0}
+</style>
+</head>
+<body>
+<div class="box"><h1 id="t"></h1><p id="m"></p></div>
+<script>
+var ok = new URLSearchParams(location.search).get('ok') === '1';
+document.getElementById('t').textContent = ok ? 'Inscrição cancelada' : 'Link inválido';
+document.getElementById('m').textContent = ok
+  ? 'Você não vai mais receber e-mails de novidades do SLL Hub. Avisos importantes sobre a sua conta continuam sendo enviados.'
+  : 'Não foi possível cancelar por este link. Fale com o suporte do SLL Hub.';
+</script>
+</body>
+</html>
