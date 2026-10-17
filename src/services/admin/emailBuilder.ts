@@ -27,6 +27,11 @@ const textOn = (hex: string) => {
   return lum > 0.6 ? '#0f172a' : '#ffffff';
 };
 
+const MD_B = /\*\*([^\s*](?:[^*\n]*[^\s*])?)\*\*/g;
+const MD_I = /\*([^\s*](?:[^*\n]*[^\s*])?)\*/g;
+const md = (s: string) => s.replace(MD_B, '<strong>$1</strong>').replace(MD_I, '<em>$1</em>');
+const stripMd = (s: string) => s.replace(MD_B, '$1').replace(MD_I, '$1');
+
 function blockOk(b: EmailBlock, preview = false): boolean {
   if (b.type === 'divider') return true;
   if (b.type === 'image') return !!safeUrl(b.src);
@@ -43,7 +48,7 @@ function blockHtml(b: EmailBlock, preview = false): string {
   const t = esc(b.text.trim()).replace(/\n/g, '<br>');
   const al = safeAlign(b.align);
   if (b.type === 'heading') return `<h1 style="margin:0 0 16px;font-size:24px;line-height:1.3;color:#0f172a;text-align:${al}">${t}</h1>`;
-  if (b.type === 'text') return `<p style="margin:0 0 16px;text-align:${al}">${t}</p>`;
+  if (b.type === 'text') return `<p style="margin:0 0 16px;text-align:${al}">${md(t)}</p>`;
   if (b.type === 'divider') return '<hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0">';
   if (b.type === 'button') {
     const c = safeColor(b.color);
@@ -67,7 +72,7 @@ export function buildEmailText(blocks: EmailBlock[]): string {
   const parts: string[] = [];
   for (const b of blocks) {
     if (!blockOk(b)) continue;
-    if (b.type === 'heading' || b.type === 'text') parts.push(b.text.trim());
+    if (b.type === 'heading' || b.type === 'text') parts.push(b.type === 'text' ? stripMd(b.text.trim()) : b.text.trim());
     else if (b.type === 'button') parts.push(`${b.text.trim()}: ${b.url.trim()}`);
   }
   parts.push('Atenciosamente,\nEquipe SLL Hub\n' + EMAIL_SITE);

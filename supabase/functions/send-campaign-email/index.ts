@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
     const audience = String(body?.audience || 'all');
     const storeId = body?.store_id ? String(body.store_id) : null;
     const test = body?.test === true;
+    const blocks = Array.isArray(body?.blocks) && JSON.stringify(body.blocks).length < 200000 ? body.blocks : null;
     if (!subject) return json({ error: 'Informe o assunto.' }, 400);
     if (!html) {
       if (!text) return json({ error: 'Informe o conteúdo do e-mail.' }, 400);
@@ -80,7 +81,7 @@ Deno.serve(async (req) => {
     if (recipients.length > MAX_RECIPIENTS) return json({ error: `Limite de ${MAX_RECIPIENTS} destinatários por campanha.` }, 400);
 
     const { data: camp, error: campErr } = await admin.from('marketing_email_campaigns')
-      .insert({ subject, message: text || subject, html, audience, store_id: audience === 'store' ? storeId : null, status: 'sending', total: recipients.length, created_by: adminId })
+      .insert({ subject, message: text || subject, html, blocks, audience, store_id: audience === 'store' ? storeId : null, status: 'sending', total: recipients.length, created_by: adminId })
       .select('id').single();
     if (campErr || !camp) return json({ error: 'Erro ao criar a campanha: ' + (campErr?.message || '') }, 500);
 

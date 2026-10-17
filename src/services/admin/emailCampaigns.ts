@@ -1,11 +1,14 @@
 import { supabase } from '@/lib/supabase';
 import type { MktAudience } from '@/services/admin/marketingAdmin';
+import type { EmailBlock } from '@/services/admin/emailBuilder';
 
 export interface EmailCampaign {
   id: string;
   subject: string;
   message: string;
   html?: string | null;
+  blocks?: EmailBlock[] | null;
+  has_blocks?: boolean;
   audience: MktAudience;
   store_id: string | null;
   status: 'sending' | 'sent' | 'partial' | 'failed';
@@ -70,9 +73,9 @@ export async function countRecipients(audience: MktAudience, storeId: string | n
   return Number(data ?? 0);
 }
 
-export async function sendCampaign(p: { subject: string; html: string; text: string; audience: MktAudience; storeId: string | null; test: boolean }): Promise<SendResult> {
+export async function sendCampaign(p: { subject: string; html: string; text: string; audience: MktAudience; storeId: string | null; test: boolean; blocks?: EmailBlock[] }): Promise<SendResult> {
   const { data, error } = await supabase.functions.invoke('send-campaign-email', {
-    body: { subject: p.subject, html: p.html, text: p.text, audience: p.audience, store_id: p.audience === 'store' ? p.storeId : null, test: p.test },
+    body: { subject: p.subject, html: p.html, text: p.text, audience: p.audience, store_id: p.audience === 'store' ? p.storeId : null, test: p.test, blocks: p.blocks },
   });
   if (error) {
     let msg = error.message;
@@ -84,6 +87,35 @@ export async function sendCampaign(p: { subject: string; html: string; text: str
   }
   if ((data as any)?.error) throw new Error((data as any).error);
   return data as SendResult;
+}
+
+export interface EmailDraft {
+  id: string; kind: 'draft' | 'template'; name: string; subject: string;
+  blocks: EmailBlock[]; audience: MktAudience; store_id: string | null; updated_at: string;
+}
+export interface EmailInitial { subject: string; blocks: EmailBlock[]; audience: MktAudience; storeId: string | null }
+
+export async function listDrafts(): Promise<EmailDraft[]> {
+  const { data, error } = await supabase.rpc('admin_email_drafts_list');
+  if (error) throw error;
+  return (data || []) as EmailDraft[];
+}
+
+export async function saveDraft(p: {
+  id?: string | null; kind: 'draft' | 'template'; name: string; subject: string;
+  blocks: EmailBlock[]; audience: MktAudience; storeId: string | null;
+}): Promise<string> {
+  const { data, error } = await supabase.rpc('admin_email_draft_save', {
+    p_id: p.id ?? null, p_kind: p.kind, p_name: p.name, p_subject: p.subject, p_blocks: p.blocks,
+    p_audience: p.audience, p_store_id: p.audience === 'store' ? p.storeId : null,
+  });
+  if (error) throw error;
+  return String(data);
+}
+
+export async function deleteDraft(id: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_email_draft_delete', { p_id: id });
+  if (error) throw error;
 }
 
 export async function uploadEmailImage(file: File): Promise<string> {

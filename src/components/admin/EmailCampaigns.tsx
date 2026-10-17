@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Eye, Mail, Plus, Send, Trash2, Upload, X } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, Copy, Eye, FolderOpen, Italic, Mail, Plus, Save, Send, Trash2, Upload, X } from 'lucide-react';
 import { AUDIENCE_LABEL, type MktAudience } from '@/services/admin/marketingAdmin';
 import {
-  EMPTY_EMAIL_METRICS, countRecipients, getCampaignDetail, getEmailMetrics, listCampaigns, sendCampaign, uploadEmailImage,
-  type EmailCampaign, type EmailMetrics, type EmailSendRow,
+  EMPTY_EMAIL_METRICS, countRecipients, deleteDraft, getCampaignDetail, getEmailMetrics, listCampaigns, listDrafts, saveDraft, sendCampaign, uploadEmailImage,
+  type EmailCampaign, type EmailDraft, type EmailInitial, type EmailMetrics, type EmailSendRow,
 } from '@/services/admin/emailCampaigns';
 import { BLOCK_LABEL, buildEmailHtml, buildEmailText, hasContent, newBlock, previewHtml, type Align, type BlockType, type EmailBlock } from '@/services/admin/emailBuilder';
 import { StorePicker } from '@/components/admin/MarketingPickers';
@@ -85,6 +85,15 @@ function BlockCard({ b, i, total, onChange, onMove, onRemove }: {
   onChange: (p: Partial<EmailBlock>) => void; onMove: (d: -1 | 1) => void; onRemove: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+      const taRef = useRef<HTMLTextAreaElement>(null);
+      const wrap = (mark: string) => {
+        const el = taRef.current;
+        if (!el) return;
+        const s = el.selectionStart, e = el.selectionEnd;
+        if (s === e) return;
+        onChange({ text: b.text.slice(0, s) + mark + b.text.slice(s, e) + mark + b.text.slice(e) });
+        requestAnimationFrame(() => { el.focus(); el.setSelectionRange(s + mark.length, e + mark.length); });
+      };
   const [up, setUp] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -115,7 +124,12 @@ function BlockCard({ b, i, total, onChange, onMove, onRemove }: {
       )}
       {b.type === 'text' && (
         <div className="space-y-2">
-          <textarea rows={5} className={inputCls} value={b.text} onChange={(e) => onChange({ text: e.target.value })} placeholder="Escreva o texto. Quebras de linha são mantidas." />
+          <div className="flex items-center gap-1">
+                <button type="button" title="Negrito" aria-label="Negrito" onClick={() => wrap('**')} className="rounded-lg border border-slate-700 p-1.5 text-slate-200 hover:bg-slate-800"><Bold className="h-4 w-4" /></button>
+                <button type="button" title="Itálico" aria-label="Itálico" onClick={() => wrap('*')} className="rounded-lg border border-slate-700 p-1.5 text-slate-200 hover:bg-slate-800"><Italic className="h-4 w-4" /></button>
+                <span className="ml-2 text-[13px] text-slate-500">Selecione o trecho e clique em um dos botões.</span>
+              </div>
+              <textarea ref={taRef} rows={5} className={inputCls} value={b.text} onChange={(e) => onChange({ text: e.target.value })} placeholder="Escreva o texto. Quebras de linha são mantidas." />
           <AlignPicker value={b.align} onChange={(a) => onChange({ align: a })} />
         </div>
       )}
@@ -161,11 +175,63 @@ function BlockCard({ b, i, total, onChange, onMove, onRemove }: {
   );
 }
 
-function NewEmailModal({ onClose, onSent }: { onClose: () => void; onSent: (msg: string) => void }) {
-  const [subject, setSubject] = useState('');
-  const [blocks, setBlocks] = useState<EmailBlock[]>([newBlock('text')]);
-  const [audience, setAudience] = useState<MktAudience>('all');
-  const [storeId, setStoreId] = useState<string | null>(null);
+function LibraryModal({ onPick, onClose }: { onPick: (d: EmailDraft) => void; onClose: () => void }) {
+  const [items, setItems] = useState<EmailDraft[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const reload = useCallback(() => {
+    listDrafts().then(setItems).catch((e) => setErr(e?.message || 'Erro ao carregar'));
+  }, []);
+  useEffect(() => { reload(); }, [reload]);
+  const del = async (id: string) => {
+    if (confirmId !== id) { setConfirmId(id); return; }
+    try { await deleteDraft(id); setConfirmId(null); reload(); } catch (e: any) { setErr(e?.message || 'Erro ao excluir'); }
+  };
+  const section = (kind: EmailDraft['kind'], title: string) => {
+    const list = (items || []).filter((d) => d.kind === kind);
+    return (
+      <div>
+        <label className={labelCls}>{title}</label>
+        {list.length === 0 ? <p className="text-[13px] text-slate-500">Nenhum item.</p> : (
+          <div className="space-y-1">
+            {list.map((d) => (
+              <div key={d.id} className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-semibold text-slate-100">{d.name}</p>
+                  <p className="truncate text-[13px] text-slate-500">{(d.subject || 'Sem assunto') + ' · ' + fmt(d.updated_at)}</p>
+                </div>
+                <button type="button" onClick={() => onPick(d)} className="rounded-lg px-2 py-1 text-[13px] font-bold text-amber-400 hover:bg-slate-800">Carregar</button>
+                <button type="button" title="Excluir" onClick={() => del(d.id)}
+                  className={'rounded-lg px-2 py-1 text-[13px] font-bold ' + (confirmId === d.id ? 'bg-rose-600 text-white' : 'text-rose-400 hover:bg-slate-800')}>
+                  {confirmId === d.id ? 'Confirmar?' : <Trash2 className="h-4 w-4" />}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+  return (
+    <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/70 p-4" onClick={onClose}>
+      <div className="my-10 w-full max-w-2xl space-y-4 rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-100">Rascunhos e modelos</h3>
+          <button type="button" aria-label="Fechar" onClick={onClose} className="text-slate-400 hover:text-slate-100"><X className="h-5 w-5" /></button>
+        </div>
+        {err && <p className="text-[15px] text-rose-400">{err}</p>}
+        {!items && !err && <p className="text-[15px] text-slate-400">Carregando...</p>}
+        {items && (<>{section('template', 'Modelos')}{section('draft', 'Rascunhos')}</>)}
+      </div>
+    </div>
+  );
+}
+
+function NewEmailModal({ onClose, onSent, initial }: { onClose: () => void; onSent: (msg: string) => void; initial?: EmailInitial | null }) {
+  const [subject, setSubject] = useState(initial?.subject ?? '');
+  const [blocks, setBlocks] = useState<EmailBlock[]>(initial?.blocks?.length ? initial.blocks : [newBlock('text')]);
+  const [audience, setAudience] = useState<MktAudience>(initial?.audience ?? 'all');
+  const [storeId, setStoreId] = useState<string | null>(initial?.storeId ?? null);
   const [count, setCount] = useState<number | null>(null);
   const [busy, setBusy] = useState<'send' | 'test' | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -195,6 +261,31 @@ function NewEmailModal({ onClose, onSent }: { onClose: () => void; onSent: (msg:
   const html = buildEmailHtml(blocks);
   const htmlPreview = buildEmailHtml(blocks, true);
 
+      const [lib, setLib] = useState(false);
+      const [draftId, setDraftId] = useState<string | null>(null);
+      const [savingDraft, setSavingDraft] = useState(false);
+      const saveAs = async (kind: 'draft' | 'template') => {
+        let name = subject.trim() || 'Sem título';
+        if (kind === 'template') {
+          const n = window.prompt('Nome do modelo:', subject.trim());
+          if (!n || !n.trim()) return;
+          name = n.trim();
+        }
+        setSavingDraft(true); setErr(null); setOk(null);
+        try {
+          const id = await saveDraft({ id: kind === 'draft' ? draftId : null, kind, name, subject: subject.trim(), blocks, audience, storeId });
+          if (kind === 'draft') setDraftId(id);
+          setOk(kind === 'template' ? 'Modelo salvo.' : 'Rascunho salvo.');
+        } catch (e: any) { setErr(e?.message || 'Erro ao salvar'); }
+        finally { setSavingDraft(false); }
+      };
+      const loadDraft = (d: EmailDraft) => {
+        setSubject(d.subject); setBlocks(d.blocks?.length ? d.blocks : [newBlock('text')]);
+        setAudience(d.audience); setStoreId(d.store_id);
+        setDraftId(d.kind === 'draft' ? d.id : null);
+        setLib(false); setErr(null); setOk(null);
+      };
+
   const run = async (test: boolean) => {
     if (!test) {
       const c = count ?? 0;
@@ -207,9 +298,9 @@ function NewEmailModal({ onClose, onSent }: { onClose: () => void; onSent: (msg:
     }
     setBusy(test ? 'test' : 'send'); setErr(null); setOk(null);
     try {
-      const r = await sendCampaign({ subject: subject.trim(), html, text: buildEmailText(blocks), audience, storeId, test });
+      const r = await sendCampaign({ subject: subject.trim(), html, text: buildEmailText(blocks), audience, storeId, test, blocks });
       if (test) { setOk('Teste enviado para ' + r.to + '.'); setBusy(null); }
-      else onSent('E-mail enviado: ' + (r.sent ?? 0) + ' enviados, ' + (r.failed ?? 0) + ' falhas.');
+      else { if (draftId) deleteDraft(draftId).catch(() => {}); onSent('E-mail enviado: ' + (r.sent ?? 0) + ' enviados, ' + (r.failed ?? 0) + ' falhas.'); }
     } catch (e: any) { setErr(e?.message || 'Erro ao enviar'); setBusy(null); }
   };
 
@@ -261,7 +352,19 @@ function NewEmailModal({ onClose, onSent }: { onClose: () => void; onSent: (msg:
         </div>
 
         <div className="mt-4 flex flex-wrap justify-end gap-2">
-          <button type="button" onClick={onClose} disabled={busy !== null} className="px-3 py-2 rounded-lg text-[15px] text-slate-300 hover:bg-slate-800 disabled:opacity-50">Cancelar</button>
+          <button type="button" onClick={() => setLib(true)} disabled={busy !== null}
+                className="mr-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-[15px] text-slate-300 hover:bg-slate-800 disabled:opacity-50">
+                <FolderOpen className="w-4 h-4" /> Rascunhos e modelos
+              </button>
+              <button type="button" disabled={busy !== null || savingDraft || (!subject.trim() && !hasContent(blocks))} onClick={() => saveAs('draft')}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[15px] font-semibold border border-slate-700 text-slate-200 hover:bg-slate-800 disabled:opacity-50">
+                <Save className="w-4 h-4" /> {savingDraft ? 'Salvando...' : 'Salvar rascunho'}
+              </button>
+              <button type="button" disabled={busy !== null || savingDraft || !hasContent(blocks)} onClick={() => saveAs('template')}
+                className="px-3 py-2 rounded-lg text-[15px] font-semibold border border-slate-700 text-slate-200 hover:bg-slate-800 disabled:opacity-50">
+                Salvar como modelo
+              </button>
+              <button type="button" onClick={onClose} disabled={busy !== null} className="px-3 py-2 rounded-lg text-[15px] text-slate-300 hover:bg-slate-800 disabled:opacity-50">Cancelar</button>
           <button type="button" disabled={!valid || busy !== null} onClick={() => run(true)}
             className="px-3 py-2 rounded-lg text-[15px] font-semibold border border-slate-700 text-slate-200 hover:bg-slate-800 disabled:opacity-50">
             {busy === 'test' ? 'Enviando teste...' : 'Enviar teste para mim'}
@@ -273,6 +376,7 @@ function NewEmailModal({ onClose, onSent }: { onClose: () => void; onSent: (msg:
         </div>
       </Modal>
       {dialog}
+          {lib && <LibraryModal onPick={loadDraft} onClose={() => setLib(false)} />}
     </>
   );
 }
@@ -349,6 +453,7 @@ export default function EmailCampaigns() {
   const [days, setDays] = useState(30);
   const [m, setM] = useState<EmailMetrics>(EMPTY_EMAIL_METRICS);
   const [openNew, setOpenNew] = useState(false);
+      const [initial, setInitial] = useState<EmailInitial | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -358,6 +463,16 @@ export default function EmailCampaigns() {
     getEmailMetrics(days).then(setM).catch(() => {});
   }, [days]);
   useEffect(() => { load(); }, [load]);
+
+      const duplicate = async (id: string) => {
+        setErr(null); setOk(null);
+        try {
+          const { campaign } = await getCampaignDetail(id);
+          if (!campaign.blocks || campaign.blocks.length === 0) { setErr('Esta campanha foi enviada antes do suporte a duplicação e não tem os blocos salvos.'); return; }
+          setInitial({ subject: campaign.subject, blocks: campaign.blocks, audience: campaign.audience, storeId: campaign.store_id });
+          setOpenNew(true);
+        } catch (e: any) { setErr(e?.message || 'Erro ao duplicar'); }
+      };
 
   return (
     <div className="space-y-5">
@@ -369,7 +484,7 @@ export default function EmailCampaigns() {
             <option value={30}>Últimos 30 dias</option>
             <option value={90}>Últimos 90 dias</option>
           </select>
-          <button type="button" onClick={() => { setOk(null); setOpenNew(true); }}
+          <button type="button" onClick={() => { setOk(null); setInitial(null); setOpenNew(true); }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[15px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400">
             <Plus className="w-4 h-4" /> Novo e-mail
           </button>
@@ -420,7 +535,13 @@ export default function EmailCampaigns() {
                   <td className="px-3 py-2 text-right tabular-nums">{c.bounced + c.failed}</td>
                   <td className="px-3 py-2 text-right"><span className={'text-xs font-bold px-2 py-0.5 rounded-full ' + rateCls(c.opened, c.sent)}>{pct(c.opened, c.sent)}</span></td>
                   <td className="px-3 py-2 text-right">
-                    <button type="button" title="Ver e-mail" onClick={() => setDetailId(c.id)}
+                    {c.has_blocks && (
+                          <button type="button" title="Duplicar e-mail" onClick={() => duplicate(c.id)}
+                            className="mr-1 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[13px] font-semibold text-slate-300 hover:bg-slate-800">
+                            <Copy className="h-4 w-4" /> Duplicar
+                          </button>
+                        )}
+                        <button type="button" title="Ver e-mail" onClick={() => setDetailId(c.id)}
                       className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[13px] font-semibold text-amber-400 hover:bg-slate-800">
                       <Eye className="h-4 w-4" /> Ver
                     </button>
@@ -433,7 +554,7 @@ export default function EmailCampaigns() {
       )}
       <p className="text-[13px] text-slate-500">Taxa de sucesso = e-mails abertos ou clicados ÷ enviados. Entregues, abertos e cliques chegam pelo webhook do Resend.</p>
 
-      {openNew && <NewEmailModal onClose={() => setOpenNew(false)} onSent={(msg) => { setOpenNew(false); setOk(msg); load(); }} />}
+      {openNew && <NewEmailModal initial={initial} onClose={() => setOpenNew(false)} onSent={(msg) => { setOpenNew(false); setOk(msg); load(); }} />}
       {detailId && <DetailModal id={detailId} onClose={() => setDetailId(null)} />}
     </div>
   );
