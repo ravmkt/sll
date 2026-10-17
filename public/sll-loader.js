@@ -3,6 +3,7 @@
   if (window.__SLL_LOADER_INITIALIZED__) return;
   window.__SLL_LOADER_INITIALIZED__ = true;
 
+  var LOADER_VERSION = "1.1.0";
   var SUPABASE_URL = "https://flivmllysdhaydhogmhg.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_fYM4F5uRs_8DbYF7ozy0hA_eA_Z5XUz";
 
@@ -28,7 +29,7 @@
 
   window.SLL_STORE_ID = storeId;
 
-  // Garante a ponte de configuração global para o Vidlytics e outros módulos
+  // Garante a ponte de configuracao global para o Vidlytics e outros modulos
   window.VIDLYTICS_CONFIG = window.VIDLYTICS_CONFIG || {};
   window.VIDLYTICS_CONFIG.storeId = storeId;
   window.VIDLYTICS_CONFIG.supabaseUrl = SUPABASE_URL;
@@ -48,6 +49,41 @@
     reviews: "reviews-widget.js"
   };
 
+  var loadedModules = [];
+
+  // Ping de saude: avisa o painel Master que o loader rodou (e se houve erro)
+  function ping(err) {
+    try {
+      var key = "sll_ping_" + storeId;
+      var now = Date.now();
+      if (err) {
+        if (sessionStorage.getItem(key + "_err")) return;
+        sessionStorage.setItem(key + "_err", "1");
+      } else {
+        if (now - Number(sessionStorage.getItem(key) || 0) < 1800000) return;
+        sessionStorage.setItem(key, String(now));
+      }
+    } catch (e) { /* sessionStorage indisponivel: envia mesmo assim */ }
+    try {
+      fetch(SUPABASE_URL + "/rest/v1/rpc/sll_widget_ping", {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          p_store_id: storeId,
+          p_version: LOADER_VERSION,
+          p_modules: loadedModules,
+          p_page: String(window.location.href).slice(0, 300),
+          p_error: err ? String(err).slice(0, 300) : null
+        })
+      }).catch(function() {});
+    } catch (e) { /* nunca quebra a loja do cliente */ }
+  }
+
   function resolveScript(mod) {
     if (typeof mod !== "string" || /[^a-z0-9_-]/i.test(mod)) return null;
     return MODULE_TO_SCRIPT[mod] || (mod + "-widget.js");
@@ -61,10 +97,11 @@
     s.src = (baseUrl ? baseUrl + "/" : "/") + scriptName + "?v=" + Math.floor(Date.now() / 600000);
     s.async = true;
     s.setAttribute("data-store-id", storeId);
+    s.onerror = function() { ping("script_load_failed:" + scriptName); };
     document.head.appendChild(s);
   }
 
-  // Consulta módulos ativos via RPC segura
+  // Consulta modulos ativos via RPC segura
   var rpcUrl = SUPABASE_URL + "/rest/v1/rpc/get_store_active_modules";
 
   fetch(rpcUrl, {
@@ -87,14 +124,17 @@
     list.forEach(function(mod) {
       var scriptFile = resolveScript(mod);
       if (scriptFile) {
-        console.log("[SLL-Loader] Injetando módulo:", mod);
+        console.log("[SLL-Loader] Injetando modulo:", mod);
+        loadedModules.push(String(mod));
         injectModule(scriptFile);
       }
     });
+    ping(null);
   })
   .catch(function(err) {
     console.warn("[SLL-Loader] Fallback para Vidlytics:", err.message);
+    loadedModules = ["vidlytics"];
     injectModule("vidlytics-widget.js");
+    ping("modules_rpc_failed:" + err.message);
   });
 })();
-

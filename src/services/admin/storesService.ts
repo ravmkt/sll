@@ -223,6 +223,26 @@ export async function getStoreCommunications(storeId: string): Promise<CommData>
   return { email_count: d.email_count ?? 0, whatsapp_count: d.whatsapp_count ?? 0, list: d.list ?? [] };
 }
 
+export const LATEST_LOADER_VERSION = '1.1.0';
+export type WidgetHealthStatus = 'ok' | 'error' | 'stale' | 'legacy' | 'never';
+export type WidgetHealth = {
+  status: WidgetHealthStatus;
+  first_ping_at: string | null;
+  last_ping_at: string | null;
+  ping_count: number;
+  loader_version: string | null;
+  modules: string[] | null;
+  last_page_url: string | null;
+  last_error: string | null;
+  last_error_at: string | null;
+  error_count: number;
+  last_event_at: string | null;
+};
+
+export function getWidgetHealth(storeId: string): Promise<WidgetHealth> {
+  return call<WidgetHealth>('admin_widget_health', { p_store_id: storeId });
+}
+
 export type ResetResult = { email: string; link: string; email_sent: boolean; email_error?: string };
 
 export async function resetStorePassword(storeId: string): Promise<ResetResult> {

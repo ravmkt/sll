@@ -11,6 +11,7 @@ import { Badge, CARD, DeleteStoreModal, ICON, INPUT, dt, dtt, modLabel } from '@
 import { ContactActions } from '@/components/admin/StoreModals';
 import { CommunicationTab } from '@/components/admin/CommunicationTab';
 import { AssinaturasTab, FinanceiroTab, IndicacoesTab, ResumoTab } from '@/components/admin/storeTabs';
+import WidgetHealthCard from '@/components/admin/WidgetHealthCard';
 
 const TABS = [
   ['resumo', 'Resumo'], ['assinaturas', 'Assinaturas'], ['financeiro', 'Financeiro'], ['indicacoes', 'Indicações'],
@@ -283,7 +284,12 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
         ))}
       </div>
 
-      {aba === 'resumo' && <ResumoTab storeId={storeId} data={data} />}
+      {aba === 'resumo' && (
+            <div className="space-y-4">
+              <WidgetHealthCard storeId={storeId} />
+              <ResumoTab storeId={storeId} data={data} />
+            </div>
+          )}
 
       {aba === 'assinaturas' && <AssinaturasTab storeId={storeId} data={data} plans={plans} busy={busy} onStatus={changeStatus} reload={() => load()} />}
       {aba === 'financeiro' && <FinanceiroTab storeId={storeId} />}
