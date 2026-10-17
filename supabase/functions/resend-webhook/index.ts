@@ -1,5 +1,3 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
 const te = new TextEncoder();
 const json = (d: unknown, status = 200) =>
   new Response(JSON.stringify(d), { status, headers: { 'Content-Type': 'application/json' } });
@@ -50,11 +48,17 @@ Deno.serve(async (req) => {
     const emailId = evt?.data?.email_id ? String(evt.data.email_id) : null;
     if (!emailId) return json({ ok: true, ignored: 'sem email_id' });
 
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { error } = await admin.rpc('email_track_event', { p_resend_id: emailId, p_type: type });
-    if (error) {
-      console.error('email_track_event', error.message);
-      return json({ error: 'rpc: ' + error.message }, 500);
+    const url = Deno.env.get('SUPABASE_URL')!;
+    const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const res = await fetch(`${url}/rest/v1/rpc/email_track_event`, {
+      method: 'POST',
+      headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_resend_id: emailId, p_type: type }),
+    });
+    if (!res.ok) {
+      const t = (await res.text()).slice(0, 300);
+      console.error('rpc', res.status, t);
+      return json({ error: `rpc ${res.status}: ${t}` }, 500);
     }
     return json({ ok: true, type });
   } catch (err) {
