@@ -243,6 +243,20 @@ export function getWidgetHealth(storeId: string): Promise<WidgetHealth> {
   return call<WidgetHealth>('admin_widget_health', { p_store_id: storeId });
 }
 
+export type StoreFlag = {
+  id: string;
+  module_slug: string;
+  key: string;
+  name: string;
+  description: string | null;
+  mode: 'off' | 'stores' | 'all';
+  enabled: boolean;
+};
+
+export async function getStoreFlags(storeId: string): Promise<StoreFlag[]> {
+  return (await call<StoreFlag[]>('admin_store_flags', { p_store_id: storeId })) || [];
+}
+
 export type ResetResult = { email: string; link: string; email_sent: boolean; email_error?: string };
 
 export async function resetStorePassword(storeId: string): Promise<ResetResult> {

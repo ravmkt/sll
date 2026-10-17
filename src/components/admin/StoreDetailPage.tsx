@@ -12,6 +12,7 @@ import { ContactActions } from '@/components/admin/StoreModals';
 import { CommunicationTab } from '@/components/admin/CommunicationTab';
 import { AssinaturasTab, FinanceiroTab, IndicacoesTab, ResumoTab } from '@/components/admin/storeTabs';
 import WidgetHealthCard from '@/components/admin/WidgetHealthCard';
+import StoreFlagsCard from '@/components/admin/StoreFlagsCard';
 
 const TABS = [
   ['resumo', 'Resumo'], ['assinaturas', 'Assinaturas'], ['financeiro', 'Financeiro'], ['indicacoes', 'Indicações'],
@@ -287,6 +288,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
       {aba === 'resumo' && (
             <div className="space-y-4">
               <WidgetHealthCard storeId={storeId} />
+              <StoreFlagsCard storeId={storeId} />
               <ResumoTab storeId={storeId} data={data} />
             </div>
           )}
