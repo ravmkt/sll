@@ -112,13 +112,20 @@ export default function NpsWizardGate() {
       </div>
 
       {invite && !open && (
-        <div className="nps-pop fixed bottom-4 left-4 z-50">
-          <button type="button" onClick={startWizard} aria-label="Responder pesquisa de experiência" className="block cursor-pointer">
-            <img src="/assets/noah-pergunta.png" alt="Noah pergunta: como está sendo sua experiência com o SLL?" className="nps-float h-48 w-auto object-contain mix-blend-multiply drop-shadow-xl" />
-          </button>
-          <button type="button" aria-label="Fechar" onClick={closeInvite} className="absolute right-0 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-white text-slate-500 shadow hover:text-slate-800">
-            <X className="h-3.5 w-3.5" />
-          </button>
+        <div className="nps-pop fixed bottom-4 left-4 z-50 flex items-end">
+          <img src="/assets/dica-do-noah-logo-ico.png" alt="Noah" onClick={startWizard} className="nps-float h-40 w-auto shrink-0 cursor-pointer object-contain mix-blend-multiply drop-shadow-xl" />
+          <div className="nps-bubble relative mb-16 -ml-1 w-72 rounded-2xl border-2 border-[#fd8539] bg-white p-4 shadow-2xl">
+            <span className="absolute -left-2 bottom-5 h-4 w-4 rotate-45 border-b-2 border-l-2 border-[#fd8539] bg-white" />
+            <button type="button" aria-label="Fechar" onClick={closeInvite} className="absolute right-2 top-2 cursor-pointer text-slate-400 hover:text-slate-700">
+              <X className="h-4 w-4" />
+            </button>
+            <p className="pr-5 text-lg font-black leading-snug text-slate-900">Como está sendo sua experiência com o SLL?</p>
+            <p className="mt-1 text-sm text-slate-600">Leva menos de 1 minuto.</p>
+            <div className="mt-3 flex justify-end gap-2">
+              <button type="button" onClick={closeInvite} className="cursor-pointer rounded-lg px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50">Depois</button>
+              <button type="button" onClick={startWizard} className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-black text-white hover:bg-[#0082d1]">Responder</button>
+            </div>
+          </div>
         </div>
       )}
 
