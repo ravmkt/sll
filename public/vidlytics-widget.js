@@ -73,6 +73,26 @@
       })
       .catch(function () { return sllFlags; });
   })();
+  window.SLL.flagsLoaded = false;
+  window.SLL.flagsReady.then(function () { window.SLL.flagsLoaded = true; });
+  window.SLL.feature = function (key, onFn, offFn) {
+    var done = false;
+    function run() {
+      if (done) return;
+      done = true;
+      var on = window.SLL.hasFlag(key);
+      try {
+        if (on) { if (onFn) onFn(); }
+        else if (offFn) { offFn(); }
+      } catch (e) {
+        console.warn('[SLL] erro na feature ' + key, e);
+        if (on && offFn) { try { offFn(); } catch (e2) {} }
+      }
+    }
+    if (window.SLL.flagsLoaded) { run(); return; }
+    var timer = setTimeout(run, 1500);
+    window.SLL.flagsReady.then(function () { clearTimeout(timer); run(); });
+  };
 
   try {
     var oldRoot = document.getElementById('vidlytics-widget-root');
