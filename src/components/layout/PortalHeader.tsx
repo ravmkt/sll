@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import DashboardNotice from '@/components/dashboard/DashboardNotice';
 import NpsWizardGate from '@/components/feedback/NpsWizardGate';
+import FeatureWishCard from '@/components/feedback/FeatureWishCard';
 
 const sb: any = supabase;
 
@@ -62,8 +63,9 @@ export default function PortalHeader() {
         </div>
       </div>
       </div>
-      <div className="flex flex-col empty:hidden lg:w-64 lg:shrink-0">
-        <NpsWizardGate />
+      <div className="flex flex-col lg:w-64 lg:shrink-0 min-[1900px]:fixed min-[1900px]:right-2 min-[1900px]:top-[calc(var(--trial-h,0px)+var(--notice-h,0px)+5.5rem)] min-[1900px]:z-30 min-[1900px]:w-40">
+        <FeatureWishCard />
+        <NpsWizardGate showCard={false} />
       </div>
     </div>
   );

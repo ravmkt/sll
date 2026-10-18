@@ -25,7 +25,7 @@ const chip = (on: boolean) =>
     on ? 'border-[#0094eb] bg-[#0094eb]/10 text-[#0094eb]' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
   }`;
 
-export default function NpsWizardGate() {
+export default function NpsWizardGate({ showCard = true }: { showCard?: boolean }) {
   const [storeId, setStoreId] = useState<string | null>(null);
   const [show, setShow] = useState(false);
   const [invite, setInvite] = useState(false);
@@ -97,13 +97,15 @@ export default function NpsWizardGate() {
         .nps-pop { animation: npsPop .5s cubic-bezier(.2,.9,.3,1.2) both; }
       `}</style>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-[#0094eb]/30 bg-white p-5 text-center shadow-sm">
+      {showCard && (
+<div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-[#0094eb]/30 bg-white p-5 text-center shadow-sm">
         <img src="/assets/noah-pergunta2.png" alt="Noah" className="nps-float h-32 w-auto object-contain" />
         <p className="text-lg font-black leading-snug text-slate-900">Como está sendo sua experiência com o SLL?</p>
         <p className="text-xs text-slate-500">Sua opinião vale ouro! São 3 perguntas rápidas, menos de 1 minuto.</p>
         <button type="button" onClick={startWizard} className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2.5 text-sm font-black text-white shadow hover:bg-[#0082d1]">Responder</button>
         <button type="button" onClick={dismiss} className="cursor-pointer text-xs font-bold text-slate-400 hover:text-slate-600">Agora não</button>
       </div>
+      )}
 
       {invite && !open && (
         <div className="nps-pop fixed bottom-4 left-4 z-50 flex items-end">
