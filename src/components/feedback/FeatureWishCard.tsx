@@ -20,10 +20,9 @@ export default function FeatureWishCard() {
     setErr('');
     const { data: u } = await sb.auth.getUser();
     const row: any = {
-      type: 'feature_request',
+      type: 'suggestion',
       store_id: storeId,
-      comment: text.trim(),
-      payload: { area },
+      comment: ('[' + area + '] ' + text.trim()).slice(0, 2000),
       user_id: u?.user?.id ?? null,
     };
     let { error } = await sb.from('app_feedbacks').insert(row);
@@ -40,7 +39,7 @@ export default function FeatureWishCard() {
   return (
     <section className="flex flex-col items-center gap-2 rounded-2xl border border-[#0094eb]/30 bg-white p-3 text-center shadow-sm">
       <style>{`@keyframes wishFloat { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-5px) rotate(1.5deg); } } .wish-float { animation: wishFloat 2.8s ease-in-out infinite; }`}</style>
-      <img src="/assets/noah-pergunta2.png" alt="Noah" className="wish-float h-24 w-auto object-contain" />
+      <img src="/assets/noah-pergunta2.png" alt="Noah" className="wish-float h-20 w-auto object-contain" />
       <p className="text-sm font-black leading-snug text-slate-900">O que você gostaria de ver no SLL Hub?</p>
       {done ? (
         <>
