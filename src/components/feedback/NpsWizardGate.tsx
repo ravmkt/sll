@@ -54,7 +54,7 @@ export default function NpsWizardGate() {
 
   useEffect(() => {
     if (!show || sessionStorage.getItem(INVITE_KEY)) return;
-    const t = setTimeout(() => { setInvite(true); sessionStorage.setItem(INVITE_KEY, '1'); }, 15000);
+    const t = setTimeout(() => { setInvite(true); sessionStorage.setItem(INVITE_KEY, '1'); }, 6000);
     return () => clearTimeout(t);
   }, [show]);
 
@@ -88,44 +88,34 @@ export default function NpsWizardGate() {
   return (
     <>
       <style>{`
-        @keyframes npsFloat { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-8px) rotate(2deg); } }
-        @keyframes npsPop { 0% { opacity: 0; transform: translateY(24px) scale(.9); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-        .nps-float { animation: npsFloat 2.6s ease-in-out infinite; }
-        .nps-pop { animation: npsPop .45s cubic-bezier(.2,.9,.3,1.2) both; }
+        @keyframes npsFloat { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-6px) rotate(1.5deg); } }
+        @keyframes npsPop { 0% { opacity: 0; transform: translateY(24px) scale(.85); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        .nps-float { animation: npsFloat 2.8s ease-in-out infinite; }
+        .nps-pop { animation: npsPop .5s cubic-bezier(.2,.9,.3,1.2) both; }
       `}</style>
 
-      <div className="relative mb-4 overflow-hidden rounded-2xl border border-[#0094eb]/30 bg-gradient-to-r from-[#0094eb] to-[#0070c0] p-4 shadow-lg shadow-[#0094eb]/20">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
-            <img src="/assets/dica-do-noah-logo-ico.png" alt="Noah" className="nps-float h-16 w-16 shrink-0 object-contain drop-shadow-lg" />
-            <div>
-              <p className="text-base font-black text-white">Sua opinião vale ouro! Como está sendo sua experiência com o SLL?</p>
-              <p className="text-xs text-white/80">São 3 perguntas rápidas, menos de 1 minuto.</p>
-            </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-[#0094eb]/30 bg-white px-4 py-2 shadow-sm">
+        <div className="flex items-center gap-3">
+          <img src="/assets/noah-pergunta.png" alt="Noah pergunta: como está sendo sua experiência com o SLL?" className="nps-float h-32 w-auto shrink-0 object-contain mix-blend-multiply" />
+          <div>
+            <p className="text-base font-black text-slate-900">Sua opinião vale ouro!</p>
+            <p className="text-xs text-slate-500">São 3 perguntas rápidas, menos de 1 minuto.</p>
           </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={dismiss} className="cursor-pointer rounded-lg px-3 py-2 text-xs font-bold text-white/80 hover:bg-white/10">Agora não</button>
-            <button type="button" onClick={startWizard} className="cursor-pointer rounded-lg bg-white px-5 py-2 text-sm font-black text-[#0094eb] shadow hover:bg-slate-50">Responder</button>
-          </div>
+        </div>
+        <div className="flex gap-2">
+          <button type="button" onClick={dismiss} className="cursor-pointer rounded-lg px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50">Agora não</button>
+          <button type="button" onClick={startWizard} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-sm font-black text-white shadow hover:bg-[#0082d1]">Responder</button>
         </div>
       </div>
 
       {invite && !open && (
-        <div className="nps-pop fixed bottom-4 left-4 z-50 flex max-w-[calc(100vw-2rem)] items-end gap-1">
-          <img src="/assets/dica-do-noah-logo-ico.png" alt="Noah" className="nps-float -mb-1 h-28 w-28 shrink-0 object-contain drop-shadow-xl" />
-          <div className="relative mb-6 w-64 rounded-2xl border-2 border-[#0094eb] bg-white p-4 shadow-2xl">
-            <span className="absolute -left-2 bottom-5 h-4 w-4 rotate-45 border-b-2 border-l-2 border-[#0094eb] bg-white" />
-            <button type="button" aria-label="Fechar" onClick={() => setInvite(false)} className="absolute right-2 top-2 cursor-pointer text-slate-400 hover:text-slate-700">
-              <X className="h-4 w-4" />
-            </button>
-            <p className="pr-4 text-sm font-black text-slate-900">Oi! Eu sou o Noah 👋</p>
-            <p className="mt-1 text-sm font-semibold text-slate-700">Posso te fazer 3 perguntas rápidas?</p>
-            <p className="mt-1 text-xs text-slate-500">Sua opinião direciona o que vamos construir.</p>
-            <div className="mt-3 flex justify-end gap-2">
-              <button type="button" onClick={() => setInvite(false)} className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-50">Depois</button>
-              <button type="button" onClick={startWizard} className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-1.5 text-xs font-black text-white hover:bg-[#0082d1]">Vamos lá!</button>
-            </div>
-          </div>
+        <div className="nps-pop fixed bottom-4 left-4 z-50">
+          <button type="button" onClick={startWizard} aria-label="Responder pesquisa de experiência" className="block cursor-pointer">
+            <img src="/assets/noah-pergunta.png" alt="Noah pergunta: como está sendo sua experiência com o SLL?" className="nps-float h-48 w-auto object-contain mix-blend-multiply drop-shadow-xl" />
+          </button>
+          <button type="button" aria-label="Fechar" onClick={() => setInvite(false)} className="absolute right-0 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-white text-slate-500 shadow hover:text-slate-800">
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
 
