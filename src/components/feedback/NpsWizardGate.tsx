@@ -97,18 +97,12 @@ export default function NpsWizardGate() {
         .nps-pop { animation: npsPop .5s cubic-bezier(.2,.9,.3,1.2) both; }
       `}</style>
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-[#0094eb]/30 bg-white px-4 py-2 shadow-sm">
-        <div className="flex items-center gap-3">
-          <img src="/assets/dica-do-noah-logo-ico.png" alt="Noah" className="h-28 w-auto shrink-0 object-contain mix-blend-multiply" />
-          <div>
-            <p className="text-lg font-black text-slate-900">Como está sendo sua experiência com o SLL?</p>
-            <p className="text-xs text-slate-500">Sua opinião vale ouro! São 3 perguntas rápidas, menos de 1 minuto.</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button type="button" onClick={dismiss} className="cursor-pointer rounded-lg px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50">Agora não</button>
-          <button type="button" onClick={startWizard} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-sm font-black text-white shadow hover:bg-[#0082d1]">Responder</button>
-        </div>
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-[#0094eb]/30 bg-white p-5 text-center shadow-sm">
+        <img src="/assets/dica-do-noah-logo-ico.png" alt="Noah" className="nps-float h-32 w-auto object-contain mix-blend-multiply" />
+        <p className="text-lg font-black leading-snug text-slate-900">Como está sendo sua experiência com o SLL?</p>
+        <p className="text-xs text-slate-500">Sua opinião vale ouro! São 3 perguntas rápidas, menos de 1 minuto.</p>
+        <button type="button" onClick={startWizard} className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2.5 text-sm font-black text-white shadow hover:bg-[#0082d1]">Responder</button>
+        <button type="button" onClick={dismiss} className="cursor-pointer text-xs font-bold text-slate-400 hover:text-slate-600">Agora não</button>
       </div>
 
       {invite && !open && (

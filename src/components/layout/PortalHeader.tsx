@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import DashboardNotice from '@/components/dashboard/DashboardNotice';
+import NpsWizardGate from '@/components/feedback/NpsWizardGate';
 
 const sb: any = supabase;
 
@@ -44,7 +45,8 @@ export default function PortalHeader() {
   const greetName = (contact || String(store?.contact_name || '')).trim().split(/\s+/)[0] || storeName;
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4 lg:flex-row">
+      <div className="min-w-0 flex-1 space-y-4">
       <DashboardNotice storeId={storeId} />
       <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-sm">
         {logo && !imgFailed ? (
@@ -58,6 +60,10 @@ export default function PortalHeader() {
           <h1 className="truncate text-xl font-black text-slate-900">Bem-vindo(a), {greetName}</h1>
           <p className="text-sm text-slate-500">Painel de controle e inteligência da sua operação online.</p>
         </div>
+      </div>
+      </div>
+      <div className="flex flex-col empty:hidden lg:w-64 lg:shrink-0">
+        <NpsWizardGate />
       </div>
     </div>
   );
