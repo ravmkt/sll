@@ -98,7 +98,7 @@ export default function NpsWizardGate() {
       `}</style>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-[#0094eb]/30 bg-white p-5 text-center shadow-sm">
-        <img src="/assets/dica-do-noah-logo-ico.png" alt="Noah" className="nps-float h-32 w-auto object-contain mix-blend-multiply" />
+        <img src="/assets/noah-pergunta2.png" alt="Noah" className="nps-float h-32 w-auto object-contain" />
         <p className="text-lg font-black leading-snug text-slate-900">Como está sendo sua experiência com o SLL?</p>
         <p className="text-xs text-slate-500">Sua opinião vale ouro! São 3 perguntas rápidas, menos de 1 minuto.</p>
         <button type="button" onClick={startWizard} className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2.5 text-sm font-black text-white shadow hover:bg-[#0082d1]">Responder</button>
@@ -107,7 +107,7 @@ export default function NpsWizardGate() {
 
       {invite && !open && (
         <div className="nps-pop fixed bottom-4 left-4 z-50 flex items-end">
-          <img src="/assets/dica-do-noah-logo-ico.png" alt="Noah" onClick={startWizard} className="nps-float h-40 w-auto shrink-0 cursor-pointer object-contain mix-blend-multiply drop-shadow-xl" />
+          <img src="/assets/noah-pergunta2.png" alt="Noah" onClick={startWizard} className="nps-float h-40 w-auto shrink-0 cursor-pointer object-contain drop-shadow-xl" />
           <div className="nps-bubble relative mb-16 -ml-1 w-72 rounded-2xl border-2 border-[#fd8539] bg-white p-4 shadow-2xl">
             <span className="absolute -left-2 bottom-5 h-4 w-4 rotate-45 border-b-2 border-l-2 border-[#fd8539] bg-white" />
             <button type="button" aria-label="Fechar" onClick={closeInvite} className="absolute right-2 top-2 cursor-pointer text-slate-400 hover:text-slate-700">
