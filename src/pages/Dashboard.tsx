@@ -6,6 +6,7 @@ import {
   MousePointerClick, Package, Play, Radio, Shirt,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import NpsWizardGate from '@/components/feedback/NpsWizardGate';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
 import { listScopedTips, pickTip, resolveCta, plainText, type ScopedTip } from '@/services/scopedTips';
@@ -242,6 +243,7 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <NpsWizardGate />
 
         {/* Resultados com filtro de periodo */}
         <div data-tour="kpis" className="space-y-3">

@@ -70,3 +70,37 @@ export async function submitSuggestion(params: {
   });
   if (error) throw error;
 }
+
+export type WizardStatus = { should_show: boolean; reason: string; days_since_signup: number };
+
+export async function getWizardStatus(storeId: string): Promise<WizardStatus> {
+  const { data, error } = await supabase.rpc("feedback_wizard_status", { p_store_id: storeId });
+  if (error) throw error;
+  return data as WizardStatus;
+}
+
+export async function dismissWizard(storeId: string): Promise<void> {
+  const { error } = await supabase.rpc("feedback_dismiss_wizard", { p_store_id: storeId });
+  if (error) throw error;
+}
+
+export async function submitNpsWizard(params: {
+  storeId: string;
+  score: number;
+  topFeature?: string;
+  mainPain?: string;
+  mainPainOther?: string;
+  comment?: string;
+}): Promise<void> {
+  const { error } = await supabase.rpc("submit_nps_wizard", {
+    p_store_id: params.storeId,
+    p_score: params.score,
+    p_payload: {
+      top_feature: params.topFeature || null,
+      main_pain: params.mainPain || null,
+      main_pain_other: params.mainPainOther || null,
+    },
+    p_comment: params.comment ?? null,
+  });
+  if (error) throw error;
+}
