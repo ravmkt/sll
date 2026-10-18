@@ -53,12 +53,15 @@ export default function NpsWizardGate() {
   }, []);
 
   useEffect(() => {
-    if (!show || sessionStorage.getItem(INVITE_KEY)) return;
-    const t = setTimeout(() => { setInvite(true); sessionStorage.setItem(INVITE_KEY, '1'); }, 6000);
+    if (!show) return;
+    const force = new URLSearchParams(window.location.search).has('nps');
+    if (!force && sessionStorage.getItem(INVITE_KEY)) return;
+    const t = setTimeout(() => setInvite(true), 6000);
     return () => clearTimeout(t);
   }, [show]);
 
-  const startWizard = () => { setInvite(false); setStep(1); setOpen(true); };
+  const closeInvite = () => { sessionStorage.setItem(INVITE_KEY, '1'); setInvite(false); };
+  const startWizard = () => { closeInvite(); setStep(1); setOpen(true); };
 
   const dismiss = async () => {
     if (!storeId) return;
@@ -96,10 +99,10 @@ export default function NpsWizardGate() {
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-[#0094eb]/30 bg-white px-4 py-2 shadow-sm">
         <div className="flex items-center gap-3">
-          <img src="/assets/noah-pergunta.png" alt="Noah pergunta: como está sendo sua experiência com o SLL?" className="nps-float h-32 w-auto shrink-0 object-contain mix-blend-multiply" />
+          <img src="/assets/dica-do-noah-logo-ico.png" alt="Noah" className="h-28 w-auto shrink-0 object-contain mix-blend-multiply" />
           <div>
-            <p className="text-base font-black text-slate-900">Sua opinião vale ouro!</p>
-            <p className="text-xs text-slate-500">São 3 perguntas rápidas, menos de 1 minuto.</p>
+            <p className="text-lg font-black text-slate-900">Como está sendo sua experiência com o SLL?</p>
+            <p className="text-xs text-slate-500">Sua opinião vale ouro! São 3 perguntas rápidas, menos de 1 minuto.</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -113,7 +116,7 @@ export default function NpsWizardGate() {
           <button type="button" onClick={startWizard} aria-label="Responder pesquisa de experiência" className="block cursor-pointer">
             <img src="/assets/noah-pergunta.png" alt="Noah pergunta: como está sendo sua experiência com o SLL?" className="nps-float h-48 w-auto object-contain mix-blend-multiply drop-shadow-xl" />
           </button>
-          <button type="button" aria-label="Fechar" onClick={() => setInvite(false)} className="absolute right-0 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-white text-slate-500 shadow hover:text-slate-800">
+          <button type="button" aria-label="Fechar" onClick={closeInvite} className="absolute right-0 top-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-white text-slate-500 shadow hover:text-slate-800">
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
