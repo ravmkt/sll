@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { dismissWizard, getNpsOptions, getWizardStatus, resolveStoreId, submitNpsWizard } from '@/services/feedback';
+import { dismissWizard, getNpsOptions, getNpsTexts, getWizardStatus, NPS_TEXT_DEFAULTS, resolveStoreId, submitNpsWizard } from '@/services/feedback';
 import { showError, showSuccess } from '@/utils/toast';
 
 const INVITE_KEY = 'sll_nps_invite_shown';
@@ -39,6 +39,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
   const [busy, setBusy] = useState(false);
   const [pains, setPains] = useState(DEFAULT_PAINS);
   const [features, setFeatures] = useState(DEFAULT_FEATURES);
+  const [tx, setTx] = useState<Record<string, string>>(NPS_TEXT_DEFAULTS);
 
   useEffect(() => {
     let alive = true;
@@ -51,6 +52,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
         setShow(st.should_show);
         if (st.should_show) {
           try {
+            getNpsTexts().then((t) => { if (alive) setTx({ ...NPS_TEXT_DEFAULTS, ...t }); }).catch(() => { /* mantém o padrão */ });
             const opts = await getNpsOptions();
             if (!alive) return;
             if (opts.pains.length) setPains(opts.pains);
@@ -110,7 +112,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
       {showCard && (
 <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-[#0094eb]/30 bg-white p-5 text-center shadow-sm">
         <img src="/assets/noah-pergunta2.png" alt="Noah" className="nps-float h-32 w-auto object-contain" />
-        <p className="text-lg font-black leading-snug text-slate-900">Como está sendo sua experiência com o SLL?</p>
+        <p className="text-lg font-black leading-snug text-slate-900">{tx.invite_title}</p>
         <p className="text-xs text-slate-500">Sua opinião vale ouro! São 3 perguntas rápidas, menos de 1 minuto.</p>
         <button type="button" onClick={startWizard} className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2.5 text-sm font-black text-white shadow hover:bg-[#0082d1]">Responder</button>
         <button type="button" onClick={dismiss} className="cursor-pointer text-xs font-bold text-slate-400 hover:text-slate-600">Agora não</button>
@@ -125,7 +127,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
             <button type="button" aria-label="Fechar" onClick={closeInvite} className="absolute right-2 top-2 cursor-pointer text-slate-400 hover:text-slate-700">
               <X className="h-4 w-4" />
             </button>
-            <p className="pr-5 text-lg font-black leading-snug text-slate-900">Como está sendo sua experiência com o SLL?</p>
+            <p className="pr-5 text-lg font-black leading-snug text-slate-900">{tx.invite_title}</p>
             <p className="mt-1 text-sm text-slate-600">Leva menos de 1 minuto.</p>
             <div className="mt-3 flex justify-end gap-2">
               <button type="button" onClick={closeInvite} className="cursor-pointer rounded-lg px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50">Depois</button>
@@ -140,9 +142,9 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-slate-900">Sua opinião ({step}/3)</DialogTitle>
             <DialogDescription className="text-sm text-slate-600">
-              {step === 1 && 'De 0 a 10, o quanto você recomendaria o SLL a outro lojista?'}
-              {step === 2 && 'Conte o que mais pesa e o que mais vale para você.'}
-              {step === 3 && 'Quer deixar algum comentário? (opcional)'}
+              {step === 1 && tx.score_question}
+              {step === 2 && tx.step2_description}
+              {step === 3 && tx.comment_question}
             </DialogDescription>
           </DialogHeader>
 
@@ -160,7 +162,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <p className="mb-2 text-xs font-bold uppercase text-slate-500">Maior dificuldade</p>
+                <p className="mb-2 text-xs font-bold uppercase text-slate-500">{tx.pain_title}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {pains.map((p) => (
                     <button key={p.key} type="button" onClick={() => setPain(p.key)} className={chip(pain === p.key)}>{p.label}</button>
@@ -172,7 +174,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
                 )}
               </div>
               <div>
-                <p className="mb-2 text-xs font-bold uppercase text-slate-500">Funcionalidade favorita</p>
+                <p className="mb-2 text-xs font-bold uppercase text-slate-500">{tx.feature_title}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {features.map((f) => (
                     <button key={f.key} type="button" onClick={() => setFeature(f.key)} className={chip(feature === f.key)}>{f.label}</button>
@@ -184,7 +186,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
 
           {step === 3 && (
             <textarea value={comment} onChange={(e) => setComment(e.target.value.slice(0, 2000))} rows={4}
-              placeholder="O que podemos melhorar?"
+              placeholder={tx.comment_placeholder}
               className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#0094eb]" />
           )}
 

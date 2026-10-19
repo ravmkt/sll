@@ -115,3 +115,22 @@ export async function getNpsOptions(): Promise<{ pains: NpsOption[]; features: N
     rows.filter((r) => r.kind === kind).map((r) => ({ key: r.key, label: r.label }));
   return { pains: pick("pain"), features: pick("feature") };
 }
+
+export const NPS_TEXT_FIELDS: { key: string; label: string; def: string; max: number }[] = [
+  { key: "invite_title", label: "Convite (balão e card)", def: "Como está sendo sua experiência com o SLL?", max: 120 },
+  { key: "score_question", label: "Passo 1 · Pergunta da nota (0 a 10)", def: "De 0 a 10, o quanto você recomendaria o SLL a outro lojista?", max: 200 },
+  { key: "step2_description", label: "Passo 2 · Introdução", def: "Conte o que mais pesa e o que mais vale para você.", max: 200 },
+  { key: "pain_title", label: "Passo 2 · Título da lista de dificuldades", def: "Maior dificuldade", max: 60 },
+  { key: "feature_title", label: "Passo 2 · Título da lista de funcionalidades", def: "Funcionalidade favorita", max: 60 },
+  { key: "comment_question", label: "Passo 3 · Pergunta do comentário", def: "Quer deixar algum comentário? (opcional)", max: 200 },
+  { key: "comment_placeholder", label: "Passo 3 · Placeholder do comentário", def: "O que podemos melhorar?", max: 120 },
+];
+
+export const NPS_TEXT_DEFAULTS: Record<string, string> = NPS_TEXT_FIELDS.reduce<Record<string, string>>(
+  (m, f) => { m[f.key] = f.def; return m; }, {});
+
+export async function getNpsTexts(): Promise<Record<string, string>> {
+  const { data, error } = await (supabase as any).rpc("get_nps_texts");
+  if (error) throw error;
+  return (data ?? {}) as Record<string, string>;
+}

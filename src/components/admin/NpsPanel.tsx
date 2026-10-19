@@ -2,10 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, Frown, Loader2, Meh, MessageSquareQuote, Plus, RotateCcw, Settings, Search, Smile, X } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
-  getNpsConfig, getNpsResults, listNpsOptions, listNpsStores, resetNpsStore, saveNpsConfig, saveNpsOptions,
+  getNpsConfig, getNpsResults, listNpsOptions, listNpsStores, resetNpsStore, saveNpsConfig, saveNpsOptions, saveNpsTexts,
   type NpsOptionRow, type NpsStoreRow,
   type NpsConfig, type NpsCount, type NpsResults,
 } from '@/services/admin/npsAdmin';
+import { getNpsTexts, NPS_TEXT_DEFAULTS, NPS_TEXT_FIELDS } from '@/services/feedback';
 
 const LABELS: Record<string, string> = {
   dificuldade_instalacao: 'Dificuldade na instalação',
@@ -179,6 +180,8 @@ export default function NpsPanel() {
   const [opts, setOpts] = useState<NpsOptionRow[]>([]);
   const [savingOpts, setSavingOpts] = useState(false);
   const [stores, setStores] = useState<NpsStoreRow[]>([]);
+  const [texts, setTexts] = useState<Record<string, string>>(NPS_TEXT_DEFAULTS);
+  const [savingTexts, setSavingTexts] = useState(false);
   const [storesErr, setStoresErr] = useState<string | null>(null);
 
   const loadResults = useCallback(async () => {
@@ -197,6 +200,7 @@ export default function NpsPanel() {
       .then((r) => { setStores(r); setStoresErr(null); })
       .catch((e: any) => setStoresErr(e?.message ?? 'Erro ao carregar lojas'));
   }, [drawer, cfg?.target]);
+  useEffect(() => { getNpsTexts().then((t) => setTexts({ ...NPS_TEXT_DEFAULTS, ...t })).catch(() => { /* padrão */ }); }, []);
   useEffect(() => { listNpsOptions().then(setOpts).catch(() => { /* usa rótulos padrão */ }); }, []);
 
   const save = async () => {
@@ -254,6 +258,22 @@ export default function NpsPanel() {
     if (i < 0 || j < 0 || j >= list.length) return;
     [list[i], list[j]] = [list[j], list[i]];
     setOpts([...opts.filter((o) => o.kind !== kind), ...list.map((o, n) => ({ ...o, sort_order: n + 1 }))]);
+  };
+
+  const saveTexts = async () => {
+    setErr(null); setMsg(null);
+    const payload: Record<string, string> = {};
+    for (const f of NPS_TEXT_FIELDS) {
+      const v = (texts[f.key] ?? '').trim();
+      payload[f.key] = v === f.def ? '' : v;
+    }
+    setSavingTexts(true);
+    try {
+      await saveNpsTexts(payload);
+      setTexts({ ...NPS_TEXT_DEFAULTS, ...(await getNpsTexts()) });
+      setMsg('Textos salvos.');
+    } catch (e: any) { setErr(e?.message ?? 'Erro ao salvar textos'); }
+    setSavingTexts(false);
   };
 
   const saveOpts = async () => {
@@ -419,6 +439,24 @@ export default function NpsPanel() {
               className="mt-5 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-amber-500 text-sm font-bold text-slate-900 hover:bg-amber-400 disabled:opacity-50">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar configurações
             </button>
+
+            <div className="mt-8">
+              <h4 className="mb-1 text-sm font-bold text-slate-100">Textos das perguntas</h4>
+              <p className="mb-3 text-[11px] text-slate-500">Deixe em branco para voltar ao texto padrão.</p>
+              <div className="space-y-3">
+                {NPS_TEXT_FIELDS.map((f) => (
+                  <label key={f.key} className="block text-xs font-semibold text-slate-400">
+                    {f.label}
+                    <input className={`${INPUT} mt-1`} maxLength={f.max} value={texts[f.key] ?? ''} placeholder={f.def}
+                      onChange={(e) => setTexts({ ...texts, [f.key]: e.target.value })} />
+                  </label>
+                ))}
+              </div>
+              <button type="button" onClick={() => void saveTexts()} disabled={savingTexts}
+                className="mt-3 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-amber-500 text-sm font-bold text-amber-400 hover:bg-amber-500/10 disabled:opacity-50">
+                {savingTexts && <Loader2 className="h-4 w-4 animate-spin" />} Salvar textos
+              </button>
+            </div>
 
             {(['pain', 'feature'] as const).map((kind) => (
               <div key={kind} className="mt-8">

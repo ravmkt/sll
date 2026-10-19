@@ -70,3 +70,8 @@ export async function listNpsStores(): Promise<NpsStoreRow[]> {
   if (error) throw error;
   return (data ?? []) as NpsStoreRow[];
 }
+
+export async function saveNpsTexts(p: Record<string, string>): Promise<void> {
+  const { error } = await sb.rpc('admin_nps_save_texts', { p });
+  if (error) throw error;
+}
