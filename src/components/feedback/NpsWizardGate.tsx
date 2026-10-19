@@ -47,6 +47,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
       try {
         const id = await resolveStoreId();
         const st = await getWizardStatus(id);
+        console.info('[NPS] status', { id, st });
         if (!alive) return;
         setStoreId(id);
         setShow(st.should_show);
@@ -59,7 +60,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
             if (opts.features.length) setFeatures(opts.features);
           } catch { /* mantém as opções padrão */ }
         }
-      } catch { /* sem loja ou sem permissão: não exibe */ }
+      } catch (err) { console.warn('[NPS] falhou', err); /* sem loja ou sem permissão: não exibe */ }
     })();
     return () => { alive = false; };
   }, []);
