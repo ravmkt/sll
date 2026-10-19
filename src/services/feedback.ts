@@ -119,11 +119,10 @@ export async function getNpsOptions(): Promise<{ pains: NpsOption[]; features: N
 export const NPS_TEXT_FIELDS: { key: string; label: string; def: string; max: number }[] = [
   { key: "invite_title", label: "Convite (balão e card)", def: "Como está sendo sua experiência com o SLL?", max: 120 },
   { key: "score_question", label: "Passo 1 · Pergunta da nota (0 a 10)", def: "De 0 a 10, o quanto você recomendaria o SLL a outro lojista?", max: 200 },
-  { key: "step2_description", label: "Passo 2 · Introdução", def: "Conte o que mais pesa e o que mais vale para você.", max: 200 },
-  { key: "pain_title", label: "Passo 2 · Título da lista de dificuldades", def: "Maior dificuldade", max: 60 },
-  { key: "feature_title", label: "Passo 2 · Título da lista de funcionalidades", def: "Funcionalidade favorita", max: 60 },
-  { key: "comment_question", label: "Passo 3 · Pergunta do comentário", def: "Quer deixar algum comentário? (opcional)", max: 200 },
-  { key: "comment_placeholder", label: "Passo 3 · Placeholder do comentário", def: "O que podemos melhorar?", max: 120 },
+  { key: "pain_title", label: "Passo 2 · Pergunta (dificuldade)", def: "Qual tem sido a sua maior dificuldade?", max: 60 },
+  { key: "feature_title", label: "Passo 3 · Pergunta (funcionalidade)", def: "Qual recurso mais gera resultado?", max: 60 },
+  { key: "comment_question", label: "Passo 4 · Pergunta do comentário", def: "Quer deixar algum comentário? (opcional)", max: 200 },
+  { key: "comment_placeholder", label: "Passo 4 · Placeholder do comentário", def: "O que podemos melhorar?", max: 120 },
 ];
 
 export const NPS_TEXT_DEFAULTS: Record<string, string> = NPS_TEXT_FIELDS.reduce<Record<string, string>>(

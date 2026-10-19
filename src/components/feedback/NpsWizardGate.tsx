@@ -141,11 +141,12 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg gap-5 border-slate-200 bg-white p-6 text-slate-900 shadow-2xl sm:rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black text-slate-900">Sua opinião ({step}/3)</DialogTitle>
+            <DialogTitle className="text-xl font-black text-slate-900">Sua opinião ({step}/4)</DialogTitle>
             <DialogDescription className="text-sm text-slate-600">
               {step === 1 && tx.score_question}
-              {step === 2 && tx.step2_description}
-              {step === 3 && tx.comment_question}
+              {step === 2 && tx.pain_title}
+              {step === 3 && tx.feature_title}
+              {step === 4 && tx.comment_question}
             </DialogDescription>
           </DialogHeader>
 
@@ -161,31 +162,32 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
           )}
 
           {step === 2 && (
-            <div className="space-y-4">
-              <div>
-                <p className="mb-2 text-xs font-bold uppercase text-slate-500">{tx.pain_title}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {pains.map((p) => (
-                    <button key={p.key} type="button" onClick={() => setPain(p.key)} className={chip(pain === p.key)}>{p.label}</button>
-                  ))}
-                </div>
-                {pain === 'outro' && (
-                  <input value={painOther} onChange={(e) => setPainOther(e.target.value.slice(0, 300))} placeholder="Descreva rapidamente"
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#0094eb]" />
-                )}
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                {pains.map((p) => (
+                  <button key={p.key} type="button"
+                    onClick={() => { setPain(p.key); if (p.key !== 'outro') setStep(3); }}
+                    className={chip(pain === p.key)}>{p.label}</button>
+                ))}
               </div>
-              <div>
-                <p className="mb-2 text-xs font-bold uppercase text-slate-500">{tx.feature_title}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {features.map((f) => (
-                    <button key={f.key} type="button" onClick={() => setFeature(f.key)} className={chip(feature === f.key)}>{f.label}</button>
-                  ))}
-                </div>
-              </div>
+              {pain === 'outro' && (
+                <input value={painOther} onChange={(e) => setPainOther(e.target.value.slice(0, 300))} placeholder="Descreva rapidamente"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#0094eb]" />
+              )}
             </div>
           )}
 
           {step === 3 && (
+            <div className="grid grid-cols-2 gap-2">
+              {features.map((f) => (
+                <button key={f.key} type="button"
+                  onClick={() => { setFeature(f.key); setStep(4); }}
+                  className={chip(feature === f.key)}>{f.label}</button>
+              ))}
+            </div>
+          )}
+
+          {step === 4 && (
             <textarea value={comment} onChange={(e) => setComment(e.target.value.slice(0, 2000))} rows={4}
               placeholder={tx.comment_placeholder}
               className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#0094eb]" />
@@ -194,9 +196,9 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
           <div className="flex justify-between pt-2">
             <button type="button" disabled={step === 1 || busy} onClick={() => setStep((s) => s - 1)}
               className="cursor-pointer rounded-lg px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50 disabled:opacity-40">Voltar</button>
-            {step < 3 ? (
-              <button type="button" disabled={score === null} onClick={() => setStep((s) => s + 1)}
-                className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-sm font-bold text-white disabled:opacity-40">Continuar</button>
+            {step < 4 ? (
+              <button type="button" disabled={step === 1 && score === null} onClick={() => setStep((s) => s + 1)}
+                className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-sm font-bold text-white disabled:opacity-40">{(step === 2 && !pain) || (step === 3 && !feature) ? 'Pular' : 'Continuar'}</button>
             ) : (
               <button type="button" disabled={busy} onClick={send}
                 className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-5 py-2 text-sm font-bold text-white disabled:opacity-60">
