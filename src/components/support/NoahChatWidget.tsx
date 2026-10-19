@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Loader2, MessageCircle, Send, X } from 'lucide-react';
+import { Loader2, MessageCircle, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { buildSupportUrl } from '@/config/support';
+import { submitVote } from '@/services/feedback';
 
 const sb: any = supabase;
 
@@ -16,7 +17,7 @@ export interface SupportContext {
   appStatus?: boolean; // Aplicativo de videos ativo na loja
 }
 
-type Msg = { role: 'user' | 'assistant'; content: string; animate?: boolean };
+type Msg = { role: 'user' | 'assistant'; content: string; animate?: boolean; id?: string; question?: string; vote?: 'up' | 'down' };
 
 const HIDDEN_ON = ['/admin-master', '/dashboard/onboarding', '/auth'];
 const GREETING = 'Olá! Sou o Noah, assistente do SLL Hub. Como posso te ajudar agora?';
@@ -136,6 +137,18 @@ export default function NoahChatWidget() {
   const aiOff = !!cfg && cfg.ai_enabled === false;
   const whatsapp = cfg?.whatsapp_number ? waUrl(cfg, store?.name, storeId ?? store?.id) : buildSupportUrl(store?.name, storeId ?? store?.id);
 
+  const vote = async (idx: number, v: 'up' | 'down') => {
+    const m = messages[idx];
+    if (!m?.id || !storeId || m.vote === v) return;
+    const prev = m.vote;
+    setMessages((all) => all.map((x, k) => (k === idx ? { ...x, vote: v } : x)));
+    try {
+      await submitVote({ type: 'noah', referenceId: m.id, vote: v, storeId, comment: v === 'down' ? m.question : undefined });
+    } catch {
+      setMessages((all) => all.map((x, k) => (k === idx ? { ...x, vote: prev } : x)));
+    }
+  };
+
   const send = async () => {
     const text = input.trim().slice(0, MAX_LEN);
     if (!text || loading || !storeId) return;
@@ -160,7 +173,7 @@ export default function NoahChatWidget() {
       else if (error) console.error('noah-support', error, await (error as any).context?.text?.().catch(() => ''));
     } catch { /* usa o texto padrao */ }
 
-    setMessages((m) => [...m, { role: 'assistant', content: reply, animate: true }]);
+    setMessages((m) => [...m, { role: 'assistant', content: reply, animate: true, id: reply === FALLBACK ? undefined : crypto.randomUUID(), question: text }]);
     setLoading(false);
   };
 
@@ -193,6 +206,19 @@ export default function NoahChatWidget() {
                 }`}
               >
                 {m.animate ? <Typewriter text={m.content} onTick={scrollDown} /> : m.role === 'assistant' ? <Md text={m.content} /> : m.content}
+                {m.id && (
+                  <div className="mt-1.5 flex items-center gap-1.5 border-t border-slate-200 pt-1.5">
+                    <span className="mr-auto text-[11px] text-slate-400">{m.vote ? 'Obrigado!' : 'Isso ajudou?'}</span>
+                    <button type="button" aria-label="Resposta útil" onClick={() => void vote(i, 'up')}
+                      className={`cursor-pointer rounded-md p-1 ${m.vote === 'up' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-700'}`}>
+                      <ThumbsUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button type="button" aria-label="Resposta não útil" onClick={() => void vote(i, 'down')}
+                      className={`cursor-pointer rounded-md p-1 ${m.vote === 'down' ? 'text-rose-600' : 'text-slate-400 hover:text-slate-700'}`}>
+                      <ThumbsDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
