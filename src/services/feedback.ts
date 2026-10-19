@@ -71,7 +71,24 @@ export async function submitSuggestion(params: {
   if (error) throw error;
 }
 
-export type WizardStatus = { should_show: boolean; reason: string; days_since_signup: number };
+export type NpsQuestionType = "nps" | "single" | "multi" | "text";
+export type NpsSurveyOption = { key: string; label: string };
+export type NpsSurveyQuestion = {
+  id: string;
+  type: NpsQuestionType;
+  title: string;
+  required: boolean;
+  placeholder: string | null;
+  allow_other: boolean;
+  options: NpsSurveyOption[];
+};
+export type NpsSurvey = { id: string; invite_title: string; invite_text: string; questions: NpsSurveyQuestion[] };
+export type WizardStatus = {
+  should_show: boolean;
+  reason: string;
+  days_since_signup: number;
+  survey?: NpsSurvey | null;
+};
 
 export async function getWizardStatus(storeId: string): Promise<WizardStatus> {
   const { data, error } = await supabase.rpc("feedback_wizard_status", { p_store_id: storeId });
@@ -132,4 +149,20 @@ export async function getNpsTexts(): Promise<Record<string, string>> {
   const { data, error } = await (supabase as any).rpc("get_nps_texts");
   if (error) throw error;
   return (data ?? {}) as Record<string, string>;
+}
+
+export async function dismissSurvey(storeId: string, surveyId: string): Promise<void> {
+  const { error } = await (supabase as any).rpc("feedback_dismiss_survey", { p_store_id: storeId, p_survey_id: surveyId });
+  if (error) throw error;
+}
+
+export type NpsAnswerInput = { question_id: string; value: number | string | string[]; other?: string };
+
+export async function submitNpsSurvey(storeId: string, surveyId: string, answers: NpsAnswerInput[]): Promise<void> {
+  const { error } = await (supabase as any).rpc("submit_nps_survey", {
+    p_store_id: storeId,
+    p_survey_id: surveyId,
+    p_answers: answers,
+  });
+  if (error) throw error;
 }
