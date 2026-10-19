@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, Frown, Loader2, Meh, MessageSquareQuote, Plus, RotateCcw, Settings, Smile, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Frown, Loader2, Meh, MessageSquareQuote, Plus, RotateCcw, Settings, Search, Smile, X } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
-  getNpsConfig, getNpsResults, listNpsOptions, resetNpsStore, saveNpsConfig, saveNpsOptions,
-  type NpsOptionRow,
+  getNpsConfig, getNpsResults, listNpsOptions, listNpsStores, resetNpsStore, saveNpsConfig, saveNpsOptions,
+  type NpsOptionRow, type NpsStoreRow,
   type NpsConfig, type NpsCount, type NpsResults,
 } from '@/services/admin/npsAdmin';
 
@@ -110,6 +110,62 @@ function Ranking({ title, items, labels, color, emptyText }: { title: string; it
   );
 }
 
+function StorePicker({ stores, error, value, onChange }: { stores: NpsStoreRow[]; error: string | null; value: string; onChange: (v: string) => void }) {
+  const [q, setQ] = useState('');
+  const selected = value.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
+  const chosen = new Set(selected);
+  const term = q.trim().toLowerCase();
+  const list = term
+    ? stores.filter((s) => (s.name ?? '').toLowerCase().includes(term) || s.id.toLowerCase().includes(term))
+    : stores;
+  const known = new Set(stores.map((s) => s.id));
+  const unknown = stores.length ? selected.filter((id) => !known.has(id)) : [];
+  const emit = (ids: string[]) => onChange(ids.join('\n'));
+  const toggle = (id: string) => emit(chosen.has(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+
+  return (
+    <div className="rounded-xl border border-slate-700 bg-slate-800/60 p-3">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+        <input className={`${INPUT} pl-8`} placeholder="Buscar loja por nome" value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
+      <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+        <span>{selected.length} selecionada(s) de {stores.length}</span>
+        <span className="flex gap-3">
+          <button type="button" className="cursor-pointer font-bold text-amber-400 hover:text-amber-300"
+            onClick={() => emit(Array.from(new Set([...selected, ...list.map((s) => s.id)])))}>Marcar listadas</button>
+          <button type="button" className="cursor-pointer font-bold text-slate-400 hover:text-slate-200" onClick={() => emit([])}>Limpar</button>
+        </span>
+      </div>
+      {error ? (
+        <p className="mt-2 text-xs text-rose-300">{error}</p>
+      ) : stores.length === 0 ? (
+        <p className="mt-2 flex items-center gap-2 text-xs text-slate-400"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando lojas...</p>
+      ) : (
+        <ul className="mt-2 max-h-56 space-y-1 overflow-y-auto pr-1">
+          {list.map((s) => (
+            <li key={s.id}>
+              <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${chosen.has(s.id) ? 'border-amber-500/60 bg-amber-500/10 text-amber-200' : 'border-slate-700 text-slate-200 hover:border-slate-500'}`}>
+                <input type="checkbox" className="h-4 w-4 shrink-0 cursor-pointer" checked={chosen.has(s.id)} onChange={() => toggle(s.id)} />
+                <span className="min-w-0 flex-1 truncate">{s.name || 'Loja sem nome'}</span>
+                <span className="shrink-0 font-mono text-[10px] text-slate-500">{s.id.slice(0, 8)}</span>
+              </label>
+            </li>
+          ))}
+          {list.length === 0 && <li className="py-2 text-center text-xs text-slate-500">Nenhuma loja encontrada.</li>}
+        </ul>
+      )}
+      {unknown.length > 0 && (
+        <p className="mt-2 text-[11px] text-slate-400">
+          {unknown.length} ID(s) salvo(s) não aparecem na lista.{' '}
+          <button type="button" className="cursor-pointer font-bold text-rose-300 hover:text-rose-200"
+            onClick={() => emit(selected.filter((id) => known.has(id)))}>Remover</button>
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function NpsPanel() {
   const [cfg, setCfg] = useState<NpsConfig | null>(null);
   const [idsText, setIdsText] = useState('');
@@ -122,6 +178,8 @@ export default function NpsPanel() {
   const [drawer, setDrawer] = useState(false);
   const [opts, setOpts] = useState<NpsOptionRow[]>([]);
   const [savingOpts, setSavingOpts] = useState(false);
+  const [stores, setStores] = useState<NpsStoreRow[]>([]);
+  const [storesErr, setStoresErr] = useState<string | null>(null);
 
   const loadResults = useCallback(async () => {
     try { setRes(await getNpsResults(days)); } catch (e: any) { setErr(e?.message ?? 'Erro ao carregar resultados'); }
@@ -133,6 +191,12 @@ export default function NpsPanel() {
       .catch((e: any) => setErr(e?.message ?? 'Erro ao carregar configuração'));
   }, []);
   useEffect(() => { void loadResults(); }, [loadResults]);
+  useEffect(() => {
+    if (!drawer || cfg?.target !== 'stores') return;
+    listNpsStores()
+      .then((r) => { setStores(r); setStoresErr(null); })
+      .catch((e: any) => setStoresErr(e?.message ?? 'Erro ao carregar lojas'));
+  }, [drawer, cfg?.target]);
   useEffect(() => { listNpsOptions().then(setOpts).catch(() => { /* usa rótulos padrão */ }); }, []);
 
   const save = async () => {
@@ -319,9 +383,9 @@ export default function NpsPanel() {
       )}
 
       {drawer && (
-        <div className="fixed inset-0 z-[100] flex justify-end">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <button type="button" aria-label="Fechar configurações" className="absolute inset-0 cursor-pointer bg-black/60" onClick={() => setDrawer(false)} />
-          <aside className="relative h-full w-full max-w-md overflow-y-auto border-l border-slate-700 bg-slate-900 p-5 shadow-2xl">
+          <aside role="dialog" aria-modal="true" className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="text-base font-black text-slate-100">Configurações do NPS</h3>
               <button type="button" aria-label="Fechar" onClick={() => setDrawer(false)} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100">
@@ -346,8 +410,8 @@ export default function NpsPanel() {
                 </select>
               </label>
               {cfg.target === 'stores' && (
-                <textarea className={`${INPUT} h-28 py-2 font-mono text-xs`} placeholder="Um ID de loja (UUID) por linha"
-                  value={idsText} onChange={(e) => setIdsText(e.target.value)} />
+                <StorePicker stores={stores} error={storesErr}
+                  value={idsText} onChange={setIdsText} />
               )}
             </div>
 

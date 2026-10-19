@@ -62,3 +62,11 @@ export async function saveNpsOptions(rows: NpsOptionRow[]): Promise<void> {
   const { error } = await sb.rpc('admin_nps_save_options', { p: payload });
   if (error) throw error;
 }
+
+export interface NpsStoreRow { id: string; name: string | null }
+
+export async function listNpsStores(): Promise<NpsStoreRow[]> {
+  const { data, error } = await sb.rpc('admin_nps_list_stores');
+  if (error) throw error;
+  return (data ?? []) as NpsStoreRow[];
+}
