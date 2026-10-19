@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
@@ -13,6 +14,13 @@ export default function FeatureWishCard() {
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState('');
+  const [thanks, setThanks] = useState(false);
+
+  useEffect(() => {
+    if (!thanks) return;
+    const t = setTimeout(() => setThanks(false), 6000);
+    return () => clearTimeout(t);
+  }, [thanks]);
 
   const send = async () => {
     if (!storeId || text.trim().length < 5 || sending) return;
@@ -33,6 +41,7 @@ export default function FeatureWishCard() {
     setSending(false);
     if (error) { setErr('Não foi possível enviar. Tente de novo.'); return; }
     setDone(true);
+    setThanks(true);
     setText('');
   };
 
@@ -58,6 +67,17 @@ export default function FeatureWishCard() {
             {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} Enviar ideia
           </button>
         </>
+      )}
+      {thanks && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4" onClick={() => setThanks(false)}>
+          <div role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <img src="/assets/noah-pergunta2.png" alt="Noah" className="wish-float mx-auto h-28 w-auto object-contain" />
+            <p className="mt-3 text-lg font-black text-slate-900">Obrigado pela sua ideia!</p>
+            <p className="mt-1 text-sm text-slate-600">Ela foi enviada ao nosso time e ajuda a definir os próximos módulos do SLL Hub.</p>
+            <button type="button" onClick={() => setThanks(false)} className="mt-4 w-full cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-black text-white shadow hover:bg-[#0082d1]">Fechar</button>
+          </div>
+        </div>,
+        document.body
       )}
     </section>
   );
