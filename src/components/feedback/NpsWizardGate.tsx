@@ -6,6 +6,7 @@ import {
   type NpsAnswerInput, type NpsSurvey, type NpsSurveyQuestion,
 } from '@/services/feedback';
 import { showError } from '@/utils/toast';
+import { logNpsEvent } from '@/services/admin/npsSurveys';
 
 const INVITE_KEY = 'sll_nps_invite_shown';
 const SCROLL = 'overflow-y-auto overscroll-contain [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300';
@@ -59,12 +60,20 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
     return () => clearTimeout(t);
   }, [show]);
 
+  useEffect(() => {
+    if (!show || !survey || !storeId) return;
+    const k = 'sll_nps_view_' + survey.id;
+    if (sessionStorage.getItem(k)) return;
+    sessionStorage.setItem(k, '1');
+    void logNpsEvent(survey.id, storeId, 'view').catch(() => { /* silencioso */ });
+  }, [show, survey, storeId]);
   const closeInvite = () => { sessionStorage.setItem(INVITE_KEY, '1'); setInvite(false); };
   const startWizard = () => { closeInvite(); setStep(0); setOpen(true); };
 
   const dismiss = async () => {
     if (!storeId || !survey) return;
     setShow(false); setInvite(false);
+    void logNpsEvent(survey.id, storeId, 'dismiss').catch(() => { /* silencioso */ });
     try { await dismissSurvey(storeId, survey.id); } catch { /* silencioso */ }
   };
 
@@ -84,7 +93,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
       setThanks(true);
     } catch (e: any) {
       if (String(e?.message).includes('already_answered_recently')) { setOpen(false); setShow(false); }
-      else showError('Não foi possível enviar agora. Tente novamente.');
+      else { console.error('[NPS] envio falhou', e); showError('Falha ao enviar: ' + (e?.message ?? 'erro desconhecido')); }
     } finally { setBusy(false); }
   };
 

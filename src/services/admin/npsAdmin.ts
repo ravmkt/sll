@@ -80,11 +80,11 @@ export interface NpsResponse {
   id: string; created_at: string; score: number; comment: string | null;
   payload: Record<string, unknown> | null;
   store_id: string; store_name: string | null; contact_name: string | null;
-  email: string | null; whatsapp: string | null; user_email: string | null;
+  email: string | null; whatsapp: string | null; user_email: string | null; survey_name?: string | null;
 }
 
-export async function listNpsResponses(days: number): Promise<NpsResponse[]> {
-  const { data, error } = await sb.rpc('admin_nps_responses', { p_days: days });
+export async function listNpsResponses(days: number, surveyId?: string | null): Promise<NpsResponse[]> {
+  const { data, error } = await sb.rpc('admin_nps_responses', { p_days: days, p_survey_id: surveyId ?? null });
   if (error) throw error;
   return (data ?? []) as NpsResponse[];
 }
