@@ -115,7 +115,7 @@ export default function VidlyticsLanding() {
     return () => window.removeEventListener('keydown', onKey);
   }, [trialOpen]);
   useEffect(() => {
-    document.title = 'Vidlytics by SLL Hub | Aumente suas Vendas com Vídeos';
+    document.title = 'SLL Hub | Vídeos interativos e live commerce para e-commerce';
     const prev = document.documentElement.style.scrollBehavior;
     document.documentElement.style.scrollBehavior = 'smooth';
     return () => { document.documentElement.style.scrollBehavior = prev; };
@@ -128,7 +128,7 @@ export default function VidlyticsLanding() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
           <div className="flex items-center gap-2 font-bold">
             <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 text-white flex items-center justify-center text-sm">SLL</span>
-            Vidlytics
+            SLL Hub
           </div>
           <div className="hidden md:flex space-x-8">
             <a href="#recursos" className="text-gray-600 hover:text-blue-600 transition font-medium">Recursos</a>
@@ -173,9 +173,9 @@ export default function VidlyticsLanding() {
             <div className="rounded-2xl border border-gray-200 bg-white shadow-2xl p-2 overflow-hidden">
               <div className="bg-gray-100 rounded-xl h-[400px] md:h-[600px] w-full relative flex items-center justify-center overflow-hidden">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-4 w-full px-12 opacity-80">
-                  <div className="w-1/3 h-64 bg-gray-300 rounded-xl border-4 border-white shadow-lg" />
-                  <div className="w-1/3 h-64 bg-gray-300 rounded-xl border-4 border-indigo-500 shadow-xl scale-105" />
-                  <div className="w-1/3 h-64 bg-gray-300 rounded-xl border-4 border-white shadow-lg" />
+                  <div className="w-1/3 h-64 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl border-4 border-white shadow-lg flex items-end p-4"><span className="text-white font-bold text-sm">Stories</span></div>
+                  <div className="w-1/3 h-64 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl border-4 border-indigo-500 shadow-xl scale-105 flex items-end p-4"><span className="text-white font-bold text-sm">Carrossel</span></div>
+                  <div className="w-1/3 h-64 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl border-4 border-white shadow-lg flex items-end p-4"><span className="text-white font-bold text-sm">Grade de vídeos</span></div>
                 </div>
                 <div className="absolute bottom-6 right-6 w-48 h-80 bg-black rounded-2xl shadow-2xl border-4 border-white overflow-hidden flex flex-col justify-end p-4 hover:scale-105 transition duration-300">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
@@ -400,8 +400,28 @@ export default function VidlyticsLanding() {
         )}
       </section>
 
-      {/* CTA final */}
-      <section className="py-20 bg-blue-700">
+      {/* Integração TikTok */}
+      <section id="tiktok" className="py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Integração com o TikTok</h2>
+          <p className="text-lg text-gray-600 mb-6">
+            O SLL Hub usa o Login Kit do TikTok para que o lojista conecte a própria conta e importe os vídeos públicos dela
+            (escopos <strong>user.info.basic</strong> e <strong>video.list</strong>) para os widgets da loja.
+          </p>
+          <ul className="text-left max-w-xl mx-auto space-y-2 text-gray-700 mb-6">
+            <li className="flex gap-2"><Check className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />Lemos apenas nome, avatar e a lista de vídeos públicos.</li>
+            <li className="flex gap-2"><Check className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />Nada é publicado na sua conta.</li>
+            <li className="flex gap-2"><Check className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />Você desconecta quando quiser em Integrações.</li>
+          </ul>
+          <p className="text-sm text-gray-500">
+            Veja a <Link to="/privacidade" className="underline">Política de Privacidade</Link>, os{' '}
+            <Link to="/termos" className="underline">Termos de Serviço</Link> e a página{' '}
+            <Link to="/exclusao-de-dados" className="underline">Exclusão de dados</Link>.
+          </p>
+        </div>
+      </section>
+
+      {/* CTA final */}      <section className="py-20 bg-blue-700">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Pronto para aumentar suas conversões?</h2>
           <p className="text-xl text-indigo-100 mb-10">Crie sua conta em segundos. Não pedimos cartão de crédito. Risco zero para você testar na sua loja real.</p>
@@ -425,7 +445,7 @@ export default function VidlyticsLanding() {
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 font-bold text-white">
               <span className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-400 text-white flex items-center justify-center text-xs">SLL</span>
-              Vidlytics
+              SLL Hub
             </div>
             <p className="text-sm mt-4">A plataforma definitiva de vídeos interativos para e-commerce. Aumente seu faturamento retendo a atenção do seu cliente.</p>
           </div>
@@ -441,6 +461,7 @@ export default function VidlyticsLanding() {
             <ul className="space-y-2 text-sm">
               <li><Link to="/termos" className="hover:text-white transition">Termos de Uso</Link></li>
               <li><Link to="/privacidade" className="hover:text-white transition">Política de Privacidade</Link></li>
+              <li><Link to="/sobre" className="hover:text-white transition">Sobre</Link></li>
             </ul>
           </div>
         </div>
