@@ -51,3 +51,21 @@ export async function listAdminStores(): Promise<{ id: string; name: string }[]>
   if (error) throw error;
   return (data ?? []) as { id: string; name: string }[];
 }
+export type NpsStat = { views: number; dismissals: number };
+
+export async function listNpsStats(): Promise<Record<string, NpsStat>> {
+  const { data, error } = await sb.rpc('admin_nps_survey_stats');
+  if (error) throw error;
+  const out: Record<string, NpsStat> = {};
+  for (const r of (data ?? []) as any[]) out[r.survey_id] = { views: Number(r.views) || 0, dismissals: Number(r.dismissals) || 0 };
+  return out;
+}
+
+export async function resetNpsStore(storeId: string): Promise<void> {
+  const { error } = await sb.rpc('admin_nps_reset_store', { p_store_id: storeId });
+  if (error) throw error;
+}
+
+export async function logNpsEvent(surveyId: string, storeId: string, event: 'view' | 'dismiss'): Promise<void> {
+  await sb.rpc('nps_log_event', { p_survey_id: surveyId, p_store_id: storeId, p_event: event });
+}
