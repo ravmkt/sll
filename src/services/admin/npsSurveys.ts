@@ -1,0 +1,53 @@
+import { supabase } from '@/lib/supabase';
+
+const sb: any = supabase;
+
+export type QType = 'nps' | 'single' | 'multi' | 'text';
+export type AdminOption = { key: string; label: string };
+export type AdminQuestion = {
+  id?: string;
+  type: QType;
+  title: string;
+  required: boolean;
+  placeholder: string | null;
+  allow_other: boolean;
+  options: AdminOption[];
+  legacy_key?: string | null;
+};
+export type AdminSurvey = {
+  id?: string;
+  name: string;
+  enabled: boolean;
+  invite_title: string;
+  invite_text: string;
+  min_days_after_signup: number;
+  cooldown_days: number;
+  dismiss_days: number;
+  target: 'all' | 'stores';
+  store_ids: string[];
+  responses_count?: number;
+  questions: AdminQuestion[];
+};
+
+export async function listNpsSurveys(): Promise<AdminSurvey[]> {
+  const { data, error } = await sb.rpc('admin_nps_list_surveys');
+  if (error) throw error;
+  return (data ?? []) as AdminSurvey[];
+}
+
+export async function saveNpsSurvey(s: AdminSurvey): Promise<string> {
+  const { data, error } = await sb.rpc('admin_nps_save_survey', { p: s });
+  if (error) throw error;
+  return data as string;
+}
+
+export async function deleteNpsSurvey(id: string): Promise<void> {
+  const { error } = await sb.rpc('admin_nps_delete_survey', { p_id: id });
+  if (error) throw error;
+}
+
+export async function listAdminStores(): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await sb.from('stores').select('id,name').order('name').limit(1000);
+  if (error) throw error;
+  return (data ?? []) as { id: string; name: string }[];
+}
