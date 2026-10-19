@@ -9,6 +9,7 @@ import {
 import { getNpsTexts, NPS_TEXT_DEFAULTS, NPS_TEXT_FIELDS } from '@/services/feedback';
 import NpsResponses from '@/components/admin/NpsResponses';
 import NpsSurveysList from '@/components/admin/NpsSurveysList';
+import IdeasAdmin from '@/components/admin/IdeasAdmin';
 
 const LABELS: Record<string, string> = {
   dificuldade_instalacao: 'Dificuldade na instalação',
@@ -446,6 +447,7 @@ export default function NpsPanel() {
       <NpsResponses days={days} labelsPain={labelsPain} labelsFeat={labelsFeat} />
 
       <NpsSurveysList />
+      <IdeasAdmin />
       {drawer && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <button type="button" aria-label="Fechar configurações" className="absolute inset-0 cursor-pointer bg-black/60" onClick={() => setDrawer(false)} />
