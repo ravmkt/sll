@@ -41,3 +41,24 @@ export async function resetNpsStore(storeId: string): Promise<number> {
   if (error) throw error;
   return Number(data ?? 0);
 }
+
+export interface NpsOptionRow {
+  kind: 'pain' | 'feature';
+  key: string;
+  label: string;
+  sort_order: number;
+  active: boolean;
+  isNew?: boolean;
+}
+
+export async function listNpsOptions(): Promise<NpsOptionRow[]> {
+  const { data, error } = await sb.rpc('admin_nps_list_options');
+  if (error) throw error;
+  return (data ?? []) as NpsOptionRow[];
+}
+
+export async function saveNpsOptions(rows: NpsOptionRow[]): Promise<void> {
+  const payload = rows.map(({ kind, key, label, sort_order, active }) => ({ kind, key, label, sort_order, active }));
+  const { error } = await sb.rpc('admin_nps_save_options', { p: payload });
+  if (error) throw error;
+}

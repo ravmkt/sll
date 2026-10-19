@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Frown, Loader2, Meh, MessageSquareQuote, RotateCcw, Settings, Smile, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Frown, Loader2, Meh, MessageSquareQuote, Plus, RotateCcw, Settings, Smile, X } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
-  getNpsConfig, getNpsResults, resetNpsStore, saveNpsConfig,
+  getNpsConfig, getNpsResults, listNpsOptions, resetNpsStore, saveNpsConfig, saveNpsOptions,
+  type NpsOptionRow,
   type NpsConfig, type NpsCount, type NpsResults,
 } from '@/services/admin/npsAdmin';
 
@@ -81,7 +82,7 @@ function Kpi({ icon, label, range, value, pct, color }: { icon: React.ReactNode;
   );
 }
 
-function Ranking({ title, items, color, emptyText }: { title: string; items: NpsCount[]; color: string; emptyText: string }) {
+function Ranking({ title, items, labels, color, emptyText }: { title: string; items: NpsCount[]; labels: Record<string, string>; color: string; emptyText: string }) {
   const total = items.reduce((s, i) => s + i.count, 0);
   const max = Math.max(1, ...items.map((i) => i.count));
   return (
@@ -94,7 +95,7 @@ function Ranking({ title, items, color, emptyText }: { title: string; items: Nps
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black" style={{ background: `${color}22`, color }}>{idx + 1}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2 text-xs">
-                  <span className="truncate font-semibold text-slate-200">{LABELS[i.key] ?? i.key}</span>
+                  <span className="truncate font-semibold text-slate-200">{labels[i.key] ?? LABELS[i.key] ?? i.key}</span>
                   <span className="shrink-0 tabular-nums text-slate-400">{i.count} · {pctOf(i.count, total)}%</span>
                 </div>
                 <div className="mt-1 h-1.5 rounded-full bg-slate-700">
@@ -119,6 +120,8 @@ export default function NpsPanel() {
   const [err, setErr] = useState<string | null>(null);
   const [resetId, setResetId] = useState('');
   const [drawer, setDrawer] = useState(false);
+  const [opts, setOpts] = useState<NpsOptionRow[]>([]);
+  const [savingOpts, setSavingOpts] = useState(false);
 
   const loadResults = useCallback(async () => {
     try { setRes(await getNpsResults(days)); } catch (e: any) { setErr(e?.message ?? 'Erro ao carregar resultados'); }
@@ -130,6 +133,7 @@ export default function NpsPanel() {
       .catch((e: any) => setErr(e?.message ?? 'Erro ao carregar configuração'));
   }, []);
   useEffect(() => { void loadResults(); }, [loadResults]);
+  useEffect(() => { listNpsOptions().then(setOpts).catch(() => { /* usa rótulos padrão */ }); }, []);
 
   const save = async () => {
     if (!cfg) return;
@@ -162,6 +166,67 @@ export default function NpsPanel() {
   if (!cfg) return <div className="flex items-center gap-2 text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>;
 
   const total = res?.total ?? 0;
+
+  const toMap = (kind: 'pain' | 'feature') =>
+    opts.reduce<Record<string, string>>((m, o) => { if (o.kind === kind) m[o.key] = o.label; return m; }, {});
+  const labelsPain = toMap('pain');
+  const labelsFeat = toMap('feature');
+
+  const slug = (s: string) =>
+    s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+
+  const updateOpt = (kind: 'pain' | 'feature', key: string, patch: Partial<NpsOptionRow>) =>
+    setOpts(opts.map((o) => (o.kind === kind && o.key === key ? { ...o, ...patch } : o)));
+
+  const addOpt = (kind: 'pain' | 'feature') => {
+    const n = opts.filter((o) => o.kind === kind).length;
+    setOpts([...opts, { kind, key: `novo_${Date.now().toString(36)}`, label: '', sort_order: n + 1, active: true, isNew: true }]);
+  };
+
+  const moveOpt = (kind: 'pain' | 'feature', key: string, dir: -1 | 1) => {
+    const list = opts.filter((o) => o.kind === kind).sort((a, b) => a.sort_order - b.sort_order);
+    const i = list.findIndex((o) => o.key === key);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    setOpts([...opts.filter((o) => o.kind !== kind), ...list.map((o, n) => ({ ...o, sort_order: n + 1 }))]);
+  };
+
+  const saveOpts = async () => {
+    setErr(null); setMsg(null);
+    const out: NpsOptionRow[] = [];
+    for (const kind of ['pain', 'feature'] as const) {
+      const used = new Set(opts.filter((o) => !o.isNew && o.kind === kind).map((o) => o.key));
+      let n = 0;
+      for (const o of opts.filter((x) => x.kind === kind).sort((a, b) => a.sort_order - b.sort_order)) {
+        const label = o.label.trim();
+        if (!label) {
+          if (o.isNew) continue;
+          setErr('Há uma opção sem rótulo. Preencha ou desative.'); return;
+        }
+        let key = o.key;
+        if (o.isNew) {
+          const base = slug(label) || 'opcao';
+          key = base;
+          let k = 2;
+          while (used.has(key)) key = `${base}_${k++}`.slice(0, 40);
+          used.add(key);
+        }
+        n += 1;
+        out.push({ kind, key, label: label.slice(0, 60), sort_order: n, active: o.active });
+      }
+      if (!out.some((o) => o.kind === kind && o.active)) {
+        setErr('Mantenha ao menos uma opção ativa em cada lista.'); return;
+      }
+    }
+    setSavingOpts(true);
+    try {
+      await saveNpsOptions(out);
+      setOpts(await listNpsOptions());
+      setMsg('Opções salvas.');
+    } catch (e: any) { setErr(e?.message ?? 'Erro ao salvar opções'); }
+    setSavingOpts(false);
+  };
 
   return (
     <div className="space-y-5">
@@ -222,8 +287,8 @@ export default function NpsPanel() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Ranking title="Maiores dores" items={res.pains} color={RED} emptyText="Nenhuma dor registrada no período." />
-            <Ranking title="Funcionalidades preferidas" items={res.features} color={GRN} emptyText="Nenhuma preferência registrada no período." />
+            <Ranking title="Maiores dores" items={res.pains} labels={labelsPain} color={RED} emptyText="Nenhuma dor registrada no período." />
+            <Ranking title="Funcionalidades preferidas" items={res.features} labels={labelsFeat} color={GRN} emptyText="Nenhuma preferência registrada no período." />
           </div>
 
           <div>
@@ -289,6 +354,37 @@ export default function NpsPanel() {
             <button type="button" onClick={() => void save()} disabled={saving}
               className="mt-5 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-amber-500 text-sm font-bold text-slate-900 hover:bg-amber-400 disabled:opacity-50">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar configurações
+            </button>
+
+            {(['pain', 'feature'] as const).map((kind) => (
+              <div key={kind} className="mt-8">
+                <h4 className="mb-1 text-sm font-bold text-slate-100">
+                  {kind === 'pain' ? 'Opções de "Maior dificuldade"' : 'Opções de "Funcionalidade favorita"'}
+                </h4>
+                {kind === 'pain' && <p className="mb-2 text-[11px] text-slate-500">A opção com chave "outro" abre um campo de texto para o lojista.</p>}
+                <ul className="space-y-2">
+                  {opts.filter((o) => o.kind === kind).sort((a, b) => a.sort_order - b.sort_order).map((o, idx, arr) => (
+                    <li key={o.key} className={`flex items-center gap-1.5 ${o.active ? '' : 'opacity-50'}`}>
+                      <input className={INPUT} maxLength={60} value={o.label} placeholder="Rótulo da opção"
+                        onChange={(e) => updateOpt(kind, o.key, { label: e.target.value })} />
+                      <button type="button" aria-label="Subir" disabled={idx === 0} onClick={() => moveOpt(kind, o.key, -1)}
+                        className="cursor-pointer rounded p-1.5 text-slate-400 hover:bg-slate-800 disabled:cursor-default disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
+                      <button type="button" aria-label="Descer" disabled={idx === arr.length - 1} onClick={() => moveOpt(kind, o.key, 1)}
+                        className="cursor-pointer rounded p-1.5 text-slate-400 hover:bg-slate-800 disabled:cursor-default disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
+                      <input type="checkbox" title="Ativa" className="h-4 w-4 shrink-0 cursor-pointer" checked={o.active}
+                        onChange={(e) => updateOpt(kind, o.key, { active: e.target.checked })} />
+                    </li>
+                  ))}
+                </ul>
+                <button type="button" onClick={() => addOpt(kind)}
+                  className="mt-2 inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300">
+                  <Plus className="h-4 w-4" /> Adicionar opção
+                </button>
+              </div>
+            ))}
+            <button type="button" onClick={() => void saveOpts()} disabled={savingOpts}
+              className="mt-4 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-amber-500 text-sm font-bold text-amber-400 hover:bg-amber-500/10 disabled:opacity-50">
+              {savingOpts && <Loader2 className="h-4 w-4 animate-spin" />} Salvar opções
             </button>
 
             <div className="mt-8 rounded-xl border border-rose-500/30 bg-rose-500/5 p-4">

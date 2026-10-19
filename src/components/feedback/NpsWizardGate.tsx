@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { dismissWizard, getWizardStatus, resolveStoreId, submitNpsWizard } from '@/services/feedback';
+import { dismissWizard, getNpsOptions, getWizardStatus, resolveStoreId, submitNpsWizard } from '@/services/feedback';
 import { showError, showSuccess } from '@/utils/toast';
 
 const INVITE_KEY = 'sll_nps_invite_shown';
-const PAINS = [
+const DEFAULT_PAINS = [
   { key: 'dificuldade_instalacao', label: 'Dificuldade na instalação' },
   { key: 'poucos_recursos', label: 'Faltam funcionalidades' },
   { key: 'preco', label: 'Preço' },
@@ -13,7 +13,7 @@ const PAINS = [
   { key: 'suporte', label: 'Suporte' },
   { key: 'outro', label: 'Outro' },
 ];
-const FEATURES = [
+const DEFAULT_FEATURES = [
   { key: 'vidlytics', label: 'Vidlytics (vídeos)' },
   { key: 'live_commerce', label: 'Live Commerce' },
   { key: 'analytics', label: 'Analytics' },
@@ -37,6 +37,8 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
   const [feature, setFeature] = useState('');
   const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pains, setPains] = useState(DEFAULT_PAINS);
+  const [features, setFeatures] = useState(DEFAULT_FEATURES);
 
   useEffect(() => {
     let alive = true;
@@ -47,6 +49,14 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
         if (!alive) return;
         setStoreId(id);
         setShow(st.should_show);
+        if (st.should_show) {
+          try {
+            const opts = await getNpsOptions();
+            if (!alive) return;
+            if (opts.pains.length) setPains(opts.pains);
+            if (opts.features.length) setFeatures(opts.features);
+          } catch { /* mantém as opções padrão */ }
+        }
       } catch { /* sem loja ou sem permissão: não exibe */ }
     })();
     return () => { alive = false; };
@@ -152,7 +162,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
               <div>
                 <p className="mb-2 text-xs font-bold uppercase text-slate-500">Maior dificuldade</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {PAINS.map((p) => (
+                  {pains.map((p) => (
                     <button key={p.key} type="button" onClick={() => setPain(p.key)} className={chip(pain === p.key)}>{p.label}</button>
                   ))}
                 </div>
@@ -164,7 +174,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
               <div>
                 <p className="mb-2 text-xs font-bold uppercase text-slate-500">Funcionalidade favorita</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {FEATURES.map((f) => (
+                  {features.map((f) => (
                     <button key={f.key} type="button" onClick={() => setFeature(f.key)} className={chip(feature === f.key)}>{f.label}</button>
                   ))}
                 </div>

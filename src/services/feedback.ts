@@ -1,4 +1,4 @@
-﻿import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
 
 export type FeedbackVote = "up" | "down";
 export type FeedbackKind = "tip" | "noah";
@@ -103,4 +103,15 @@ export async function submitNpsWizard(params: {
     p_comment: params.comment ?? null,
   });
   if (error) throw error;
+}
+
+export type NpsOption = { key: string; label: string };
+
+export async function getNpsOptions(): Promise<{ pains: NpsOption[]; features: NpsOption[] }> {
+  const { data, error } = await (supabase as any).rpc("get_nps_options");
+  if (error) throw error;
+  const rows = (data ?? []) as { kind: string; key: string; label: string }[];
+  const pick = (kind: string): NpsOption[] =>
+    rows.filter((r) => r.kind === kind).map((r) => ({ key: r.key, label: r.label }));
+  return { pains: pick("pain"), features: pick("feature") };
 }
