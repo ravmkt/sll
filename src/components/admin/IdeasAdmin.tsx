@@ -30,16 +30,16 @@ export default function IdeasAdmin() {
     <div>
       <div className="mb-3">
         <h4 className="text-sm font-bold text-slate-100">Pedidos dos lojistas {rows ? `(${rows.length})` : ''}</h4>
-        <p className="text-xs text-slate-400">Clique no título da coluna para ordenar. Alterações de módulo, status e visibilidade são salvas na hora.</p>
+        <p className="text-xs text-slate-400">Clique no título da coluna para ordenar. Alterações de módulo, descrição, status e visibilidade são salvas na hora.</p>
       </div>
       <div className="overflow-x-auto rounded-2xl border border-slate-700/80 bg-slate-800/60">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-slate-700/80">
             <tr>
-              <SortTh label="Descrição" k="title" sort={sort} onSort={setSort} />
               <SortTh label="Loja" k="store" sort={sort} onSort={setSort} />
               <SortTh label="Módulo" k="module" sort={sort} onSort={setSort} />
               <SortTh label="Categoria" k="category" sort={sort} onSort={setSort} />
+              <SortTh label="Descrição" k="title" sort={sort} onSort={setSort} />
               <SortTh label="Votos" k="votes" sort={sort} onSort={setSort} align="center" />
               <SortTh label="Status" k="status" sort={sort} onSort={setSort} />
               <SortTh label="Visível" k="hidden" sort={sort} onSort={setSort} align="center" />
@@ -51,11 +51,6 @@ export default function IdeasAdmin() {
             {rows && sorted.length === 0 && <tr><td colSpan={8} className="py-8 text-center text-slate-500">Nenhum pedido.</td></tr>}
             {sorted.map((r) => (
               <tr key={r.id} className={`align-top hover:bg-white/5 ${r.hidden ? 'opacity-50' : ''}`}>
-                <td className="min-w-[280px] px-3 py-2.5">
-                  <textarea defaultValue={r.title} rows={2}
-                    onBlur={(e) => { const v = e.target.value.trim(); if (v.length >= 3 && v !== r.title) void patch(r.id, { title: v }); }}
-                    className="w-full resize-none rounded-lg border border-transparent bg-transparent px-2 py-1 text-xs text-slate-100 outline-none hover:border-slate-700 focus:border-amber-500" />
-                </td>
                 <td className="whitespace-nowrap px-3 py-2.5 text-slate-300">{r.store_name ?? '—'}</td>
                 <td className="px-3 py-2.5">
                   <select value={r.module} onChange={(e) => patch(r.id, { module: e.target.value })} className={SEL}>
@@ -63,6 +58,11 @@ export default function IdeasAdmin() {
                   </select>
                 </td>
                 <td className="whitespace-nowrap px-3 py-2.5 text-slate-300">{r.category}</td>
+                <td className="min-w-[300px] px-3 py-2.5">
+                  <textarea key={r.title} defaultValue={r.title} rows={2}
+                    onBlur={(e) => { const v = e.target.value.trim(); if (v.length >= 3 && v !== r.title) void patch(r.id, { title: v }); }}
+                    className="w-full resize-none rounded-lg border border-transparent bg-transparent px-2 py-1 text-xs text-slate-100 outline-none hover:border-slate-700 focus:border-amber-500" />
+                </td>
                 <td className="px-3 py-2.5 text-center text-base font-black text-amber-400">{r.votes}</td>
                 <td className="px-3 py-2.5">
                   <select value={r.status} onChange={(e) => patch(r.id, { status: e.target.value as ReqStatus })} className={SEL}>

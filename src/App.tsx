@@ -249,7 +249,7 @@ function AppRoutes() {
             )
           }
         />
-        <Route path="/dashboard/ideias" element={user ? <IdeasBoard /> : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/pedidos-dos-lojistas" element={user ? <IdeasBoard /> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/onboarding" element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} />
         <Route
           path="/dashboard/dicas"

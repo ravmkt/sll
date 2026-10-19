@@ -56,7 +56,7 @@ export default function FeatureWishCard() {
         <>
           <p className="text-xs text-slate-600">Obrigado! Sua ideia chegou ao time e ajuda a definir os próximos módulos.</p>
           <button type="button" onClick={() => setDone(false)} className="cursor-pointer text-xs font-bold text-[#0094eb] hover:underline">Enviar outra ideia</button>
-          <button type="button" onClick={() => navigate('/dashboard/ideias')} className="cursor-pointer text-xs font-bold text-slate-500 hover:underline">Ver o que outros pediram</button>
+          <button type="button" onClick={() => navigate('/dashboard/pedidos-dos-lojistas')} className="cursor-pointer text-xs font-bold text-slate-500 hover:underline">Ver o que outros pediram</button>
         </>
       ) : (
         <>
@@ -77,7 +77,7 @@ export default function FeatureWishCard() {
             <img src="/assets/noah-pergunta2.png" alt="Noah" className="wish-float mx-auto h-28 w-auto object-contain" />
             <p className="mt-3 text-lg font-black text-slate-900">Obrigado pela sua ideia!</p>
             <p className="mt-1 text-sm text-slate-600">Ela foi enviada ao nosso time e ajuda a definir os próximos módulos do SLL Hub.</p>
-            <button type="button" onClick={() => { setThanks(false); navigate('/dashboard/ideias'); }} className="mt-4 w-full cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-black text-white shadow hover:bg-[#0082d1]">Ver o que outros lojistas pediram</button>
+            <button type="button" onClick={() => { setThanks(false); navigate('/dashboard/pedidos-dos-lojistas'); }} className="mt-4 w-full cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-black text-white shadow hover:bg-[#0082d1]">Ver o que outros lojistas pediram</button>
             <button type="button" onClick={() => setThanks(false)} className="mt-2 w-full cursor-pointer text-xs font-bold text-slate-400 hover:text-slate-600">Fechar</button>
           </div>
         </div>,
