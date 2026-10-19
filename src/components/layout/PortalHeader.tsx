@@ -63,7 +63,7 @@ export default function PortalHeader() {
         </div>
       </div>
       </div>
-      <div className="flex flex-col lg:w-52 lg:shrink-0 min-[1900px]:absolute min-[1900px]:left-full min-[1900px]:top-0 min-[1900px]:ml-3 min-[1900px]:w-44">
+      <div className="flex flex-col lg:w-52 lg:shrink-0 min-[1900px]:absolute min-[1900px]:left-full min-[1900px]:top-0 min-[1900px]:ml-4 min-[1900px]:w-56">
         <FeatureWishCard />
         <NpsWizardGate showCard={false} />
       </div>
