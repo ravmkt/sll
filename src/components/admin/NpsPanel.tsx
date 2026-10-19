@@ -10,7 +10,6 @@ import { getNpsTexts, NPS_TEXT_DEFAULTS, NPS_TEXT_FIELDS } from '@/services/feed
 import NpsResponses from '@/components/admin/NpsResponses';
 import NpsSurveysList from '@/components/admin/NpsSurveysList';
 import IdeasAdmin from '@/components/admin/IdeasAdmin';
-import NpsVoice from '@/components/admin/NpsVoice';
 
 const LABELS: Record<string, string> = {
   dificuldade_instalacao: 'Dificuldade na instalação',
@@ -181,13 +180,12 @@ function Step({ n, title, children }: { n: React.ReactNode; title: string; child
     </section>
   );
 }
-type SubTab = 'overview' | 'voice' | 'responses' | 'surveys' | 'ideas';
+type SubTab = 'overview' | 'surveys' | 'ideas' | 'responses';
 const SUBTABS: { id: SubTab; label: string }[] = [
   { id: 'overview', label: 'Visão geral' },
-  { id: 'voice', label: 'Voz do cliente' },
-  { id: 'responses', label: 'Respostas detalhadas' },
   { id: 'surveys', label: 'Pesquisas' },
   { id: 'ideas', label: 'Ideias dos lojistas' },
+  { id: 'responses', label: 'Respostas' },
 ];
 
 export default function NpsPanel() {
@@ -438,7 +436,6 @@ export default function NpsPanel() {
         </>
       ))}
 
-      {sub === 'voice' && <NpsVoice comments={res?.comments ?? null} />}
       {sub === 'responses' && <NpsResponses days={days} labelsPain={labelsPain} labelsFeat={labelsFeat} />}
       {sub === 'surveys' && <NpsSurveysList />}
       {sub === 'ideas' && <IdeasAdmin />}

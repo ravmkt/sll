@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import {
   deleteNpsSurvey, listAdminStores, listNpsStats, listNpsSurveys, resetNpsStore, saveNpsSurvey,
   type AdminSurvey, type NpsStat,
 } from '@/services/admin/npsSurveys';
 import NpsSurveyEditor from '@/components/admin/NpsSurveyEditor';
-import NpsResponses from '@/components/admin/NpsResponses';
+import NpsSurveyResults from '@/components/admin/NpsSurveyResults';
 
 const TH = 'px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500';
 const ICONBTN = 'cursor-pointer rounded-md p-1.5 text-slate-400 hover:bg-white/10 hover:text-white';
@@ -64,8 +63,10 @@ export default function NpsSurveysList() {
     catch (e: any) { setErr(e?.message ?? 'Erro ao resetar'); }
   };
 
+  if (viewing) return <NpsSurveyResults survey={viewing} onBack={() => setViewing(null)} />;
+
   return (
-    <section className="mt-8 space-y-3">
+    <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-sm font-bold text-slate-100">Pesquisas NPS</h4>
         <button type="button" onClick={() => setEditing({ s: null })}
@@ -140,16 +141,6 @@ export default function NpsSurveysList() {
 
       <NpsSurveyEditor open={!!editing} survey={editing?.s ?? null} onClose={() => setEditing(null)}
         onSaved={() => { setEditing(null); setMsg('Pesquisa salva.'); void load(); }} />
-
-      <Dialog open={!!viewing} onOpenChange={(v) => { if (!v) setViewing(null); }}>
-        <DialogContent className="flex max-h-[88vh] max-w-6xl flex-col gap-3 overflow-hidden border-slate-700 bg-[#0f1322] p-5 text-slate-100 sm:rounded-2xl">
-          <DialogTitle className="text-lg font-black text-white">Respostas · {viewing?.name}</DialogTitle>
-          <DialogDescription className="sr-only">Todas as respostas desta pesquisa</DialogDescription>
-          <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#334155_transparent]">
-            {viewing && <NpsResponses days={365} surveyId={viewing.id} />}
-          </div>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }
