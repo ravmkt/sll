@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Frown, Loader2, Meh, MessageSquareQuote, RotateCcw, Settings, Smile, X } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
   getNpsConfig, getNpsResults, resetNpsStore, saveNpsConfig,
-  type NpsConfig, type NpsResults,
+  type NpsConfig, type NpsCount, type NpsResults,
 } from '@/services/admin/npsAdmin';
 
 const LABELS: Record<string, string> = {
@@ -20,7 +21,22 @@ const LABELS: Record<string, string> = {
 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const INPUT = 'h-9 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 text-sm text-slate-100 outline-none focus:border-amber-500';
-const CARD = 'rounded-xl border border-slate-700 bg-slate-800/60 p-4';
+const CARD = 'rounded-2xl border border-slate-700/80 bg-slate-800/60 p-5';
+const RED = '#f43f5e';
+const YEL = '#f59e0b';
+const GRN = '#10b981';
+
+const scoreColor = (s: number) => (s >= 9 ? GRN : s >= 7 ? YEL : RED);
+const scoreLabel = (s: number) => (s >= 9 ? 'Promotor' : s >= 7 ? 'Neutro' : 'Detrator');
+const pctOf = (n: number, t: number) => (t > 0 ? Math.round((n / t) * 100) : 0);
+
+function zone(nps: number | null) {
+  if (nps == null) return { label: 'Sem dados', color: '#64748b' };
+  if (nps >= 75) return { label: 'Zona de excelência', color: GRN };
+  if (nps >= 50) return { label: 'Zona de qualidade', color: '#34d399' };
+  if (nps >= 0) return { label: 'Zona de aperfeiçoamento', color: YEL };
+  return { label: 'Zona crítica', color: RED };
+}
 
 function Num({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
   return (
@@ -32,21 +48,63 @@ function Num({ label, value, onChange }: { label: string; value: number; onChang
   );
 }
 
-function Bars({ items }: { items: { key: string; count: number }[] }) {
-  const max = Math.max(1, ...items.map((i) => i.count));
-  if (!items.length) return <p className="text-sm text-slate-500">Sem dados no período.</p>;
+function Gauge({ nps }: { nps: number | null }) {
+  const z = zone(nps);
+  const len = Math.PI * 80;
+  const ratio = nps == null ? 0 : (Math.max(-100, Math.min(100, nps)) + 100) / 200;
   return (
-    <div className="space-y-2">
-      {items.map((i) => (
-        <div key={i.key}>
-          <div className="flex justify-between text-xs text-slate-300">
-            <span>{LABELS[i.key] ?? i.key}</span><span className="tabular-nums">{i.count}</span>
-          </div>
-          <div className="mt-1 h-2 rounded-full bg-slate-700">
-            <div className="h-2 rounded-full bg-amber-500" style={{ width: `${(i.count / max) * 100}%` }} />
-          </div>
-        </div>
-      ))}
+    <div className="flex flex-col items-center">
+      <svg viewBox="0 0 200 118" className="w-full max-w-[260px]" role="img" aria-label={`NPS ${nps ?? 'sem dados'}`}>
+        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#334155" strokeWidth="16" strokeLinecap="round" />
+        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke={z.color} strokeWidth="16" strokeLinecap="round"
+          strokeDasharray={`${len * ratio} ${len}`} style={{ transition: 'stroke-dasharray .6s ease' }} />
+        <text x="100" y="88" textAnchor="middle" fill="#f1f5f9" fontSize="38" fontWeight="900">{nps ?? '—'}</text>
+        <text x="20" y="116" textAnchor="middle" fill="#64748b" fontSize="9">-100</text>
+        <text x="180" y="116" textAnchor="middle" fill="#64748b" fontSize="9">100</text>
+      </svg>
+      <span className="mt-1 rounded-full px-3 py-1 text-[11px] font-bold" style={{ background: `${z.color}22`, color: z.color }}>{z.label}</span>
+    </div>
+  );
+}
+
+function Kpi({ icon, label, range, value, pct, color }: { icon: React.ReactNode; label: string; range: string; value: number; pct: number; color: string }) {
+  return (
+    <div className={CARD} style={{ borderColor: `${color}55` }}>
+      <div className="flex items-center justify-between">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: `${color}22`, color }}>{icon}</span>
+        <span className="text-xs font-bold" style={{ color }}>{pct}%</span>
+      </div>
+      <div className="mt-3 text-3xl font-black text-slate-100">{value}</div>
+      <div className="text-xs font-semibold text-slate-300">{label}</div>
+      <div className="text-[11px] text-slate-500">{range}</div>
+    </div>
+  );
+}
+
+function Ranking({ title, items, color, emptyText }: { title: string; items: NpsCount[]; color: string; emptyText: string }) {
+  const total = items.reduce((s, i) => s + i.count, 0);
+  const max = Math.max(1, ...items.map((i) => i.count));
+  return (
+    <div className={CARD}>
+      <h4 className="mb-4 text-sm font-bold text-slate-100">{title}</h4>
+      {items.length === 0 ? <p className="text-sm text-slate-500">{emptyText}</p> : (
+        <ol className="space-y-3">
+          {items.map((i, idx) => (
+            <li key={i.key} className="flex items-center gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black" style={{ background: `${color}22`, color }}>{idx + 1}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="truncate font-semibold text-slate-200">{LABELS[i.key] ?? i.key}</span>
+                  <span className="shrink-0 tabular-nums text-slate-400">{i.count} · {pctOf(i.count, total)}%</span>
+                </div>
+                <div className="mt-1 h-1.5 rounded-full bg-slate-700">
+                  <div className="h-1.5 rounded-full" style={{ width: `${(i.count / max) * 100}%`, background: color }} />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }
@@ -60,6 +118,7 @@ export default function NpsPanel() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [resetId, setResetId] = useState('');
+  const [drawer, setDrawer] = useState(false);
 
   const loadResults = useCallback(async () => {
     try { setRes(await getNpsResults(days)); } catch (e: any) { setErr(e?.message ?? 'Erro ao carregar resultados'); }
@@ -83,6 +142,7 @@ export default function NpsPanel() {
     try {
       await saveNpsConfig({ ...cfg, store_ids: ids });
       setMsg('Configuração salva.');
+      setDrawer(false);
     } catch (e: any) { setErr(e?.message ?? 'Erro ao salvar'); }
     setSaving(false);
   };
@@ -94,105 +154,155 @@ export default function NpsPanel() {
     try {
       const n = await resetNpsStore(resetId.trim());
       setMsg(`NPS reiniciado: ${n} resposta(s) removida(s).`);
+      setResetId('');
       void loadResults();
     } catch (e: any) { setErr(e?.message ?? 'Erro ao reiniciar'); }
   };
 
   if (!cfg) return <div className="flex items-center gap-2 text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>;
 
-  const npsColor = res?.nps == null ? 'text-slate-400' : res.nps >= 50 ? 'text-emerald-400' : res.nps >= 0 ? 'text-amber-400' : 'text-rose-400';
+  const total = res?.total ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black text-slate-100">NPS dos lojistas</h2>
+          <p className="flex items-center gap-2 text-xs text-slate-400">
+            <span className={`h-2 w-2 rounded-full ${cfg.enabled ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+            {cfg.enabled ? 'Pesquisa ligada' : 'Pesquisa desligada'} · {cfg.target === 'all' ? 'todas as lojas' : `${cfg.store_ids.length} loja(s)`}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <select className="h-9 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200" value={days} onChange={(e) => setDays(Number(e.target.value))}>
+            {[30, 90, 180, 365].map((d) => <option key={d} value={d}>Últimos {d} dias</option>)}
+          </select>
+          <button type="button" onClick={() => setDrawer(true)}
+            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-3 text-xs font-bold text-slate-100 hover:border-amber-500 hover:text-amber-400">
+            <Settings className="h-4 w-4" /> Configurações
+          </button>
+        </div>
+      </div>
+
       {(err || msg) && (
         <div className={`rounded-lg px-3 py-2 text-sm ${err ? 'bg-rose-500/10 text-rose-300' : 'bg-emerald-500/10 text-emerald-300'}`}>{err ?? msg}</div>
       )}
 
-      <section className={CARD}>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-100">Configuração do NPS</h3>
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
-            <input type="checkbox" checked={cfg.enabled} onChange={(e) => setCfg({ ...cfg, enabled: e.target.checked })} />
-            {cfg.enabled ? 'Ligado' : 'Desligado'}
-          </label>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Num label="Dias mínimos após o cadastro" value={cfg.min_days_after_signup} onChange={(n) => setCfg({ ...cfg, min_days_after_signup: n })} />
-          <Num label="Intervalo entre respostas (dias)" value={cfg.cooldown_days} onChange={(n) => setCfg({ ...cfg, cooldown_days: n })} />
-          <Num label="Se dispensar, voltar em (dias)" value={cfg.dismiss_days} onChange={(n) => setCfg({ ...cfg, dismiss_days: n })} />
-        </div>
-        <div className="mt-3 space-y-2">
-          <label className="block text-xs font-semibold text-slate-400">
-            Público
-            <select className={`${INPUT} mt-1`} value={cfg.target} onChange={(e) => setCfg({ ...cfg, target: e.target.value as NpsConfig['target'] })}>
-              <option value="all">Todas as lojas</option>
-              <option value="stores">Apenas lojas específicas</option>
-            </select>
-          </label>
-          {cfg.target === 'stores' && (
-            <textarea className={`${INPUT} h-24 py-2 font-mono text-xs`} placeholder="Um ID de loja (UUID) por linha"
-              value={idsText} onChange={(e) => setIdsText(e.target.value)} />
-          )}
-        </div>
-        <button type="button" onClick={() => void save()} disabled={saving}
-          className="mt-4 inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-amber-500 px-4 text-sm font-bold text-slate-900 hover:bg-amber-400 disabled:opacity-50">
-          {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
-        </button>
-      </section>
+      {!res ? <Loader2 className="h-5 w-5 animate-spin text-slate-400" /> : (
+        <>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_repeat(3,minmax(0,1fr))]">
+            <div className={`${CARD} flex flex-col items-center justify-center`}>
+              <p className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">NPS · {total} resposta(s)</p>
+              <Gauge nps={res.nps} />
+            </div>
+            <Kpi icon={<Smile className="h-5 w-5" />} label="Promotores" range="Notas 9 e 10" value={res.promoters} pct={pctOf(res.promoters, total)} color={GRN} />
+            <Kpi icon={<Meh className="h-5 w-5" />} label="Neutros" range="Notas 7 e 8" value={res.passives} pct={pctOf(res.passives, total)} color={YEL} />
+            <Kpi icon={<Frown className="h-5 w-5" />} label="Detratores" range="Notas 0 a 6" value={res.detractors} pct={pctOf(res.detractors, total)} color={RED} />
+          </div>
 
-      <section className={CARD}>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-100">Resultados</h3>
-          <select className="h-8 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200" value={days} onChange={(e) => setDays(Number(e.target.value))}>
-            {[30, 90, 180, 365].map((d) => <option key={d} value={d}>Últimos {d} dias</option>)}
-          </select>
-        </div>
-        {!res ? <Loader2 className="h-4 w-4 animate-spin text-slate-400" /> : (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              <div className="rounded-lg bg-slate-900 p-3 text-center"><div className={`text-3xl font-black ${npsColor}`}>{res.nps ?? '—'}</div><div className="text-[11px] text-slate-400">NPS</div></div>
-              <div className="rounded-lg bg-slate-900 p-3 text-center"><div className="text-2xl font-black text-slate-100">{res.total}</div><div className="text-[11px] text-slate-400">Respostas</div></div>
-              <div className="rounded-lg bg-slate-900 p-3 text-center"><div className="text-2xl font-black text-emerald-400">{res.promoters}</div><div className="text-[11px] text-slate-400">Promotores (9-10)</div></div>
-              <div className="rounded-lg bg-slate-900 p-3 text-center"><div className="text-2xl font-black text-amber-400">{res.passives}</div><div className="text-[11px] text-slate-400">Neutros (7-8)</div></div>
-              <div className="rounded-lg bg-slate-900 p-3 text-center"><div className="text-2xl font-black text-rose-400">{res.detractors}</div><div className="text-[11px] text-slate-400">Detratores (0-6)</div></div>
-            </div>
-            <div>
-              <p className="mb-2 text-xs font-semibold text-slate-400">Distribuição das notas</p>
-              <Bars items={res.distribution.map((d) => ({ key: String(d.score), count: d.count }))} />
-            </div>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div><p className="mb-2 text-xs font-semibold text-slate-400">Maior dor</p><Bars items={res.pains} /></div>
-              <div><p className="mb-2 text-xs font-semibold text-slate-400">Funcionalidade preferida</p><Bars items={res.features} /></div>
-            </div>
-            <div>
-              <p className="mb-2 text-xs font-semibold text-slate-400">Comentários</p>
-              {res.comments.length === 0 ? <p className="text-sm text-slate-500">Nenhum comentário no período.</p> : (
-                <ul className="space-y-2">
-                  {res.comments.map((c, i) => (
-                    <li key={i} className="rounded-lg bg-slate-900 p-3 text-sm text-slate-200">
-                      <div className="mb-1 flex justify-between text-[11px] text-slate-400">
-                        <span>{c.store ?? 'Loja'} · nota {c.score}</span>
-                        <span>{new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
-                      </div>
-                      {c.comment}{c.pain_other ? <span className="block text-slate-400">Outro: {c.pain_other}</span> : null}
-                    </li>
-                  ))}
-                </ul>
-              )}
+          <div className={CARD}>
+            <h4 className="mb-4 text-sm font-bold text-slate-100">Distribuição das notas</h4>
+            <div className="h-56 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={res.distribution} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid stroke="#334155" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="score" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{ fill: '#ffffff10' }}
+                    contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: '#e2e8f0' }}
+                    labelFormatter={(s) => `Nota ${s}`}
+                    formatter={(v: number) => [`${v} resposta(s)`, '']} />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={44}>
+                    {res.distribution.map((d) => <Cell key={d.score} fill={scoreColor(d.score)} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
-        )}
-      </section>
 
-      <section className={CARD}>
-        <h3 className="mb-1 text-sm font-bold text-slate-100">Reiniciar NPS de uma loja (teste)</h3>
-        <p className="mb-3 text-xs text-slate-400">Apaga as respostas e dispensas da loja, e o convite volta a aparecer.</p>
-        <div className="flex gap-2">
-          <input className={INPUT} placeholder="ID da loja (UUID)" value={resetId} onChange={(e) => setResetId(e.target.value)} />
-          <button type="button" onClick={() => void reset()}
-            className="h-9 shrink-0 cursor-pointer rounded-lg border border-rose-500/50 px-4 text-sm font-bold text-rose-300 hover:bg-rose-500/10">Reiniciar</button>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Ranking title="Maiores dores" items={res.pains} color={RED} emptyText="Nenhuma dor registrada no período." />
+            <Ranking title="Funcionalidades preferidas" items={res.features} color={GRN} emptyText="Nenhuma preferência registrada no período." />
+          </div>
+
+          <div>
+            <h4 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-100">
+              <MessageSquareQuote className="h-4 w-4 text-amber-400" /> Voz do cliente
+            </h4>
+            {res.comments.length === 0 ? (
+              <div className={`${CARD} text-center text-sm text-slate-500`}>Nenhum comentário no período.</div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {res.comments.map((c, i) => (
+                  <article key={i} className="flex flex-col rounded-2xl border border-slate-700/80 bg-slate-800/60 p-4" style={{ borderTop: `3px solid ${scoreColor(c.score)}` }}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{ background: `${scoreColor(c.score)}22`, color: scoreColor(c.score) }}>
+                        Nota {c.score} · {scoreLabel(c.score)}
+                      </span>
+                      <span className="text-[11px] text-slate-500">{new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    {c.comment && <p className="mt-3 text-sm leading-relaxed text-slate-200">“{c.comment}”</p>}
+                    {c.pain_other && <p className="mt-2 text-xs text-slate-400">Outra dor: {c.pain_other}</p>}
+                    <p className="mt-auto pt-3 text-[11px] font-semibold text-slate-400">{c.store ?? 'Loja'}</p>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {drawer && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          <button type="button" aria-label="Fechar configurações" className="absolute inset-0 cursor-pointer bg-black/60" onClick={() => setDrawer(false)} />
+          <aside className="relative h-full w-full max-w-md overflow-y-auto border-l border-slate-700 bg-slate-900 p-5 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="text-base font-black text-slate-100">Configurações do NPS</h3>
+              <button type="button" aria-label="Fechar" onClick={() => setDrawer(false)} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <label className="mb-5 flex cursor-pointer items-center justify-between rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-3 text-sm font-semibold text-slate-200">
+              Pesquisa {cfg.enabled ? 'ligada' : 'desligada'}
+              <input type="checkbox" className="h-4 w-4 cursor-pointer" checked={cfg.enabled} onChange={(e) => setCfg({ ...cfg, enabled: e.target.checked })} />
+            </label>
+
+            <div className="space-y-3">
+              <Num label="Dias mínimos após o cadastro" value={cfg.min_days_after_signup} onChange={(n) => setCfg({ ...cfg, min_days_after_signup: n })} />
+              <Num label="Intervalo entre respostas (dias)" value={cfg.cooldown_days} onChange={(n) => setCfg({ ...cfg, cooldown_days: n })} />
+              <Num label="Se dispensar, voltar em (dias)" value={cfg.dismiss_days} onChange={(n) => setCfg({ ...cfg, dismiss_days: n })} />
+              <label className="block text-xs font-semibold text-slate-400">
+                Público
+                <select className={`${INPUT} mt-1`} value={cfg.target} onChange={(e) => setCfg({ ...cfg, target: e.target.value as NpsConfig['target'] })}>
+                  <option value="all">Todas as lojas</option>
+                  <option value="stores">Apenas lojas específicas</option>
+                </select>
+              </label>
+              {cfg.target === 'stores' && (
+                <textarea className={`${INPUT} h-28 py-2 font-mono text-xs`} placeholder="Um ID de loja (UUID) por linha"
+                  value={idsText} onChange={(e) => setIdsText(e.target.value)} />
+              )}
+            </div>
+
+            <button type="button" onClick={() => void save()} disabled={saving}
+              className="mt-5 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-amber-500 text-sm font-bold text-slate-900 hover:bg-amber-400 disabled:opacity-50">
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar configurações
+            </button>
+
+            <div className="mt-8 rounded-xl border border-rose-500/30 bg-rose-500/5 p-4">
+              <h4 className="mb-1 flex items-center gap-2 text-sm font-bold text-rose-300"><RotateCcw className="h-4 w-4" /> Reiniciar NPS de uma loja</h4>
+              <p className="mb-3 text-xs text-slate-400">Apaga respostas e dispensas da loja, e o convite volta a aparecer. Use para testes.</p>
+              <div className="flex gap-2">
+                <input className={INPUT} placeholder="ID da loja (UUID)" value={resetId} onChange={(e) => setResetId(e.target.value)} />
+                <button type="button" onClick={() => void reset()}
+                  className="h-9 shrink-0 cursor-pointer rounded-lg border border-rose-500/50 px-3 text-sm font-bold text-rose-300 hover:bg-rose-500/10">Reiniciar</button>
+              </div>
+            </div>
+          </aside>
         </div>
-      </section>
+      )}
     </div>
   );
 }
