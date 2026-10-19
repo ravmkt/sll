@@ -3,8 +3,7 @@ import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Lightbulb, Crown, Plug,
-  CreditCard, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Gift, Clock,
-} from 'lucide-react';
+  CreditCard, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Gift, Clock, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
 import { supabase } from '@/lib/supabase';
