@@ -33,8 +33,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-1">
         <Sidebar isCollapsed={collapsed} onToggle={toggle} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <main className="mx-auto min-[1900px]:ml-0 w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-            <div className="space-y-6">
+          <main className={`relative w-full flex-1 px-4 py-8 sm:px-6 lg:px-8 ${mkLocation === 'home' ? 'min-[1900px]:pr-[17rem]' : ''}`}>
+            <div className="mx-auto w-full max-w-[76rem] space-y-6">
               <PortalHeader />
               {children}
             </div>

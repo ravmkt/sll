@@ -46,7 +46,7 @@ export default function PortalHeader() {
   const greetName = (contact || String(store?.contact_name || '')).trim().split(/\s+/)[0] || storeName;
 
   return (
-    <div className="relative flex flex-col gap-4 lg:flex-row">
+    <div className="relative min-[1900px]:static flex flex-col gap-4 lg:flex-row">
       <div className="min-w-0 flex-1 space-y-4">
       <DashboardNotice storeId={storeId} />
       <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-sm">
@@ -63,7 +63,7 @@ export default function PortalHeader() {
         </div>
       </div>
       </div>
-      <div className="flex flex-col lg:w-52 lg:shrink-0 min-[1900px]:absolute min-[1900px]:left-full min-[1900px]:top-0 min-[1900px]:ml-4 min-[1900px]:w-56">
+      <div className="flex flex-col lg:w-52 lg:shrink-0 min-[1900px]:absolute min-[1900px]:right-6 min-[1900px]:top-8 min-[1900px]:w-56">
         <FeatureWishCard />
         <NpsWizardGate showCard={false} />
       </div>
