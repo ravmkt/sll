@@ -45,6 +45,7 @@ const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
 const DicasNoah = lazy(() => import('./pages/dicas/DicasNoah'));
 const InstagramCallback = lazy(() => import('./pages/auth/InstagramCallback'));
+const IdeasBoard = lazy(() => import('@/pages/IdeasBoard'));
 
 function PageLoader() {
   return (
@@ -248,6 +249,7 @@ function AppRoutes() {
             )
           }
         />
+        <Route path="/dashboard/ideias" element={user ? <div className="min-h-screen bg-slate-50"><IdeasBoard /></div> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/onboarding" element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} />
         <Route
           path="/dashboard/dicas"

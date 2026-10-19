@@ -10,6 +10,7 @@ import { getNpsTexts, NPS_TEXT_DEFAULTS, NPS_TEXT_FIELDS } from '@/services/feed
 import NpsResponses from '@/components/admin/NpsResponses';
 import NpsSurveysList from '@/components/admin/NpsSurveysList';
 import IdeasAdmin from '@/components/admin/IdeasAdmin';
+import NpsVoice from '@/components/admin/NpsVoice';
 
 const LABELS: Record<string, string> = {
   dificuldade_instalacao: 'Dificuldade na instalação',
@@ -32,7 +33,6 @@ const YEL = '#f59e0b';
 const GRN = '#10b981';
 
 const scoreColor = (s: number) => (s >= 9 ? GRN : s >= 7 ? YEL : RED);
-const scoreLabel = (s: number) => (s >= 9 ? 'Promotor' : s >= 7 ? 'Neutro' : 'Detrator');
 const pctOf = (n: number, t: number) => (t > 0 ? Math.round((n / t) * 100) : 0);
 
 function zone(nps: number | null) {
@@ -181,6 +181,15 @@ function Step({ n, title, children }: { n: React.ReactNode; title: string; child
     </section>
   );
 }
+type SubTab = 'overview' | 'voice' | 'responses' | 'surveys' | 'ideas';
+const SUBTABS: { id: SubTab; label: string }[] = [
+  { id: 'overview', label: 'Visão geral' },
+  { id: 'voice', label: 'Voz do cliente' },
+  { id: 'responses', label: 'Respostas detalhadas' },
+  { id: 'surveys', label: 'Pesquisas' },
+  { id: 'ideas', label: 'Ideias dos lojistas' },
+];
+
 export default function NpsPanel() {
   const [cfg, setCfg] = useState<NpsConfig | null>(null);
   const [idsText, setIdsText] = useState('');
@@ -191,6 +200,7 @@ export default function NpsPanel() {
   const [err, setErr] = useState<string | null>(null);
   const [resetId, setResetId] = useState('');
   const [drawer, setDrawer] = useState(false);
+  const [sub, setSub] = useState<SubTab>('overview');
   const [opts, setOpts] = useState<NpsOptionRow[]>([]);
   const [savingOpts, setSavingOpts] = useState(false);
   const [stores, setStores] = useState<NpsStoreRow[]>([]);
@@ -379,7 +389,16 @@ export default function NpsPanel() {
         <div className={`rounded-lg px-3 py-2 text-sm ${err ? 'bg-rose-500/10 text-rose-300' : 'bg-emerald-500/10 text-emerald-300'}`}>{err ?? msg}</div>
       )}
 
-      {!res ? <Loader2 className="h-5 w-5 animate-spin text-slate-400" /> : (
+      <div className="flex flex-wrap gap-1 border-b border-slate-700">
+        {SUBTABS.map((t) => (
+          <button key={t.id} type="button" onClick={() => setSub(t.id)}
+            className={`-mb-px cursor-pointer border-b-2 px-4 py-2 text-sm font-bold transition ${sub === t.id ? 'border-amber-500 text-amber-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {sub === 'overview' && (!res ? <Loader2 className="h-5 w-5 animate-spin text-slate-400" /> : (
         <>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_repeat(3,minmax(0,1fr))]">
             <div className={`${CARD} flex flex-col items-center justify-center`}>
@@ -416,38 +435,13 @@ export default function NpsPanel() {
             <Ranking title="Maiores dores" items={res.pains} labels={labelsPain} color={RED} emptyText="Nenhuma dor registrada no período." />
             <Ranking title="Funcionalidades preferidas" items={res.features} labels={labelsFeat} color={GRN} emptyText="Nenhuma preferência registrada no período." />
           </div>
-
-          <div>
-            <h4 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-100">
-              <MessageSquareQuote className="h-4 w-4 text-amber-400" /> Voz do cliente
-            </h4>
-            {res.comments.length === 0 ? (
-              <div className={`${CARD} text-center text-sm text-slate-500`}>Nenhum comentário no período.</div>
-            ) : (
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {res.comments.map((c, i) => (
-                  <article key={i} className="flex flex-col rounded-2xl border border-slate-700/80 bg-slate-800/60 p-4" style={{ borderTop: `3px solid ${scoreColor(c.score)}` }}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{ background: `${scoreColor(c.score)}22`, color: scoreColor(c.score) }}>
-                        Nota {c.score} · {scoreLabel(c.score)}
-                      </span>
-                      <span className="text-[11px] text-slate-500">{new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                    {c.comment && <p className="mt-3 text-sm leading-relaxed text-slate-200">“{c.comment}”</p>}
-                    {c.pain_other && <p className="mt-2 text-xs text-slate-400">Outra dor: {c.pain_other}</p>}
-                    <p className="mt-auto pt-3 text-[11px] font-semibold text-slate-400">{c.store ?? 'Loja'}</p>
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
         </>
-      )}
+      ))}
 
-      <NpsResponses days={days} labelsPain={labelsPain} labelsFeat={labelsFeat} />
-
-      <NpsSurveysList />
-      <IdeasAdmin />
+      {sub === 'voice' && <NpsVoice comments={res?.comments ?? null} />}
+      {sub === 'responses' && <NpsResponses days={days} labelsPain={labelsPain} labelsFeat={labelsFeat} />}
+      {sub === 'surveys' && <NpsSurveysList />}
+      {sub === 'ideas' && <IdeasAdmin />}
       {drawer && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <button type="button" aria-label="Fechar configurações" className="absolute inset-0 cursor-pointer bg-black/60" onClick={() => setDrawer(false)} />
