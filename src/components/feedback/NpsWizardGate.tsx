@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { dismissWizard, getNpsOptions, getNpsTexts, getWizardStatus, NPS_TEXT_DEFAULTS, resolveStoreId, submitNpsWizard } from '@/services/feedback';
-import { showError, showSuccess } from '@/utils/toast';
+import { showError } from '@/utils/toast';
 
 const INVITE_KEY = 'sll_nps_invite_shown';
 const DEFAULT_PAINS = [
@@ -37,6 +37,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
   const [feature, setFeature] = useState('');
   const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
+  const [thanks, setThanks] = useState(false);
   const [pains, setPains] = useState(DEFAULT_PAINS);
   const [features, setFeatures] = useState(DEFAULT_FEATURES);
   const [tx, setTx] = useState<Record<string, string>>(NPS_TEXT_DEFAULTS);
@@ -91,8 +92,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
         mainPainOther: pain === 'outro' ? painOther.trim() : undefined,
         comment: comment.trim(),
       });
-      showSuccess('Obrigado pelo seu feedback!');
-      setOpen(false); setShow(false);
+      setThanks(true);
     } catch (e: any) {
       if (String(e?.message).includes('already_answered_recently')) { setOpen(false); setShow(false); }
       else showError('Não foi possível enviar agora. Tente novamente.');
@@ -138,8 +138,19 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v && thanks) setShow(false); }}>
         <DialogContent className="max-w-lg gap-5 border-slate-200 bg-white p-6 text-slate-900 shadow-2xl sm:rounded-2xl">
+          {thanks ? (
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <DialogTitle className="sr-only">Obrigado pela sua opinião</DialogTitle>
+              <DialogDescription className="sr-only">Agradecimento pelo envio da pesquisa</DialogDescription>
+              <img src="/assets/noah-pergunta2.png" alt="Noah" className="nps-float h-36 w-auto object-contain" />
+              <p className="text-lg font-black text-slate-900">Obrigado pela sua opinião!</p>
+              <p className="text-xs text-slate-600">Sua resposta chegou ao time e ajuda a melhorar o SLL Hub.</p>
+              <button type="button" onClick={() => { setOpen(false); setShow(false); }}
+                className="mt-1 w-full cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2.5 text-sm font-black text-white hover:bg-[#0082d1]">Fechar</button>
+            </div>
+          ) : (<>
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-slate-900">Sua opinião ({step}/4)</DialogTitle>
             <DialogDescription className="text-sm text-slate-600">
@@ -206,6 +217,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
               </button>
             )}
           </div>
+        </>)}
         </DialogContent>
       </Dialog>
     </>

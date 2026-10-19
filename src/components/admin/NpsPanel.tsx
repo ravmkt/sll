@@ -7,6 +7,7 @@ import {
   type NpsConfig, type NpsCount, type NpsResults,
 } from '@/services/admin/npsAdmin';
 import { getNpsTexts, NPS_TEXT_DEFAULTS, NPS_TEXT_FIELDS } from '@/services/feedback';
+import NpsResponses from '@/components/admin/NpsResponses';
 
 const LABELS: Record<string, string> = {
   dificuldade_instalacao: 'Dificuldade na instalação',
@@ -167,6 +168,17 @@ function StorePicker({ stores, error, value, onChange }: { stores: NpsStoreRow[]
   );
 }
 
+function Step({ n, title, children }: { n: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border border-slate-700 bg-slate-800/40">
+      <header className="flex items-center gap-3 border-b border-slate-700 px-4 py-3">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500 text-xs font-black text-slate-900">{n}</span>
+        <h4 className="text-sm font-bold text-slate-100">{title}</h4>
+      </header>
+      <div className="space-y-4 p-4">{children}</div>
+    </section>
+  );
+}
 export default function NpsPanel() {
   const [cfg, setCfg] = useState<NpsConfig | null>(null);
   const [idsText, setIdsText] = useState('');
@@ -214,7 +226,6 @@ export default function NpsPanel() {
     try {
       await saveNpsConfig({ ...cfg, store_ids: ids });
       setMsg('Configuração salva.');
-      setDrawer(false);
     } catch (e: any) { setErr(e?.message ?? 'Erro ao salvar'); }
     setSaving(false);
   };
@@ -260,23 +271,44 @@ export default function NpsPanel() {
     setOpts([...opts.filter((o) => o.kind !== kind), ...list.map((o, n) => ({ ...o, sort_order: n + 1 }))]);
   };
 
-  const saveTexts = async () => {
-    setErr(null); setMsg(null);
-    const payload: Record<string, string> = {};
-    for (const f of NPS_TEXT_FIELDS) {
-      const v = (texts[f.key] ?? '').trim();
-      payload[f.key] = v === f.def ? '' : v;
-    }
-    setSavingTexts(true);
-    try {
-      await saveNpsTexts(payload);
-      setTexts({ ...NPS_TEXT_DEFAULTS, ...(await getNpsTexts()) });
-      setMsg('Textos salvos.');
-    } catch (e: any) { setErr(e?.message ?? 'Erro ao salvar textos'); }
-    setSavingTexts(false);
+  const renderText = (key: string, tagText: string) => {
+    const f = NPS_TEXT_FIELDS.find((x) => x.key === key);
+    if (!f) return null;
+    return (
+      <label key={key} className="block rounded-xl border border-amber-500/40 bg-amber-500/5 p-3">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">{tagText}</span>
+        <input className={`${INPUT} mt-1.5 font-semibold`} maxLength={f.max} value={texts[f.key] ?? ''} placeholder={f.def}
+          onChange={(e) => setTexts({ ...texts, [f.key]: e.target.value })} />
+      </label>
+    );
   };
 
-  const saveOpts = async () => {
+  const renderOptions = (kind: 'pain' | 'feature') => (
+    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Respostas sugeridas</p>
+      {kind === 'pain' && <p className="mb-2 text-[11px] text-slate-500">A opção com chave "outro" abre um campo de texto para o lojista.</p>}
+      <ul className="mt-2 space-y-2">
+        {opts.filter((o) => o.kind === kind).sort((a, b) => a.sort_order - b.sort_order).map((o, idx, arr) => (
+          <li key={o.key} className={`flex items-center gap-1.5 ${o.active ? '' : 'opacity-50'}`}>
+            <input className={INPUT} maxLength={60} value={o.label} placeholder="Rótulo da opção"
+              onChange={(e) => updateOpt(kind, o.key, { label: e.target.value })} />
+            <button type="button" aria-label="Subir" disabled={idx === 0} onClick={() => moveOpt(kind, o.key, -1)}
+              className="cursor-pointer rounded p-1.5 text-slate-400 hover:bg-slate-800 disabled:cursor-default disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
+            <button type="button" aria-label="Descer" disabled={idx === arr.length - 1} onClick={() => moveOpt(kind, o.key, 1)}
+              className="cursor-pointer rounded p-1.5 text-slate-400 hover:bg-slate-800 disabled:cursor-default disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
+            <input type="checkbox" title="Ativa" className="h-4 w-4 shrink-0 cursor-pointer" checked={o.active}
+              onChange={(e) => updateOpt(kind, o.key, { active: e.target.checked })} />
+          </li>
+        ))}
+      </ul>
+      <button type="button" onClick={() => addOpt(kind)}
+        className="mt-2 inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300">
+        <Plus className="h-4 w-4" /> Adicionar opção
+      </button>
+    </div>
+  );
+
+  const saveQuestions = async () => {
     setErr(null); setMsg(null);
     const out: NpsOptionRow[] = [];
     for (const kind of ['pain', 'feature'] as const) {
@@ -303,15 +335,23 @@ export default function NpsPanel() {
         setErr('Mantenha ao menos uma opção ativa em cada lista.'); return;
       }
     }
-    setSavingOpts(true);
+    const payload: Record<string, string> = {};
+    for (const f of NPS_TEXT_FIELDS) {
+      const v = (texts[f.key] ?? '').trim();
+      payload[f.key] = v === f.def ? '' : v;
+    }
+    setSavingTexts(true); setSavingOpts(true);
     try {
+      await saveNpsTexts(payload);
       await saveNpsOptions(out);
+      setTexts({ ...NPS_TEXT_DEFAULTS, ...(await getNpsTexts()) });
       setOpts(await listNpsOptions());
-      setMsg('Opções salvas.');
-    } catch (e: any) { setErr(e?.message ?? 'Erro ao salvar opções'); }
-    setSavingOpts(false);
+      setMsg('Perguntas e opções salvas.');
+    } catch (e: any) { setErr(e?.message ?? 'Erro ao salvar perguntas'); }
+    setSavingTexts(false); setSavingOpts(false);
   };
 
+  const stepKeys = ['score_question', 'pain_title', 'feature_title', 'comment_question', 'comment_placeholder'];
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -402,101 +442,85 @@ export default function NpsPanel() {
         </>
       )}
 
+      <NpsResponses days={days} labelsPain={labelsPain} labelsFeat={labelsFeat} />
+
       {drawer && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <button type="button" aria-label="Fechar configurações" className="absolute inset-0 cursor-pointer bg-black/60" onClick={() => setDrawer(false)} />
-          <aside role="dialog" aria-modal="true" className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
+          <aside role="dialog" aria-modal="true" className="relative flex max-h-[92vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
               <h3 className="text-base font-black text-slate-100">Configurações do NPS</h3>
               <button type="button" aria-label="Fechar" onClick={() => setDrawer(false)} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <label className="mb-5 flex cursor-pointer items-center justify-between rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-3 text-sm font-semibold text-slate-200">
-              Pesquisa {cfg.enabled ? 'ligada' : 'desligada'}
-              <input type="checkbox" className="h-4 w-4 cursor-pointer" checked={cfg.enabled} onChange={(e) => setCfg({ ...cfg, enabled: e.target.checked })} />
-            </label>
-
-            <div className="space-y-3">
-              <Num label="Dias mínimos após o cadastro" value={cfg.min_days_after_signup} onChange={(n) => setCfg({ ...cfg, min_days_after_signup: n })} />
-              <Num label="Intervalo entre respostas (dias)" value={cfg.cooldown_days} onChange={(n) => setCfg({ ...cfg, cooldown_days: n })} />
-              <Num label="Se dispensar, voltar em (dias)" value={cfg.dismiss_days} onChange={(n) => setCfg({ ...cfg, dismiss_days: n })} />
-              <label className="block text-xs font-semibold text-slate-400">
-                Público
-                <select className={`${INPUT} mt-1`} value={cfg.target} onChange={(e) => setCfg({ ...cfg, target: e.target.value as NpsConfig['target'] })}>
-                  <option value="all">Todas as lojas</option>
-                  <option value="stores">Apenas lojas específicas</option>
-                </select>
-              </label>
-              {cfg.target === 'stores' && (
-                <StorePicker stores={stores} error={storesErr}
-                  value={idsText} onChange={setIdsText} />
-              )}
-            </div>
-
-            <button type="button" onClick={() => void save()} disabled={saving}
-              className="mt-5 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-amber-500 text-sm font-bold text-slate-900 hover:bg-amber-400 disabled:opacity-50">
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar configurações
-            </button>
-
-            <div className="mt-8">
-              <h4 className="mb-1 text-sm font-bold text-slate-100">Textos das perguntas</h4>
-              <p className="mb-3 text-[11px] text-slate-500">Deixe em branco para voltar ao texto padrão.</p>
-              <div className="space-y-3">
-                {NPS_TEXT_FIELDS.map((f) => (
-                  <label key={f.key} className="block text-xs font-semibold text-slate-400">
-                    {f.label}
-                    <input className={`${INPUT} mt-1`} maxLength={f.max} value={texts[f.key] ?? ''} placeholder={f.def}
-                      onChange={(e) => setTexts({ ...texts, [f.key]: e.target.value })} />
-                  </label>
-                ))}
-              </div>
-              <button type="button" onClick={() => void saveTexts()} disabled={savingTexts}
-                className="mt-3 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-amber-500 text-sm font-bold text-amber-400 hover:bg-amber-500/10 disabled:opacity-50">
-                {savingTexts && <Loader2 className="h-4 w-4 animate-spin" />} Salvar textos
-              </button>
-            </div>
-
-            {(['pain', 'feature'] as const).map((kind) => (
-              <div key={kind} className="mt-8">
-                <h4 className="mb-1 text-sm font-bold text-slate-100">
-                  {kind === 'pain' ? 'Opções de "Maior dificuldade"' : 'Opções de "Funcionalidade favorita"'}
-                </h4>
-                {kind === 'pain' && <p className="mb-2 text-[11px] text-slate-500">A opção com chave "outro" abre um campo de texto para o lojista.</p>}
-                <ul className="space-y-2">
-                  {opts.filter((o) => o.kind === kind).sort((a, b) => a.sort_order - b.sort_order).map((o, idx, arr) => (
-                    <li key={o.key} className={`flex items-center gap-1.5 ${o.active ? '' : 'opacity-50'}`}>
-                      <input className={INPUT} maxLength={60} value={o.label} placeholder="Rótulo da opção"
-                        onChange={(e) => updateOpt(kind, o.key, { label: e.target.value })} />
-                      <button type="button" aria-label="Subir" disabled={idx === 0} onClick={() => moveOpt(kind, o.key, -1)}
-                        className="cursor-pointer rounded p-1.5 text-slate-400 hover:bg-slate-800 disabled:cursor-default disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
-                      <button type="button" aria-label="Descer" disabled={idx === arr.length - 1} onClick={() => moveOpt(kind, o.key, 1)}
-                        className="cursor-pointer rounded p-1.5 text-slate-400 hover:bg-slate-800 disabled:cursor-default disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
-                      <input type="checkbox" title="Ativa" className="h-4 w-4 shrink-0 cursor-pointer" checked={o.active}
-                        onChange={(e) => updateOpt(kind, o.key, { active: e.target.checked })} />
-                    </li>
-                  ))}
-                </ul>
-                <button type="button" onClick={() => addOpt(kind)}
-                  className="mt-2 inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300">
-                  <Plus className="h-4 w-4" /> Adicionar opção
+            <div className="flex-1 space-y-5 overflow-y-auto p-6">
+              <Step n={<Settings className="h-3.5 w-3.5" />} title="Geral">
+                <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-3 text-sm font-semibold text-slate-200">
+                  Pesquisa {cfg.enabled ? 'ligada' : 'desligada'}
+                  <input type="checkbox" className="h-4 w-4 cursor-pointer" checked={cfg.enabled} onChange={(e) => setCfg({ ...cfg, enabled: e.target.checked })} />
+                </label>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Num label="Dias mínimos após o cadastro" value={cfg.min_days_after_signup} onChange={(n) => setCfg({ ...cfg, min_days_after_signup: n })} />
+                  <Num label="Intervalo entre respostas (dias)" value={cfg.cooldown_days} onChange={(n) => setCfg({ ...cfg, cooldown_days: n })} />
+                  <Num label="Se dispensar, voltar em (dias)" value={cfg.dismiss_days} onChange={(n) => setCfg({ ...cfg, dismiss_days: n })} />
+                </div>
+                <label className="block text-xs font-semibold text-slate-400">
+                  Público
+                  <select className={`${INPUT} mt-1`} value={cfg.target} onChange={(e) => setCfg({ ...cfg, target: e.target.value as NpsConfig['target'] })}>
+                    <option value="all">Todas as lojas</option>
+                    <option value="stores">Apenas lojas específicas</option>
+                  </select>
+                </label>
+                {cfg.target === 'stores' && <StorePicker stores={stores} error={storesErr} value={idsText} onChange={setIdsText} />}
+                <button type="button" onClick={() => void save()} disabled={saving}
+                  className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-amber-500 text-sm font-bold text-slate-900 hover:bg-amber-400 disabled:opacity-50">
+                  {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar configurações gerais
                 </button>
-              </div>
-            ))}
-            <button type="button" onClick={() => void saveOpts()} disabled={savingOpts}
-              className="mt-4 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-amber-500 text-sm font-bold text-amber-400 hover:bg-amber-500/10 disabled:opacity-50">
-              {savingOpts && <Loader2 className="h-4 w-4 animate-spin" />} Salvar opções
-            </button>
+              </Step>
 
-            <div className="mt-8 rounded-xl border border-rose-500/30 bg-rose-500/5 p-4">
-              <h4 className="mb-1 flex items-center gap-2 text-sm font-bold text-rose-300"><RotateCcw className="h-4 w-4" /> Reiniciar NPS de uma loja</h4>
-              <p className="mb-3 text-xs text-slate-400">Apaga respostas e dispensas da loja, e o convite volta a aparecer. Use para testes.</p>
-              <div className="flex gap-2">
-                <input className={INPUT} placeholder="ID da loja (UUID)" value={resetId} onChange={(e) => setResetId(e.target.value)} />
-                <button type="button" onClick={() => void reset()}
-                  className="h-9 shrink-0 cursor-pointer rounded-lg border border-rose-500/50 px-3 text-sm font-bold text-rose-300 hover:bg-rose-500/10">Reiniciar</button>
+              <p className="px-1 text-[11px] text-slate-500">
+                Perguntas e respostas: o campo em <span className="font-bold text-amber-400">amarelo</span> é a pergunta; o bloco em <span className="font-bold text-emerald-400">verde</span> são as respostas sugeridas. Deixe a pergunta em branco para voltar ao texto padrão.
+              </p>
+
+              <Step n={<MessageSquareQuote className="h-3.5 w-3.5" />} title="Convite">
+                {NPS_TEXT_FIELDS.filter((f) => !stepKeys.includes(f.key)).map((f) => renderText(f.key, f.label))}
+              </Step>
+              <Step n="1" title="Nota de 0 a 10">
+                {renderText('score_question', 'Pergunta')}
+                <p className="text-[11px] text-slate-500">Respostas: notas de 0 a 10 (fixas).</p>
+              </Step>
+              <Step n="2" title="Maior dificuldade">
+                {renderText('pain_title', 'Pergunta')}
+                {renderOptions('pain')}
+              </Step>
+              <Step n="3" title="Funcionalidade favorita">
+                {renderText('feature_title', 'Pergunta')}
+                {renderOptions('feature')}
+              </Step>
+              <Step n="4" title="Comentário livre">
+                {renderText('comment_question', 'Pergunta')}
+                {renderText('comment_placeholder', 'Texto de apoio dentro do campo')}
+              </Step>
+
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4">
+                <h4 className="mb-1 flex items-center gap-2 text-sm font-bold text-rose-300"><RotateCcw className="h-4 w-4" /> Reiniciar NPS de uma loja</h4>
+                <p className="mb-3 text-xs text-slate-400">Apaga respostas e dispensas da loja, e o convite volta a aparecer. Use para testes.</p>
+                <div className="flex gap-2">
+                  <input className={INPUT} placeholder="ID da loja (UUID)" value={resetId} onChange={(e) => setResetId(e.target.value)} />
+                  <button type="button" onClick={() => void reset()}
+                    className="h-9 shrink-0 cursor-pointer rounded-lg border border-rose-500/50 px-3 text-sm font-bold text-rose-300 hover:bg-rose-500/10">Reiniciar</button>
+                </div>
               </div>
+            </div>
+
+            <div className="space-y-2 border-t border-slate-700 px-6 py-4">
+              {(err || msg) && <div className={`rounded-lg px-3 py-2 text-xs ${err ? 'bg-rose-500/10 text-rose-300' : 'bg-emerald-500/10 text-emerald-300'}`}>{err ?? msg}</div>}
+              <button type="button" onClick={() => void saveQuestions()} disabled={savingTexts || savingOpts}
+                className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-amber-500 text-sm font-bold text-amber-400 hover:bg-amber-500/10 disabled:opacity-50">
+                {(savingTexts || savingOpts) && <Loader2 className="h-4 w-4 animate-spin" />} Salvar perguntas e opções
+              </button>
             </div>
           </aside>
         </div>

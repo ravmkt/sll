@@ -75,3 +75,16 @@ export async function saveNpsTexts(p: Record<string, string>): Promise<void> {
   const { error } = await sb.rpc('admin_nps_save_texts', { p });
   if (error) throw error;
 }
+
+export interface NpsResponse {
+  id: string; created_at: string; score: number; comment: string | null;
+  payload: Record<string, unknown> | null;
+  store_id: string; store_name: string | null; contact_name: string | null;
+  email: string | null; whatsapp: string | null; user_email: string | null;
+}
+
+export async function listNpsResponses(days: number): Promise<NpsResponse[]> {
+  const { data, error } = await sb.rpc('admin_nps_responses', { p_days: days });
+  if (error) throw error;
+  return (data ?? []) as NpsResponse[];
+}
