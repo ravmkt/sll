@@ -34,6 +34,7 @@ const GROUPS: Group[] = [
     title: 'Comunidade & Ensino',
     items: [
       { name: 'Insights do Noah', icon: Lightbulb, path: '/dashboard/dicas' },
+  { name: 'Pedidos dos lojistas', icon: MessageSquarePlus, path: '/dashboard/ideias' },
       { name: 'Clube SLL (Indique e Ganhe)', icon: Crown, path: '/dashboard/afiliados' },
     ],
   },

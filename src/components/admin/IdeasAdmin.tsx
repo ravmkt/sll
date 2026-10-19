@@ -1,88 +1,83 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Lightbulb, Loader2, ThumbsUp } from 'lucide-react';
-import { listAdminIdeas, setAdminIdea, type AdminIdea } from '@/services/admin/ideasAdmin';
-import { IDEA_STATUS, type IdeaStatus } from '@/services/ideas';
+import { Loader2 } from 'lucide-react';
+import SortTh, { type Sort } from '@/components/common/SortTh';
+import { MODULES, STATUS_LABEL, STATUS_ORDER, adminList, sortBy, updateRequest, type AdminRow, type ReqStatus } from '@/services/requests';
+import { showError } from '@/utils/toast';
 
-const TH = 'px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500';
-const ORDER: IdeaStatus[] = ['received', 'analysis', 'planned', 'in_progress', 'done', 'hidden'];
+const SEL = 'cursor-pointer rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 outline-none focus:border-amber-500';
+
+const get = (r: AdminRow, k: string): string | number =>
+  k === 'votes' ? r.votes : k === 'status' ? STATUS_ORDER.indexOf(r.status) : k === 'date' ? r.created_at
+  : k === 'hidden' ? Number(!r.hidden) : k === 'store' ? r.store_name ?? '' : k === 'module' ? r.module : k === 'category' ? r.category : r.title;
 
 export default function IdeasAdmin() {
-  const [rows, setRows] = useState<AdminIdea[] | null>(null);
-  const [filter, setFilter] = useState<'all' | IdeaStatus>('all');
-  const [err, setErr] = useState('');
+  const [rows, setRows] = useState<AdminRow[] | null>(null);
+  const [sort, setSort] = useState<Sort>({ key: 'votes', dir: 'desc' });
 
   const load = useCallback(async () => {
-    try { setRows(await listAdminIdeas()); } catch (e: any) { setErr(e?.message ?? 'Erro ao carregar ideias'); }
+    try { setRows(await adminList()); } catch (e: any) { showError(e?.message || 'Erro ao carregar'); setRows([]); }
   }, []);
   useEffect(() => { void load(); }, [load]);
 
-  const update = async (r: AdminIdea, patch: { status?: IdeaStatus; title?: string }) => {
-    const status = patch.status ?? r.status;
-    const title = patch.title ?? r.public_title ?? '';
-    setErr('');
-    setRows((prev) => (prev ?? []).map((x) => (x.id === r.id ? { ...x, status, public_title: title.trim() || null } : x)));
-    try { await setAdminIdea(r.id, status, title); }
-    catch (e: any) { setErr(e?.message ?? 'Erro ao salvar'); void load(); }
+  const patch = async (id: string, p: Partial<AdminRow>) => {
+    setRows((l) => l && l.map((r) => (r.id === id ? { ...r, ...p } : r)));
+    try { await updateRequest(id, p as any); } catch (e: any) { showError(e?.message || 'Erro ao salvar'); void load(); }
   };
 
-  const list = useMemo(() => (rows ?? []).filter((r) => filter === 'all' || r.status === filter), [rows, filter]);
+  const sorted = useMemo(() => (rows ? sortBy(rows, (r) => get(r, sort.key), sort.dir) : []), [rows, sort]);
 
   return (
-    <section className="mt-8 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="flex items-center gap-2 text-sm font-bold text-slate-100">
-          <Lightbulb className="h-4 w-4 text-amber-400" /> Ideias dos lojistas {rows ? `(${list.length})` : ''}
-        </h4>
-        <select value={filter} onChange={(e) => setFilter(e.target.value as 'all' | IdeaStatus)}
-          className="h-9 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200">
-          <option value="all">Todos os status</option>
-          {ORDER.map((s) => <option key={s} value={s}>{IDEA_STATUS[s].label}</option>)}
-        </select>
+    <div>
+      <div className="mb-3">
+        <h4 className="text-sm font-bold text-slate-100">Pedidos dos lojistas {rows ? `(${rows.length})` : ''}</h4>
+        <p className="text-xs text-slate-400">Clique no título da coluna para ordenar. Alterações de módulo, status e visibilidade são salvas na hora.</p>
       </div>
-      {err && <p className="text-sm font-semibold text-rose-400">{err}</p>}
-
-      {!rows ? <Loader2 className="h-5 w-5 animate-spin text-slate-400" /> : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-700/80 bg-slate-800/60">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-slate-700/80">
-              <tr>
-                <th className={`${TH} w-16 text-center`}>Votos</th>
-                <th className={TH}>Ideia</th>
-                <th className={TH}>Categoria</th>
-                <th className={TH}>Loja</th>
-                <th className={TH}>Data</th>
-                <th className={TH}>Título público</th>
-                <th className={TH}>Status</th>
+      <div className="overflow-x-auto rounded-2xl border border-slate-700/80 bg-slate-800/60">
+        <table className="w-full text-left text-xs">
+          <thead className="border-b border-slate-700/80">
+            <tr>
+              <SortTh label="Descrição" k="title" sort={sort} onSort={setSort} />
+              <SortTh label="Loja" k="store" sort={sort} onSort={setSort} />
+              <SortTh label="Módulo" k="module" sort={sort} onSort={setSort} />
+              <SortTh label="Categoria" k="category" sort={sort} onSort={setSort} />
+              <SortTh label="Votos" k="votes" sort={sort} onSort={setSort} align="center" />
+              <SortTh label="Status" k="status" sort={sort} onSort={setSort} />
+              <SortTh label="Visível" k="hidden" sort={sort} onSort={setSort} align="center" />
+              <SortTh label="Data" k="date" sort={sort} onSort={setSort} />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-700/60">
+            {!rows && <tr><td colSpan={8} className="py-8 text-center"><Loader2 className="mx-auto h-4 w-4 animate-spin text-slate-400" /></td></tr>}
+            {rows && sorted.length === 0 && <tr><td colSpan={8} className="py-8 text-center text-slate-500">Nenhum pedido.</td></tr>}
+            {sorted.map((r) => (
+              <tr key={r.id} className={`align-top hover:bg-white/5 ${r.hidden ? 'opacity-50' : ''}`}>
+                <td className="min-w-[280px] px-3 py-2.5">
+                  <textarea defaultValue={r.title} rows={2}
+                    onBlur={(e) => { const v = e.target.value.trim(); if (v.length >= 3 && v !== r.title) void patch(r.id, { title: v }); }}
+                    className="w-full resize-none rounded-lg border border-transparent bg-transparent px-2 py-1 text-xs text-slate-100 outline-none hover:border-slate-700 focus:border-amber-500" />
+                </td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-slate-300">{r.store_name ?? '—'}</td>
+                <td className="px-3 py-2.5">
+                  <select value={r.module} onChange={(e) => patch(r.id, { module: e.target.value })} className={SEL}>
+                    {MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-slate-300">{r.category}</td>
+                <td className="px-3 py-2.5 text-center text-base font-black text-amber-400">{r.votes}</td>
+                <td className="px-3 py-2.5">
+                  <select value={r.status} onChange={(e) => patch(r.id, { status: e.target.value as ReqStatus })} className={SEL}>
+                    {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+                  </select>
+                </td>
+                <td className="px-3 py-2.5 text-center">
+                  <input type="checkbox" checked={!r.hidden} onChange={(e) => patch(r.id, { hidden: !e.target.checked })} className="h-4 w-4 cursor-pointer" />
+                </td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-slate-400">{new Date(r.created_at).toLocaleDateString('pt-BR')}</td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-700/60">
-              {list.length === 0 && <tr><td colSpan={7} className="px-3 py-8 text-center text-slate-500">Nenhuma ideia.</td></tr>}
-              {list.map((r) => (
-                <tr key={r.id} className="align-middle hover:bg-white/5">
-                  <td className="px-3 py-2.5 text-center">
-                    <span className="inline-flex items-center gap-1 font-black text-amber-400"><ThumbsUp className="h-3.5 w-3.5" />{r.votes}</span>
-                  </td>
-                  <td className="max-w-[280px] px-3 py-2.5 text-slate-200">{r.body}</td>
-                  <td className="px-3 py-2.5 text-slate-400">{r.category}</td>
-                  <td className="px-3 py-2.5 text-slate-300">{r.store_name ?? '—'}</td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-slate-400">{new Date(r.created_at).toLocaleDateString('pt-BR')}</td>
-                  <td className="px-3 py-2.5">
-                    <input key={`${r.id}-${r.public_title ?? ''}`} defaultValue={r.public_title ?? ''} maxLength={120} placeholder="Igual ao texto original"
-                      onBlur={(e) => { if (e.target.value.trim() !== (r.public_title ?? '')) void update(r, { title: e.target.value }); }}
-                      className="h-8 w-52 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs text-slate-100 outline-none focus:border-amber-500" />
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <select value={r.status} onChange={(e) => void update(r, { status: e.target.value as IdeaStatus })}
-                      className="h-8 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200">
-                      {ORDER.map((s) => <option key={s} value={s}>{IDEA_STATUS[s].label}</option>)}
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

@@ -1,97 +1,75 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Loader2, ThumbsUp } from 'lucide-react';
-import { resolveStoreId } from '@/services/feedback';
-import { IDEA_STATUS, listIdeas, toggleIdeaVote, type Idea, type IdeaStatus } from '@/services/ideas';
+import { Loader2, ThumbsUp } from 'lucide-react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useLoja } from '@/contexts/LojaContext';
+import SortTh, { type Sort } from '@/components/common/SortTh';
+import { STATUS_CLS, STATUS_LABEL, STATUS_ORDER, boardList, sortBy, toggleVote, type BoardRow } from '@/services/requests';
 import { showError } from '@/utils/toast';
 
-type Tab = 'all' | Exclude<IdeaStatus, 'hidden' | 'received'>;
-const TABS: { v: Tab; label: string }[] = [
-  { v: 'all', label: 'Todas' },
-  { v: 'analysis', label: 'Em análise' },
-  { v: 'planned', label: 'Planejado' },
-  { v: 'in_progress', label: 'Em desenvolvimento' },
-  { v: 'done', label: 'Entregue' },
-];
+const get = (r: BoardRow, k: string): string | number =>
+  k === 'votes' ? r.votes : k === 'status' ? STATUS_ORDER.indexOf(r.status) : k === 'module' ? r.module : k === 'category' ? r.category : r.title;
 
 export default function IdeasBoard() {
-  const [storeId, setStoreId] = useState<string | null>(null);
-  const [items, setItems] = useState<Idea[] | null>(null);
-  const [tab, setTab] = useState<Tab>('all');
-  const [sort, setSort] = useState<'votes' | 'recent'>('votes');
-  const [busy, setBusy] = useState<string | null>(null);
-  const [err, setErr] = useState('');
+  const { storeId } = useLoja() as { storeId: string | null };
+  const [rows, setRows] = useState<BoardRow[] | null>(null);
+  const [sort, setSort] = useState<Sort>({ key: 'votes', dir: 'desc' });
 
-  const load = useCallback(async (id: string) => {
-    try { setItems(await listIdeas(id)); } catch (e: any) { setErr(e?.message ?? 'Erro ao carregar ideias'); }
-  }, []);
+  const load = useCallback(async () => {
+    if (!storeId) return;
+    try { setRows(await boardList(storeId)); } catch (e: any) { showError(e?.message || 'Erro ao carregar os pedidos'); setRows([]); }
+  }, [storeId]);
+  useEffect(() => { void load(); }, [load]);
 
-  useEffect(() => {
-    (async () => {
-      try { const id = await resolveStoreId(); setStoreId(id); await load(id); }
-      catch (e: any) { setErr(e?.message ?? 'Erro ao carregar ideias'); }
-    })();
-  }, [load]);
-
-  const vote = async (i: Idea) => {
-    if (!storeId || busy) return;
-    setBusy(i.id);
-    setItems((prev) => (prev ?? []).map((x) => (x.id === i.id ? { ...x, voted: !x.voted, votes: x.votes + (x.voted ? -1 : 1) } : x)));
-    try { await toggleIdeaVote(i.id, storeId); }
-    catch { showError('Não foi possível registrar seu voto.'); await load(storeId); }
-    finally { setBusy(null); }
+  const vote = async (r: BoardRow) => {
+    if (!storeId) return;
+    setRows((p) => p && p.map((x) => (x.id === r.id ? { ...x, voted: !x.voted, votes: x.votes + (x.voted ? -1 : 1) } : x)));
+    try { await toggleVote(r.id, storeId); } catch (e: any) { showError(e?.message || 'Erro ao votar'); void load(); }
   };
 
-  const list = useMemo(() => {
-    const f = (items ?? []).filter((i) => tab === 'all' || i.status === tab);
-    return [...f].sort((a, b) => (sort === 'votes' ? b.votes - a.votes : 0) || b.created_at.localeCompare(a.created_at));
-  }, [items, tab, sort]);
+  const sorted = useMemo(() => (rows ? sortBy(rows, (r) => get(r, sort.key), sort.dir) : []), [rows, sort]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
-      <button type="button" onClick={() => window.history.back()} className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-slate-800">
-        <ArrowLeft className="h-4 w-4" /> Voltar
-      </button>
-      <div>
-        <h1 className="text-2xl font-black text-slate-900">O que a comunidade está pedindo</h1>
-        <p className="text-sm text-slate-500">Vote nas ideias que você também quer ver no SLL Hub. As mais votadas ganham prioridade.</p>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1.5">
-          {TABS.map((t) => (
-            <button key={t.v} type="button" onClick={() => setTab(t.v)}
-              className={`cursor-pointer rounded-full px-3 py-1.5 text-xs font-bold ${tab === t.v ? 'bg-[#0094eb] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-              {t.label}
-            </button>
-          ))}
+    <DashboardLayout>
+      <div className="mx-auto max-w-6xl space-y-5 pb-16">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900">Pedidos dos lojistas</h1>
+          <p className="mt-1 text-sm text-slate-500">Veja o que outras lojas pediram e vote no que também faria diferença para você. Os mais votados entram primeiro na fila.</p>
         </div>
-        <select value={sort} onChange={(e) => setSort(e.target.value as 'votes' | 'recent')} className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700">
-          <option value="votes">Mais votadas</option>
-          <option value="recent">Mais recentes</option>
-        </select>
-      </div>
 
-      {err ? <p className="text-sm font-semibold text-rose-600">{err}</p>
-        : !items ? <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-        : list.length === 0 ? <p className="rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">Nenhuma ideia nesta categoria.</p>
-        : (
-          <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-            {list.map((i) => (
-              <li key={i.id} className="flex items-center gap-4 px-4 py-3">
-                <button type="button" onClick={() => void vote(i)} aria-pressed={i.voted} title={i.voted ? 'Remover meu voto' : 'Curtir esta ideia'}
-                  className={`flex w-14 shrink-0 cursor-pointer flex-col items-center rounded-xl border px-2 py-2 transition ${i.voted ? 'border-[#0094eb] bg-[#0094eb]/10 text-[#0094eb]' : 'border-slate-200 text-slate-500 hover:border-[#0094eb] hover:text-[#0094eb]'}`}>
-                  <ThumbsUp className="h-4 w-4" />
-                  <span className="mt-0.5 text-sm font-black">{i.votes}</span>
-                </button>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-slate-900">{i.body}</p>
-                  <p className="text-[11px] text-slate-500">{i.category}{i.mine ? ' · sua ideia' : ''} · {new Date(i.created_at).toLocaleDateString('pt-BR')}</p>
-                </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${IDEA_STATUS[i.status].cls}`}>{IDEA_STATUS[i.status].label}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-    </div>
+        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-100 bg-slate-50">
+              <tr>
+                <SortTh label="Descrição" k="title" sort={sort} onSort={setSort} />
+                <SortTh label="Módulo" k="module" sort={sort} onSort={setSort} />
+                <SortTh label="Categoria" k="category" sort={sort} onSort={setSort} />
+                <SortTh label="Vote" k="votes" sort={sort} onSort={setSort} align="center" />
+                <SortTh label="Status" k="status" sort={sort} onSort={setSort} />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {!rows && <tr><td colSpan={5} className="py-10 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-[#0094eb]" /></td></tr>}
+              {rows && sorted.length === 0 && <tr><td colSpan={5} className="py-10 text-center text-slate-400">Nenhum pedido ainda. Seja o primeiro a sugerir.</td></tr>}
+              {sorted.map((r) => (
+                <tr key={r.id} className="align-top hover:bg-slate-50/60">
+                  <td className="max-w-[460px] px-3 py-3 font-medium text-slate-800">{r.title}</td>
+                  <td className="whitespace-nowrap px-3 py-3 text-slate-600">{r.module}</td>
+                  <td className="whitespace-nowrap px-3 py-3 text-slate-600">{r.category}</td>
+                  <td className="px-3 py-3 text-center">
+                    <button type="button" onClick={() => vote(r)} title={r.voted ? 'Remover meu voto' : 'Votar neste pedido'}
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-black transition ${r.voted ? 'border-[#0094eb] bg-[#0094eb] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]'}`}>
+                      <ThumbsUp className="h-3.5 w-3.5" /> {r.votes}
+                    </button>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${STATUS_CLS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }
