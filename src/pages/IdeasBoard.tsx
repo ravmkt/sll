@@ -84,7 +84,7 @@ export default function IdeasBoard() {
       </div>
 
       <Dialog open={!!open} onOpenChange={(v) => { if (!v) setOpenId(null); }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg border-slate-200 bg-white text-slate-900">
           <DialogTitle className="text-lg font-black text-slate-900">Pedido de lojista</DialogTitle>
           <DialogDescription className="sr-only">Texto completo do pedido</DialogDescription>
           {open && (
