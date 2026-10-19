@@ -40,3 +40,6 @@ supabase/.temp/
 .env
 
 *.bak-*
+
+diag-*.txt
+nps-master.ps1
