@@ -1,4 +1,5 @@
 import ImageUpload from '@/components/admin/ImageUpload';
+import NpsPanel from '@/components/admin/NpsPanel';
 import EmailCampaigns from '@/components/admin/EmailCampaigns';
 import { getEmailMetrics, EMPTY_EMAIL_METRICS, type EmailMetrics } from '@/services/admin/emailCampaigns';
 import { LinkPicker, StorePicker } from '@/components/admin/MarketingPickers';
@@ -14,7 +15,7 @@ import {
   type CouponDraft, type CouponDuration, type CouponPlanOption, type CouponType, type MktCoupon,
 } from '@/services/admin/couponsMarketing';
 
-type TabKey = 'visao' | 'banner' | 'popup' | 'aviso' | 'email' | 'whatsapp' | 'promocao';
+type TabKey = 'visao' | 'banner' | 'popup' | 'aviso' | 'email' | 'whatsapp' | 'promocao' | 'nps';
 
 const KIND_TITLE: Record<MktKind, string> = { banner: 'Banners', popup: 'Popups', notice: 'Avisos do sistema' };
 const KIND_NOUN: Record<MktKind, string> = { banner: 'banner', popup: 'popup', notice: 'aviso' };
@@ -640,6 +641,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'email', label: 'E-mail', icon: <Mail className="w-4 h-4" /> },
   { key: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="w-4 h-4" /> },
   { key: 'promocao', label: 'Cupom', icon: <Tag className="w-4 h-4" /> },
+  { key: 'nps', label: 'NPS', icon: <BarChart3 className="h-4 w-4" /> },
 ];
 
 export default function MarketingTab() {
@@ -670,6 +672,7 @@ export default function MarketingTab() {
           note="Envio de WhatsApp ainda não conectado. Precisa da API oficial ou de um provedor para medir leitura e resposta." />
       )}
       {tab === 'promocao' && <Cupom />}
+      {tab === 'nps' && <NpsPanel />}
     </div>
   );
 }
