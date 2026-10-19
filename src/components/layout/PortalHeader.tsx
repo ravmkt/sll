@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import DashboardNotice from '@/components/dashboard/DashboardNotice';
 import NpsWizardGate from '@/components/feedback/NpsWizardGate';
+import { createPortal } from 'react-dom';
 import FeatureWishCard from '@/components/feedback/FeatureWishCard';
 
 const sb: any = supabase;
@@ -65,7 +66,7 @@ export default function PortalHeader() {
       </div>
       <div className="flex flex-col lg:w-52 lg:shrink-0 2xl:absolute 2xl:right-6 2xl:top-8 2xl:w-52">
         <FeatureWishCard />
-        <NpsWizardGate showCard={false} />
+        {createPortal(<NpsWizardGate showCard={false} />, document.body)}
       </div>
     </div>
   );
