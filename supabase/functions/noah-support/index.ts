@@ -41,14 +41,20 @@ const FREE_GREETING = "Olá! Sou o Noah, assistente do SLL Hub. Me diga sua dúv
 const FREE_THANKS = "Por nada! Se precisar de mais alguma coisa, é só chamar.";
 const FREE_HUMAN = "Claro! Para falar com nosso time, clique em **Chamar no WhatsApp** logo abaixo do chat.";
 
+const GREET_WORDS = new Set(["oi","oii","oiii","ola","opa","eae","e","ai","hey","hello","hi","bom","boa","dia","tarde","noite","tudo","bem","td","como","vai","voce","salve","fala"]);
+const isGreeting = (q: string) => { const w = q.split(" "); return w.length <= 6 && w.every((x) => GREET_WORDS.has(x)); };
+
 const freeReply = (text: string): string | null => {
   const q = norm(text);
   if (!q || q.length > 80) return null;
-  if (GREETING_RE.test(q)) return FREE_GREETING;
+  if (GREETING_RE.test(q) || isGreeting(q)) return FREE_GREETING;
   if (THANKS_RE.test(q)) return FREE_THANKS;
   if (HUMAN_RE.test(q)) return FREE_HUMAN;
   return null;
 };
+
+const ACTION_UPGRADE = { type: "upgrade", label: "Fazer upgrade", href: "/dashboard/assinaturas" };
+const ACTION_RECHARGE = { type: "recharge", label: "Comprar mensagens extras", href: "/dashboard/assinaturas" };
 
 const fmtDate = (d: string | null | undefined) => {
   const m = String(d ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -140,7 +146,7 @@ Deno.serve(async (req) => {
       : `Você atingiu o limite de mensagens do Noah neste mês${renov ? ` (renova em ${renov})` : ""}. Para continuar conversando agora, faça upgrade do seu plano ou compre um pacote extra de mensagens. Se preferir, fale com nosso time pelo **Chamar no WhatsApp**, logo abaixo do chat.`;
     return json({
       reply,
-      limit_reached: true,
+      limit_reached: true, actions: noPlan ? [ACTION_UPGRADE] : [ACTION_UPGRADE, ACTION_RECHARGE],
       reason: credit.reason,
       credits: { used: credit.used, total: credit.total, extra: credit.extra, renewal_date: credit.renewal_date },
     });
