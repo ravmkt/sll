@@ -95,7 +95,7 @@ export async function getOverrides(): Promise<Record<string, Record<string, Limi
 // ---------- calculo de margem ----------
 export type Calc = {
   storageBrl: number; trafficBrl: number; fixedTotal: number; fixedPerStore: number;
-  deduction: number; mbPerPlay: number; realistic: number; payingStores: number;
+  deduction: number; mbPerPlay: number; realistic: number; payingStores: number; aiBrl?: number;
 };
 
 export function buildCalc(s: CostSettings, paying: number, extraBrl = 0): Calc {
@@ -110,6 +110,7 @@ export function buildCalc(s: CostSettings, paying: number, extraBrl = 0): Calc {
     mbPerPlay: s.mb_per_play,
     realistic: s.realistic_usage_percent / 100,
     payingStores: paying,
+    aiBrl: Number((s as any).ai_cost_brl_per_message) || 0,
   };
 }
 
@@ -122,6 +123,16 @@ export const MARGIN_NA: Margin = { level: 'na', worst: null, real: null, costWor
 
 // Custo variavel a "usage" (0..1) do limite. null = limite ilimitado (custo sem teto)
 function variableCost(lim: Limits, c: Calc, usage: number): number | null {
+  const base = variableCostBase(lim, c, usage);
+  if (base === null) return null;
+  const ai = c.aiBrl ?? 0;
+  if (ai > 0 && 'ai_messages' in lim) {
+    if (lim.ai_messages === null || lim.ai_messages === undefined) return null;
+    return base + Number(lim.ai_messages) * usage * ai;
+  }
+  return base;
+}
+function variableCostBase(lim: Limits, c: Calc, usage: number): number | null {
   let t = 0;
   if ('storage_gb' in lim) {
     if (lim.storage_gb === null || lim.storage_gb === undefined) return null;
@@ -190,4 +201,33 @@ export async function deleteCustomCost(id: string): Promise<void> {
 // Soma das despesas ativas em R$ (USD convertido pelo cambio informado)
 export function customTotalBrl(list: CustomCost[], rate: number): number {
   return list.filter((x) => x.is_active).reduce((t, x) => t + (x.currency === 'USD' ? x.amount * rate : x.amount), 0);
+}
+
+
+// ---------- margem por cliente isolado (so custo variavel, sem diluir custo fixo) ----------
+export function variableWorstCost(limitsList: Limits[], c: Calc): number | null {
+  let t = 0;
+  for (const l of limitsList) {
+    const v = variableCost(l, c, 1);
+    if (v === null) return null;
+    t += v;
+  }
+  return t;
+}
+
+export function standaloneMargin(prices: Prices, limitsList: Limits[], c: Calc): { worst: number | null; cost: number | null } {
+  const rev = [prices.m, prices.s / 6, prices.a / 12].map((x) => x / 100).filter((x) => x > 0);
+  const cost = variableWorstCost(limitsList, c);
+  if (!rev.length || cost === null) return { worst: null, cost };
+  return { worst: Math.min(...rev.map((r) => (r - cost - r * c.deduction) / r)), cost };
+}
+
+// Maior desconto (0..90, passo 0,1) em que o pior ciclo ainda tem margem >= 0
+export function maxSafeDiscount(list: Prices, limitsList: Limits[], c: Calc): number | null {
+  const cost = variableWorstCost(limitsList, c);
+  if (cost === null) return null;
+  const base = [list.m, list.s / 6, list.a / 12].map((x) => x / 100).filter((x) => x > 0);
+  if (!base.length) return null;
+  const pct = Math.min(...base.map((L) => 100 * (1 - cost / (L * (1 - c.deduction)))));
+  return Math.max(0, Math.min(90, Math.floor(pct * 10) / 10));
 }

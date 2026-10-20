@@ -86,5 +86,11 @@ export function usePricingCosts(plans: DynamicPlan[] | null, comboMods: ComboMod
     if (m && (m.level === 'warn' || m.level === 'low' || m.level === 'loss')) alerts.push({ plan: p, margin: m });
   });
 
-  return { settings, calc, discounts, fx, alerts, listPrices, marginOf, reload };
+  const limitsOf = (p: DynamicPlan): Limits[] | null => {
+    const mp = members(p.id);
+    if (!mp.length || mp.some((x) => !x.plan)) return null;
+    return mp.map((x) => ({ ...((x.plan!.limits_config ?? {}) as Limits), ...(overrides[p.id]?.[x.row.module_slug] ?? {}) }));
+  };
+
+  return { settings, calc, discounts, fx, alerts, listPrices, marginOf, limitsOf, reload };
 }

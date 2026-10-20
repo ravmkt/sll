@@ -13,6 +13,8 @@ import ComboCreator from '@/components/admin/ComboCreator';
 import ComboModulesEditor from '@/components/admin/ComboModulesEditor';
 import ComboPricing from '@/components/admin/ComboPricing';
 import MarginBadge from '@/components/admin/MarginBadge';
+import type { PriceGuard } from '@/components/admin/ComboPricing';
+import { maxSafeDiscount, standaloneMargin, variableWorstCost } from '@/services/admin/costsAdmin';
 import ItemCard, { BTN } from '@/components/admin/ItemCard';
 import { CARD } from '@/components/admin/moduleUi';
 
@@ -115,6 +117,18 @@ export default function ComboSection({ rev, logos, store }: { rev: ModulesRevenu
 
   const live = pricing ? ((plans || []).find((x) => x.id === pricing.id) ?? pricing) : null;
 
+  const guardOf = (p: DynamicPlan): PriceGuard | undefined => {
+    const c = costs.calc;
+    const lp = costs.listPrices(p.id);
+    const lims = costs.limitsOf(p);
+    if (!c || !lp || !lims) return undefined;
+    return {
+      cost: variableWorstCost(lims, c),
+      maxPct: maxSafeDiscount(lp, lims, c),
+      worstAt: (pc) => standaloneMargin({ m: Math.round(lp.m * (1 - pc / 100)), s: Math.round(lp.s * (1 - pc / 100)), a: Math.round(lp.a * (1 - pc / 100)) }, lims, c).worst,
+    };
+  };
+
   const dnd = (p: DynamicPlan) => ({
     draggable: true,
     onDragStart: (e: DragEvent<HTMLDivElement>) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id); setDragId(p.id); },
@@ -182,7 +196,7 @@ export default function ComboSection({ rev, logos, store }: { rev: ModulesRevenu
               <p className="text-[15px] font-bold text-white">Preço de {live.plan_name}</p>
               <button type="button" onClick={() => setPricing(null)} className="cursor-pointer text-[13px] text-slate-400 hover:text-white">Fechar</button>
             </div>
-            <ComboPricing combo={live} list={costs.listPrices(pricing.id)} pct={costs.discounts[pricing.id] ?? 0} onChanged={refresh} />
+            <ComboPricing combo={live} guard={guardOf(live)} list={costs.listPrices(pricing.id)} pct={costs.discounts[pricing.id] ?? 0} onChanged={refresh} />
             <div className="flex items-center justify-center gap-2 text-[13px] text-slate-500"><span>Margem</span><MarginBadge m={costs.marginOf(live)} /></div>
           </div>
         </div>
