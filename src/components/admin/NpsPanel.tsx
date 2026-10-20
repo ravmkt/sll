@@ -408,7 +408,7 @@ export default function NpsPanel() {
         <>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_repeat(3,minmax(0,1fr))]">
             <div className={`${CARD} flex flex-col items-center justify-center`}>
-              <p className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">NPS · {total} resposta(s)</p>
+              <p className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">NPS · {total} com nota · {Math.max(total, ...(res.questions ?? []).map((q) => q.total))} resposta(s)</p>
               <Gauge nps={res.nps} />
             </div>
             <Kpi icon={<Smile className="h-5 w-5" />} label="Promotores" range="Notas 9 e 10" value={res.promoters} pct={pctOf(res.promoters, total)} color={GRN} />
