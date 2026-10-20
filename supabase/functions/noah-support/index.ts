@@ -208,7 +208,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents: contents.map((x) => ({ role: x.role, parts: [{ text: x.text }] })),
-          generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
+          generationConfig: { temperature: 0.4, maxOutputTokens: 1500, thinkingConfig: { thinkingBudget: 0 } },
         }),
       });
       if (res.ok) {
