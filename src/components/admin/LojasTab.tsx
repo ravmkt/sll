@@ -9,6 +9,8 @@ import {
   type AdminStoreRow, type StoreStatus,
 } from '@/services/admin/storesService';
 import { Badge, CARD, DeleteStoreModal, ICON, modLabel } from '@/components/admin/storeUi';
+import { AiCredits } from '@/components/admin/StoreAiCreditsCard';
+import { getNoahCredits, type NoahCredits } from '@/services/admin/noahCreditsService';
 
 const sb = supabase as any;
 const TZ = 'America/Sao_Paulo';
@@ -172,6 +174,7 @@ function LojasList() {
   const [dir, setDir] = useState<SortDir>('desc');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [del, setDel] = useState<AdminStoreRow | null>(null);
+  const [credits, setCredits] = useState<Record<string, NoahCredits>>({});
 
   const open = (id: string, aba?: string) =>
     setParams(aba ? { tab: 'lojas', loja: id, aba } : { tab: 'lojas', loja: id });
@@ -185,6 +188,9 @@ function LojasList() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    getNoahCredits().then((l) => setCredits(Object.fromEntries(l.map((c) => [c.store_id, c])))).catch(() => {});
+  }, []);
 
   const onSort = (k: SortKey) => {
     if (k === sort) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -231,12 +237,12 @@ function LojasList() {
       else if (sort === 'created') p = ts(a.created_at) - ts(b.created_at);
       else if (sort === 'access') p = ts(a.last_sign_in_at) - ts(b.last_sign_in_at);
       else if (sort === 'plans') p = planKey(a).localeCompare(planKey(b), 'pt-BR', { sensitivity: 'base' });
-      else if (sort === 'ai') p = (a.ai_interactions || 0) - (b.ai_interactions || 0);
+      else if (sort === 'ai') { const f = (c?: NoahCredits) => (c && c.credits_total > 0 ? c.credits_used / c.credits_total : -1); p = f(credits[a.id]) - f(credits[b.id]); }
       else if (sort === 'storage') p = storagePct(a) - storagePct(b);
       else p = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
       return p * sign || ts(b.created_at) - ts(a.created_at);
     });
-  }, [rows, q, status, mod, sort, dir, modNames]);
+  }, [rows, q, status, mod, sort, dir, modNames, credits]);
 
   const togglePlan = async (r: AdminStoreRow) => {
     if (r.is_lifetime) {
@@ -353,7 +359,7 @@ function LojasList() {
                 <Th label="Último acesso" k="access" sort={sort} dir={dir} onSort={onSort} />
                 <Th label="Status" k="status" sort={sort} dir={dir} onSort={onSort} />
                 <Th label="Planos &amp; módulos" k="plans" sort={sort} dir={dir} onSort={onSort} />
-                <Th label="Consumo IA" k="ai" sort={sort} dir={dir} onSort={onSort} />
+                <Th label="Mensagens IA" k="ai" sort={sort} dir={dir} onSort={onSort} />
                 <Th label="Storage" k="storage" sort={sort} dir={dir} onSort={onSort} />
                 <th className="px-4 py-3 text-right uppercase tracking-wider">Ações</th>
               </tr>
@@ -397,13 +403,8 @@ function LojasList() {
                         ))}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3" title={`${r.ai_tokens.toLocaleString('pt-BR')} tokens · US$ ${Number(r.ai_cost_usd).toFixed(4)} no mês`}>
-                      {r.ai_interactions > 0 ? (
-                        <>
-                          <p className="font-bold text-slate-200">{r.ai_interactions.toLocaleString('pt-BR')} {r.ai_interactions === 1 ? 'interação' : 'interações'}</p>
-                          <p className="text-[13px] text-slate-500">{r.ai_tokens.toLocaleString('pt-BR')} tokens</p>
-                        </>
-                      ) : <span className="text-slate-600">—</span>}
+                    <td className="whitespace-nowrap px-4 py-3" title={`${r.ai_interactions} interações · ${r.ai_tokens.toLocaleString('pt-BR')} tokens · US$ ${Number(r.ai_cost_usd).toFixed(4)} no mês`}>
+                      <AiCredits c={credits[r.id]} />
                     </td>
                     <td className="px-4 py-3"><StorageCell used={r.storage_used_bytes} limit={r.storage_limit_bytes} /></td>
                     <td className="px-4 py-3 text-right">
