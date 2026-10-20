@@ -6,6 +6,10 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.1-flash-lite";
 
+const WINDOW = 6;
+const KB_BUDGET = 8000;
+const KB_DOC_MAX = 3500;
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -25,6 +29,40 @@ const limited = (uid: string) => {
 };
 
 const clean = (v: unknown, max: number) => String(v ?? "").replace(/[\r\n\t]+/g, " ").trim().slice(0, max);
+const norm = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+
+// ---- Respostas gratuitas (sem IA, sem debitar credito) ----
+const GREETING_RE = /^(oi+|ola+|opa|eae|e ai|hey|hello|hi|bom dia|boa tarde|boa noite|tudo bem|oi tudo bem|ola tudo bem|oi bom dia|oi boa tarde|oi boa noite|ola bom dia|ola boa tarde|ola boa noite)$/;
+const THANKS_RE = /^(obrigad[oa]|muito obrigad[oa]|valeu|vlw|ok|certo|entendi|blz|beleza|show|perfeito)$/;
+const HUMAN_RE = /(atendente|humano|pessoa de verdade|falar com (alguem|o suporte|suporte)|suporte humano|chamar o suporte|chamar suporte)/;
+
+const FREE_GREETING = "Olá! Sou o Noah, assistente do SLL Hub. Me diga sua dúvida e eu te ajudo.";
+const FREE_THANKS = "Por nada! Se precisar de mais alguma coisa, é só chamar.";
+const FREE_HUMAN = "Claro! Para falar com nosso time, clique em **Chamar no WhatsApp** logo abaixo do chat.";
+
+const freeReply = (text: string): string | null => {
+  const q = norm(text);
+  if (!q || q.length > 80) return null;
+  if (GREETING_RE.test(q)) return FREE_GREETING;
+  if (THANKS_RE.test(q)) return FREE_THANKS;
+  if (HUMAN_RE.test(q)) return FREE_HUMAN;
+  return null;
+};
+
+const fmtDate = (d: string | null | undefined) => {
+  const m = String(d ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}` : "";
+};
+
+const pageModules = (route: string, q: string) => {
+  const mods = new Set<string>(["geral"]);
+  if (route.startsWith("/dashboard/modules/vidlytics")) mods.add("vidlytics");
+  else mods.add("sll-hub");
+  if (/video|story|stories|vidlytics|widget|biblioteca|aparencia/.test(q)) mods.add("vidlytics");
+  if (/produto|plano|assinatura|instal|script|gtm|medida|clube|afiliad|configur|cobranca/.test(q)) mods.add("sll-hub");
+  return [...mods];
+};
 
 const SYSTEM = `Você é o Noah, assistente de suporte do SLL Hub, plataforma para lojistas de e-commerce.
 Personalidade: prestativo, direto e especialista em e-commerce. Responda em português do Brasil, em até cerca de 120 palavras, com passo a passo numerado quando for configuração. Use markdown simples: **negrito** para nomes de abas, menus e botões; listas numeradas (1. 2. 3.) para passo a passo, com uma linha em branco entre parágrafos; sem títulos (#) e sem tabelas.
@@ -69,74 +107,145 @@ Deno.serve(async (req) => {
   const { data: store } = await asUser.from("stores").select("id, name").eq("id", storeId).maybeSingle();
   if (!store) return json({ error: "LOJA_INVALIDA" }, 403);
 
+  const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+  const { data: cfg } = await admin.from("noah_settings").select("ai_enabled, model").eq("id", 1).maybeSingle();
+  if (cfg && cfg.ai_enabled === false) return json({ error: "IA_DESATIVADA" }, 403);
+
+  // Janela de memoria: somente as ultimas WINDOW mensagens
   const raw: any[] = Array.isArray(body?.messages) ? body.messages : [];
   const contents = raw
     .map((m) => ({ role: m?.role === "assistant" ? "model" : "user", text: String(m?.content ?? "").slice(0, 1000) }))
     .filter((m) => m.text.trim())
-    .slice(-12);
+    .slice(-WINDOW);
   while (contents.length && contents[0].role !== "user") contents.shift();
   if (!contents.length || contents[contents.length - 1].role !== "user") return json({ error: "MENSAGEM_INVALIDA" }, 400);
 
-  const status = typeof ctx.appStatus === "boolean" ? (ctx.appStatus ? "ativo" : "desativado") : "desconhecido";
-  const baseSystem =
-    `${SYSTEM}\n\nCONTEXTO ATUAL (dados do sistema)\n` +
-    `- Loja: ${clean(store.name, 80)}\n` +
-    `- Rota atual: ${clean(ctx.currentRoute, 120)}\n` +
-    `- Aba ativa: ${clean(ctx.activeTab, 40) || "nenhuma"}\n` +
-    `- Aplicativo de vídeos: ${status}`;
-  const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-  const { data: cfg } = await admin.from("noah_settings").select("ai_enabled, model").eq("id", 1).maybeSingle();
-  if (cfg && cfg.ai_enabled === false) return json({ error: "IA_DESATIVADA" }, 403);
-  const { data: kb } = await admin.from("noah_knowledge").select("module, title, content").eq("is_active", true).order("module").order("title").limit(60);
-  let used = 0;
-  const docs: string[] = [];
-  for (const k of kb ?? []) {
-    const block = `[${k.module}] ${k.title}\n${String(k.content ?? "").slice(0, 60000)}`;
-    if (used + block.length > 150000) break;
-    used += block.length;
-    docs.push(block);
-  }
-  const system = docs.length
-    ? `${baseSystem}\n\nDOCUMENTAÇÃO DE SUPORTE (fonte de verdade; se conflitar com as regras acima, esta prevalece)\n${docs.join("\n\n---\n")}`
-    : baseSystem;
+  const lastText = contents[contents.length - 1].text;
 
-  const MODELS = [...new Set([cfg?.model || MODEL, "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview", "gemini-3.7-flash", "gemini-flash-latest"])];
-  let data: any = null;
-  let usedModel = "";
-  for (const m of MODELS) {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: contents.map((x) => ({ role: x.role, parts: [{ text: x.text }] })),
-        generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
-      }),
-    });
-    if (res.ok) {
-      data = await res.json().catch(() => null);
-      if (data) { usedModel = m; break; }
-      continue;
-    }
-    console.error("noah-support gemini", m, res.status, (await res.text()).slice(0, 300));
-    if (res.status === 404 || res.status === 429 || res.status >= 500) continue;
-    break;
+  // Respostas gratuitas: sem IA e sem debitar
+  const free = freeReply(lastText);
+  if (free) return json({ reply: free, free: true });
+
+  // Trava de credito (atomica)
+  const { data: credit, error: creditErr } = await admin.rpc("noah_consume_credit", { p_store_id: storeId });
+  if (creditErr || !credit) {
+    console.error("noah_consume_credit", creditErr?.message);
+    return json({ error: "CREDITOS_INDISPONIVEIS" }, 503);
   }
-  if (!data) return json({ error: "IA_INDISPONIVEL" }, 502);
-  const reply = String(data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text ?? "").join("") ?? "").trim();
-  const usage = data?.usageMetadata ?? {};
-  const pt = Number(usage.promptTokenCount ?? 0);
-  const tt = Number(usage.totalTokenCount ?? 0);
-  const ct = tt > pt ? tt - pt : Number(usage.candidatesTokenCount ?? 0);
-  const { error: logErr } = await admin.from("noah_logs").insert({
-    store_id: storeId,
-    model: usedModel,
-    prompt_tokens: pt,
-    completion_tokens: ct,
-    total_tokens: tt || pt + ct,
-    user_message: contents[contents.length - 1].text.slice(0, 500),
-  });
-  if (logErr) console.error("noah_logs", logErr.message);
-  
-  return json({ reply: reply || "Não consegui responder agora. Pode reformular a pergunta ou chamar nosso time no WhatsApp?" });
+  if (!credit.allowed) {
+    const noPlan = credit.reason === "no_plan";
+    const renov = fmtDate(credit.renewal_date);
+    const reply = noPlan
+      ? "Sua loja ainda não tem um plano ativo, então o atendimento com IA do Noah não está disponível. Escolha um plano para liberar. Enquanto isso, nosso time atende pelo **Chamar no WhatsApp**, logo abaixo do chat."
+      : `Você atingiu o limite de mensagens do Noah neste mês${renov ? ` (renova em ${renov})` : ""}. Para continuar conversando agora, faça upgrade do seu plano ou compre um pacote extra de mensagens. Se preferir, fale com nosso time pelo **Chamar no WhatsApp**, logo abaixo do chat.`;
+    return json({
+      reply,
+      limit_reached: true,
+      reason: credit.reason,
+      credits: { used: credit.used, total: credit.total, extra: credit.extra, renewal_date: credit.renewal_date },
+    });
+  }
+
+  const refund = async () => {
+    const { error } = await admin.rpc("noah_refund_credit", { p_store_id: storeId, p_source: credit.source });
+    if (error) console.error("noah_refund_credit", error.message);
+  };
+
+  try {
+    const q = norm(lastText);
+    const route = clean(ctx.currentRoute, 120);
+    const status = typeof ctx.appStatus === "boolean" ? (ctx.appStatus ? "ativo" : "desativado") : "desconhecido";
+    const baseSystem =
+      `${SYSTEM}\n\nCONTEXTO ATUAL (dados do sistema)\n` +
+      `- Loja: ${clean(store.name, 80)}\n` +
+      `- Rota atual: ${route}\n` +
+      `- Aba ativa: ${clean(ctx.activeTab, 40) || "nenhuma"}\n` +
+      `- Aplicativo de vídeos: ${status}`;
+
+    // Base de conhecimento enxuta: filtra por modulo, ranqueia por relevancia e limita o tamanho
+    const { data: kb } = await admin
+      .from("noah_knowledge")
+      .select("module, title, content")
+      .eq("is_active", true)
+      .in("module", pageModules(route, q))
+      .order("module")
+      .order("title")
+      .limit(60);
+    const words = [...new Set(q.split(" ").filter((w) => w.length >= 4))];
+    const scored = (kb ?? [])
+      .map((k) => {
+        const title = norm(String(k.title ?? ""));
+        const hay = norm(String(k.content ?? "").slice(0, 20000));
+        let s = 0;
+        for (const w of words) {
+          if (title.includes(w)) s += 3;
+          else if (hay.includes(w)) s += 1;
+        }
+        return { k, s };
+      })
+      .sort((a, b) => b.s - a.s);
+    let pick = scored.filter((x) => x.s > 0);
+    if (!pick.length) pick = scored.slice(0, 2);
+    let used = 0;
+    const docs: string[] = [];
+    for (const { k } of pick) {
+      const block = `[${k.module}] ${k.title}\n${String(k.content ?? "").slice(0, KB_DOC_MAX)}`;
+      if (used + block.length > KB_BUDGET) continue;
+      used += block.length;
+      docs.push(block);
+    }
+    const system = docs.length
+      ? `${baseSystem}\n\nDOCUMENTAÇÃO DE SUPORTE (fonte de verdade; se conflitar com as regras acima, esta prevalece)\n${docs.join("\n\n---\n")}`
+      : baseSystem;
+
+    const MODELS = [...new Set([cfg?.model || MODEL, "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview", "gemini-3.7-flash", "gemini-flash-latest"])];
+    let data: any = null;
+    let usedModel = "";
+    for (const m of MODELS) {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: contents.map((x) => ({ role: x.role, parts: [{ text: x.text }] })),
+          generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
+        }),
+      });
+      if (res.ok) {
+        data = await res.json().catch(() => null);
+        if (data) { usedModel = m; break; }
+        continue;
+      }
+      console.error("noah-support gemini", m, res.status, (await res.text()).slice(0, 300));
+      if (res.status === 404 || res.status === 429 || res.status >= 500) continue;
+      break;
+    }
+    if (!data) { await refund(); return json({ error: "IA_INDISPONIVEL" }, 502); }
+
+    const reply = String(data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text ?? "").join("") ?? "").trim();
+    if (!reply) { await refund(); return json({ error: "IA_VAZIA" }, 502); }
+
+    const usage = data?.usageMetadata ?? {};
+    const pt = Number(usage.promptTokenCount ?? 0);
+    const tt = Number(usage.totalTokenCount ?? 0);
+    const ct = tt > pt ? tt - pt : Number(usage.candidatesTokenCount ?? 0);
+    const { error: logErr } = await admin.from("noah_logs").insert({
+      store_id: storeId,
+      model: usedModel,
+      prompt_tokens: pt,
+      completion_tokens: ct,
+      total_tokens: tt || pt + ct,
+      user_message: lastText.slice(0, 500),
+    });
+    if (logErr) console.error("noah_logs", logErr.message);
+
+    return json({
+      reply,
+      credits: { used: credit.used, total: credit.total, extra: credit.extra, renewal_date: credit.renewal_date },
+    });
+  } catch (e) {
+    console.error("noah-support", e);
+    await refund();
+    return json({ error: "IA_INDISPONIVEL" }, 502);
+  }
 });

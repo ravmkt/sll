@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader2, MessageCircle, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/lib/supabase';
@@ -17,7 +17,7 @@ export interface SupportContext {
   appStatus?: boolean; // Aplicativo de videos ativo na loja
 }
 
-type Msg = { role: 'user' | 'assistant'; content: string; animate?: boolean; id?: string; question?: string; vote?: 'up' | 'down' };
+type Msg = { role: 'user' | 'assistant'; content: string; cta?: 'limit'; animate?: boolean; id?: string; question?: string; vote?: 'up' | 'down' };
 
 const HIDDEN_ON = ['/admin-master', '/dashboard/onboarding', '/auth'];
 const GREETING = 'Olá! Sou o Noah, assistente do SLL Hub. Como posso te ajudar agora?';
@@ -92,6 +92,7 @@ function waUrl(cfg: any, name?: string | null, id?: string | null): string {
 
 export default function NoahChatWidget() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { store, storeId } = useLoja() as { store: any; storeId: string | null };
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([{ role: 'assistant', content: GREETING }]);
@@ -164,16 +165,18 @@ export default function NoahChatWidget() {
       activeTab: inVidlytics ? tab : undefined,
       appStatus,
     };
-    const history = next.slice(1).slice(-12).map(({ role, content }) => ({ role, content }));
+    const history = next.slice(1).slice(-6).map(({ role, content }) => ({ role, content }));
 
     let reply = FALLBACK;
+    let limit = false;
+    let free = false;
     try {
       const { data, error } = await supabase.functions.invoke('noah-support', { body: { messages: history, context } });
-      if (!error && data?.reply) reply = String(data.reply);
+      if (!error && data?.reply) { reply = String(data.reply); limit = data.limit_reached === true; free = data.free === true; }
       else if (error) console.error('noah-support', error, await (error as any).context?.text?.().catch(() => ''));
     } catch { /* usa o texto padrao */ }
 
-    setMessages((m) => [...m, { role: 'assistant', content: reply, animate: true, id: reply === FALLBACK ? undefined : crypto.randomUUID(), question: text }]);
+    setMessages((m) => [...m, { role: 'assistant', content: reply, animate: true, cta: limit ? 'limit' : undefined, id: reply === FALLBACK || limit || free ? undefined : crypto.randomUUID(), question: text }]);
     setLoading(false);
   };
 
@@ -206,6 +209,18 @@ export default function NoahChatWidget() {
                 }`}
               >
                 {m.animate ? <Typewriter text={m.content} onTick={scrollDown} /> : m.role === 'assistant' ? <Md text={m.content} /> : m.content}
+                {m.cta === 'limit' && (
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    <button type="button" onClick={() => { setOpen(false); navigate('/dashboard/assinaturas'); }}
+                      className="cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#007fcc]">
+                      Fazer upgrade de plano
+                    </button>
+                    <button type="button" onClick={() => { setOpen(false); navigate('/dashboard/assinaturas?addon=ai_messages'); }}
+                      className="cursor-pointer rounded-lg border border-[#0094eb] px-3 py-1.5 text-xs font-semibold text-[#0094eb] hover:bg-sky-50">
+                      Comprar pacote extra
+                    </button>
+                  </div>
+                )}
                 {m.id && (
                   <div className="mt-1.5 flex items-center gap-1.5 border-t border-slate-200 pt-1.5">
                     <span className="mr-auto text-[11px] text-slate-400">{m.vote ? 'Obrigado!' : 'Isso ajudou?'}</span>
