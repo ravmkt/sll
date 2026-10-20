@@ -2,14 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, Frown, Loader2, Meh, MessageSquareQuote, Plus, RotateCcw, Settings, Search, Smile, X } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
-  getNpsConfig, getNpsResults, listNpsOptions, listNpsStores, resetNpsStore, saveNpsConfig, saveNpsOptions, saveNpsTexts,
+  getNpsConfig, getNpsResults, listNpsOptions, listNpsResponses, listNpsStores, resetNpsStore, saveNpsConfig, saveNpsOptions, saveNpsTexts,
   type NpsOptionRow, type NpsStoreRow,
-  type NpsConfig, type NpsCount, type NpsResults,
+  type NpsConfig, type NpsCount, type NpsResponse, type NpsResults,
 } from '@/services/admin/npsAdmin';
 import { getNpsTexts, NPS_TEXT_DEFAULTS, NPS_TEXT_FIELDS } from '@/services/feedback';
 import NpsResponses from '@/components/admin/NpsResponses';
 import NpsSurveysList from '@/components/admin/NpsSurveysList';
 import IdeasAdmin from '@/components/admin/IdeasAdmin';
+import { NpsRadar, TopIdeas } from '@/components/admin/NpsOverviewExtras';
 import { listNpsSurveys, type AdminSurvey } from '@/services/admin/npsSurveys';
 
 const LABELS: Record<string, string> = {
@@ -184,11 +185,10 @@ function Step({ n, title, children }: { n: React.ReactNode; title: string; child
 type SubTab = 'overview' | 'surveys' | 'ideas' | 'responses';
 const SUBTABS: { id: SubTab; label: string }[] = [
   { id: 'overview', label: 'Visão geral' },
-  { id: 'surveys', label: 'Pesquisas' },
-  { id: 'ideas', label: 'Ideias dos lojistas' },
-  { id: 'responses', label: 'Respostas' },
+  { id: 'responses', label: 'Respostas do NPS' },
+  { id: 'ideas', label: 'Banco de ideias' },
+  { id: 'surveys', label: 'Configuração dos disparos' },
 ];
-
 export default function NpsPanel() {
   const [cfg, setCfg] = useState<NpsConfig | null>(null);
   const [idsText, setIdsText] = useState('');
@@ -208,6 +208,20 @@ export default function NpsPanel() {
   const [texts, setTexts] = useState<Record<string, string>>(NPS_TEXT_DEFAULTS);
   const [savingTexts, setSavingTexts] = useState(false);
   const [storesErr, setStoresErr] = useState<string | null>(null);
+  const [rows, setRows] = useState<NpsResponse[] | null>(null);
+  const [res2, setRes2] = useState<NpsResults | null>(null);
+  const [storesCount, setStoresCount] = useState(0);
+  useEffect(() => {
+    setRows(null);
+    listNpsResponses(days, surveyId).then(setRows).catch(() => setRows([]));
+  }, [days, surveyId]);
+  useEffect(() => {
+    setRes2(null);
+    getNpsResults(days * 2, surveyId).then(setRes2).catch(() => setRes2(null));
+  }, [days, surveyId]);
+  useEffect(() => {
+    listNpsStores().then((r) => setStoresCount(r.length)).catch(() => { /* opcional */ });
+  }, []);
 
   const loadResults = useCallback(async () => {
     try { setRes(await getNpsResults(days, surveyId)); } catch (e: any) { setErr(e?.message ?? 'Erro ao carregar resultados'); }
@@ -259,6 +273,13 @@ export default function NpsPanel() {
   if (!cfg) return <div className="flex items-center gap-2 text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>;
 
   const total = res?.total ?? 0;
+  const prevTotal = res && res2 ? res2.total - res.total : 0;
+  const prevNps = res && res2 && prevTotal > 0
+    ? Math.round((((res2.promoters - res.promoters) - (res2.detractors - res.detractors)) / prevTotal) * 100)
+    : null;
+  const delta = res?.nps != null && prevNps != null ? Math.round(res.nps) - prevNps : null;
+  const responded = rows ? new Set(rows.map((r) => r.store_id)).size : null;
+  const adherence = storesCount > 0 && responded != null ? Math.round((responded / storesCount) * 100) : null;
 
   const toMap = (kind: 'pain' | 'feature') =>
     opts.reduce<Record<string, string>>((m, o) => { if (o.kind === kind) m[o.key] = o.label; return m; }, {});
@@ -411,9 +432,37 @@ export default function NpsPanel() {
               <p className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">NPS · {total} com nota · {Math.max(total, ...(res.questions ?? []).map((q) => q.total))} resposta(s)</p>
               <Gauge nps={res.nps} />
             </div>
-            <Kpi icon={<Smile className="h-5 w-5" />} label="Promotores" range="Notas 9 e 10" value={res.promoters} pct={pctOf(res.promoters, total)} color={GRN} />
-            <Kpi icon={<Meh className="h-5 w-5" />} label="Neutros" range="Notas 7 e 8" value={res.passives} pct={pctOf(res.passives, total)} color={YEL} />
-            <Kpi icon={<Frown className="h-5 w-5" />} label="Detratores" range="Notas 0 a 6" value={res.detractors} pct={pctOf(res.detractors, total)} color={RED} />
+            <Kpi icon={<Smile className="h-5 w-5" />} label="Promotores" range="Notas 9 e 10 · fãs, peça depoimento" value={res.promoters} pct={pctOf(res.promoters, total)} color={GRN} />
+            <Kpi icon={<Meh className="h-5 w-5" />} label="Neutros" range="Notas 7 e 8 · passivos, fáceis de perder" value={res.passives} pct={pctOf(res.passives, total)} color={YEL} />
+            <Kpi icon={<Frown className="h-5 w-5" />} label="Detratores" range="Notas 0 a 6 · risco de cancelar, contato urgente" value={res.detractors} pct={pctOf(res.detractors, total)} color={RED} />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className={CARD}>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Respostas e adesão</p>
+              <div className="mt-2 flex items-end gap-3">
+                <span className="text-3xl font-black text-slate-100">{rows ? rows.length : '—'}</span>
+                <span className="pb-1 text-xs text-slate-400">resposta(s) no período</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-400">
+                {adherence == null ? 'Calculando adesão...' : `${responded} de ${storesCount} lojas responderam (${adherence}%)`}
+              </p>
+            </div>
+            <div className={CARD}>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Termômetro do período</p>
+              {delta == null ? (
+                <p className="mt-2 text-sm text-slate-500">Sem respostas no período anterior para comparar.</p>
+              ) : (
+                <>
+                  <div className="mt-2 flex items-end gap-3">
+                    <span className="text-3xl font-black" style={{ color: delta > 0 ? GRN : delta < 0 ? RED : '#94a3b8' }}>
+                      {delta > 0 ? '+' : ''}{delta} {Math.abs(delta) === 1 ? 'ponto' : 'pontos'}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">vs. {days} dias anteriores (NPS {prevNps})</p>
+                </>
+              )}
+            </div>
           </div>
 
           <div className={CARD}>
@@ -437,12 +486,26 @@ export default function NpsPanel() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {surveyId ? (res.questions ?? []).map((q) => (
-                  <Ranking key={q.title} title={q.title} items={q.items} labels={{}} color={YEL} emptyText="Sem respostas no período." />
-                )) : (<><Ranking title="Maiores dores" items={res.pains} labels={labelsPain} color={RED} emptyText="Nenhuma dor registrada no período." />
-            <Ranking title="Funcionalidades preferidas" items={res.features} labels={labelsFeat} color={GRN} emptyText="Nenhuma preferência registrada no período." /></>)}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <NpsRadar rows={rows} />
+            <TopIdeas />
           </div>
+
+          {surveyId ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {(res.questions ?? []).map((q) => (
+                <Ranking key={q.title} title={q.title} items={q.items} labels={{}} color={YEL} emptyText="Sem respostas no período." />
+              ))}
+            </div>
+          ) : (
+            <details className="rounded-2xl border border-slate-700/80 bg-slate-800/40 p-4">
+              <summary className="cursor-pointer text-sm font-bold text-slate-300">Ver maiores dores e funcionalidades preferidas</summary>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <Ranking title="Maiores dores" items={res.pains} labels={labelsPain} color={RED} emptyText="Nenhuma dor registrada no período." />
+                <Ranking title="Funcionalidades preferidas" items={res.features} labels={labelsFeat} color={GRN} emptyText="Nenhuma preferência registrada no período." />
+              </div>
+            </details>
+          )}
         </>
       ))}
 
