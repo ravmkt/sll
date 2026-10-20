@@ -298,57 +298,6 @@ function SlidesEditor({ slides, onChange }: { slides: MktSlide[]; onChange: (s: 
   );
 }
 
-const NOTICE_PREVIEW: Record<NoticeStyle, string> = {
-  info: 'bg-blue-600 text-white',
-  warning: 'bg-amber-400 text-slate-900',
-  urgent: 'bg-red-600 text-white',
-};
-
-function ItemPreview({ draft }: { draft: MktDraft }) {
-  const wrap = (child: React.ReactNode, note?: string) => (
-    <div className="md:col-span-2 space-y-1">
-      <label className={labelCls}>Pré-visualização</label>
-      {child}
-      {note && <p className="text-[13px] text-slate-500">{note}</p>}
-    </div>
-  );
-
-  if (draft.kind === 'notice') {
-    const txt = draft.body.trim() || 'Sua mensagem aparece aqui.';
-    return wrap(
-      <div className="overflow-hidden rounded-lg border border-slate-700 bg-white">
-        <div className={'flex items-center gap-3 px-4 py-2 text-sm ' + NOTICE_PREVIEW[draft.notice_style ?? 'info']}>
-          <p className="min-w-0 flex-1 text-center font-semibold">{txt}</p>
-          {draft.cta_url && <span className="shrink-0 rounded-md bg-black/20 px-3 py-1 text-xs font-bold">{draft.cta_label || 'Saiba mais'}</span>}
-          <X className="w-4 h-4 shrink-0" />
-        </div>
-        <div className="flex h-10 items-center border-b border-slate-200 px-4 text-xs font-bold text-slate-400">SLLhub</div>
-        <div className="h-10 bg-slate-50" />
-      </div>,
-      'A barra fica fixa no topo do painel do lojista.'
-    );
-  }
-
-  if (draft.kind === 'banner') {
-    const imgs = (draft.slides ?? []).filter((s) => s.image_url);
-    if (imgs.length === 0) return null;
-    return wrap(
-      <div className="overflow-hidden rounded-lg border border-slate-700 bg-white">
-        <img src={imgs[0].image_url} alt="" className="w-full" style={{ aspectRatio: '1200 / 150', objectFit: 'cover' }} />
-        <div className="h-10 bg-slate-50" />
-      </div>,
-      imgs.length > 1 ? 'Mostrando a imagem 1 de ' + imgs.length + ' do carrossel.' : undefined
-    );
-  }
-
-  if (!draft.image_url) return null;
-  return wrap(
-    <div className="flex items-center justify-center rounded-lg border border-slate-700 bg-black/60 p-4">
-      <img src={draft.image_url} alt="" className="w-full max-w-[360px] rounded-lg" style={{ aspectRatio: '900 / 600', objectFit: 'cover' }} />
-    </div>
-  );
-}
-
 function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
   draft: MktDraft; onChange: (d: MktDraft) => void; onCancel: () => void; onSave: () => void; saving: boolean;
 }) {
@@ -380,7 +329,7 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
                   <ImageUpload kind={draft.kind as 'popup'} value={draft.image_url} onChange={(u) => set('image_url', u)} />
                 )
             )}
-        <ItemPreview draft={draft} />
+        
             <div><label className={labelCls}>{draft.kind === 'notice' ? 'Link do botão (opcional)' : 'Link ao clicar na imagem'}</label>
           <LinkPicker value={draft.cta_url} onChange={(v) => set('cta_url', v)} /></div>
         <div><label className={labelCls}>Local de exibição</label>
@@ -459,42 +408,80 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
       {!draft && <KpiGrid kpis={itemKpis(kind, items)} />}
       {!draft && <MarketingChart kind={kind} />}
       {items.length === 0 && !draft && <p className="text-[15px] text-slate-500">Nenhum item criado.</p>}
-      <div className="space-y-2">
-        {items.map((i) => {
-          const st = statusOf(i);
-          return (
-            <div key={i.id} className="rounded-xl border border-slate-800 bg-slate-900 p-3 flex flex-wrap items-center gap-3">
-              {i.kind !== 'notice' && <Thumb url={i.slides?.[0]?.image_url || i.image_url} />}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-[15px] font-semibold text-slate-100 truncate">{i.title}</p>
-                  <span className={'text-xs font-bold px-2 py-0.5 rounded-full ' + st.cls}>{st.label}</span>
-                  {i.coupon_code && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">{i.coupon_code}</span>}
-                </div>
-                <p className="text-[13px] text-slate-400">
-                  {LOCATION_LABEL[i.location]} · {AUDIENCE_LABEL[i.audience]} · {fmtDate(i.starts_at)} → {fmtDate(i.ends_at)}
-                </p>
-              </div>
-              <div className="text-[13px] text-slate-300 tabular-nums">
-                {i.impressions} imp · {i.clicks} cliques · {ctr(i)} · {i.closes} disp.
-              </div>
-              <div className="flex items-center gap-1">
-                <button type="button" title={i.is_active ? 'Pausar' : 'Ativar'} onClick={() => toggle(i)} className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
-                  {i.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                </button>
-                <button type="button" title="Editar" onClick={() => setDraft(editDraft(i))} className="p-2 rounded-lg text-slate-300 hover:bg-slate-800">
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button type="button" title="Excluir" onClick={() => remove(i.id)}
-                  className={'p-2 rounded-lg ' + (confirmId === i.id ? 'bg-rose-600 text-white text-[13px] font-bold px-3' : 'text-rose-400 hover:bg-slate-800')}>
-                  {confirmId === i.id ? 'Confirmar?' : <Trash2 className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+      {items.length > 0 && (
+        <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900">
+          <table className="w-full text-left text-[13px]">
+            <thead className="border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400">
+              <tr>
+                <th className="px-3 py-3">Item</th>
+                <th className="px-3 py-3">Local</th>
+                <th className="px-3 py-3">Período</th>
+                <th className="px-3 py-3 text-right">Impressões</th>
+                <th className="px-3 py-3 text-right">Cliques</th>
+                <th className="px-3 py-3 text-right">CTR</th>
+                <th className="px-3 py-3 text-right">Dispensados</th>
+                <th className="px-3 py-3 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {items.map((i) => {
+                const st = statusOf(i);
+                return (
+                  <tr key={i.id} className="align-middle hover:bg-white/5">
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-3">
+                        {i.kind !== 'notice' && <Thumb url={i.slides?.[0]?.image_url || i.image_url} />}
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="max-w-[260px] truncate text-[15px] font-semibold text-slate-100">{i.title}</p>
+                            <span className={'rounded-full px-2 py-0.5 text-xs font-bold ' + st.cls}>{st.label}</span>
+                            {i.coupon_code && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-bold text-amber-300">{i.coupon_code}</span>}
+                          </div>
+                          <p className="text-[12px] text-slate-500">{AUDIENCE_LABEL[i.audience]}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2.5 text-slate-300">{LOCATION_LABEL[i.location]}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5 text-[12px] text-slate-400">
+                      {i.starts_at || i.ends_at ? fmtDate(i.starts_at) + ' → ' + (i.ends_at ? fmtDate(i.ends_at) : 'sem fim') : 'Sem prazo'}
+                    </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-slate-100">{i.impressions}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-slate-100">{i.clicks}</td>
+                    <td className="px-3 py-2.5 text-right font-bold tabular-nums text-[#fd8539]">{ctr(i)}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-slate-300">{i.closes}</td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center justify-end gap-1">
+                        <button type="button" title={i.is_active ? 'Pausar' : 'Ativar'} onClick={() => toggle(i)} className="rounded-lg p-2 text-slate-300 hover:bg-slate-800">
+                          {i.is_active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        </button>
+                        <button type="button" title="Editar" onClick={() => setDraft(editDraft(i))} className="rounded-lg p-2 text-slate-300 hover:bg-slate-800">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button type="button" title="Excluir" onClick={() => remove(i.id)}
+                          className={'rounded-lg p-2 ' + (confirmId === i.id ? 'bg-rose-600 px-3 text-[13px] font-bold text-white' : 'text-rose-400 hover:bg-slate-800')}>
+                          {confirmId === i.id ? 'Confirmar?' : <Trash2 className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot className="border-t border-slate-700 bg-slate-950/40 text-[13px] font-bold text-slate-200">
+              <tr>
+                <td className="px-3 py-3" colSpan={3}>Total do período</td>
+                <td className="px-3 py-3 text-right tabular-nums">{items.reduce((s, x) => s + x.impressions, 0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums">{items.reduce((s, x) => s + x.clicks, 0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-[#fd8539]">
+                  {ctr({ impressions: items.reduce((s, x) => s + x.impressions, 0), clicks: items.reduce((s, x) => s + x.clicks, 0), closes: 0 })}
+                </td>
+                <td className="px-3 py-3 text-right tabular-nums">{items.reduce((s, x) => s + x.closes, 0)}</td>
+                <td />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}</div>
   );
 }
 
