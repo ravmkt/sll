@@ -5,10 +5,14 @@ export type NoahRecent = {
   created_at: string;
   store_name: string;
   model: string | null;
+  prompt_tokens: number;
+  completion_tokens: number;
   total_tokens: number;
   finish_reason: string | null;
   user_message: string | null;
 };
+export type NoahByModel = { model: string; questions: number; prompt_tokens: number; completion_tokens: number; total_tokens: number };
+export type NoahPrice = { model: string; input_usd: number; output_usd: number };
 
 const iso = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -18,16 +22,18 @@ export function rangeFromDays(days: number) {
   const start = new Date();
   start.setDate(end.getDate() - (days - 1));
   start.setHours(0, 0, 0, 0);
-  return { start: iso(start), end: iso(end), from: start.toISOString() };
+  return { start: iso(start), end: iso(end), from: start.toISOString(), to: new Date(Date.now() + 86400000).toISOString() };
 }
 
 export async function getNoahUsage(days: number) {
   const r = rangeFromDays(days);
-  const [daily, recent] = await Promise.all([
+  const [daily, recent, byModel, prices] = await Promise.all([
     supabase.rpc('admin_noah_daily', { p_start: r.start, p_end: r.end }),
     supabase.rpc('admin_noah_recent', { p_limit: 50 }),
+    supabase.rpc('admin_noah_metrics', { p_from: r.from, p_to: r.to }),
+    supabase.from('noah_models').select('model,input_usd,output_usd'),
   ]);
-  const err = daily.error || recent.error;
+  const err = daily.error || recent.error || byModel.error || prices.error;
   if (err) throw new Error(err.message);
   const n = (v: unknown) => Number(v ?? 0);
   return {
@@ -36,7 +42,15 @@ export async function getNoahUsage(days: number) {
     })) as NoahDaily[],
     recent: ((recent.data ?? []) as any[]).map((x) => ({
       created_at: String(x.created_at), store_name: String(x.store_name), model: x.model ?? null,
-      total_tokens: n(x.total_tokens), finish_reason: x.finish_reason ?? null, user_message: x.user_message ?? null,
+      prompt_tokens: n(x.prompt_tokens), completion_tokens: n(x.completion_tokens), total_tokens: n(x.total_tokens),
+      finish_reason: x.finish_reason ?? null, user_message: x.user_message ?? null,
     })) as NoahRecent[],
+    byModel: ((byModel.data ?? []) as any[]).map((x) => ({
+      model: String(x.model ?? '—'), questions: n(x.questions), prompt_tokens: n(x.prompt_tokens),
+      completion_tokens: n(x.completion_tokens), total_tokens: n(x.total_tokens),
+    })) as NoahByModel[],
+    prices: ((prices.data ?? []) as any[]).map((x) => ({
+      model: String(x.model), input_usd: n(x.input_usd), output_usd: n(x.output_usd),
+    })) as NoahPrice[],
   };
 }
