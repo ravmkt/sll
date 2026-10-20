@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronRight, GripVertical, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { getModulesOverview, reorderHubModules, type ModulesData } from '@/services/admin/modulesService';
+import RevenueSection from '@/components/admin/RevenueSection';
+import { getModulesRevenue, listStoreOptions, brlCents, type ModulesRevenue, type StoreOpt } from '@/services/admin/modulesRevenue';
 import ModuloDetalhe from '@/components/admin/ModuloDetalhe';
 import NovoModuloModal from '@/components/admin/NovoModuloModal';
 import ComboSection from '@/components/admin/ComboSection';
@@ -9,6 +11,7 @@ import SandboxStoreSelect from '@/components/master/SandboxStoreSelect';
 import { CARD, SELECT, STATUS_LABEL, ModuleLogo, brl, int } from '@/components/admin/moduleUi';
 
 const TH = 'px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-500';
+const STATUS_TIP: Record<string, string> = { active: "Ativo: visível e disponível para contratação.", coming_soon: "Em breve: aparece como lançamento futuro, ainda sem contratação.", hidden: "Oculto: invisível para os lojistas (rascunho)." };
 
 export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: (id: string) => void; onOpenPlans: (slug: string) => void }) {
   const [days, setDays] = useState(30);
@@ -21,6 +24,10 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
   const [dragSlug, setDragSlug] = useState<string | null>(null);
   const [overSlug, setOverSlug] = useState<string | null>(null);
   const blocked = useRef(false);
+  const [rev, setRev] = useState<ModulesRevenue | null>(null);
+  const [revLoading, setRevLoading] = useState(false);
+  const [store, setStore] = useState('');
+  const [stores, setStores] = useState<StoreOpt[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -31,6 +38,14 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
   }, [days]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { listStoreOptions().then(setStores).catch(() => setStores([])); }, []);
+  useEffect(() => {
+    setRevLoading(true);
+    getModulesRevenue(days, store || null)
+      .then(setRev)
+      .catch((e) => { setRev(null); toast.error(e?.message || 'Erro ao carregar a receita.'); })
+      .finally(() => setRevLoading(false));
+  }, [days, store]);
 
   if (selected) {
     return (
@@ -49,6 +64,8 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
         (a, b) => (a.status === 'active' ? 0 : 1) - (b.status === 'active' ? 0 : 1) || (a.sort_order ?? 999) - (b.sort_order ?? 999),
       )
     : [];
+
+  const revBy = new Map((rev?.items || []).filter((i) => !i.is_combo).map((i) => [i.item_key, i.cents] as [string, number]));
 
   const dropOn = async (target: (typeof list)[number]) => {
     const src = list.find((x) => x.slug === dragSlug);
@@ -90,7 +107,7 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
             <option value={7}>Últimos 7 dias</option>
             <option value={30}>Últimos 30 dias</option>
-            <option value={90}>Últimos 90 dias</option>
+            <option value={90}>Últimos 90 dias</option><option value={180}>Últimos 6 meses</option><option value={365}>Últimos 12 meses</option>
           </select>
         </div>
       </div>
@@ -100,6 +117,8 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
       {creating && <NovoModuloModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load(); }} />}
 
       <SandboxStoreSelect />
+
+      <RevenueSection data={rev} loading={revLoading} stores={stores} store={store} onStore={setStore} />
 
       <div className="flex gap-2">
         {([['modulos', 'Módulos individuais'], ['combos', 'Combos']] as const).map(([k, l]) => (
@@ -137,9 +156,11 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
                   <th className={TH}>Módulo</th>
                   <th className={TH}>Status</th>
                   <th className={TH}>Venda</th>
-                  <th className={`${TH} text-right`}>Com acesso</th>
+                  <th className={`${TH} text-right`}>Lojas</th>
                   <th className={`${TH} text-right`}>Pagantes</th>
+                  <th className={`${TH} text-right`}>Trial</th>
                   <th className={`${TH} text-right`}>Receita mensal</th>
+                  <th className={`${TH} text-right`}>Receita no período</th>
                   <th className={`${TH} text-right`}>Views ({data.days}d)</th>
                   <th className={TH} />
                 </tr>
@@ -199,7 +220,7 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
                     </td>
                     <td className="px-3 py-3">
                       <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${m.status === 'active' ? 'bg-emerald-500/15 text-emerald-300' : m.status === 'hidden' ? 'bg-slate-500/15 text-slate-400' : 'bg-amber-500/15 text-amber-300'}`}>
-                        {STATUS_LABEL[m.status] || m.status}
+                        <span title={STATUS_TIP[m.status]}>{STATUS_LABEL[m.status] || m.status}</span>
                       </span>
                     </td>
                     <td className="px-3 py-3">
@@ -209,7 +230,9 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
                     </td>
                     <td className="px-3 py-3 text-right font-semibold text-white">{int(m.access)}</td>
                     <td className="px-3 py-3 text-right font-semibold text-emerald-300">{int(m.paying)}</td>
+                    <td className="px-3 py-3 text-right font-semibold text-amber-300">{int(m.trial)}</td>
                     <td className="px-3 py-3 text-right font-semibold text-white">{brl(m.mrr)}</td>
+                    <td className="px-3 py-3 text-right font-semibold text-[#fd8539]">{brlCents(revBy.get(m.slug) ?? 0)}</td>
                     <td className="px-3 py-3 text-right text-slate-300">{m.views === null ? '—' : int(m.views)}</td>
                     <td className="px-3 py-3 text-right text-slate-500"><ChevronRight size={16} /></td>
                   </tr>
