@@ -39,7 +39,7 @@ export default function ItemCard({ kind, dot, logos, title, subtitle, stats, rev
       {dnd?.draggable && <GripVertical size={16} title="Arraste para mudar a ordem" className="absolute right-2 top-2 cursor-grab text-slate-600 active:cursor-grabbing" />}
 
       <div onClick={onOpen} className={`flex w-full flex-col items-center gap-2 ${onOpen ? 'cursor-pointer' : ''}`}>
-        <div className="flex h-12 items-center justify-center -space-x-3">
+        <div className="flex h-12 items-center justify-center gap-2">
           {logos.slice(0, 3).map((l, i) => <ModuleLogo key={i} url={l.url} name={l.name} size={44} />)}
         </div>
         <p className="max-w-full truncate text-[15px] font-bold text-white" title={title}>{title}</p>

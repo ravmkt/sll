@@ -113,6 +113,8 @@ export default function ComboSection({ rev, logos, store }: { rev: ModulesRevenu
     }
   };
 
+  const live = pricing ? ((plans || []).find((x) => x.id === pricing.id) ?? pricing) : null;
+
   const dnd = (p: DynamicPlan) => ({
     draggable: true,
     onDragStart: (e: DragEvent<HTMLDivElement>) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id); setDragId(p.id); },
@@ -173,15 +175,15 @@ export default function ComboSection({ rev, logos, store }: { rev: ModulesRevenu
         </div>
       )}
 
-      {pricing && (
+      {pricing && live && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4" onClick={() => setPricing(null)}>
           <div className={`${CARD} w-full max-w-md space-y-3`} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <p className="text-[15px] font-bold text-white">Preço de {pricing.plan_name}</p>
+              <p className="text-[15px] font-bold text-white">Preço de {live.plan_name}</p>
               <button type="button" onClick={() => setPricing(null)} className="cursor-pointer text-[13px] text-slate-400 hover:text-white">Fechar</button>
             </div>
-            <ComboPricing combo={pricing} list={costs.listPrices(pricing.id)} pct={costs.discounts[pricing.id] ?? 0} onChanged={refresh} />
-            <div className="flex items-center justify-center gap-2 text-[13px] text-slate-500"><span>Margem</span><MarginBadge m={costs.marginOf(pricing)} /></div>
+            <ComboPricing combo={live} list={costs.listPrices(pricing.id)} pct={costs.discounts[pricing.id] ?? 0} onChanged={refresh} />
+            <div className="flex items-center justify-center gap-2 text-[13px] text-slate-500"><span>Margem</span><MarginBadge m={costs.marginOf(live)} /></div>
           </div>
         </div>
       )}
