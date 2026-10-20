@@ -7,8 +7,7 @@ const brl4 = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', 
 const dt = (s: string) => new Date(s).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 const dm = (s: string) => `${s.slice(8, 10)}/${s.slice(5, 7)}`;
 
-export default function NoahUsageTab() {
-  const [days, setDays] = useState(30);
+export default function NoahUsageTab({ range }: { range: { from: Date; to: Date } }) {
   const [daily, setDaily] = useState<NoahDaily[]>([]);
   const [recent, setRecent] = useState<NoahRecent[]>([]);
   const [byModel, setByModel] = useState<NoahByModel[]>([]);
@@ -22,15 +21,15 @@ export default function NoahUsageTab() {
     let alive = true;
     setLoading(true);
     setError('');
-    getNoahUsage(days)
+    getNoahUsage(range)
       .then((r) => {
         if (!alive) return;
-        setDaily(r.daily); setRecent(r.recent); setByModel(r.byModel); setPrices(r.prices);
+        setDaily(r.daily); setRecent(r.recent.filter((x) => { const t = new Date(x.created_at).getTime(); return t >= range.from.getTime() && t < range.to.getTime(); })); setByModel(r.byModel); setPrices(r.prices);
       })
       .catch((e) => { if (alive) setError(e.message || 'Erro ao carregar'); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [days]);
+  }, [range]);
 
   const priceMap = useMemo(() => new Map(prices.map((p) => [p.model, p])), [prices]);
   const costUsd = (model: string | null, p: number, c: number): number | null => {
@@ -57,18 +56,7 @@ export default function NoahUsageTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Uso do Noah</h2>
-        <select
-          value={days}
-          onChange={(e) => setDays(Number(e.target.value))}
-          className="rounded-md border border-white/10 bg-transparent px-3 py-1.5 text-sm"
-        >
-          <option value={7}>7 dias</option>
-          <option value={30}>30 dias</option>
-          <option value={90}>90 dias</option>
-        </select>
-      </div>
+      <h2 className="text-lg font-semibold">Uso do Noah</h2>
 
       {error && <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">{error}. Confirme que a migração 20261201 foi executada.</div>}
       {/* ALERTA_CORTES */}
@@ -95,7 +83,7 @@ export default function NoahUsageTab() {
           {daily.map((d) => (
             <div key={d.day} className="flex h-full min-w-0 flex-1 flex-col" title={`${dm(d.day)}: ${d.questions} perguntas, ${d.truncated} cortadas`}>
               <div className="relative flex-1">
-                <div className="absolute bottom-0 w-full rounded-t bg-[#0094eb]/70" style={{ height: `${(d.questions / maxQ) * 100}%` }} />
+                <div className="absolute bottom-0 w-full rounded-t bg-[#fd8539]" style={{ height: `${(d.questions / maxQ) * 100}%` }} />
                 <span className="absolute w-full text-center text-[11px] font-semibold text-slate-200" style={{ bottom: `calc(${(d.questions / maxQ) * 100}% + 2px)` }}>
                   {d.questions}
                 </span>

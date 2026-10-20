@@ -6,8 +6,7 @@ import { MasterLayout, type MasterTab } from '@/components/admin/MasterLayout';
 import DashboardTab from '@/components/admin/DashboardTab';
 import LojasTab from '@/components/admin/LojasTab';
 import MarketingTab from '@/components/admin/MarketingTab';
-import NoahSupportTab from '@/components/master/NoahSupportTab';
-import NoahUsageTab from '@/components/admin/NoahUsageTab';
+import NoahPage from '@/components/admin/NoahPage';
 import BenchmarkUpdateCard from '@/components/admin/BenchmarkUpdateCard';
 
 export default function AdminMasterPage() {
@@ -30,7 +29,7 @@ export default function AdminMasterPage() {
       ) : tab === 'lojas' ? (
         <LojasTab />
       ) : tab === 'noah' ? (
-<><NoahSupportTab /><div className="mt-8"><NoahUsageTab /></div></>
+<NoahPage />
 ) : tab === 'marketing' ? (
         <MarketingTab />
       ) : tab === 'precos' ? (

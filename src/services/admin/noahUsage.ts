@@ -25,8 +25,8 @@ export function rangeFromDays(days: number) {
   return { start: iso(start), end: iso(end), from: start.toISOString(), to: new Date(Date.now() + 86400000).toISOString() };
 }
 
-export async function getNoahUsage(days: number) {
-  const r = rangeFromDays(days);
+export async function getNoahUsage(range: { from: Date; to: Date }) {
+  const r = { start: iso(range.from), end: iso(new Date(range.to.getTime() - 1)), from: range.from.toISOString(), to: range.to.toISOString() };
   const [daily, recent, byModel, prices] = await Promise.all([
     supabase.rpc('admin_noah_daily', { p_start: r.start, p_end: r.end }),
     supabase.rpc('admin_noah_recent', { p_limit: 50 }),

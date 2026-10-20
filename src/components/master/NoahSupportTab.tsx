@@ -1,6 +1,6 @@
 import { useFxRate } from '../../hooks/admin/useFxRate';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BookOpen, ChevronLeft, ChevronRight, CloudDownload, Coins, ExternalLink, FileUp, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Store, Trash2, X, Zap } from 'lucide-react';
+import { BookOpen, CloudDownload, Coins, ExternalLink, FileUp, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Store, Trash2, X, Zap } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { showError, showSuccess } from '@/utils/toast';
 
@@ -75,7 +75,7 @@ function StoresModal({ range, cost, rate, onClose }: { range: { from: Date; to: 
   }, [rows, cost]);
 
   const total = list.reduce((a, x) => ({ q: a.q + x.q, t: a.t + x.t, usd: a.usd + x.usd }), { q: 0, t: 0, usd: 0 });
-  const month = range.from.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const month = range.from.toLocaleDateString('pt-BR') + ' a ' + new Date(range.to.getTime() - 1).toLocaleDateString('pt-BR');
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
@@ -119,14 +119,13 @@ function StoresModal({ range, cost, rate, onClose }: { range: { from: Date; to: 
   );
 }
 
-export default function NoahSupportTab() {
+export default function NoahSupportTab({ range }: { range: { from: Date; to: Date } }) {
   const [items, setItems] = useState<Item[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
   const [models, setModels] = useState<ModelRow[]>([]);
   const [cfg, setCfg] = useState<Settings | null>(null);
   const [form, setForm] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [off, setOff] = useState(0);
   const [editing, setEditing] = useState<Partial<Item> | null>(null);
   const [saving, setSaving] = useState(false);
   const [savingCfg, setSavingCfg] = useState(false);
@@ -138,11 +137,6 @@ export default function NoahSupportTab() {
   const [listing, setListing] = useState(false);
   const [avail, setAvail] = useState<{ model: string; label: string }[]>([]);
   const [reading, setReading] = useState(false);
-
-  const range = useMemo(() => {
-    const n = new Date();
-    return { from: new Date(n.getFullYear(), n.getMonth() + off, 1), to: new Date(n.getFullYear(), n.getMonth() + off + 1, 1) };
-  }, [off]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -340,23 +334,10 @@ export default function NoahSupportTab() {
     showSuccess('Tópico excluído.');
     void load();
   };
-
-  const monthName = range.from.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   const modelOptions = form && !models.some((m) => m.model === form.model) ? [...models, { model: form.model, label: form.model } as ModelRow] : models;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-black text-white">Suporte Noah</h2>
-          <p className="text-sm text-slate-400">Configuração, consumo da IA e base de conhecimento do assistente.</p>
-        </div>
-        <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-[#111524] px-1 py-1">
-          <button type="button" aria-label="Mês anterior" onClick={() => setOff((v) => v - 1)} className="cursor-pointer rounded-lg p-1.5 text-slate-300 hover:bg-white/10"><ChevronLeft className="h-4 w-4" /></button>
-          <span className="min-w-[130px] text-center text-xs font-bold capitalize text-white">{monthName}</span>
-          <button type="button" aria-label="Próximo mês" disabled={off >= 0} onClick={() => setOff((v) => v + 1)} className="cursor-pointer rounded-lg p-1.5 text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button>
-        </div>
-      </div>
 
       {loading && !cfg ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-slate-500" /></div>
@@ -364,7 +345,7 @@ export default function NoahSupportTab() {
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className={card}>
-              <div className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-[#0094eb]" /><span className={label}>Perguntas no mês</span></div>
+              <div className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-[#0094eb]" /><span className={label}>Perguntas no período</span></div>
               <p className="mt-2 text-3xl font-black text-white">{n0(t.q)}</p>
             </div>
             <div className={card}>
