@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { getStoreFlags, type StoreFlag } from '@/services/admin/storesService';
 import { setFlagStore } from '@/services/admin/flagsService';
 import { CARD, modLabel } from '@/components/admin/storeUi';
+import StoreAiCreditsCard from '@/components/admin/StoreAiCreditsCard';
 
 const MODE: Record<StoreFlag['mode'], { label: string; cls: string }> = {
   all: { label: 'Liberada para todas', cls: 'bg-emerald-500/15 text-emerald-300' },
@@ -36,6 +37,8 @@ export default function StoreFlagsCard({ storeId }: { storeId: string }) {
   };
 
   return (
+    <>
+    <StoreAiCreditsCard storeId={storeId} />
     <div className={`${CARD} space-y-3`}>
       <p className="text-[15px] font-bold text-white">Feature flags da loja</p>
       {flags === null ? (
@@ -71,5 +74,6 @@ export default function StoreFlagsCard({ storeId }: { storeId: string }) {
         </div>
       )}
     </div>
+    </>
   );
 }
