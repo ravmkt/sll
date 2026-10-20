@@ -1,5 +1,5 @@
 create or replace function public.noah_plan_credits(p_store_id uuid)
-returns int
+returns integer
 language plpgsql
 stable
 security definer
@@ -14,21 +14,20 @@ begin
       and coalesce(s.is_current, true)
       and s.status in ('active', 'trial', 'trialing', 'lifetime')
   loop
-    if r.status in ('trial', 'trialing') then
+    if r.status in ('trial', 'trialing', 'lifetime') then
       v := 1000;
     else
-      v := null;
       select coalesce(
                nullif(dp.limits_config->>'ai_messages', '')::int,
                case
-                 when lower(coalesce(dp.plan_name, '')) like '%scale%' then 1000
-                 when lower(coalesce(dp.plan_name, '')) like '%pro%' then 250
+                 when dp.is_combo then 1000
+                 when lower(coalesce(dp.plan_tier, '') || ' ' || coalesce(dp.plan_name, '')) like '%scale%' then 1000
+                 when lower(coalesce(dp.plan_tier, '') || ' ' || coalesce(dp.plan_name, '')) like '%pro%' then 250
                  else 50
                end)
         into v
         from public.dynamic_plans dp
        where dp.id = r.dynamic_plan_id;
-      if v is null and r.status = 'lifetime' then v := 250; end if;
       v := coalesce(v, 50);
     end if;
     best := greatest(best, v);
