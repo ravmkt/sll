@@ -240,6 +240,7 @@ Deno.serve(async (req) => {
       total_tokens: tt || pt + ct,
       user_message: lastText.slice(0, 500),
       finish_reason: finish || null,
+      finish_reason: finish || null,
     });
     if (logErr) console.error("noah_logs", logErr.message);
 
