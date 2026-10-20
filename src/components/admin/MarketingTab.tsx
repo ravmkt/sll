@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { KpiGrid, Thumb, itemKpis, couponKpis } from '@/components/admin/MarketingKpi';
+import CouponRanking from '@/components/admin/CouponRanking';
 import MarketingChart from '@/components/admin/MarketingChart';
 import EmailFunnel from '@/components/admin/EmailFunnel';
 import ImageUpload from '@/components/admin/ImageUpload';
@@ -697,6 +698,7 @@ function Cupom() {
       )}
 
       {!draft && <KpiGrid kpis={couponKpis(items)} />}
+      {!draft && <CouponRanking />}
       {items.length === 0 && !draft && <p className="text-[15px] text-slate-500">Nenhum cupom criado.</p>}
 
       <div className="space-y-2">
