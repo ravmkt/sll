@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
         continue;
       }
       console.error("noah-support gemini", m, res.status, (await res.text()).slice(0, 300));
-      if (res.status === 404 || res.status === 429 || res.status >= 500) continue;
+      if (res.status === 400 || res.status === 404 || res.status === 429 || res.status >= 500) continue;
       break;
     }
     if (!data) { await refund(); return json({ error: "IA_INDISPONIVEL" }, 502); }
