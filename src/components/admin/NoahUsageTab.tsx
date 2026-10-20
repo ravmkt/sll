@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getNoahUsage, type NoahDaily, type NoahModel, type NoahRecent } from '@/services/admin/noahUsage';
+import { getNoahUsage, type NoahDaily, type NoahRecent } from '@/services/admin/noahUsage';
 
 const int = (n: number) => new Intl.NumberFormat('pt-BR').format(n);
 const dt = (s: string) => new Date(s).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
@@ -7,7 +7,6 @@ const dt = (s: string) => new Date(s).toLocaleString('pt-BR', { timeZone: 'Ameri
 export default function NoahUsageTab() {
   const [days, setDays] = useState(30);
   const [daily, setDaily] = useState<NoahDaily[]>([]);
-  const [models, setModels] = useState<NoahModel[]>([]);
   const [recent, setRecent] = useState<NoahRecent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -17,7 +16,7 @@ export default function NoahUsageTab() {
     setLoading(true);
     setError('');
     getNoahUsage(days)
-      .then((r) => { if (alive) { setDaily(r.daily); setModels(r.models); setRecent(r.recent); } })
+      .then((r) => { if (alive) { setDaily(r.daily); setRecent(r.recent); } })
       .catch((e) => { if (alive) setError(e.message || 'Erro ao carregar'); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
@@ -73,23 +72,6 @@ export default function NoahUsageTab() {
           ))}
           {!daily.length && !loading && <div className="text-sm opacity-60">Sem dados no período.</div>}
         </div>
-      </div>
-
-      <div className="rounded-lg border border-white/10 p-4">
-        <div className="mb-3 text-sm font-medium">Por modelo</div>
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs opacity-60">
-            <tr><th className="py-1">Modelo</th><th>Perguntas</th><th>Entrada</th><th>Saída</th><th>Total</th></tr>
-          </thead>
-          <tbody>
-            {models.map((m) => (
-              <tr key={m.model} className="border-t border-white/5">
-                <td className="py-1.5">{m.model}</td><td>{int(m.questions)}</td>
-                <td>{int(m.prompt_tokens)}</td><td>{int(m.completion_tokens)}</td><td>{int(m.total_tokens)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
 
       <div className="rounded-lg border border-white/10 p-4">
