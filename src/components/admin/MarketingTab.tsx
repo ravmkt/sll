@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { KpiGrid, Thumb, itemKpis, couponKpis } from '@/components/admin/MarketingKpi';
+import MarketingChart from '@/components/admin/MarketingChart';
+import EmailFunnel from '@/components/admin/EmailFunnel';
 import ImageUpload from '@/components/admin/ImageUpload';
 import NpsPanel from '@/components/admin/NpsPanel';
 import EmailCampaigns from '@/components/admin/EmailCampaigns';
@@ -454,6 +456,7 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
       {err && <p className="text-[15px] text-rose-400">{err}</p>}
       {draft && <ItemForm draft={draft} onChange={setDraft} onCancel={() => setDraft(null)} onSave={save} saving={saving} />}
       {!draft && <KpiGrid kpis={itemKpis(kind, items)} />}
+      {!draft && <MarketingChart kind={kind} />}
       {items.length === 0 && !draft && <p className="text-[15px] text-slate-500">Nenhum item criado.</p>}
       <div className="space-y-2">
         {items.map((i) => {
@@ -766,7 +769,7 @@ export default function MarketingTab() {
       {tab === 'banner' && <ItemsPanel kind="banner" />}
       {tab === 'popup' && <ItemsPanel kind="popup" />}
           {tab === 'aviso' && <ItemsPanel kind="notice" />}
-      {tab === 'email' && <EmailCampaigns />}
+      {tab === 'email' && (<><EmailFunnel /><EmailCampaigns /></>)}
           {false && (
         <ChannelBlock title="E-mail marketing" icon={<Mail className="w-4 h-4" />} labels={['Enviados', 'Abertos', 'Clicados', 'Respondidos']}
           note="Envio de e-mail ainda não conectado. Precisa de um provedor (ex.: Resend, SendGrid) para medir abertura e resposta." />
