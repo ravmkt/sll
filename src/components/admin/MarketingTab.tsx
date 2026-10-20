@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import ImageUpload from '@/components/admin/ImageUpload';
 import NpsPanel from '@/components/admin/NpsPanel';
 import EmailCampaigns from '@/components/admin/EmailCampaigns';
@@ -63,11 +64,17 @@ function ChannelBlock({ title, icon, labels, note, values }: { title: string; ic
   );
 }
 
-type MetricCard = { title: string; items: { label: string; value: string | number }[] };
+type MetricCard = { title: string; tab?: string; items: { label: string; value: string | number }[] };
+
+// Abre a aba do canal clicando no botao correspondente da barra de abas
+function goToTab(label: string) {
+  const btn = Array.from(document.querySelectorAll('button')).find((b) => (b.textContent || '').trim() === label);
+  if (btn) { (btn as HTMLButtonElement).click(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+}
 
 function MetricCardView({ card }: { card: MetricCard }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900 p-5">
       <h3 className="text-lg font-bold text-slate-100">{card.title}</h3>
       <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 text-center">
         {card.items.map((it) => (
@@ -77,6 +84,15 @@ function MetricCardView({ card }: { card: MetricCard }) {
           </div>
         ))}
       </div>
+      {card.tab && (
+        <button
+          type="button"
+          onClick={() => goToTab(card.tab as string)}
+          className="mt-5 cursor-pointer self-start text-[13px] font-semibold text-sky-400 transition-colors hover:text-sky-300"
+        >
+          {'Ver relat\u00f3rio detalhado \u2192'}
+        </button>
+      )}
     </div>
   );
 }
@@ -93,10 +109,41 @@ function Visao() {
   const [em, setEm] = useState<EmailMetrics>(EMPTY_EMAIL_METRICS);
   const [err, setErr] = useState<string | null>(null);
 
+  const [cp, setCp] = useState({ total: 0, active: 0, uses: 0, expired: 0 });
+  const [nps, setNps] = useState({ score: '\u2014' as string, total: 0, prom: 0, detr: 0 });
+
   useEffect(() => {
     setErr(null);
     getMetrics(days).then(setM).catch((e) => setErr(e?.message || 'Erro ao carregar m\u00e9tricas'));
     getEmailMetrics(days).then(setEm).catch(() => {});
+
+    listMktCoupons().then((list: any[]) => {
+      const now = Date.now();
+      let active = 0, expired = 0, uses = 0;
+      for (const c of list || []) {
+        uses += Number(c.times_used) || 0;
+        const end = c.expires_at ?? c.valid_until ?? c.ends_at ?? null;
+        if (end && new Date(end).getTime() < now) expired++;
+        else if ((c.is_active ?? c.active ?? true) !== false) active++;
+      }
+      setCp({ total: (list || []).length, active, uses, expired });
+    }).catch(() => {});
+
+    const since = new Date(Date.now() - days * 86400000).toISOString();
+    (supabase as any)
+      .from('app_feedbacks')
+      .select('score')
+      .eq('type', 'nps_wizard')
+      .gte('created_at', since)
+      .not('score', 'is', null)
+      .limit(5000)
+      .then(({ data }: any) => {
+        const sc: number[] = (data || []).map((r: any) => Number(r.score));
+        const total = sc.length;
+        const prom = sc.filter((s) => s >= 9).length;
+        const detr = sc.filter((s) => s <= 6).length;
+        setNps({ score: total ? String(Math.round(((prom - detr) / total) * 100)) : '\u2014', total, prom, detr });
+      });
   }, [days]);
 
   const countsItems = (c?: MktCounts) => [
@@ -108,10 +155,11 @@ function Visao() {
 
   // Para um novo modulo/canal, adicione um item aqui.
   const cards: MetricCard[] = [
-    { title: 'Banners', items: countsItems(m?.banner) },
-    { title: 'Popups', items: countsItems(m?.popup) },
+    { title: 'Banners', tab: 'Banners', items: countsItems(m?.banner) },
+    { title: 'Popups', tab: 'Popups', items: countsItems(m?.popup) },
     {
       title: 'E-mails',
+      tab: 'E-mail',
       items: [
         { label: 'Enviados', value: em.sent },
         { label: 'Abertos', value: em.opened },
@@ -119,14 +167,35 @@ function Visao() {
         { label: 'Rejeitados', value: em.bounced + em.failed },
       ],
     },
-    { title: 'Avisos', items: countsItems(m?.notice) },
+    { title: 'Avisos', tab: 'Avisos', items: countsItems(m?.notice) },
     {
       title: 'WhatsApp',
+      tab: 'WhatsApp',
       items: [
         { label: 'Enviadas', value: 0 },
         { label: 'Lidas', value: 0 },
         { label: 'Clicadas', value: 0 },
         { label: 'Respondidas', value: 0 },
+      ],
+    },
+    {
+      title: 'Cupons',
+      tab: 'Cupom',
+      items: [
+        { label: 'Ativos', value: cp.active },
+        { label: 'Usos', value: cp.uses },
+        { label: 'Expirados', value: cp.expired },
+        { label: 'Total', value: cp.total },
+      ],
+    },
+    {
+      title: 'NPS',
+      tab: 'NPS',
+      items: [
+        { label: 'Nota NPS', value: nps.score },
+        { label: 'Respostas', value: nps.total },
+        { label: 'Promotores', value: nps.prom },
+        { label: 'Detratores', value: nps.detr },
       ],
     },
   ];
