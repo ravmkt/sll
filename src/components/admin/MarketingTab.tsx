@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { KpiGrid, Thumb, itemKpis, couponKpis } from '@/components/admin/MarketingKpi';
 import ImageUpload from '@/components/admin/ImageUpload';
 import NpsPanel from '@/components/admin/NpsPanel';
 import EmailCampaigns from '@/components/admin/EmailCampaigns';
@@ -452,12 +453,14 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
       </div>
       {err && <p className="text-[15px] text-rose-400">{err}</p>}
       {draft && <ItemForm draft={draft} onChange={setDraft} onCancel={() => setDraft(null)} onSave={save} saving={saving} />}
+      {!draft && <KpiGrid kpis={itemKpis(kind, items)} />}
       {items.length === 0 && !draft && <p className="text-[15px] text-slate-500">Nenhum item criado.</p>}
       <div className="space-y-2">
         {items.map((i) => {
           const st = statusOf(i);
           return (
             <div key={i.id} className="rounded-xl border border-slate-800 bg-slate-900 p-3 flex flex-wrap items-center gap-3">
+              {i.kind !== 'notice' && <Thumb url={i.slides?.[0]?.image_url || i.image_url} />}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <p className="text-[15px] font-semibold text-slate-100 truncate">{i.title}</p>
@@ -690,6 +693,7 @@ function Cupom() {
         </div>
       )}
 
+      {!draft && <KpiGrid kpis={couponKpis(items)} />}
       {items.length === 0 && !draft && <p className="text-[15px] text-slate-500">Nenhum cupom criado.</p>}
 
       <div className="space-y-2">
