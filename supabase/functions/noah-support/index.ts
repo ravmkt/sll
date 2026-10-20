@@ -54,7 +54,7 @@ const freeReply = (text: string): string | null => {
 };
 
 const ACTION_UPGRADE = { type: "upgrade", label: "Fazer upgrade", href: "/dashboard/assinaturas" };
-const ACTION_RECHARGE = { type: "recharge", label: "Comprar mensagens extras", href: "/dashboard/assinaturas" };
+const ACTION_RECHARGE = { type: "recharge", label: "Comprar pacote extra", href: "/dashboard/assinaturas?addon=ai_messages" };
 
 const fmtDate = (d: string | null | undefined) => {
   const m = String(d ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);

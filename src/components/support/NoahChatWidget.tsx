@@ -17,12 +17,16 @@ export interface SupportContext {
   appStatus?: boolean; // Aplicativo de videos ativo na loja
 }
 
-type Msg = { role: 'user' | 'assistant'; content: string; cta?: 'limit'; animate?: boolean; id?: string; question?: string; vote?: 'up' | 'down' };
+type Msg = { role: 'user' | 'assistant'; content: string; cta?: 'limit'; actions?: { type: string; label: string; href: string }[]; animate?: boolean; id?: string; question?: string; vote?: 'up' | 'down' };
 
 const HIDDEN_ON = ['/admin-master', '/dashboard/onboarding', '/auth'];
 const GREETING = 'Olá! Sou o Noah, assistente do SLL Hub. Como posso te ajudar agora?';
 const FALLBACK = 'Não consegui responder agora. Tente de novo em instantes ou chame nosso time no WhatsApp.';
 const MAX_LEN = 500;
+const DEFAULT_ACTIONS = [
+  { type: 'upgrade', label: 'Fazer upgrade de plano', href: '/dashboard/assinaturas' },
+  { type: 'recharge', label: 'Comprar pacote extra', href: '/dashboard/assinaturas?addon=ai_messages' },
+];
 
 function Avatar({ size, className = '' }: { size: number; className?: string }) {
   const [failed, setFailed] = useState(false);
@@ -170,13 +174,14 @@ export default function NoahChatWidget() {
     let reply = FALLBACK;
     let limit = false;
     let free = false;
+    let actions: Msg['actions'];
     try {
       const { data, error } = await supabase.functions.invoke('noah-support', { body: { messages: history, context } });
-      if (!error && data?.reply) { reply = String(data.reply); limit = data.limit_reached === true; free = data.free === true; }
+      if (!error && data?.reply) { reply = String(data.reply); limit = data.limit_reached === true; free = data.free === true; actions = Array.isArray(data.actions) ? data.actions.filter((a: any) => typeof a?.href === 'string' && a.href.startsWith('/')) : undefined; }
       else if (error) console.error('noah-support', error, await (error as any).context?.text?.().catch(() => ''));
     } catch { /* usa o texto padrao */ }
 
-    setMessages((m) => [...m, { role: 'assistant', content: reply, animate: true, cta: limit ? 'limit' : undefined, id: reply === FALLBACK || limit || free ? undefined : crypto.randomUUID(), question: text }]);
+    setMessages((m) => [...m, { role: 'assistant', content: reply, animate: true, cta: limit ? 'limit' : undefined, actions, id: reply === FALLBACK || limit || free ? undefined : crypto.randomUUID(), question: text }]);
     setLoading(false);
   };
 
@@ -211,14 +216,14 @@ export default function NoahChatWidget() {
                 {m.animate ? <Typewriter text={m.content} onTick={scrollDown} /> : m.role === 'assistant' ? <Md text={m.content} /> : m.content}
                 {m.cta === 'limit' && (
                   <div className="mt-2 flex flex-col gap-1.5">
-                    <button type="button" onClick={() => { setOpen(false); navigate('/dashboard/assinaturas'); }}
-                      className="cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#007fcc]">
-                      Fazer upgrade de plano
-                    </button>
-                    <button type="button" onClick={() => { setOpen(false); navigate('/dashboard/assinaturas?addon=ai_messages'); }}
-                      className="cursor-pointer rounded-lg border border-[#0094eb] px-3 py-1.5 text-xs font-semibold text-[#0094eb] hover:bg-sky-50">
-                      Comprar pacote extra
-                    </button>
+                    {(m.actions?.length ? m.actions : DEFAULT_ACTIONS).map((a, k) => (
+                      <button key={a.type} type="button" onClick={() => { setOpen(false); navigate(a.href); }}
+                        className={k === 0
+                          ? 'cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#007fcc]'
+                          : 'cursor-pointer rounded-lg border border-[#0094eb] px-3 py-1.5 text-xs font-semibold text-[#0094eb] hover:bg-sky-50'}>
+                        {a.label}
+                      </button>
+                    ))}
                   </div>
                 )}
                 {m.id && (
