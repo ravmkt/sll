@@ -223,6 +223,10 @@ Deno.serve(async (req) => {
 
     const reply = String(data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text ?? "").join("") ?? "").trim();
     if (!reply) { await refund(); return json({ error: "IA_VAZIA" }, 502); }
+    const finish = String(data?.candidates?.[0]?.finishReason ?? "");
+    const truncated = finish === "MAX_TOKENS";
+    if (truncated) console.warn("noah-support truncated", usedModel, storeId);
+    const replyOut = truncated ? reply + "\n\n(Resposta longa. Envie \"continue\" para ver o restante.)" : reply;
 
     const usage = data?.usageMetadata ?? {};
     const pt = Number(usage.promptTokenCount ?? 0);
@@ -239,7 +243,7 @@ Deno.serve(async (req) => {
     if (logErr) console.error("noah_logs", logErr.message);
 
     return json({
-      reply,
+      reply: replyOut,
       credits: { used: credit.used, total: credit.total, extra: credit.extra, renewal_date: credit.renewal_date },
     });
   } catch (e) {
