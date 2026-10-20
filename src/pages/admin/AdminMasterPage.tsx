@@ -7,6 +7,7 @@ import DashboardTab from '@/components/admin/DashboardTab';
 import LojasTab from '@/components/admin/LojasTab';
 import MarketingTab from '@/components/admin/MarketingTab';
 import NoahSupportTab from '@/components/master/NoahSupportTab';
+import NoahUsageTab from '@/components/admin/NoahUsageTab';
 import BenchmarkUpdateCard from '@/components/admin/BenchmarkUpdateCard';
 
 export default function AdminMasterPage() {
@@ -29,7 +30,7 @@ export default function AdminMasterPage() {
       ) : tab === 'lojas' ? (
         <LojasTab />
       ) : tab === 'noah' ? (
-<NoahSupportTab />
+<><NoahSupportTab /><div className="mt-8"><NoahUsageTab /></div></>
 ) : tab === 'marketing' ? (
         <MarketingTab />
       ) : tab === 'precos' ? (
