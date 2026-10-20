@@ -1,5 +1,6 @@
 import type { ElementType, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useFxRate } from '../../hooks/admin/useFxRate';
 import { Bot, ArrowLeft, Layers, LayoutDashboard, Lightbulb, Megaphone, ShieldCheck, Store, Tag } from 'lucide-react';
 
 export type MasterTab = 'dashboard' | 'lojas' | 'modulos' | 'precos' | 'marketing' | 'insights' | 'noah';
@@ -16,6 +17,7 @@ const ITEMS: { id: MasterTab; label: string; icon: ElementType }[] = [
 
 export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: (t: MasterTab) => void; children: ReactNode }) {
   const navigate = useNavigate();
+  const { rate, syncedAt } = useFxRate();
 
   return (
     <div className="flex min-h-screen bg-[#0b0e1a] font-sans text-slate-200">
@@ -50,6 +52,12 @@ export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: 
           })}
         </nav>
 
+        <div className="px-5 pb-3" title={syncedAt ? `Atualizado em ${new Date(syncedAt).toLocaleString('pt-BR')}` : undefined}>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Cotação do dia</p>
+          <p className="text-sm font-bold text-white">
+            US$ 1 = {rate ? `R$ ${rate.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+          </p>
+        </div>
         <div className="border-t border-slate-800 p-3">
           <button
             type="button"

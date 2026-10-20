@@ -1,3 +1,4 @@
+import { useFxRate } from '../../hooks/admin/useFxRate';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BookOpen, ChevronLeft, ChevronRight, CloudDownload, Coins, ExternalLink, FileUp, Loader2, MessageSquare, Pencil, Plus, RefreshCw, Store, Trash2, X, Zap } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -170,7 +171,8 @@ export default function NoahSupportTab() {
     const x = priceMap.get(model);
     return x ? (p / 1e6) * Number(x.input_usd) + (c / 1e6) * Number(x.output_usd) : 0;
   }, [priceMap]);
-  const rate = cfg?.usd_brl ?? 5.5;
+  const { rate: fxRate } = useFxRate();
+  const rate = fxRate ?? cfg?.usd_brl ?? 5.5;
 
   const t = useMemo(() => {
     const s = rows.reduce(
@@ -408,7 +410,7 @@ export default function NoahSupportTab() {
                   <input className={`${input} mt-1`} value={form.whatsapp_number} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} />
                 </div>
                 <div>
-                  <label className={label}>Cotação (R$ por US$)</label>
+                  <label className={label}>Cotação reserva (R$ por US$)</label>
                   <input className={`${input} mt-1`} defaultValue={form.usd_brl} onBlur={(e) => setForm({ ...form, usd_brl: Number(e.target.value.replace(',', '.')) || 5.5 })} />
                 </div>
               </div>
