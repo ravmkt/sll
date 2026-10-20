@@ -73,7 +73,7 @@ export default function NoahUsageTab() {
         <div className="mb-3 text-sm font-medium">Perguntas por dia</div>
         <div className="flex h-32 items-end gap-1">
           {daily.map((d) => (
-            <div key={d.day} className="group relative flex-1" title={`${d.day}: ${d.questions} perguntas, ${d.truncated} cortadas`}>
+            <div key={d.day} className="group relative flex h-full flex-1 items-end" title={`${d.day}: ${d.questions} perguntas, ${d.truncated} cortadas`}>
               <div className="w-full rounded-t bg-sky-500/60" style={{ height: `${(d.questions / maxQ) * 100}%`, minHeight: 2 }} />
             </div>
           ))}
