@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,7 @@ import {
 import { SubscriptionModuleCard } from "@/components/assinaturas/SubscriptionModuleCard";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import MyAddonsCard from "@/components/billing/MyAddonsCard";
+import NoahPackModal from "@/components/billing/NoahPackModal";
 
 export default function Assinaturas() {
   const { user } = useAuth();
@@ -18,6 +19,8 @@ export default function Assinaturas() {
   const [subscriptions, setSubscriptions] = useState<StoreSubscription[]>([]);
   const [billingAnchorDay, setBillingAnchorDay] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [packOpen, setPackOpen] = useState(searchParams.get("addon") === "ai_messages");
 
   async function load() {
     if (!storeId) return;
@@ -55,6 +58,7 @@ export default function Assinaturas() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-6xl space-y-8 pb-20">
+        {storeId && packOpen && <NoahPackModal storeId={storeId} onClose={() => { setPackOpen(false); setSearchParams({}, { replace: true }); }} />}
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Minhas Assinaturas</h1>

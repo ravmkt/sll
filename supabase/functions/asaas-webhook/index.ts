@@ -186,6 +186,15 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  // 3.8) Pacote avulso de mensagens do Noah: credita 1 vez por pagamento (noah_settle_pack_payment e idempotente)
+  if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && asaasPaymentId && String(payment?.externalReference ?? "").startsWith("noahpack:")) {
+    const { data: packQty, error: packErr } = await supabase.rpc("noah_settle_pack_payment", { p_asaas_payment_id: asaasPaymentId });
+    if (packErr) {
+      console.error("[asaas-webhook] erro ao creditar pacote Noah:", packErr);
+      return new Response("Pack error", { status: 500 });
+    }
+    console.log("[asaas-webhook] pacote Noah creditado:", asaasPaymentId, packQty);
+  }
   // 4) Comissao de indicacao
   if ((eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") && asaasPaymentId && sub) {
     const paidValue = Number(payment?.value ?? 0);
