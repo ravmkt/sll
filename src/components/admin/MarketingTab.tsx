@@ -63,6 +63,30 @@ function ChannelBlock({ title, icon, labels, note, values }: { title: string; ic
   );
 }
 
+type MetricCard = { title: string; items: { label: string; value: string | number }[] };
+
+function MetricCardView({ card }: { card: MetricCard }) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <h3 className="text-lg font-bold text-slate-100">{card.title}</h3>
+      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 text-center">
+        {card.items.map((it) => (
+          <div key={it.label}>
+            <p className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">{it.label}</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-[#fd8539]">{it.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const DAY_OPTIONS = [
+  { v: 7, label: '\u00daltimos 7 dias' },
+  { v: 30, label: '\u00daltimos 30 dias' },
+  { v: 90, label: '\u00daltimos 90 dias' },
+];
+
 function Visao() {
   const [days, setDays] = useState(30);
   const [m, setM] = useState<MktMetrics | null>(null);
@@ -71,50 +95,57 @@ function Visao() {
 
   useEffect(() => {
     setErr(null);
-    getMetrics(days).then(setM).catch((e) => setErr(e?.message || 'Erro ao carregar métricas'));
+    getMetrics(days).then(setM).catch((e) => setErr(e?.message || 'Erro ao carregar m\u00e9tricas'));
     getEmailMetrics(days).then(setEm).catch(() => {});
   }, [days]);
 
-  const block = (title: string, c: MktCounts | undefined) => (
-    <div className="space-y-3">
-      <h3 className="text-[15px] font-bold text-slate-100">{title}</h3>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label="Impressões" value={c?.impressions ?? 0} />
-        <Stat label="Cliques" value={c?.clicks ?? 0} />
-        <Stat label="CTR" value={c ? ctr(c) : '0,0%'} />
-        <Stat label="Dispensados" value={c?.closes ?? 0} />
-      </div>
-    </div>
-  );
+  const countsItems = (c?: MktCounts) => [
+    { label: 'Impress\u00f5es', value: c?.impressions ?? 0 },
+    { label: 'Cliques', value: c?.clicks ?? 0 },
+    { label: 'CTR', value: c ? ctr(c) : '0,0%' },
+    { label: 'Sa\u00eddas', value: c?.closes ?? 0 },
+  ];
+
+  // Para um novo modulo/canal, adicione um item aqui.
+  const cards: MetricCard[] = [
+    { title: 'Banners', items: countsItems(m?.banner) },
+    { title: 'Popups', items: countsItems(m?.popup) },
+    {
+      title: 'E-mails',
+      items: [
+        { label: 'Enviados', value: em.sent },
+        { label: 'Abertos', value: em.opened },
+        { label: 'Cliques', value: em.clicked },
+        { label: 'Rejeitados', value: em.bounced + em.failed },
+      ],
+    },
+    { title: 'Avisos', items: countsItems(m?.notice) },
+    {
+      title: 'WhatsApp',
+      items: [
+        { label: 'Enviadas', value: 0 },
+        { label: 'Lidas', value: 0 },
+        { label: 'Clicadas', value: 0 },
+        { label: 'Respondidas', value: 0 },
+      ],
+    },
+  ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-slate-100">Métricas</h2>
+        <h2 className="text-base font-bold text-slate-100">{'M\u00e9tricas'}</h2>
         <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={inputCls + ' !w-auto'}>
-          <option value={7}>Últimos 7 dias</option>
-          <option value={30}>Últimos 30 dias</option>
-          <option value={90}>Últimos 90 dias</option>
+          {DAY_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
         </select>
       </div>
       {err && <p className="text-[15px] text-rose-400">{err}</p>}
-      {block('Banners', m?.banner)}
-      {block('Popups', m?.popup)}
-          {block('Avisos do sistema', m?.notice)}
-      <ChannelBlock
-        title="E-mail marketing" icon={<Mail className="w-4 h-4" />}
-        labels={['Enviados', 'Abertos', 'Clicados', 'Rejeitados']}
-        values={[em.sent, em.opened, em.clicked, em.bounced + em.failed]} note="Dados do Resend. Abertura e clique dependem do rastreamento ativo no domínio."
-      />
-      <ChannelBlock
-        title="WhatsApp marketing" icon={<MessageCircle className="w-4 h-4" />}
-        labels={['Enviadas', 'Lidas', 'Clicadas', 'Respondidas']}
-        note="Zerado até conectar um provedor de WhatsApp."
-      />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {cards.map((c) => <MetricCardView key={c.title} card={c} />)}
+      </div>
     </div>
   );
 }
-
 function DateTimeField({ label, value, onChange }: { label: string; value: string | null; onChange: (v: string | null) => void }) {
   return (
     <div>
