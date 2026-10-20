@@ -197,8 +197,6 @@ Deno.serve(async (req) => {
     const system = docs.length
       ? `${baseSystem}\n\nDOCUMENTAÇÃO DE SUPORTE (fonte de verdade; se conflitar com as regras acima, esta prevalece)\n${docs.join("\n\n---\n")}`
       : baseSystem;
-
-    const systemFinal = system + "\n\nFORMATO: responda em texto simples, sem asteriscos, sem markdown e sem cabeçalhos. Use passos numerados curtos (máximo 6)."
     const MODELS = [...new Set([cfg?.model || MODEL, "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview", "gemini-3.7-flash", "gemini-flash-latest"])];
     let data: any = null;
     let usedModel = "";
@@ -207,7 +205,7 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemFinal }] },
+          systemInstruction: { parts: [{ text: system }] },
           contents: contents.map((x) => ({ role: x.role, parts: [{ text: x.text }] })),
           generationConfig: { temperature: 0.4, maxOutputTokens: 1500, thinkingConfig: { thinkingBudget: 0 } },
         }),
@@ -223,7 +221,7 @@ Deno.serve(async (req) => {
     }
     if (!data) { await refund(); return json({ error: "IA_INDISPONIVEL" }, 502); }
 
-    const reply = String(data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text ?? "").join("") ?? "").replace(/\*\*/g, "").trim();
+    const reply = String(data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text ?? "").join("") ?? "").trim();
     if (!reply) { await refund(); return json({ error: "IA_VAZIA" }, 502); }
 
     const usage = data?.usageMetadata ?? {};
