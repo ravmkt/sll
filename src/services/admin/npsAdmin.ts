@@ -17,6 +17,7 @@ export interface NpsResults {
   total: number; promoters: number; passives: number; detractors: number; nps: number | null;
   distribution: { score: number; count: number }[];
   pains: NpsCount[]; features: NpsCount[]; comments: NpsComment[];
+  questions?: { title: string; total: number; items: NpsCount[] }[];
 }
 
 export async function getNpsConfig(): Promise<NpsConfig> {
@@ -30,8 +31,8 @@ export async function saveNpsConfig(cfg: NpsConfig): Promise<void> {
   if (error) throw error;
 }
 
-export async function getNpsResults(days: number): Promise<NpsResults> {
-  const { data, error } = await sb.rpc('admin_nps_results', { p_days: days });
+export async function getNpsResults(days: number, surveyId?: string | null): Promise<NpsResults> {
+  const { data, error } = await sb.rpc('admin_nps_results', { p_days: days, p_survey_id: surveyId ?? null });
   if (error) throw error;
   return data as NpsResults;
 }

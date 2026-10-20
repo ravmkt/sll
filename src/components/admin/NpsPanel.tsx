@@ -10,6 +10,7 @@ import { getNpsTexts, NPS_TEXT_DEFAULTS, NPS_TEXT_FIELDS } from '@/services/feed
 import NpsResponses from '@/components/admin/NpsResponses';
 import NpsSurveysList from '@/components/admin/NpsSurveysList';
 import IdeasAdmin from '@/components/admin/IdeasAdmin';
+import { listNpsSurveys, type AdminSurvey } from '@/services/admin/npsSurveys';
 
 const LABELS: Record<string, string> = {
   dificuldade_instalacao: 'Dificuldade na instalação',
@@ -193,6 +194,8 @@ export default function NpsPanel() {
   const [idsText, setIdsText] = useState('');
   const [res, setRes] = useState<NpsResults | null>(null);
   const [days, setDays] = useState(90);
+  const [surveyId, setSurveyId] = useState<string | null>(null);
+  const [surveys, setSurveys] = useState<AdminSurvey[]>([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -207,8 +210,8 @@ export default function NpsPanel() {
   const [storesErr, setStoresErr] = useState<string | null>(null);
 
   const loadResults = useCallback(async () => {
-    try { setRes(await getNpsResults(days)); } catch (e: any) { setErr(e?.message ?? 'Erro ao carregar resultados'); }
-  }, [days]);
+    try { setRes(await getNpsResults(days, surveyId)); } catch (e: any) { setErr(e?.message ?? 'Erro ao carregar resultados'); }
+  }, [days, surveyId]);
 
   useEffect(() => {
     getNpsConfig()
@@ -216,6 +219,7 @@ export default function NpsPanel() {
       .catch((e: any) => setErr(e?.message ?? 'Erro ao carregar configuração'));
   }, []);
   useEffect(() => { void loadResults(); }, [loadResults]);
+  useEffect(() => { listNpsSurveys().then(setSurveys).catch(() => { /* opcional */ }); }, []);
   useEffect(() => {
     if (!drawer || cfg?.target !== 'stores') return;
     listNpsStores()
@@ -373,7 +377,11 @@ export default function NpsPanel() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <select className="h-9 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200" value={days} onChange={(e) => setDays(Number(e.target.value))}>
+          <select className="h-9 max-w-[220px] rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200" value={surveyId ?? ''} onChange={(e) => setSurveyId(e.target.value || null)}>
+                <option value="">Todas as pesquisas</option>
+                {surveys.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <select className="h-9 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200" value={days} onChange={(e) => setDays(Number(e.target.value))}>
             {[30, 90, 180, 365].map((d) => <option key={d} value={d}>Últimos {d} dias</option>)}
           </select>
           <button type="button" onClick={() => setDrawer(true)}
@@ -430,13 +438,15 @@ export default function NpsPanel() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Ranking title="Maiores dores" items={res.pains} labels={labelsPain} color={RED} emptyText="Nenhuma dor registrada no período." />
-            <Ranking title="Funcionalidades preferidas" items={res.features} labels={labelsFeat} color={GRN} emptyText="Nenhuma preferência registrada no período." />
+            {surveyId ? (res.questions ?? []).map((q) => (
+                  <Ranking key={q.title} title={q.title} items={q.items} labels={{}} color={YEL} emptyText="Sem respostas no período." />
+                )) : (<><Ranking title="Maiores dores" items={res.pains} labels={labelsPain} color={RED} emptyText="Nenhuma dor registrada no período." />
+            <Ranking title="Funcionalidades preferidas" items={res.features} labels={labelsFeat} color={GRN} emptyText="Nenhuma preferência registrada no período." /></>)}
           </div>
         </>
       ))}
 
-      {sub === 'responses' && <NpsResponses days={days} labelsPain={labelsPain} labelsFeat={labelsFeat} />}
+      {sub === 'responses' && <NpsResponses days={days} surveyId={surveyId} labelsPain={labelsPain} labelsFeat={labelsFeat} />}
       {sub === 'surveys' && <NpsSurveysList />}
       {sub === 'ideas' && <IdeasAdmin />}
       {drawer && (
