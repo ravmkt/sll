@@ -93,3 +93,7 @@ export async function reorderHubModules(slugs: string[]): Promise<void> {
   const { error } = await sb.rpc('admin_reorder_hub_modules', { p_slugs: slugs });
   if (error) throw new Error(error.message);
 }
+export async function deleteHubModule(slug: string): Promise<void> {
+  const { error } = await sb.rpc('admin_delete_hub_module', { p_slug: slug });
+  if (error) throw new Error(error.message);
+}

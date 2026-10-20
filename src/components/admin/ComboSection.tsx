@@ -1,52 +1,58 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Layers, Loader2, Plus } from 'lucide-react';
+import type { DragEvent } from 'react';
+import { Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { listDynamicPlans, updateDynamicPlan, type DynamicPlan } from '@/services/admin/plansAdmin';
 import { deleteDynamicPlan, getPlanSubscribers } from '@/services/admin/pricingService';
 import { listAllComboModules, listHubModules, type ComboModuleRow, type HubModule } from '@/services/admin/combosAdmin';
+import { getComboStats, reorderCombos, type ComboStat, type ModulesRevenue } from '@/services/admin/modulesRevenue';
 import { usePricingCosts } from '@/hooks/admin/usePricingCosts';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import { PlanDrawer } from '@/components/admin/PrecosTab';
 import ComboCreator from '@/components/admin/ComboCreator';
-import ComboDiscountCard from '@/components/admin/ComboDiscountCard';
 import ComboModulesEditor from '@/components/admin/ComboModulesEditor';
 import ComboPricing from '@/components/admin/ComboPricing';
 import MarginBadge from '@/components/admin/MarginBadge';
-import { CARD, int } from '@/components/admin/moduleUi';
+import ItemCard, { BTN } from '@/components/admin/ItemCard';
+import { CARD } from '@/components/admin/moduleUi';
 
-export default function ComboSection() {
+const sortOf = (p: DynamicPlan) => ((p as any).sort_order ?? 999) as number;
+
+export default function ComboSection({ rev, logos, store }: { rev: ModulesRevenue | null; logos: Record<string, string | null>; store: string }) {
   const [plans, setPlans] = useState<DynamicPlan[] | null>(null);
   const [comboMods, setComboMods] = useState<ComboModuleRow[]>([]);
   const [mods, setMods] = useState<HubModule[]>([]);
+  const [stats, setStats] = useState<Record<string, ComboStat>>({});
   const [subs, setSubs] = useState<Record<string, number>>({});
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<DynamicPlan | null>(null);
   const [editingMods, setEditingMods] = useState<DynamicPlan | null>(null);
+  const [pricing, setPricing] = useState<DynamicPlan | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
   const costs = usePricingCosts(plans, comboMods);
 
   const load = useCallback(async () => {
-    const [p, cm, m, s] = await Promise.all([
+    const [p, cm, m, st, s] = await Promise.all([
       listDynamicPlans(),
       listAllComboModules().catch(() => [] as ComboModuleRow[]),
       listHubModules().catch(() => [] as HubModule[]),
+      getComboStats(store || null).catch(() => ({} as Record<string, ComboStat>)),
       getPlanSubscribers().catch(() => ({} as Record<string, number>)),
     ]);
-    setPlans(p); setComboMods(cm); setMods(m); setSubs(s);
-  }, []);
+    setPlans(p); setComboMods(cm); setMods(m); setStats(st); setSubs(s);
+  }, [store]);
 
   useEffect(() => { load().catch(() => setPlans([])); }, [load]);
 
   const modName = useMemo(() => new Map(mods.map((m) => [m.slug, m.name])), [mods]);
-  const combos = (plans || []).filter((p) => p.is_combo);
-  const line = (id: string) =>
-    comboMods.filter((r) => r.plan_id === id).map((r) => {
-      const planName = r.member_tier
-        ? (plans || []).find((x) => !x.is_combo && x.module_slug === r.module_slug && x.plan_tier === r.member_tier)?.plan_name
-        : null;
-      return planName || modName.get(r.module_slug) || r.module_slug;
-    }).join(' + ') || 'Nenhum módulo definido';
+  const combos = useMemo(() => (plans || []).filter((p) => p.is_combo).sort((a, b) => sortOf(a) - sortOf(b)), [plans]);
+
+  const slugsOf = (id: string) => comboMods.filter((r) => r.plan_id === id).map((r) => r.module_slug);
+  const line = (id: string) => slugsOf(id).map((s) => modName.get(s) || s).join(' + ') || 'Nenhum módulo definido';
+  const revOf = (id: string) => Number(rev?.items.find((i) => i.item_key === `combo:${id}`)?.cents) || 0;
 
   const refresh = () => { load(); costs.reload(); };
 
@@ -85,52 +91,98 @@ export default function ComboSection() {
     }
   };
 
-  const btn = 'cursor-pointer rounded-md px-2.5 py-1 text-[13px] font-semibold disabled:opacity-40';
+  const dropOn = async (target: DynamicPlan) => {
+    const src = combos.find((x) => x.id === dragId);
+    setOverId(null);
+    if (!src || src.id === target.id) return;
+    const arr = [...combos];
+    const from = arr.findIndex((x) => x.id === src.id);
+    const to = arr.findIndex((x) => x.id === target.id);
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    setPlans((plans || []).map((p) => {
+      const i = arr.findIndex((x) => x.id === p.id);
+      return i >= 0 ? ({ ...p, sort_order: i + 1 } as any) : p;
+    }));
+    try {
+      await reorderCombos(arr.map((x) => x.id));
+      toast.success('Ordem dos combos atualizada.');
+    } catch (e: any) {
+      toast.error(e?.message || 'Não foi possível salvar a ordem.');
+      load();
+    }
+  };
+
+  const dnd = (p: DynamicPlan) => ({
+    draggable: true,
+    onDragStart: (e: DragEvent<HTMLDivElement>) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id); setDragId(p.id); },
+    onDragOver: (e: DragEvent<HTMLDivElement>) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (overId !== p.id) setOverId(p.id); },
+    onDrop: (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); dropOn(p); },
+    onDragEnd: () => { setDragId(null); setOverId(null); },
+  });
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] text-slate-500">Combo é um pacote de módulos com preço fechado. O preço é calculado pelo desconto sobre a soma dos planos.</p>
-        <button type="button" onClick={() => setCreating(true)} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-2 text-[13px] font-bold text-white hover:opacity-90">
-          <Plus size={14} /> Novo Combo
+    <section className="space-y-3">
+      <div className="flex items-center gap-3">
+        <h2 className="text-[15px] font-black uppercase tracking-wider text-white">Combos</h2>
+        <button type="button" onClick={() => setCreating(true)} className="flex cursor-pointer items-center gap-1 text-[13px] font-bold text-[#fd8539] hover:opacity-80">
+          <Plus size={14} /> Combo
         </button>
       </div>
-
-      <ComboDiscountCard />
 
       {plans === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
       ) : combos.length === 0 ? (
-        <div className={CARD}><p className="text-[13px] text-slate-500">Nenhum combo cadastrado. Clique em "Novo Combo".</p></div>
+        <div className={CARD}><p className="text-[13px] text-slate-500">Nenhum combo cadastrado. Clique em "+ Combo".</p></div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {combos.map((p) => (
-            <div key={p.id} className={`${CARD} space-y-3 shadow-[inset_4px_0_0_0_#facc15]`}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="flex items-center gap-2 truncate text-[15px] font-bold text-white"><Layers size={14} className="shrink-0 text-[#fd8539]" /> {p.plan_name}</p>
-                  <p className="mt-0.5 text-[13px] text-amber-200/80">{line(p.id)}</p>
-                </div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>
-                  {p.is_active ? 'Ativo' : 'Pausado'}
-                </span>
-              </div>
-              <ComboPricing combo={p} list={costs.listPrices(p.id)} pct={costs.discounts[p.id] ?? 0} onChanged={refresh} />
-              <div className="flex items-center justify-center gap-2 text-[13px] text-slate-500"><span>Margem</span><MarginBadge m={costs.marginOf(p)} /></div>
-              <p className="text-center text-[13px] text-slate-500">{int(subs[p.id])} assinantes</p>
-              <div className="flex flex-wrap justify-center gap-1.5">
-                <button type="button" onClick={() => setEditing(p)} className={`${btn} bg-white/5 text-slate-200 hover:bg-white/10`}>Editar</button>
-                <button type="button" onClick={() => setEditingMods(p)} className={`${btn} bg-white/5 text-amber-300 hover:bg-white/10`}>Módulos</button>
-                <button type="button" disabled={busyId === p.id} onClick={() => toggleActive(p)}
-                  className={`${btn} ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
-                  {p.is_active ? 'Pausar' : 'Ativar'}
-                </button>
-                <button type="button" disabled={busyId === p.id || (subs[p.id] || 0) > 0} onClick={() => remove(p)}
-                  title={(subs[p.id] || 0) > 0 ? 'Combo com assinantes: use Pausar' : 'Excluir combo'}
-                  className={`${btn} bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-30`}>Excluir</button>
-              </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {combos.map((p) => {
+            const st = stats[p.id];
+            return (
+              <ItemCard
+                key={p.id}
+                kind="combo"
+                dot={p.is_active
+                  ? { color: 'green', tip: 'Ativo: visível e disponível para contratação.' }
+                  : { color: 'gray', tip: 'Pausado: oculto para novas contratações.' }}
+                logos={slugsOf(p.id).map((s) => ({ url: logos[s] ?? null, name: modName.get(s) || s }))}
+                title={p.plan_name}
+                subtitle={line(p.id)}
+                stats={{ total: Number(st?.total) || 0, trial: Number(st?.trial) || 0, paying: Number(st?.paying) || 0 }}
+                revenue={revOf(p.id)}
+                dnd={dnd(p)}
+                dim={dragId === p.id}
+                highlight={!!dragId && dragId !== p.id && overId === p.id}
+                actions={
+                  <>
+                    <button type="button" onClick={() => setEditing(p)} className={`${BTN} bg-white/5 text-slate-200 hover:bg-white/10`}>Editar</button>
+                    <button type="button" onClick={() => setEditingMods(p)} className={`${BTN} bg-white/5 text-amber-300 hover:bg-white/10`}>Módulos</button>
+                    <button type="button" onClick={() => setPricing(p)} className={`${BTN} bg-white/5 text-sky-300 hover:bg-white/10`}>Preço</button>
+                    <button type="button" disabled={busyId === p.id} onClick={() => toggleActive(p)}
+                      className={`${BTN} ${p.is_active ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'}`}>
+                      {p.is_active ? 'Pausar' : 'Ativar'}
+                    </button>
+                    <button type="button" disabled={busyId === p.id || (subs[p.id] || 0) > 0} onClick={() => remove(p)}
+                      title={(subs[p.id] || 0) > 0 ? 'Combo com assinantes: use Pausar' : 'Excluir combo'}
+                      className={`${BTN} bg-rose-500/15 text-rose-300 hover:bg-rose-500/25`}>Excluir</button>
+                  </>
+                }
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {pricing && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4" onClick={() => setPricing(null)}>
+          <div className={`${CARD} w-full max-w-md space-y-3`} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <p className="text-[15px] font-bold text-white">Preço de {pricing.plan_name}</p>
+              <button type="button" onClick={() => setPricing(null)} className="cursor-pointer text-[13px] text-slate-400 hover:text-white">Fechar</button>
             </div>
-          ))}
+            <ComboPricing combo={pricing} list={costs.listPrices(pricing.id)} pct={costs.discounts[pricing.id] ?? 0} onChanged={refresh} />
+            <div className="flex items-center justify-center gap-2 text-[13px] text-slate-500"><span>Margem</span><MarginBadge m={costs.marginOf(pricing)} /></div>
+          </div>
         </div>
       )}
 
@@ -138,6 +190,6 @@ export default function ComboSection() {
       {editingMods && <ComboModulesEditor combo={editingMods} onClose={() => setEditingMods(null)} onSaved={refresh} />}
       {editing && <PlanDrawer key={editing.id} plan={editing} modules={mods} defaultModule="" onClose={() => setEditing(null)} onSaved={refresh} />}
       {dialog}
-    </div>
+    </section>
   );
 }

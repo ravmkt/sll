@@ -35,3 +35,15 @@ export async function listStoreOptions(): Promise<StoreOpt[]> {
   if (error) throw new Error(error.message);
   return ((data || []) as any[]).map((s) => ({ id: s.id as string, name: (s.name as string) || s.id }));
 }
+export type ComboStat = { plan_id: string; total: number; trial: number; paying: number };
+
+export async function getComboStats(store: string | null): Promise<Record<string, ComboStat>> {
+  const { data, error } = await sb.rpc('admin_combo_stats', { p_store: store });
+  if (error) throw new Error(error.message);
+  return Object.fromEntries(((data || []) as ComboStat[]).map((r) => [r.plan_id, r]));
+}
+
+export async function reorderCombos(ids: string[]): Promise<void> {
+  const { error } = await sb.rpc('admin_reorder_combos', { p_ids: ids });
+  if (error) throw new Error(error.message);
+}
