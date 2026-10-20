@@ -51,6 +51,13 @@ export default function NoahUsageTab() {
       </div>
 
       {error && <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">{error}. Confirme que a migração 20261020 foi executada.</div>}
+      {/* ALERTA_CORTES */}
+      {!loading && questions >= 20 && Number(pct) > 5 && (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-400">
+          {pct}% das respostas foram cortadas por limite de tokens (MAX_TOKENS). Considere aumentar o maxOutputTokens do Noah.
+        </div>
+      )}
+
       {loading && <div className="text-sm opacity-60">Carregando...</div>}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
