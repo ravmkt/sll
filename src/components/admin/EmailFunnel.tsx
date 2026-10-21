@@ -1,3 +1,4 @@
+import { useMarketingPeriod } from '@/components/admin/MarketingPeriod';
 import { useEffect, useState } from 'react';
 import { EMPTY_EMAIL_METRICS, getEmailMetrics, type EmailMetrics } from '@/services/admin/emailCampaigns';
 
@@ -7,14 +8,16 @@ const fmt = (v: number) => v.toFixed(1).replace('.', ',') + '%';
 const fmt2 = (v: number) => v.toFixed(2).replace('.', ',') + '%';
 
 export default function EmailFunnel() {
-  const [days, setDays] = useState(30);
+  const range = useMarketingPeriod();
+  const days = range.days;
+  const setDays = (_n: number) => {};
   const [m, setM] = useState<EmailMetrics>(EMPTY_EMAIL_METRICS);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     setErr(null);
-    getEmailMetrics(days).then(setM).catch((e) => setErr(e?.message || 'Erro ao carregar o funil'));
-  }, [days]);
+    getEmailMetrics({ start: range.start, end: range.end }).then(setM).catch((e) => setErr(e?.message || 'Erro ao carregar o funil'));
+  }, [range.start, range.end]);
 
   const base = m.sent;
   const stages = [
@@ -32,7 +35,7 @@ export default function EmailFunnel() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-[15px] font-bold text-slate-100">Funil e saúde de entrega</h3>
-        <select value={days} onChange={(e) => setDays(Number(e.target.value))}
+        <select hidden value={days} onChange={(e) => setDays(Number(e.target.value))}
           className="h-9 rounded-lg border border-slate-700 bg-slate-950 px-2 text-xs text-slate-200">
           {OPTS.map((d) => <option key={d} value={d}>{'Últimos ' + d + ' dias'}</option>)}
         </select>

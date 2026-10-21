@@ -1,3 +1,4 @@
+import { useMarketingPeriod } from '@/components/admin/MarketingPeriod';
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, Frown, Loader2, Meh, MessageSquareQuote, Plus, RotateCcw, Settings, Search, Smile, X } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -193,7 +194,8 @@ export default function NpsPanel() {
   const [cfg, setCfg] = useState<NpsConfig | null>(null);
   const [idsText, setIdsText] = useState('');
   const [res, setRes] = useState<NpsResults | null>(null);
-  const [days, setDays] = useState(90);
+  const { days } = useMarketingPeriod();
+  const setDays = (_n: number) => {};
   const [surveyId, setSurveyId] = useState<string | null>(null);
   const [surveys, setSurveys] = useState<AdminSurvey[]>([]);
   const [saving, setSaving] = useState(false);
@@ -402,7 +404,7 @@ export default function NpsPanel() {
                 <option value="">Todas as pesquisas</option>
                 {surveys.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
-              <select className="h-9 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200" value={days} onChange={(e) => setDays(Number(e.target.value))}>
+              <select hidden className="h-9 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200" value={days} onChange={(e) => setDays(Number(e.target.value))}>
             {[30, 90, 180, 365].map((d) => <option key={d} value={d}>Últimos {d} dias</option>)}
           </select>
           <button type="button" onClick={() => setDrawer(true)}

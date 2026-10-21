@@ -2,18 +2,17 @@ import { useEffect, useState } from 'react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { getMarketingSeries, type MktSeries } from '@/services/admin/marketingSeries';
 import type { MktKind } from '@/services/admin/marketingAdmin';
-
-const OPTS = [7, 30, 90];
+import { useMarketingPeriod } from '@/components/admin/MarketingPeriod';
 
 export default function MarketingChart({ kind }: { kind: MktKind }) {
-  const [days, setDays] = useState(30);
+  const { start, end } = useMarketingPeriod();
   const [s, setS] = useState<MktSeries | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     setS(null); setErr(null);
-    getMarketingSeries(kind, days).then(setS).catch((e) => setErr(e?.message || 'Erro ao carregar o gráfico'));
-  }, [kind, days]);
+    getMarketingSeries(kind, { start, end }).then(setS).catch((e) => setErr(e?.message || 'Erro ao carregar o gráfico'));
+  }, [kind, start, end]);
 
   const second = kind === 'notice'
     ? { key: 'closes', name: 'Dispensados', color: '#f43f5e' }
@@ -22,18 +21,12 @@ export default function MarketingChart({ kind }: { kind: MktKind }) {
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h3 className="text-[15px] font-bold text-slate-100">Evolução diária</h3>
-          <p className="text-[12px] text-slate-500">
-            Impressões (eixo esquerdo) e {second.name.toLowerCase()} (eixo direito)
-            {s ? ` · ${s.stores} loja(s) alcançada(s) no período` : ''}
-          </p>
-        </div>
-        <select value={days} onChange={(e) => setDays(Number(e.target.value))}
-          className="h-9 rounded-lg border border-slate-700 bg-slate-950 px-2 text-xs text-slate-200">
-          {OPTS.map((d) => <option key={d} value={d}>{'Últimos ' + d + ' dias'}</option>)}
-        </select>
+      <div className="mb-3">
+        <h3 className="text-[15px] font-bold text-slate-100">Evolução diária</h3>
+        <p className="text-[12px] text-slate-500">
+          Impressões (eixo esquerdo) e {second.name.toLowerCase()} (eixo direito)
+          {s ? ` · ${s.stores} loja(s) alcançada(s) no período` : ''}
+        </p>
       </div>
       {err ? (
         <p className="text-sm text-rose-400">{err}</p>

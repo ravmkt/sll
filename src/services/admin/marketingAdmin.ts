@@ -1,3 +1,4 @@
+import type { DateRange } from '@/services/admin/marketingPeriod';
 import { supabase } from '@/lib/supabase';
 
 export type MktKind = 'banner' | 'popup' | 'notice';
@@ -98,11 +99,12 @@ const ymd = (d: Date) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-export async function getMetrics(days: number): Promise<MktMetrics> {
+export async function getMetrics(arg: number | DateRange): Promise<MktMetrics> {
+  const days = typeof arg === 'number' ? arg : 1;
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - (days - 1));
-  const { data, error } = await supabase.rpc('admin_marketing_metrics', { p_start: ymd(start), p_end: ymd(end) });
+  const { data, error } = await supabase.rpc('admin_marketing_metrics', typeof arg === 'number' ? { p_start: ymd(start), p_end: ymd(end) } : { p_start: arg.start, p_end: arg.end });
   if (error) throw error;
   const zero = { impressions: 0, clicks: 0, closes: 0 };
   const raw = (data || {}) as Partial<MktMetrics>;

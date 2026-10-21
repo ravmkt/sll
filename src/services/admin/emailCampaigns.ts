@@ -1,3 +1,4 @@
+import type { DateRange } from '@/services/admin/marketingPeriod';
 import { supabase } from '@/lib/supabase';
 import type { MktAudience } from '@/services/admin/marketingAdmin';
 import type { EmailBlock } from '@/services/admin/emailBuilder';
@@ -133,11 +134,12 @@ const ymd = (d: Date) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-export async function getEmailMetrics(days: number): Promise<EmailMetrics> {
+export async function getEmailMetrics(arg: number | DateRange): Promise<EmailMetrics> {
+  const days = typeof arg === 'number' ? arg : 1;
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - (days - 1));
-  const { data, error } = await supabase.rpc('admin_email_metrics', { p_start: ymd(start), p_end: ymd(end) });
+  const { data, error } = await supabase.rpc('admin_email_metrics', typeof arg === 'number' ? { p_start: ymd(start), p_end: ymd(end) } : { p_start: arg.start, p_end: arg.end });
   if (error) throw error;
   const d = (data || {}) as Record<string, unknown>;
   return {

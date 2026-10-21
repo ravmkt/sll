@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { KpiGrid, Thumb, itemKpis, couponKpis } from '@/components/admin/MarketingKpi';
 import CouponRanking from '@/components/admin/CouponRanking';
 import MarketingChart from '@/components/admin/MarketingChart';
+import { PeriodContext, PeriodPicker, usePeriodState, useMarketingPeriod, type PeriodState } from '@/components/admin/MarketingPeriod';
 import EmailFunnel from '@/components/admin/EmailFunnel';
 import ImageUpload from '@/components/admin/ImageUpload';
 import NpsPanel from '@/components/admin/NpsPanel';
@@ -101,13 +102,9 @@ function MetricCardView({ card }: { card: MetricCard }) {
   );
 }
 
-const DAY_OPTIONS = [
-  { v: 7, label: '\u00daltimos 7 dias' },
-  { v: 30, label: '\u00daltimos 30 dias' },
-  { v: 90, label: '\u00daltimos 90 dias' },
-];
 
-function Visao({ days }: { days: number }) {
+function Visao() {
+  const { start, end } = useMarketingPeriod();
   const [m, setM] = useState<MktMetrics | null>(null);
   const [em, setEm] = useState<EmailMetrics>(EMPTY_EMAIL_METRICS);
   const [err, setErr] = useState<string | null>(null);
@@ -117,8 +114,8 @@ function Visao({ days }: { days: number }) {
 
   useEffect(() => {
     setErr(null);
-    getMetrics(days).then(setM).catch((e) => setErr(e?.message || 'Erro ao carregar m\u00e9tricas'));
-    getEmailMetrics(days).then(setEm).catch(() => {});
+    getMetrics({ start, end }).then(setM).catch((e) => setErr(e?.message || 'Erro ao carregar m\u00e9tricas'));
+    getEmailMetrics({ start, end }).then(setEm).catch(() => {});
 
     listMktCoupons().then((list: any[]) => {
       const now = Date.now();
@@ -132,12 +129,14 @@ function Visao({ days }: { days: number }) {
       setCp({ total: (list || []).length, active, uses, expired });
     }).catch(() => {});
 
-    const since = new Date(Date.now() - days * 86400000).toISOString();
+    const since = new Date(`${start}T00:00:00-03:00`).toISOString();
+    const until = new Date(`${end}T23:59:59.999-03:00`).toISOString();
     (supabase as any)
       .from('app_feedbacks')
       .select('score')
       .eq('type', 'nps_wizard')
       .gte('created_at', since)
+      .lte('created_at', until)
       .not('score', 'is', null)
       .limit(5000)
       .then(({ data }: any) => {
@@ -147,7 +146,7 @@ function Visao({ days }: { days: number }) {
         const detr = sc.filter((s) => s <= 6).length;
         setNps({ score: total ? String(Math.round(((prom - detr) / total) * 100)) : '\u2014', total, prom, detr });
       });
-  }, [days]);
+  }, [start, end]);
 
   const countsItems = (c?: MktCounts) => [
     { label: 'Impress\u00f5es', value: c?.impressions ?? 0 },
@@ -733,9 +732,9 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'nps', label: 'NPS', icon: <BarChart3 className="h-4 w-4" /> },
 ];
 
-export default function MarketingTab() {
+function MarketingInner({ ps }: { ps: PeriodState }) {
   const [tab, setTab] = useState<TabKey>('visao');
-  const [days, setDays] = useState(30);
+  
   return (
     <div className="space-y-5">
       <div className="sticky top-0 z-30 -mx-6 -mt-6 space-y-3 bg-[#0b0e1a] px-6 pt-6">
@@ -750,14 +749,10 @@ export default function MarketingTab() {
               </button>
             ))}
           </div>
-          {tab === 'visao' && (
-            <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={inputCls + ' mb-1 !w-auto cursor-pointer'}>
-              {DAY_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-            </select>
-          )}
+          {tab !== 'whatsapp' && tab !== 'promocao' && <PeriodPicker ps={ps} />}
         </div>
       </div>
-      {tab === 'visao' && <Visao days={days} />}
+      {tab === 'visao' && <Visao />}
       {tab === 'banner' && <ItemsPanel kind="banner" />}
       {tab === 'popup' && <ItemsPanel kind="popup" />}
           {tab === 'aviso' && <ItemsPanel kind="notice" />}
@@ -773,5 +768,14 @@ export default function MarketingTab() {
       {tab === 'promocao' && <Cupom />}
       {tab === 'nps' && <NpsPanel />}
     </div>
+  );
+}
+
+export default function MarketingTab() {
+  const ps = usePeriodState();
+  return (
+    <PeriodContext.Provider value={ps.period}>
+      <MarketingInner ps={ps} />
+    </PeriodContext.Provider>
   );
 }
