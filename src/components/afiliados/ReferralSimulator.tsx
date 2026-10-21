@@ -53,18 +53,18 @@ export function ReferralSimulator() {
     let alive = true;
     (async () => {
       const { data, error } = await supabase
-        .from("plans")
-        .select("id, name, price_cents, modules, sort_order")
+        .from("dynamic_plans")
+        .select("id, plan_name, module_slug, is_combo, price_monthly_cents, sort_order")
         .eq("is_active", true)
-        .gt("price_cents", 0)
+        .gt("price_monthly_cents", 0)
         .order("sort_order", { ascending: true });
       if (!alive || error || !data || data.length === 0) return;
       setPlans(
         data.map((p: any) => ({
           id: p.id,
-          name: p.name,
-          price: Number(p.price_cents) / 100,
-          module: Array.isArray(p.modules) && p.modules.length === 1 ? String(p.modules[0]) : "bundle",
+          name: p.plan_name,
+          price: Number(p.price_monthly_cents) / 100,
+          module: p.is_combo || !p.module_slug ? "bundle" : String(p.module_slug),
         }))
       );
     })();
