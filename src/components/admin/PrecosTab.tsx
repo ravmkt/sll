@@ -15,7 +15,8 @@ import { cycleInfo } from '@/components/admin/cycleInfo';
 import InfraCostsCard from '@/components/admin/InfraCostsCard';
 import InfraStatusCard from '@/components/admin/InfraStatusCard';
 import PlanosGerenciar from '@/components/admin/PlanosGerenciar';
-import { getModulesOverview, type ModuleOverview } from '@/services/admin/modulesService';
+import PrecosItemCards from '@/components/admin/PrecosItemCards';
+import ComboGerenciar from '@/components/admin/ComboGerenciar';
 import { usePricingCosts } from '@/hooks/admin/usePricingCosts';
 import { listAllComboModules, type ComboModuleRow } from '@/services/admin/combosAdmin';
 import { CARD, INPUT, brl, int } from '@/components/admin/moduleUi';
@@ -249,7 +250,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   const [editing, setEditing] = useState<DynamicPlan | 'new' | null>(null);
   const [comboMods, setComboMods] = useState<ComboModuleRow[]>([]);
   const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [ov, setOv] = useState<ModuleOverview[]>([]);
+  const [comboSel, setComboSel] = useState('');
   const { confirm, dialog } = useConfirm();
   const costs = usePricingCosts(plans, comboMods);
 
@@ -262,7 +263,6 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   }, []);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { getModulesOverview(30).then((d) => setOv(d.modules)).catch(() => setOv([])); }, []);
 
   const modName = useMemo(() => new Map(modules.map((m) => [m.slug, m.name])), [modules]);
   const filtered = (plans || []).filter((p) =>
@@ -376,7 +376,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
         </div>
         <div className="inline-flex rounded-lg border border-slate-700 bg-[#0b0e1a] p-0.5">
           {TABS.map((t) => (
-            <button key={t.id} type="button" onClick={() => setSub(t.id)}
+            <button key={t.id} type="button" onClick={() => { setSub(t.id); setFilter(''); setComboSel(''); }}
               className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${sub === t.id ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}>
               {t.label}
             </button>
@@ -418,53 +418,25 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
           {false && renderTable(individuals, false)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {modules.map((m) => {
-            const o = ov.find((x) => x.slug === m.slug);
-            const mp = (plans || []).filter((p) => !p.is_combo && p.module_slug === m.slug);
-            const act = mp.filter((p) => p.is_active);
-            const min = act.length ? Math.min(...act.map((p) => p.price_monthly_cents)) : null;
-            const sc = mp.reduce((sum, p) => sum + (subs[p.id] || 0), 0);
-            const dot = o?.status === 'active' ? 'bg-emerald-500' : o?.status === 'coming_soon' ? 'bg-yellow-400' : 'bg-slate-500';
-            return (
-              <button key={m.slug} type="button" onClick={() => setFilter(m.slug)}
-                className="relative cursor-pointer rounded-2xl border border-slate-800 bg-[#111524] p-5 text-center transition-colors hover:border-sky-500/50 hover:bg-white/5">
-                <i className={`absolute left-3 top-3 h-2.5 w-2.5 rounded-full ${dot}`} />
-                {o?.logo_url
-                  ? <img src={o.logo_url} alt={m.name} className="mx-auto h-11 w-11 rounded-xl bg-white object-contain p-1" />
-                  : <div className="mx-auto h-11 w-11 rounded-xl bg-white/10" />}
-                <p className="mt-2 text-base font-black text-white">{m.name}</p>
-                <p className="text-[13px] text-slate-500">{mp.length === 0 ? 'Nenhum plano ainda' : `${mp.length} ${mp.length === 1 ? 'plano' : 'planos'} · ${act.length} ativos`}</p>
-                <div className="mt-3 flex items-end justify-between text-left">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">A partir de</p>
-                    <p className="text-lg font-black text-sky-300">{min === null ? '—' : brl(min)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Assinantes</p>
-                    <p className="text-lg font-black text-white">{int(sc)}</p>
-                  </div>
-                </div>
-                <p className="mt-3 text-[13px] font-semibold text-sky-300">Gerenciar preços →</p>
-              </button>
-            );
-          })}
-        </div>
+        <PrecosItemCards kind="modulos" plans={plans} comboMods={comboMods} onManage={setFilter} />
       ))}
 
       {sub === 'combos' && (plans === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
+      ) : comboSel && (plans || []).some((p) => p.id === comboSel) ? (
+        <div className="space-y-4">
+          <button type="button" onClick={() => setComboSel('')} className="cursor-pointer text-[13px] font-semibold text-slate-400 hover:text-white">← Combos</button>
+          <ComboGerenciar
+            plan={(plans || []).find((p) => p.id === comboSel) as DynamicPlan}
+            costs={costs}
+            subs={subs}
+            subtitle={comboMods.filter((r) => r.plan_id === comboSel).map((r) => modName.get(r.module_slug) || r.module_slug).join(' + ')}
+            onEdit={setEditing}
+            onSaved={load}
+          />
+        </div>
       ) : (
-        <PlanosGerenciar
-          title="Combos"
-          plans={(plans || []).filter((p) => p.is_combo)}
-          subs={subs}
-          showAnchor={false}
-          subtitleOf={(p) => comboMods.filter((r) => r.plan_id === p.id).map((r) => modName.get(r.module_slug) || r.module_slug).join(' + ')}
-          renderMargin={(p) => <MarginBadge m={costs.marginOf(p)} />}
-          onEdit={setEditing}
-          onSaved={load}
-        />
+        <PrecosItemCards kind="combos" plans={plans} comboMods={comboMods} onManage={setComboSel} />
       ))}
 
       {sub === 'custos' && (
