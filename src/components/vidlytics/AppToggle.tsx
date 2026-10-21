@@ -14,7 +14,7 @@ export default function AppToggle() {
   useEffect(() => {
     if (!storeId) return;
     let alive = true;
-    sb.from('store_settings_public').select('app_enabled,widget_enabled').eq('store_id', storeId).maybeSingle()
+    sb.rpc('get_store_settings_public', { p_store_id: storeId }).maybeSingle()
       .then(({ data }: any) => {
         if (!alive) return;
         setOn(data ? data.app_enabled !== false && data.widget_enabled !== false : true);

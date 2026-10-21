@@ -124,10 +124,7 @@ export default function NoahChatWidget() {
   useEffect(() => {
     if (!open || !storeId) return;
     let alive = true;
-    sb.from('store_settings_public')
-      .select('app_enabled,widget_enabled')
-      .eq('store_id', storeId)
-      .maybeSingle()
+    sb.rpc('get_store_settings_public', { p_store_id: storeId }).maybeSingle()
       .then(({ data }: any) => {
         if (alive && data) setAppStatus(data.app_enabled !== false && data.widget_enabled !== false);
       });

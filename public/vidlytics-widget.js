@@ -2055,10 +2055,7 @@ var query = 'comments_public?select=id,store_id,video_id,user_name,content,statu
 
 function readStoreSettings() {
     if (!storeId || !hasSupabase) return Promise.resolve({});
-    return supabaseFetch(
-'store_settings_public?select=auto_approve_comments,whatsapp_number,whatsapp_message,whatsapp_message_template,store_name,logo_url,live_widget_config,live_player_config,reply_display_name,app_enabled,widget_enabled&store_id=eq.' + encodeURIComponent(storeId) + '&limit=1',
-      { method: 'GET' }
-    )
+    return supabaseFetch('rpc/get_store_settings_public', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ p_store_id: storeId }) })
       .then(function (response) { if (!response.ok) return {}; return response.json(); })
       .then(function (data) {
         if (Array.isArray(data) && data.length > 0) return data[0];
@@ -7947,10 +7944,7 @@ if (status === 'active' || status === 'lifetime') {
 
 function readStoreStatus() {
     if (!storeId || !hasSupabase) return Promise.resolve(null);
-return supabaseFetch(
-      'stores_public?select=id,name,logo_url,subscription_status,trial_ends_at,past_due_since&id=eq.' + encodeURIComponent(storeId) + '&limit=1',
-      { method: 'GET' }
-    )
+return supabaseFetch('rpc/get_store_public', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ p_store_id: storeId }) })
           .then(function (response) {
         if (!response.ok) return null;
         return response.json();

@@ -1,7 +1,24 @@
-﻿Set-Location "F:\RODRIGO VICENTE\DYAD\sll-hub"
-Get-Clipboard | Set-Content supabase\public_store_rpcs.sql -Encoding utf8
-(Get-Content supabase\public_store_rpcs.sql | Measure-Object -Line).Lines
-git add supabase\public_store_rpcs.sql
-git commit -m "feat(seguranca): RPCs get_store_public e get_store_settings_public"
-git push
+﻿begin;
 
+create or replace function public.get_store_settings_public(p_store_id uuid)
+returns setof public.store_settings_public
+language sql stable security definer
+set search_path = public
+as $$
+  select * from public.store_settings_public where store_id = p_store_id limit 1;
+$$;
+
+create or replace function public.get_store_public(p_store_id uuid)
+returns setof public.stores_public
+language sql stable security definer
+set search_path = public
+as $$
+  select * from public.stores_public where id = p_store_id limit 1;
+$$;
+
+revoke all on function public.get_store_settings_public(uuid) from public;
+revoke all on function public.get_store_public(uuid) from public;
+grant execute on function public.get_store_settings_public(uuid) to anon, authenticated;
+grant execute on function public.get_store_public(uuid) to anon, authenticated;
+
+commit;
