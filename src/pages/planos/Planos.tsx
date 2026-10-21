@@ -27,8 +27,8 @@ const sb: any = supabase;
 
 const CYCLES: { key: PlanCycle; label: string; badge?: string }[] = [
   { key: "monthly", label: "Mensal" },
-  { key: "semiannual", label: "Semestral", badge: "17% OFF" },
-  { key: "yearly", label: "Anual", badge: "4 MESES GRÁTIS" },
+  { key: "semiannual", label: "Semestral" },
+  { key: "yearly", label: "Anual" },
 ];
 
 type AddonRow = {
@@ -62,6 +62,29 @@ export default function Planos() {
     });
     return () => { alive = false; };
   }, [combos]);
+  const [badges, setBadges] = useState<Record<string, string | null>>({});
+
+  useEffect(() => {
+    let alive = true;
+    sb.from("dynamic_plans")
+      .select("price_monthly_cents,price_semiannual_cents,price_annual_cents")
+      .eq("is_active", true)
+      .gt("price_monthly_cents", 0)
+      .then(({ data, error }: any) => {
+        if (!alive || error || !data) return;
+        const list = (data as any[]).map((r) => ({
+          monthly: Number(r.price_monthly_cents) || 0,
+          semiannual: Number(r.price_semiannual_cents) || 0,
+          yearly: Number(r.price_annual_cents) || 0,
+        }));
+        setBadges({
+          semiannual: maxCycleDiscountLabel(list, "semiannual"),
+          yearly: maxCycleDiscountLabel(list, "yearly"),
+        });
+      });
+    return () => { alive = false; };
+  }, []);
+
   const [current, setCurrent] = useState<{ tier: string | null } | null>(null);
 
   useEffect(() => {
@@ -178,8 +201,8 @@ export default function Planos() {
                   )}
                 >
                   {c.label}
-                  {c.badge && (
-                    <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">{c.badge}</span>
+                  {badges[c.key] && (
+                    <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">{badges[c.key]}</span>
                   )}
                 </button>
               ))}

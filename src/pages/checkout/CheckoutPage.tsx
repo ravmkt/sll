@@ -13,10 +13,10 @@ const sb: any = supabase;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const IN = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-[#0094eb]';
 const LB = 'mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500';
-const CYCLES: { key: Cycle; label: string }[] = [
+const BASE_CYCLES: { key: Cycle; label: string }[] = [
   { key: 'monthly', label: 'Mensal' },
-  { key: 'semiannual', label: 'Semestral (17% OFF)' },
-  { key: 'yearly', label: 'Anual (4 meses grátis)' },
+  { key: 'semiannual', label: 'Semestral' },
+  { key: 'yearly', label: 'Anual' },
 ];
 const MSG: Record<string, string> = {
   MODULE_ALREADY_SUBSCRIBED: 'Sua loja já tem este módulo ativo.',
@@ -157,6 +157,13 @@ export default function CheckoutPage() {
   };
 
   const months = CYCLE_MONTHS[cycle];
+  const cyclePrices = plan
+    ? { monthly: plan.price_monthly_cents, semiannual: plan.price_semiannual_cents, yearly: plan.price_annual_cents }
+    : null;
+  const CYCLES = BASE_CYCLES.map((c) => {
+    const l = cyclePrices && c.key !== 'monthly' ? cycleDiscountLabel(cyclePrices, c.key) : null;
+    return l ? { ...c, label: `${c.label} (${l})` } : c;
+  });
   const bumpIds = upsells.filter((a) => sel.has(a.id)).map((a) => a.id);
   const planCents = plan ? cents(plan, cycle) : 0;
   const discount = !applied ? 0 : applied.type === 'percentage' ? Math.round((planCents * applied.value) / 100) : Math.min(planCents, applied.value);
