@@ -87,6 +87,10 @@ Deno.serve(async (req) => {
       .select("id, plan_name, is_combo, module_slug, is_active, price_monthly_cents, price_semiannual_cents, price_annual_cents")
       .eq("id", plan_id).maybeSingle();
     if (!dyn || !dyn.is_active) return json({ error: "PLANO_INVALIDO" }, 400);
+    const { data: sellable, error: sellErr } = await admin.rpc("plan_is_sellable", { p_plan_id: dyn.id });
+    if (sellErr || sellable !== true) {
+      return json({ error: "PLANO_INDISPONIVEL", message: "Este plano não está disponível para contratação no momento." }, 409);
+    }
     const priceCents = cycle === "MONTHLY" ? dyn.price_monthly_cents : cycle === "SEMIANNUAL" ? dyn.price_semiannual_cents : dyn.price_annual_cents;
     if (!priceCents || priceCents < 500) return json({ error: "PLANO_INVALIDO" }, 400);
 

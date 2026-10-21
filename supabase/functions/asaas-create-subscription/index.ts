@@ -122,6 +122,10 @@ Deno.serve(async (req) => {
       if (!d || !d.is_active) {
         return jsonResponse({ error: "PLANO_INVALIDO" }, 400);
       }
+      const { data: sellable, error: sellErr } = await supabaseAdmin.rpc("plan_is_sellable", { p_plan_id: d.id });
+      if (sellErr || sellable !== true) {
+        return jsonResponse({ error: "PLANO_INDISPONIVEL", message: "Este plano não está disponível para contratação no momento." }, 409);
+      }
       dyn = d;
       planName = d.plan_name;
       priceCents =

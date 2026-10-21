@@ -90,73 +90,18 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
         const hasRealEvents = events && events.length > 0;
 
         if (!hasRealEvents) {
-          // ==============================
-          // MODO DEMONSTRAÇÃO / MOCK VISUAL
-          // ==============================
-          setIsDemoData(true);
-
-          const mockPeak = 48;
-          const mockTotalViews = 342;
-          const mockClicks = 46;
-          const mockOrders = 7;
-
-          setTotalViews(mockTotalViews);
-          setPeakViewers(mockPeak);
-          setAvgViewTime("14m 20s");
-          setCommentsCount(89);
-          setProductClicks(mockClicks);
-          setOrdersCount(mockOrders);
-
-          // Curva orgânica de live (esquenta, pico no meio com apresentação dos produtos, estabilização)
-          const mockCurve: TimelinePoint[] = [
-            { time: "00:00", viewers: 6, clicks: 0 },
-            { time: "00:05", viewers: 18, clicks: 2 },
-            { time: "00:10", viewers: 29, clicks: 5 },
-            { time: "00:15", viewers: 42, clicks: 12 },
-            { time: "00:20", viewers: 48, clicks: 18 }, // PICO
-            { time: "00:25", viewers: 45, clicks: 26 },
-            { time: "00:30", viewers: 41, clicks: 33 },
-            { time: "00:35", viewers: 36, clicks: 39 },
-            { time: "00:40", viewers: 31, clicks: 42 },
-            { time: "00:45", viewers: 22, clicks: 46 },
-            { time: "00:50", viewers: 12, clicks: 46 },
-          ];
-          setTimelineData(mockCurve);
-
-          // Produtos com métricas de interesse e conversão
-          let calculatedPotential = 0;
-          let calculatedRevenue = 0;
-
-          const fallbackProducts = [
-            { id: "1", name: "Calça Confort - Rosa Pink 42/44 - M", price: 149.95, clicks: 18, salesCount: 3 },
-            { id: "2", name: "Calça Confort Bicolor Preto e Rosa Pink 46/48 - G", price: 154.95, clicks: 14, salesCount: 2 },
-            { id: "3", name: "Blusa Confort - Verde Jade 46/48 - G", price: 149.95, clicks: 9, salesCount: 1 },
-            { id: "4", name: "Blusa Manga Longa Elegance", price: 299.90, clicks: 5, salesCount: 1 },
-          ];
-
-          const sourceProds = realProducts.length > 0 ? realProducts.map((p, i) => ({
-            id: p.id,
-            name: p.name,
-            price: Number(p.price || 99.9),
-            clicks: [18, 14, 9, 5][i] || Math.floor(Math.random() * 8) + 2,
-            salesCount: [3, 2, 1, 1][i] || 1
-          })) : fallbackProducts;
-
-          const mappedRank = sourceProds.map(p => {
-            const rev = p.salesCount * p.price;
-            const pot = p.clicks * p.price;
-            calculatedRevenue += rev;
-            calculatedPotential += pot;
-            return {
-              ...p,
-              revenue: rev,
-            };
-          }).sort((a, b) => b.clicks - a.clicks);
-
-          setProductRank(mappedRank);
-          setTotalRevenue(calculatedRevenue);
-          setPotentialRevenue(calculatedPotential);
-
+          // Sem eventos reais: estado vazio, sem dados fictícios
+          setIsDemoData(false);
+          setTotalViews(0);
+          setPeakViewers(0);
+          setAvgViewTime("0m 0s");
+          setCommentsCount(0);
+          setProductClicks(0);
+          setOrdersCount(0);
+          setTimelineData([]);
+          setProductRank([]);
+          setTotalRevenue(0);
+          setPotentialRevenue(0);
         } else {
           // ==============================
           // MODO PRODUÇÃO / DADOS REAIS
