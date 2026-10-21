@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LifeBuoy } from 'lucide-react';
 import NoahSupportTab from '@/components/master/NoahSupportTab';
 import NoahUsageTab from '@/components/admin/NoahUsageTab';
 
@@ -7,12 +7,12 @@ type Preset = 'today' | '7' | '15' | '30' | '90' | 'month' | 'custom';
 
 const PRESETS: { key: Preset; label: string }[] = [
   { key: 'today', label: 'Hoje' },
-  { key: '7', label: '7 dias' },
-  { key: '15', label: '15 dias' },
-  { key: '30', label: '30 dias' },
-  { key: '90', label: '90 dias' },
+  { key: '7', label: 'Últimos 7 dias' },
+  { key: '15', label: 'Últimos 15 dias' },
+  { key: '30', label: 'Últimos 30 dias' },
+  { key: '90', label: 'Últimos 90 dias' },
   { key: 'month', label: 'Mês' },
-  { key: 'custom', label: 'Personalizado' },
+  { key: 'custom', label: 'Período personalizado' },
 ];
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -21,6 +21,8 @@ const fromInput = (s: string) => {
   const [y, m, d] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
 };
+
+const CLS = 'h-9 rounded-lg border border-slate-700 bg-slate-950 px-2 text-xs text-slate-200 focus:border-amber-500 focus:outline-none';
 
 export default function NoahPage() {
   const [preset, setPreset] = useState<Preset>('month');
@@ -49,44 +51,33 @@ export default function NoahPage() {
   }, [preset, off, cFrom, cTo]);
 
   const monthName = range.from.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  const dateInput = 'rounded-lg border border-slate-700 bg-[#111524] px-2 py-1 text-xs text-white [color-scheme:dark]';
+  const today = toInput(new Date());
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-[#0a0d1a] px-4 py-3">
-        <div>
-          <h2 className="text-xl font-black text-white">Suporte Noah</h2>
-          <p className="text-xs text-slate-400">Configuração, consumo da IA e base de conhecimento do assistente.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-800 bg-[#111524] p-1">
-            {PRESETS.map((p) => (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => setPreset(p.key)}
-                className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                  preset === p.key ? 'bg-[#0094eb] text-white' : 'text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
+      <div className="sticky top-0 z-30 -mx-6 -mt-6 space-y-3 bg-[#0b0e1a] px-6 pt-6">
+        <h1 className="flex items-center gap-2 text-xl font-black text-white"><LifeBuoy className="h-5 w-5 text-amber-500" /> Suporte Noah</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <p className="text-[13px] text-slate-500">Configuração, consumo da IA e base de conhecimento do assistente.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <select value={preset} onChange={(e) => setPreset(e.target.value as Preset)} className={`${CLS} cursor-pointer`}>
+              {PRESETS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+            </select>
+            {preset === 'month' && (
+              <div className="flex items-center gap-1">
+                <button type="button" aria-label="Mês anterior" onClick={() => setOff((v) => v - 1)} className="cursor-pointer rounded-lg p-1.5 text-slate-300 hover:bg-white/10"><ChevronLeft className="h-4 w-4" /></button>
+                <span className="min-w-[130px] text-center text-xs font-bold capitalize text-white">{monthName}</span>
+                <button type="button" aria-label="Próximo mês" disabled={off >= 0} onClick={() => setOff((v) => v + 1)} className="cursor-pointer rounded-lg p-1.5 text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button>
+              </div>
+            )}
+            {preset === 'custom' && (
+              <>
+                <input type="date" value={cFrom} max={cTo} onChange={(e) => e.target.value && setCFrom(e.target.value)} className={CLS} style={{ colorScheme: 'dark' }} />
+                <span className="text-xs text-slate-500">até</span>
+                <input type="date" value={cTo} min={cFrom} max={today} onChange={(e) => e.target.value && setCTo(e.target.value)} className={CLS} style={{ colorScheme: 'dark' }} />
+              </>
+            )}
           </div>
-          {preset === 'month' && (
-            <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-[#111524] px-1 py-1">
-              <button type="button" aria-label="Mês anterior" onClick={() => setOff((v) => v - 1)} className="cursor-pointer rounded-lg p-1.5 text-slate-300 hover:bg-white/10"><ChevronLeft className="h-4 w-4" /></button>
-              <span className="min-w-[130px] text-center text-xs font-bold capitalize text-white">{monthName}</span>
-              <button type="button" aria-label="Próximo mês" disabled={off >= 0} onClick={() => setOff((v) => v + 1)} className="cursor-pointer rounded-lg p-1.5 text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button>
-            </div>
-          )}
-          {preset === 'custom' && (
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <input type="date" value={cFrom} max={cTo} onChange={(e) => e.target.value && setCFrom(e.target.value)} className={dateInput} />
-              <span>até</span>
-              <input type="date" value={cTo} min={cFrom} max={toInput(new Date())} onChange={(e) => e.target.value && setCTo(e.target.value)} className={dateInput} />
-            </div>
-          )}
         </div>
       </div>
 
