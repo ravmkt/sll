@@ -311,6 +311,7 @@ function LojasList() {
 
   return (
     <div className="space-y-4">
+      <div className="sticky top-0 z-30 -mx-6 -mt-6 space-y-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
       <div>
         <h1 className="text-2xl font-black text-white">Lojas</h1>
         <p className="text-[13px] text-slate-500">{visible.length} de {rows.length} lojas</p>
@@ -345,6 +346,8 @@ function LojasList() {
           <option value="all">Todos os módulos</option>
           {modules.map((m) => <option key={m} value={m}>{modNames[m] || modLabel(m)} ({modCounts[m]})</option>)}
         </select>
+      </div>
+
       </div>
 
       <div className={`${CARD} overflow-x-auto p-0`}>
