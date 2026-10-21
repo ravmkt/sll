@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, Plus, X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   listDynamicPlans, listPlanAddons, updateDynamicPlan, updatePlanAddon,
@@ -13,9 +13,12 @@ import { useConfirm } from '@/components/admin/ConfirmDialog';
 import MarginBadge from '@/components/admin/MarginBadge';
 import { cycleInfo } from '@/components/admin/cycleInfo';
 import InfraCostsCard from '@/components/admin/InfraCostsCard';
+import InfraStatusCard from '@/components/admin/InfraStatusCard';
+import PlanosGerenciar from '@/components/admin/PlanosGerenciar';
+import { getModulesOverview, type ModuleOverview } from '@/services/admin/modulesService';
 import { usePricingCosts } from '@/hooks/admin/usePricingCosts';
 import { listAllComboModules, type ComboModuleRow } from '@/services/admin/combosAdmin';
-import { CARD, INPUT, SELECT, brl, int } from '@/components/admin/moduleUi';
+import { CARD, INPUT, brl, int } from '@/components/admin/moduleUi';
 
 type Mod = { slug: string; name: string };
 type Row = { key: string; kind: 'num' | 'bool'; val: string; on: boolean };
@@ -236,7 +239,7 @@ function AddonRow({ a, onSaved }: { a: PlanAddon; onSaved: () => void }) {
 }
 
 export default function PrecosTab({ initialModule }: { initialModule: string | null }) {
-  const [sub, setSub] = useState<'planos' | 'addons' | 'custos'>('planos');
+  const [sub, setSub] = useState<'modulos' | 'combos' | 'addons' | 'custos'>('modulos');
   const [filter, setFilter] = useState(initialModule || '');
   const [modules, setModules] = useState<Mod[]>([]);
   const [plans, setPlans] = useState<DynamicPlan[] | null>(null);
@@ -246,6 +249,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   const [editing, setEditing] = useState<DynamicPlan | 'new' | null>(null);
   const [comboMods, setComboMods] = useState<ComboModuleRow[]>([]);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [ov, setOv] = useState<ModuleOverview[]>([]);
   const { confirm, dialog } = useConfirm();
   const costs = usePricingCosts(plans, comboMods);
 
@@ -258,6 +262,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { getModulesOverview(30).then((d) => setOv(d.modules)).catch(() => setOv([])); }, []);
 
   const modName = useMemo(() => new Map(modules.map((m) => [m.slug, m.name])), [modules]);
   const filtered = (plans || []).filter((p) =>
@@ -355,28 +360,18 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
     </div>
   );
 
-  const TABS: { id: typeof sub; label: string }[] = [{ id: 'planos', label: 'Planos' }, { id: 'addons', label: 'Add-ons' }, { id: 'custos', label: 'Custos' }];
+  const TABS: { id: typeof sub; label: string }[] = [{ id: 'modulos', label: 'Módulos' }, { id: 'combos', label: 'Combos' }, { id: 'addons', label: 'Add-ons' }, { id: 'custos', label: 'Custos' }];
 
   return (
     <div className="space-y-5">
-      <div className="sticky top-0 z-20 -mx-6 -mt-6 space-y-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
+      <div className="sticky top-0 z-30 -mx-6 -mt-6 space-y-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
         <div className="flex min-h-[44px] flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-black text-white">Preços</h1>
             <p className="text-[13px] text-slate-500">Planos, limites, add-ons e custos de cada módulo.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {sub === 'planos' && (
-              <>
-                <select value={filter} onChange={(e) => setFilter(e.target.value)} className={`${SELECT} cursor-pointer`}>
-                  <option value="">Todos os módulos</option>
-                  {modules.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
-                </select>
-                <button type="button" onClick={() => setEditing('new')} className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#fd8539] px-3 py-1.5 text-[13px] font-bold text-white">
-                  <Plus size={14} /> Novo plano
-                </button>
-              </>
-            )}
+            
           </div>
         </div>
         <div className="inline-flex rounded-lg border border-slate-700 bg-[#0b0e1a] p-0.5">
@@ -395,7 +390,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
         </div>
       )}
 
-      {sub === 'planos' && costs.alerts.length > 0 && (
+      {(sub === 'modulos' || sub === 'combos') && costs.alerts.length > 0 && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] text-amber-200">
           <p className="font-bold">Atenção Rodrigo: {costs.alerts.length} {costs.alerts.length === 1 ? 'item está' : 'itens estão'} com margem abaixo de 50% no pior caso.</p>
           <ul className="mt-1 list-disc pl-4">
@@ -406,53 +401,78 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
         </div>
       )}{error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[15px] text-rose-300">{error}</div>}
 
-      {sub === 'planos' && (plans === null ? (
+      {sub === 'modulos' && (plans === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
       ) : filter ? (
         <div className="space-y-4">
-          <button type="button" onClick={() => setFilter('')} className="cursor-pointer text-[13px] font-semibold text-slate-400 hover:text-white">← Todos os módulos</button>
-          <section className="space-y-2">
-            <h2 className="text-[15px] font-bold text-sky-300">{modName.get(filter) || filter} <span className="ml-1 font-normal text-slate-500">({individuals.length} planos)</span></h2>
-            {renderTable(individuals, false)}
-          </section>
+          <button type="button" onClick={() => setFilter('')} className="cursor-pointer text-[13px] font-semibold text-slate-400 hover:text-white">← Módulos</button>
+          <PlanosGerenciar
+            title={modName.get(filter) || filter}
+            plans={individuals}
+            subs={subs}
+            showAnchor
+            renderMargin={(p) => <MarginBadge m={costs.marginOf(p)} />}
+            onEdit={setEditing}
+            onSaved={load}
+          />
+          {false && renderTable(individuals, false)}
         </div>
       ) : (
-        <div className="space-y-8">
-          <section data-sec="modulo-cards" className="space-y-3">
-            <h2 className="text-[15px] font-bold text-sky-300">Módulos</h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {modules.map((m) => {
-                const mp = (plans || []).filter((p) => !p.is_combo && p.module_slug === m.slug);
-                const act = mp.filter((p) => p.is_active);
-                const min = act.length ? Math.min(...act.map((p) => p.price_monthly_cents)) : null;
-                const sc = mp.reduce((sum, p) => sum + (subs[p.id] || 0), 0);
-                return (
-                  <button key={m.slug} type="button" onClick={() => setFilter(m.slug)}
-                    className="cursor-pointer rounded-2xl border border-slate-800 bg-[#111524] p-5 text-left transition-colors hover:border-sky-500/50 hover:bg-white/5">
-                    <p className="text-base font-black text-white">{m.name}</p>
-                    <p className="mt-1 text-[13px] text-slate-500">{mp.length === 0 ? 'Nenhum plano ainda' : `${mp.length} ${mp.length === 1 ? 'plano' : 'planos'} · ${act.length} ativos`}</p>
-                    <div className="mt-4 flex items-end justify-between">
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">A partir de</p>
-                        <p className="text-lg font-black text-sky-300">{min === null ? '—' : brl(min)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Assinantes</p>
-                        <p className="text-lg font-black text-white">{int(sc)}</p>
-                      </div>
-                    </div>
-                    <p className="mt-4 text-[13px] font-semibold text-sky-300">Gerenciar planos →</p>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {modules.map((m) => {
+            const o = ov.find((x) => x.slug === m.slug);
+            const mp = (plans || []).filter((p) => !p.is_combo && p.module_slug === m.slug);
+            const act = mp.filter((p) => p.is_active);
+            const min = act.length ? Math.min(...act.map((p) => p.price_monthly_cents)) : null;
+            const sc = mp.reduce((sum, p) => sum + (subs[p.id] || 0), 0);
+            const dot = o?.status === 'active' ? 'bg-emerald-500' : o?.status === 'coming_soon' ? 'bg-yellow-400' : 'bg-slate-500';
+            return (
+              <button key={m.slug} type="button" onClick={() => setFilter(m.slug)}
+                className="relative cursor-pointer rounded-2xl border border-slate-800 bg-[#111524] p-5 text-center transition-colors hover:border-sky-500/50 hover:bg-white/5">
+                <i className={`absolute left-3 top-3 h-2.5 w-2.5 rounded-full ${dot}`} />
+                {o?.logo_url
+                  ? <img src={o.logo_url} alt={m.name} className="mx-auto h-11 w-11 rounded-xl bg-white object-contain p-1" />
+                  : <div className="mx-auto h-11 w-11 rounded-xl bg-white/10" />}
+                <p className="mt-2 text-base font-black text-white">{m.name}</p>
+                <p className="text-[13px] text-slate-500">{mp.length === 0 ? 'Nenhum plano ainda' : `${mp.length} ${mp.length === 1 ? 'plano' : 'planos'} · ${act.length} ativos`}</p>
+                <div className="mt-3 flex items-end justify-between text-left">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">A partir de</p>
+                    <p className="text-lg font-black text-sky-300">{min === null ? '—' : brl(min)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Assinantes</p>
+                    <p className="text-lg font-black text-white">{int(sc)}</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-[13px] font-semibold text-sky-300">Gerenciar preços →</p>
+              </button>
+            );
+          })}
         </div>
       ))}
 
-      {sub === 'custos' && <InfraCostsCard onChanged={costs.reload} />}
+      {sub === 'combos' && (plans === null ? (
+        <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
+      ) : (
+        <PlanosGerenciar
+          title="Combos"
+          plans={(plans || []).filter((p) => p.is_combo)}
+          subs={subs}
+          showAnchor={false}
+          subtitleOf={(p) => comboMods.filter((r) => r.plan_id === p.id).map((r) => modName.get(r.module_slug) || r.module_slug).join(' + ')}
+          renderMargin={(p) => <MarginBadge m={costs.marginOf(p)} />}
+          onEdit={setEditing}
+          onSaved={load}
+        />
+      ))}
+
+      {sub === 'custos' && (
+        <div className="space-y-6">
+          <InfraStatusCard />
+          <InfraCostsCard onChanged={costs.reload} />
+        </div>
+      )}
 
       {sub === 'addons' && <AddonsAdminTab />}
 
