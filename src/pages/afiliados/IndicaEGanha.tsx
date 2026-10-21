@@ -81,9 +81,15 @@ const IndicaEGanha: React.FC = () => {
       setAmount("");
       setPixKey("");
       loadData();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      showError("Erro ao solicitar saque");
+      if (err?.code === "23514" || String(err?.message || "").includes("Saldo insuficiente")) {
+        showError("Saldo insuficiente para este saque.");
+      } else if (err?.code === "42501") {
+        showError("Não foi possível registrar o saque. Verifique os dados e tente novamente.");
+      } else {
+        showError("Erro ao solicitar saque");
+      }
     } finally {
       setSubmitting(false);
     }
