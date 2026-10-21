@@ -6,6 +6,8 @@ import { showError, showSuccess } from '@/utils/toast';
 const sb: any = supabase;
 type Row = { id: string; name: string; is_sandbox: boolean };
 
+const TIP = 'Essa loja lê as configurações em teste. Todas as outras leem somente o que está publicado ao vivo.';
+
 export default function SandboxStoreSelect({ compact = false }: { compact?: boolean }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [value, setValue] = useState('');
@@ -34,25 +36,28 @@ export default function SandboxStoreSelect({ compact = false }: { compact?: bool
     showSuccess(id ? 'Loja Teste definida.' : 'Loja Teste removida.');
   };
 
+  const options = (
+    <>
+      <option value="">Nenhuma</option>
+      {rows.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+    </>
+  );
+
   if (compact) {
     return (
-      <label
-        className="flex items-center gap-1.5"
-        title="Essa loja lê as configurações em teste. Todas as outras leem somente o que está publicado ao vivo."
-      >
-        <FlaskConical className="h-4 w-4 text-[#fd8539]" />
-        <span className="text-[13px] font-semibold text-slate-400">Loja teste</span>
+      <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-[#111524] py-1 pl-3 pr-1" title={TIP}>
+        <FlaskConical className="h-4 w-4 shrink-0 text-[#fd8539]" />
+        <span className="whitespace-nowrap text-xs font-bold text-white">Loja teste</span>
+        {(loading || saving) && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />}
         <select
           value={value}
           disabled={loading || saving}
           onChange={(e) => change(e.target.value)}
-          className="h-8 max-w-[200px] cursor-pointer rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-[13px] text-slate-200 outline-none focus:border-[#0094eb]"
+          className="h-7 max-w-[180px] cursor-pointer rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-xs text-white outline-none focus:border-[#0094eb]"
         >
-          <option value="">Nenhuma</option>
-          {rows.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+          {options}
         </select>
-        {(loading || saving) && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />}
-      </label>
+      </div>
     );
   }
 
@@ -63,15 +68,14 @@ export default function SandboxStoreSelect({ compact = false }: { compact?: bool
         <h3 className="text-base font-bold text-white">Loja Oficial de Testes (Sandbox)</h3>
         {(loading || saving) && <Loader2 className="h-4 w-4 animate-spin text-slate-500" />}
       </div>
-      <p className="text-xs text-slate-400">Essa loja lê as configurações em teste. Todas as outras leem somente o que está publicado ao vivo.</p>
+      <p className="text-xs text-slate-400">{TIP}</p>
       <select
         value={value}
         disabled={loading || saving}
         onChange={(e) => change(e.target.value)}
         className="w-full cursor-pointer rounded-xl border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[#0094eb]"
       >
-        <option value="">Nenhuma</option>
-        {rows.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+        {options}
       </select>
     </div>
   );

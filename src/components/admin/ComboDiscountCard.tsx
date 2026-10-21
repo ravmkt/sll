@@ -4,7 +4,9 @@ import { supabase } from '@/lib/supabase';
 
 const sb: any = supabase;
 
-export default function ComboDiscountCard() {
+const TIP = 'Sugestão para novos combos e desconto do combo personalizado do cliente. Cada combo fixo tem o seu próprio desconto, editável no card.';
+
+export default function ComboDiscountCard({ compact = false }: { compact?: boolean }) {
   const [value, setValue] = useState('');
   const [saved, setSaved] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -36,30 +38,45 @@ export default function ComboDiscountCard() {
 
   const dirty = saved === null || Number(value.replace(',', '.')) !== saved;
 
+  const controls = (
+    <div className="flex items-center gap-2">
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className={`rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-right text-slate-100 outline-none focus:border-[#0094eb] ${
+          compact ? 'h-7 w-14 text-xs' : 'h-9 w-20 text-[15px]'
+        }`}
+      />
+      <span className={compact ? 'text-xs text-slate-400' : 'text-[15px] text-slate-400'}>%</span>
+      <button
+        type="button"
+        disabled={busy || !dirty}
+        onClick={save}
+        className={`cursor-pointer rounded-lg bg-[#0094eb] font-bold text-white disabled:opacity-40 ${
+          compact ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-[13px]'
+        }`}
+      >
+        {busy ? 'Salvando...' : 'Salvar'}
+      </button>
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-[#111524] py-1 pl-3 pr-1" title={TIP}>
+        <span className="whitespace-nowrap text-xs font-bold text-yellow-300">Desc. combos</span>
+        {controls}
+      </div>
+    );
+  }
+
   return (
     <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-[#111524] p-4">
       <div>
         <h2 className="text-[15px] font-bold text-yellow-300">Desconto padrão dos combos</h2>
-        <p className="mt-0.5 text-[13px] text-slate-500">
-          Sugestão para novos combos e desconto do combo personalizado do cliente. Cada combo fixo tem o seu próprio desconto, editável no card.
-        </p>
+        <p className="mt-0.5 text-[13px] text-slate-500">{TIP}</p>
       </div>
-      <div className="flex items-center gap-2">
-        <input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="h-9 w-20 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-right text-[15px] text-slate-100 outline-none focus:border-[#0094eb]"
-        />
-        <span className="text-[15px] text-slate-400">%</span>
-        <button
-          type="button"
-          disabled={busy || !dirty}
-          onClick={save}
-          className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
-        >
-          {busy ? 'Salvando...' : 'Salvar'}
-        </button>
-      </div>
+      {controls}
     </section>
   );
 }

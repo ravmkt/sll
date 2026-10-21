@@ -147,8 +147,9 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
           <h1 className="text-xl font-black text-white">Módulos</h1>
           <p className="text-[13px] text-slate-500">Arraste os cards para mudar a ordem da vitrine; módulos ativos ficam sempre na frente.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <SandboxStoreSelect compact />
+          <ComboDiscountCard compact />
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
             <option value={7}>Últimos 7 dias</option>
@@ -214,7 +215,6 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
         </div>
       </section>
 
-      <ComboDiscountCard />
       {dialog}
     </div>
   );
