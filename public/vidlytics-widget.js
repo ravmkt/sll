@@ -2015,39 +2015,34 @@ var query = 'comments_public?select=id,store_id,video_id,user_name,content,statu
   function readLikesFromDb() {
     if (!hasSupabase) return Promise.resolve({ likedVideos: {}, likeCounts: {} });
     var fingerprint = getFingerprint();
-    var userLikesPromise = supabaseFetch(
-      'video_likes?select=video_id&store_id=eq.' + encodeURIComponent(storeId) +
-      '&user_fingerprint=eq.' + encodeURIComponent(fingerprint),
-      { method: 'GET' }
-    ).then(function (response) {
-      if (!response.ok) return [];
-      return response.json();
-    }).then(function (data) {
-      return Array.isArray(data) ? data : [];
-    }).catch(function () { return []; });
 
-    var allLikesPromise = supabaseFetch(
-      'video_likes?select=video_id&store_id=eq.' + encodeURIComponent(storeId),
-      { method: 'GET' }
-    ).then(function (response) {
-      if (!response.ok) return [];
-      return response.json();
-    }).then(function (data) {
-      return Array.isArray(data) ? data : [];
-    }).catch(function () { return []; });
+    function callRpc(name, payload) {
+      return supabaseFetch('rpc/' + name, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function (response) {
+        if (!response.ok) return [];
+        return response.json();
+      }).then(function (data) {
+        return Array.isArray(data) ? data : [];
+      }).catch(function () { return []; });
+    }
 
-    return Promise.all([userLikesPromise, allLikesPromise]).then(function (results) {
-      var userLikes = results[0];
-      var allLikes = results[1];
+    var userLikesPromise = callRpc('get_user_video_likes', {
+      p_store_id: storeId,
+      p_fingerprint: fingerprint
+    });
+    var countsPromise = callRpc('get_video_like_counts', { p_store_id: storeId });
+
+    return Promise.all([userLikesPromise, countsPromise]).then(function (results) {
       var likedVideosMap = {};
-      userLikes.forEach(function (like) {
+      results[0].forEach(function (like) {
         if (like.video_id) likedVideosMap[like.video_id] = true;
       });
       var likeCountsMap = {};
-      allLikes.forEach(function (like) {
-        if (like.video_id) {
-          likeCountsMap[like.video_id] = (likeCountsMap[like.video_id] || 0) + 1;
-        }
+      results[1].forEach(function (row) {
+        if (row.video_id) likeCountsMap[row.video_id] = Number(row.likes) || 0;
       });
       return { likedVideos: likedVideosMap, likeCounts: likeCountsMap };
     });
