@@ -4,6 +4,8 @@ import {
   AffiliateDatabaseService,
   AffiliateSummary,
   ReferralDetail,
+  AffiliateSettings,
+  MyWithdrawal,
 } from "@/services/AffiliateDatabaseService";
 import { Copy, MessageCircle, TrendingUp, Hourglass, Wallet, Users } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
@@ -13,6 +15,13 @@ import { ReferralSimulator, REF_PLANS, REF_RATE, brl } from "@/components/afilia
 import { ReferralMilestones } from "@/components/afiliados/ReferralMilestones";
 import { ReferralEarningsChart } from "@/components/afiliados/ReferralEarningsChart";
 import { BLUE_BTN, CARD, ICON_BOX, LABEL, MUTED, TITLE } from "@/components/afiliados/clubeStyles";
+
+const WD_LABEL: Record<string, string> = {
+  pending: "Pendente",
+  approved: "Aprovado",
+  paid: "Pago",
+  rejected: "Rejeitado",
+};
 
 const IndicaEGanha: React.FC = () => {
   const { storeId, store } = useLoja();
@@ -26,6 +35,8 @@ const IndicaEGanha: React.FC = () => {
   const [pixKeyType, setPixKeyType] = useState("cpf");
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [settings, setSettings] = useState<AffiliateSettings>({ grace_days: 7, payout_day: 10, min_withdrawal: 50 });
+  const [withdrawals, setWithdrawals] = useState<MyWithdrawal[]>([]);
 
   const loadData = async () => {
     if (!storeId) return;
@@ -36,6 +47,12 @@ const IndicaEGanha: React.FC = () => {
     ]);
     setSummary(summaryData);
     setDetails(referredData);
+    const [st, wd] = await Promise.all([
+      AffiliateDatabaseService.getSettings(),
+      AffiliateDatabaseService.getMyWithdrawals(storeId),
+    ]);
+    setSettings(st);
+    setWithdrawals(wd);
     setLoading(false);
   };
 
@@ -46,6 +63,17 @@ const IndicaEGanha: React.FC = () => {
   const referralLink = store?.referral_code
     ? `${window.location.origin}/?ref=${store.referral_code}`
     : "";
+
+  const openProof = async (ref: string) => {
+    const w = window.open("about:blank", "_blank");
+    try {
+      const url = await AffiliateDatabaseService.getProofUrl(ref);
+      if (w) w.location.href = url;
+    } catch {
+      if (w) w.close();
+      showError("Não foi possível abrir o comprovante.");
+    }
+  };
 
   const handleCopyLink = () => {
     if (!referralLink) return;
@@ -63,6 +91,14 @@ const IndicaEGanha: React.FC = () => {
     if (!storeId || !amount || !pixKey) return;
     const numericAmount = parseFloat(amount.replace(",", "."));
 
+    if (!(numericAmount > 0)) {
+      showError("Informe um valor válido");
+      return;
+    }
+    if (numericAmount < settings.min_withdrawal) {
+      showError(`Valor mínimo para saque: ${brl(settings.min_withdrawal)}`);
+      return;
+    }
     if (!summary || numericAmount > summary.available_balance) {
       showError("Saldo insuficiente");
       return;
@@ -83,7 +119,9 @@ const IndicaEGanha: React.FC = () => {
       loadData();
     } catch (err: any) {
       console.error(err);
-      if (err?.code === "23514" || String(err?.message || "").includes("Saldo insuficiente")) {
+      if (String(err?.message || "").includes("Valor mínimo")) {
+        showError(String(err.message));
+      } else if (err?.code === "23514" || String(err?.message || "").includes("Saldo insuficiente")) {
         showError("Saldo insuficiente para este saque.");
       } else if (err?.code === "42501") {
         showError("Não foi possível registrar o saque. Verifique os dados e tente novamente.");
@@ -104,6 +142,13 @@ const IndicaEGanha: React.FC = () => {
   }
 
   const referredCount = summary?.total_referred_stores || 0;
+  const today = new Date();
+  const nextPayout = new Date(
+    today.getFullYear(),
+    today.getMonth() + (today.getDate() < settings.payout_day ? 0 : 1),
+    settings.payout_day,
+  );
+  const nextPayoutLabel = nextPayout.toLocaleDateString("pt-BR");
   const payingRows = details.filter((d) => d.status === "paid").length;
   const toRelease = details.reduce((sum, d) => sum + d.commission_pending, 0);
   const refCommission = (REF_PLANS.find((p) => p.key === "pro")?.price ?? 99.9) * REF_RATE;
@@ -178,7 +223,7 @@ const IndicaEGanha: React.FC = () => {
             <div className="space-y-0.5 min-w-0">
               <span className={LABEL}>Saldo a liberar</span>
               <p className="text-xl font-bold text-[#fd8539]">{brl(toRelease)}</p>
-              <p className={`text-[10px] ${MUTED}`}>Liberado 14 dias após o pagamento</p>
+              <p className={`text-[10px] ${MUTED}`}>Liberado {settings.grace_days} dias após o pagamento</p>
             </div>
             <div className={ICON_BOX}>
               <Hourglass className="w-4 h-4" />
@@ -197,7 +242,7 @@ const IndicaEGanha: React.FC = () => {
             </div>
             <button
               onClick={() => setShowWithdrawModal(true)}
-              disabled={!summary || summary.available_balance <= 0}
+              disabled={!summary || summary.available_balance < settings.min_withdrawal}
               className={`w-full py-1.5 rounded-lg ${BLUE_BTN} text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer`}
             >
               Solicitar saque
@@ -227,11 +272,41 @@ const IndicaEGanha: React.FC = () => {
           <ReferralMilestones count={referredCount} />
         </div>
 
+        {withdrawals.length > 0 && (
+          <div className={`${CARD} p-4 space-y-2`}>
+            <h3 className={`text-sm ${TITLE}`}>Meus saques</h3>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {withdrawals.map((w) => (
+                <div key={w.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <div>
+                    <p className="font-semibold text-slate-800 dark:text-white">{brl(w.amount)}</p>
+                    <p className={`text-[11px] ${MUTED}`}>{new Date(w.requested_at).toLocaleDateString("pt-BR")}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {w.status === "paid" && w.proof_url && (
+                      <button
+                        onClick={() => openProof(w.proof_url as string)}
+                        className="text-xs font-semibold text-[#0094eb] hover:underline cursor-pointer"
+                      >
+                        Ver comprovante
+                      </button>
+                    )}
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{WD_LABEL[w.status] || w.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Modal de Saque */}
         {showWithdrawModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-[#111524] rounded-2xl p-6 w-full max-w-md space-y-4 shadow-xl">
               <h3 className={`text-lg ${TITLE}`}>Solicitar Saque</h3>
+              <p className={`text-xs ${MUTED}`}>
+                Mínimo de {brl(settings.min_withdrawal)}. Pagamos todo dia {settings.payout_day} os saques solicitados até o dia anterior. Próximo pagamento: {nextPayoutLabel}.
+              </p>
               <p className={`text-sm ${MUTED}`}>
                 Saldo disponível: <strong className="text-slate-800 dark:text-white">{brl(summary?.available_balance || 0)}</strong>
               </p>

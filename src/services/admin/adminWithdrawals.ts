@@ -54,3 +54,39 @@ export const adminProcessWithdrawal = (id: string, action: WithdrawalAction, not
     p_notes: notes || null,
     p_proof_url: proofUrl || null,
   });
+
+export type AffiliateSettings = {
+  grace_days: number;
+  payout_day: number;
+  min_withdrawal: number;
+  auto_approve_max: number;
+};
+
+export const adminGetAffiliateSettings = () => call<AffiliateSettings>('admin_get_affiliate_settings', {});
+
+export const adminSetAffiliateSettings = (s: AffiliateSettings) =>
+  call<AffiliateSettings>('admin_set_affiliate_settings', {
+    p_grace: s.grace_days,
+    p_payout_day: s.payout_day,
+    p_min: s.min_withdrawal,
+    p_auto_max: s.auto_approve_max,
+  });
+
+const PROOF_BUCKET = 'withdrawal-proofs';
+
+export async function uploadWithdrawalProof(row: { id: string; store_id: string }, file: File): Promise<string> {
+  const ext = (file.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const path = `${row.store_id}/${row.id}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from(PROOF_BUCKET)
+    .upload(path, file, { contentType: file.type || undefined, upsert: false });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+export async function getWithdrawalProofUrl(ref: string): Promise<string> {
+  if (/^https?:\/\//i.test(ref)) return ref;
+  const { data, error } = await supabase.storage.from(PROOF_BUCKET).createSignedUrl(ref, 300);
+  if (error || !data?.signedUrl) throw new Error(error?.message || 'Comprovante indisponível');
+  return data.signedUrl;
+}

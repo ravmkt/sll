@@ -33,6 +33,18 @@ export interface ReferralDetail {
   commission_canceled: number;
   next_release_at: string | null;
 }
+export interface AffiliateSettings {
+  grace_days: number;
+  payout_day: number;
+  min_withdrawal: number;
+}
+export interface MyWithdrawal {
+  id: string;
+  amount: number;
+  status: string;
+  proof_url: string | null;
+  requested_at: string;
+}
 export interface RequestWithdrawalParams {
   storeId: string;
   amount: number;
@@ -132,6 +144,44 @@ export class AffiliateDatabaseService {
       next_release_at: r.next_release_at ?? null,
     }));
   }
+  static async getSettings(): Promise<AffiliateSettings> {
+    const def: AffiliateSettings = { grace_days: 7, payout_day: 10, min_withdrawal: 50 };
+    const { data } = await (supabase as any)
+      .from("affiliate_settings")
+      .select("grace_days, payout_day, min_withdrawal")
+      .eq("id", true)
+      .maybeSingle();
+    if (!data) return def;
+    return {
+      grace_days: Number(data.grace_days),
+      payout_day: Number(data.payout_day),
+      min_withdrawal: Number(data.min_withdrawal),
+    };
+  }
+
+  static async getMyWithdrawals(storeId: string): Promise<MyWithdrawal[]> {
+    const { data } = await supabase
+      .from("affiliate_withdrawals")
+      .select("id, amount, status, proof_url, requested_at")
+      .eq("store_id", storeId)
+      .order("requested_at", { ascending: false })
+      .limit(20);
+    return ((data as any[]) || []).map((w) => ({
+      id: w.id,
+      amount: Number(w.amount || 0),
+      status: w.status,
+      proof_url: w.proof_url ?? null,
+      requested_at: w.requested_at,
+    }));
+  }
+
+  static async getProofUrl(ref: string): Promise<string> {
+    if (/^https?:\/\//i.test(ref)) return ref;
+    const { data, error } = await supabase.storage.from("withdrawal-proofs").createSignedUrl(ref, 300);
+    if (error || !data?.signedUrl) throw new Error(error?.message || "Comprovante indisponível");
+    return data.signedUrl;
+  }
+
   static async requestWithdrawal(params: RequestWithdrawalParams): Promise<void> {
     const { storeId, amount, pixKey, pixKeyType } = params;
 

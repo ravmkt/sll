@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Copy, Wallet, X } from 'lucide-react';
 import {
+  adminGetAffiliateSettings,
   adminListWithdrawals,
   adminProcessWithdrawal,
+  adminSetAffiliateSettings,
+  getWithdrawalProofUrl,
+  uploadWithdrawalProof,
   WITHDRAWAL_STATUS_LABEL,
+  type AffiliateSettings,
   type WithdrawalAction,
   type WithdrawalRow,
   type WithdrawalSummary,
@@ -30,18 +35,24 @@ const ACTION_TITLE: Record<WithdrawalAction, string> = {
   reject: 'Rejeitar saque',
 };
 
+const MAX_PROOF_BYTES = 5 * 1024 * 1024;
+
 const brl = (n: number) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString('pt-BR') : '—');
+const inputCls = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[#0094eb]';
+const labelCls = 'mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500';
 
 export default function SaquesTab() {
   const [filter, setFilter] = useState('pending');
   const [rows, setRows] = useState<WithdrawalRow[]>([]);
   const [summary, setSummary] = useState<WithdrawalSummary | null>(null);
+  const [cfg, setCfg] = useState<AffiliateSettings | null>(null);
+  const [savingCfg, setSavingCfg] = useState(false);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [modal, setModal] = useState<{ row: WithdrawalRow; action: WithdrawalAction } | null>(null);
   const [notes, setNotes] = useState('');
-  const [proof, setProof] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -59,9 +70,28 @@ export default function SaquesTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    adminGetAffiliateSettings()
+      .then(setCfg)
+      .catch((e) => setMsg({ type: 'err', text: e instanceof Error ? e.message : 'Erro ao carregar configuração.' }));
+  }, []);
+
+  const saveCfg = async () => {
+    if (!cfg) return;
+    setSavingCfg(true);
+    try {
+      setCfg(await adminSetAffiliateSettings(cfg));
+      setMsg({ type: 'ok', text: 'Configuração salva. A nova carência vale para as próximas comissões.' });
+    } catch (e) {
+      setMsg({ type: 'err', text: e instanceof Error ? e.message : 'Erro ao salvar configuração.' });
+    } finally {
+      setSavingCfg(false);
+    }
+  };
+
   const openModal = (row: WithdrawalRow, action: WithdrawalAction) => {
     setNotes('');
-    setProof('');
+    setFile(null);
     setModal({ row, action });
   };
 
@@ -71,9 +101,15 @@ export default function SaquesTab() {
       setMsg({ type: 'err', text: 'Informe o motivo da rejeição.' });
       return;
     }
+    if (file && file.size > MAX_PROOF_BYTES) {
+      setMsg({ type: 'err', text: 'O comprovante deve ter no máximo 5 MB.' });
+      return;
+    }
     setBusy(true);
     try {
-      await adminProcessWithdrawal(modal.row.id, modal.action, notes, proof);
+      let proofPath: string | undefined;
+      if (modal.action === 'pay' && file) proofPath = await uploadWithdrawalProof(modal.row, file);
+      await adminProcessWithdrawal(modal.row.id, modal.action, notes, proofPath);
       setMsg({ type: 'ok', text: `${ACTION_TITLE[modal.action]}: concluído.` });
       setModal(null);
       await load();
@@ -93,6 +129,22 @@ export default function SaquesTab() {
     }
   };
 
+  const openProof = async (ref: string) => {
+    const w = window.open('about:blank', '_blank');
+    try {
+      const url = await getWithdrawalProofUrl(ref);
+      if (w) w.location.href = url;
+    } catch (e) {
+      if (w) w.close();
+      setMsg({ type: 'err', text: e instanceof Error ? e.message : 'Não foi possível abrir o comprovante.' });
+    }
+  };
+
+  const today = new Date();
+  const payoutDay = cfg?.payout_day ?? 10;
+  const nextPayout = new Date(today.getFullYear(), today.getMonth() + (today.getDate() < payoutDay ? 0 : 1), payoutDay)
+    .toLocaleDateString('pt-BR');
+
   const card = 'rounded-2xl border border-slate-800 bg-[#0f1322] p-4';
 
   return (
@@ -103,7 +155,9 @@ export default function SaquesTab() {
         </div>
         <div>
           <h1 className="text-xl font-black text-white">Saques de afiliados</h1>
-          <p className="text-sm text-slate-400">Só comissões liberadas (após a carência de 14 dias) entram no saldo sacável.</p>
+          <p className="text-sm text-slate-400">
+            Só comissões liberadas (após a carência de {cfg?.grace_days ?? 7} dias) entram no saldo sacável. Próximo pagamento: <b className="text-white">{nextPayout}</b>.
+          </p>
         </div>
       </div>
 
@@ -124,6 +178,36 @@ export default function SaquesTab() {
           <p className="text-xs text-slate-500">desde o início</p>
         </div>
       </div>
+
+      {cfg && (
+        <div className={`${card} space-y-3`}>
+          <p className="text-sm font-black text-white">Regras do programa</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div>
+              <label className={labelCls}>Carência (dias)</label>
+              <input type="number" min={0} max={90} value={cfg.grace_days} onChange={(e) => setCfg({ ...cfg, grace_days: Number(e.target.value) })} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Dia do pagamento</label>
+              <input type="number" min={1} max={28} value={cfg.payout_day} onChange={(e) => setCfg({ ...cfg, payout_day: Number(e.target.value) })} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Mínimo de saque (R$)</label>
+              <input type="number" min={0} step="0.01" value={cfg.min_withdrawal} onChange={(e) => setCfg({ ...cfg, min_withdrawal: Number(e.target.value) })} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Aprovar sozinho até (R$)</label>
+              <input type="number" min={0} step="0.01" value={cfg.auto_approve_max} onChange={(e) => setCfg({ ...cfg, auto_approve_max: Number(e.target.value) })} className={inputCls} />
+            </div>
+            <div className="flex items-end">
+              <button type="button" disabled={savingCfg} onClick={saveCfg} className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-bold text-white hover:bg-[#007fcc] disabled:opacity-60">
+                {savingCfg ? 'Salvando...' : 'Salvar regras'}
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500">Aprovar sozinho = 0 deixa a aprovação automática desligada.</p>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-1.5">
         {FILTERS.map((f) => (
@@ -187,7 +271,7 @@ export default function SaquesTab() {
                   {r.processed_at && <p className="mt-1 text-xs text-slate-500">{fmt(r.processed_at)}</p>}
                   {r.admin_notes && <p className="mt-1 max-w-[220px] text-xs text-slate-400">{r.admin_notes}</p>}
                   {r.proof_url && (
-                    <a href={r.proof_url} target="_blank" rel="noopener noreferrer" className="mt-1 block text-xs text-[#0094eb] hover:underline">Ver comprovante</a>
+                    <button type="button" onClick={() => openProof(r.proof_url as string)} className="mt-1 block cursor-pointer text-xs text-[#0094eb] hover:underline">Ver comprovante</button>
                   )}
                 </td>
                 <td className="px-4 py-3">
@@ -195,8 +279,8 @@ export default function SaquesTab() {
                     {r.status === 'pending' && (
                       <button type="button" onClick={() => openModal(r, 'approve')} className="cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#007fcc]">Aprovar</button>
                     )}
-                    {r.status === 'approved' && (
-                      <button type="button" onClick={() => openModal(r, 'pay')} className="cursor-pointer rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-500">Marcar pago</button>
+                    {(r.status === 'pending' || r.status === 'approved') && (
+                      <button type="button" onClick={() => openModal(r, 'pay')} className="cursor-pointer rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-500">Pagar</button>
                     )}
                     {(r.status === 'pending' || r.status === 'approved') && (
                       <button type="button" onClick={() => openModal(r, 'reject')} className="cursor-pointer rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-bold text-red-300 hover:bg-red-500/25">Rejeitar</button>
@@ -220,16 +304,22 @@ export default function SaquesTab() {
 
             {modal.action === 'pay' && (
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">Link do comprovante (opcional)</label>
-                <input value={proof} onChange={(e) => setProof(e.target.value)} placeholder="https://..." className="w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[#0094eb]" />
+                <label className={labelCls}>Comprovante (PDF ou imagem, até 5 MB)</label>
+                <input
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg,image/webp"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="block w-full text-sm text-slate-300 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-[#0094eb] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white"
+                />
+                {file && <p className="mt-1 text-xs text-slate-500">{file.name}</p>}
               </div>
             )}
 
             <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
+              <label className={labelCls}>
                 {modal.action === 'reject' ? 'Motivo da rejeição (obrigatório)' : 'Observação (opcional)'}
               </label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[#0094eb]" />
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputCls} />
             </div>
 
             {modal.action === 'reject' && (
