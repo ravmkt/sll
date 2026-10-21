@@ -36,6 +36,13 @@ const DIFFS = [
 export default function VidlyticsLanding() {
   const [cycle, setCycle] = useState<Cycle>('anual');
   const { plans: PLANS, cycles: CYCLES } = useLandingPlans();
+  const topPlan = PLANS.find((p) => p.id === 'scale') ?? PLANS[PLANS.length - 1];
+  const bigText = topPlan
+    ? `Precisa de mais de ${topPlan.maxVideos} vídeos ou ${Math.round(topPlan.views / 1000)} mil visualizações?`
+    : 'Precisa de mais volume?';
+  const trialLimit = topPlan
+    ? `Até ${topPlan.maxVideos} vídeos e ${topPlan.views.toLocaleString('pt-BR')} visualizações/mês`
+    : 'Todos os limites do plano Scale';
   const [trialOpen, setTrialOpen] = useState(false);
 
   useEffect(() => {
@@ -290,7 +297,7 @@ export default function VidlyticsLanding() {
           </div>
 
           <p className="text-center text-sm text-gray-500 mt-10 max-w-2xl mx-auto">
-            Precisa de mais de 150 vídeos ou 180 mil visualizações? Fale com nosso time para um plano sob medida. Depois do teste, pagamento por cartão de crédito ou Pix. A renovação é automática e você cancela quando quiser, direto no painel.
+            {bigText} Fale com nosso time para um plano sob medida. Depois do teste, pagamento por cartão de crédito ou Pix. A renovação é automática e você cancela quando quiser, direto no painel.
           </p>
         </div>
 
@@ -317,7 +324,7 @@ export default function VidlyticsLanding() {
                 Leva menos de 1 minuto. Você usa tudo do plano Scale por 7 dias para rodar na sua loja, sem cartão de crédito.
               </p>
               <ul className="space-y-2 text-sm mb-6">
-                {['Até 150 vídeos e 180.000 visualizações/mês', 'Todos os formatos liberados', 'Escolha o plano só no fim do teste'].map((x) => (
+                {[trialLimit, 'Todos os formatos liberados', 'Escolha o plano só no fim do teste'].map((x) => (
                   <li key={x} className="flex items-start gap-2"><Check className="w-4 h-4 mt-0.5 text-indigo-600 shrink-0" />{x}</li>
                 ))}
               </ul>

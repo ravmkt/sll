@@ -13,6 +13,8 @@ export type LandingPlan = {
   billing: Record<Cycle, string>;
   features: string[];
   highlight?: boolean;
+  maxVideos: number;
+  views: number;
 };
 
 type State = { status: 'loading' | 'ready' | 'error'; plans: LandingPlan[]; cycles: LandingCycle[] };
@@ -78,6 +80,8 @@ export function useLandingPlans(): State {
           name: String(r.plan_name).replace(/^Vidlytics\s+/i, ''),
           tag: TAGS[r.plan_tier] ?? '',
           highlight: !!r.is_recommended,
+          maxVideos: num(r.limits_config?.max_videos),
+          views: num(r.limits_config?.views),
           price: {
             mensal: brl(m),
             semestral: s > 0 ? brl(Math.round(s / 6)) : '—',
