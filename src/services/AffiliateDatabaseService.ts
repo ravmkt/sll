@@ -144,6 +144,25 @@ export class AffiliateDatabaseService {
       next_release_at: r.next_release_at ?? null,
     }));
   }
+  static async getTermsAcceptance(storeId: string, version: string): Promise<{ accepted_at: string } | null> {
+    const { data } = await (supabase as any)
+      .from("affiliate_terms_acceptances")
+      .select("accepted_at")
+      .eq("store_id", storeId)
+      .eq("terms_version", version)
+      .maybeSingle();
+    return data ? { accepted_at: String(data.accepted_at) } : null;
+  }
+
+  static async acceptTerms(storeId: string, version: string): Promise<void> {
+    const { error } = await (supabase as any).rpc("accept_affiliate_terms", {
+      p_store_id: storeId,
+      p_version: version,
+      p_user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : null,
+    });
+    if (error) throw error;
+  }
+
   static async getSettings(): Promise<AffiliateSettings> {
     const def: AffiliateSettings = { grace_days: 7, payout_day: 10, min_withdrawal: 50 };
     const { data } = await (supabase as any)

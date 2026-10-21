@@ -7,7 +7,10 @@ import {
   AffiliateSettings,
   MyWithdrawal,
 } from "@/services/AffiliateDatabaseService";
-import { Copy, MessageCircle, TrendingUp, Hourglass, Wallet, Users } from "lucide-react";
+import { Copy, MessageCircle, TrendingUp, Hourglass, Wallet, Users, ScrollText, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ClubeTermsModal } from "@/components/afiliados/ClubeTermsModal";
+import { TERMS_VERSION } from "@/components/afiliados/clubeTerms";
 import { showSuccess, showError } from "@/utils/toast";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ReferralDetailsTable } from "@/components/afiliados/ReferralDetailsTable";
@@ -37,6 +40,8 @@ const IndicaEGanha: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [settings, setSettings] = useState<AffiliateSettings>({ grace_days: 7, payout_day: 10, min_withdrawal: 50 });
   const [withdrawals, setWithdrawals] = useState<MyWithdrawal[]>([]);
+  const [termsAccepted, setTermsAccepted] = useState<boolean | null>(null);
+  const [showTerms, setShowTerms] = useState(false);
 
   const loadData = async () => {
     if (!storeId) return;
@@ -58,6 +63,19 @@ const IndicaEGanha: React.FC = () => {
 
   useEffect(() => {
     loadData();
+  }, [storeId]);
+
+  useEffect(() => {
+    if (!storeId) return;
+    let alive = true;
+    AffiliateDatabaseService.getTermsAcceptance(storeId, TERMS_VERSION).then((r) => {
+      if (!alive) return;
+      setTermsAccepted(!!r);
+      if (!r) setShowTerms(true);
+    });
+    return () => {
+      alive = false;
+    };
   }, [storeId]);
 
   const referralLink = store?.referral_code
@@ -180,19 +198,25 @@ const IndicaEGanha: React.FC = () => {
                 <span className="px-3 py-1 rounded-full bg-white/15 border border-white/25">10% recorrente</span>
                 <span className="px-3 py-1 rounded-full bg-white/15 border border-white/25">Sem limite de indicações</span>
                 <span className="px-3 py-1 rounded-full bg-white/15 border border-white/25">Saque via PIX</span>
+                <Link
+                  to="/dashboard/afiliados/regras"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fd8539] text-white hover:bg-[#e87420] transition-colors"
+                >
+                  <ScrollText className="w-3.5 h-3.5" /> Regras do Clube
+                </Link>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="flex-1 min-w-0 bg-white/15 border border-white/25 rounded-xl px-3 py-2.5 text-xs md:text-sm truncate text-left">
-                  {referralLink || "Gerando seu link..."}
+                  {termsAccepted ? referralLink || "Gerando seu link..." : "Link bloqueado até você aceitar as regras do Clube"}
                 </div>
                 <button
-                  onClick={handleCopyLink}
+                  onClick={() => (termsAccepted ? handleCopyLink() : setShowTerms(true))}
                   className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#0073c7] text-sm font-bold hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   <Copy className="w-4 h-4" /> Copiar link
                 </button>
                 <button
-                  onClick={handleWhatsApp}
+                  onClick={() => (termsAccepted ? handleWhatsApp() : setShowTerms(true))}
                   className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-bold transition-colors cursor-pointer"
                 >
                   <MessageCircle className="w-4 h-4" /> Enviar no WhatsApp
@@ -201,6 +225,24 @@ const IndicaEGanha: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {termsAccepted === false && (
+          <div className="rounded-2xl border border-[#fd8539]/40 bg-[#fd8539]/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-[#fd8539] shrink-0 mt-0.5" />
+              <div>
+                <p className={`text-sm ${TITLE}`}>Ative o seu link de indicação</p>
+                <p className={`text-xs ${MUTED}`}>Leia e aceite as regras do Clube SLL para começar a indicar e receber comissões.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowTerms(true)}
+              className="px-4 py-2 rounded-xl bg-[#fd8539] hover:bg-[#e87420] text-white text-sm font-bold transition-colors cursor-pointer shrink-0"
+            >
+              Ler regras e ativar
+            </button>
+          </div>
+        )}
 
         {/* Cards compactos */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
@@ -245,7 +287,7 @@ const IndicaEGanha: React.FC = () => {
             </div>
             <button
               onClick={() => setShowWithdrawModal(true)}
-              disabled={!summary || summary.available_balance < settings.min_withdrawal}
+              disabled={!termsAccepted || !summary || summary.available_balance < settings.min_withdrawal}
               className={`w-full py-1.5 rounded-lg ${BLUE_BTN} text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer`}
             >
               Solicitar saque
@@ -301,6 +343,17 @@ const IndicaEGanha: React.FC = () => {
             </div>
           </div>
         )}
+
+        <ClubeTermsModal
+          open={showTerms && termsAccepted === false}
+          storeId={storeId as string}
+          settings={settings}
+          onClose={() => setShowTerms(false)}
+          onAccepted={() => {
+            setTermsAccepted(true);
+            setShowTerms(false);
+          }}
+        />
 
         {/* Modal de Saque */}
         {showWithdrawModal && (

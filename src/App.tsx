@@ -35,6 +35,7 @@ const LiveAdminPage = lazy(() => import('./pages/modules/LiveAdminPage'));
 const Products = lazy(() => import('./pages/Products'));
 const Medidas = lazy(() => import('./pages/Medidas'));
 const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
+const ClubeRules = lazy(() => import('./pages/afiliados/ClubeRules'));
 const SettingsPage = lazy(() => import('./pages/configuracoes/SettingsPage'));
 const Assinaturas = lazy(() => import('./pages/assinaturas/Assinaturas'));
 const Planos = lazy(() => import('./pages/planos/Planos'));
@@ -243,6 +244,18 @@ function AppRoutes() {
             user ? (
               <SubscriptionGate>
                 <DicasNoah scope="vidlytics" />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
+        <Route
+          path="/dashboard/afiliados/regras"
+          element={
+            user ? (
+              <SubscriptionGate>
+                <ClubeRules />
               </SubscriptionGate>
             ) : (
               <Navigate to="/auth" replace />
