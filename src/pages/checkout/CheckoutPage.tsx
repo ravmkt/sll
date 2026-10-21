@@ -96,12 +96,15 @@ export default function CheckoutPage() {
   const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
 
   useEffect(() => {
-    if (!UUID.test(planId)) { setLoading(false); return; }
+    if (!planId) { setLoading(false); return; }
     let alive = true;
     (async () => {
-      const { data: p } = await sb.from('dynamic_plans')
+      const modKey = sp.get('module') || 'vidlytics';
+      let q = sb.from('dynamic_plans')
         .select('id,plan_name,is_combo,module_slug,is_active,price_monthly_cents,price_semiannual_cents,price_annual_cents')
-        .eq('id', planId).eq('is_active', true).maybeSingle();
+        .eq('is_active', true);
+      q = UUID.test(planId) ? q.eq('id', planId) : q.eq('plan_tier', planId.toLowerCase()).eq('module_slug', modKey).eq('is_combo', false);
+      const { data: p } = await q.maybeSingle();
       if (!alive) return;
       if (!p) { setLoading(false); return; }
       let list: string[] = p.module_slug ? [p.module_slug] : [];
