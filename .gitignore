@@ -43,3 +43,6 @@ supabase/.temp/
 
 diag-*.txt
 nps-master.ps1
+
+*.bak
+*.bak2
