@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, LifeBuoy } from 'lucide-react';
+import { LifeBuoy } from 'lucide-react';
 import NoahSupportTab from '@/components/master/NoahSupportTab';
 import NoahUsageTab from '@/components/admin/NoahUsageTab';
 
@@ -26,7 +26,6 @@ const CLS = 'h-9 rounded-lg border border-slate-700 bg-slate-950 px-2 text-xs te
 
 export default function NoahPage() {
   const [preset, setPreset] = useState<Preset>('month');
-  const [off, setOff] = useState(0);
   const [cFrom, setCFrom] = useState(() => toInput(new Date(Date.now() - 6 * 86400000)));
   const [cTo, setCTo] = useState(() => toInput(new Date()));
 
@@ -34,7 +33,7 @@ export default function NoahPage() {
     const n = new Date();
     const d0 = new Date(n.getFullYear(), n.getMonth(), n.getDate());
     if (preset === 'month') {
-      return { from: new Date(n.getFullYear(), n.getMonth() + off, 1), to: new Date(n.getFullYear(), n.getMonth() + off + 1, 1) };
+      return { from: new Date(n.getFullYear(), n.getMonth(), 1), to: new Date(n.getFullYear(), n.getMonth() + 1, 1) };
     }
     if (preset === 'custom') {
       const f = fromInput(cFrom);
@@ -48,9 +47,8 @@ export default function NoahPage() {
       from: new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() - (days - 1)),
       to: new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + 1),
     };
-  }, [preset, off, cFrom, cTo]);
+  }, [preset, cFrom, cTo]);
 
-  const monthName = range.from.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   const today = toInput(new Date());
 
   return (
@@ -63,13 +61,6 @@ export default function NoahPage() {
             <select value={preset} onChange={(e) => setPreset(e.target.value as Preset)} className={`${CLS} cursor-pointer`}>
               {PRESETS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
             </select>
-            {preset === 'month' && (
-              <div className="flex items-center gap-1">
-                <button type="button" aria-label="Mês anterior" onClick={() => setOff((v) => v - 1)} className="cursor-pointer rounded-lg p-1.5 text-slate-300 hover:bg-white/10"><ChevronLeft className="h-4 w-4" /></button>
-                <span className="min-w-[130px] text-center text-xs font-bold capitalize text-white">{monthName}</span>
-                <button type="button" aria-label="Próximo mês" disabled={off >= 0} onClick={() => setOff((v) => v + 1)} className="cursor-pointer rounded-lg p-1.5 text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button>
-              </div>
-            )}
             {preset === 'custom' && (
               <>
                 <input type="date" value={cFrom} max={cTo} onChange={(e) => e.target.value && setCFrom(e.target.value)} className={CLS} style={{ colorScheme: 'dark' }} />
