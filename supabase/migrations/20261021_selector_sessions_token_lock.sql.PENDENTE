@@ -1,0 +1,36 @@
+-- NAO EXECUTAR antes do widget enviar o header x-selector-token em todas as chamadas.
+create or replace function vidlytics.selector_req_token()
+returns text language sql stable as $$
+  select nullif(nullif(current_setting('request.headers', true), '')::json ->> 'x-selector-token', '')
+$$;
+grant execute on function vidlytics.selector_req_token() to anon, authenticated;
+
+do $$
+declare p record;
+begin
+  for p in select policyname from pg_policies where schemaname = 'vidlytics' and tablename = 'vid_selector_sessions' loop
+    execute format('drop policy %I on vidlytics.vid_selector_sessions', p.policyname);
+  end loop;
+end $$;
+
+alter table vidlytics.vid_selector_sessions enable row level security;
+
+create policy sel_insert on vidlytics.vid_selector_sessions
+  for insert to anon, authenticated
+  with check (token is not null and length(token) >= 16);
+
+create policy sel_token_rw on vidlytics.vid_selector_sessions
+  for all to anon, authenticated
+  using (token = vidlytics.selector_req_token())
+  with check (token = vidlytics.selector_req_token());
+
+create policy sel_owner_rw on vidlytics.vid_selector_sessions
+  for all to authenticated
+  using (public.is_store_owner_or_member(store_id) or public.is_superadmin())
+  with check (public.is_store_owner_or_member(store_id) or public.is_superadmin());
+
+-- Reverter, se necessario:
+-- drop policy sel_insert on vidlytics.vid_selector_sessions;
+-- drop policy sel_token_rw on vidlytics.vid_selector_sessions;
+-- drop policy sel_owner_rw on vidlytics.vid_selector_sessions;
+-- create policy vid_selector_sessions_all on vidlytics.vid_selector_sessions for all to public using (true) with check (true);
