@@ -261,7 +261,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
       tries++;
       try {
         const res = await fetch(
-          `${supabaseUrl}/rest/v1/widget_selectors?token=eq.${encodeURIComponent(token)}&select=selector`,
+          `${supabaseUrl}/rest/v1/rpc/widget_selector_get?p_token=${encodeURIComponent(token)}`,
           { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } }
         );
         if (res.ok) {

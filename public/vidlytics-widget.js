@@ -7797,11 +7797,11 @@ ctaElement.addEventListener('click', function(e) {
 function sendSelector(selector, storyId) {
   console.log('[Vidlytics Picker] Enviando seletor. Token atual:', widgetSelectToken, 'StoryId:', storyId, 'Selector:', selector);
 
-  var payload = { selector: selector, token: widgetSelectToken };
-  if (storyId) { payload.story_id = storyId; }
+  var payload = { p_selector: selector, p_token: widgetSelectToken };
+  if (storyId) { payload.p_story_id = String(storyId); }
 
   var baseSupabase = (supabaseUrl || 'https://flivmllysdhaydhogmhg.supabase.co').replace(/\/rest\/v1.*/, '').replace(/\/+$/, '');
-  var endpoint = baseSupabase + '/rest/v1/widget_selectors';
+  var endpoint = baseSupabase + '/rest/v1/rpc/widget_selector_submit';
 
   console.log('[Vidlytics Picker] Endpoint:', endpoint);
   console.log('[Vidlytics Picker] Payload:', JSON.stringify(payload));

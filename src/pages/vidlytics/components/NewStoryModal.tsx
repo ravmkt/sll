@@ -123,7 +123,7 @@ export default function NewStoryModal({
 
     const requests = [
       {
-        url: `${nextSupabaseUrl}/rest/v1/widget_selectors?token=eq.${encodeURIComponent(token)}&select=*`,
+        url: `${nextSupabaseUrl}/rest/v1/rpc/widget_selector_get?p_token=${encodeURIComponent(token)}`,
         headers: {
           'apikey': anonKey,
           'Authorization': `Bearer ${anonKey}`,
