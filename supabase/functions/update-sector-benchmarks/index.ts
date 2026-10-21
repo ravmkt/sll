@@ -59,11 +59,34 @@ Responda SOMENTE com um JSON, sem texto fora dele, neste formato:
 Regras: percentuais como número (2.5 significa 2,5%); ticket em reais (BRL); use null para a métrica que não tiver fonte confiável; não invente números.`;
 }
 
+let START = Date.now();
+let modelCache: string[] | null = null;
+
+async function listModels(): Promise<string[]> {
+  if (modelCache) return modelCache;
+  const pref = [Deno.env.get("GEMINI_MODEL") ?? "", "gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-flash-lite-latest"].filter(Boolean);
+  let avail: string[] = [];
+  try {
+    const res = await fetch(`${API}/models?pageSize=200`, { headers: { "x-goog-api-key": GEMINI_KEY } });
+    if (res.ok) {
+      const j = await res.json();
+      avail = ((j.models ?? []) as any[])
+        .filter((m) => (m.supportedGenerationMethods ?? []).includes("generateContent"))
+        .map((m) => String(m.name).replace(/^models\//, ""))
+        .filter((id) => /^gemini-/.test(id) && /flash/.test(id) && !/(tts|image|embedding|live|audio|robotics|computer-use|thinking|exp)/.test(id));
+    }
+  } catch { /* usa a lista padrao */ }
+  const ordered = avail.length ? [...pref.filter((p) => avail.includes(p)), ...avail.sort().reverse()] : pref;
+  modelCache = [...new Set(ordered)].slice(0, 3);
+  return modelCache;
+}
+
 async function askGemini(prompt: string) {
-  let last = "";
-  for (const m of MODELS) {
+  const errs: string[] = [];
+  for (const m of await listModels()) {
+    if (Date.now() - START > 110000) { errs.push("prazo global excedido"); break; }
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 50000);
+    const timer = setTimeout(() => ctrl.abort(), 35000);
     try {
       const res = await fetch(`${API}/models/${m}:generateContent`, {
         method: "POST",
@@ -75,21 +98,21 @@ async function askGemini(prompt: string) {
           generationConfig: { temperature: 0.1 },
         }),
       });
-      if (!res.ok) { last = `${m} ${res.status}`; continue; }
+      if (!res.ok) { errs.push(`${m} ${res.status} ${(await res.text()).replace(/\s+/g, " ").slice(0, 140)}`); continue; }
       const j = await res.json();
       const cand = j?.candidates?.[0];
       const text = (cand?.content?.parts ?? []).map((p: any) => p?.text ?? "").join("");
       const sources = ((cand?.groundingMetadata?.groundingChunks ?? []) as any[])
-        .map((c) => String(c?.web?.title ?? "").trim())
+        .map((ch) => String(ch?.web?.title ?? "").trim())
         .filter(Boolean);
       return { text, sources: [...new Set(sources)], model: m };
     } catch (e) {
-      last = `${m} ${(e as Error).message}`;
+      errs.push(`${m} ${(e as Error).message}`);
     } finally {
       clearTimeout(timer);
     }
   }
-  throw new Error(`Gemini falhou (${last})`);
+  throw new Error(`Gemini falhou: ${errs.join(" | ")}`);
 }
 
 async function processSector(s: any, cur: Row | undefined, year: number, nowIso: string) {
@@ -157,6 +180,7 @@ Deno.serve(async (req) => {
   }
   if (!allowed) return json({ error: "FORBIDDEN" }, 403);
   if (!GEMINI_KEY) return json({ error: "IA_NAO_CONFIGURADA" }, 500);
+  START = Date.now();
 
   const body = await req.json().catch(() => ({}));
   const dryRun = body?.dry_run === true;
