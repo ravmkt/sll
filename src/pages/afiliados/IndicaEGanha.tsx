@@ -169,7 +169,7 @@ const IndicaEGanha: React.FC = () => {
   const nextPayoutLabel = nextPayout.toLocaleDateString("pt-BR");
   const payingRows = details.filter((d) => d.status === "paid").length;
   const toRelease = details.reduce((sum, d) => sum + d.commission_pending, 0);
-  const refCommission = (REF_PLANS.find((p) => p.key === "pro")?.price ?? 99.9) * REF_RATE;
+  const refCommission = (REF_PLANS.find((p) => p.key === "pro")?.price ?? 99.9) * (Number(settings.commission_rate ?? REF_RATE * 100) / 100);
   const forecast12 = Math.max(payingRows, 1) * refCommission * 12;
 
   const modalInput =

@@ -1,13 +1,13 @@
 import React from 'react';
 import { CalendarDays, Hourglass, Percent, Wallet } from 'lucide-react';
-import { buildClubeRules, type ClubeSettings } from './clubeTerms';
+import { buildClubeRules, commissionLabel, type ClubeSettings } from './clubeTerms';
 
 const brl = (n: number) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function ClubeRulesContent({ settings }: { settings: ClubeSettings }) {
   const sections = buildClubeRules(settings);
   const highlights = [
-    { icon: Percent, label: 'Comissão', value: '10% recorrente' },
+    { icon: Percent, label: 'Comissão', value: commissionLabel(settings) },
     { icon: Hourglass, label: 'Carência', value: `${settings.grace_days} dias` },
     { icon: CalendarDays, label: 'Pagamento', value: `Todo dia ${settings.payout_day}` },
     { icon: Wallet, label: 'Saque mínimo', value: brl(settings.min_withdrawal) },

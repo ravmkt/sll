@@ -16,7 +16,7 @@ export function buildClubeRules(s: ClubeSettings): RuleSection[] {
       id: 'programa',
       title: 'Como funciona o Clube SLL',
       items: [
-        'O Clube SLL é o programa de indicação do SLL Hub. Você indica lojas pelo seu link exclusivo e recebe 10% de comissão recorrente sobre cada pagamento confirmado da assinatura da loja indicada.',
+        `O Clube SLL é o programa de indicação do SLL Hub. Você indica lojas pelo seu link exclusivo e recebe ${commissionRate(s)}% de comissão recorrente sobre cada pagamento confirmado da assinatura da loja indicada${commissionLimit(s)}.${commissionBonus(s)}`,
         'Não há limite de lojas indicadas.',
         'A comissão continua enquanto a loja indicada mantiver a assinatura ativa e em dia.',
       ],
@@ -88,3 +88,27 @@ export function buildClubeRules(s: ClubeSettings): RuleSection[] {
     },
   ];
 }
+
+// --- Premiações configuradas no Master (aba Saques) ---
+type CommissionExtras = { commission_rate?: number; recurring_months?: number; first_payment_bonus?: number };
+const ex = (s: object) => s as CommissionExtras;
+
+export const commissionRate = (s: object): string =>
+  Number(ex(s).commission_rate ?? 10).toLocaleString('pt-BR');
+
+export const commissionLabel = (s: object): string => {
+  const m = Number(ex(s).recurring_months ?? 0);
+  return `${commissionRate(s)}% ${m > 0 ? `nos primeiros ${m} pagamentos` : 'recorrente'}`;
+};
+
+export const commissionLimit = (s: object): string => {
+  const m = Number(ex(s).recurring_months ?? 0);
+  return m > 0 ? `, limitada aos primeiros ${m} pagamentos de cada assinatura` : '';
+};
+
+export const commissionBonus = (s: object): string => {
+  const b = Number(ex(s).first_payment_bonus ?? 0);
+  return b > 0
+    ? ` No primeiro pagamento de cada loja indicada você recebe ainda um bônus de ${b.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}, somado à comissão.`
+    : '';
+};
