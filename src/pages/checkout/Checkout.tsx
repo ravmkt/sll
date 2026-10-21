@@ -19,6 +19,7 @@ const digits = (v: string) => v.replace(/\D/g, '');
 const ERR: Record<string, string> = {
   SESSAO_EXPIRADA: 'Sessão expirada. Faça login novamente.',
   MODULE_ALREADY_SUBSCRIBED: 'Você já possui este módulo ativo na sua loja.',
+  PLANO_INDISPONIVEL: 'Este plano não está disponível para contratação no momento.',
   TRIAL_ACTIVE: 'Seu teste deste módulo já está ativo.',
   DB_ERROR: 'Não foi possível registrar a assinatura. Tente novamente.',
   CUPOM_INVALIDO: 'Cupom inválido ou esgotado.',

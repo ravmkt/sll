@@ -346,7 +346,12 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
                   </Badge>
                 </div>
 
-                <div className="h-64 w-full pt-3">
+                <div className="relative h-64 w-full pt-3">
+                  {timelineData.length === 0 && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center text-xs text-slate-400">
+                      Sem dados de audiência para esta live.
+                    </div>
+                  )}
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <defs>

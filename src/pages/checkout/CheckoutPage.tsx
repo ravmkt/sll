@@ -20,6 +20,7 @@ const CYCLES: { key: Cycle; label: string }[] = [
 ];
 const MSG: Record<string, string> = {
   MODULE_ALREADY_SUBSCRIBED: 'Sua loja já tem este módulo ativo.',
+  PLANO_INDISPONIVEL: 'Este plano não está disponível para contratação no momento.',
   ADDON_INDISPONIVEL: 'Um dos add-ons não está mais disponível. Remova-o e tente de novo.',
   CUPOM_INVALIDO: 'Cupom inválido ou esgotado.',
   PLANO_INVALIDO: 'Este plano não está disponível.',
