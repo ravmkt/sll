@@ -46,3 +46,5 @@ nps-master.ps1
 
 *.bak
 *.bak2
+
+public/*.bak*
