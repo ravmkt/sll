@@ -234,7 +234,10 @@ const IndicaEGanha: React.FC = () => {
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-0.5">
                 <span className={LABEL}>Saldo disponível</span>
-                <p className="text-xl font-bold text-green-600">{brl(summary?.available_balance || 0)}</p>
+                <p className={`text-xl font-bold ${(summary?.available_balance || 0) < 0 ? "text-red-600" : "text-green-600"}`}>{brl(summary?.available_balance || 0)}</p>
+                {(summary?.available_balance || 0) < 0 && (
+                  <p className={`text-[10px] ${MUTED}`}>Saldo devedor por estorno ou chargeback. Será abatido das próximas comissões.</p>
+                )}
               </div>
               <div className={ICON_BOX}>
                 <Wallet className="w-4 h-4" />

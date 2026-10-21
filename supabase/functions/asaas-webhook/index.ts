@@ -209,8 +209,9 @@ Deno.serve(async (req: Request) => {
       if (refErr) console.error("Erro ao registrar comissao:", refErr);
     }
   }
-  if ((eventType === "PAYMENT_REFUNDED" || eventType === "PAYMENT_DELETED") && asaasPaymentId) {
+  if ((eventType === "PAYMENT_REFUNDED" || eventType === "PAYMENT_DELETED" || eventType === "PAYMENT_CHARGEBACK_REQUESTED") && asaasPaymentId) {
     const { error: cancelRefErr } = await supabase.rpc("cancel_referral_reward_by_payment", {
+      p_reason: eventType === "PAYMENT_CHARGEBACK_REQUESTED" ? "chargeback" : eventType === "PAYMENT_REFUNDED" ? "refund" : "payment_deleted",
       p_payment_id: asaasPaymentId,
     });
     if (cancelRefErr) console.error("Erro ao cancelar comissao:", cancelRefErr);

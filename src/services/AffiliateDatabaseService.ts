@@ -87,7 +87,7 @@ export class AffiliateDatabaseService {
 
     return {
       total_generated: totalGenerated,
-      available_balance: Math.max(totalGenerated - totalWithdrawn, 0),
+      available_balance: Math.round((totalGenerated - totalWithdrawn) * 100) / 100,
       total_referred_stores: referredCount,
     };
   }
