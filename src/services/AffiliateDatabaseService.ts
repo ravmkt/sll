@@ -37,6 +37,9 @@ export interface AffiliateSettings {
   grace_days: number;
   payout_day: number;
   min_withdrawal: number;
+  commission_rate: number;
+  recurring_months: number;
+  first_payment_bonus: number;
 }
 export interface MyWithdrawal {
   id: string;
@@ -164,10 +167,10 @@ export class AffiliateDatabaseService {
   }
 
   static async getSettings(): Promise<AffiliateSettings> {
-    const def: AffiliateSettings = { grace_days: 7, payout_day: 10, min_withdrawal: 50 };
+    const def: AffiliateSettings = { grace_days: 7, payout_day: 10, min_withdrawal: 50, commission_rate: 10, recurring_months: 0, first_payment_bonus: 0 };
     const { data } = await (supabase as any)
       .from("affiliate_settings")
-      .select("grace_days, payout_day, min_withdrawal")
+      .select("grace_days, payout_day, min_withdrawal, commission_rate, recurring_months, first_payment_bonus")
       .eq("id", true)
       .maybeSingle();
     if (!data) return def;
@@ -175,6 +178,9 @@ export class AffiliateDatabaseService {
       grace_days: Number(data.grace_days),
       payout_day: Number(data.payout_day),
       min_withdrawal: Number(data.min_withdrawal),
+      commission_rate: Number(data.commission_rate ?? 10),
+      recurring_months: Number(data.recurring_months ?? 0),
+      first_payment_bonus: Number(data.first_payment_bonus ?? 0),
     };
   }
 

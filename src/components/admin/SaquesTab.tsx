@@ -182,7 +182,7 @@ export default function SaquesTab() {
       {cfg && (
         <div className={`${card} space-y-3`}>
           <p className="text-sm font-black text-white">Regras do programa</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label className={labelCls}>Carência (dias)</label>
               <input type="number" min={0} max={90} value={cfg.grace_days} onChange={(e) => setCfg({ ...cfg, grace_days: Number(e.target.value) })} className={inputCls} />
@@ -199,13 +199,25 @@ export default function SaquesTab() {
               <label className={labelCls}>Aprovar sozinho até (R$)</label>
               <input type="number" min={0} step="0.01" value={cfg.auto_approve_max} onChange={(e) => setCfg({ ...cfg, auto_approve_max: Number(e.target.value) })} className={inputCls} />
             </div>
+            <div>
+              <label className={labelCls}>Comissão (%)</label>
+              <input type="number" min={0} max={100} step="0.01" value={cfg.commission_rate} onChange={(e) => setCfg({ ...cfg, commission_rate: Number(e.target.value) })} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Meses de comissão (0 = sem limite)</label>
+              <input type="number" min={0} max={120} value={cfg.recurring_months} onChange={(e) => setCfg({ ...cfg, recurring_months: Number(e.target.value) })} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Bônus na 1ª venda (R$)</label>
+              <input type="number" min={0} step="0.01" value={cfg.first_payment_bonus} onChange={(e) => setCfg({ ...cfg, first_payment_bonus: Number(e.target.value) })} className={inputCls} />
+            </div>
             <div className="flex items-end">
               <button type="button" disabled={savingCfg} onClick={saveCfg} className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-bold text-white hover:bg-[#007fcc] disabled:opacity-60">
                 {savingCfg ? 'Salvando...' : 'Salvar regras'}
               </button>
             </div>
           </div>
-          <p className="text-xs text-slate-500">Aprovar sozinho = 0 deixa a aprovação automática desligada.</p>
+          <p className="text-xs text-slate-500">Aprovar sozinho = 0 desliga a aprovação automática. Meses de comissão = 0 paga em todas as mensalidades. O bônus é somado à comissão do 1º pagamento de cada loja indicada e cancelado junto em estorno ou chargeback. Alterações valem só para comissões novas.</p>
         </div>
       )}
 

@@ -38,7 +38,7 @@ const IndicaEGanha: React.FC = () => {
   const [pixKeyType, setPixKeyType] = useState("cpf");
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [settings, setSettings] = useState<AffiliateSettings>({ grace_days: 7, payout_day: 10, min_withdrawal: 50 });
+  const [settings, setSettings] = useState<AffiliateSettings>({ grace_days: 7, payout_day: 10, min_withdrawal: 50, commission_rate: 10, recurring_months: 0, first_payment_bonus: 0 });
   const [withdrawals, setWithdrawals] = useState<MyWithdrawal[]>([]);
   const [termsAccepted, setTermsAccepted] = useState<boolean | null>(null);
   const [showTerms, setShowTerms] = useState(false);
@@ -192,10 +192,10 @@ const IndicaEGanha: React.FC = () => {
                 <span className="bg-gradient-to-r from-[#ffc38f] to-[#fd8539] bg-clip-text text-transparent">todo mês.</span>
               </h1>
               <p className="text-sm text-white/80">
-                Receba 10% de comissão recorrente enquanto a loja indicada continuar assinando. Sem limite de indicações.
+                Receba {Number(settings.commission_rate).toLocaleString("pt-BR")}% de comissão {settings.recurring_months > 0 ? `nos primeiros ${settings.recurring_months} pagamentos de cada loja indicada` : "recorrente enquanto a loja indicada continuar assinando"}.{settings.first_payment_bonus > 0 ? ` Bônus de ${brl(settings.first_payment_bonus)} na 1ª venda.` : ""} Sem limite de indicações.
               </p>
               <div className="flex flex-wrap justify-center md:justify-start gap-2 text-xs font-bold">
-                <span className="px-3 py-1 rounded-full bg-white/15 border border-white/25">10% recorrente</span>
+                <span className="px-3 py-1 rounded-full bg-white/15 border border-white/25">{Number(settings.commission_rate).toLocaleString("pt-BR")}% {settings.recurring_months > 0 ? `por ${settings.recurring_months} meses` : "recorrente"}</span>
                 <span className="px-3 py-1 rounded-full bg-white/15 border border-white/25">Sem limite de indicações</span>
                 <span className="px-3 py-1 rounded-full bg-white/15 border border-white/25">Saque via PIX</span>
                 <Link

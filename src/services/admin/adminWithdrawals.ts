@@ -60,6 +60,9 @@ export type AffiliateSettings = {
   payout_day: number;
   min_withdrawal: number;
   auto_approve_max: number;
+  commission_rate: number;
+  recurring_months: number;
+  first_payment_bonus: number;
 };
 
 export const adminGetAffiliateSettings = () => call<AffiliateSettings>('admin_get_affiliate_settings', {});
@@ -70,6 +73,9 @@ export const adminSetAffiliateSettings = (s: AffiliateSettings) =>
     p_payout_day: s.payout_day,
     p_min: s.min_withdrawal,
     p_auto_max: s.auto_approve_max,
+    p_rate: s.commission_rate,
+    p_months: s.recurring_months,
+    p_bonus: s.first_payment_bonus,
   });
 
 const PROOF_BUCKET = 'withdrawal-proofs';
