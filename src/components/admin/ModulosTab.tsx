@@ -142,12 +142,13 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-20 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
+      <div className="sticky top-0 z-30 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-[#0b0e1a] px-6 pb-3 pt-6">
         <div>
           <h1 className="text-xl font-black text-white">Módulos</h1>
           <p className="text-[13px] text-slate-500">Arraste os cards para mudar a ordem da vitrine; módulos ativos ficam sempre na frente.</p>
         </div>
         <div className="flex items-center gap-2">
+          <SandboxStoreSelect compact />
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
             <option value={7}>Últimos 7 dias</option>
@@ -162,7 +163,7 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
       {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[15px] text-rose-300">{error}</div>}
       {creating && <NovoModuloModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load(); }} />}
 
-      <SandboxStoreSelect />
+      
 
       <RevenueSection data={rev} loading={revLoading} stores={stores} store={store} onStore={setStore} />
 
