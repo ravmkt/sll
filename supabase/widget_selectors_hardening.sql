@@ -1,0 +1,1 @@
+﻿-- COLE AQUI O SQL DO ITEM 1 (de "begin;" até "commit;")
