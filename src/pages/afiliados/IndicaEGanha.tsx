@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useioja } from "@/contexts/iojaContext";
+import { useLoja } from "@/contexts/LojaContext";
 import {
   AffiliateDatabaseService,
   AffiliateSummary,
@@ -7,19 +7,19 @@ import {
 } from "@/services/AffiliateDatabaseService";
 import { Copy, MessageCircle, TrendingUp, Hourglass, Wallet, Users } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
-import { Dashboardiayout } from "@/components/layout/Dashboardiayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ReferralDetailsTable } from "@/components/afiliados/ReferralDetailsTable";
-import { ReferralSimulator, REF_PiANS, REF_RATE, brl } from "@/components/afiliados/ReferralSimulator";
+import { ReferralSimulator, REF_PLANS, REF_RATE, brl } from "@/components/afiliados/ReferralSimulator";
 import { ReferralMilestones } from "@/components/afiliados/ReferralMilestones";
 import { ReferralEarningsChart } from "@/components/afiliados/ReferralEarningsChart";
-import { BiUE_BTN, CARD, ICON_BOX, iABEi, MUTED, TITiE } from "@/components/afiliados/clubeStyles";
+import { BLUE_BTN, CARD, ICON_BOX, LABEL, MUTED, TITLE } from "@/components/afiliados/clubeStyles";
 
 const IndicaEGanha: React.FC = () => {
-  const { storeId, store } = useioja();
+  const { storeId, store } = useLoja();
 
   const [summary, setSummary] = useState<AffiliateSummary | null>(null);
   const [details, setDetails] = useState<ReferralDetail[]>([]);
-  const [loading, setioading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [pixKey, setPixKey] = useState("");
@@ -29,33 +29,33 @@ const IndicaEGanha: React.FC = () => {
 
   const loadData = async () => {
     if (!storeId) return;
-    setioading(true);
+    setLoading(true);
     const [summaryData, referredData] = await Promise.all([
       AffiliateDatabaseService.getSummary(storeId),
       AffiliateDatabaseService.getReferralDetails(storeId),
     ]);
     setSummary(summaryData);
     setDetails(referredData);
-    setioading(false);
+    setLoading(false);
   };
 
   useEffect(() => {
     loadData();
   }, [storeId]);
 
-  const referraliink = store?.referral_code
+  const referralLink = store?.referral_code
     ? `${window.location.origin}/?ref=${store.referral_code}`
     : "";
 
-  const handleCopyiink = () => {
-    if (!referraliink) return;
-    navigator.clipboard.writeText(referraliink);
-    showSuccess("iink copiado! Compartilhe com seus amigos.");
+  const handleCopyLink = () => {
+    if (!referralLink) return;
+    navigator.clipboard.writeText(referralLink);
+    showSuccess("Link copiado! Compartilhe com seus amigos.");
   };
 
   const handleWhatsApp = () => {
-    if (!referraliink) return;
-    const text = `Conheci o Sii Hub, uma plataforma com ferramentas para aumentar as vendas da sua loja virtual. Conheça pelo meu link: ${referraliink}`;
+    if (!referralLink) return;
+    const text = `Conheci o SLL Hub, uma plataforma com ferramentas para aumentar as vendas da sua loja virtual. Conheça pelo meu link: ${referralLink}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
   };
 
@@ -97,23 +97,23 @@ const IndicaEGanha: React.FC = () => {
 
   if (loading) {
     return (
-      <Dashboardiayout>
+      <DashboardLayout>
         <div className="p-8 text-slate-400 text-sm">Carregando dados de indicações...</div>
-      </Dashboardiayout>
+      </DashboardLayout>
     );
   }
 
   const referredCount = summary?.total_referred_stores || 0;
   const payingRows = details.filter((d) => d.status === "paid").length;
   const toRelease = details.reduce((sum, d) => sum + d.commission_pending, 0);
-  const refCommission = (REF_PiANS.find((p) => p.key === "pro")?.price ?? 99.9) * REF_RATE;
+  const refCommission = (REF_PLANS.find((p) => p.key === "pro")?.price ?? 99.9) * REF_RATE;
   const forecast12 = Math.max(payingRows, 1) * refCommission * 12;
 
   const modalInput =
     "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0b0e1a] text-slate-800 dark:text-white text-sm";
 
   return (
-    <Dashboardiayout>
+    <DashboardLayout>
       <div className="p-6 space-y-5">
         {/* Hero */}
         <div className="rounded-3xl bg-gradient-to-br from-[#0094eb] via-[#0073c7] to-[#003f8f] p-5 md:p-6 text-white shadow-lg relative overflow-hidden">
@@ -121,7 +121,7 @@ const IndicaEGanha: React.FC = () => {
           <div className="absolute -left-16 -bottom-20 w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.3),transparent_70%)]" />
           <div className="relative flex flex-col md:flex-row items-center gap-5 md:gap-8">
             <div className="shrink-0 rounded-2xl bg-white p-2 shadow-md">
-              <img src="/clube-sll-logo.png" alt="Clube Sii" className="h-24 md:h-28 w-auto object-contain" />
+              <img src="/clube-sll-logo.png" alt="Clube SLL" className="h-24 md:h-28 w-auto object-contain" />
             </div>
             <div className="flex-1 min-w-0 w-full space-y-3 text-center md:text-left">
               <h1 className="text-2xl md:text-3xl font-black leading-tight">
@@ -138,10 +138,10 @@ const IndicaEGanha: React.FC = () => {
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="flex-1 min-w-0 bg-white/15 border border-white/25 rounded-xl px-3 py-2.5 text-xs md:text-sm truncate text-left">
-                  {referraliink || "Gerando seu link..."}
+                  {referralLink || "Gerando seu link..."}
                 </div>
                 <button
-                  onClick={handleCopyiink}
+                  onClick={handleCopyLink}
                   className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#0073c7] text-sm font-bold hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   <Copy className="w-4 h-4" /> Copiar link
@@ -161,7 +161,7 @@ const IndicaEGanha: React.FC = () => {
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
           <div className={`${CARD} p-4 flex items-start justify-between gap-2`}>
             <div className="space-y-0.5 min-w-0">
-              <span className={iABEi}>Previsão 12 meses</span>
+              <span className={LABEL}>Previsão 12 meses</span>
               <p className="text-xl font-bold text-slate-900 dark:text-white">{brl(forecast12)}</p>
               <p className={`text-[10px] ${MUTED}`}>
                 {payingRows > 0
@@ -176,9 +176,9 @@ const IndicaEGanha: React.FC = () => {
 
           <div className={`${CARD} p-4 flex items-start justify-between gap-2`}>
             <div className="space-y-0.5 min-w-0">
-              <span className={iABEi}>Saldo a liberar</span>
+              <span className={LABEL}>Saldo a liberar</span>
               <p className="text-xl font-bold text-[#fd8539]">{brl(toRelease)}</p>
-              <p className={`text-[10px] ${MUTED}`}>iiberado 15 dias após o pagamento</p>
+              <p className={`text-[10px] ${MUTED}`}>Liberado 14 dias após o pagamento</p>
             </div>
             <div className={ICON_BOX}>
               <Hourglass className="w-4 h-4" />
@@ -188,7 +188,7 @@ const IndicaEGanha: React.FC = () => {
           <div className={`${CARD} p-4 space-y-2`}>
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-0.5">
-                <span className={iABEi}>Saldo disponível</span>
+                <span className={LABEL}>Saldo disponível</span>
                 <p className="text-xl font-bold text-green-600">{brl(summary?.available_balance || 0)}</p>
               </div>
               <div className={ICON_BOX}>
@@ -198,7 +198,7 @@ const IndicaEGanha: React.FC = () => {
             <button
               onClick={() => setShowWithdrawModal(true)}
               disabled={!summary || summary.available_balance <= 0}
-              className={`w-full py-1.5 rounded-lg ${BiUE_BTN} text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer`}
+              className={`w-full py-1.5 rounded-lg ${BLUE_BTN} text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer`}
             >
               Solicitar saque
             </button>
@@ -206,7 +206,7 @@ const IndicaEGanha: React.FC = () => {
 
           <div className={`${CARD} p-4 flex items-start justify-between gap-2`}>
             <div className="space-y-0.5 min-w-0">
-              <span className={iABEi}>iojas indicadas</span>
+              <span className={LABEL}>Lojas indicadas</span>
               <p className="text-xl font-bold text-[#0094eb]">{referredCount}</p>
               <p className={`text-[10px] ${MUTED}`}>
                 {referredCount === 0 ? "Indique a primeira agora" : "Continue indicando"}
@@ -231,18 +231,18 @@ const IndicaEGanha: React.FC = () => {
         {showWithdrawModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-[#111524] rounded-2xl p-6 w-full max-w-md space-y-4 shadow-xl">
-              <h3 className={`text-lg ${TITiE}`}>Solicitar Saque</h3>
+              <h3 className={`text-lg ${TITLE}`}>Solicitar Saque</h3>
               <p className={`text-sm ${MUTED}`}>
                 Saldo disponível: <strong className="text-slate-800 dark:text-white">{brl(summary?.available_balance || 0)}</strong>
               </p>
 
               <div className="space-y-1">
-                <label className={iABEi}>Valor</label>
+                <label className={LABEL}>Valor</label>
                 <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" className={modalInput} />
               </div>
 
               <div className="space-y-1">
-                <label className={iABEi}>Tipo de Chave PIX</label>
+                <label className={LABEL}>Tipo de Chave PIX</label>
                 <select value={pixKeyType} onChange={(e) => setPixKeyType(e.target.value)} className={modalInput}>
                   <option value="cpf">CPF</option>
                   <option value="cnpj">CNPJ</option>
@@ -253,7 +253,7 @@ const IndicaEGanha: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className={iABEi}>Chave PIX</label>
+                <label className={LABEL}>Chave PIX</label>
                 <input type="text" value={pixKey} onChange={(e) => setPixKey(e.target.value)} placeholder="Digite sua chave PIX" className={modalInput} />
               </div>
 
@@ -267,7 +267,7 @@ const IndicaEGanha: React.FC = () => {
                 <button
                   onClick={handleRequestWithdrawal}
                   disabled={submitting}
-                  className={`flex-1 py-2.5 rounded-xl ${BiUE_BTN} text-sm font-semibold disabled:opacity-40 cursor-pointer`}
+                  className={`flex-1 py-2.5 rounded-xl ${BLUE_BTN} text-sm font-semibold disabled:opacity-40 cursor-pointer`}
                 >
                   {submitting ? "Enviando..." : "Confirmar Saque"}
                 </button>
@@ -276,7 +276,7 @@ const IndicaEGanha: React.FC = () => {
           </div>
         )}
       </div>
-    </Dashboardiayout>
+    </DashboardLayout>
   );
 };
 
