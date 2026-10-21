@@ -2,87 +2,16 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, X, ArrowRight, Smartphone, Layers, LayoutGrid, PlayCircle, Sparkles } from 'lucide-react';
 
+import { useLandingPlans, type Cycle } from '@/hooks/useLandingPlans';
+
 const CTA = '/auth?mode=signup&module=vidlytics';
 
-type Cycle = 'mensal' | 'semestral' | 'anual';
 
-const CYCLES: { id: Cycle; label: string; off?: string }[] = [
-  { id: 'mensal', label: 'Mensal' },
-  { id: 'semestral', label: 'Semestral', off: '17% OFF' },
-  { id: 'anual', label: 'Anual', off: '33% OFF · 4 meses grátis' },
-];
 
-type PlanId = 'starter' | 'pro' | 'scale';
-type Plan = {
-  id: PlanId;
-  name: string;
-  tag: string;
-  price: Record<Cycle, string>;
-  billing: Record<Cycle, string>;
-  features: string[];
-  highlight?: boolean;
-};
-
-const PLANS: Plan[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    tag: 'Para quem está começando',
-    price: { mensal: '59,90', semestral: '49,90', anual: '39,90' },
-    billing: {
-      mensal: 'R$ 59,90 cobrado todo mês',
-      semestral: 'R$ 299,40 a cada 6 meses',
-      anual: 'R$ 478,80 por ano, em até 12x',
-    },
-    features: [
-      'Até 5 vídeos ativos na loja',
-      'Até 5.000 visualizações/mês',
-      'Stories e Widget Flutuante',
-      'Suporte padrão',
-    ],
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    tag: 'Operação ativa',
-    highlight: true,
-    price: { mensal: '97,00', semestral: '79,90', anual: '67,00' },
-    billing: {
-      mensal: 'R$ 97,00 cobrado todo mês',
-      semestral: 'R$ 479,40 a cada 6 meses',
-      anual: 'R$ 804,00 por ano, em até 12x',
-    },
-    features: [
-      'Até 20 vídeos ativos na loja',
-      'Até 25.000 visualizações/mês',
-      'Stories, Widget e Carrossel na PDP',
-      'Botão WhatsApp e Checkout direto',
-      'Métricas completas',
-    ],
-  },
-  {
-    id: 'scale',
-    name: 'Scale',
-    tag: 'Grandes lojas e alto tráfego',
-    price: { mensal: '197,00', semestral: '159,00', anual: '127,00' },
-    billing: {
-      mensal: 'R$ 197,00 cobrado todo mês',
-      semestral: 'R$ 954,00 a cada 6 meses',
-      anual: 'R$ 1.524,00 por ano, em até 12x',
-    },
-    features: [
-      'Até 150 vídeos ativos',
-      'Até 180.000 visualizações/mês',
-      'Todos os formatos liberados',
-      'CDN de alta performance no carregamento',
-      'Suporte prioritário via WhatsApp',
-    ],
-  },
-];
 
 const CYCLE_PARAM: Record<Cycle, string> = { mensal: 'monthly', semestral: 'semiannual', anual: 'yearly' };
 
-const checkoutUrl = (plan: PlanId, cycle: Cycle) =>
+const checkoutUrl = (plan: string, cycle: Cycle) =>
   `${CTA}&plan=${plan}&cycle=${CYCLE_PARAM[cycle]}`;
 
 const TRIAL_STEPS = [
@@ -106,6 +35,7 @@ const DIFFS = [
 
 export default function VidlyticsLanding() {
   const [cycle, setCycle] = useState<Cycle>('anual');
+  const { plans: PLANS, cycles: CYCLES } = useLandingPlans();
   const [trialOpen, setTrialOpen] = useState(false);
 
   useEffect(() => {
