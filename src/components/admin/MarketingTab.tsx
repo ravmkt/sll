@@ -107,8 +107,7 @@ const DAY_OPTIONS = [
   { v: 90, label: '\u00daltimos 90 dias' },
 ];
 
-function Visao() {
-  const [days, setDays] = useState(30);
+function Visao({ days }: { days: number }) {
   const [m, setM] = useState<MktMetrics | null>(null);
   const [em, setEm] = useState<EmailMetrics>(EMPTY_EMAIL_METRICS);
   const [err, setErr] = useState<string | null>(null);
@@ -206,12 +205,6 @@ function Visao() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-slate-100">{'M\u00e9tricas'}</h2>
-        <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={inputCls + ' !w-auto'}>
-          {DAY_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-        </select>
-      </div>
       {err && <p className="text-[15px] text-rose-400">{err}</p>}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => <MetricCardView key={c.title} card={c} />)}
@@ -742,19 +735,29 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
 
 export default function MarketingTab() {
   const [tab, setTab] = useState<TabKey>('visao');
+  const [days, setDays] = useState(30);
   return (
     <div className="space-y-5">
-      <h1 className="flex items-center gap-2 text-xl font-bold text-slate-100"><Megaphone className="w-5 h-5 text-amber-500" /> Marketing</h1>
-      <div className="flex flex-wrap gap-1 border-b border-slate-800">
-        {TABS.map((t) => (
-          <button key={t.key} type="button" onClick={() => setTab(t.key)}
-            className={'flex items-center gap-1.5 px-3 py-2 text-[15px] font-semibold border-b-2 -mb-px ' +
-              (tab === t.key ? 'border-amber-500 text-amber-400' : 'border-transparent text-slate-400 hover:text-slate-200')}>
-            {t.icon}{t.label}
-          </button>
-        ))}
+      <div className="sticky top-0 z-30 -mx-6 -mt-6 space-y-3 bg-[#0b0e1a] px-6 pt-6">
+        <h1 className="flex items-center gap-2 text-xl font-black text-white"><Megaphone className="h-5 w-5 text-amber-500" /> Marketing</h1>
+        <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-800">
+          <div className="flex flex-wrap gap-1">
+            {TABS.map((t) => (
+              <button key={t.key} type="button" onClick={() => setTab(t.key)}
+                className={'-mb-px flex cursor-pointer items-center gap-1.5 border-b-2 px-3 py-2 text-[15px] font-semibold ' +
+                  (tab === t.key ? 'border-amber-500 text-amber-400' : 'border-transparent text-slate-400 hover:text-slate-200')}>
+                {t.icon}{t.label}
+              </button>
+            ))}
+          </div>
+          {tab === 'visao' && (
+            <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={inputCls + ' mb-1 !w-auto cursor-pointer'}>
+              {DAY_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+            </select>
+          )}
+        </div>
       </div>
-      {tab === 'visao' && <Visao />}
+      {tab === 'visao' && <Visao days={days} />}
       {tab === 'banner' && <ItemsPanel kind="banner" />}
       {tab === 'popup' && <ItemsPanel kind="popup" />}
           {tab === 'aviso' && <ItemsPanel kind="notice" />}
