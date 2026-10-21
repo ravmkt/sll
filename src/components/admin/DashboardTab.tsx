@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { getDashboard, getModulesDistribution, listModules, type DashboardData, type ModuleSlice, type SeriesPoint } from '@/services/admin/adminService';
 import { getConsumption, type Consumption } from '@/services/admin/consumptionService';
 import InfraQuotaCards from '@/components/admin/InfraQuotaCards';
+import { getNoahCredits, type NoahCredits } from '@/services/admin/noahCreditsService';
 import { EventsChart, StorageRanking, bytesFmt } from '@/components/admin/ConsumptionDetail';
 
 const sb: any = supabase;
@@ -146,23 +147,28 @@ function PieCard({ title, items, empty, bd }: { title: string; items: { name: st
   );
 }
 
-function AlertBox({ title, rows, detail }: { title: string; rows: AlertRow[]; detail: (r: AlertRow) => string }) {
+function AlertBox({ title, rows, detail, tone }: { title: string; rows: AlertRow[]; detail: (r: AlertRow) => string; tone: 'danger' | 'warn' }) {
   const open = (id: string) => { window.location.href = `/admin-master?tab=lojas&loja=${id}`; };
+  const hot = rows.length > 0;
+  const box = !hot
+    ? 'border-slate-800 bg-[#0b0e1a] opacity-70'
+    : tone === 'danger' ? 'border-rose-500/70 bg-rose-500/10' : 'border-amber-500/70 bg-amber-500/10';
+  const badge = !hot ? 'bg-emerald-500/15 text-emerald-300' : tone === 'danger' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-black';
   return (
-    <div className="rounded-xl border border-slate-800 bg-[#0b0e1a] p-3">
+    <div className={`rounded-xl border p-3 ${box}`}>
       <p className="mb-2 flex items-center gap-2 text-[13px] font-bold text-white">
         {title}
-        <span className={`rounded-full px-2 py-0.5 text-xs ${rows.length ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/15 text-emerald-300'}`}>{rows.length}</span>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-black ${badge}`}>{hot ? `${rows.length} LOJA(S)` : '0'}</span>
       </p>
-      {rows.length === 0 ? (
-        <p className="text-[13px] text-slate-500">Nenhuma loja.</p>
+      {!hot ? (
+        <p className="flex items-center gap-1.5 text-[13px] text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" /> Tudo em dia</p>
       ) : (
         <ul className="space-y-1">
           {rows.map((r, i) => (
             <li key={`${r.id}-${r.what}-${i}`}>
               <button type="button" onClick={() => open(r.id)} className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] hover:bg-white/5">
-                <span className="truncate font-semibold text-slate-200">{r.name}</span>
-                <span className="shrink-0 text-xs text-amber-300">{detail(r)}</span>
+                <span className="truncate font-semibold text-slate-100">{r.name}</span>
+                <span className={`shrink-0 text-xs font-semibold ${tone === 'danger' ? 'text-rose-300' : 'text-amber-300'}`}>{detail(r)}</span>
               </button>
             </li>
           ))}
@@ -172,6 +178,42 @@ function AlertBox({ title, rows, detail }: { title: string; rows: AlertRow[]; de
   );
 }
 
+function AiQuotaCard({ label, value, hint, used, total, extra, ready, icon: Icon, tone, bd }: {
+  label: string; value: string; hint: string; used: number; total: number; extra: number; ready: boolean; icon: ElementType; tone: string; bd: string;
+}) {
+  const pct = total > 0 ? Math.min(100, (used / total) * 100) : 0;
+  const bar = pct >= 90 ? 'bg-rose-500' : pct >= 70 ? 'bg-amber-400' : 'bg-emerald-500';
+  return (
+    <div className={card(bd)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[13px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+          <p className="mt-1 truncate text-2xl font-black text-white">{value}</p>
+          <p className="mt-0.5 text-[13px] text-slate-500">{hint}</p>
+        </div>
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tone}`}><Icon className="h-4 w-4" /></div>
+      </div>
+      <div className="mt-3 border-t border-slate-800 pt-3">
+        {!ready ? (
+          <p className="text-xs text-slate-500">Franquia indisponível.</p>
+        ) : total === 0 ? (
+          <p className="text-xs text-slate-500">Nenhuma loja com franquia de IA.</p>
+        ) : (
+          <>
+            <div className="flex justify-between text-[13px]">
+              <span className="text-slate-300"><b className="text-white">{int(used)}</b> de {int(total)} mensagens no ciclo</span>
+              <span className="font-bold text-slate-200">{pct.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</span>
+            </div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-800">
+              <div className={`h-full rounded-full ${bar}`} style={{ width: `${Math.max(pct > 0 ? 2 : 0, pct)}%` }} />
+            </div>
+            <p className="mt-1.5 text-xs text-slate-600">Franquia dos planos das lojas{extra > 0 ? ` · ${int(extra)} extras em saldo` : ''}</p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 export default function DashboardTab() {
   const [periodo, setPeriodo] = useState<Periodo>('30');
   const [cs, setCs] = useState(() => ymd(addDays(new Date(), -29)));
@@ -188,6 +230,8 @@ export default function DashboardTab() {
   const [healthErr, setHealthErr] = useState('');
   const [aiErr, setAiErr] = useState('');
   const [infra, setInfra] = useState<any>(null);
+  const [credits, setCredits] = useState<NoahCredits[] | null>(null);
+  const [creditNames, setCreditNames] = useState<Record<string, string>>({});
   const [origin, setOrigin] = useState<{ d: string; new: number; renewal: number; upfront: number }[]>([]);
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const prices = useMemo(loadPrices, []);
@@ -247,7 +291,22 @@ export default function DashboardTab() {
     return () => { alive = false; };
   }, [range.start, range.end]);
 
-  const s = data?.stores;
+  useEffect(() => {
+    let alive = true;
+    getNoahCredits()
+      .then(async (rows) => {
+        if (!alive) return;
+        setCredits(rows);
+        const ids = rows.filter((r) => r.credits_total > 0 && r.credits_used / r.credits_total >= 0.9).map((r) => r.store_id);
+        if (!ids.length) { setCreditNames({}); return; }
+        const { data: st } = await sb.from('stores').select('id, name').in('id', ids);
+        if (alive) setCreditNames(Object.fromEntries((st ?? []).map((x: any) => [x.id, x.name])));
+      })
+      .catch(() => { if (alive) setCredits(null); });
+    return () => { alive = false; };
+  }, []);
+
+const s = data?.stores;
   const pie = s ? [
     { name: 'Ativas', value: s.active, color: '#10b981' },
     { name: 'Trial', value: s.trial, color: '#0094eb' },
@@ -261,7 +320,18 @@ export default function DashboardTab() {
   const aiCost = ai ? cost(ai.prompt_tokens, ai.completion_tokens) : 0;
   const aiAvg = ai && ai.stores > 0 ? aiCost / ai.stores : 0;
 
-  const totalAlerts = health ? health.alerts.near_limit.length + health.alerts.past_due.length + health.alerts.no_script.length : 0;
+  const withPlan = (credits ?? []).filter((r) => r.credits_total > 0);
+  const aiTotal = withPlan.reduce((n, r) => n + r.credits_total, 0);
+  const aiUsed = withPlan.reduce((n, r) => n + Math.min(r.credits_used, r.credits_total), 0);
+  const aiExtra = (credits ?? []).reduce((n, r) => n + r.credits_extra, 0);
+  const aiNear: AlertRow[] = withPlan
+    .filter((r) => r.credits_used / r.credits_total >= 0.9)
+    .map((r) => ({ id: r.store_id, name: creditNames[r.store_id] ?? 'Loja', what: 'Noah IA', pct: Math.min(100, Math.round((r.credits_used / r.credits_total) * 100)) }));
+  const nearLimit = [...(health?.alerts.near_limit ?? []), ...aiNear];
+  const pastDue = health?.alerts.past_due ?? [];
+  const noScript = health?.alerts.no_script ?? [];
+  const totalAlerts = health ? nearLimit.length + pastDue.length + noScript.length : 0;
+  const critical = pastDue.length > 0;
   const conv = health && health.trial_ended > 0 ? Math.round((health.trial_converted / health.trial_ended) * 100) : null;
   const monthly = (new Date(range.end).getTime() - new Date(range.start).getTime()) / 86400000 > 62;
   const series = origin.map((r) => ({
@@ -302,11 +372,22 @@ export default function DashboardTab() {
       {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[15px] text-rose-300">{error}</div>}
 
       {/* ALERTAS */}
-      <section className={`${card(BD.alert)} space-y-3`}>
-        <div className="flex items-center gap-2">
-          {totalAlerts ? <AlertTriangle className="h-4 w-4 text-amber-400" /> : <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+      <section className={`space-y-3 rounded-2xl border p-4 ${
+        !health ? 'border-slate-700 bg-[#111524]'
+        : critical ? 'border-rose-500/70 bg-gradient-to-br from-rose-500/10 to-[#111524] shadow-[0_0_24px_rgba(244,63,94,0.18)]'
+        : totalAlerts ? 'border-amber-500/70 bg-gradient-to-br from-amber-500/10 to-[#111524] shadow-[0_0_24px_rgba(245,158,11,0.18)]'
+        : 'border-emerald-500/40 bg-[#111524]'}`}>
+        <div className="flex flex-wrap items-center gap-2">
+          {totalAlerts > 0 ? (
+            <span className="relative flex h-3 w-3">
+              <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${critical ? 'bg-rose-400' : 'bg-amber-400'}`} />
+              <span className={`relative inline-flex h-3 w-3 rounded-full ${critical ? 'bg-rose-500' : 'bg-amber-500'}`} />
+            </span>
+          ) : <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
           <h2 className="text-sm font-bold text-white">Central de alertas</h2>
-          <span className="text-[13px] text-slate-500">{health ? (totalAlerts ? `${totalAlerts} ponto(s) pedem atenção` : 'Tudo certo por aqui') : ''}</span>
+          {health && (totalAlerts > 0
+            ? <span className={`rounded-full px-2.5 py-0.5 text-xs font-black ${critical ? 'bg-rose-500 text-white' : 'bg-amber-500 text-black'}`}>{totalAlerts} PONTO(S) PEDEM ATENÇÃO</span>
+            : <span className="text-[13px] text-emerald-400">Tudo certo por aqui</span>)}
         </div>
         {healthErr ? (
           <p className="text-[13px] text-rose-300">Não foi possível carregar os alertas: {healthErr}</p>
@@ -315,11 +396,11 @@ export default function DashboardTab() {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-              <AlertBox title="Perto do limite (90%+)" rows={health.alerts.near_limit} detail={(r) => `${r.what} ${r.pct}%`} />
-              <AlertBox title="Pagamento em atraso" rows={health.alerts.past_due} detail={(r) => `${r.days ?? 0} dia(s)`} />
-              <AlertBox title="Sem script há 48h+" rows={health.alerts.no_script} detail={(r) => `${r.days ?? 0} dia(s) de conta`} />
+              <AlertBox tone="warn" title="Perto do limite (90%+)" rows={nearLimit} detail={(r) => `${r.what} ${r.pct}%`} />
+              <AlertBox tone="danger" title="Pagamento em atraso" rows={pastDue} detail={(r) => `${r.days ?? 0} dia(s)`} />
+              <AlertBox tone="warn" title="Sem script há 48h+" rows={noScript} detail={(r) => `${r.days ?? 0} dia(s) de conta`} />
             </div>
-            <p className="text-xs text-slate-600">Quem está perto do limite é oportunidade de vender add-on.</p>
+            <p className="text-xs text-slate-500">Quem está perto do limite (inclui a franquia de IA do Noah) é oportunidade de vender upgrade ou pacote extra.</p>
           </>
         )}
       </section>
@@ -383,7 +464,7 @@ export default function DashboardTab() {
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <Metric bd={BD.infra} label="Consumo de IA" value={ai ? money(aiCost) : '—'} hint={ai ? `${int(ai.total_tokens)} tokens (estimativa)` : (aiErr ? 'Rode o SQL admin_ai_usage' : '')} icon={Coins} tone="bg-sky-500/15 text-sky-400" />
-            <Metric bd={BD.infra} label="Mensagens da IA" value={ai ? int(ai.calls) : '—'} hint="Respostas do Noah no período" icon={MessageSquare} tone="bg-sky-500/15 text-sky-400" />
+            <AiQuotaCard bd={BD.infra} label="Mensagens da IA" value={ai ? int(ai.calls) : '—'} hint="Respostas do Noah no período" used={aiUsed} total={aiTotal} extra={aiExtra} ready={credits !== null} icon={MessageSquare} tone="bg-sky-500/15 text-sky-400" />
             <Metric bd={BD.infra} label="Custo de IA por loja" value={ai ? money(aiAvg) : '—'} hint={ai ? `Média entre ${int(ai.stores)} loja(s) que usaram` : ''} icon={Bot} tone="bg-sky-500/15 text-sky-400" />
           </div>
 
