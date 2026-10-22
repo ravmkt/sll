@@ -312,7 +312,7 @@ export default function Dashboard() {
       <div className="space-y-6">
 
         {/* Resultados com filtro de periodo */}
-        <div data-tour="kpis" className="space-y-3">
+        <div data-tour="kpis" className="mb-0 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-black text-slate-900">Resultados da sua loja</h2>
@@ -384,7 +384,7 @@ export default function Dashboard() {
         <div id="meus-modulos" data-tour="modules" className="scroll-mt-24 space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-lg font-black text-slate-900">Mais possibilidades para a sua loja</h2>
+              <h2 className="text-[1.375rem] font-medium leading-tight text-slate-900">Mais possibilidades para a sua loja</h2>
               <p className="text-sm text-slate-500">Use o que já está ativo. Experimente ou contrate o próximo módulo no seu ritmo.</p>
             </div>
             <button
@@ -403,7 +403,7 @@ export default function Dashboard() {
             showcaseMods.forEach((x) => bySlug.set(x.slug, x));
             const rank = (m: ShopMod) => (ownedSet.has(m.slug) ? 0 : m.status === 'coming_soon' ? 2 : 1);
             const list = Array.from(bySlug.values())
-              .filter((m) => m.status !== 'hidden' && !/^module de teste/i.test(m.name))
+              .filter((m) => m.status !== 'hidden' && !/^m[oó]d[uú]l[eo]\s+(de\s+)?teste/i.test(m.name))
               .sort((x, y) => rank(x) - rank(y));
 
             if (list.length === 0) {
@@ -429,9 +429,13 @@ export default function Dashboard() {
                       <div className="space-y-4">
                         <ModulePreview slug={m.slug} />
                         <div className="flex items-center justify-between gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
-                            <Icon className="h-5 w-5 text-[#0094eb]" />
-                          </div>
+                          {m.logo_url ? (
+                            <img src={m.logo_url} alt={m.name} className="h-10 w-auto max-w-[60%] object-contain object-left" />
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
+                              <Icon className="h-5 w-5 text-[#0094eb]" />
+                            </div>
+                          )}
                           {maint ? (
                             <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-700">{'\u2022'} Em manutenção</span>
                           ) : owned && trial ? (
@@ -514,7 +518,7 @@ export default function Dashboard() {
         {/* Sua operacao, sem perder o ritmo */}
         <div className="space-y-4">
           <div>
-            <h2 className="text-lg font-black text-slate-900">Sua operação, sem perder o ritmo</h2>
+            <h2 className="text-[1.375rem] font-medium leading-tight text-slate-900">Sua operação, sem perder o ritmo</h2>
             <p className="text-sm text-slate-500">Acompanhe o dia da loja e volte rápido ao que importa.</p>
           </div>
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -598,8 +602,8 @@ export default function Dashboard() {
         </div>
         <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
         {/* Clube + Academy */}
-        <div className="-mb-3">
-          <h2 className="text-lg font-black text-slate-900">Para ir além, no seu tempo</h2>
+        <div className="mb-4">
+          <h2 className="text-[1.375rem] font-medium leading-tight text-slate-900">Para ir além, no seu tempo</h2>
           <p className="text-sm text-slate-500">Cresça com indicações e aprenda com quem já vende.</p>
         </div>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">

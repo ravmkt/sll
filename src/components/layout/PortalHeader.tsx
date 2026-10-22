@@ -59,8 +59,9 @@ export default function PortalHeader() {
           </div>
         )}
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-black text-slate-900">Bem-vindo(a), {greetName}</h1>
-          <p className="text-sm text-slate-500">Painel de controle e inteligência da sua operação online.</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#0094eb]">Seu negócio no SLL Hub</p>
+          <h1 className="truncate text-xl font-black text-slate-900">Olá, {greetName}</h1>
+          <p className="text-sm text-slate-500">Acompanhe sua loja e descubra os próximos módulos para ela.</p>
         </div>
       </div>
       <div className="min-w-0 empty:hidden lg:col-span-1 2xl:col-span-3">
@@ -68,7 +69,7 @@ export default function PortalHeader() {
       </div>
       </div>
       </div>
-      <div className="flex flex-col lg:w-52 lg:shrink-0 2xl:absolute 2xl:right-6 2xl:top-8 2xl:w-52">
+      <div className="flex flex-col lg:w-52 lg:shrink-0 2xl:absolute 2xl:right-6 2xl:top-8 2xl:w-60">
         <FeatureWishCard />
         {createPortal(<NpsWizardGate showCard={false} />, document.body)}
       </div>
