@@ -1,3 +1,4 @@
+import ModuleTrialButton from '@/components/dashboard/ModuleTrialButton';
 import { useEffect, useMemo, useState } from 'react';
 import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -487,9 +488,7 @@ export default function Dashboard() {
                           {isJoined ? <><Check className="h-3.5 w-3.5" /> Você está na lista</> : busySlug === m.slug ? 'Entrando...' : 'Entrar na lista de espera'}
                         </button>
                       ) : (
-                        <button type="button" onClick={() => navigate(`/dashboard/planos?modulo=${m.slug}`)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#007fcc]">
-                          Ativar módulo <ArrowRight className="h-3.5 w-3.5" />
-                        </button>
+                        <ModuleTrialButton slug={m.slug} />
                       )}
                     </div>
                   </div>

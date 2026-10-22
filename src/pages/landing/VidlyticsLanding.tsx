@@ -366,7 +366,7 @@ export default function VidlyticsLanding() {
           <p className="text-xl text-indigo-100 mb-10">Crie sua conta em segundos. Não pedimos cartão de crédito. Risco zero para você testar na sua loja real.</p>
           <div className="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-2xl text-left">
             <h3 className="font-bold text-gray-900 text-xl mb-2">Crie sua conta</h3>
-            <p className="text-sm text-gray-600 mb-4">Leva menos de 1 minuto. Seu teste de {trialDays} dias começa na hora, sem cartão.</p>
+            <p className="text-sm text-gray-600 mb-4">Leva menos de 1 minuto. Seu teste de {trialDays} dias começa quando você ativa o módulo, sem cartão.</p>
             <Link to={CTA} className="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center font-bold py-4 rounded-xl transition shadow-lg">
               Iniciar Trial de {trialDays} Dias
             </Link>

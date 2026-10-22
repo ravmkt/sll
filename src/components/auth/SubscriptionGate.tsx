@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
 import { supabase } from '@/lib/supabase';
 
-const MODULE_PREFIXES = ['/dashboard/modules', '/vidlytics', '/live'];
+const MODULE_PREFIXES = ['/dashboard/modules', '/dashboard/produtos', '/dashboard/medidas', '/dashboard/metricas', '/dashboard/dicas/vidlytics'];
 
 interface SubscriptionGateProps {
   children: React.ReactNode;
