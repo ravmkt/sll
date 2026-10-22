@@ -68,7 +68,7 @@ const money = (e: EventRow) => {
   return Number((md as any).value ?? (md as any).amount ?? (md as any).total ?? 0) || 0;
 };
 
-const sectionTitle = 'text-xl font-bold leading-tight text-slate-900';
+const sectionTitle = 'text-xs font-bold uppercase tracking-wider text-slate-400';
 const card = 'bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm';
 
 const LIVE_TIPS: Record<number, { title: string; text: string }> = {
@@ -334,7 +334,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         <ModuleHeader module="live" />
         <div>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-1">
-            <h3 className={sectionTitle}>Faturamento das lives</h3>
+            <h3 className={sectionTitle}>Faturamento</h3>
             <div className="flex flex-wrap items-center gap-2">
               {periodo === 'custom' && (
                 <>
@@ -369,7 +369,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         </div>
 
         <div>
-          <h3 className={`${sectionTitle} mb-3 px-1`}>Consumo do plano</h3>
+          <h3 className={`${sectionTitle} mb-3 px-1`}>Consumo do Plano</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Meter label="Horas de transmissão" value={`${hours.toFixed(1).replace('.', ',')} h`} of="de —" pct={null} icon={Clock} foot="Neste mês" />
             <Meter label="Pico de espectadores" value={fmtInt(peak)} of="de —" pct={null} icon={Users} foot="Ao vivo" />
@@ -391,8 +391,8 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         <div className="grid gap-4 lg:grid-cols-2">
           <div className={card}>
             <div className="mb-3 flex items-center gap-2">
-              <Radio size={16} className="text-[#DC2626]" />
-              <h3 className="text-base font-black text-slate-900">Próxima live</h3>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#DC2626]/10"><Radio className="h-4 w-4 text-[#DC2626]" /></div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Próxima live</h3>
             </div>
             {next ? (
               <div className="space-y-3">
@@ -437,8 +437,8 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
 
           <div className={card}>
             <div className="mb-3 flex items-center gap-2">
-              <Trophy size={16} className="text-[#DC2626]" />
-              <h3 className="text-base font-black text-slate-900">Engajamento das lives</h3>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#DC2626]/10"><Trophy className="h-4 w-4 text-[#DC2626]" /></div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Engajamento das lives</h3>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
