@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
 import { supabase } from '@/lib/supabase';
 
+const MODULE_PREFIXES = ['/dashboard/modules', '/vidlytics', '/live'];
+
 interface SubscriptionGateProps {
   children: React.ReactNode;
 }
@@ -96,6 +98,13 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) 
     : status === 'trialing';
 
   const hasAccess = status === 'active' || status === 'lifetime' || status === 'paid' || hasPaidSub === true || isTrialActive;
+
+  if (!hasAccess && status === 'none') {
+    const inModule = MODULE_PREFIXES.some(
+      (p) => location.pathname === p || location.pathname.startsWith(p + '/')
+    );
+    return inModule ? <Navigate to="/dashboard" replace /> : <>{children}</>;
+  }
 
   if (!hasAccess) {
     return <Navigate to="/planos-bloqueio" state={{ from: location }} replace />;

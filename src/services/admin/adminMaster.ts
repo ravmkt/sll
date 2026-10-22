@@ -27,7 +27,7 @@ export type AdminXray = {
 
 export const STATUS_LABEL: Record<string, string> = {
   active: 'Ativo',
-  trialing: 'Trial',
+  none: 'Sem teste', trialing: 'Trial',
   past_due: 'Inadimplente',
   canceled: 'Cancelado',
   lifetime: 'Vitalício',

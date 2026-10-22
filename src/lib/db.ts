@@ -287,7 +287,7 @@ export interface Store {
   platform?: string;
   owner_user_id?: string;
   plan_id?: string;
-  subscription_status?: 'trialing' | 'active' | 'past_due' | 'canceled';
+  subscription_status?: 'none' | 'trialing' | 'active' | 'past_due' | 'canceled';
   trial_ends_at?: string | null;
   storage_used_bytes?: number;
   storage_limit_bytes?: number;
@@ -1025,9 +1025,9 @@ const ensureSupabaseStoreExists = async (storeId?: string) => {
     console.warn('Não foi possível buscar loja no localStorage:', error);
   }
 
-  const trialEndsDate = new Date();
-  const { data: tdRaw } = await (supabase as any).rpc('get_trial_days');
-  trialEndsDate.setDate(trialEndsDate.getDate() + (Number(tdRaw) > 0 ? Number(tdRaw) : 14));
+  
+  
+  
 
   const storeToInsert = sanitizeTablePayload('stores', {
     id: storeId,
@@ -1035,8 +1035,8 @@ const ensureSupabaseStoreExists = async (storeId?: string) => {
     url: localStore?.url || '',
     owner_user_id: user.id,
 plan_id: (localStore as any)?.plan_id || '5493cbc5-05b4-4f39-99ba-e29c98d86cb6',
-subscription_status: (localStore as any)?.subscription_status || 'trialing',
-trial_ends_at: (localStore as any)?.trial_ends_at || trialEndsDate.toISOString(),
+subscription_status: (localStore as any)?.subscription_status || 'none',
+trial_ends_at: (localStore as any)?.trial_ends_at || null,
   });
 
   const { error } = await supabase
@@ -1693,7 +1693,7 @@ export const db = {
     id: string;
     store_id: string;
     plan_name: string;
-    status: 'trialing' | 'active' | 'past_due' | 'canceled';
+    status: 'none' | 'trialing' | 'active' | 'past_due' | 'canceled';
     current_period_start?: string;
     current_period_end?: string;
     created_at?: string;
