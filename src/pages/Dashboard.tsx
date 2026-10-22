@@ -312,7 +312,7 @@ export default function Dashboard() {
   const shortcuts = SHORTCUT_POOL
     .map((s, i) => ({ ...s, i, text: s.key === 'ins' ? insight.title : s.text }))
     .sort((a, b) => (shortcutHits[b.key] ?? 0) - (shortcutHits[a.key] ?? 0) || a.i - b.i)
-    .slice(0, 3);
+    .slice(0, 5);
 
   const copy = () => {
     if (!referralLink) return;
@@ -414,13 +414,6 @@ export default function Dashboard() {
               <h2 className="text-xl font-bold leading-tight text-slate-900">Mais possibilidades para a sua loja</h2>
               <p className="text-sm text-slate-500">Use o que já está ativo. Experimente ou contrate o próximo módulo no seu ritmo.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard/planos')}
-              className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
-            >
-              Ver módulos e planos <ArrowRight className="h-3 w-3" />
-            </button>
           </div>
           {(() => {
             type ShopMod = (typeof showcaseMods)[number];
@@ -464,14 +457,8 @@ export default function Dashboard() {
 
                   return (
                     <div key={m.slug} className={`${CARD} flex h-full flex-col justify-between gap-4 p-4`}>
-                      <div className="space-y-4">
-                        <div className="flex flex-col items-center gap-2.5">$1{m.logo_url ? (
-                            <img src={m.logo_url} alt={m.name} className="h-16 w-auto max-w-[75%] object-contain object-center" />
-                          ) : (
-                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
-                              <Icon className="h-8 w-8 text-[#0094eb]" />
-                            </div>
-                          )}
+                      <div className="relative flex flex-col items-center gap-3 pt-8">
+                        <div className="absolute right-0 top-0">
                           {maint ? (
                             <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">{'\u2022'} Em manutenção</span>
                           ) : owned && trial ? (
@@ -482,19 +469,25 @@ export default function Dashboard() {
                             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{'\u2022'} Ativo</span>
                           ) : soon ? (
                             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">{'\u2022'} Em breve</span>
-                          ) : (
-                            used ? (
+                          ) : used ? (
                             <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">{'\u2022'} Teste encerrado</span>
                           ) : (
                             <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-1 text-xs font-semibold text-[#0094eb]">{'\u2022'} Teste grátis disponível</span>
-                          )
                           )}
                         </div>
-                        <div className="space-y-1.5 text-center">$1<h3 className="text-lg font-bold text-slate-900">{m.name}</h3>
-                          {m.description && (
-                            <p className="line-clamp-3 text-sm font-medium leading-relaxed text-slate-600">{m.description}</p>
-                          )}
-                        </div>
+                        {m.logo_url ? (
+                          <img src={m.logo_url} alt={m.name} className="h-24 w-auto max-w-[85%] object-contain object-center" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
+                              <Icon className="h-10 w-10 text-[#0094eb]" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900">{m.name}</h3>
+                          </div>
+                        )}
+                        {m.description && (
+                          <p className="line-clamp-3 text-center text-sm font-medium leading-relaxed text-slate-600">{m.description}</p>
+                        )}
                       </div>
 
                       <div className="mt-auto space-y-2">
@@ -549,6 +542,15 @@ export default function Dashboard() {
               </div>
             );
           })()}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard/planos')}
+              className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+            >
+              Ver módulos e planos <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
         </div>
         {/* Sua operacao, sem perder o ritmo */}
         <div className="space-y-4">
