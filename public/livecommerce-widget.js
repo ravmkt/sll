@@ -702,7 +702,31 @@ function fetchLiveSpotlight(live) {
 
 
   // Inicialização automática do widget de Live
+  function isLiveAppEnabled() {
+    var sid = cleanUuid(storeId);
+    if (!sid) return Promise.resolve(true);
+    return fetch(supabaseUrl + '/rest/v1/rpc/get_module_app_enabled', {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Authorization': 'Bearer ' + supabaseAnonKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_store_id: sid, p_module: 'live_commerce' })
+    })
+      .then(function (res) { return res.ok ? res.json() : true; })
+      .then(function (v) { return v !== false; })
+      .catch(function () { return true; });
+  }
+
   function initLiveWidget() {
+    isLiveAppEnabled().then(function (on) {
+      if (on) runLiveWidget();
+      else console.log('[LiveCommerce] Aplicativo desativado para este modulo.');
+    });
+  }
+
+  function runLiveWidget() {
     fetchActiveLive().then(function(live) {
       if (live) {
         console.log('[LiveCommerce] Live ativa encontrada:', live.id || live.title);

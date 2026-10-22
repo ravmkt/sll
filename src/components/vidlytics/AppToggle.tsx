@@ -1,48 +1,19 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
+import { useModuleAppEnabled } from '@/hooks/useModuleAppEnabled';
+import type { AppModuleKey } from '@/services/moduleAppService';
 
-const sb: any = supabase;
+const HINT: Record<AppModuleKey, { on: string; off: string }> = {
+  vidlytics: { on: 'Vídeos online na sua loja', off: 'Vídeos ocultos na sua loja' },
+  live_commerce: { on: 'Lives online na sua loja', off: 'Lives ocultas na sua loja' },
+};
 
-export default function AppToggle() {
+export default function AppToggle({ moduleKey = 'vidlytics' }: { moduleKey?: AppModuleKey }) {
   const { storeId } = useLoja() as { storeId: string | null };
-  const [on, setOn] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!storeId) return;
-    let alive = true;
-    sb.rpc('get_store_settings_public', { p_store_id: storeId }).maybeSingle()
-      .then(({ data }: any) => {
-        if (!alive) return;
-        setOn(data ? data.app_enabled !== false && data.widget_enabled !== false : true);
-        setLoading(false);
-      });
-    return () => { alive = false; };
-  }, [storeId]);
-
-  const toggle = async () => {
-    if (!storeId || saving) return;
-    const next = !on;
-    setOn(next);
-    setSaving(true);
-    setError(null);
-    const patch = next ? { app_enabled: true, widget_enabled: true } : { app_enabled: false };
-    const { data, error: err } = await sb.from('store_settings').update(patch).eq('store_id', storeId).select('store_id');
-    setSaving(false);
-    if (err || !data || data.length === 0) {
-      setOn(!next);
-      setError('Não foi possível salvar.');
-      return;
-    }
-    window.dispatchEvent(new CustomEvent('vidlytics:app-enabled', { detail: next }));
-  };
+  const { enabled: on, loading, saving, error, toggle } = useModuleAppEnabled(storeId, moduleKey);
 
   return (
     <div
-      title={error ?? (on ? 'Vídeos online na sua loja' : 'Vídeos ocultos na sua loja')}
+      title={error ?? (on ? HINT[moduleKey].on : HINT[moduleKey].off)}
       className={`flex items-center gap-2.5 rounded-xl border px-3 py-1.5 transition-colors ${
         error ? 'border-amber-300 bg-amber-50' : on ? 'border-emerald-200 bg-emerald-50/70' : 'border-rose-200 bg-rose-50/70'
       }`}

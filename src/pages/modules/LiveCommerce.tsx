@@ -458,7 +458,7 @@ export function LiveCommerce() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={{ paddingTop: 'var(--trial-h, 0px)' }}>
-      <TopBar actions={<AppToggle />} />
+      <TopBar actions={<AppToggle moduleKey="live_commerce" />} />
       <div className="flex flex-1">
       <LiveSidebar
         activeTab={activeTab}
