@@ -1,3 +1,5 @@
+import PageTour from "@/components/tour/PageTour";
+import type { TourStep } from "@/hooks/usePageTour";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { LiveCommerceDatabaseService } from "@/services/LiveCommerceDatabaseService";
 import { MODULES } from "@/lib/modules";
@@ -28,6 +30,13 @@ import LiveAppearanceModal, {
   WidgetAoVivoSettings,
   LivePlayerSettings,
 } from "@/components/live/LiveAppearanceModal";
+
+const LIVES_TOUR: TourStep[] = [
+  { element: '[data-tour="live-nova"]', title: 'Nova Live', description: 'Programe uma live com o vídeo do YouTube e os produtos que serão apresentados.', side: 'bottom' },
+  { element: '[data-tour="live-aparencia"]', title: 'Aparência', description: 'Defina como o widget de divulgação, o selo "ao vivo" e o player aparecem na sua loja.', side: 'bottom' },
+  { element: '[data-tour="live-filtros"]', title: 'Busca e filtros', description: 'Encontre lives pelo título e filtre por programadas, ao vivo ou finalizadas.', side: 'bottom' },
+  { element: '[data-tour="live-lista"]', title: 'Suas lives', description: 'Cada live tem painel de controle (quando está ao vivo), métricas, divulgação, edição e exclusão.', side: 'top' },
+];
 
 interface Product {
   id: string;
@@ -250,6 +259,7 @@ function LiveCommerceContent() {
 
   return (
     <div className="space-y-6 p-6 max-w-6xl mx-auto">
+      <PageTour tourKey="live-lives" steps={LIVES_TOUR} />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-500">
@@ -264,11 +274,11 @@ function LiveCommerceContent() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setAppearanceOpen(true)} className="gap-2">
+          <Button data-tour="live-aparencia" variant="outline" onClick={() => setAppearanceOpen(true)} className="gap-2">
             <Palette className="h-4 w-4" />
             Aparência
           </Button>
-          <Button onClick={handleCreateNew} disabled={!allowsLive} className="gap-2 bg-rose-600 hover:bg-rose-700 text-white">
+          <Button data-tour="live-nova" onClick={handleCreateNew} disabled={!allowsLive} className="gap-2 bg-rose-600 hover:bg-rose-700 text-white">
             <Plus className="h-4 w-4" />
             Nova Live
           </Button>
@@ -292,7 +302,7 @@ function LiveCommerceContent() {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div data-tour="live-filtros" className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -325,7 +335,7 @@ function LiveCommerceContent() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div data-tour="live-lista" className="space-y-3">
           {filteredLives.map((live) => {
             const isLiveNow = Boolean(live.is_active && live.status === "live");
             return (

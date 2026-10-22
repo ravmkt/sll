@@ -1,3 +1,4 @@
+import { setModuleAppEnabled } from '@/services/moduleAppService';
 import PageTour from '@/components/tour/PageTour';
 import { visaoGeralTour } from '@/tours/visaoGeralVidlyticsTour';
 import React, { useState, useEffect } from 'react';
@@ -164,12 +165,8 @@ export default function VisaoGeralTab() {
     setAppEnabled(next);
     setAppSaving(true);
     setAppError(null);
-    const { data, error } = await supabase
-      .from('store_settings')
-      .update({ app_enabled: next, widget_enabled: next })
-      .eq('store_id', storeId)
-      .select('store_id');
-    if (error || !data || data.length === 0) {
+    const ok = await setModuleAppEnabled(storeId, 'vidlytics', next);
+    if (!ok) {
       setAppEnabled(!next);
       setAppError('Não foi possível salvar. Tente novamente.');
     }

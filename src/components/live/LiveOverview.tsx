@@ -1,3 +1,5 @@
+import PageTour from "@/components/tour/PageTour";
+import type { TourStep } from "@/hooks/usePageTour";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Lightbulb, Radio } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +12,12 @@ import {
   getMonthOccurrences,
   getUpcoming,
 } from "@/lib/commercialDates";
+
+const VISAO_TOUR: TourStep[] = [
+  { element: '[data-tour="live-calendar"]', title: 'Calendário de datas comerciais', description: 'Os dias em laranja são datas fortes de venda do seu setor. Navegue pelos meses para planejar suas lives.', side: 'bottom' },
+  { element: '[data-tour="live-proximas"]', title: 'Próximas datas', description: 'Veja o que vem por aí e até quando programar a live para dar tempo de divulgar.', side: 'left' },
+  { element: '[data-tour="live-datas-mes"]', title: 'Datas do mês', description: 'Clique em "Criar live para esta data" e a live já abre com o título preenchido.', side: 'top' },
+];
 
 const MONTHS = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const WEEKDAYS = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
@@ -81,13 +89,14 @@ export function LiveOverview({ onCreateLive }: LiveOverviewProps) {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <PageTour tourKey="live-visao-geral" steps={VISAO_TOUR} />
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900">Visão Geral</h1>
         <p className="text-sm text-slate-500">Datas comerciais do seu setor para planejar as próximas lives.</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card data-tour="live-calendar" className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="flex items-center gap-2 text-base">
               <CalendarDays className="h-5 w-5 text-[#0094eb]" />
@@ -133,7 +142,7 @@ export function LiveOverview({ onCreateLive }: LiveOverviewProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card data-tour="live-proximas">
           <CardHeader>
             <CardTitle className="text-base">Próximas datas</CardTitle>
           </CardHeader>
@@ -155,7 +164,7 @@ export function LiveOverview({ onCreateLive }: LiveOverviewProps) {
         </Card>
       </div>
 
-      <Card>
+      <Card data-tour="live-datas-mes">
         <CardHeader>
           <CardTitle className="text-base">Datas de {MONTHS[cursor.m]}</CardTitle>
         </CardHeader>

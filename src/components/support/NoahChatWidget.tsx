@@ -1,3 +1,4 @@
+import { getModuleAppEnabled } from '@/services/moduleAppService';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader2, MessageCircle, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react';
@@ -124,10 +125,8 @@ export default function NoahChatWidget() {
   useEffect(() => {
     if (!open || !storeId) return;
     let alive = true;
-    sb.rpc('get_store_settings_public', { p_store_id: storeId }).maybeSingle()
-      .then(({ data }: any) => {
-        if (alive && data) setAppStatus(data.app_enabled !== false && data.widget_enabled !== false);
-      });
+    getModuleAppEnabled(storeId, window.location.pathname.includes('live') ? 'live_commerce' : 'vidlytics')
+      .then((v) => { if (alive) setAppStatus(v); });
     return () => { alive = false; };
   }, [open, storeId]);
 

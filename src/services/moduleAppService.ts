@@ -19,6 +19,7 @@ export async function setModuleAppEnabled(storeId: string, moduleKey: AppModuleK
         : { app_enabled: false };
   const { data, error } = await sb.from('store_settings').update(patch).eq('store_id', storeId).select('store_id');
   if (error || !data || data.length === 0) return false;
+  window.dispatchEvent(new CustomEvent('sll:module-app-enabled', { detail: { module: moduleKey, enabled } }));
   if (moduleKey === 'vidlytics') {
     window.dispatchEvent(new CustomEvent('vidlytics:app-enabled', { detail: enabled }));
   }
