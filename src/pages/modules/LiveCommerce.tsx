@@ -1,3 +1,4 @@
+import ClearCacheButton from '@/components/layout/ClearCacheButton';
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { LiveCommerceDatabaseService } from "@/services/LiveCommerceDatabaseService";
 import { MODULES } from "@/lib/modules";
@@ -468,7 +469,7 @@ export function LiveCommerce() {
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         <header className="bg-white border-b border-slate-200/80 px-6 py-2.5 flex items-center justify-between sticky top-0 z-20">
           <StoreBrand />
-          <ModuleSwitcher />
+          <div className="flex items-center gap-2"><ClearCacheButton /><ModuleSwitcher /></div>
         </header>
 
         <div className="flex-1">

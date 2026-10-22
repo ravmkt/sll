@@ -1,3 +1,4 @@
+import ClearCacheButton from '@/components/layout/ClearCacheButton';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -63,7 +64,7 @@ export function TopBar({ actions }: { actions?: ReactNode; [k: string]: unknown 
       <div className="flex items-center gap-2">
         <MasterButton />
         {actions}
-        <ModuleSwitcher />
+        <div className="flex items-center gap-2"><ClearCacheButton /><ModuleSwitcher /></div>
 
         <div ref={ref} className="relative">
           <button
