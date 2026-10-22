@@ -45,12 +45,12 @@ export default function DashboardNotice({ storeId }: { storeId: string | null | 
     else navigate(item.cta_url);
   };
 
-  const img = <img src={item.image_url ?? ''} alt={item.title} className="block h-auto max-h-44 w-full object-cover object-center" />;
+  const img = <img src={item.image_url ?? ''} alt={item.title} className="block h-auto w-full object-cover object-center lg:h-full" />;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl shadow-sm">
+    <div className="relative overflow-hidden rounded-2xl shadow-sm lg:h-full">
       {item.cta_url ? (
-        <button type="button" onClick={go} aria-label={item.title} className="block w-full cursor-pointer">
+        <button type="button" onClick={go} aria-label={item.title} className="block w-full cursor-pointer lg:h-full">
           {img}
         </button>
       ) : (

@@ -48,9 +48,9 @@ export default function PortalHeader() {
 
   return (
     <div className="relative 2xl:static flex flex-col gap-4 lg:flex-row">
-      <div className="min-w-0 flex-1 space-y-4">
-      <DashboardNotice storeId={storeId} />
-      <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-sm">
+      <div className="min-w-0 flex-1">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
+      <div className="flex min-w-0 flex-1 items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-sm">
         {logo && !imgFailed ? (
           <img src={logo} alt={storeName} className="h-14 w-14 shrink-0 rounded-2xl border border-slate-200 bg-white object-contain p-1" onError={() => setImgFailed(true)} />
         ) : (
@@ -62,6 +62,10 @@ export default function PortalHeader() {
           <h1 className="truncate text-xl font-black text-slate-900">Bem-vindo(a), {greetName}</h1>
           <p className="text-sm text-slate-500">Painel de controle e inteligência da sua operação online.</p>
         </div>
+      </div>
+      <div className="empty:hidden lg:w-[calc(50%-0.5rem)] lg:shrink-0">
+        <DashboardNotice storeId={storeId} />
+      </div>
       </div>
       </div>
       <div className="flex flex-col lg:w-52 lg:shrink-0 2xl:absolute 2xl:right-6 2xl:top-8 2xl:w-52">

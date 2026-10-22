@@ -3,7 +3,7 @@ import { ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export const IMG_SPEC = {
-  banner: { w: 1200, h: 150, label: 'Banner' },
+  banner: { w: 1200, h: 180, label: 'Banner' },
   popup: { w: 900, h: 600, label: 'Popup' },
 } as const;
 
