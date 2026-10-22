@@ -437,7 +437,7 @@ export default function Dashboard() {
                 {[...list, ...Array.from({ length: Math.max(0, 3 - list.length) }, () => null)].map((m, i) => {
                   if (!m) {
                     return (
-                      <div key={`soon-${i}`} className="hidden h-full min-h-[240px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-6 text-center md:flex">
+                      <div key={`soon-${i}`} className="hidden h-full min-h-[180px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-6 text-center md:flex">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-slate-400 ring-1 ring-slate-200">
                           <Package className="h-6 w-6" />
                         </div>
@@ -456,8 +456,8 @@ export default function Dashboard() {
                   const used = !owned && !soon && !maint && (data.trialUsed ?? []).includes(m.slug);
 
                   return (
-                    <div key={m.slug} className={`${CARD} flex h-full flex-col justify-between gap-4 p-4`}>
-                      <div className="relative flex flex-col items-center gap-3 pt-8">
+                    <div key={m.slug} className={`${CARD} flex h-full flex-col justify-between gap-2 p-3`}>
+                      <div className="relative flex flex-col items-center gap-1 pt-1">
                         <div className="absolute right-0 top-0">
                           {maint ? (
                             <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">{'\u2022'} Em manutenção</span>
@@ -476,7 +476,7 @@ export default function Dashboard() {
                           )}
                         </div>
                         {m.logo_url ? (
-                          <img src={m.logo_url} alt={m.name} className="h-24 w-auto max-w-[85%] object-contain object-center" />
+                          <img src={m.logo_url} alt={m.name} className="h-20 w-auto max-w-[80%] object-contain object-center" />
                         ) : (
                           <div className="flex flex-col items-center gap-2">
                             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
