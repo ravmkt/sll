@@ -1,4 +1,5 @@
 import StoreDetailPage from '@/components/admin/StoreDetailPage';
+import SandboxStoreSelect from '@/components/master/SandboxStoreSelect';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowDown, ArrowUp, ArrowUpDown, Eye, KeyRound, Loader2, Mail, MessageCircle, MoreVertical, Pencil, Power, Search, Star, Trash2 } from 'lucide-react';
@@ -342,6 +343,7 @@ function LojasList() {
             className="w-full rounded-xl border border-white/10 bg-[#111524] py-2 pl-9 pr-3 text-[13px] text-white outline-none focus:border-[#fd8539]"
           />
         </div>
+        <SandboxStoreSelect compact />
         <select value={mod} onChange={(e) => setMod(e.target.value)} className="cursor-pointer rounded-xl border border-white/10 bg-[#111524] px-3 py-2 text-[13px] text-white outline-none">
           <option value="all">Todos os módulos</option>
           {modules.map((m) => <option key={m} value={m}>{modNames[m] || modLabel(m)} ({modCounts[m]})</option>)}

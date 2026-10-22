@@ -10,7 +10,6 @@ import ComboSection from '@/components/admin/ComboSection';
 import ComboDiscountCard from '@/components/admin/ComboDiscountCard';
 import RevenueSection from '@/components/admin/RevenueSection';
 import ItemCard, { BTN } from '@/components/admin/ItemCard';
-import SandboxStoreSelect from '@/components/master/SandboxStoreSelect';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import { SELECT } from '@/components/admin/moduleUi';
 
@@ -148,7 +147,6 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
           <p className="text-[13px] text-slate-500">Arraste os cards para mudar a ordem da vitrine; módulos ativos ficam sempre na frente.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <SandboxStoreSelect compact />
           <ComboDiscountCard compact />
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
