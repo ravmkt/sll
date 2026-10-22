@@ -1,8 +1,7 @@
 import React from 'react';
-import {
+import { Radio,
   LayoutDashboard,
   TrendingUp,
-  Film,
   Users,
   Palette,
   PanelLeftClose,
@@ -33,7 +32,7 @@ interface LiveSidebarProps {
 const MENU_ITEMS: { id: LiveTab; label: string; icon: React.ElementType }[] = [
   { id: 'visao-geral', label: 'Visão Geral', icon: LayoutDashboard },
   { id: 'resultados', label: 'Resultados & Métricas', icon: TrendingUp },
-  { id: 'lives', label: 'Lives', icon: Film },
+  { id: 'lives', label: 'Lives', icon: Radio },
   { id: 'audiencia', label: 'Audiência', icon: Users },
   { id: 'aparencia', label: 'Aparência', icon: Palette },
 ];
@@ -111,7 +110,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
           );
         })}
       </nav>
-      <SidebarTourSlot isExpanded={isExpanded} />
+      <div className="mt-auto"><SidebarTourSlot isExpanded={isExpanded} /></div>
 
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
         <button
