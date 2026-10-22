@@ -81,15 +81,26 @@ const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm transiti
 const DATE_IN = 'h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#0094eb]';
 
 
-function Metric({ label, value, hint, icon: Icon, onClick, badge }: {
-  label: string; value: string; hint: string; icon: ElementType; onClick?: () => void; badge?: ReactNode;
+function TipBubble({ text, right }: { text: string; right?: boolean }) {
+  return (
+    <span
+      role="tooltip"
+      className={`pointer-events-none absolute top-full z-30 mt-2 w-64 rounded-lg bg-[#0f172a] px-3 py-2 text-xs font-bold leading-snug text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 ${right ? 'right-4' : 'left-4'}`}
+    >
+      {text}
+    </span>
+  );
+}
+
+function Metric({ label, value, hint, icon: Icon, onClick, badge, tip, tipRight }: {
+  label: string; value: string; hint: string; icon: ElementType; onClick?: () => void; badge?: ReactNode; tip?: string; tipRight?: boolean;
 }) {
   return (
     <div
       {...(onClick
         ? { role: 'button', tabIndex: 0, onClick, onKeyDown: (e: KeyboardEvent) => { if (e.key === 'Enter') onClick(); } }
         : {})}
-      className={`${CARD} flex h-full min-h-[148px] flex-col justify-between p-4 ${onClick ? 'cursor-pointer hover:border-[#0094eb]/40' : ''}`}
+      className={`${CARD} group relative flex h-full min-h-[148px] flex-col justify-between p-4 ${onClick ? 'cursor-pointer hover:border-[#0094eb]/40' : ''}`}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
@@ -102,6 +113,7 @@ function Metric({ label, value, hint, icon: Icon, onClick, badge }: {
         <p className="mt-0.5 text-sm text-slate-700">{hint}</p>
       </div>
       <div className="min-h-[20px]">{badge}</div>
+      {tip && <TipBubble text={tip} right={tipRight} />}
     </div>
   );
 }
@@ -373,9 +385,10 @@ export default function Dashboard() {
           </div>
 
           <div className={`grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-5 ${loading ? 'opacity-60' : ''}`}>
-            <div className={`${CARD} flex h-full min-h-[148px] flex-col justify-between p-4`}>
+            <div className={`${CARD} group relative flex h-full min-h-[148px] flex-col justify-between p-4`}>
               
               
+              <TipBubble text="Soma das vendas assistidas pelos seus vídeos com as comissões recebidas do Clube SLL no período escolhido." />
               <div className="relative flex items-start justify-between gap-2">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Impacto financeiro</p>
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
@@ -391,10 +404,10 @@ export default function Dashboard() {
               </span>
             </div>
 
-            <Metric label="Catálogo ativo" value={int(data.products)} hint="SKUs sincronizados" icon={Package} onClick={() => navigate(PRODUCTS_ROUTE)} />
-            <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Visualizações" value={hasVid ? int(data.viewsRange) : '0'} hint={hasVid ? 'Vídeos no período' : 'Ative o Vidlytics'} icon={Eye} /></div>
-            <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Cliques & interações" value={hasVid ? int(data.clicksRange) : '0'} hint={hasVid ? 'Comprar e WhatsApp' : 'Ative o Vidlytics'} icon={MousePointerClick} /></div>
-            <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Taxa de conversão (CTR)" value={hasVid ? pct(data.ctrRange) : '0%'} hint={hasVid ? 'Cliques ÷ visualizações' : 'Ative o Vidlytics'} icon={Activity} /></div>
+            <Metric label="Catálogo ativo" value={int(data.products)} hint="SKUs sincronizados" icon={Package} onClick={() => navigate(PRODUCTS_ROUTE)} tip="Produtos sincronizados com o SLL Hub e prontos para serem vinculados aos seus vídeos." />
+            <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Visualizações" value={hasVid ? int(data.viewsRange) : '0'} hint={hasVid ? 'Vídeos no período' : 'Ative o Vidlytics'} icon={Eye} tip="Quantas vezes os seus vídeos foram vistos no período escolhido." /></div>
+            <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Cliques & interações" value={hasVid ? int(data.clicksRange) : '0'} hint={hasVid ? 'Comprar e WhatsApp' : 'Ative o Vidlytics'} icon={MousePointerClick} tip="Cliques nos botões de compra e no WhatsApp feitos a partir dos seus vídeos." /></div>
+            <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Taxa de conversão (CTR)" value={hasVid ? pct(data.ctrRange) : '0%'} hint={hasVid ? 'Cliques ÷ visualizações' : 'Ative o Vidlytics'} icon={Activity} tipRight tip="Percentual das visualizações que viraram clique: cliques ÷ visualizações." /></div>
           </div>
           <div className="flex justify-end">
             <button

@@ -7,7 +7,7 @@ type Props = { tourKey: string; steps: TourStep[]; inline?: boolean };
 
 export default function PageTour({ tourKey, steps, inline = false }: Props) {
   const { start } = usePageTour(tourKey, steps);
-  const [hosted, setHosted] = useState(false);
+  const [hosted, setHosted] = useState<boolean>(() => !!(window as any).__sllTourHost);
 
   useEffect(() => {
     if (inline) return;

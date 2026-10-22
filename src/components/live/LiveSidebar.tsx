@@ -13,6 +13,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type LiveTab =
@@ -99,7 +100,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
         </button>
       </div>
 
-      <nav className="flex-1 px-4 py-4 overflow-y-auto [&::-webkit-scrollbar]:hidden">
+      <nav className="min-h-0 px-4 py-4 overflow-y-auto [&::-webkit-scrollbar]:hidden">
         {MENU_GROUPS.map((group, gi) => (
           <div key={group.title} className={gi > 0 ? 'mt-5' : ''}>
             {isExpanded ? (
@@ -136,6 +137,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
           </div>
         ))}
       </nav>
+      <SidebarTourSlot isExpanded={isExpanded} />
 
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
         <button

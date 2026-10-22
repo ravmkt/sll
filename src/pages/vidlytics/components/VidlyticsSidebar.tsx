@@ -12,6 +12,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 import { useAuth } from '../../../contexts/AuthContext';
 
 export type VidlyticsTab = 'visao-geral' | 'resultados' | 'stories' | 'biblioteca' | 'comentarios' | 'aparencia';
@@ -93,7 +94,7 @@ export function VidlyticsSidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden">
+      <nav className="min-h-0 px-4 py-6 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden">
         {isExpanded && (
           <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
             Vidlytics
@@ -124,6 +125,7 @@ export function VidlyticsSidebar({
           );
         })}
       </nav>
+      <SidebarTourSlot isExpanded={isExpanded} />
 
       {/* Footer */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
