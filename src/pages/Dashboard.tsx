@@ -474,7 +474,7 @@ export default function Dashboard() {
                                 <p className="mt-2 text-xl font-black text-slate-900">
                                   {trial === 1 ? 'Falta 1 dia' : `Faltam ${trial} dias`}
                                 </p>
-                                <p className="text-xs font-semibold text-slate-600">E agora? Assine para não perder o acesso.</p>
+                                <p className="text-xs font-semibold text-slate-600">Assine para não perder o acesso.</p>
                                 <button type="button" onClick={() => navigate(`/dashboard/planos?modulo=${m.slug}`)} className="mt-3 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white hover:bg-[#e07128]">
                                   Assine agora <ArrowRight className="h-3.5 w-3.5" />
                                 </button>

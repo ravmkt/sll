@@ -15,14 +15,16 @@ export default function ModuleTrialButton({ slug, route }: { slug: string; route
   useEffect(() => {
     if (!storeId) return;
     let alive = true;
-    (supabase as any)
-      .from('trial_registry')
-      .select('*')
-      .eq('store_id', storeId)
-      .then(({ data, error }: { data: any[] | null; error: unknown }) => {
-        if (!alive || error || !data) return;
-        if (data.some((r) => Object.values(r).includes(slug))) setUsed(true);
-      });
+    const db = supabase as any;
+    Promise.all([
+      db.from('trial_registry').select('*').eq('store_id', storeId),
+      db.from('subscriptions').select('module_key').eq('store_id', storeId).eq('module_key', slug),
+    ]).then(([reg, subs]: any[]) => {
+      if (!alive) return;
+      const inReg = (reg?.data ?? []).some((r: any) => Object.values(r).includes(slug));
+      const inSubs = (subs?.data ?? []).length > 0;
+      if (inReg || inSubs) setUsed(true);
+    });
     return () => { alive = false; };
   }, [storeId, slug]);
 
@@ -54,9 +56,10 @@ export default function ModuleTrialButton({ slug, route }: { slug: string; route
   if (used) {
     return (
       <div className="flex flex-col gap-2">
-        <p className="text-center text-[11px] font-semibold text-slate-500">
-          {msg ?? TRIAL_DENIED_TEXT.trial_used}
-        </p>
+        <div className="rounded-2xl border border-[#0094eb]/30 bg-gradient-to-b from-sky-50 to-white p-4 text-center">
+          <p className="text-sm font-black text-slate-900">Volte a usar e impulsione suas vendas!</p>
+          <p className="mt-1 text-xs font-semibold text-slate-600">Seu teste grátis já foi utilizado. Assine para ter este módulo de volta na sua loja.</p>
+        </div>
         <button
           type="button"
           onClick={goPlans}
