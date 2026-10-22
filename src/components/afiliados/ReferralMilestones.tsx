@@ -16,7 +16,7 @@ export function ReferralMilestones({ count }: { count: number }) {
   const pct = next ? Math.min(100, Math.round(((count - base) / (next.n - base)) * 100)) : 100;
 
   return (
-    <div className={`${CARD} p-5 space-y-4`}>
+    <div className={`${CARD} p-5 space-y-4 h-full flex flex-col justify-between`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className={ICON_BOX}>

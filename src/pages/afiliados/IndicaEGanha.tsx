@@ -179,9 +179,9 @@ const IndicaEGanha: React.FC = () => {
     <DashboardLayout>
       <div className="p-6 space-y-5">
         {/* Hero */}
-        <div className="rounded-3xl bg-gradient-to-br from-[#0094eb] via-[#0073c7] to-[#003f8f] p-5 md:p-6 text-white shadow-lg relative overflow-hidden">
-          <div className="absolute -right-10 -top-16 w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(253,133,57,0.45),transparent_70%)]" />
-          <div className="absolute -left-16 -bottom-20 w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.3),transparent_70%)]" />
+        <div className="rounded-3xl bg-gradient-to-br from-[#0B132B] via-[#111d3f] to-[#1C2541] p-5 md:p-6 text-white shadow-lg relative overflow-hidden">
+          <div className="absolute -right-10 -top-16 w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(253,133,57,0.28),transparent_70%)]" />
+          <div className="absolute -left-16 -bottom-20 w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(0,148,235,0.22),transparent_70%)]" />
           <div className="relative flex flex-col md:flex-row items-center gap-5 md:gap-8">
             <div className="shrink-0 rounded-2xl bg-white p-2 shadow-md">
               <img src="/clube-sll-logo.png" alt="Clube SLL" className="h-24 md:h-28 w-auto object-contain" />
@@ -312,7 +312,7 @@ const IndicaEGanha: React.FC = () => {
 
         <ReferralEarningsChart storeId={storeId} />
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-stretch">
           <ReferralSimulator />
           <ReferralMilestones count={referredCount} />
         </div>

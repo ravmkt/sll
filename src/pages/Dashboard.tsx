@@ -5,7 +5,7 @@ import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Activity, ArrowRight, TrendingDown, TrendingUp, Check, Clock, Copy, DollarSign, Eye, Gift,
-  MousePointerClick, Package, Play, Radio, Shirt, Lock, MessageCircle,
+  MousePointerClick, Package, Play, Radio, Shirt, MessageCircle,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
@@ -243,7 +243,7 @@ export default function Dashboard() {
   const visibleMods = sortModules(data.modules.filter((m) => m.status !== 'hidden'), data.owned);
   const showcaseMods = visibleMods.filter((m) => !data.owned.includes(m.slug));
   const apps = visibleMods.filter((m) => data.owned.includes(m.slug) && m.status !== 'maintenance' && (m.route_path || ROUTES[m.slug]));
-  const modCols = showcaseMods.length <= 1 ? 'md:grid-cols-1' : showcaseMods.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
+  const modCols = 'md:grid-cols-2 lg:grid-cols-3';
 
   const copy = () => {
     if (!referralLink) return;
@@ -338,8 +338,8 @@ export default function Dashboard() {
         </div>
 
         {apps.length > 0 && (
-          <Section title="Meus aplicativos">
-            <div className="flex flex-wrap gap-3">
+          <Section title="Meus módulos">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {apps.map((m) => {
                 const AppIcon = ICONS[m.slug] ?? Package;
                 const appRoute = (m.route_path || ROUTES[m.slug]) as string;
@@ -349,19 +349,24 @@ export default function Dashboard() {
                     key={m.slug}
                     type="button"
                     onClick={() => navigate(appRoute)}
-                    className={`${CARD} group flex min-w-[260px] flex-1 cursor-pointer items-center gap-3 px-4 py-3 text-left hover:border-[#0094eb]/40 sm:flex-none`}
+                    className={`${CARD} group flex cursor-pointer flex-col items-center gap-3 p-4 text-center transition-all hover:-translate-y-0.5 hover:border-[#0094eb]/40 hover:shadow-md`}
                   >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
-                      <AppIcon className="h-5 w-5" />
+                    <div className="flex h-16 w-full items-center justify-center">
+                      {m.logo_url ? (
+                        <img src={m.logo_url} alt={m.name} className="max-h-16 w-auto max-w-full object-contain" />
+                      ) : (
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0094eb]/10 text-[#0094eb] ring-1 ring-[#0094eb]/15">
+                          <AppIcon className="h-7 w-7" />
+                        </div>
+                      )}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-black text-slate-900">{m.name}</p>
-                      <p className="text-xs font-semibold text-emerald-600">
-                        {appTrial ? `Em teste: ${appTrial} ${appTrial === 1 ? 'dia' : 'dias'}` : '\u25CF Ativo'}
-                      </p>
-                    </div>
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-bold text-white group-hover:bg-[#007fcc]">
-                      Abrir <ArrowRight className="h-3 w-3" />
+                    {!m.logo_url && <p className="truncate text-sm font-black text-slate-900">{m.name}</p>}
+                    <span
+                      className={`mt-auto rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                        appTrial ? 'bg-orange-50 text-[#fd8539]' : 'bg-emerald-50 text-emerald-700'
+                      }`}
+                    >
+                      {appTrial ? `Em teste: ${appTrial} ${appTrial === 1 ? 'dia' : 'dias'}` : '\u25CF Ativo'}
                     </span>
                   </button>
                 );
@@ -444,11 +449,11 @@ export default function Dashboard() {
         <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
         {/* Modulos vindos do Master */}
         <div id="meus-modulos" data-tour="modules" className="scroll-mt-24">
-          <Section title="Módulos disponíveis para assinar">
+          <Section title="Conheça outros módulos e impulsione suas vendas">
             {showcaseMods.length === 0 && !loading && (
               <p className="text-sm text-slate-500">Você já usa todos os módulos disponíveis.</p>
             )}
-            <div className={`-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 md:mx-0 md:grid ${modCols} md:overflow-visible md:px-0 md:pb-0`}>
+            <div className={`-mx-1 flex snap-x snap-mandatory gap-6 overflow-x-auto px-1 pb-2 md:mx-0 md:grid ${modCols} md:overflow-visible md:px-0 md:pb-0`}>
               {showcaseMods.map((m) => {
                 const owned = data.owned.includes(m.slug);
                 if (m.status === 'hidden') return null;
@@ -617,17 +622,11 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="flex flex-col gap-2 sm:flex-row">
-                <div className="relative min-w-0 flex-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs">
-                  <span aria-hidden="true" className="block select-none truncate text-slate-400 blur-sm">https://sllhub.exemplo/?ref=XXXXXXXX</span>
-                  <span className="absolute inset-0 flex items-center gap-1.5 px-3 font-semibold text-slate-700">
-                    <Lock className="h-3.5 w-3.5 shrink-0" /> Aceite as regras para liberar seu link
-                  </span>
-                </div>
                 <button
                   type="button"
                   disabled={termsAccepted === null}
                   onClick={() => setTermsOpen(true)}
-                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#e07128] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#e07128] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Ativar meu link de indicação
                 </button>

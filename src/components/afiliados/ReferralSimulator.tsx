@@ -80,7 +80,7 @@ export function ReferralSimulator() {
   const monthly = plan ? count * plan.price * REF_RATE : 0;
 
   return (
-    <div className={`${CARD} p-5 space-y-4`}>
+    <div className={`${CARD} p-5 space-y-4 h-full flex flex-col justify-between`}>
       <div className="flex items-center gap-3">
         <div className={ICON_BOX}>
           <Calculator className="w-4 h-4" />

@@ -117,11 +117,11 @@ export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 
                 href={SUBSCRIBE_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#0094eb] to-[#0073c7] p-4 text-center text-white shadow-sm transition-transform hover:scale-[1.02]"
+                className="flex h-[135px] w-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-xl bg-gradient-to-br from-red-600 to-red-800 p-3 text-center text-white shadow-sm transition-transform hover:scale-[1.02]"
               >
-                <YoutubeMark className="h-9 w-9" />
+                <YoutubeMark className="h-7 w-7" />
                 <span className="text-sm font-black leading-tight">Quer ver mais?</span>
-                <span className="text-[11px] font-medium leading-snug text-white/90">
+                <span className="line-clamp-3 text-[11px] font-medium leading-snug text-white/90">
                   {hub ? 'Veja mais vídeos e dicas para impulsionar o seu e-commerce no nosso canal do YouTube.' : 'Veja todos os vídeos do Vidlytics no nosso canal do YouTube.'}
                 </span>
               </a>

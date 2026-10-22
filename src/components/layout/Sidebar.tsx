@@ -1,23 +1,23 @@
-import { useEffect, useState } from 'react';
+
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Lightbulb, Crown, Plug,
-  CreditCard, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Gift, Clock, MessageSquarePlus } from 'lucide-react';
+  CreditCard, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Gift, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
-import { supabase } from '@/lib/supabase';
+
 
 interface SidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
 }
 
-type PlanState = { kind: 'trial'; days: number } | { kind: 'expired' } | null;
+
 type Item = { name: string; icon: ElementType; path: string; exact?: boolean };
 type Group = { title: string; items: Item[]; bottom?: boolean };
 
-const sb: any = supabase;
+
 
 const GROUPS: Group[] = [
   {
@@ -54,33 +54,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const isExpanded = !isCollapsed;
   const ctx: any = useLoja();
   const storeId: string | null = ctx?.loja?.id ?? ctx?.store?.id ?? ctx?.storeId ?? ctx?.lojaId ?? null;
-  const [plan, setPlan] = useState<PlanState>(null);
 
-  useEffect(() => {
-    if (!storeId) { setPlan(null); return; }
-    let alive = true;
-    (async () => {
-      const { data, error } = await sb
-        .from('subscriptions')
-        .select('status, current_period_end, is_current')
-        .eq('store_id', storeId)
-        .eq('is_current', true);
-      if (!alive || error || !data) return;
-      const rows = data as any[];
-      if (rows.some((s) => s.status === 'active')) { setPlan(null); return; }
-      const trials = rows.filter((s) => s.status === 'trialing' && s.current_period_end);
-      const now = Date.now();
-      const live = trials.map((s) => new Date(s.current_period_end).getTime()).filter((t) => t > now);
-      if (live.length) {
-        setPlan({ kind: 'trial', days: Math.max(1, Math.ceil((Math.min(...live) - now) / 86400000)) });
-      } else if (trials.length) {
-        setPlan({ kind: 'expired' });
-      } else {
-        setPlan(null);
-      }
-    })();
-    return () => { alive = false; };
-  }, [storeId]);
 
   const isActive = (it: Item) =>
     it.exact
@@ -177,27 +151,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                   Conhecer
                 </Link>
               </div>
-
-              {plan && (
-                <div className={`rounded-xl border p-3 ${plan.kind === 'trial' ? 'border-[#0094eb]/30 bg-[#0094eb]/5' : 'border-red-200 bg-red-50'}`}>
-                  <div className={`flex items-center gap-2 ${plan.kind === 'trial' ? 'text-[#0094eb]' : 'text-red-600'}`}>
-                    <Clock size={16} className="shrink-0" />
-                    <p className="text-xs font-bold">
-                      {plan.kind === 'trial'
-                        ? `Período de teste: ${plan.days} ${plan.days === 1 ? 'dia restante' : 'dias restantes'}`
-                        : 'Teste encerrado'}
-                    </p>
-                  </div>
-                  <Link
-                    to="/dashboard/planos"
-                    className={`mt-2 block rounded-lg py-1.5 text-center text-xs font-bold text-white ${
-                      plan.kind === 'trial' ? 'bg-[#0094eb] hover:bg-[#007bc4]' : 'bg-red-600 hover:bg-red-700'
-                    }`}
-                  >
-                    Assinar agora
-                  </Link>
-                </div>
-              )}
             </>
           ) : (
             <>
@@ -208,17 +161,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               >
                 <Gift size={18} />
               </Link>
-              {plan && (
-                <Link
-                  to="/dashboard/planos"
-                  title={plan.kind === 'trial' ? `Teste: ${plan.days} dia(s) restante(s)` : 'Teste encerrado'}
-                  className={`flex items-center justify-center rounded-lg p-2 ${
-                    plan.kind === 'trial' ? 'bg-[#0094eb]/10 text-[#0094eb]' : 'bg-red-50 text-red-600'
-                  }`}
-                >
-                  <Clock size={18} />
-                </Link>
-              )}
             </>
           )
         )}
