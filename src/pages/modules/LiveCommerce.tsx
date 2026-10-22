@@ -362,12 +362,12 @@ function LiveCommerceContent() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {isLiveNow && (
+                    {live.status !== "finished" && (
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenAdminPanel(live.id)}
-                        title="Administrar Live (Painel de Controle)"
+                        title="Cockpit da Live"
                         className="text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300"
                       >
                         <MonitorPlay className="h-4 w-4" />
