@@ -83,9 +83,9 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   };
 
   const renderGroup = (g: Group, idx: number) => (
-    <div key={g.title} className={`${idx > 0 ? 'mt-5' : ''} ${g.bottom ? 'mt-auto pt-5' : ''}`}>
+    <div key={g.title} className={idx > 0 ? 'mt-5' : ''}>
       {isExpanded ? (
-        <p className="px-4 mb-1.5 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">{g.title}</p>
+        <p className="px-4 mb-1.5 text-[11px] font-semibold tracking-wider text-slate-900 dark:text-white uppercase">{g.title}</p>
       ) : (
         idx > 0 && <div className="mx-3 mb-2 border-t border-slate-200 dark:border-slate-800" />
       )}

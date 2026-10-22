@@ -326,7 +326,7 @@ export default function Dashboard() {
             <Metric label="Cliques & interações" value={hasVid ? int(data.clicksRange) : '—'} hint={hasVid ? 'Comprar e WhatsApp' : 'Ative o Vidlytics'} icon={MousePointerClick} />
             <Metric label="Taxa de conversão (CTR)" value={hasVid ? pct(data.ctrRange) : '—'} hint={hasVid ? 'Cliques ÷ visualizações' : 'Ative o Vidlytics'} icon={Activity} />
           </div>
-          <div className="flex justify-end">
+          <div className="-mb-7 flex justify-end">
             <button
               type="button"
               onClick={() => navigate(METRICS_ROUTE)}
@@ -338,7 +338,8 @@ export default function Dashboard() {
         </div>
 
         {apps.length > 0 && (
-          <Section title="Meus módulos">
+          <div className="space-y-3">
+<h2 className="text-lg font-black text-slate-900">Meus módulos</h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {apps.map((m) => {
                 const AppIcon = ICONS[m.slug] ?? Package;
@@ -372,7 +373,7 @@ export default function Dashboard() {
                 );
               })}
             </div>
-          </Section>
+          </div>
         )}
 
         {/* Pulso de hoje + dica */}
@@ -449,7 +450,8 @@ export default function Dashboard() {
         <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
         {/* Modulos vindos do Master */}
         <div id="meus-modulos" data-tour="modules" className="scroll-mt-24">
-          <Section title="Conheça outros módulos e impulsione suas vendas">
+          <div className="space-y-3">
+<h2 className="text-lg font-black text-slate-900">Conheça outros módulos e impulsione suas vendas</h2>
             {showcaseMods.length === 0 && !loading && (
               <p className="text-sm text-slate-500">Você já usa todos os módulos disponíveis.</p>
             )}
@@ -566,7 +568,7 @@ export default function Dashboard() {
                 );
               })}
             </div>
-          </Section>
+          </div>
         </div>
 
         {/* Clube + Academy */}
@@ -656,3 +658,5 @@ export default function Dashboard() {
     </DashboardLayout>
   );
 }
+
+void Section;
