@@ -95,9 +95,10 @@ function Metric({ label, value, hint, icon: Icon, onClick, badge }: {
   );
 }
 
-function Mini({ label, value }: { label: string; value: string }) {
+function Mini({ label, value, icon: Icon }: { label: string; value: string; icon: ElementType }) {
   return (
-    <div className="rounded-xl bg-slate-50 px-3 py-3 text-center">
+    <div className="flex h-full flex-col items-center justify-center gap-1.5 rounded-xl bg-sky-50/70 px-3 py-3 text-center ring-1 ring-[#0094eb]/10">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#0094eb] shadow-sm"><Icon className="h-4 w-4" /></div>
       <p className="text-sm font-semibold leading-tight text-slate-700">{label}</p>
       <p className="mt-1 text-lg font-black text-slate-900">{value}</p>
     </div>
@@ -315,7 +316,7 @@ export default function Dashboard() {
         <div data-tour="kpis" className="mb-0 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-black text-slate-900">Resultados da sua loja</h2>
+              <h2 className="text-xl font-bold leading-tight text-slate-900">Resultados da sua loja</h2>
               <p className="text-sm text-slate-700">O que o SLL Hub gerou no período escolhido.</p>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -384,7 +385,7 @@ export default function Dashboard() {
         <div id="meus-modulos" data-tour="modules" className="scroll-mt-24 space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-[1.375rem] font-medium leading-tight text-slate-900">Mais possibilidades para a sua loja</h2>
+              <h2 className="text-xl font-bold leading-tight text-slate-900">Mais possibilidades para a sua loja</h2>
               <p className="text-sm text-slate-500">Use o que já está ativo. Experimente ou contrate o próximo módulo no seu ritmo.</p>
             </div>
             <button
@@ -414,7 +415,18 @@ export default function Dashboard() {
 
             return (
               <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-3">
-                {list.map((m) => {
+                {[...list, ...Array.from({ length: Math.max(0, 3 - list.length) }, () => null)].map((m, i) => {
+                  if (!m) {
+                    return (
+                      <div key={`soon-${i}`} className="hidden h-full min-h-[320px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-6 text-center md:flex">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-slate-400 ring-1 ring-slate-200">
+                          <Package className="h-6 w-6" />
+                        </div>
+                        <p className="text-sm font-bold text-slate-700">Em breve</p>
+                        <p className="text-xs font-medium text-slate-500">Novos módulos para sua operação.</p>
+                      </div>
+                    );
+                  }
                   const owned = ownedSet.has(m.slug);
                   const maint = m.status === 'maintenance';
                   const soon = m.status === 'coming_soon' && !owned;
@@ -430,27 +442,27 @@ export default function Dashboard() {
                         <ModulePreview slug={m.slug} />
                         <div className="flex items-center justify-between gap-3">
                           {m.logo_url ? (
-                            <img src={m.logo_url} alt={m.name} className="h-10 w-auto max-w-[60%] object-contain object-left" />
+                            <img src={m.logo_url} alt={m.name} className="h-12 w-auto max-w-[65%] object-contain object-left" />
                           ) : (
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
-                              <Icon className="h-5 w-5 text-[#0094eb]" />
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
+                              <Icon className="h-6 w-6 text-[#0094eb]" />
                             </div>
                           )}
                           {maint ? (
-                            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-700">{'\u2022'} Em manutenção</span>
+                            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">{'\u2022'} Em manutenção</span>
                           ) : owned && trial ? (
-                            <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#0094eb]">
+                            <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-1 text-xs font-semibold text-[#0094eb]">
                               {'\u2022'} Em teste: {trial} {trial === 1 ? 'dia' : 'dias'}
                             </span>
                           ) : owned ? (
-                            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">{'\u2022'} Ativo</span>
+                            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{'\u2022'} Ativo</span>
                           ) : soon ? (
-                            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-500">{'\u2022'} Em breve</span>
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">{'\u2022'} Em breve</span>
                           ) : (
                             used ? (
-                            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-700">{'\u2022'} Teste encerrado</span>
+                            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">{'\u2022'} Teste encerrado</span>
                           ) : (
-                            <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#0094eb]">{'\u2022'} Teste grátis disponível</span>
+                            <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-1 text-xs font-semibold text-[#0094eb]">{'\u2022'} Teste grátis disponível</span>
                           )
                           )}
                         </div>
@@ -518,7 +530,7 @@ export default function Dashboard() {
         {/* Sua operacao, sem perder o ritmo */}
         <div className="space-y-4">
           <div>
-            <h2 className="text-[1.375rem] font-medium leading-tight text-slate-900">Sua operação, sem perder o ritmo</h2>
+            <h2 className="text-xl font-bold leading-tight text-slate-900">Sua operação, sem perder o ritmo</h2>
             <p className="text-sm text-slate-500">Acompanhe o dia da loja e volte rápido ao que importa.</p>
           </div>
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -534,10 +546,10 @@ export default function Dashboard() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Atividade de hoje</span>
               </div>
               {hasVid ? (
-                <div className="grid grid-cols-3 gap-2">
-                  <Mini label="Pessoas que interagiram" value={pulse ? int(pulse.interactions) : '\u2014'} />
-                  <Mini label="Cliques em comprar" value={pulse ? int(pulse.buyClicks) : '\u2014'} />
-                  <Mini label="Sessões com vídeo engajado" value={pulse ? int(pulse.engaged) : '\u2014'} />
+                <div className="grid flex-1 grid-cols-3 gap-2">
+                  <Mini icon={Activity} label="Pessoas que interagiram" value={pulse ? int(pulse.interactions) : '\u2014'} />
+                  <Mini icon={MousePointerClick} label="Cliques em comprar" value={pulse ? int(pulse.buyClicks) : '\u2014'} />
+                  <Mini icon={Play} label="Sessões com vídeo engajado" value={pulse ? int(pulse.engaged) : '\u2014'} />
                 </div>
               ) : noModule ? (
                 <button
@@ -603,8 +615,8 @@ export default function Dashboard() {
         <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
         {/* Clube + Academy */}
         <div className="mb-4">
-          <h2 className="text-[1.375rem] font-medium leading-tight text-slate-900">Para ir além, no seu tempo</h2>
-          <p className="text-sm text-slate-500">Cresça com indicações e aprenda com quem já vende.</p>
+          <h2 className="text-xl font-bold leading-tight text-slate-900">Para ir além, no seu tempo</h2>
+          <p className="text-sm text-slate-500">Indique lojistas, ganhe benefícios e domine estratégias práticas para o seu e-commerce.</p>
         </div>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <div data-tour="club" className={`${CARD} flex flex-col gap-4 p-5`}>
