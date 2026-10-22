@@ -1,3 +1,4 @@
+import { LiveTemplatesService } from "@/services/LiveTemplatesService";
 import React, { useState, useEffect, useMemo } from "react";
 import { LiveCommerceDatabaseService } from '@/services/LiveCommerceDatabaseService';
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,6 @@ import { toast } from "sonner";
 import { fetchYouTubeLiveDetails, extractYouTubeVideoId } from "@/services/youtube";
 import {
   INITIAL_TEMPLATES,
-  STORAGE_KEY_TEMPLATES,
   LiveAppearanceTemplate
 } from "@/components/live/LiveAppearanceModal";
 
@@ -116,20 +116,26 @@ export function LiveFormDialog({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("preset_padrao");
   const [availableTemplates, setAvailableTemplates] = useState<LiveAppearanceTemplate[]>(INITIAL_TEMPLATES);
 
-  // Carrega templates disponíveis (presets + customizados do localStorage)
+  // Carrega temas disponíveis (presets + personalizados da loja, no banco)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_TEMPLATES);
-      if (saved) {
-        const parsed: LiveAppearanceTemplate[] = JSON.parse(saved);
-        setAvailableTemplates([...INITIAL_TEMPLATES, ...parsed]);
-      } else {
-        setAvailableTemplates(INITIAL_TEMPLATES);
-      }
-    } catch {
+    if (!open || !storeId) {
       setAvailableTemplates(INITIAL_TEMPLATES);
+      return;
     }
-  }, [open]);
+    let cancelled = false;
+    (async () => {
+      try {
+        await LiveTemplatesService.migrateLegacy(storeId).catch(() => 0);
+        const customs = await LiveTemplatesService.list(storeId);
+        if (!cancelled) setAvailableTemplates([...INITIAL_TEMPLATES, ...customs]);
+      } catch {
+        if (!cancelled) setAvailableTemplates(INITIAL_TEMPLATES);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, storeId]);
 
   // Reseta formulário
   const resetForm = () => {

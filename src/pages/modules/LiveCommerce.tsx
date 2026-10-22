@@ -428,6 +428,7 @@ function LiveCommerceContent() {
         onSave={handleSaveAppearance}
         isSaving={savingAppearance}
         initialData={appearanceData}
+        storeId={storeId}
       />
 
       <LiveMetricsModal

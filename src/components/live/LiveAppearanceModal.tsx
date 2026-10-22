@@ -1,3 +1,4 @@
+import { LiveTemplatesService } from "@/services/LiveTemplatesService";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -102,6 +103,7 @@ interface Props {
     player: DeviceConfig<LivePlayerSettings>
   ) => void;
   isSaving: boolean;
+  storeId?: string | null;
   initialData?: {
     divulgacao: DeviceConfig<WidgetDivulgacaoSettings> | null;
     aoVivo: DeviceConfig<WidgetAoVivoSettings> | null;
@@ -521,7 +523,7 @@ const ElementSubItem = ({
   );
 };
 
-export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving, initialData }: Props) {
+export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving, initialData, storeId }: Props) {
   const [activeTab, setActiveTab] = useState<"divulgacao" | "aovivo" | "player">("divulgacao");
   const [device, setDevice] = useState<"desktop" | "mobile">("mobile");
   const [openAccordion, setOpenAccordion] = useState<string>("player_visibilidade");
@@ -574,16 +576,21 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
   }, [isOpen, initialData]);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_TEMPLATES);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setTemplates([...INITIAL_TEMPLATES, ...parsed]);
+    if (!isOpen || !storeId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await LiveTemplatesService.migrateLegacy(storeId).catch(() => 0);
+        const customs = await LiveTemplatesService.list(storeId);
+        if (!cancelled) setTemplates([...INITIAL_TEMPLATES, ...customs]);
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, storeId]);
 
   const notify = (msg: string) => {
     setBannerAlert(msg);
@@ -603,7 +610,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
   };
 
   // Salvar atualizações no template
-  const handleSaveCurrentTemplate = () => {
+  const handleSaveCurrentTemplate = async () => {
     const name = templateNameInput.trim();
     if (!name) {
       notify("Digite um nome para o tema antes de salvar!");
@@ -614,66 +621,69 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
 
     // Se for padrão de fábrica ou não existir, cria como um novo
     if (!currentTpl || currentTpl.isDefault) {
-      handleSaveAsNewTemplate();
+      await handleSaveAsNewTemplate();
       return;
     }
 
-    const updated = templates.map(t => {
-      if (t.id === selectedTemplateId) {
-        return {
-          ...t,
-          name: name,
-          divulgacao: JSON.parse(JSON.stringify(divulgacaoConfig)),
-          aoVivo: JSON.parse(JSON.stringify(aoVivoConfig)),
-          player: JSON.parse(JSON.stringify(playerConfig))
-        };
-      }
-      return t;
-    });
-
-    const customs = updated.filter(t => !t.isDefault);
-    localStorage.setItem(STORAGE_KEY_TEMPLATES, JSON.stringify(customs));
-    setTemplates(updated);
-    notify(`Template "${name}" atualizado com sucesso!`);
+    try {
+      const saved = await LiveTemplatesService.update(selectedTemplateId, {
+        name,
+        divulgacao: JSON.parse(JSON.stringify(divulgacaoConfig)),
+        aoVivo: JSON.parse(JSON.stringify(aoVivoConfig)),
+        player: JSON.parse(JSON.stringify(playerConfig)),
+      });
+      setTemplates(prev => prev.map(t => (t.id === saved.id ? saved : t)));
+      notify(`Template "${name}" atualizado com sucesso!`);
+    } catch (e) {
+      console.error(e);
+      notify("Não foi possível atualizar o tema. Tente novamente.");
+    }
   };
 
   // Salvar como novo template
-  const handleSaveAsNewTemplate = () => {
+  const handleSaveAsNewTemplate = async () => {
     const name = templateNameInput.trim();
     if (!name) {
       notify("Digite um nome para o novo tema antes de salvar!");
       return;
     }
+    if (!storeId) {
+      notify("Loja não identificada. Recarregue a página.");
+      return;
+    }
 
-    const newId = "custom_" + Date.now();
-    const newTemplate: LiveAppearanceTemplate = {
-      id: newId,
-      name: name,
-      isDefault: false,
-      divulgacao: JSON.parse(JSON.stringify(divulgacaoConfig)),
-      aoVivo: JSON.parse(JSON.stringify(aoVivoConfig)),
-      player: JSON.parse(JSON.stringify(playerConfig))
-    };
-
-    const customs = [...templates.filter(t => !t.isDefault), newTemplate];
-    localStorage.setItem(STORAGE_KEY_TEMPLATES, JSON.stringify(customs));
-    setTemplates([...INITIAL_TEMPLATES, ...customs]);
-    setSelectedTemplateId(newId);
-    notify(`Novo template "${name}" salvo!`);
+    try {
+      const created = await LiveTemplatesService.create(storeId, {
+        name,
+        divulgacao: JSON.parse(JSON.stringify(divulgacaoConfig)),
+        aoVivo: JSON.parse(JSON.stringify(aoVivoConfig)),
+        player: JSON.parse(JSON.stringify(playerConfig)),
+      });
+      setTemplates(prev => [...prev, created]);
+      setSelectedTemplateId(created.id);
+      notify(`Novo template "${name}" salvo!`);
+    } catch (e) {
+      console.error(e);
+      notify("Não foi possível salvar o tema. Tente novamente.");
+    }
   };
 
-  const handleDeleteCurrentTemplate = () => {
+  const handleDeleteCurrentTemplate = async () => {
     const current = templates.find(t => t.id === selectedTemplateId);
     if (!current || current.isDefault) return;
 
     if (!confirm(`Deseja realmente excluir o template "${current.name}"?`)) return;
 
-    const customs = templates.filter(t => !t.isDefault && t.id !== selectedTemplateId);
-    localStorage.setItem(STORAGE_KEY_TEMPLATES, JSON.stringify(customs));
-    setTemplates([...INITIAL_TEMPLATES, ...customs]);
-    setSelectedTemplateId("preset_padrao");
-    setTemplateNameInput("");
-    notify("Template excluído.");
+    try {
+      await LiveTemplatesService.remove(current.id);
+      setTemplates(prev => prev.filter(t => t.id !== current.id));
+      setSelectedTemplateId("preset_padrao");
+      setTemplateNameInput("");
+      notify("Template excluído.");
+    } catch (e) {
+      console.error(e);
+      notify("Não foi possível excluir o tema. Tente novamente.");
+    }
   };
 
   const handleSave = () => {
