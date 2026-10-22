@@ -22,6 +22,7 @@ import { AffiliateDatabaseService, type AffiliateSettings } from '@/services/Aff
 import { ClubeTermsModal } from '@/components/afiliados/ClubeTermsModal';
 import { TERMS_VERSION } from '@/components/afiliados/clubeTerms';
 import PageTour from '@/components/tour/PageTour';
+import CalendarioComercialHub from '@/components/dashboard/CalendarioComercialHub';
 import { DASHBOARD_TOUR } from '@/tours/dashboardTour';
 
 // dash-v11-noah-size
@@ -558,13 +559,13 @@ export default function Dashboard() {
             <h2 className="text-xl font-bold leading-tight text-slate-900">Sua operação, sem perder o ritmo</h2>
             <p className="text-sm text-slate-500">Acompanhe o dia da loja e volte rápido ao que importa.</p>
           </div>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-2">
             <div className={`${CARD} flex flex-col gap-3 p-5`}>
               <div>
                 <h3 className="text-base font-black text-slate-900">Continue de onde precisar</h3>
                 <p className="text-sm text-slate-500">Atalhos para o que você mais usa.</p>
               </div>
-              <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-3">
+              <div className="grid flex-1 grid-cols-1 gap-2 grid-cols-1">
                 {shortcuts.map((it) => (
                   <button
                     key={it.key}
@@ -585,6 +586,7 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
+            <CalendarioComercialHub />
           </div>
         </div>
         <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
