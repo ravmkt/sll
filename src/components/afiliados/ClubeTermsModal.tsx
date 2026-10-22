@@ -81,7 +81,7 @@ export function ClubeTermsModal({ open, storeId, settings, onClose, onAccepted }
               onChange={(e) => setChecked(e.target.checked)}
               className="mt-0.5 h-4 w-4 accent-[#0094eb]"
             />
-            <span>Li e aceito as regras do Clube SLL.</span>
+            <span>Li e concordo com os termos e regras do Clube SLL (Vers{'\u00e3'}o {TERMS_VERSION}).</span>
           </label>
           <div className="flex justify-end gap-2">
             <button type="button" disabled={busy} onClick={onClose} className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white">
@@ -93,7 +93,7 @@ export function ClubeTermsModal({ open, storeId, settings, onClose, onAccepted }
               onClick={accept}
               className="cursor-pointer rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#007fcc] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {busy ? 'Registrando...' : 'Aceitar e ativar meu link'}
+              {busy ? 'Registrando...' : 'Aceitar e Liberar Link'}
             </button>
           </div>
         </div>

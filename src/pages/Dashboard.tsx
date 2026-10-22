@@ -5,7 +5,7 @@ import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Activity, ArrowRight, TrendingDown, TrendingUp, Check, Clock, Copy, DollarSign, Eye, Gift,
-  MousePointerClick, Package, Play, Radio, Shirt,
+  MousePointerClick, Package, Play, Radio, Shirt, Lock, MessageCircle,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
@@ -18,6 +18,9 @@ import { joinWaitlist, useDashboardData, usePulse, type DashData } from '@/compo
 import { useLoja } from '@/contexts/LojaContext';
 import { sortModules } from '@/lib/moduleOrder';
 import { showError, showSuccess } from '@/utils/toast';
+import { AffiliateDatabaseService, type AffiliateSettings } from '@/services/AffiliateDatabaseService';
+import { ClubeTermsModal } from '@/components/afiliados/ClubeTermsModal';
+import { TERMS_VERSION } from '@/components/afiliados/clubeTerms';
 import PageTour from '@/components/tour/PageTour';
 import { DASHBOARD_TOUR } from '@/tours/dashboardTour';
 
@@ -157,6 +160,24 @@ export default function Dashboard() {
   const [joined, setJoined] = useState<Set<string>>(new Set());
   const [busySlug, setBusySlug] = useState<string | null>(null);
 
+  // Aceite das regras do Clube (null = carregando)
+  const [termsAccepted, setTermsAccepted] = useState<boolean | null>(null);
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [clubSettings, setClubSettings] = useState<AffiliateSettings>({
+    grace_days: 7, payout_day: 10, min_withdrawal: 50, commission_rate: 10, recurring_months: 0, first_payment_bonus: 0,
+  });
+  useEffect(() => {
+    if (!storeId) return;
+    let alive = true;
+    Promise.all([
+      AffiliateDatabaseService.getSettings(),
+      AffiliateDatabaseService.getTermsAcceptance(storeId, TERMS_VERSION),
+    ])
+      .then(([s, a]) => { if (!alive) return; setClubSettings(s); setTermsAccepted(!!a); })
+      .catch(() => { if (alive) setTermsAccepted(false); });
+    return () => { alive = false; };
+  }, [storeId]);
+
   const range = useMemo(() => {
     const now = new Date();
     if (periodo === 'custom') return { start: cs, end: ce };
@@ -220,7 +241,9 @@ export default function Dashboard() {
   const hubCta = seasonal ? (seasonal.source ? resolveCta(seasonal.source, data.owned) : null) : hubTip ? resolveCta(hubTip, data.owned) : null;
   const insight = seasonal ? { title: seasonal.title, text: seasonal.text } : hubTip ? { title: hubTip.title, text: plainText(hubTip.content) } : buildInsight(data, hasVid);
   const visibleMods = sortModules(data.modules.filter((m) => m.status !== 'hidden'), data.owned);
-  const modCols = visibleMods.length <= 1 ? 'md:grid-cols-1' : visibleMods.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
+  const showcaseMods = visibleMods.filter((m) => !data.owned.includes(m.slug));
+  const apps = visibleMods.filter((m) => data.owned.includes(m.slug) && m.status !== 'maintenance' && (m.route_path || ROUTES[m.slug]));
+  const modCols = showcaseMods.length <= 1 ? 'md:grid-cols-1' : showcaseMods.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
 
   const copy = () => {
     if (!referralLink) return;
@@ -314,6 +337,39 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {apps.length > 0 && (
+          <Section title="Meus aplicativos">
+            <div className="flex flex-wrap gap-3">
+              {apps.map((m) => {
+                const AppIcon = ICONS[m.slug] ?? Package;
+                const appRoute = (m.route_path || ROUTES[m.slug]) as string;
+                const appTrial = data.trialDays[m.slug];
+                return (
+                  <button
+                    key={m.slug}
+                    type="button"
+                    onClick={() => navigate(appRoute)}
+                    className={`${CARD} group flex min-w-[260px] flex-1 cursor-pointer items-center gap-3 px-4 py-3 text-left hover:border-[#0094eb]/40 sm:flex-none`}
+                  >
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+                      <AppIcon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-black text-slate-900">{m.name}</p>
+                      <p className="text-xs font-semibold text-emerald-600">
+                        {appTrial ? `Em teste: ${appTrial} ${appTrial === 1 ? 'dia' : 'dias'}` : '\u25CF Ativo'}
+                      </p>
+                    </div>
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-bold text-white group-hover:bg-[#007fcc]">
+                      Abrir <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </Section>
+        )}
+
         {/* Pulso de hoje + dica */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <div className={`${CARD} flex flex-col gap-4 p-5`}>
@@ -388,12 +444,12 @@ export default function Dashboard() {
         <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
         {/* Modulos vindos do Master */}
         <div id="meus-modulos" data-tour="modules" className="scroll-mt-24">
-          <Section title="Módulos">
-            {visibleMods.length === 0 && !loading && (
-              <p className="text-sm text-slate-500">Nenhum módulo disponível no momento.</p>
+          <Section title="Módulos disponíveis para assinar">
+            {showcaseMods.length === 0 && !loading && (
+              <p className="text-sm text-slate-500">Você já usa todos os módulos disponíveis.</p>
             )}
             <div className={`-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 md:mx-0 md:grid ${modCols} md:overflow-visible md:px-0 md:pb-0`}>
-              {visibleMods.map((m) => {
+              {showcaseMods.map((m) => {
                 const owned = data.owned.includes(m.slug);
                 if (m.status === 'hidden') return null;
 
@@ -542,14 +598,41 @@ export default function Dashboard() {
                   : 'Você chegou ao nível máximo do Clube SLL.'}
               </p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <div className="min-w-0 flex-1 truncate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
-                {referralLink || 'Gerando seu link...'}
+            {termsAccepted ? (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="min-w-0 flex-1 truncate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
+                  {referralLink || 'Gerando seu link...'}
+                </div>
+                <button type="button" onClick={copy} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#007fcc]">
+                  <Copy className="h-3.5 w-3.5" /> Copiar link
+                </button>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`Conheça o SLL Hub e comece com teste grátis: ${referralLink}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Enviar no WhatsApp
+                </a>
               </div>
-              <button type="button" onClick={copy} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#007fcc]">
-                <Copy className="h-3.5 w-3.5" /> Copiar link
-              </button>
-            </div>
+            ) : (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative min-w-0 flex-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs">
+                  <span aria-hidden="true" className="block select-none truncate text-slate-400 blur-sm">https://sllhub.exemplo/?ref=XXXXXXXX</span>
+                  <span className="absolute inset-0 flex items-center gap-1.5 px-3 font-semibold text-slate-700">
+                    <Lock className="h-3.5 w-3.5 shrink-0" /> Aceite as regras para liberar seu link
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  disabled={termsAccepted === null}
+                  onClick={() => setTermsOpen(true)}
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#e07128] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Ativar meu link de indicação
+                </button>
+              </div>
+            )}
             <button type="button" onClick={() => navigate('/dashboard/afiliados')} className="mt-auto inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline">
               <Gift className="h-3.5 w-3.5" /> Ver ganhos e metas <ArrowRight className="h-3 w-3" />
             </button>
@@ -561,6 +644,15 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {storeId && (
+        <ClubeTermsModal
+          open={termsOpen}
+          storeId={storeId}
+          settings={clubSettings}
+          onClose={() => setTermsOpen(false)}
+          onAccepted={() => { setTermsAccepted(true); setTermsOpen(false); }}
+        />
+      )}
       {storeId && <DashboardTour storeId={storeId} createdAt={store?.created_at} />}
     </DashboardLayout>
   );
