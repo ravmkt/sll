@@ -60,6 +60,16 @@ const METRICS_ROUTE = '/dashboard/metricas';
 const TIPS_ROUTE = '/dashboard/dicas';
 const PRODUCTS_ROUTE = '/dashboard/produtos';
 
+type Shortcut = { key: string; icon: ElementType; title: string; text: string; to: string; tour?: string };
+const SHORTCUT_POOL: Shortcut[] = [
+  { key: 'cat', icon: Package, title: 'Vídeos e catálogo', text: 'Organize o conteúdo da sua loja', to: PRODUCTS_ROUTE },
+  { key: 'ins', icon: Lightbulb, title: 'Insights', text: '', to: TIPS_ROUTE, tour: 'noah' },
+  { key: 'inst', icon: Plug, title: 'Instalação', text: 'Acesse a configuração dos módulos', to: '/dashboard/integracao' },
+  { key: 'plan', icon: DollarSign, title: 'Assinatura & Planos', text: 'Gerencie módulos e cobrança', to: '/dashboard/planos' },
+  { key: 'club', icon: Gift, title: 'Clube SLL', text: 'Indique lojas e acompanhe ganhos', to: '/dashboard/afiliados' },
+  { key: 'met', icon: Activity, title: 'Métricas', text: 'Relatório completo de resultados', to: METRICS_ROUTE },
+];
+
 function AssetImg({ src, alt, className, fallback }: { src: string; alt: string; className: string; fallback: ReactNode }) {
   const [failed, setFailed] = useState(false);
   if (failed) return <>{fallback}</>;
@@ -288,6 +298,21 @@ export default function Dashboard() {
   const showcaseMods = visibleMods.filter((m) => !data.owned.includes(m.slug));
   const apps = visibleMods.filter((m) => data.owned.includes(m.slug) && m.status !== 'maintenance' && (m.route_path || ROUTES[m.slug]));
 
+  const hitsKey = `sll_shortcuts:${storeId ?? 'x'}`;
+  const [shortcutHits, setShortcutHits] = useState<Record<string, number>>({});
+  useEffect(() => {
+    try { setShortcutHits(JSON.parse(localStorage.getItem(hitsKey) || '{}')); } catch { setShortcutHits({}); }
+  }, [hitsKey]);
+  const bumpShortcut = (key: string) => {
+    const next = { ...shortcutHits, [key]: (shortcutHits[key] ?? 0) + 1 };
+    setShortcutHits(next);
+    try { localStorage.setItem(hitsKey, JSON.stringify(next)); } catch { /* ignora */ }
+  };
+  const shortcuts = SHORTCUT_POOL
+    .map((s, i) => ({ ...s, i, text: s.key === 'ins' ? insight.title : s.text }))
+    .sort((a, b) => (shortcutHits[b.key] ?? 0) - (shortcutHits[a.key] ?? 0) || a.i - b.i)
+    .slice(0, 3);
+
   const copy = () => {
     if (!referralLink) return;
     navigator.clipboard.writeText(referralLink);
@@ -307,7 +332,7 @@ export default function Dashboard() {
     }
   };
 
-  void hubCta;
+  void hubCta; void pulse; void noModule;
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -533,69 +558,19 @@ export default function Dashboard() {
             <h2 className="text-xl font-bold leading-tight text-slate-900">Sua operação, sem perder o ritmo</h2>
             <p className="text-sm text-slate-500">Acompanhe o dia da loja e volte rápido ao que importa.</p>
           </div>
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <div className={`${CARD} flex flex-col gap-4 p-5`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                  </span>
-                  <h3 className="text-base font-black text-slate-900">Movimentação de Hoje</h3>
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Atividade de hoje</span>
-              </div>
-              {hasVid ? (
-                <div className="grid flex-1 grid-cols-3 gap-2">
-                  <Mini icon={Activity} label="Pessoas que interagiram" value={pulse ? int(pulse.interactions) : '\u2014'} />
-                  <Mini icon={MousePointerClick} label="Cliques em comprar" value={pulse ? int(pulse.buyClicks) : '\u2014'} />
-                  <Mini icon={Play} label="Sessões com vídeo engajado" value={pulse ? int(pulse.engaged) : '\u2014'} />
-                </div>
-              ) : noModule ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/dashboard/planos')}
-                  className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-left transition-colors hover:border-[#0094eb]"
-                >
-                  <span className="text-sm font-black text-slate-900">Ative seu primeiro módulo</span>
-                  <span className="text-sm text-slate-700">Assim você acompanha o engajamento dos seus clientes aqui.</span>
-                  <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb]">
-                    Ver planos <ArrowRight className="h-3 w-3" />
-                  </span>
-                </button>
-              ) : !loading ? (
-                <p className="rounded-xl bg-slate-50 px-4 py-4 text-sm font-medium text-slate-600">
-                  A atividade dos seus módulos ativos aparecerá aqui.
-                </p>
-              ) : null}
-              <div className="mt-auto flex items-center justify-between gap-3">
-                <p className="text-sm text-slate-700">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
-                <button
-                  type="button"
-                  onClick={() => navigate(METRICS_ROUTE)}
-                  className="inline-flex shrink-0 cursor-pointer items-center gap-1 text-xs font-bold text-[#0094eb] hover:underline"
-                >
-                  Ver pedidos <ArrowUpRight className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 gap-4">
             <div className={`${CARD} flex flex-col gap-3 p-5`}>
               <div>
                 <h3 className="text-base font-black text-slate-900">Continue de onde precisar</h3>
                 <p className="text-sm text-slate-500">Atalhos para o que você mais usa.</p>
               </div>
-              <div className="flex flex-1 flex-col gap-2">
-                {[
-                  { key: 'cat', icon: Package, title: 'Vídeos e catálogo', text: 'Organize o conteúdo da sua loja', to: PRODUCTS_ROUTE, tour: undefined as string | undefined },
-                  { key: 'ins', icon: Lightbulb, title: 'Insights', text: insight.title, to: TIPS_ROUTE, tour: 'noah' as string | undefined },
-                  { key: 'inst', icon: Plug, title: 'Instalação', text: 'Acesse a configuração dos módulos', to: '/dashboard/integracao', tour: undefined as string | undefined },
-                ].map((it) => (
+              <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-3">
+                {shortcuts.map((it) => (
                   <button
                     key={it.key}
                     type="button"
                     data-tour={it.tour}
-                    onClick={() => navigate(it.to)}
+                    onClick={() => { bumpShortcut(it.key); navigate(it.to); }}
                     className="group flex flex-1 cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition-all hover:border-[#0094eb]/40 hover:bg-slate-50"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
@@ -709,3 +684,5 @@ export default function Dashboard() {
 void Section;
 void Clock;
 void NOAH_LOGO;
+void Mini;
+void ArrowUpRight;

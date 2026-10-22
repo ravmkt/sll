@@ -59,8 +59,8 @@ export default function PortalHeader() {
           </div>
         )}
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-black text-slate-900">Bem-vindo(a), {greetName}</h1>
-          <p className="text-sm text-slate-500">Painel de controle e inteligência da sua operação online.</p>
+          <h1 className="truncate text-2xl font-extrabold tracking-tight text-slate-800">Seu negócio, em um só Hub.</h1>
+          <p className="text-sm text-slate-500">Olá, {greetName}. Acompanhe sua loja e descubra o próximo módulo para ela.</p>
         </div>
       </div>
       <div className="min-w-0 empty:hidden lg:col-span-1 2xl:col-span-3">
