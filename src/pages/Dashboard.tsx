@@ -465,15 +465,24 @@ export default function Dashboard() {
                         </button>
                       ) : owned ? (
                         route ? (
-                          <div className="flex flex-col gap-2">
-                            <button type="button" onClick={() => navigate(route)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700">
-                            Acessar painel <ArrowRight className="h-3.5 w-3.5" />
-                          </button>
+                          <div className="flex flex-col gap-3">
                             {trial ? (
-                              <button type="button" onClick={() => navigate(`/dashboard/planos?modulo=${m.slug}`)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white hover:bg-[#e07128]">
-                                <Clock className="h-3.5 w-3.5" /> Assine agora
-                              </button>
+                              <div className="rounded-2xl border-2 border-[#fd8539] bg-gradient-to-b from-orange-50 to-white p-4 text-center shadow-sm">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fd8539] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                                  <Clock className="h-3 w-3" /> Em teste
+                                </span>
+                                <p className="mt-2 text-xl font-black text-slate-900">
+                                  {trial === 1 ? 'Falta 1 dia' : `Faltam ${trial} dias`}
+                                </p>
+                                <p className="text-xs font-semibold text-slate-600">E agora? Assine para não perder o acesso.</p>
+                                <button type="button" onClick={() => navigate(`/dashboard/planos?modulo=${m.slug}`)} className="mt-3 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white hover:bg-[#e07128]">
+                                  Assine agora <ArrowRight className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
                             ) : null}
+                            <button type="button" onClick={() => navigate(route)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700">
+                              Acessar painel <ArrowRight className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         ) : null
                       ) : soon ? (
@@ -488,7 +497,7 @@ export default function Dashboard() {
                           {isJoined ? <><Check className="h-3.5 w-3.5" /> Você está na lista</> : busySlug === m.slug ? 'Entrando...' : 'Entrar na lista de espera'}
                         </button>
                       ) : (
-                        <ModuleTrialButton slug={m.slug} />
+                        <ModuleTrialButton slug={m.slug} route={route} />
                       )}
                     </div>
                   </div>
