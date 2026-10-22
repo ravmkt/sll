@@ -114,7 +114,7 @@ function Meter(props: { label: string; value: string; of: string; pct: number | 
     <div className={card}>
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{props.label}</p>
-        <Icon size={15} className="text-[#EA580C]" />
+        <Icon size={15} className="text-[#DC2626]" />
       </div>
       <p className="mt-2 text-2xl font-extrabold text-slate-900">
         {props.value} <span className="text-xs font-medium text-slate-400">{props.of}</span>
@@ -126,7 +126,7 @@ function Meter(props: { label: string; value: string; of: string; pct: number | 
         </div>
         {props.pct !== null && (
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full rounded-full bg-[#EA580C]" style={{ width: `${Math.min(100, props.pct)}%` }} />
+            <div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.min(100, props.pct)}%` }} />
           </div>
         )}
       </div>
@@ -349,7 +349,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                     key={p.key}
                     type="button"
                     onClick={() => setPeriodo(p.key)}
-                    className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${periodo === p.key ? 'bg-[#EA580C] text-white shadow-sm' : 'text-slate-500 hover:text-[#EA580C]'}`}
+                    className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${periodo === p.key ? 'bg-[#DC2626] text-white shadow-sm' : 'text-slate-500 hover:text-[#DC2626]'}`}
                   >
                     {p.label}
                   </button>
@@ -377,7 +377,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
             <div className={card}>
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Ciclo da conta</p>
-                <CalendarClock size={15} className="text-[#EA580C]" />
+                <CalendarClock size={15} className="text-[#DC2626]" />
               </div>
               <p className="mt-2 text-[10px] font-semibold uppercase text-slate-400">Status</p>
               <p className="text-xl font-extrabold text-slate-900">{cycle?.status || '—'}</p>
@@ -391,7 +391,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         <div className="grid gap-4 lg:grid-cols-2">
           <div className={card}>
             <div className="mb-3 flex items-center gap-2">
-              <Radio size={16} className="text-[#EA580C]" />
+              <Radio size={16} className="text-[#DC2626]" />
               <h3 className="text-base font-black text-slate-900">Próxima live</h3>
             </div>
             {next ? (
@@ -420,7 +420,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 <button
                   type="button"
                   onClick={() => navigate(`/dashboard/modules/stream-sell/live/${next.id}/cockpit`)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#EA580C] py-2.5 text-xs font-bold text-white hover:bg-[#c2410c]"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#DC2626] py-2.5 text-xs font-bold text-white hover:bg-[#B91C1C]"
                 >
                   Abrir Cockpit da Live <ArrowRight size={14} />
                 </button>
@@ -428,7 +428,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
             ) : (
               <div className="py-6 text-center text-sm text-slate-400">
                 Nenhuma live agendada.
-                <button type="button" onClick={() => navigate('/dashboard/modules/stream-sell', { state: { tab: 'lives' } })} className="mt-2 block w-full text-xs font-bold text-[#EA580C] hover:underline">
+                <button type="button" onClick={() => navigate('/dashboard/modules/stream-sell', { state: { tab: 'lives' } })} className="mt-2 block w-full text-xs font-bold text-[#DC2626] hover:underline">
                   Criar uma live
                 </button>
               </div>
@@ -437,7 +437,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
 
           <div className={card}>
             <div className="mb-3 flex items-center gap-2">
-              <Trophy size={16} className="text-[#EA580C]" />
+              <Trophy size={16} className="text-[#DC2626]" />
               <h3 className="text-base font-black text-slate-900">Engajamento das lives</h3>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -478,7 +478,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
             </div>
           </div>
 
-          <div className="flex h-full flex-col justify-between space-y-4 rounded-2xl border border-[#fd8539]/60 bg-white p-5 shadow-sm transition-all hover:border-[#fd8539]">
+          <div className="flex h-full flex-col justify-between space-y-4 rounded-2xl border border-[#DC2626]/60 bg-white p-5 shadow-sm transition-all hover:border-[#DC2626]">
             <div className="flex items-center justify-between">
               <img src="/assets/clube-sll-logo-wide.png" alt="Clube SLL" className="h-auto w-[140px] shrink-0 object-contain object-left" />
               <Share2 className="h-4 w-4 text-slate-400" />
@@ -490,7 +490,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
               <button
                 type="button"
                 onClick={copyLink}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#e07128] active:scale-[0.99]"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#DC2626] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#B91C1C] active:scale-[0.99]"
               >
                 {copied ? (<><Check className="h-4 w-4" />LINK COPIADO!</>) : (<><Link2 className="h-4 w-4" />COPIAR MEU LINK DE INDICAÇÃO</>)}
               </button>
@@ -498,7 +498,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 <a
                   href={CLUBE_PATH}
                   onClick={(e) => { e.preventDefault(); navigate(CLUBE_PATH); }}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 transition-colors hover:text-[#fd8539]"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 transition-colors hover:text-[#DC2626]"
                 >
                   Acessar painel de indicações →
                 </a>
