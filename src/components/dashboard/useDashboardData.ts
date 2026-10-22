@@ -86,6 +86,18 @@ async function applyStaging(storeId: string, list: ModuleRow[]): Promise<ModuleR
   }
 }
 
+const moduleRank = (status: string): number => {
+  const s = String(status || '').toLowerCase();
+  if (s === 'coming_soon') return 1;
+  if (['hidden', 'inactive', 'paused', 'oculto'].includes(s)) return 2;
+  return 0;
+};
+
+/** Disponiveis primeiro, depois "em breve", depois o resto; dentro de cada grupo vale a ordem do Master */
+export function sortModules(list: ModuleRow[]): ModuleRow[] {
+  return [...list].sort((a, b) => moduleRank(a.status) - moduleRank(b.status) || a.sort_order - b.sort_order);
+}
+
 export function useDashboardData(storeId: string | null | undefined, range: Range) {
   const [data, setData] = useState<DashData>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -143,7 +155,7 @@ export function useDashboardData(storeId: string | null | undefined, range: Rang
         topVideo: best ? { title: best.title, views: best.views, clicks: best.clicks, conversions: best.conversions } : null,
         owned,
         trialDays,
-        modules: val(hub, []) || [],
+        modules: sortModules(val(hub, []) || []),
         waitlist: wlRows.map((r) => String(r.module_slug)),
         referred: Number(val(aff, null)?.total_referred_stores) || 0,
       });

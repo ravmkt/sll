@@ -109,7 +109,7 @@ export function useStagingPublish<T extends Record<string, any> = Record<string,
     const { data, error } = await sb.rpc('admin_staging_sandbox');
     if (error) return showError(error.message);
     const row = Array.isArray(data) ? data[0] : data;
-    if (!row) return showError('Nenhuma Loja Teste definida. Escolha uma na aba Módulos do Master.');
+    if (!row) return showError('Nenhuma Loja Teste definida. Escolha uma na aba Lojas do Master.');
     if (String(row.id) !== String(myStoreId ?? '')) {
       toast.info(`Você está logado em outra loja. Para ver o rascunho, entre com a conta da loja "${row.name}".`);
     }
