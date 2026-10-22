@@ -94,13 +94,7 @@ export function VidlyticsSidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="min-h-0 px-4 py-6 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden">
-        {isExpanded && (
-          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
-            Vidlytics
-          </p>
-        )}
-
+      <nav className="min-h-0 px-4 pt-2 pb-4 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden">
         {menuItems.map((item) => {
           const isActive = activeTab === item.id;
           const Icon = item.icon;
@@ -125,7 +119,7 @@ export function VidlyticsSidebar({
           );
         })}
       </nav>
-      <SidebarTourSlot isExpanded={isExpanded} />
+      <div className="mt-auto pb-4"><SidebarTourSlot isExpanded={isExpanded} /></div>
 
       {/* Footer */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
@@ -144,11 +138,11 @@ export function VidlyticsSidebar({
           type="button"
           onClick={() => signOut()}
           title={!isExpanded ? 'Sair da Plataforma' : undefined}
-          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 transition-colors cursor-pointer ${
-            !isExpanded ? 'justify-center' : ''
+          className={`flex items-center gap-2.5 px-4 py-2 w-full rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 transition-colors cursor-pointer ${
+            !isExpanded ? 'justify-center' : 'justify-start'
           }`}
         >
-          <LogOut size={20} className="shrink-0" />
+          <LogOut size={18} className="shrink-0" />
           {isExpanded && <span>Sair da Plataforma</span>}
         </button>
       </div>
