@@ -4,6 +4,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { startModuleTrial, TRIAL_DENIED_TEXT } from '@/services/subscriptions/startModuleTrial';
+import SubscribeModalButton from '@/components/dashboard/SubscribeModalButton';
 
 export default function ModuleTrialButton({ slug, route }: { slug: string; route?: string }) {
   const navigate = useNavigate();
@@ -60,13 +61,9 @@ export default function ModuleTrialButton({ slug, route }: { slug: string; route
           <p className="text-sm font-black text-slate-900">Volte a usar e impulsione suas vendas!</p>
           <p className="mt-1 text-xs font-semibold text-slate-600">Seu teste grátis já foi utilizado. Assine para ter este módulo de volta na sua loja.</p>
         </div>
-        <button
-          type="button"
-          onClick={goPlans}
-          className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white hover:bg-[#e07128]"
-        >
+        <SubscribeModalButton slug={slug} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white hover:bg-[#e07128]">
           Assinar <ArrowRight className="h-3.5 w-3.5" />
-        </button>
+        </SubscribeModalButton>
       </div>
     );
   }
