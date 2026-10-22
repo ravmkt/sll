@@ -85,7 +85,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
           className={`flex items-center justify-center gap-2 rounded-lg py-2 px-3 text-xs font-bold transition-all w-full ${
             isExpanded
               ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200'
-              : 'bg-[#0094eb] text-white hover:bg-[#007bc4]'
+              : 'bg-[#e11d48] text-white hover:bg-[#be123c]'
           }`}
           title={isExpanded ? 'Recolher menu' : 'Expandir menu'}
         >
@@ -124,8 +124,8 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
                       !isExpanded ? 'justify-center' : ''
                     } ${
                       isActive
-                        ? 'bg-[#0094eb] text-white font-medium shadow-md shadow-[#0094eb]/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb]'
+                        ? 'bg-[#e11d48] text-white font-medium shadow-md shadow-[#e11d48]/20'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#e11d48]'
                     }`}
                   >
                     <Icon size={20} className="shrink-0" />
@@ -144,7 +144,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
           type="button"
           onClick={() => navigate('/dashboard')}
           title={!isExpanded ? 'Voltar ao Dashboard SLL' : undefined}
-          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb] transition-all duration-200 cursor-pointer ${
+          className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#e11d48] transition-all duration-200 cursor-pointer ${
             !isExpanded ? 'justify-center' : ''
           }`}
         >

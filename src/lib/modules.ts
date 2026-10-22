@@ -18,7 +18,7 @@ export const MODULES: Record<string, ModuleDefinition> = {
     id: "live_commerce",
     name: "Stream Sell",
     description: "Transmissões ao vivo integradas ao seu catálogo",
-    route: "/dashboard/modules/live-commerce"
+    route: "/stream-sell"
   },
   PDV: {
     id: "pdv",

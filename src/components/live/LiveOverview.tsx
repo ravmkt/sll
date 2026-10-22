@@ -99,7 +99,7 @@ export function LiveOverview({ onCreateLive }: LiveOverviewProps) {
         <Card data-tour="live-calendar" className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="flex items-center gap-2 text-base">
-              <CalendarDays className="h-5 w-5 text-[#0094eb]" />
+              <CalendarDays className="h-5 w-5 text-[#e11d48]" />
               {MONTHS[cursor.m]} {cursor.y}
             </CardTitle>
             <div className="flex gap-1">
@@ -129,7 +129,7 @@ export function LiveOverview({ onCreateLive }: LiveOverviewProps) {
                       occs
                         ? "bg-[#fd8539]/10 border-[#fd8539]/40 text-[#c2571a] font-bold"
                         : isToday(day)
-                        ? "border-[#0094eb] text-[#0094eb] font-bold"
+                        ? "border-[#e11d48] text-[#e11d48] font-bold"
                         : "border-transparent text-slate-600"
                     }`}
                   >
@@ -186,7 +186,7 @@ export function LiveOverview({ onCreateLive }: LiveOverviewProps) {
               <button
                 type="button"
                 onClick={() => onCreateLive(o)}
-                className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-bold text-white hover:bg-[#007bc4]"
+                className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-[#e11d48] px-4 py-2 text-sm font-bold text-white hover:bg-[#be123c]"
               >
                 <Radio size={16} /> Criar live para esta data
               </button>

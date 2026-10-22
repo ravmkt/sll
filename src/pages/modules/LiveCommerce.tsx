@@ -222,7 +222,7 @@ function LiveCommerceContent() {
   };
 
   const handleOpenAdminPanel = (liveId: string) => {
-    window.open(`/dashboard/modules/live-commerce/admin/${liveId}`, "_blank", "noopener,noreferrer");
+    navigate(`/stream-sell/live/${liveId}/cockpit`);
   };
 
   const onFormSaved = async () => {
