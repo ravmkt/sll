@@ -513,7 +513,7 @@ export default function Dashboard() {
                             <button
                               type="button"
                               onClick={() => navigate(route)}
-                              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 transition-colors hover:border-[#0094eb] hover:text-[#0094eb]"
+                              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-emerald-700"
                             >
                               Acessar {m.name} <ArrowRight className="h-3.5 w-3.5" />
                             </button>
