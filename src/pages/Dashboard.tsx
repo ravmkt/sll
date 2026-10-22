@@ -444,7 +444,7 @@ export default function Dashboard() {
                 {[...list, ...Array.from({ length: Math.max(0, 3 - list.length) }, () => null)].map((m, i) => {
                   if (!m) {
                     return (
-                      <div key={`soon-${i}`} className="hidden h-full min-h-[320px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-6 text-center md:flex">
+                      <div key={`soon-${i}`} className="hidden h-full min-h-[240px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-6 text-center md:flex">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-slate-400 ring-1 ring-slate-200">
                           <Package className="h-6 w-6" />
                         </div>
@@ -465,13 +465,11 @@ export default function Dashboard() {
                   return (
                     <div key={m.slug} className={`${CARD} flex h-full flex-col justify-between gap-4 p-4`}>
                       <div className="space-y-4">
-                        <ModulePreview slug={m.slug} />
-                        <div className="flex items-center justify-between gap-3">
-                          {m.logo_url ? (
-                            <img src={m.logo_url} alt={m.name} className="h-12 w-auto max-w-[65%] object-contain object-left" />
+                        <div className="flex flex-col items-center gap-2.5">$1{m.logo_url ? (
+                            <img src={m.logo_url} alt={m.name} className="h-16 w-auto max-w-[75%] object-contain object-center" />
                           ) : (
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
-                              <Icon className="h-6 w-6 text-[#0094eb]" />
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
+                              <Icon className="h-8 w-8 text-[#0094eb]" />
                             </div>
                           )}
                           {maint ? (
@@ -492,8 +490,7 @@ export default function Dashboard() {
                           )
                           )}
                         </div>
-                        <div className="space-y-1.5">
-                          <h3 className="text-lg font-bold text-slate-900">{m.name}</h3>
+                        <div className="space-y-1.5 text-center">$1<h3 className="text-lg font-bold text-slate-900">{m.name}</h3>
                           {m.description && (
                             <p className="line-clamp-3 text-sm font-medium leading-relaxed text-slate-600">{m.description}</p>
                           )}
@@ -556,13 +553,13 @@ export default function Dashboard() {
         {/* Sua operacao, sem perder o ritmo */}
         <div className="space-y-4">
           <div>
-            <h2 className="text-xl font-bold leading-tight text-slate-900">Sua operação, sem perder o ritmo</h2>
-            <p className="text-sm text-slate-500">Acompanhe o dia da loja e volte rápido ao que importa.</p>
+            <h2 className="text-xl font-bold leading-tight text-slate-900">Acesso rápido e datas que importam</h2>
+            <p className="text-sm text-slate-500">Vá direto ao que você mais usa e planeje as próximas datas comemorativas da sua loja.</p>
           </div>
           <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-2">
             <div className={`${CARD} flex flex-col gap-3 p-5`}>
               <div>
-                <h3 className="text-base font-black text-slate-900">Continue de onde precisar</h3>
+                <h3 className="text-base font-black text-slate-900">Acesso rápido</h3>
                 <p className="text-sm text-slate-500">Atalhos para o que você mais usa.</p>
               </div>
               <div className="grid flex-1 grid-cols-1 gap-2 grid-cols-1">
@@ -572,10 +569,10 @@ export default function Dashboard() {
                     type="button"
                     data-tour={it.tour}
                     onClick={() => { bumpShortcut(it.key); navigate(it.to); }}
-                    className="group flex flex-1 cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition-all hover:border-[#0094eb]/40 hover:bg-slate-50"
+                    className="group flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left transition-all hover:border-[#0094eb]/40 hover:bg-slate-50"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
-                      <it.icon className="h-5 w-5" />
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+                      <it.icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-slate-900">{it.title}</p>
@@ -688,3 +685,4 @@ void Clock;
 void NOAH_LOGO;
 void Mini;
 void ArrowUpRight;
+void ModulePreview;
