@@ -1013,7 +1013,7 @@ playerWrap.appendChild(liveSpotlightOverlayEl);
       card.appendChild(price);
 
 card.onclick = function () {
-  trackLiveEvent(live.id, 'product_click', { product_id: p.id, source: 'live_modal' });
+  (function(){try{var d='',h=location.hostname.split('.');for(var i=h.length-2;i>=0;i--){var c=h.slice(i).join('.');document.cookie='vly_probe=1;path=/;domain=.'+c+';SameSite=Lax';if(document.cookie.indexOf('vly_probe=1')!==-1){document.cookie='vly_probe=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.'+c+';SameSite=Lax';d=';domain=.'+c;break;}}document.cookie='vly_live_ts='+Date.now()+';expires='+new Date(Date.now()+30*864e5).toUTCString()+';path=/'+d+';SameSite=Lax';}catch(_){}})(); trackLiveEvent(live.id, 'product_click', { product_id: p.id, source: 'live_modal' });
   var go = p.url || '';
   try {
     if (window.SLL && window.SLL.liveAttr) {
@@ -2819,6 +2819,7 @@ function sendAnalyticsEvent(eventType, videoId, productId, extraData) {
 
         if (videoId) {
           document.cookie = 'vly_video_id=' + encodeURIComponent(videoId) + expStr;
+          if (eventType === 'product_click' || eventType === 'whatsapp_click') document.cookie = 'vly_video_ts=' + Date.now() + expStr;
           localStorage.setItem('vly_video_id', videoId);
         }
         if (productId) {

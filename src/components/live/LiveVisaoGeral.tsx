@@ -12,7 +12,7 @@ import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
 import { LiveOverview } from '@/components/live/LiveOverview';
 import type { CommercialDateOccurrence } from '@/lib/commercialDates';
 
-const CLUBE_PATH = '/dashboard/medidas';
+const CLUBE_PATH = '/dashboard/afiliados';
 
 // Nomes dos eventos gravados em live_commerce.live_events (ajuste aqui se forem outros)
 const EV = {

@@ -50,6 +50,10 @@
     try {
       var vid = getCookie("vly_video_id");
       if (!vid) { try { vid = localStorage.getItem("vly_video_id"); } catch (e) {} }
+      var liveId = getCookie("vly_live_id");
+      var liveTs = Number(getCookie("vly_live_ts")) || 0;
+      var vidTs = Number(getCookie("vly_video_ts")) || 0;
+      if (liveId && (!vid || liveTs > vidTs)) return { module: "live_commerce", source_id: liveId };
       if (vid) return { module: "vidlytics", source_id: vid };
       var raw = localStorage.getItem("sll_last_interaction") || localStorage.getItem("vidlytics_last_interaction");
       if (!raw) return { module: "direct", source_id: null };
