@@ -1158,8 +1158,8 @@ export function LiveFormDialog({
                       })}
                     </div>
 
-                    <div className="rounded-lg bg-blue-50/60 p-3 border border-blue-100 text-xs text-blue-900 flex gap-2 items-center">
-                      <Layers className="h-4 w-4 text-blue-600 shrink-0" />
+                    <div className="rounded-lg bg-rose-50/60 p-3 border border-rose-100 text-xs text-rose-900 flex gap-2 items-center">
+                      <Layers className="h-4 w-4 text-rose-600 shrink-0" />
                       <span>
                         Dica: Você pode criar ou editar novos temas detalhados com logotipo, fontes e margens pelo menu <strong>Aparência da Live</strong>.
                       </span>

@@ -206,8 +206,8 @@ export function ShareLiveModal({
           </TabsContent>
 
           <TabsContent value="cohost" className="space-y-4 pt-3">
-            <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 text-xs text-blue-900 dark:text-blue-300 flex items-start gap-2">
-              <HelpCircle className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+            <div className="rounded-lg bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-900 dark:text-rose-300 flex items-start gap-2">
+              <HelpCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
               <div>
                 O YouTube não gera link de convidado nativo na transmissão padrão RTMP. Para transmitir em dupla com tela dividida, utilize ferramentas de estúdio que transmitem direto para o YouTube:
               </div>

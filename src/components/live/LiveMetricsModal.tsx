@@ -260,7 +260,7 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
                   {/* Cliques em Produtos */}
                   <Card className="border border-slate-200 shadow-sm">
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                      <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
                         <MousePointerClick className="w-5 h-5" />
                       </div>
                       <div>
@@ -277,7 +277,7 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
                   {/* Taxa de Conversão */}
                   <Card className="border border-slate-200 shadow-sm">
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                      <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
                         <ArrowUpRight className="w-5 h-5" />
                       </div>
                       <div>
@@ -302,7 +302,7 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
                   <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80">
                     <p className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
-                      <Eye className="w-3.5 h-3.5 text-blue-500" /> Visualizações Totais
+                      <Eye className="w-3.5 h-3.5 text-rose-500" /> Visualizações Totais
                     </p>
                     <p className="text-lg font-bold text-slate-800 mt-1">{totalViews.toLocaleString("pt-BR")}</p>
                   </div>
