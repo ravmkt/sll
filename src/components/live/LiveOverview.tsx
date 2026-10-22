@@ -91,7 +91,7 @@ export function LiveOverview({ onCreateLive }: LiveOverviewProps) {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <PageTour tourKey="live-visao-geral" steps={VISAO_TOUR} />
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900">Visão Geral</h1>
+        <h1 className="text-2xl font-extrabold text-slate-900">Datas comerciais</h1>
         <p className="text-sm text-slate-500">Datas comerciais do seu setor para planejar as próximas lives.</p>
       </div>
 
