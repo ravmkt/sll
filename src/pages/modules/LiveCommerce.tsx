@@ -1,4 +1,3 @@
-import ClearCacheButton from '@/components/layout/ClearCacheButton';
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { LiveCommerceDatabaseService } from "@/services/LiveCommerceDatabaseService";
 import { MODULES } from "@/lib/modules";
@@ -13,8 +12,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { StoreBrand } from "@/components/layout/StoreBrand";
-import { ModuleSwitcher } from "@/components/layout/ModuleSwitcher";
+import { TopBar } from "@/components/layout/TopBar";
+import AppToggle from "@/components/vidlytics/AppToggle";
 import { LiveSidebar, LiveTab } from "@/components/live/LiveSidebar";
 import { LiveOverview } from "@/components/live/LiveOverview";
 import type { CommercialDateOccurrence } from "@/lib/commercialDates";
@@ -458,7 +457,9 @@ export function LiveCommerce() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex font-sans">
+    <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={{ paddingTop: 'var(--trial-h, 0px)' }}>
+      <TopBar actions={<AppToggle />} />
+      <div className="flex flex-1">
       <LiveSidebar
         activeTab={activeTab}
         isCollapsed={collapsed}
@@ -466,11 +467,7 @@ export function LiveCommerce() {
         onTabChange={handleTabChange}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        <header className="bg-white border-b border-slate-200/80 px-6 py-2.5 flex items-center justify-between sticky top-0 z-20">
-          <StoreBrand />
-          <div className="flex items-center gap-2"><ClearCacheButton /><ModuleSwitcher /></div>
-        </header>
+      <div className="flex min-w-0 flex-1 flex-col">
 
         <div className="flex-1">
           {activeTab === "visao-geral" ? (<LiveOverview onCreateLive={handleCreateLive} />) : activeTab === "lives" ? (
@@ -489,6 +486,7 @@ export function LiveCommerce() {
         </div>
 
         <AppFooter />
+      </div>
       </div>
     </div>
   );

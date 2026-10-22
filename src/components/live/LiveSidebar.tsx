@@ -64,7 +64,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
 
   return (
     <aside
-      className={`h-screen sticky top-0 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] transition-all duration-300 ease-in-out flex flex-col z-30 ${
+      className={`sticky top-[calc(var(--trial-h,0px)_+_3.5rem)] h-[calc(100vh_-_var(--trial-h,0px)_-_3.5rem)] shrink-0 self-start border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] transition-all duration-300 ease-in-out flex flex-col z-30 ${
         isExpanded ? 'w-64' : 'w-20'
       }`}
     >
