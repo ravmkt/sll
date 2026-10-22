@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
@@ -362,7 +363,7 @@ function LiveCommerceContent() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {live.status !== "finished" && (
+                    {!["finished", "ended"].includes(String(live.status)) && (
                       <Button
                         variant="outline"
                         size="icon"
@@ -450,7 +451,8 @@ const TAB_TITLES: Record<LiveTab, string> = {
 
 export function LiveCommerce() {
   const [collapsed, setCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<LiveTab>("visao-geral");
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<LiveTab>((((location.state as { tab?: LiveTab } | null)?.tab) as LiveTab) || "visao-geral");
 
   const handleCreateLive = (occ: CommercialDateOccurrence) => {
     setActiveTab("lives");

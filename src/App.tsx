@@ -34,6 +34,7 @@ const LiveCommerce = lazy(() => import('./pages/modules/LiveCommerce'));
 const LiveAdminPage = lazy(() => import('./pages/modules/LiveAdminPage'));
 const LiveCockpit = lazy(() => import('./pages/streamsell/LiveCockpit'));
 const StreamDestinos = lazy(() => import('./pages/streamsell/Destinos'));
+const StreamSellLayout = lazy(() => import('./components/streamsell/StreamSellLayout'));
 const LegacyLiveRedirect = lazy(() => import('./pages/streamsell/LegacyLiveRedirect'));
 const Products = lazy(() => import('./pages/Products'));
 const Medidas = lazy(() => import('./pages/Medidas'));
@@ -144,7 +145,7 @@ function AppRoutes() {
               element={
                 user ? (
                   <SubscriptionGate>
-                    <ModuleGate moduleKey="live_commerce"><LiveCockpit /></ModuleGate>
+                    <ModuleGate moduleKey="live_commerce"><StreamSellLayout><LiveCockpit /></StreamSellLayout></ModuleGate>
                   </SubscriptionGate>
                 ) : (
                   <Navigate to="/auth" replace />
@@ -156,7 +157,7 @@ function AppRoutes() {
               element={
                 user ? (
                   <SubscriptionGate>
-                    <ModuleGate moduleKey="live_commerce"><StreamDestinos /></ModuleGate>
+                    <ModuleGate moduleKey="live_commerce"><StreamSellLayout><StreamDestinos /></StreamSellLayout></ModuleGate>
                   </SubscriptionGate>
                 ) : (
                   <Navigate to="/auth" replace />
