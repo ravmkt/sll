@@ -80,12 +80,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
         </button>
       </div>
 
-      <nav className="min-h-0 px-4 py-6 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden">
-        {isExpanded && (
-          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
-            StreamSell
-          </p>
-        )}
+      <nav className="min-h-0 px-4 pt-2 pb-4 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden">
 
         {MENU_ITEMS.map((item) => {
           const isActive = activeTab === item.id;
@@ -110,7 +105,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
           );
         })}
       </nav>
-      <div className="mt-auto"><SidebarTourSlot isExpanded={isExpanded} /></div>
+      <div className="mt-auto pb-4"><SidebarTourSlot isExpanded={isExpanded} /></div>
 
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
         <button
