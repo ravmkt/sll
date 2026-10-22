@@ -9,7 +9,8 @@ import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
 import { useLoja } from '@/contexts/LojaContext';
 import { getActiveSubscriptions } from '@/services/subscriptions/getStoreSubscriptions';
 import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
-import { LiveOverview } from '@/components/live/LiveOverview';
+import { listScopedTips, pickTip, plainText, type ScopedTip } from '@/services/scopedTips';
+import { getSeasonalTip, type SeasonalTip } from '@/services/seasonalTips';
 import ModuleHeader from '@/components/layout/ModuleHeader';
 import type { CommercialDateOccurrence } from '@/lib/commercialDates';
 
@@ -70,6 +71,21 @@ const money = (e: EventRow) => {
 const sectionTitle = 'text-xl font-bold leading-tight text-slate-900';
 const card = 'bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm';
 
+const LIVE_TIPS: Record<number, { title: string; text: string }> = {
+  0: { title: 'Liquidação ao vivo', text: 'Faça uma live de início de ano com 3 produtos-chave e um cupom exclusivo para quem assistir até o fim.' },
+  1: { title: 'Carnaval e Dia da Mulher', text: 'Apresente kits de festa e de presente ao vivo, mostrando o produto em uso e o preço na tela.' },
+  2: { title: 'Dia da Mulher e Páscoa', text: 'Monte uma live de presentes por faixa de preço e fixe o link do produto no chat.' },
+  3: { title: 'Aquecimento do Dia das Mães', text: 'Agende a live com antecedência, divulgue por WhatsApp e destaque o prazo de entrega.' },
+  4: { title: 'Dia das Mães e Namorados', text: 'Responda dúvidas de presente no chat e use o WhatsApp como apoio para fechar a compra.' },
+  5: { title: 'Dia dos Namorados', text: 'Lives curtas de 30 minutos com kits para casais costumam reter mais. Mostre 3 opções por faixa de preço.' },
+  6: { title: 'Preparação para o Dia dos Pais', text: 'Programe a live uma semana antes e deixe os produtos do cupom já vinculados à transmissão.' },
+  7: { title: 'Dia dos Pais', text: 'Comece a live pelo produto mais vendido e repita o cupom a cada 10 minutos para quem entrou depois.' },
+  8: { title: 'Dia do Cliente e Dia das Crianças', text: 'Use o Dia do Cliente para uma live de recompra com oferta só para quem já comprou.' },
+  9: { title: 'Dia das Crianças e Black Friday', text: 'Faça uma live-teste de Black Friday agora: treine o cockpit, o chat e a troca de produtos em destaque.' },
+  10: { title: 'Black Friday', text: 'Poucos produtos, ofertas claras e contagem regressiva. Avise a data da live com antecedência.' },
+  11: { title: 'Natal e Réveillon', text: 'Mostre prazos de entrega ao vivo e priorize produtos de pronta-entrega.' },
+};
+
 function Stat(props: { label: string; value: string; sub: string; icon: React.ElementType; tone: string; badge?: string; children?: React.ReactNode }) {
   const Icon = props.icon;
   return (
@@ -118,7 +134,7 @@ function Meter(props: { label: string; value: string; of: string; pct: number | 
   );
 }
 
-export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: CommercialDateOccurrence) => void }) {
+export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccurrence) => void }) {
   const navigate = useNavigate();
   const { storeId, store } = useLoja();
 
@@ -269,6 +285,42 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
     return lives.find((l) => l.status === 'scheduled' && l.scheduled_at && new Date(l.scheduled_at).getTime() >= now - 3600000) || null;
   }, [lives]);
 
+  const [liveTips, setLiveTips] = useState<ScopedTip[]>([]);
+  const [sectorId, setSectorId] = useState<string | null | undefined>((store as any)?.sector_id);
+  const [seasonal, setSeasonal] = useState<SeasonalTip | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    listScopedTips('live_commerce').then((l) => { if (alive) setLiveTips(l); });
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    const sid = (store as any)?.sector_id;
+    if (sid !== undefined) { setSectorId(sid); return; }
+    if (!storeId) return;
+    let alive = true;
+    supabase.from('stores').select('sector_id').eq('id', storeId).maybeSingle()
+      .then(({ data }) => { if (alive) setSectorId(((data as any)?.sector_id as string | null) ?? null); });
+    return () => { alive = false; };
+  }, [store, storeId]);
+
+  useEffect(() => {
+    if (!storeId || sectorId === undefined) return;
+    let alive = true;
+    getSeasonalTip(sectorId, 'live_commerce').then((s) => { if (alive) setSeasonal(s); });
+    return () => { alive = false; };
+  }, [storeId, sectorId]);
+
+  const liveTip = pickTip(liveTips, { sectorId, niche: String((store as any)?.store_niche || '') }, {
+    views: viewsEv, clicks: clicksEv, ctr: viewsEv > 0 ? (clicksEv / viewsEv) * 100 : 0,
+  }, 0);
+  const noahTip = seasonal
+    ? { title: seasonal.title, text: seasonal.text }
+    : liveTip
+      ? { title: liveTip.title, text: plainText(liveTip.content) }
+      : LIVE_TIPS[new Date().getMonth()];
+
   const copyLink = () => {
     const code = (store as any)?.referral_code;
     navigator.clipboard.writeText(code ? `${window.location.origin}/?ref=${code}` : window.location.origin);
@@ -278,7 +330,7 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
 
   return (
     <>
-      <div className="mx-auto max-w-6xl space-y-8 p-6 pb-4">
+      <div className="mx-auto max-w-7xl space-y-6 p-6 pb-4">
         <ModuleHeader module="live" />
         <div>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-1">
@@ -417,25 +469,48 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#EA580C]/50 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-[#EA580C]">Clube SLL</h3>
-            <Share2 size={16} className="text-slate-300" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            <img src="/assets/dica-do-noah-logo-wide.png" alt="Dica do Noah" className="h-auto w-[180px] shrink-0 object-contain object-left" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-slate-800">{noahTip.title}</p>
+              <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{noahTip.text}</p>
+            </div>
           </div>
-          <p className="mt-2 text-xs text-slate-500">Receba comissões e benefícios ao indicar o StreamSell para outros lojistas.</p>
-          <button type="button" onClick={copyLink} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#EA580C] py-2.5 text-xs font-bold uppercase text-white hover:bg-[#c2410c]">
-            {copied ? <Check size={14} /> : <Link2 size={14} />}
-            {copied ? 'Link copiado' : 'Copiar meu link de indicação'}
-          </button>
-          <button type="button" onClick={() => navigate(CLUBE_PATH)} className="mt-2 block w-full text-center text-[11px] text-slate-500 hover:text-[#EA580C]">
-            Acessar painel de indicações →
-          </button>
+
+          <div className="flex h-full flex-col justify-between space-y-4 rounded-2xl border border-[#fd8539]/60 bg-white p-5 shadow-sm transition-all hover:border-[#fd8539]">
+            <div className="flex items-center justify-between">
+              <img src="/assets/clube-sll-logo-wide.png" alt="Clube SLL" className="h-auto w-[140px] shrink-0 object-contain object-left" />
+              <Share2 className="h-4 w-4 text-slate-400" />
+            </div>
+            <p className="text-xs leading-relaxed text-slate-500">
+              Receba comissões e benefícios ao indicar o StreamSell para outros lojistas.
+            </p>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={copyLink}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#e07128] active:scale-[0.99]"
+              >
+                {copied ? (<><Check className="h-4 w-4" />LINK COPIADO!</>) : (<><Link2 className="h-4 w-4" />COPIAR MEU LINK DE INDICAÇÃO</>)}
+              </button>
+              <div className="text-center">
+                <a
+                  href={CLUBE_PATH}
+                  onClick={(e) => { e.preventDefault(); navigate(CLUBE_PATH); }}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 transition-colors hover:text-[#fd8539]"
+                >
+                  Acessar painel de indicações →
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <VidlyticsAcademy />
+        <div className="w-full [&>*]:!w-full [&>*]:!max-w-none">
+          <VidlyticsAcademy variant="vidlytics" />
+        </div>
       </div>
-
-      <LiveOverview onCreateLive={onCreateLive} />
     </>
   );
 }
