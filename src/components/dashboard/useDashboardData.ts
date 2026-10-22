@@ -34,12 +34,13 @@ export interface DashData {
   trialDays: Record<string, number>;
   modules: ModuleRow[];
   waitlist: string[];
+  trialUsed: string[];
   referred: number;
 }
 
 const EMPTY: DashData = {
   products: 0, viewsRange: 0, clicksRange: 0, ctrRange: 0, assistedRevenue: 0, clubCommission: 0,
-  totalVideos: 0, topVideo: null, owned: [], trialDays: {}, modules: [], waitlist: [], referred: 0,
+  totalVideos: 0, topVideo: null, owned: [], trialDays: {}, modules: [], waitlist: [], trialUsed: [], referred: 0,
 };
 
 const sum = (rows: any[], k: string) => rows.reduce((s, r) => s + (Number(r[k]) || 0), 0);
@@ -143,6 +144,18 @@ export function useDashboardData(storeId: string | null | undefined, range: Rang
       const rewRows: any[] = val(rew, null)?.data || [];
       const wlRows: any[] = val(wl, null)?.data || [];
 
+      let trialUsed: string[] = [];
+      try {
+        const [reg, ss] = await Promise.all([
+          sb.from('trial_registry').select('*').eq('store_id', storeId),
+          sb.from('subscriptions').select('module_key').eq('store_id', storeId),
+        ]);
+        const used = new Set<string>();
+        (ss?.data ?? []).forEach((r: any) => { if (r?.module_key) used.add(String(r.module_key)); });
+        (reg?.data ?? []).forEach((r: any) => Object.values(r).forEach((v) => { if (typeof v === 'string') used.add(v); }));
+        trialUsed = Array.from(used);
+      } catch { /* mantem vazio */ }
+
       if (!alive) return;
       setData({
         products: val(prod, null)?.count ?? 0,
@@ -157,6 +170,7 @@ export function useDashboardData(storeId: string | null | undefined, range: Rang
         trialDays,
         modules: sortModules(val(hub, []) || []),
         waitlist: wlRows.map((r) => String(r.module_slug)),
+        trialUsed,
         referred: Number(val(aff, null)?.total_referred_stores) || 0,
       });
       setLoading(false);

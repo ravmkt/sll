@@ -422,6 +422,7 @@ export default function Dashboard() {
                   const Icon = ICONS[m.slug] ?? Package;
                   const route = (m.route_path || ROUTES[m.slug]) as string | undefined;
                   const isJoined = joined.has(m.slug) || data.waitlist.includes(m.slug);
+                  const used = !owned && !soon && !maint && (data.trialUsed ?? []).includes(m.slug);
 
                   return (
                     <div key={m.slug} className={`${CARD} flex h-full flex-col justify-between gap-4 p-4`}>
@@ -442,7 +443,11 @@ export default function Dashboard() {
                           ) : soon ? (
                             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-500">{'\u2022'} Em breve</span>
                           ) : (
+                            used ? (
+                            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-700">{'\u2022'} Teste encerrado</span>
+                          ) : (
                             <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#0094eb]">{'\u2022'} Teste grátis disponível</span>
+                          )
                           )}
                         </div>
                         <div className="space-y-1.5">
@@ -480,14 +485,23 @@ export default function Dashboard() {
                             {isJoined ? <><Check className="h-3.5 w-3.5" /> Você está na lista</> : busySlug === m.slug ? 'Entrando...' : 'Entrar na lista de espera'}
                           </button>
                         ) : (
+                          used ? (
+                          <SubscribeModalButton
+                            slug={m.slug}
+                            className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#e07128]"
+                          >
+                            Assinar {m.name} <ArrowRight className="h-3.5 w-3.5" />
+                          </SubscribeModalButton>
+                        ) : (
                           <ModuleTrialButton slug={m.slug} route={route} />
+                        )
                         )}
                         <p className="text-center text-[11px] font-medium text-slate-500">
                           {maint
                             ? 'Voltamos em instantes.'
                             : owned
                               ? trial ? `Aproveite o teste: ${trial === 1 ? 'falta 1 dia' : `faltam ${trial} dias`}.` : 'Seu módulo está pronto para usar.'
-                              : soon ? 'Avisaremos quando abrir.' : 'Explore o módulo antes de contratar.'}
+                              : soon ? 'Avisaremos quando abrir.' : used ? 'Você já utilizou o teste grátis.' : 'Explore o módulo antes de contratar.'}
                         </p>
                       </div>
                     </div>
