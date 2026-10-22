@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ModulosTab from '@/components/admin/ModulosTab';
 import PrecosTab from '@/components/admin/PrecosTab';
+import TrialSettingsCard from '@/components/admin/TrialSettingsCard';
 import { MasterLayout, type MasterTab } from '@/components/admin/MasterLayout';
 import DashboardTab from '@/components/admin/DashboardTab';
 import LojasTab from '@/components/admin/LojasTab';
@@ -33,7 +34,7 @@ export default function AdminMasterPage() {
 ) : tab === 'saques' ? (<SaquesTab />) : tab === 'marketing' ? (
         <MarketingTab />
       ) : tab === 'precos' ? (
-        <PrecosTab initialModule={planModule} />
+        <><TrialSettingsCard /><PrecosTab initialModule={planModule} /></>
       ) : tab === 'modulos' ? (
         <ModulosTab onOpenPlans={(slug) => { setPlanModule(slug); setTab('precos'); }} onOpenStore={(id) => { setParams({ tab: 'lojas', loja: id }); setTab('lojas'); }} />
       ) : (

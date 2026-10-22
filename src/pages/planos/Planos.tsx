@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useLoja } from "@/contexts/LojaContext";
+import { useTrialDays } from "@/hooks/useTrialDays";
 import type { PlanCycle } from "@/components/planos/VidlyticsPlanCard";
 import ComboCards from "@/components/planos/ComboCards";
 import ComboPlanoModal from "@/components/planos/ComboPlanoModal";
@@ -40,6 +41,7 @@ export default function Planos() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { storeId } = useLoja();
+  const trialDays = useTrialDays();
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<CatalogPlan[]>([]);
   const [mods, setMods] = useState<CatalogModule[]>([]);
@@ -187,7 +189,7 @@ export default function Planos() {
         {/* 1. Topo */}
         <header className="space-y-4 text-center">
           <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Planos e preços do SLL Hub</h1>
-          <p className="text-sm font-medium text-slate-500">Comece com 7 dias grátis, sem cartão. Cancele quando quiser.</p>
+          <p className="text-sm font-medium text-slate-500">Comece com {trialDays} dias grátis, sem cartão. Cancele quando quiser.</p>
           <div className="flex justify-center pt-1">
             <div className="inline-flex flex-wrap items-center justify-center gap-1 rounded-2xl border border-slate-200/50 bg-slate-100 p-1">
               {CYCLES.map((c) => (

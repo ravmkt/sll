@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTrialDays } from "@/hooks/useTrialDays";
 
 const FAQ: { q: string; a: string }[] = [
   {
@@ -9,7 +10,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Quando eu contrato outro módulo, tenho teste grátis?",
-    a: "Quem já tem um plano pago ganha 7 dias de teste ao contratar um novo módulo avulso, uma vez por módulo. Combos não têm período de teste.",
+    a: "Quem já tem um plano pago ganha {DIAS} dias de teste ao contratar um novo módulo avulso, uma vez por módulo. Combos não têm período de teste.",
   },
   {
     q: "Como funciona o upgrade de plano?",
@@ -31,6 +32,7 @@ const FAQ: { q: string; a: string }[] = [
 
 export default function PlanosFaq() {
   const [open, setOpen] = useState<number | null>(null);
+  const days = useTrialDays();
   return (
     <section className="mx-auto max-w-3xl space-y-4 pt-4">
       <h2 className="text-center text-2xl font-black tracking-tight text-slate-900">Perguntas frequentes</h2>
@@ -46,7 +48,7 @@ export default function PlanosFaq() {
               {f.q}
               <ChevronDown className={cn("h-4 w-4 shrink-0 text-slate-400 transition-transform", open === i && "rotate-180")} />
             </button>
-            {open === i && <p className="pb-4 text-sm leading-relaxed text-slate-600">{f.a}</p>}
+            {open === i && <p className="pb-4 text-sm leading-relaxed text-slate-600">{f.a.replace("{DIAS}", String(days))}</p>}
           </div>
         ))}
       </div>

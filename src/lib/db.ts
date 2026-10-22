@@ -1026,7 +1026,8 @@ const ensureSupabaseStoreExists = async (storeId?: string) => {
   }
 
   const trialEndsDate = new Date();
-  trialEndsDate.setDate(trialEndsDate.getDate() + 7);
+  const { data: tdRaw } = await (supabase as any).rpc('get_trial_days');
+  trialEndsDate.setDate(trialEndsDate.getDate() + (Number(tdRaw) > 0 ? Number(tdRaw) : 14));
 
   const storeToInsert = sanitizeTablePayload('stores', {
     id: storeId,

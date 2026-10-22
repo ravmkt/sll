@@ -267,7 +267,8 @@ Deno.serve(async (req) => {
     }
 
     // 4.6 Trial de 7 dias por modulo (1x por loja/modulo, so para quem ja tem plano pago)
-    const TRIAL_DAYS = 7;
+    const { data: tdRaw } = await supabaseAdmin.rpc("get_trial_days");
+    const TRIAL_DAYS = Number(tdRaw) > 0 ? Number(tdRaw) : 14;
     let trialDays = 0;
     let existingTrial: { id: string; asaas_subscription_id: string | null; current_period_end: string | null } | null = null;
 

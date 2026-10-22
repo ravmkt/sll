@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Check, X, ArrowRight, Smartphone, Layers, LayoutGrid, PlayCircle, Sparkles } from 'lucide-react';
 
 import { useLandingPlans, type Cycle } from '@/hooks/useLandingPlans';
+import { useTrialDays } from '@/hooks/useTrialDays';
 
 const CTA = '/auth?mode=signup&module=vidlytics';
 
@@ -35,6 +36,7 @@ const DIFFS = [
 
 export default function VidlyticsLanding() {
   const [cycle, setCycle] = useState<Cycle>('anual');
+  const trialDays = useTrialDays();
   const { plans: PLANS, cycles: CYCLES } = useLandingPlans();
   const topPlan = PLANS.find((p) => p.id === 'scale') ?? PLANS[PLANS.length - 1];
   const bigText = topPlan
@@ -75,7 +77,7 @@ export default function VidlyticsLanding() {
           <div className="flex items-center gap-4">
             <Link to="/auth" className="hidden sm:block text-sm text-gray-500 hover:text-gray-900">Entrar</Link>
             <Link to={CTA} className="bg-gray-900 hover:bg-blue-600 text-white px-6 py-2.5 rounded-full font-medium transition shadow-lg shadow-gray-900/20">
-              Teste Grátis 7 Dias
+              Teste Grátis {trialDays} Dias
             </Link>
           </div>
         </div>
@@ -100,7 +102,7 @@ export default function VidlyticsLanding() {
               Widgets de vídeo interativos para o seu e-commerce. Retenha a atenção do seu cliente, mostre o produto em ação e impulsione sua taxa de conversão em poucos cliques.
             </p>
             <Link to={CTA} className="inline-flex bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full text-lg font-bold transition shadow-xl shadow-blue-600/30 items-center justify-center gap-2">
-              Comece seu Teste Grátis de 7 Dias <ArrowRight className="w-5 h-5" />
+              Comece seu Teste Grátis de {trialDays} Dias <ArrowRight className="w-5 h-5" />
             </Link>
             <p className="mt-4 text-sm text-gray-500">Instalação em 2 minutos. Sem fidelidade.</p>
           </div>
@@ -208,7 +210,7 @@ export default function VidlyticsLanding() {
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Escolha o plano ideal para sua loja</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Cadastre-se e ganhe 7 dias de Acesso Total (Plano Scale) para rodar na sua loja. Sem necessidade de cartão de crédito.
+              Cadastre-se e ganhe {trialDays} dias de Acesso Total (Plano Scale) para rodar na sua loja. Sem necessidade de cartão de crédito.
             </p>
           </div>
 
@@ -284,7 +286,7 @@ export default function VidlyticsLanding() {
                     p.highlight ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                   }`}
                 >
-                  Testar 7 Dias Grátis
+                  Testar {trialDays} Dias Grátis
                 </button>
                 <p className={`text-xs text-center mt-3 ${p.highlight ? 'text-gray-400' : 'text-gray-500'}`}>
                   Já quer assinar?{' '}
@@ -307,7 +309,7 @@ export default function VidlyticsLanding() {
             onClick={() => setTrialOpen(false)}
             role="dialog"
             aria-modal="true"
-            aria-label="Teste grátis por 7 dias"
+            aria-label={`Teste grátis por ${trialDays} dias`}
           >
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 relative" onClick={(e) => e.stopPropagation()}>
               <button
@@ -318,10 +320,10 @@ export default function VidlyticsLanding() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <span className="inline-block px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold mb-4">7 dias de Acesso Total · Plano Scale</span>
+              <span className="inline-block px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold mb-4">{trialDays} dias de Acesso Total · Plano Scale</span>
               <h3 className="text-2xl font-bold mb-2">Crie sua conta grátis</h3>
               <p className="text-sm text-gray-600 mb-5">
-                Leva menos de 1 minuto. Você usa tudo do plano Scale por 7 dias para rodar na sua loja, sem cartão de crédito.
+                Leva menos de 1 minuto. Você usa tudo do plano Scale por {trialDays} dias para rodar na sua loja, sem cartão de crédito.
               </p>
               <ul className="space-y-2 text-sm mb-6">
                 {[trialLimit, 'Todos os formatos liberados', 'Escolha o plano só no fim do teste'].map((x) => (
@@ -364,9 +366,9 @@ export default function VidlyticsLanding() {
           <p className="text-xl text-indigo-100 mb-10">Crie sua conta em segundos. Não pedimos cartão de crédito. Risco zero para você testar na sua loja real.</p>
           <div className="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-2xl text-left">
             <h3 className="font-bold text-gray-900 text-xl mb-2">Crie sua conta</h3>
-            <p className="text-sm text-gray-600 mb-4">Leva menos de 1 minuto. Seu teste de 7 dias começa na hora, sem cartão.</p>
+            <p className="text-sm text-gray-600 mb-4">Leva menos de 1 minuto. Seu teste de {trialDays} dias começa na hora, sem cartão.</p>
             <Link to={CTA} className="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center font-bold py-4 rounded-xl transition shadow-lg">
-              Iniciar Trial de 7 Dias
+              Iniciar Trial de {trialDays} Dias
             </Link>
             <p className="text-xs text-gray-500 mt-3">
               Ao se cadastrar, você concorda com os <Link to="/termos" className="underline">Termos de Uso</Link> e a{' '}
