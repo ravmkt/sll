@@ -5,7 +5,7 @@ import type { ElementType, KeyboardEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Activity, ArrowRight, TrendingDown, TrendingUp, Check, Clock, Copy, DollarSign, Eye, Gift,
-  MousePointerClick, Package, Play, Radio, Shirt, MessageCircle,
+  MousePointerClick, Package, Play, Radio, Shirt, MessageCircle, ArrowUpRight, Lightbulb, Plug,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
@@ -150,6 +150,49 @@ function buildInsight(d: DashData, hasVid: boolean): { title: string; text: stri
   };
 }
 
+function ModulePreview({ slug }: { slug: string }) {
+  const wrap = 'relative flex h-28 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-[#0094eb]/10 via-slate-50 to-slate-100 p-3';
+  if (slug === 'vidlytics') {
+    return (
+      <div className={wrap} aria-hidden="true">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className={`relative h-full w-16 rounded-lg bg-white shadow-sm ring-1 ring-slate-200 ${i === 1 ? '-translate-y-1 scale-105' : ''}`}>
+            <div className="absolute inset-1 rounded-md bg-gradient-to-b from-slate-200 to-slate-300" />
+            <div className="absolute left-1/2 top-1/2 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow">
+              <Play className="ml-0.5 h-3 w-3 fill-[#0094eb] text-[#0094eb]" />
+            </div>
+            <div className="absolute bottom-2 left-2 right-2 h-1 rounded-full bg-white/80" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (slug === 'live_commerce') {
+    return (
+      <div className={wrap} aria-hidden="true">
+        <div className="relative h-full w-40 rounded-lg bg-white p-1.5 shadow-sm ring-1 ring-slate-200">
+          <div className="h-full rounded-md bg-gradient-to-br from-slate-200 to-slate-300" />
+          <span className="absolute left-3 top-3 rounded bg-rose-500 px-1.5 py-0.5 text-[8px] font-black uppercase text-white">Ao vivo</span>
+          <div className="absolute bottom-3 right-3 h-5 w-10 rounded bg-white/90 shadow" />
+        </div>
+        <div className="flex h-full w-14 flex-col justify-center gap-1.5">
+          <div className="h-2 w-full rounded-full bg-white shadow-sm" />
+          <div className="h-2 w-3/4 rounded-full bg-white shadow-sm" />
+          <div className="h-2 w-full rounded-full bg-white shadow-sm" />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className={wrap} aria-hidden="true">
+      <div className="flex w-44 flex-col gap-1.5">
+        <div className="w-3/4 rounded-lg rounded-bl-sm bg-white px-2 py-1.5 shadow-sm ring-1 ring-slate-200"><div className="h-1.5 w-full rounded-full bg-slate-200" /></div>
+        <div className="ml-auto w-2/3 rounded-lg rounded-br-sm bg-[#0094eb] px-2 py-1.5 shadow-sm"><div className="h-1.5 w-full rounded-full bg-white/70" /></div>
+        <div className="w-4/5 rounded-lg rounded-bl-sm bg-white px-2 py-1.5 shadow-sm ring-1 ring-slate-200"><div className="h-1.5 w-full rounded-full bg-slate-200" /></div>
+      </div>
+    </div>
+  );
+}
 export default function Dashboard() {
   const navigate = useNavigate();
   const { store, storeId } = useLoja() as { store: any; storeId: string | null };
@@ -263,6 +306,7 @@ export default function Dashboard() {
     }
   };
 
+  void hubCta;
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -336,22 +380,31 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Modulos da sua loja */}
-        <div id="meus-modulos" data-tour="modules" className="scroll-mt-24 space-y-3">
-          <div>
-            <h2 className="text-lg font-black text-slate-900">Módulos da sua Loja</h2>
-            <p className="text-sm text-slate-500">Gerencie e ative as ferramentas para a sua operação</p>
+        {/* Mais possibilidades para a sua loja */}
+        <div id="meus-modulos" data-tour="modules" className="scroll-mt-24 space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-black text-slate-900">Mais possibilidades para a sua loja</h2>
+              <p className="text-sm text-slate-500">Use o que já está ativo. Experimente ou contrate o próximo módulo no seu ritmo.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard/planos')}
+              className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+            >
+              Ver módulos e planos <ArrowRight className="h-3 w-3" />
+            </button>
           </div>
           {(() => {
             type ShopMod = (typeof showcaseMods)[number];
-            const ownedSet = new Set<string>([...data.owned, ...apps.map((a) => a.slug)]);
+            const ownedSet = new Set<string>([...data.owned, ...apps.map((x) => x.slug)]);
             const bySlug = new Map<string, ShopMod>();
-            (apps as unknown as ShopMod[]).forEach((a) => bySlug.set(a.slug, a));
-            showcaseMods.forEach((s) => bySlug.set(s.slug, s));
+            (apps as unknown as ShopMod[]).forEach((x) => bySlug.set(x.slug, x));
+            showcaseMods.forEach((x) => bySlug.set(x.slug, x));
             const rank = (m: ShopMod) => (ownedSet.has(m.slug) ? 0 : m.status === 'coming_soon' ? 2 : 1);
             const list = Array.from(bySlug.values())
               .filter((m) => m.status !== 'hidden' && !/^module de teste/i.test(m.name))
-              .sort((a, b) => rank(a) - rank(b));
+              .sort((x, y) => rank(x) - rank(y));
 
             if (list.length === 0) {
               return loading ? null : (
@@ -360,7 +413,7 @@ export default function Dashboard() {
             }
 
             return (
-              <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-3">
                 {list.map((m) => {
                   const owned = ownedSet.has(m.slug);
                   const maint = m.status === 'maintenance';
@@ -369,50 +422,38 @@ export default function Dashboard() {
                   const Icon = ICONS[m.slug] ?? Package;
                   const route = (m.route_path || ROUTES[m.slug]) as string | undefined;
                   const isJoined = joined.has(m.slug) || data.waitlist.includes(m.slug);
-                  const benefits = (m.benefits ?? []).slice(0, 3);
 
                   return (
-                    <div key={m.slug} className={`${CARD} flex h-full flex-col gap-4 p-5`}>
-                      <div className="flex items-start justify-between gap-3">
-                        {m.logo_url ? (
-                          <img src={m.logo_url} alt={m.name} className="h-10 w-auto max-w-[60%] object-contain object-left" />
-                        ) : (
+                    <div key={m.slug} className={`${CARD} flex h-full flex-col justify-between gap-4 p-4`}>
+                      <div className="space-y-4">
+                        <ModulePreview slug={m.slug} />
+                        <div className="flex items-center justify-between gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
                             <Icon className="h-5 w-5 text-[#0094eb]" />
                           </div>
-                        )}
-                        {maint ? (
-                          <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-amber-700">Em manutenção</span>
-                        ) : owned && trial ? (
-                          <span className="shrink-0 rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#0094eb]">
-                            Em teste: {trial} {trial === 1 ? 'dia' : 'dias'}
-                          </span>
-                        ) : owned ? (
-                          <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">● Ativo</span>
-                        ) : soon ? (
-                          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">Em breve</span>
-                        ) : (
-                          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-600">Disponível</span>
-                        )}
+                          {maint ? (
+                            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-700">{'\u2022'} Em manutenção</span>
+                          ) : owned && trial ? (
+                            <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#0094eb]">
+                              {'\u2022'} Em teste: {trial} {trial === 1 ? 'dia' : 'dias'}
+                            </span>
+                          ) : owned ? (
+                            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">{'\u2022'} Ativo</span>
+                          ) : soon ? (
+                            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-500">{'\u2022'} Em breve</span>
+                          ) : (
+                            <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#0094eb]">{'\u2022'} Teste grátis disponível</span>
+                          )}
+                        </div>
+                        <div className="space-y-1.5">
+                          <h3 className="text-lg font-bold text-slate-900">{m.name}</h3>
+                          {m.description && (
+                            <p className="line-clamp-3 text-sm font-medium leading-relaxed text-slate-600">{m.description}</p>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="flex-1 space-y-2">
-                        <h3 className="text-lg font-semibold text-slate-900">{m.name}</h3>
-                        {m.description && (
-                          <p className="line-clamp-3 text-sm font-medium leading-relaxed text-slate-700">{m.description}</p>
-                        )}
-                        {benefits.length > 0 && (
-                          <ul className="space-y-1.5 pt-1">
-                            {benefits.map((b) => (
-                              <li key={b} className="flex items-start gap-2 text-xs font-medium text-slate-700">
-                                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0094eb]" /> {b}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-
-                      <div className="mt-auto pt-1">
+                      <div className="mt-auto space-y-2">
                         {maint ? (
                           <button type="button" disabled className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-4 py-2.5 text-xs font-bold text-slate-500">
                             Em manutenção
@@ -422,9 +463,9 @@ export default function Dashboard() {
                             <button
                               type="button"
                               onClick={() => navigate(route)}
-                              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#007fcc]"
+                              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 transition-colors hover:border-[#0094eb] hover:text-[#0094eb]"
                             >
-                              Acessar Módulo <ArrowRight className="h-3.5 w-3.5" />
+                              Acessar {m.name} <ArrowRight className="h-3.5 w-3.5" />
                             </button>
                           ) : null
                         ) : soon ? (
@@ -441,6 +482,13 @@ export default function Dashboard() {
                         ) : (
                           <ModuleTrialButton slug={m.slug} route={route} />
                         )}
+                        <p className="text-center text-[11px] font-medium text-slate-500">
+                          {maint
+                            ? 'Voltamos em instantes.'
+                            : owned
+                              ? trial ? `Aproveite o teste: ${trial === 1 ? 'falta 1 dia' : `faltam ${trial} dias`}.` : 'Seu módulo está pronto para usar.'
+                              : soon ? 'Avisaremos quando abrir.' : 'Explore o módulo antes de contratar.'}
+                        </p>
                       </div>
                     </div>
                   );
@@ -449,79 +497,97 @@ export default function Dashboard() {
             );
           })()}
         </div>
-        {/* Pulso de hoje + dica */}
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <div className={`${CARD} flex flex-col gap-4 p-5`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                </span>
-                <h3 className="text-base font-black text-slate-900">Movimentação de Hoje</h3>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Atividade de hoje</span>
-            </div>
-            {hasVid ? (
-              <div className="grid grid-cols-3 gap-2">
-                <Mini label="Pessoas que interagiram" value={pulse ? int(pulse.interactions) : '—'} />
-                <Mini label="Cliques em comprar" value={pulse ? int(pulse.buyClicks) : '—'} />
-                <Mini label="Sessões com vídeo engajado" value={pulse ? int(pulse.engaged) : '—'} />
-              </div>
-            ) : noModule ? (
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard/planos')}
-                className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-left transition-colors hover:border-[#0094eb]"
-              >
-                <span className="text-sm font-black text-slate-900">Ative seu primeiro módulo</span>
-                <span className="text-sm text-slate-700">Assim você acompanha o engajamento dos seus clientes aqui.</span>
-                <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb]">
-                  Ver planos <ArrowRight className="h-3 w-3" />
-                </span>
-              </button>
-            ) : !loading ? (
-              <p className="rounded-xl bg-slate-50 px-4 py-4 text-sm font-medium text-slate-600">
-                A atividade dos seus módulos ativos aparecerá aqui.
-              </p>
-            ) : null}
-            <p className="mt-auto text-sm text-slate-700">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
+        {/* Sua operacao, sem perder o ritmo */}
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-black text-slate-900">Sua operação, sem perder o ritmo</h2>
+            <p className="text-sm text-slate-500">Acompanhe o dia da loja e volte rápido ao que importa.</p>
           </div>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <div className={`${CARD} flex flex-col gap-4 p-5`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                  </span>
+                  <h3 className="text-base font-black text-slate-900">Movimentação de Hoje</h3>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Atividade de hoje</span>
+              </div>
+              {hasVid ? (
+                <div className="grid grid-cols-3 gap-2">
+                  <Mini label="Pessoas que interagiram" value={pulse ? int(pulse.interactions) : '\u2014'} />
+                  <Mini label="Cliques em comprar" value={pulse ? int(pulse.buyClicks) : '\u2014'} />
+                  <Mini label="Sessões com vídeo engajado" value={pulse ? int(pulse.engaged) : '\u2014'} />
+                </div>
+              ) : noModule ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard/planos')}
+                  className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-left transition-colors hover:border-[#0094eb]"
+                >
+                  <span className="text-sm font-black text-slate-900">Ative seu primeiro módulo</span>
+                  <span className="text-sm text-slate-700">Assim você acompanha o engajamento dos seus clientes aqui.</span>
+                  <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb]">
+                    Ver planos <ArrowRight className="h-3 w-3" />
+                  </span>
+                </button>
+              ) : !loading ? (
+                <p className="rounded-xl bg-slate-50 px-4 py-4 text-sm font-medium text-slate-600">
+                  A atividade dos seus módulos ativos aparecerá aqui.
+                </p>
+              ) : null}
+              <div className="mt-auto flex items-center justify-between gap-3">
+                <p className="text-sm text-slate-700">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
+                <button
+                  type="button"
+                  onClick={() => navigate(METRICS_ROUTE)}
+                  className="inline-flex shrink-0 cursor-pointer items-center gap-1 text-xs font-bold text-[#0094eb] hover:underline"
+                >
+                  Ver pedidos <ArrowUpRight className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
 
-          <div className={`${CARD} flex flex-col gap-3 p-5`} data-tour="noah">
-            <div className="flex items-center gap-3">
-              <AssetImg src={NOAH_LOGO} alt="Dica do Noah" className="h-12 w-auto max-w-[220px] shrink-0 object-contain" fallback={<h3 className="text-base font-black text-slate-900">Dica do Noah</h3>} />
+            <div className={`${CARD} flex flex-col gap-3 p-5`}>
+              <div>
+                <h3 className="text-base font-black text-slate-900">Continue de onde precisar</h3>
+                <p className="text-sm text-slate-500">Atalhos para o que você mais usa.</p>
+              </div>
+              <div className="flex flex-1 flex-col gap-2">
+                {[
+                  { key: 'cat', icon: Package, title: 'Vídeos e catálogo', text: 'Organize o conteúdo da sua loja', to: PRODUCTS_ROUTE, tour: undefined as string | undefined },
+                  { key: 'ins', icon: Lightbulb, title: 'Insights', text: insight.title, to: TIPS_ROUTE, tour: 'noah' as string | undefined },
+                  { key: 'inst', icon: Plug, title: 'Instalação', text: 'Acesse a configuração dos módulos', to: '/dashboard/integracao', tour: undefined as string | undefined },
+                ].map((it) => (
+                  <button
+                    key={it.key}
+                    type="button"
+                    data-tour={it.tour}
+                    onClick={() => navigate(it.to)}
+                    className="group flex flex-1 cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition-all hover:border-[#0094eb]/40 hover:bg-slate-50"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+                      <it.icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-slate-900">{it.title}</p>
+                      <p className="truncate text-xs font-medium text-slate-500">{it.text}</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#0094eb]" />
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-slate-800">{insight.title}</p>
-              <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">
-                {insight.text}
-                {hubCta && (
-                  <>
-                    {' '}
-                    <button
-                      type="button"
-                      onClick={() => (/^https?:\/\//i.test(hubCta.url) ? window.open(hubCta.url, '_blank', 'noopener') : navigate(hubCta.url))}
-                      className="inline cursor-pointer font-bold text-[#0094eb] hover:underline"
-                    >
-                      Saiba mais →
-                    </button>
-                  </>
-                )}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate(TIPS_ROUTE)}
-              className="inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
-            >
-              Ver mais dicas e insights <ArrowRight className="h-3 w-3" />
-            </button>
           </div>
         </div>
-
         <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
         {/* Clube + Academy */}
+        <div className="-mb-3">
+          <h2 className="text-lg font-black text-slate-900">Para ir além, no seu tempo</h2>
+          <p className="text-sm text-slate-500">Cresça com indicações e aprenda com quem já vende.</p>
+        </div>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <div data-tour="club" className={`${CARD} flex flex-col gap-4 p-5`}>
             <div className="flex flex-col items-start gap-2">
@@ -612,3 +678,4 @@ export default function Dashboard() {
 
 void Section;
 void Clock;
+void NOAH_LOGO;
