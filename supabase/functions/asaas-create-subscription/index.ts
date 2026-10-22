@@ -285,7 +285,18 @@ Deno.serve(async (req) => {
         .eq("store_id", store_id)
         .in("status", ["active", "lifetime", "past_due"])
         .limit(1);
-      if (!(hist && hist.length > 0) && paidSubs && paidSubs.length > 0) trialDays = TRIAL_DAYS;
+      if (!(hist && hist.length > 0) && paidSubs && paidSubs.length > 0) {
+        trialDays = TRIAL_DAYS;
+        const { data: stUrl } = await supabaseAdmin.from("stores").select("store_url").eq("id", store_id).maybeSingle();
+        const domain = stUrl?.store_url ?? null;
+        if (domain && resolvedModuleKey && resolvedModuleKey !== "bundle") {
+          const { data: blocked } = await supabaseAdmin.rpc("trial_blocked_by", {
+            p_store_id: store_id, p_module: resolvedModuleKey, p_domain: domain, p_ignore_own: false,
+          });
+          if (Array.isArray(blocked) && blocked.length > 0) trialDays = 0;
+          else await supabaseAdmin.rpc("register_trial_use", { p_module: resolvedModuleKey, p_store_id: store_id, p_domain: domain });
+        }
+      }
 
       const { data: tr } = await supabaseAdmin
         .from("subscriptions")

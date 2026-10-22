@@ -31,6 +31,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<WizardData>(EMPTY);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -74,7 +75,12 @@ export default function OnboardingPage() {
       manager_email: d.manager_email.trim(), connection_method: d.connection_method,
     };
     if (HEX.test(d.brand.primary_color) && HEX.test(d.brand.secondary_color)) p_data.brand_settings = d.brand;
-    const { error: e } = await sb.rpc('save_onboarding_progress', { p_store_id: storeId, p_step: to, p_completed: completed, p_data });
+    const { data: res, error: e } = await sb.rpc('save_onboarding_progress', { p_store_id: storeId, p_step: to, p_completed: completed, p_data });
+    const denied: string[] = Array.isArray(res?.trial_denied) ? res.trial_denied : [];
+    if (denied.length) {
+      const names = denied.map((m) => (m === 'live_commerce' ? 'Live Commerce' : m === 'vidlytics' ? 'Vidlytics' : m)).join(', ');
+      setNotice(`Este domínio já usou o período de teste de: ${names}. Para usar o módulo, escolha um plano em Planos.`);
+    }
     if (!silent) setBusy(false);
     if (e) { if (!silent) setError(e.message); return false; }
     return true;
@@ -138,6 +144,7 @@ export default function OnboardingPage() {
         {step === 2 && <StepManager data={data} storeId={storeId} onChange={onChange} />}
         {step === 3 && <StepConnection data={data} storeId={storeId} onChange={onChange} />}
         {step === 4 && <StepSummary data={data} storeId={storeId} busy={busy} onFinish={finish} />}
+        {notice && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">{notice}</p>}
         {error && <p className="mt-4 rounded-xl bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-700">{error}</p>}
       </main>
 
@@ -147,7 +154,9 @@ export default function OnboardingPage() {
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:invisible">
             <ArrowLeft size={14} /> Voltar
           </button>
-          <button type="button" onClick={later} disabled={busy} className="cursor-pointer text-[11px] text-slate-400 underline hover:text-slate-600">Configurar mais tarde</button>
+          {step > 1 ? (
+            <button type="button" onClick={later} disabled={busy} className="cursor-pointer text-[11px] text-slate-400 underline hover:text-slate-600">Configurar mais tarde</button>
+          ) : <span />}
           {step < TOTAL ? (
             <button type="button" onClick={next} disabled={busy}
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0094eb] px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50">
