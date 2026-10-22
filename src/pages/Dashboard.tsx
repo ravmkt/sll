@@ -243,7 +243,6 @@ export default function Dashboard() {
   const visibleMods = sortModules(data.modules.filter((m) => m.status !== 'hidden'), data.owned);
   const showcaseMods = visibleMods.filter((m) => !data.owned.includes(m.slug));
   const apps = visibleMods.filter((m) => data.owned.includes(m.slug) && m.status !== 'maintenance' && (m.route_path || ROUTES[m.slug]));
-  const modCols = 'md:grid-cols-2 lg:grid-cols-3';
 
   const copy = () => {
     if (!referralLink) return;
@@ -326,7 +325,7 @@ export default function Dashboard() {
             <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Cliques & interações" value={hasVid ? int(data.clicksRange) : '0'} hint={hasVid ? 'Comprar e WhatsApp' : 'Ative o Vidlytics'} icon={MousePointerClick} /></div>
             <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Taxa de conversão (CTR)" value={hasVid ? pct(data.ctrRange) : '0%'} hint={hasVid ? 'Cliques ÷ visualizações' : 'Ative o Vidlytics'} icon={Activity} /></div>
           </div>
-          <div className="-mb-7 flex justify-end">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={() => navigate(METRICS_ROUTE)}
@@ -337,125 +336,84 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {apps.length > 0 && (
-          <div className="space-y-3">
-<h2 className="text-lg font-black text-slate-900">Meus módulos</h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {apps.map((m) => {
-                const AppIcon = ICONS[m.slug] ?? Package;
-                const appRoute = (m.route_path || ROUTES[m.slug]) as string;
-                const appTrial = data.trialDays[m.slug];
-                return (
+        {/* Linha de modulos: Meus modulos + Conheca outros modulos */}
+        <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
+          <div className="flex flex-col gap-3">
+            <h2 className="text-lg font-black text-slate-900">Meus módulos</h2>
+            <div className={`grid flex-1 grid-cols-1 items-stretch gap-4 ${apps.length > 1 ? 'sm:grid-cols-2' : ''}`}>
+              {apps.length === 0 ? (
+                noModule ? (
                   <button
-                    key={m.slug}
                     type="button"
-                    onClick={() => navigate(appRoute)}
-                    className={`${CARD} group flex cursor-pointer flex-col items-center gap-3 p-4 text-center transition-all hover:-translate-y-0.5 hover:border-[#0094eb]/40 hover:shadow-md`}
+                    onClick={() => navigate('/dashboard/planos')}
+                    className="flex cursor-pointer flex-col items-start justify-center gap-1 rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-left transition-colors hover:border-[#0094eb]"
                   >
-                    <div className="flex h-24 w-full items-center justify-center">
-                      {m.logo_url ? (
-                        <img src={m.logo_url} alt={m.name} className="max-h-24 w-auto max-w-full object-contain" />
-                      ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0094eb]/10 text-[#0094eb] ring-1 ring-[#0094eb]/15">
-                          <AppIcon className="h-7 w-7" />
-                        </div>
-                      )}
-                    </div>
-                    {!m.logo_url && <p className="truncate text-sm font-black text-slate-900">{m.name}</p>}
-                    <span
-                      className={`mt-auto rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
-                        appTrial ? 'bg-orange-50 text-[#fd8539]' : 'bg-emerald-50 text-emerald-700'
-                      }`}
-                    >
-                      {appTrial ? `Em teste: ${appTrial} ${appTrial === 1 ? 'dia' : 'dias'}` : '\u25CF Ativo'}
+                    <span className="text-base font-black text-slate-900">Ative seu primeiro módulo</span>
+                    <span className="text-sm text-slate-700">Escolha um módulo para começar a vender mais.</span>
+                    <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb]">
+                      Ver planos <ArrowRight className="h-3 w-3" />
                     </span>
                   </button>
-                );
-              })}
+                ) : (
+                  <div className={`${CARD} p-5 text-sm text-slate-500`}>{loading ? 'Carregando...' : 'Nenhum módulo disponível no momento.'}</div>
+                )
+              ) : (
+                apps.map((m) => {
+                  const AppIcon = ICONS[m.slug] ?? Package;
+                  const appRoute = (m.route_path || ROUTES[m.slug]) as string;
+                  const appTrial = data.trialDays[m.slug];
+                  return (
+                    <div key={m.slug} className={`${CARD} flex flex-col gap-4 p-5`}>
+                      <div className="flex items-start justify-between gap-3">
+                        {m.logo_url ? (
+                          <img src={m.logo_url} alt={m.name} className="h-20 w-auto max-w-[65%] object-contain object-left" />
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0094eb]/15 to-[#0094eb]/5 ring-1 ring-[#0094eb]/15">
+                              <AppIcon className="h-9 w-9 text-[#0094eb]" />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-900">{m.name}</h3>
+                          </div>
+                        )}
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                            appTrial ? 'bg-orange-50 text-[#fd8539]' : 'bg-emerald-50 text-emerald-700'
+                          }`}
+                        >
+                          {appTrial ? `Em teste: ${appTrial} ${appTrial === 1 ? 'dia' : 'dias'}` : '\u25CF Ativo'}
+                        </span>
+                      </div>
+                      {m.description && <p className="text-sm font-medium leading-relaxed text-slate-700">{m.description}</p>}
+                      {m.slug === 'vidlytics' && (
+                        <div className="grid grid-cols-3 gap-2">
+                          <Mini label="Vídeos cadastrados" value={int(data.totalVideos)} />
+                          <Mini label="Views no período" value={int(data.viewsRange)} />
+                          <Mini label="CTR do período" value={pct(data.ctrRange)} />
+                        </div>
+                      )}
+                      <div className="mt-auto pt-1">
+                        <button
+                          type="button"
+                          onClick={() => navigate(appRoute)}
+                          className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700"
+                        >
+                          Acessar painel <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
-        )}
-
-        {/* Pulso de hoje + dica */}
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <div className={`${CARD} flex flex-col gap-4 p-5`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                </span>
-                <h3 className="text-base font-black text-slate-900">Movimentação de Hoje</h3>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Atividade de hoje</span>
-            </div>
-            {hasVid ? (
-              <div className="grid grid-cols-3 gap-2">
-                <Mini label="Pessoas que interagiram" value={pulse ? int(pulse.interactions) : '—'} />
-                <Mini label="Cliques em comprar" value={pulse ? int(pulse.buyClicks) : '—'} />
-                <Mini label="Sessões com vídeo engajado" value={pulse ? int(pulse.engaged) : '—'} />
-              </div>
-            ) : noModule ? (
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard/planos')}
-                className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-left transition-colors hover:border-[#0094eb]"
-              >
-                <span className="text-sm font-black text-slate-900">Ative seu primeiro módulo</span>
-                <span className="text-sm text-slate-700">Assim você acompanha o engajamento dos seus clientes aqui.</span>
-                <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb]">
-                  Ver planos <ArrowRight className="h-3 w-3" />
-                </span>
-              </button>
-            ) : !loading ? (
-              <p className="rounded-xl bg-slate-50 px-4 py-4 text-sm font-medium text-slate-600">
-                A atividade dos seus módulos ativos aparecerá aqui.
-              </p>
-            ) : null}
-            <p className="mt-auto text-sm text-slate-700">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
-          </div>
-
-          <div className={`${CARD} flex flex-col gap-3 p-5`} data-tour="noah">
-            <div className="flex items-center gap-3">
-              <AssetImg src={NOAH_LOGO} alt="Dica do Noah" className="h-12 w-auto max-w-[220px] shrink-0 object-contain" fallback={<h3 className="text-base font-black text-slate-900">Dica do Noah</h3>} />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-slate-800">{insight.title}</p>
-              <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">
-                {insight.text}
-                {hubCta && (
-                  <>
-                    {' '}
-                    <button
-                      type="button"
-                      onClick={() => (/^https?:\/\//i.test(hubCta.url) ? window.open(hubCta.url, '_blank', 'noopener') : navigate(hubCta.url))}
-                      className="inline cursor-pointer font-bold text-[#0094eb] hover:underline"
-                    >
-                      Saiba mais →
-                    </button>
-                  </>
-                )}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate(TIPS_ROUTE)}
-              className="inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
-            >
-              Ver mais dicas e insights <ArrowRight className="h-3 w-3" />
-            </button>
-          </div>
-        </div>
-
-        <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
         {/* Modulos vindos do Master */}
-        <div id="meus-modulos" data-tour="modules" className="scroll-mt-24">
-          <div className="space-y-3">
-<h2 className="text-lg font-black text-slate-900">Conheça outros módulos e impulsione suas vendas</h2>
+        <div id="meus-modulos" data-tour="modules" className="flex scroll-mt-24 flex-col">
+          <div className="flex flex-1 flex-col gap-3">
+<h2 className="text-lg font-black text-slate-900">Conheça outros módulos</h2>
             {showcaseMods.length === 0 && !loading && (
               <p className="text-sm text-slate-500">Você já usa todos os módulos disponíveis.</p>
             )}
-            <div className={`-mx-1 flex snap-x snap-mandatory gap-6 overflow-x-auto px-1 pb-2 md:mx-0 md:grid ${modCols} md:overflow-visible md:px-0 md:pb-0`}>
+            <div className="flex flex-1 flex-col gap-4">
               {showcaseMods.map((m) => {
                 const owned = data.owned.includes(m.slug);
                 if (m.status === 'hidden') return null;
@@ -468,7 +426,7 @@ export default function Dashboard() {
                 const isJoined = joined.has(m.slug) || data.waitlist.includes(m.slug);
 
                 return (
-                  <div key={m.slug} className={`${CARD} flex w-[85%] shrink-0 snap-center flex-col gap-4 p-5 md:w-auto ${owned ? '' : 'border-dashed'}`}>
+                  <div key={m.slug} className={`${CARD} flex flex-1 flex-col gap-4 p-5 ${owned ? '' : 'border-dashed'}`}>
                     <div className="flex items-start justify-between gap-3">
                       {m.logo_url ? (
                         <img src={m.logo_url} alt={m.name} className="h-20 w-auto max-w-[65%] object-contain object-left" />
@@ -570,7 +528,80 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        </div>
 
+        {/* Pulso de hoje + dica */}
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className={`${CARD} flex flex-col gap-4 p-5`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                </span>
+                <h3 className="text-base font-black text-slate-900">Movimentação de Hoje</h3>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Atividade de hoje</span>
+            </div>
+            {hasVid ? (
+              <div className="grid grid-cols-3 gap-2">
+                <Mini label="Pessoas que interagiram" value={pulse ? int(pulse.interactions) : '—'} />
+                <Mini label="Cliques em comprar" value={pulse ? int(pulse.buyClicks) : '—'} />
+                <Mini label="Sessões com vídeo engajado" value={pulse ? int(pulse.engaged) : '—'} />
+              </div>
+            ) : noModule ? (
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard/planos')}
+                className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-left transition-colors hover:border-[#0094eb]"
+              >
+                <span className="text-sm font-black text-slate-900">Ative seu primeiro módulo</span>
+                <span className="text-sm text-slate-700">Assim você acompanha o engajamento dos seus clientes aqui.</span>
+                <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb]">
+                  Ver planos <ArrowRight className="h-3 w-3" />
+                </span>
+              </button>
+            ) : !loading ? (
+              <p className="rounded-xl bg-slate-50 px-4 py-4 text-sm font-medium text-slate-600">
+                A atividade dos seus módulos ativos aparecerá aqui.
+              </p>
+            ) : null}
+            <p className="mt-auto text-sm text-slate-700">Os módulos trabalham no piloto automático enquanto você cuida do resto.</p>
+          </div>
+
+          <div className={`${CARD} flex flex-col gap-3 p-5`} data-tour="noah">
+            <div className="flex items-center gap-3">
+              <AssetImg src={NOAH_LOGO} alt="Dica do Noah" className="h-12 w-auto max-w-[220px] shrink-0 object-contain" fallback={<h3 className="text-base font-black text-slate-900">Dica do Noah</h3>} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-slate-800">{insight.title}</p>
+              <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">
+                {insight.text}
+                {hubCta && (
+                  <>
+                    {' '}
+                    <button
+                      type="button"
+                      onClick={() => (/^https?:\/\//i.test(hubCta.url) ? window.open(hubCta.url, '_blank', 'noopener') : navigate(hubCta.url))}
+                      className="inline cursor-pointer font-bold text-[#0094eb] hover:underline"
+                    >
+                      Saiba mais →
+                    </button>
+                  </>
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(TIPS_ROUTE)}
+              className="inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
+            >
+              Ver mais dicas e insights <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+
+        <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
         {/* Clube + Academy */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <div data-tour="club" className={`${CARD} flex flex-col gap-4 p-5`}>
