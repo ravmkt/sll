@@ -61,6 +61,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
   const { confirm, dialog } = useConfirm();
   const filled = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const saveOk = useRef(false);
 
   const load = useCallback(async (fill: boolean) => {
     setLoading(true);
@@ -103,11 +104,13 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
 
   const save = async () => {
     if (!m) return;
+    saveOk.current = false;
     setSaving(true);
     try {
       const logoArg = logo === (m.logo_url ?? null) ? null : (logo ?? '');
       const feats = parseFeatures(featuresText);
       await updateHubModule(slug, name, status, status === 'active' ? pub : false, Number(sort) || 1, logoArg, description, feats);
+      saveOk.current = true;
       toast.success('Módulo atualizado.');
       await load(true);
     } catch (e: any) {
@@ -225,12 +228,14 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
                   onClick={async () => {
                     const ok = await confirm({
                       title: 'Salvar direto ao vivo',
-                      message: 'As alterações vão para todas as lojas agora, sem passar pela Loja Teste.',
+                      message: 'As alterações vão para todas as lojas agora, e também na Loja Teste.',
                       confirmLabel: 'Salvar ao vivo',
                     });
                     if (!ok) return;
                     await save();
-                    if (staging.hasDraft) await staging.discard();
+                    if (!saveOk.current) return;
+                    const { error: syncErr } = await (supabase as any).rpc('admin_staging_sync_live', { p_scope: 'module', p_key: slug, p_config: formCfg });
+                    if (syncErr) toast.error(syncErr.message); else await staging.load();
                   }}
                   className="cursor-pointer rounded-lg bg-[#fd8539] px-5 py-2 text-[13px] font-bold text-white hover:opacity-90 disabled:opacity-40"
                 >
