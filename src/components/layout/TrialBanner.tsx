@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Clock, AlertTriangle, Sparkles, Flame } from 'lucide-react';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
 import { useModuleTrials } from '@/hooks/useModuleTrials';
@@ -9,18 +9,27 @@ const PLANOS_PATH = '/dashboard/planos';
 const BANNER_H = 44;
 const EXPIRED_WINDOW_MS = 72 * 60 * 60 * 1000;
 
+// Modulo da rota atual: /dashboard/modules/<slug> ou /dashboard/dicas/<slug>
+function currentModuleKey(p: string): string | null {
+  const m = p.match(/^\/dashboard\/(?:modules|dicas)\/([a-z0-9-]+)/i);
+  return m ? m[1].replace(/-/g, '_') : null;
+}
+
 export function TrialBanner() {
   const { state, daysLeft, endsAt } = useTrialStatus();
-  const { loading, hasPaid, trials } = useModuleTrials();
+  const { loading, trials } = useModuleTrials();
   const [tick, setTick] = useState(0);
   const [open, setOpen] = useState(false);
 
-  const mod = useMemo(() => {
-    const active = trials.filter((t) => !t.expired).sort((a, b) => a.daysLeft - b.daysLeft)[0];
-    return active ?? trials[0] ?? null;
-  }, [trials]);
+  const { pathname } = useLocation();
+  const current = currentModuleKey(pathname);
+  const mod = useMemo(
+    () => (current ? trials.find((t) => t.moduleKey === current) ?? null : null),
+    [trials, current]
+  );
 
-  const storeVisible = !loading && !hasPaid && (state === 'trial' || state === 'expired');
+  // A barra por loja foi removida: so aparece dentro do modulo em teste
+  const storeVisible = false;
   const moduleVisible = !loading && !storeVisible && !!mod;
   const kind: 'store' | 'module' | null = storeVisible ? 'store' : moduleVisible ? 'module' : null;
 
@@ -73,7 +82,7 @@ export function TrialBanner() {
 
   const Icon = expired ? AlertTriangle : last ? Flame : urgent ? Clock : Sparkles;
 
-  const what = trials.length === 1 && label ? ` do ${label}` : '';
+  const what = label ? ` do ${label}` : '';
   let text: string;
   if (isModule) {
     text = expired
@@ -98,7 +107,7 @@ export function TrialBanner() {
   }
   const to = isModule && mod ? `${PLANOS_PATH}?modulo=${mod.moduleKey}` : PLANOS_PATH;
   const cta = expired ? 'Reativar agora' : isModule ? 'Assinar' : 'Escolher plano';
-  const multi = trials.length > 1;
+  const multi = false;
 
   const dismiss = () => {
     try {

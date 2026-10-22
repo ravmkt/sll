@@ -464,9 +464,16 @@ export default function Dashboard() {
                         </button>
                       ) : owned ? (
                         route ? (
-                          <button type="button" onClick={() => navigate(route)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700">
+                          <div className="flex flex-col gap-2">
+                            <button type="button" onClick={() => navigate(route)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700">
                             Acessar painel <ArrowRight className="h-3.5 w-3.5" />
                           </button>
+                            {trial ? (
+                              <button type="button" onClick={() => navigate(`/dashboard/planos?modulo=${m.slug}`)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white hover:bg-[#e07128]">
+                                <Clock className="h-3.5 w-3.5" /> Assine agora
+                              </button>
+                            ) : null}
+                          </div>
                         ) : null
                       ) : soon ? (
                         <button
