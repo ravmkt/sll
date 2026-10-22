@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { LiveCommerceDatabaseService } from '@/services/LiveCommerceDatabaseService';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -473,13 +473,31 @@ export function LiveFormDialog({
         live_player_config: currentTpl?.player || null,
       };
 
+      let savedId: string | null = liveId;
+      let previousCouponCodes: string[] = [];
       if (liveId) {
+        const prev: any = await LiveCommerceDatabaseService.getLiveById(liveId);
+        previousCouponCodes = Array.isArray(prev?.coupons)
+          ? prev.coupons.map((c: any) => String(c?.code || ""))
+          : [];
         await LiveCommerceDatabaseService.updateLive(liveId, payload);
         toast.success("Live atualizada com sucesso!");
       } else {
         payload.is_active = true;
-        await LiveCommerceDatabaseService.createLive(payload);
+        const created: any = await LiveCommerceDatabaseService.createLive(payload);
+        savedId = created?.id ?? null;
         toast.success("Live criada com sucesso!");
+      }
+
+      if (savedId) {
+        try {
+          await LiveCommerceDatabaseService.syncLiveItems(
+            savedId, storeId, liveProducts, cleanedCoupons, previousCouponCodes,
+          );
+        } catch (syncErr: any) {
+          console.error(syncErr);
+          toast.warning("Live salva, mas produtos/cupons não sincronizaram com o cockpit: " + (syncErr?.message || "erro"));
+        }
       }
 
       onSaved();
