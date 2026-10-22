@@ -10,6 +10,7 @@ import { useLoja } from '@/contexts/LojaContext';
 import { getActiveSubscriptions } from '@/services/subscriptions/getStoreSubscriptions';
 import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
 import { LiveOverview } from '@/components/live/LiveOverview';
+import ModuleHeader from '@/components/layout/ModuleHeader';
 import type { CommercialDateOccurrence } from '@/lib/commercialDates';
 
 const CLUBE_PATH = '/dashboard/afiliados';
@@ -66,7 +67,7 @@ const money = (e: EventRow) => {
   return Number((md as any).value ?? (md as any).amount ?? (md as any).total ?? 0) || 0;
 };
 
-const sectionTitle = 'text-xs font-bold uppercase tracking-wider text-slate-400';
+const sectionTitle = 'text-xl font-bold leading-tight text-slate-900';
 const card = 'bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm';
 
 function Stat(props: { label: string; value: string; sub: string; icon: React.ElementType; tone: string; badge?: string; children?: React.ReactNode }) {
@@ -278,6 +279,7 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
   return (
     <>
       <div className="mx-auto max-w-6xl space-y-8 p-6 pb-4">
+        <ModuleHeader module="live" />
         <div>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-1">
             <h3 className={sectionTitle}>Faturamento das lives</h3>
@@ -338,7 +340,7 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
           <div className={card}>
             <div className="mb-3 flex items-center gap-2">
               <Radio size={16} className="text-[#EA580C]" />
-              <h3 className="text-sm font-bold uppercase tracking-wide text-slate-800">Próxima live</h3>
+              <h3 className="text-base font-black text-slate-900">Próxima live</h3>
             </div>
             {next ? (
               <div className="space-y-3">
@@ -384,7 +386,7 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
           <div className={card}>
             <div className="mb-3 flex items-center gap-2">
               <Trophy size={16} className="text-[#EA580C]" />
-              <h3 className="text-sm font-bold uppercase tracking-wide text-slate-800">Engajamento das lives</h3>
+              <h3 className="text-base font-black text-slate-900">Engajamento das lives</h3>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[

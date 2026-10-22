@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AppFooter } from '@/components/layout/AppFooter';
 import { TopBar } from '@/components/layout/TopBar';
-import MarketingBanner from '@/components/marketing/MarketingBanner';
+import ModuleHeader from '@/components/layout/ModuleHeader';
 import MarketingHost from '@/components/marketing/MarketingHost';
 import { useLoja } from '@/contexts/LojaContext';
 import AppToggle from '@/components/vidlytics/AppToggle';
@@ -28,7 +28,6 @@ export default function Vidlytics() {
     (window as any).__sllActiveTab = activeTab;
     window.dispatchEvent(new CustomEvent('sll:active-tab', { detail: activeTab }));
   }, [activeTab]);
-  const [, setMkBanner] = useState(false);
   const { storeId } = useLoja() as { storeId: string | null };
 
   useEffect(() => {
@@ -65,7 +64,7 @@ export default function Vidlytics() {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 p-6">
-            {activeTab === 'visao-geral' && <MarketingBanner storeId={storeId} location="vidlytics" onActive={setMkBanner} />}
+            {activeTab === 'visao-geral' && <ModuleHeader module="vidlytics" />}
 
             {activeTab === 'visao-geral' && <VisaoGeralTab />}
             {activeTab === 'resultados' && <ResultadosTab />}

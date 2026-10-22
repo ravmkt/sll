@@ -9,7 +9,13 @@ const dismissed = (id: string) => {
 };
 
 // Banner da Home gerenciado em Master > Marketing > Banners (local "Home do SLL" ou "Todos")
-export default function DashboardNotice({ storeId }: { storeId: string | null | undefined }) {
+export default function DashboardNotice({
+  storeId,
+  location = 'home',
+}: {
+  storeId: string | null | undefined;
+  location?: Parameters<typeof fetchActive>[1];
+}) {
   const navigate = useNavigate();
   const [item, setItem] = useState<ActiveItem | null>(null);
   const counted = useRef<Set<string>>(new Set());
@@ -17,13 +23,13 @@ export default function DashboardNotice({ storeId }: { storeId: string | null | 
   useEffect(() => {
     if (!storeId) return;
     let alive = true;
-    fetchActive(storeId, 'home').then((list) => {
+    fetchActive(storeId, location).then((list) => {
       if (!alive) return;
       const next = list.find((i) => i.kind === 'banner' && !!i.image_url && !dismissed(i.id)) ?? null;
       setItem(next);
     });
     return () => { alive = false; };
-  }, [storeId]);
+  }, [storeId, location]);
 
   useEffect(() => {
     if (!item || !storeId || counted.current.has(item.id)) return;
