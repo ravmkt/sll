@@ -322,9 +322,9 @@ export default function Dashboard() {
             </div>
 
             <Metric label="Catálogo ativo" value={int(data.products)} hint="SKUs sincronizados" icon={Package} onClick={() => navigate(PRODUCTS_ROUTE)} />
-            <Metric label="Visualizações" value={hasVid ? int(data.viewsRange) : '—'} hint={hasVid ? 'Vídeos no período' : 'Ative o Vidlytics'} icon={Eye} />
-            <Metric label="Cliques & interações" value={hasVid ? int(data.clicksRange) : '—'} hint={hasVid ? 'Comprar e WhatsApp' : 'Ative o Vidlytics'} icon={MousePointerClick} />
-            <Metric label="Taxa de conversão (CTR)" value={hasVid ? pct(data.ctrRange) : '—'} hint={hasVid ? 'Cliques ÷ visualizações' : 'Ative o Vidlytics'} icon={Activity} />
+            <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Visualizações" value={hasVid ? int(data.viewsRange) : '0'} hint={hasVid ? 'Vídeos no período' : 'Ative o Vidlytics'} icon={Eye} /></div>
+            <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Cliques & interações" value={hasVid ? int(data.clicksRange) : '0'} hint={hasVid ? 'Comprar e WhatsApp' : 'Ative o Vidlytics'} icon={MousePointerClick} /></div>
+            <div className={hasVid ? 'contents' : 'opacity-50 [&>*]:h-full'}><Metric label="Taxa de conversão (CTR)" value={hasVid ? pct(data.ctrRange) : '0%'} hint={hasVid ? 'Cliques ÷ visualizações' : 'Ative o Vidlytics'} icon={Activity} /></div>
           </div>
           <div className="-mb-7 flex justify-end">
             <button
@@ -352,9 +352,9 @@ export default function Dashboard() {
                     onClick={() => navigate(appRoute)}
                     className={`${CARD} group flex cursor-pointer flex-col items-center gap-3 p-4 text-center transition-all hover:-translate-y-0.5 hover:border-[#0094eb]/40 hover:shadow-md`}
                   >
-                    <div className="flex h-16 w-full items-center justify-center">
+                    <div className="flex h-24 w-full items-center justify-center">
                       {m.logo_url ? (
-                        <img src={m.logo_url} alt={m.name} className="max-h-16 w-auto max-w-full object-contain" />
+                        <img src={m.logo_url} alt={m.name} className="max-h-24 w-auto max-w-full object-contain" />
                       ) : (
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0094eb]/10 text-[#0094eb] ring-1 ring-[#0094eb]/15">
                           <AppIcon className="h-7 w-7" />
