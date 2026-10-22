@@ -592,6 +592,7 @@ card.onclick = function () {
 }
 
 function stopLivePolling() {
+    stopLiveRealtime();
   if (liveChatPollTimer) { clearInterval(liveChatPollTimer); liveChatPollTimer = null; }
   if (liveSpotlightPollTimer) { clearInterval(liveSpotlightPollTimer); liveSpotlightPollTimer = null; }
   liveChatSeenIds = {};
@@ -601,7 +602,66 @@ liveActiveProducts = [];
 
 }
 
-function startLivePolling(live) {
+var liveRt = { ws: null, timer: null, hb: null, ref: 0, stopped: true, tries: 0 };
+
+  function stopLiveRealtime() {
+    liveRt.stopped = true;
+    if (liveRt.hb) { clearInterval(liveRt.hb); liveRt.hb = null; }
+    if (liveRt.timer) { clearTimeout(liveRt.timer); liveRt.timer = null; }
+    if (liveRt.ws) { try { liveRt.ws.close(); } catch (e) {} liveRt.ws = null; }
+  }
+
+  function startLiveRealtime(live) {
+    if (!live || !live.id || typeof WebSocket === 'undefined') return;
+    stopLiveRealtime();
+    liveRt.stopped = false;
+    var topic = 'realtime:sll-live-' + live.id;
+    var wsUrl = supabaseUrl.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(supabaseAnonKey) + '&vsn=1.0.0';
+    var ws;
+    try { ws = new WebSocket(wsUrl); } catch (e) { return; }
+    liveRt.ws = ws;
+    function send(event, payload, t) {
+      try { ws.send(JSON.stringify({ topic: t || topic, event: event, payload: payload || {}, ref: String(++liveRt.ref) })); } catch (e) {}
+    }
+    ws.onopen = function () {
+      liveRt.tries = 0;
+      send('phx_join', {
+        config: {
+          broadcast: { self: false },
+          presence: { key: '' },
+          postgres_changes: [
+            { event: '*', schema: 'live_commerce', table: 'live_events', filter: 'live_id=eq.' + live.id },
+            { event: 'UPDATE', schema: 'live_commerce', table: 'lives', filter: 'id=eq.' + live.id },
+            { event: 'INSERT', schema: 'live_commerce', table: 'live_chat_messages', filter: 'live_id=eq.' + live.id }
+          ]
+        },
+        access_token: supabaseAnonKey
+      });
+      liveRt.hb = setInterval(function () { send('heartbeat', {}, 'phoenix'); }, 25000);
+    };
+    ws.onmessage = function (msg) {
+      var m;
+      try { m = JSON.parse(msg.data); } catch (e) { return; }
+      if (m.event !== 'postgres_changes') return;
+      var d = m.payload && m.payload.data;
+      if (!d) return;
+      if (d.table === 'live_chat_messages') fetchLiveChatMessages(live);
+      else if (d.table === 'lives') fetchLiveSpotlight(live);
+      else if (d.table === 'live_events') {
+        var t = d.record && d.record.event_type;
+        if (t === 'product.show' || t === 'product.hide') fetchLiveSpotlight(live);
+      }
+    };
+    ws.onclose = function () {
+      if (liveRt.hb) { clearInterval(liveRt.hb); liveRt.hb = null; }
+      if (liveRt.stopped) return;
+      liveRt.tries++;
+      liveRt.timer = setTimeout(function () { if (!liveRt.stopped) startLiveRealtime(live); }, Math.min(30000, 2000 * liveRt.tries));
+    };
+  }
+
+  function startLivePolling(live) {
+    startLiveRealtime(live);
   if (!live || !live.id) return;
 
   fetchLiveChatMessages(live);

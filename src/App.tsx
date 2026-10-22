@@ -32,6 +32,9 @@ const Login = lazy(() => import('./pages/auth/Login'));
 const Vidlytics = lazy(() => import('./pages/modules/Vidlytics'));
 const LiveCommerce = lazy(() => import('./pages/modules/LiveCommerce'));
 const LiveAdminPage = lazy(() => import('./pages/modules/LiveAdminPage'));
+const LiveCockpit = lazy(() => import('./pages/streamsell/LiveCockpit'));
+const StreamDestinos = lazy(() => import('./pages/streamsell/Destinos'));
+const LegacyLiveRedirect = lazy(() => import('./pages/streamsell/LegacyLiveRedirect'));
 const Products = lazy(() => import('./pages/Products'));
 const Medidas = lazy(() => import('./pages/Medidas'));
 const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
@@ -134,8 +137,34 @@ function AppRoutes() {
             )
           }
         />
-        <Route
-          path="/dashboard/modules/live-commerce"
+        <Route path="/dashboard/modules/live-commerce" element={<LegacyLiveRedirect to="/stream-sell" />} />
+            <Route path="/dashboard/modules/live-commerce/admin/:id" element={<LegacyLiveRedirect to="/stream-sell/live/:id/admin" />} />
+            <Route
+              path="/stream-sell/live/:id/cockpit"
+              element={
+                user ? (
+                  <SubscriptionGate>
+                    <ModuleGate moduleKey="live_commerce"><LiveCockpit /></ModuleGate>
+                  </SubscriptionGate>
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
+              }
+            />
+            <Route
+              path="/stream-sell/destinos"
+              element={
+                user ? (
+                  <SubscriptionGate>
+                    <ModuleGate moduleKey="live_commerce"><StreamDestinos /></ModuleGate>
+                  </SubscriptionGate>
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
+              }
+            />
+            <Route
+          path="/stream-sell"
           element={
             user ? (
               <SubscriptionGate>
@@ -147,7 +176,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/dashboard/modules/live-commerce/admin/:id"
+          path="/stream-sell/live/:id/admin"
           element={
             user ? (
               <SubscriptionGate>
