@@ -387,7 +387,7 @@ export default function VisaoGeralTab() {
       {/* 2. Faturamento */}
       <div>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3 px-1">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Faturamento</h3>
+          <h3 className="text-xl font-bold leading-tight text-slate-900">Faturamento</h3>
           <div className="flex flex-wrap items-center gap-2">
             {periodo === 'custom' && (
               <>
@@ -482,7 +482,7 @@ export default function VisaoGeralTab() {
 
       {/* 3. Consumo do Plano */}
       <div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 px-1">
+        <h3 className="text-xl font-bold leading-tight text-slate-900 mb-3 px-1">
           Consumo do Plano
         </h3>
         <div data-tour="vg-consumo" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
