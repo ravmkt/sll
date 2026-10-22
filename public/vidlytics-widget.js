@@ -1014,14 +1014,17 @@ playerWrap.appendChild(liveSpotlightOverlayEl);
 
 card.onclick = function () {
   trackLiveEvent(live.id, 'product_click', { product_id: p.id, source: 'live_modal' });
+  var go = p.url || '';
   try {
-    // Cookie de SESSÃO (sem expires) - atribuição só vale enquanto o navegador estiver aberto
-    document.cookie = 'vly_live_id=' + encodeURIComponent(live.id) + '; path=/; SameSite=Lax';
-    if (p.id) {
-      document.cookie = 'vly_product_id=' + encodeURIComponent(p.id) + '; path=/; SameSite=Lax';
+    if (window.SLL && window.SLL.liveAttr) {
+      window.SLL.liveAttr.mark(live, p);
+      go = window.SLL.liveAttr.tag(go, live, p);
+    } else {
+      document.cookie = 'vly_live_id=' + encodeURIComponent(live.id) + '; path=/; SameSite=Lax';
+      if (p.id) document.cookie = 'vly_product_id=' + encodeURIComponent(p.id) + '; path=/; SameSite=Lax';
     }
   } catch (_) {}
-  if (p.url) window.open(p.url, '_blank');
+  if (go) window.open(go, '_blank');
 };
 
       grid.appendChild(card);

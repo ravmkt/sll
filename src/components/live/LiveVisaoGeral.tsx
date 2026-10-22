@@ -20,6 +20,7 @@ const EV = {
   click: ['product_click', 'click'],
   paid: ['purchase', 'order_paid'],
   pending: ['order_pending', 'checkout_started'],
+  whatsapp: ['whatsapp_click'],
 };
 
 type Periodo = 'today' | '7' | '30' | 'custom';
@@ -46,6 +47,14 @@ interface EventRow {
   event_type: string;
   product_id: string | null;
   metadata: Record<string, unknown> | null;
+}
+
+interface SaleRow {
+  order_id: string | null;
+  total: number | null;
+  status: string | null;
+  module: string | null;
+  source_id: string | null;
 }
 
 const ymd = (d: Date) =>
@@ -119,6 +128,7 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
   const [dests, setDests] = useState<{ platform: string; status: string }[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [chatCount, setChatCount] = useState(0);
+  const [sales, setSales] = useState<SaleRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [cycle, setCycle] = useState<{ status: string; label: string; date: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -170,6 +180,14 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
       .gte('created_at', startIso)
       .lte('created_at', endIso)
       .then(({ count }) => { if (alive) setChatCount(count ?? 0); });
+    supabase
+      .from('sll_conversions')
+      .select('order_id,total,status,module,source_id')
+      .eq('store_id', storeId)
+      .gte('created_at', startIso)
+      .lte('created_at', endIso)
+      .limit(5000)
+      .then(({ data }) => { if (alive) setSales((data || []) as unknown as SaleRow[]); });
     return () => { alive = false; };
   }, [storeId, startIso, endIso]);
 
@@ -200,10 +218,15 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
 
   const count = (types: string[]) => events.filter((e) => types.includes(e.event_type)).length;
   const sum = (types: string[]) => events.filter((e) => types.includes(e.event_type)).reduce((s, e) => s + money(e), 0);
-  const paidRevenue = sum(EV.paid);
-  const paidOrders = count(EV.paid);
-  const pendingRevenue = sum(EV.pending);
-  const pendingOrders = count(EV.pending);
+  const liveIds = new Set(lives.map((l) => l.id));
+  const liveSales = sales.filter((s) => liveIds.has(String(s.source_id || '').replace(/^live_/, '')) || ['live_commerce', 'stream_sell'].includes(String(s.module || '')));
+  const paidSales = liveSales.filter((s) => s.status === 'paid');
+  const pendingSales = liveSales.filter((s) => s.status === 'pending');
+  const salesSum = (rows: SaleRow[]) => rows.reduce((t, s) => t + Number(s.total || 0), 0);
+  const paidRevenue = paidSales.length ? salesSum(paidSales) : sum(EV.paid);
+  const paidOrders = paidSales.length || count(EV.paid);
+  const pendingRevenue = pendingSales.length ? salesSum(pendingSales) : sum(EV.pending);
+  const pendingOrders = pendingSales.length || count(EV.pending);
   const viewsEv = count(EV.view);
   const clicksEv = count(EV.click);
 
@@ -363,11 +386,12 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
               <Trophy size={16} className="text-[#EA580C]" />
               <h3 className="text-sm font-bold uppercase tracking-wide text-slate-800">Engajamento das lives</h3>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
                 { l: 'Visualizações', v: viewsEv, i: Eye },
                 { l: 'Mensagens no chat', v: chatCount, i: MessageSquare },
                 { l: 'Cliques em produtos', v: clicksEv, i: MousePointerClick },
+                { l: 'Cliques no WhatsApp', v: count(EV.whatsapp), i: MessageSquare },
               ].map((m) => (
                 <div key={m.l} className="rounded-xl border border-slate-100 p-3">
                   <p className="flex items-center gap-1 text-[10px] font-semibold uppercase text-slate-500"><m.i size={12} />{m.l}</p>

@@ -380,6 +380,74 @@ function renderLiveWidget(live) {
   trackLiveEvent(live.id, 'view', { source: 'promo_card' });
 }
 
+window.SLL = window.SLL || {};
+window.SLL.liveAttr = window.SLL.liveAttr || (function () {
+  var waCfg = null, waDone = false, waCbs = [];
+  function rootDom() {
+    try {
+      var h = window.location.hostname || '';
+      if (!h || h === 'localhost' || /^(\d{1,3}\.){3}\d{1,3}$/.test(h)) return '';
+      var parts = h.split('.');
+      for (var i = parts.length - 2; i >= 0; i--) {
+        var c = parts.slice(i).join('.');
+        document.cookie = 'vly_probe=1; path=/; domain=.' + c + '; SameSite=Lax';
+        if (document.cookie.indexOf('vly_probe=1') !== -1) {
+          document.cookie = 'vly_probe=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.' + c + '; SameSite=Lax';
+          return '; domain=.' + c;
+        }
+      }
+    } catch (_) {}
+    return '';
+  }
+  function mark(live, p) {
+    var exp = new Date(Date.now() + 30 * 864e5).toUTCString();
+    var s = '; expires=' + exp + '; path=/' + rootDom() + '; SameSite=Lax';
+    document.cookie = 'vly_live_id=' + encodeURIComponent(live.id) + s;
+    document.cookie = 'vly_live_ts=' + Date.now() + s;
+    if (p && p.id) document.cookie = 'vly_product_id=' + encodeURIComponent(p.id) + s;
+  }
+  function tag(url, live, p) {
+    if (!url) return url;
+    try {
+      var u = new URL(url, window.location.href);
+      u.searchParams.set('src', 'live_' + live.id);
+      u.searchParams.set('utm_source', 'stream_sell');
+      u.searchParams.set('utm_campaign', live.id);
+      if (p && p.id) u.searchParams.set('utm_content', p.id);
+      return u.toString();
+    } catch (_) { return url; }
+  }
+  function loadWa(cb) {
+    if (waDone) { cb(waCfg); return; }
+    waCbs.push(cb);
+    if (waCbs.length > 1) return;
+    supabaseFetch('store_settings_public?select=whatsapp_number,whatsapp_message_template&store_id=eq.' + encodeURIComponent(storeId) + '&limit=1', { method: 'GET' })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (rows) {
+        var r0 = rows && rows[0];
+        var num = r0 ? String(r0.whatsapp_number || '').replace(/\D/g, '') : '';
+        if (num && (num.length === 10 || num.length === 11)) num = '55' + num;
+        waCfg = num ? { number: num, tpl: String(r0.whatsapp_message_template || '') } : null;
+      })
+      .catch(function () { waCfg = null; })
+      .then(function () {
+        waDone = true;
+        var q = waCbs.slice();
+        waCbs = [];
+        q.forEach(function (f) { f(waCfg); });
+      });
+  }
+  function waUrl(cfg, live, p) {
+    var t = cfg.tpl || '';
+    var msg = (t.indexOf('{{live_title}}') !== -1 || t.indexOf('{{product_name}}') !== -1)
+      ? t
+      : 'Olá! Estou na live {{live_title}} e tenho interesse no produto {{product_name}}.';
+    msg = msg.split('{{live_title}}').join(live.title || 'da loja').split('{{product_name}}').join((p && p.name) || 'produto');
+    return 'https://wa.me/' + cfg.number + '?text=' + encodeURIComponent(msg);
+  }
+  return { mark: mark, tag: tag, loadWa: loadWa, waUrl: waUrl };
+})();
+
 var liveOverlay = null;
 var liveChatPollTimer = null;
 var liveSpotlightPollTimer = null;
@@ -518,16 +586,35 @@ playerWrap.appendChild(liveSpotlightOverlayEl);
       price.textContent = p.price || '';
       card.appendChild(price);
 
+      var waBtn = document.createElement('button');
+      waBtn.type = 'button';
+      waBtn.textContent = 'Comprar pelo WhatsApp';
+      waBtn.style.cssText = 'display:none;width:100%;margin-top:8px;padding:8px 10px;border:0;border-radius:10px;background:#25d366;color:#fff;font-size:12px;font-weight:700;cursor:pointer;align-items:center;justify-content:center;';
+      window.SLL.liveAttr.loadWa(function (cfg) { if (cfg) waBtn.style.display = 'flex'; });
+      waBtn.onclick = function (e) {
+        e.stopPropagation();
+        window.SLL.liveAttr.loadWa(function (cfg) {
+          if (!cfg) return;
+          trackLiveEvent(live.id, 'whatsapp_click', { product_id: p.id, source: 'live_modal' });
+          window.SLL.liveAttr.mark(live, p);
+          window.open(window.SLL.liveAttr.waUrl(cfg, live, p), '_blank');
+        });
+      };
+      card.appendChild(waBtn);
+
 card.onclick = function () {
   trackLiveEvent(live.id, 'product_click', { product_id: p.id, source: 'live_modal' });
+  var go = p.url || '';
   try {
-    // Cookie de SESSÃO (sem expires) - atribuição só vale enquanto o navegador estiver aberto
-    document.cookie = 'vly_live_id=' + encodeURIComponent(live.id) + '; path=/; SameSite=Lax';
-    if (p.id) {
-      document.cookie = 'vly_product_id=' + encodeURIComponent(p.id) + '; path=/; SameSite=Lax';
+    if (window.SLL && window.SLL.liveAttr) {
+      window.SLL.liveAttr.mark(live, p);
+      go = window.SLL.liveAttr.tag(go, live, p);
+    } else {
+      document.cookie = 'vly_live_id=' + encodeURIComponent(live.id) + '; path=/; SameSite=Lax';
+      if (p.id) document.cookie = 'vly_product_id=' + encodeURIComponent(p.id) + '; path=/; SameSite=Lax';
     }
   } catch (_) {}
-  if (p.url) window.open(p.url, '_blank');
+  if (go) window.open(go, '_blank');
 };
 
       grid.appendChild(card);
