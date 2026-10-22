@@ -336,25 +336,27 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Launcher: Meus modulos */}
-        {(apps.length > 0 || noModule) && (
-          <div className="space-y-3">
+        {/* Linha de modulos: Meus modulos + Conheca outros modulos */}
+        <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
+          <div className="flex flex-col gap-3">
             <h2 className="text-lg font-black text-slate-900">Meus módulos</h2>
-            <div className="flex flex-wrap gap-4">
+            <div className={`grid flex-1 grid-cols-1 items-stretch gap-4 ${apps.length > 1 ? 'sm:grid-cols-2' : ''}`}>
               {apps.length === 0 ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/dashboard/planos')}
-                  className="flex h-20 w-full cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-slate-300 bg-white px-4 text-left transition-colors hover:border-[#0094eb] sm:w-72"
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-                    <Package className="h-6 w-6" />
+                noModule ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dashboard/planos')}
+                    className="flex min-h-[220px] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center transition-colors hover:border-[#0094eb]"
+                  >
+                    <Package className="h-8 w-8 text-slate-400" />
+                    <span className="text-sm font-black text-slate-900">Ative seu primeiro módulo</span>
+                    <span className="text-xs font-bold text-[#0094eb]">Ver planos</span>
+                  </button>
+                ) : (
+                  <div className={`${CARD} flex min-h-[220px] items-center justify-center p-6 text-sm text-slate-500`}>
+                    {loading ? 'Carregando...' : 'Nenhum módulo disponível no momento.'}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-black text-slate-900">Ative seu primeiro módulo</p>
-                    <p className="text-xs font-bold text-[#0094eb]">Ver planos</p>
-                  </div>
-                </button>
+                )
               ) : (
                 apps.map((m) => {
                   const AppIcon = ICONS[m.slug] ?? Package;
@@ -365,26 +367,116 @@ export default function Dashboard() {
                       key={m.slug}
                       type="button"
                       onClick={() => navigate(appRoute)}
-                      className={`${CARD} group flex h-20 w-full cursor-pointer items-center gap-4 px-4 text-left transition-all hover:-translate-y-0.5 hover:border-[#0094eb]/40 hover:shadow-md sm:w-72`}
+                      className={`${CARD} group flex h-full min-h-[220px] w-full cursor-pointer flex-col items-center justify-center gap-4 p-6 text-center transition-all hover:-translate-y-0.5 hover:border-[#0094eb]/40 hover:shadow-md`}
                     >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
-                        <AppIcon className="h-6 w-6 text-[#0094eb]" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-black text-slate-900">{m.name}</p>
-                        <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold ${appTrial ? 'text-[#fd8539]' : 'text-emerald-700'}`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${appTrial ? 'bg-[#fd8539]' : 'bg-emerald-500'}`} />
-                          {appTrial ? `Em teste: ${appTrial} ${appTrial === 1 ? 'dia' : 'dias'}` : 'Ativo'}
-                        </span>
-                      </div>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#0094eb]" />
+                      {m.logo_url ? (
+                        <img src={m.logo_url} alt={m.name} className="max-h-24 w-auto max-w-[80%] object-contain" />
+                      ) : (
+                        <>
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
+                            <AppIcon className="h-8 w-8 text-[#0094eb]" />
+                          </div>
+                          <p className="text-base font-black text-slate-900">{m.name}</p>
+                        </>
+                      )}
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                          appTrial ? 'bg-orange-50 text-[#fd8539]' : 'bg-emerald-50 text-emerald-700'
+                        }`}
+                      >
+                        {appTrial ? `Em teste: ${appTrial} ${appTrial === 1 ? 'dia' : 'dias'}` : '\u25CF Ativo'}
+                      </span>
                     </button>
                   );
                 })
               )}
             </div>
           </div>
-        )}
+
+          <div id="meus-modulos" data-tour="modules" className="flex scroll-mt-24 flex-col gap-3">
+            <h2 className="text-lg font-black text-slate-900">Conheça outros módulos</h2>
+            {(() => {
+              const list = showcaseMods.filter(
+                (m) => m.status !== 'hidden' && !/^module de teste/i.test(m.name) && !data.owned.includes(m.slug)
+              );
+              if (list.length === 0) {
+                return loading ? null : (
+                  <div className={`${CARD} flex flex-1 items-center p-5 text-sm text-slate-500`}>
+                    Você já usa todos os módulos disponíveis.
+                  </div>
+                );
+              }
+              return (
+                <div className="grid flex-1 grid-cols-1 items-stretch gap-4 sm:grid-cols-2">
+                  {list.map((m) => {
+                    const maint = m.status === 'maintenance';
+                    const soon = m.status === 'coming_soon';
+                    const Icon = ICONS[m.slug] ?? Package;
+                    const route = m.route_path || ROUTES[m.slug];
+                    const isJoined = joined.has(m.slug) || data.waitlist.includes(m.slug);
+                    return (
+                      <div
+                        key={m.slug}
+                        className={`${CARD} flex h-full flex-col gap-3 border-dashed p-4 ${list.length === 1 ? 'sm:col-span-2' : ''}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          {m.logo_url ? (
+                            <img src={m.logo_url} alt={m.name} className="h-12 w-auto max-w-[65%] object-contain object-left" />
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
+                                <Icon className="h-6 w-6 text-[#0094eb]" />
+                              </div>
+                              <h3 className="text-sm font-black text-slate-900">{m.name}</h3>
+                            </div>
+                          )}
+                          {maint ? (
+                            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">Manutenção</span>
+                          ) : soon ? (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">Em breve</span>
+                          ) : (
+                            <span className="rounded-full bg-[#0094eb]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0094eb]">Disponível</span>
+                          )}
+                        </div>
+
+                        {m.benefits.length > 0 && (
+                          <ul className="space-y-1.5">
+                            {m.benefits.slice(0, 3).map((b) => (
+                              <li key={b} className="flex items-start gap-2 text-xs font-medium text-slate-700">
+                                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0094eb]" /> {b}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+
+                        <div className="mt-auto pt-1">
+                          {maint ? (
+                            <button type="button" disabled className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-4 py-2.5 text-xs font-bold text-slate-500">
+                              Em manutenção
+                            </button>
+                          ) : soon ? (
+                            <button
+                              type="button"
+                              disabled={isJoined || busySlug === m.slug}
+                              onClick={() => onWait(m.slug)}
+                              className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold ${
+                                isJoined ? 'cursor-default bg-emerald-50 text-emerald-700' : 'cursor-pointer bg-[#0094eb] text-white hover:bg-[#007fcc] disabled:opacity-60'
+                              }`}
+                            >
+                              {isJoined ? <><Check className="h-3.5 w-3.5" /> Você está na lista</> : busySlug === m.slug ? 'Entrando...' : 'Lista de espera'}
+                            </button>
+                          ) : (
+                            <ModuleTrialButton slug={m.slug} route={route} />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
         {/* Pulso de hoje + dica */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <div className={`${CARD} flex flex-col gap-4 p-5`}>
@@ -530,128 +622,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Modulos vindos do Master */}
-        <div id="meus-modulos" data-tour="modules" className="scroll-mt-24">
-          <div className="space-y-3">
-<h2 className="text-lg font-black text-slate-900">Conheça outros módulos e impulsione suas vendas</h2>
-            {showcaseMods.length === 0 && !loading && (
-              <p className="text-sm text-slate-500">Você já usa todos os módulos disponíveis.</p>
-            )}
-            <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2">
-              {showcaseMods.map((m) => {
-                const owned = data.owned.includes(m.slug);
-                if (m.status === 'hidden' || /^module de teste/i.test(m.name)) return null;
-
-                const maint = m.status === 'maintenance';
-                const soon = m.status === 'coming_soon' && !owned;
-                const trial = data.trialDays[m.slug];
-                const Icon = ICONS[m.slug] ?? Package;
-                const route = m.route_path || ROUTES[m.slug];
-                const isJoined = joined.has(m.slug) || data.waitlist.includes(m.slug);
-
-                return (
-                  <div key={m.slug} className={`${CARD} flex h-full flex-col gap-4 p-5 ${owned ? '' : 'border-dashed'}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      {m.logo_url ? (
-                        <img src={m.logo_url} alt={m.name} className="h-20 w-auto max-w-[65%] object-contain object-left" />
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0094eb]/15 to-[#0094eb]/5 ring-1 ring-[#0094eb]/15">
-                            <Icon className="h-9 w-9 text-[#0094eb]" />
-                          </div>
-                          <h3 className="text-lg font-black text-slate-900">{m.name}</h3>
-                        </div>
-                      )}
-                      <div className="flex flex-col items-end gap-1">
-                        {maint ? (
-                          <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-amber-700">Em manutenção</span>
-                        ) : owned ? (
-                          <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">● Ativo</span>
-                        ) : soon ? (
-                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">Em breve</span>
-                        ) : (
-                          <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#0094eb]">Disponível</span>
-                        )}
-                        {owned && trial && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
-                            <Clock className="h-3 w-3" /> Teste: {trial} {trial === 1 ? 'dia' : 'dias'}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {m.description && <p className="text-sm font-medium leading-relaxed text-slate-700">{m.description}</p>}
-
-                    {owned && m.slug === 'vidlytics' ? (
-                      <div className="grid grid-cols-3 gap-2">
-                        <Mini label="Vídeos cadastrados" value={int(data.totalVideos)} />
-                        <Mini label="Views no período" value={int(data.viewsRange)} />
-                        <Mini label="CTR do período" value={pct(data.ctrRange)} />
-                      </div>
-                    ) : owned ? (
-                      <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
-                        {trial ? `Em período de teste: ${trial} ${trial === 1 ? 'dia restante' : 'dias restantes'}` : 'Módulo ativo na sua loja.'}
-                      </div>
-                    ) : (
-                      m.benefits.length > 0 && (
-                        <ul className="space-y-2">
-                          {m.benefits.map((b) => (
-                            <li key={b} className="flex items-start gap-2 text-sm font-medium text-slate-700">
-                              <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#0094eb]" /> {b}
-                            </li>
-                          ))}
-                        </ul>
-                      )
-                    )}
-
-                    <div className="mt-auto pt-1">
-                      {maint ? (
-                        <button type="button" disabled className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-4 py-2.5 text-xs font-bold text-slate-500">
-                          Em manutenção
-                        </button>
-                      ) : owned ? (
-                        route ? (
-                          <div className="flex flex-col gap-3">
-                            {trial ? (
-                              <div className="rounded-2xl border-2 border-[#fd8539] bg-gradient-to-b from-orange-50 to-white p-4 text-center shadow-sm">
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fd8539] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white">
-                                  <Clock className="h-3 w-3" /> Em teste
-                                </span>
-                                <p className="mt-2 text-xl font-black text-slate-900">
-                                  {trial === 1 ? 'Falta 1 dia' : `Faltam ${trial} dias`}
-                                </p>
-                                <p className="text-xs font-semibold text-slate-600">Assine para não perder o acesso.</p>
-                                <SubscribeModalButton slug={m.slug} className="mt-3 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#fd8539] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white hover:bg-[#e07128]">
-                                  Assine agora <ArrowRight className="h-3.5 w-3.5" />
-                                </SubscribeModalButton>
-                              </div>
-                            ) : null}
-                            <button type="button" onClick={() => navigate(route)} className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700">
-                              Acessar painel <ArrowRight className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ) : null
-                      ) : soon ? (
-                        <button
-                          type="button"
-                          disabled={isJoined || busySlug === m.slug}
-                          onClick={() => onWait(m.slug)}
-                          className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold ${
-                            isJoined ? 'cursor-default bg-emerald-50 text-emerald-700' : 'cursor-pointer bg-[#0094eb] text-white hover:bg-[#007fcc] disabled:opacity-60'
-                          }`}
-                        >
-                          {isJoined ? <><Check className="h-3.5 w-3.5" /> Você está na lista</> : busySlug === m.slug ? 'Entrando...' : 'Entrar na lista de espera'}
-                        </button>
-                      ) : (
-                        <ModuleTrialButton slug={m.slug} route={route} />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
       </div>
 
       {storeId && (
@@ -669,3 +639,4 @@ export default function Dashboard() {
 }
 
 void Section;
+void Clock;
