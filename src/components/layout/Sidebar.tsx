@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -52,6 +53,18 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const location = useLocation();
   const { signOut } = useAuth();
   const isExpanded = !isCollapsed;
+  const [hasTour, setHasTour] = useState<boolean>(() => !!(window as any).__sllTourAvailable);
+  useEffect(() => {
+    const w = window as any;
+    w.__sllTourHost = true;
+    window.dispatchEvent(new Event('sll:tour-host'));
+    const on = (e: Event) => setHasTour(!!(e as CustomEvent).detail);
+    window.addEventListener('sll:tour-available', on);
+    return () => {
+      w.__sllTourHost = false;
+      window.removeEventListener('sll:tour-available', on);
+    };
+  }, []);
   const ctx: any = useLoja();
   const storeId: string | null = ctx?.loja?.id ?? ctx?.store?.id ?? ctx?.storeId ?? ctx?.lojaId ?? null;
 
@@ -104,7 +117,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           {isExpanded ? (
             <img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="h-14 w-auto max-w-full object-contain" />
           ) : (
-            <img src="/assets/sll-hub-logo-ico.png" alt="SLL Hub" className="h-9 w-9 object-contain" />
+            <img src="/assets/sll-hub-logo-ico.png" alt="SLL Hub" className="h-11 w-11 object-contain" />
           )}
         </div>
       </div>
@@ -131,9 +144,25 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         </button>
       </div>
 
-      <nav className="flex-1 flex flex-col px-4 py-5 overflow-y-auto [&::-webkit-scrollbar]:hidden">
+      <nav className="flex min-h-0 flex-col px-4 py-5 overflow-y-auto [&::-webkit-scrollbar]:hidden">
         {GROUPS.map(renderGroup)}
       </nav>
+
+      <div className="flex min-h-0 flex-1 items-center justify-center px-4">
+        {hasTour && (
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('sll:tour-start'))}
+            title="Ver tour desta p&aacute;gina"
+            className={`inline-flex cursor-pointer items-center justify-center gap-2 border border-slate-200 bg-white text-xs font-bold text-slate-600 shadow-sm transition-colors hover:border-[#0094eb] hover:text-[#0094eb] ${
+              isExpanded ? 'w-full rounded-full px-3.5 py-2.5' : 'h-10 w-10 rounded-full'
+            }`}
+          >
+            <Lightbulb size={16} className="shrink-0 text-[#fd8539]" />
+            {isExpanded && <span>Ver tour desta p&aacute;gina</span>}
+          </button>
+        )}
+      </div>
 
       <div className="px-4 pt-3 pb-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
         {storeId && (

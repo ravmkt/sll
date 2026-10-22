@@ -55,14 +55,14 @@ export function VidlyticsSidebar({
             <img
               src="/assets/vidlytics-logo-wide.png"
               alt="Vidlytics"
-              className="h-10 w-auto object-contain"
+              className="h-14 w-auto max-w-full object-contain"
               onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
             />
           ) : (
             <img
               src="/assets/vidlytics-logo-ico.png"
               alt="Vidlytics"
-              className="h-9 w-9 object-contain"
+              className="h-11 w-11 object-contain"
               onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
             />
           )}

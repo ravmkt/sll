@@ -68,14 +68,11 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
       }`}
     >
       <div className="p-4 flex flex-col gap-3 h-24 justify-center border-b border-slate-200 dark:border-slate-800">
-        <div className="flex justify-center items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0094eb] to-[#fd8539] flex items-center justify-center shadow-sm shrink-0">
-            <Radio size={20} className="text-white" />
-          </div>
-          {isExpanded && (
-            <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
-              Stream Sell
-            </span>
+        <div className="flex justify-center items-center">
+          {isExpanded ? (
+            <img src="/assets/stream-sell-logo-wide.png" alt="Stream Sell" className="h-14 w-auto max-w-full object-contain" />
+          ) : (
+            <img src="/assets/stream-sell-logo-ico.png" alt="Stream Sell" className="h-11 w-11 object-contain" />
           )}
         </div>
       </div>
