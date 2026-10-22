@@ -53,7 +53,7 @@ export default function LiveCockpit() {
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <button type="button" onClick={() => navigate('/stream-sell')} className="p-2 rounded-lg hover:bg-slate-100">
+          <button type="button" onClick={() => navigate('/dashboard/modules/stream-sell')} className="p-2 rounded-lg hover:bg-slate-100">
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="min-w-0">

@@ -1,16 +1,14 @@
 import React from 'react';
 import {
-  Radio,
+  LayoutDashboard,
+  TrendingUp,
+  Film,
+  Users,
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
   ArrowLeft,
   LogOut,
-  LayoutDashboard,
-  BarChart3,
-  Users,
-  MessageSquare,
-  GraduationCap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
@@ -32,29 +30,12 @@ interface LiveSidebarProps {
   onToggle: () => void;
 }
 
-const MENU_GROUPS: { title: string; items: { id: LiveTab; label: string; icon: React.ElementType }[] }[] = [
-  {
-    title: 'Métricas',
-    items: [
-      { id: 'visao-geral', label: 'Visão Geral', icon: LayoutDashboard },
-      { id: 'resultados', label: 'Resultados', icon: BarChart3 },
-    ],
-  },
-  {
-    title: 'Operação',
-    items: [
-      { id: 'lives', label: 'Lives', icon: Radio },
-      { id: 'audiencia', label: 'Audiência', icon: Users },
-      { id: 'comentarios', label: 'Comentários', icon: MessageSquare },
-    ],
-  },
-  {
-    title: 'Ajustes',
-    items: [
-      { id: 'aparencia', label: 'Aparência', icon: Palette },
-      { id: 'treinamento', label: 'Treinamento', icon: GraduationCap },
-    ],
-  },
+const MENU_ITEMS: { id: LiveTab; label: string; icon: React.ElementType }[] = [
+  { id: 'visao-geral', label: 'Visão Geral', icon: LayoutDashboard },
+  { id: 'resultados', label: 'Resultados & Métricas', icon: TrendingUp },
+  { id: 'lives', label: 'Lives', icon: Film },
+  { id: 'audiencia', label: 'Audiência', icon: Users },
+  { id: 'aparencia', label: 'Aparência', icon: Palette },
 ];
 
 export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: LiveSidebarProps) {
@@ -100,42 +81,35 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
         </button>
       </div>
 
-      <nav className="min-h-0 px-4 py-4 overflow-y-auto [&::-webkit-scrollbar]:hidden">
-        {MENU_GROUPS.map((group, gi) => (
-          <div key={group.title} className={gi > 0 ? 'mt-5' : ''}>
-            {isExpanded ? (
-              <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                {group.title}
-              </p>
-            ) : (
-              gi > 0 && <div className="border-t border-slate-200 dark:border-slate-800 mb-3" />
-            )}
-            <div className="space-y-1">
-              {group.items.map((item) => {
-                const isActive = activeTab === item.id;
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => onTabChange(item.id)}
-                    title={!isExpanded ? item.label : undefined}
-                    className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                      !isExpanded ? 'justify-center' : ''
-                    } ${
-                      isActive
-                        ? 'bg-[#e11d48] text-white font-medium shadow-md shadow-[#e11d48]/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#e11d48]'
-                    }`}
-                  >
-                    <Icon size={20} className="shrink-0" />
-                    {isExpanded && <span className="whitespace-nowrap">{item.label}</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+      <nav className="min-h-0 px-4 py-6 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden">
+        {isExpanded && (
+          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+            StreamSell
+          </p>
+        )}
+
+        {MENU_ITEMS.map((item) => {
+          const isActive = activeTab === item.id;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onTabChange(item.id)}
+              title={!isExpanded ? item.label : undefined}
+              className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                !isExpanded ? 'justify-center' : ''
+              } ${
+                isActive
+                  ? 'bg-[#e11d48] text-white font-medium shadow-md shadow-[#e11d48]/20'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#e11d48]'
+              }`}
+            >
+              <Icon size={20} className="shrink-0" />
+              {isExpanded && <span className="whitespace-nowrap">{item.label}</span>}
+            </button>
+          );
+        })}
       </nav>
       <SidebarTourSlot isExpanded={isExpanded} />
 

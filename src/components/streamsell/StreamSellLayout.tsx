@@ -10,7 +10,9 @@ export default function StreamSellLayout({ children }: { children: ReactNode }) 
   const [collapsed, setCollapsed] = useState(false);
 
   const onTabChange = (tab: LiveTab) => {
-    navigate('/stream-sell', { state: { tab: tab === 'aparencia' ? 'lives' : tab } });
+    navigate('/dashboard/modules/stream-sell', {
+      state: tab === 'aparencia' ? { tab: 'lives', openAppearance: true } : { tab },
+    });
   };
 
   return (

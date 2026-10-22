@@ -138,10 +138,14 @@ function AppRoutes() {
             )
           }
         />
-        <Route path="/dashboard/modules/live-commerce" element={<LegacyLiveRedirect to="/stream-sell" />} />
-            <Route path="/dashboard/modules/live-commerce/admin/:id" element={<LegacyLiveRedirect to="/stream-sell/live/:id/admin" />} />
+        <Route path="/stream-sell" element={<Navigate to="/dashboard/modules/stream-sell" replace />} />
+        <Route path="/stream-sell/destinos" element={<Navigate to="/dashboard/modules/stream-sell/destinos" replace />} />
+        <Route path="/stream-sell/live/:id/admin" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/admin" />} />
+        <Route path="/stream-sell/live/:id/cockpit" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/cockpit" />} />
+        <Route path="/dashboard/modules/live-commerce" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell" />} />
+            <Route path="/dashboard/modules/live-commerce/admin/:id" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/admin" />} />
             <Route
-              path="/stream-sell/live/:id/cockpit"
+              path="/dashboard/modules/stream-sell/live/:id/cockpit"
               element={
                 user ? (
                   <SubscriptionGate>
@@ -153,7 +157,7 @@ function AppRoutes() {
               }
             />
             <Route
-              path="/stream-sell/destinos"
+              path="/dashboard/modules/stream-sell/destinos"
               element={
                 user ? (
                   <SubscriptionGate>
@@ -165,7 +169,7 @@ function AppRoutes() {
               }
             />
             <Route
-          path="/stream-sell"
+          path="/dashboard/modules/stream-sell"
           element={
             user ? (
               <SubscriptionGate>
@@ -177,7 +181,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/stream-sell/live/:id/admin"
+          path="/dashboard/modules/stream-sell/live/:id/admin"
           element={
             user ? (
               <SubscriptionGate>

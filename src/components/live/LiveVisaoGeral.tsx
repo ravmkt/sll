@@ -365,7 +365,7 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
                 </div>
                 <button
                   type="button"
-                  onClick={() => navigate(`/stream-sell/live/${next.id}/cockpit`)}
+                  onClick={() => navigate(`/dashboard/modules/stream-sell/live/${next.id}/cockpit`)}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#EA580C] py-2.5 text-xs font-bold text-white hover:bg-[#c2410c]"
                 >
                   Abrir Cockpit da Live <ArrowRight size={14} />
@@ -374,7 +374,7 @@ export function LiveVisaoGeral({ onCreateLive }: { onCreateLive: (occ: Commercia
             ) : (
               <div className="py-6 text-center text-sm text-slate-400">
                 Nenhuma live agendada.
-                <button type="button" onClick={() => navigate('/stream-sell', { state: { tab: 'lives' } })} className="mt-2 block w-full text-xs font-bold text-[#EA580C] hover:underline">
+                <button type="button" onClick={() => navigate('/dashboard/modules/stream-sell', { state: { tab: 'lives' } })} className="mt-2 block w-full text-xs font-bold text-[#EA580C] hover:underline">
                   Criar uma live
                 </button>
               </div>

@@ -223,7 +223,7 @@ function LiveCommerceContent() {
   };
 
   const handleOpenAdminPanel = (liveId: string) => {
-    navigate(`/stream-sell/live/${liveId}/cockpit`);
+    navigate(`/dashboard/modules/stream-sell/live/${liveId}/cockpit`);
   };
 
   const onFormSaved = async () => {
@@ -454,6 +454,12 @@ export function LiveCommerce() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<LiveTab>((((location.state as { tab?: LiveTab } | null)?.tab) as LiveTab) || "visao-geral");
+  useEffect(() => {
+    if ((location.state as { openAppearance?: boolean } | null)?.openAppearance) {
+      const t = setTimeout(() => window.dispatchEvent(new Event("live:open-appearance")), 500);
+      return () => clearTimeout(t);
+    }
+  }, []);
 
   const handleCreateLive = (occ: CommercialDateOccurrence) => {
     setActiveTab("lives");

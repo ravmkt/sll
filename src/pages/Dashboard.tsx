@@ -38,7 +38,7 @@ const PERIODOS: { key: Periodo; label: string }[] = [
 ];
 
 const ICONS: Record<string, ElementType> = { vidlytics: Play, live_commerce: Radio, provador: Shirt };
-const ROUTES: Record<string, string> = { vidlytics: '/dashboard/modules/vidlytics', live_commerce: '/stream-sell' };
+const ROUTES: Record<string, string> = { vidlytics: '/dashboard/modules/vidlytics', live_commerce: '/dashboard/modules/stream-sell' };
 
 
 const pad = (n: number) => String(n).padStart(2, '0');

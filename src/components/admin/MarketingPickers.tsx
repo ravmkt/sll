@@ -11,7 +11,7 @@ export const INTERNAL_LINKS = [
   { label: 'Minhas assinaturas', url: '/dashboard/assinaturas' },
   { label: 'Módulos', url: '/dashboard/modules' },
   { label: 'Vidlytics', url: '/dashboard/modules/vidlytics' },
-  { label: 'Stream Sell', url: '/stream-sell' },
+  { label: 'Stream Sell', url: '/dashboard/modules/stream-sell' },
   { label: 'Integração', url: '/dashboard/integracao' },
   { label: 'Produtos', url: '/dashboard/produtos' },
   { label: 'Métricas', url: '/dashboard/metricas' },
