@@ -1716,3 +1716,25 @@ function fetchLiveSpotlight(live) {
   }
   setInterval(sync, 400);
 })();
+/* SLL-LIVE-CHATCFG */
+(function () {
+  if (window.__sllLiveChatCfg) return;
+  window.__sllLiveChatCfg = true;
+  var css = document.createElement('style');
+  css.textContent = [
+    '.vl-live-modal.sll-no-chat .vl-live-chat{display:none!important}',
+    '@media (min-width:901px){',
+    '.vl-live-modal.sll-3c.sll-no-chat{grid-template-areas:"hd hd hd" "ph pl pl" "ls pl pl" "ad cp sh"!important}',
+    '}'
+  ].join('');
+  document.head.appendChild(css);
+
+  function sync() {
+    var m = document.querySelector('.vl-live-modal');
+    if (!m) return;
+    var c = window.__sllCfg || {};
+    m.classList.toggle('sll-no-chat', c.showChat === false);
+    m.classList.toggle('sll-no-share', c.showShare === false);
+  }
+  setInterval(sync, 300);
+})();
