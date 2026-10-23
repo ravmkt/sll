@@ -1147,7 +1147,7 @@ function fetchLiveSpotlight(live) {
         var live = rows[0];
         if (!live || !UUID.test(live.id)) return;
         window.__sllLiveId = live.id;
-        window.__sllKey = KEY;
+        window.__sllKey = KEY; window.__sllLive = live;
         return Promise.all([
           api('live_products?select=product_id,code,display_order,is_on_air,price_override,checkout_url&live_id=eq.' + live.id + '&order=display_order.asc'),
           api('live_coupons?select=code,discount_percent&live_id=eq.' + live.id + '&is_active=eq.true'),
@@ -1213,7 +1213,7 @@ function fetchLiveSpotlight(live) {
     '.vl-live-modal.sll-no-share .sll-3c-share{display:none!important}',
     '.vl-live-modal.sll-no-views .sll-3c-views{display:none!important}',
     '@media (min-width:901px){',
-    '.vl-live-modal.sll-3c{position:relative!important;--h:min(92vh,720px);--pw:calc((var(--h) - 96px)*9/16);display:grid!important;grid-template-columns:minmax(0,1fr) var(--pw) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;grid-template-areas:"ph pl ch" "ls pl ch" "ad cp sh"!important;gap:10px!important;width:min(96vw,calc(var(--pw) + 680px))!important;max-width:none!important;height:var(--h)!important;max-height:none!important;padding:12px!important;background:#fff!important;box-sizing:border-box!important;overflow:hidden!important}',
+    '.vl-live-modal.sll-3c{position:relative!important;--h:90vh;--pw:calc((var(--h) - 96px)*9/16);display:grid!important;grid-template-columns:minmax(0,1fr) var(--pw) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;grid-template-areas:"ph pl ch" "ls pl ch" "ad cp sh"!important;gap:10px!important;width:90vw!important;max-width:none!important;height:var(--h)!important;max-height:none!important;padding:12px!important;background:#fff!important;box-sizing:border-box!important;overflow:hidden!important}',
     '.vl-live-modal.sll-3c>.vl-live-modal-close{position:absolute!important;top:6px;right:6px;z-index:20}',
     '.vl-live-modal.sll-3c .sll-yt-wrap{grid-area:pl;aspect-ratio:auto!important;width:100%!important;max-width:none!important;height:100%!important;margin:0!important;min-height:0}',
     '.vl-live-modal.sll-3c>.sll-ao-box,.vl-live-modal.sll-3c>.vl-live-modal-body{display:contents!important}',
@@ -1351,5 +1351,46 @@ function fetchLiveSpotlight(live) {
     if (!beatTimer) beatTimer = setInterval(beat, 10000);
   }
 
+  setInterval(sync, 700);
+})();
+/* SLL-LIVE-LAYOUT2 */
+(function () {
+  if (window.__sllLiveLayout2) return;
+  window.__sllLiveLayout2 = true;
+
+  var css = document.createElement('style');
+  css.textContent = [
+    '.sll-3c-logo{display:none;width:32px;height:32px;border-radius:50%;object-fit:cover;flex:none;background:var(--p,#ef4444);color:#fff;align-items:center;justify-content:center;font:800 14px system-ui,sans-serif;pointer-events:none}',
+    '@media (min-width:901px){',
+    '.vl-live-modal.sll-3c .sll-3c-logo{display:flex}',
+    '.vl-live-modal.sll-3c .vl-live-player-wrap{position:relative!important;overflow:hidden!important;container-type:size;background:#000}',
+    '.vl-live-modal.sll-3c .vl-live-player-wrap iframe{position:absolute!important;top:0!important;left:50%!important;height:100%!important;width:calc(100cqh * 16 / 9)!important;max-width:none!important;transform:translateX(-50%)!important;border:0!important}',
+    '.vl-live-modal.sll-3c .vl-live-player-wrap video{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important}',
+    '.vl-live-modal.sll-3c .sll-3c-top{top:0!important;left:0!important;right:0!important;height:52px;padding:0 12px;box-sizing:border-box;background:#000;pointer-events:auto;gap:8px;z-index:8}',
+    '}'
+  ].join('');
+  document.head.appendChild(css);
+
+  function logoUrl() {
+    var l = window.__sllLive || {}, c = window.__sllCfg || {};
+    var u = l.store_logo_url || l.logo_url || l.store_logo || c.logoUrl || '';
+    return /^https?:\/\//i.test(String(u)) ? String(u) : '';
+  }
+  function sync() {
+    var top = document.querySelector('.vl-live-modal .sll-3c-top');
+    if (!top || top.querySelector('.sll-3c-logo')) return;
+    var l = window.__sllLive || {};
+    var u = logoUrl(), node;
+    if (u) {
+      node = document.createElement('img');
+      node.src = u;
+      node.alt = '';
+    } else {
+      node = document.createElement('span');
+      node.textContent = String(l.store_name || 'L').charAt(0).toUpperCase();
+    }
+    node.className = 'sll-3c-logo';
+    top.insertBefore(node, top.firstChild);
+  }
   setInterval(sync, 700);
 })();
