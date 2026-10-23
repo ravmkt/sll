@@ -1142,7 +1142,7 @@ function fetchLiveSpotlight(live) {
   }
 
   function refresh(vid) {
-    api('lives?select=id,status,spotlight_product_id,spotlight_coupon_code,advantages,spotlight_advantage_idx,store_id&youtube_video_id=eq.' + encodeURIComponent(vid) + '&order=created_at.desc&limit=1')
+    api('lives?select=id,status,spotlight_product_id,spotlight_coupon_code,advantages,spotlight_advantage_idx,store_id,viewer_min_display&youtube_video_id=eq.' + encodeURIComponent(vid) + '&order=created_at.desc&limit=1')
       .then(function (rows) {
         var live = rows[0];
         if (!live || !UUID.test(live.id)) return;
@@ -1545,4 +1545,57 @@ function fetchLiveSpotlight(live) {
     }
   }
   setInterval(sync, 150);
+})();
+/* SLL-LIVE-POLISH */
+(function () {
+  if (window.__sllLivePolish) return;
+  window.__sllLivePolish = true;
+  var saved = 0, lastOn = '';
+
+  var css = document.createElement('style');
+  css.textContent = [
+    '@keyframes sllPing{0%{box-shadow:0 0 0 0 rgba(239,68,68,.7)}100%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}',
+    '.vl-live-modal .sll-3c-pill.sll-3c-live{background:#111!important;color:#fff!important;font-size:13px!important;padding:6px 12px!important;gap:7px!important}',
+    '.vl-live-modal .sll-3c-pill.sll-3c-live::before{content:"";width:8px;height:8px;border-radius:50%;background:#ef4444;animation:sllPing 1.4s ease-out infinite}',
+    '.vl-live-modal .sll-3c-pill.sll-3c-views{background:#111!important;color:#fff!important;font-size:13px!important;padding:6px 12px!important}',
+    '.vl-live-modal.sll-hide-views .sll-3c-views{display:none!important}'
+  ].join('');
+  document.head.appendChild(css);
+
+  document.addEventListener('scroll', function (e) {
+    var t = e.target;
+    if (t && t.classList && t.classList.contains('sll-ao-list')) saved = t.scrollTop;
+  }, true);
+
+  function realCount(modal) {
+    var n = modal.querySelector('.sll-3c-top .sll-3c-n');
+    if (!n) return 0;
+    var t = String(n.textContent || '').trim().toUpperCase();
+    var v = parseFloat(t.replace(',', '.'));
+    if (!isFinite(v)) return 0;
+    return t.slice(-1) === 'K' ? v * 1000 : v;
+  }
+
+  function sync() {
+    var modal = document.querySelector('.vl-live-modal');
+    if (!modal) { saved = 0; lastOn = ''; return; }
+
+    var l = window.__sllLive || {};
+    var min = Math.max(0, parseInt(l.viewer_min_display, 10) || 0);
+    modal.classList.toggle('sll-hide-views', min > 0 && realCount(modal) < min);
+
+    var list = modal.querySelector('.sll-ao-list');
+    if (!list || list.getAttribute('data-sll-sc')) return;
+    list.setAttribute('data-sll-sc', '1');
+    var on = list.querySelector('.sll-ao-it.on');
+    var b = on && on.querySelector('b');
+    var key = b ? b.textContent : '';
+    if (on && key !== lastOn) {
+      lastOn = key;
+      list.scrollTop += on.getBoundingClientRect().top - list.getBoundingClientRect().top - 8;
+    } else {
+      list.scrollTop = saved;
+    }
+  }
+  setInterval(sync, 300);
 })();
