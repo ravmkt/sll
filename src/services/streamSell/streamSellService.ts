@@ -2,7 +2,14 @@ import { supabase } from '@/lib/supabase';
 import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
 import { dispatchLiveEvent } from './adapters';
 
+export interface CockpitAdvantage {
+  id: string;
+  title: string;
+  description: string;
+}
 export interface CockpitLive {
+  advantages: CockpitAdvantage[];
+  activeAdvantageIdx: number | null;
   id: string;
   storeId: string;
   title: string;
@@ -64,7 +71,7 @@ async function seedProducts(live: any) {
 export async function getCockpit(liveId: string): Promise<CockpitData | null> {
   const { data: live, error } = await lc
     .from('lives')
-    .select('id, store_id, title, status, active_destinations, featured_product_ids')
+    .select('id, store_id, title, status, active_destinations, featured_product_ids, advantages, spotlight_advantage_idx')
     .eq('id', liveId)
     .maybeSingle();
   if (error) throw error;
@@ -100,6 +107,14 @@ export async function getCockpit(liveId: string): Promise<CockpitData | null> {
       title: live.title,
       status: live.status || 'scheduled',
       activeDestinations: Array.isArray(live.active_destinations) ? live.active_destinations : ['site'],
+          advantages: Array.isArray(live.advantages)
+            ? live.advantages.map((x: any, i: number) => ({
+                id: String(x?.id ?? `a_${i}`),
+                title: String(x?.title ?? ''),
+                description: String(x?.description ?? ''),
+              }))
+            : [],
+          activeAdvantageIdx: typeof live.spotlight_advantage_idx === 'number' ? live.spotlight_advantage_idx : null,
     },
     products: (lp.data || []).map((r: any) => {
       const p = byId.get(r.product_id);
@@ -165,6 +180,18 @@ export async function setCouponActive(live: CockpitLive, coupon: CockpitCoupon, 
     type: active ? 'coupon.activate' : 'coupon.deactivate',
     couponId: coupon.id,
     code: coupon.code,
+  });
+}
+
+export async function setAdvantageActive(live: CockpitLive, idx: number | null) {
+  const adv = idx == null ? null : live.advantages[idx];
+  if (idx != null && !adv) throw new Error('Beneficio nao encontrado');
+  const up = await lc.from('lives').update({ spotlight_advantage_idx: idx }).eq('id', live.id);
+  if (up.error) throw up.error;
+  return dispatchLiveEvent(live.activeDestinations, {
+    liveId: live.id,
+    type: adv ? 'advantage.activate' : 'advantage.deactivate',
+    advantageId: adv?.id ?? null,
   });
 }
 

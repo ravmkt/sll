@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, Package, Radio, Square, Tag, Activity } from 'lucide-react';
+import { ArrowLeft, Loader2, Package, Radio, Square, Tag, Activity, Gift } from 'lucide-react';
 import { useLiveCockpit } from '@/hooks/useLiveCockpit';
 import {
-  addCoupon, setCouponActive, setLiveStatus, setProductOnAir,
+  addCoupon, setAdvantageActive, setCouponActive, setLiveStatus, setProductOnAir,
 } from '@/services/streamSell/streamSellService';
 
 const EVENT_LABEL: Record<string, string> = {
   'live.start': 'Live iniciada', 'live.end': 'Live encerrada',
   'product.show': 'Produto no ar', 'product.hide': 'Produto retirado',
-  'coupon.activate': 'Cupom ativado', 'coupon.deactivate': 'Cupom desativado',
+  'coupon.activate': 'Cupom ativado', 'coupon.deactivate': 'Cupom desativado', 'advantage.activate': 'Benefício no ar', 'advantage.deactivate': 'Benefício retirado',
   'banner.show': 'Banner no ar', 'banner.hide': 'Banner retirado',
   product_click: 'Clique em produto', view: 'Visualização', page_view: 'Visualização',
 };
@@ -82,7 +82,7 @@ export default function LiveCockpit() {
 
       {msg && <p className="text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">{msg}</p>}
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <section className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
           <h2 className="text-sm font-bold flex items-center gap-2"><Package className="w-4 h-4" />Produtos</h2>
           {products.length === 0 && <p className="text-xs text-slate-400">Nenhum produto vinculado a esta live.</p>}
@@ -140,6 +140,31 @@ export default function LiveCockpit() {
             <input value={percent} onChange={(e) => setPercent(e.target.value)} type="number" min={1} max={100} className="w-16 border border-slate-200 rounded-lg px-2 py-1.5 text-xs" />
             <button type="submit" disabled={!!busy} className="text-[11px] font-bold px-3 rounded-lg bg-slate-900 text-white disabled:opacity-60">Criar</button>
           </form>
+        </section>
+        <section className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+          <h2 className="text-sm font-bold flex items-center gap-2"><Gift className="w-4 h-4" />Benefícios</h2>
+          {live.advantages.length === 0 && <p className="text-xs text-slate-400">Nenhum benefício cadastrado nesta live.</p>}
+          {live.advantages.map((a, i) => {
+            const on = live.activeAdvantageIdx === i;
+            return (
+              <div key={a.id} className={`flex items-center justify-between gap-2 p-2 rounded-xl border ${on ? 'border-emerald-400 bg-emerald-50' : 'border-slate-100'}`}>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold truncate">{a.title}</p>
+                  <p className="text-[11px] text-slate-500 truncate">{a.description}</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={!!busy}
+                  onClick={() => run(`a-${a.id}`, () => setAdvantageActive(live, on ? null : i))}
+                  className={`text-[11px] font-bold px-3 py-1.5 rounded-lg disabled:opacity-60 ${
+                    on ? 'bg-slate-800 text-white' : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  }`}
+                >
+                  {busy === `a-${a.id}` ? '...' : on ? 'Tirar do ar' : 'Ativar'}
+                </button>
+              </div>
+            );
+          })}
         </section>
 
         <section className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
