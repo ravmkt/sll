@@ -994,8 +994,8 @@ function fetchLiveSpotlight(live) {
     '.sll-ao-dh{width:100%;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:10px;padding:8px;font-weight:700;margin-bottom:6px;cursor:pointer}' +
     '.sll-ao-list{display:none}.sll-ao-list.open{display:block}' +
     '.sll-ao-ov{position:absolute;left:8px;right:8px;bottom:8px;z-index:5;display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.82);border:1px solid #10b981;border-radius:12px;padding:8px;color:#fff;font:12px/1.3 system-ui,sans-serif}' +
-    '.sll-ao-ov img{width:44px;height:44px;border-radius:8px;object-fit:cover}' +
-    '.sll-ao-ov b{display:block;font-size:13px}' +
+    '.sll-ao-ov img{width:72px;height:72px;border-radius:10px;object-fit:cover;flex:none}' +
+    '.sll-ao-ov b{display:block;font-size:14px}' +
     '.sll-ao-btn{margin-left:auto;background:#10b981;color:#fff;border-radius:8px;padding:6px 12px;font-weight:700;text-decoration:none;white-space:nowrap}' +
     '.sll-ao-box{background:#0b0b0b;color:#fff;padding:8px;font:12px/1.3 system-ui,sans-serif}' +
     '.sll-ao-cp{background:#f59e0b;color:#111;font-weight:700;border-radius:8px;padding:8px 10px;margin-bottom:8px;text-align:center}' +
@@ -1006,7 +1006,7 @@ function fetchLiveSpotlight(live) {
     '.sll-ao-bn img{width:100%;border-radius:8px;display:block}' +
     '.sll-ao-it{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid #27272a;border-radius:10px;margin-bottom:6px}' +
     '.sll-ao-it.on{border-color:#10b981;background:rgba(16,185,129,.12)}' +
-    '.sll-ao-it img{width:40px;height:40px;border-radius:6px;object-fit:cover}' +
+    '.sll-ao-it img{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none}' +
     '.sll-ao-it span{flex:1;min-width:0}' +
     '.sll-ao-it em{display:block;font-style:normal;color:#a1a1aa}';
   document.head.appendChild(css);
@@ -1126,7 +1126,7 @@ function fetchLiveSpotlight(live) {
       var sq = Number(p.stock_qty);
           if (sq > 0 && sq <= 3) {
             var sk = el('em', null, 'Restam ' + sq);
-            sk.style.color = '#dc2626';
+            sk.style.cssText = 'display:inline-block;margin-top:3px;background:#dc2626;color:#fff;font-style:normal;font-weight:800;font-size:11px;padding:1px 8px;border-radius:999px'; /* SLL-BIG-PHOTO */
             sk.style.fontWeight = '700';
             info.appendChild(sk);
           }
@@ -1150,7 +1150,7 @@ function fetchLiveSpotlight(live) {
         var osq = Number(onAir.p.stock_qty);
         if (osq > 0 && osq <= 3) {
           var osk = el('em', null, 'Restam ' + osq);
-          osk.style.cssText = 'display:block;font-style:normal;font-weight:700;font-size:11px;color:#fca5a5';
+          osk.style.cssText = 'display:inline-block;margin-top:4px;background:#dc2626;color:#fff;font-style:normal;font-weight:800;font-size:12px;padding:2px 10px;border-radius:999px';
           t.appendChild(osk);
         }
         ov.appendChild(t);
