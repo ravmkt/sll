@@ -226,6 +226,23 @@ function getActiveLivePlayerConfig() {
   return cfg;
 }
 
+/* SLL-PROMO-CFG */
+function loadPromoCfg(live) {
+  function apply(sid) {
+    if (!cleanUuid(sid)) return Promise.resolve();
+    return fetchJson('appearance_settings?select=widget_divulgacao,widget_aovivo&store_id=eq.' + sid + '&limit=1', {}).then(function (rows) {
+      var r = Array.isArray(rows) ? rows[0] : null;
+      if (!r) return;
+      if (r.widget_divulgacao) liveDivulgacaoConfig = r.widget_divulgacao;
+      if (r.widget_aovivo) liveAoVivoConfig = r.widget_aovivo;
+    });
+  }
+  if (cleanUuid(live.store_id)) return apply(live.store_id);
+  return fetchJson('lives?select=store_id&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) {
+    return apply(rows && rows[0] && rows[0].store_id);
+  });
+}
+
 function getActiveLiveWidgetConfig(liveStatus) {
   var isMobile = window.innerWidth < 768;
   var target = (liveStatus === 'live' && liveAoVivoConfig) ? liveAoVivoConfig : (liveDivulgacaoConfig || {});
@@ -271,11 +288,11 @@ function renderLiveWidget(live) {
 
   var mediaUrl = live.promo_media_url || live.youtube_thumbnail_url || '';
   var mediaType = live.promo_media_type || 'image';
-  var ctaText = live.promo_cta_text || (isLive ? 'Assistir Agora' : 'Quero Participar');
+  var ctaText = currentCfg.ctaText || live.promo_cta_text || (isLive ? 'Assistir Agora' : 'Quero Participar');
   var title = live.title || 'Live Commerce';
   var scheduledAt = live.scheduled_at ? new Date(live.scheduled_at) : null;
 
-  var aspectCss = (shape === 'square' || shape === 'circle') ? 'aspect-ratio: 1/1;' : 'aspect-ratio: 9/16;';
+  var aspectCss = (shape === 'square' || shape === 'circle') ? 'aspect-ratio: 1/1;' : (shape === 'landscape' ? 'aspect-ratio: 16/9;' : 'aspect-ratio: 9/16;');
 
   var style = document.createElement('style');
   style.textContent =
@@ -289,7 +306,7 @@ function renderLiveWidget(live) {
       'user-select:none; transition:transform .2s ease;' +
     '}' +
     '.vl-live-container:hover { transform: scale(1.03); }' +
-    '.vl-live-media { width:100%; height:100%; object-fit:cover; display:block; }' +
+    '.vl-live-media { width:100%; height:100%; object-fit:' + (currentCfg.objectFit || 'cover') + '; display:block; }' +
     '.vl-live-overlay-grad {' +
       'position:absolute; inset:0;' +
       'background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%);' +
@@ -297,7 +314,7 @@ function renderLiveWidget(live) {
     '}' +
     '.vl-live-top-row { display:flex; justify-content:space-between; align-items:flex-start; width:100%; }' +
     '.vl-live-badge {' +
-      'background:' + (isLive ? '#ef4444' : '#3b82f6') + ';' +
+      'background:' + (currentCfg.ctaBgColor || (isLive ? '#ef4444' : '#3b82f6')) + ';' +
       'color:#fff; font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px;' +
       'display:inline-flex; align-items:center; gap:4px; text-transform:uppercase; letter-spacing:0.5px;' +
     '}' +
@@ -311,11 +328,11 @@ function renderLiveWidget(live) {
     '.vl-live-close:hover { background:rgba(0,0,0,0.8); }' +
     '.vl-live-bottom-info { display:flex; flex-direction:column; gap:6px; width:100%; }' +
     '.vl-live-title { color:#fff; font-size:11px; font-weight:700; line-height:1.2; margin:0; text-shadow:0 1px 2px rgba(0,0,0,0.8); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }' +
-    '.vl-live-countdown { background:rgba(0,0,0,0.65); backdrop-filter:blur(4px); color:#fbbf24; font-size:10px; font-weight:700; text-align:center; padding:4px 6px; border-radius:6px; border:1px solid rgba(251,191,36,0.3); }' +
+    '.vl-live-countdown { background:' + (currentCfg.countdownBgColor || 'rgba(0,0,0,0.65)') + '; backdrop-filter:blur(4px); color:' + (currentCfg.countdownTextColor || '#fbbf24') + '; font-size:10px; font-weight:700; text-align:center; padding:4px 6px; border-radius:' + (currentCfg.countdownBorderRadius || '6px') + '; }' +
     '.vl-live-cta-btn {' +
       'width:100%; padding:6px 0; background:' + (currentCfg.ctaBgColor || '#22c55e') + ';' +
       'color:' + (currentCfg.ctaTextColor || '#ffffff') + ';' +
-      'font-size:11px; font-weight:700; text-align:center; border:none; border-radius:6px; cursor:pointer;' +
+      'font-size:11px; font-weight:700; text-align:center; border:none; border-radius:' + (currentCfg.ctaBorderRadius || '6px') + '; cursor:pointer;' +
       'box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:filter .2s;' +
     '}' +
     '.vl-live-cta-btn:hover { filter:brightness(1.1); }';
@@ -360,7 +377,7 @@ function renderLiveWidget(live) {
     }
     topRow.appendChild(badge);
 
-    if (currentCfg.allowClose !== false) {
+    if ((currentCfg.allowClose !== false && currentCfg.showCloseButton !== false)) {
       var closeBtn = document.createElement('button');
       closeBtn.className = 'vl-live-close';
       closeBtn.textContent = '×';
@@ -383,7 +400,7 @@ function renderLiveWidget(live) {
       bottomInfo.appendChild(titleEl);
     }
 
-    if (!isLive && scheduledAt && scheduledAt > new Date()) {
+    if (!isLive && scheduledAt && scheduledAt > new Date() && currentCfg.showCountdown !== false) {
       var countEl = document.createElement('div');
       countEl.className = 'vl-live-countdown';
       function updateCountdown() {
@@ -406,12 +423,12 @@ function renderLiveWidget(live) {
     var ctaBtn = document.createElement('button');
     ctaBtn.className = 'vl-live-cta-btn';
     ctaBtn.textContent = ctaText;
-    bottomInfo.appendChild(ctaBtn);
+    if (currentCfg.showCTA !== false) bottomInfo.appendChild(ctaBtn);
 
     overlayEl.appendChild(bottomInfo);
     card.appendChild(overlayEl);
   } else {
-    if (currentCfg.allowClose !== false) {
+    if ((currentCfg.allowClose !== false && currentCfg.showCloseButton !== false)) {
       var closeCircle = document.createElement('button');
       closeCircle.className = 'vl-live-close';
       closeCircle.style.cssText = 'position:absolute; top:4px; right:4px; z-index:3;';
@@ -932,7 +949,7 @@ function fetchLiveSpotlight(live) {
     fetchActiveLive().then(function(live) {
       if (live) {
         console.log('[LiveCommerce] Live ativa encontrada:', live.id || live.title);
-        renderLiveWidget(live);
+        loadPromoCfg(live).then(function () { renderLiveWidget(live); });
       } else {
         console.log('[LiveCommerce] Nenhuma live ativa encontrada no momento.');
       }

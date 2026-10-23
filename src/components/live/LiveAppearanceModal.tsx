@@ -552,6 +552,8 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("preset_padrao");
   const [templateNameInput, setTemplateNameInput] = useState<string>("");
   const [bannerAlert, setBannerAlert] = useState<string>("");
+  const [picked, setPicked] = useState<{ id: string; base: string } | null>(null);
+  useEffect(() => { if (isOpen) setPicked(null); }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -608,6 +610,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     const tpl = templates.find(t => t.id === id);
     if (!tpl) return;
     setSelectedTemplateId(id);
+    setPicked({ id: id, base: JSON.stringify([tpl.divulgacao, tpl.aoVivo, tpl.player]) });
     setTemplateNameInput(""); // Fica em branco propositalmente
     setDivulgacaoConfig(JSON.parse(JSON.stringify(tpl.divulgacao)));
     setAoVivoConfig(JSON.parse(JSON.stringify(tpl.aoVivo)));
@@ -667,6 +670,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
       });
       setTemplates(prev => [...prev, created]);
       setSelectedTemplateId(created.id);
+      setPicked({ id: created.id, base: JSON.stringify([divulgacaoConfig, aoVivoConfig, playerConfig]) });
       notify(`Novo template "${name}" salvo!`);
     } catch (e) {
       console.error(e);
@@ -692,7 +696,45 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    const cur = picked ? templates.find((t) => t.id === picked.id) : undefined;
+    const now = JSON.stringify([divulgacaoConfig, aoVivoConfig, playerConfig]);
+    if (cur && picked && now !== picked.base) {
+      const typed = templateNameInput.trim();
+      const data = {
+        divulgacao: JSON.parse(JSON.stringify(divulgacaoConfig)),
+        aoVivo: JSON.parse(JSON.stringify(aoVivoConfig)),
+        player: JSON.parse(JSON.stringify(playerConfig)),
+      };
+      try {
+        if (cur.isDefault) {
+          if (!typed) {
+            notify("Modelo padrão não pode ser alterado. Digite um nome para salvar suas mudanças como novo template.");
+            return;
+          }
+          if (templates.some((t) => t.name.trim().toLowerCase() === typed.toLowerCase())) {
+            notify("Já existe um template com esse nome. Escolha outro nome.");
+            return;
+          }
+          if (!storeId) {
+            notify("Loja não identificada. Recarregue a página.");
+            return;
+          }
+          const created = await LiveTemplatesService.create(storeId, { name: typed, ...data });
+          setTemplates((prev) => [...prev, created]);
+          setSelectedTemplateId(created.id);
+          setPicked({ id: created.id, base: now });
+        } else {
+          const saved = await LiveTemplatesService.update(cur.id, { name: typed || cur.name, ...data });
+          setTemplates((prev) => prev.map((t) => (t.id === saved.id ? saved : t)));
+          setPicked({ id: saved.id, base: now });
+        }
+      } catch (e) {
+        console.error(e);
+        notify("Não foi possível salvar o template. Tente novamente.");
+        return;
+      }
+    }
     onSave(divulgacaoConfig, aoVivoConfig, playerConfig);
   };
 
