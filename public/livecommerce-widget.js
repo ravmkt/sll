@@ -1625,3 +1625,94 @@ function fetchLiveSpotlight(live) {
   }
   setInterval(sync, 300);
 })();
+/* SLL-LIVE-APPEAR */
+(function () {
+  if (window.__sllAppear) return;
+  window.__sllAppear = true;
+  var HEX = /^#[0-9a-f]{3,8}$/i;
+
+  var css = document.createElement('style');
+  css.textContent = [
+    '.sll-ao-ov div>span{display:block!important;margin-top:2px}',
+    '.sll-ao-ov em{display:block!important;width:fit-content;margin:6px 0 0!important}',
+    '.vl-live-modal.sll-no-views .sll-3c-views{display:none!important}'
+  ].join('');
+  document.head.appendChild(css);
+
+  function rgb(s) {
+    var m = String(s).match(/rgba?\(([^)]+)\)/);
+    if (!m) return null;
+    var p = m[1].split(',').map(parseFloat);
+    return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
+  }
+  function hex(h) {
+    h = String(h).replace('#', '');
+    if (h.length === 3 || h.length === 4) h = h.split('').map(function (x) { return x + x; }).join('');
+    return { r: parseInt(h.substr(0, 2), 16), g: parseInt(h.substr(2, 2), 16), b: parseInt(h.substr(4, 2), 16) };
+  }
+  function lum(o) {
+    var f = function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(o.r) + 0.7152 * f(o.g) + 0.0722 * f(o.b);
+  }
+  function bgOf(e) {
+    while (e && e.nodeType === 1) {
+      var o = rgb(getComputedStyle(e).backgroundColor);
+      if (o && o.a > 0.5) return o;
+      e = e.parentElement;
+    }
+    return { r: 255, g: 255, b: 255 };
+  }
+  function legible(color, e) {
+    var a = lum(hex(color)) + 0.05, b = lum(bgOf(e)) + 0.05;
+    return Math.max(a, b) / Math.min(a, b) >= 3;
+  }
+  function setS(e, p, v) { if (e && v && e.style[p] !== v) e.style[p] = v; }
+  function colorize(e, c) { if (e && HEX.test(String(c || '')) && legible(c, e)) setS(e, 'color', c); }
+  function size(e, v, k, min, max) {
+    var n = Number(v);
+    if (e && isFinite(n) && n > 0) setS(e, 'fontSize', Math.min(max, Math.max(min, Math.round(n * k))) + 'px');
+  }
+  function hx(c) { return HEX.test(String(c || '')) ? String(c) : ''; }
+
+  function sync() {
+    var c = window.__sllCfg;
+    if (!c) return;
+    var modal = document.querySelector('.vl-live-modal');
+    if (modal) modal.classList.toggle('sll-no-views', c.showViewerCount === false);
+
+    var names = document.querySelectorAll('.sll-ao-it b');
+    for (var i = 0; i < names.length; i++) colorize(names[i], c.productNameColor);
+
+    var ov = document.querySelector('.sll-ao-ov');
+    if (ov) {
+      var nb = ov.querySelector('b'), pr = ov.querySelector('div > span');
+      colorize(nb, c.productNameColor);
+      size(nb, c.productNameSize, 1.25, 11, 26);
+      colorize(pr, c.productPriceColor);
+      size(pr, c.productPriceSize, 1.1, 10, 24);
+      setS(ov, 'borderColor', hx(c.borderColor));
+    }
+
+    var cp = document.querySelector('.sll-ao-cp');
+    if (cp) {
+      setS(cp, 'background', hx(c.couponCodeBgColor));
+      setS(cp, 'color', hx(c.couponCodeColor));
+    }
+
+    if (modal) {
+      var all = modal.getElementsByTagName('*');
+      for (var j = 0; j < all.length; j++) {
+        var e = all[j];
+        if (e.children.length) continue;
+        if (!/^\s*\d+(?:[.,]\d+)?\s*%\s*OFF\s*$/i.test(e.textContent || '')) continue;
+        var prev = e.previousElementSibling;
+        if (!prev) continue;
+        setS(e, 'background', hx(c.couponTextBgColor));
+        setS(e, 'color', hx(c.couponTextColor));
+        setS(prev, 'background', hx(c.couponCodeBgColor));
+        setS(prev, 'color', hx(c.couponCodeColor));
+      }
+    }
+  }
+  setInterval(sync, 400);
+})();
