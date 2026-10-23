@@ -1,5 +1,5 @@
 import { LiveTemplatesService } from "@/services/LiveTemplatesService";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +107,7 @@ interface Props {
   ) => void;
   isSaving: boolean;
   storeId?: string | null;
+  initialTemplateId?: string | null;
   initialData?: {
     divulgacao: DeviceConfig<WidgetDivulgacaoSettings> | null;
     aoVivo: DeviceConfig<WidgetAoVivoSettings> | null;
@@ -529,7 +530,7 @@ const ElementSubItem = ({
   );
 };
 
-export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving, initialData, storeId }: Props) {
+export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving, initialData, storeId, initialTemplateId }: Props) {
   const [activeTab, setActiveTab] = useState<"divulgacao" | "aovivo" | "player">("divulgacao");
   const [device, setDevice] = useState<"desktop" | "mobile">("mobile");
   const [openAccordion, setOpenAccordion] = useState<string>("player_visibilidade");
@@ -619,6 +620,17 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
   };
 
   // Salvar atualizações no template
+  const appliedTplRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isOpen) { appliedTplRef.current = null; return; }
+    if (!initialTemplateId || appliedTplRef.current === initialTemplateId) return;
+    const tpl = templates.find(t => t.id === initialTemplateId);
+    if (!tpl) return;
+    appliedTplRef.current = initialTemplateId;
+    handleSelectTemplate(initialTemplateId);
+    if (!tpl.isDefault) setTemplateNameInput(tpl.name);
+  }, [isOpen, initialTemplateId, templates]);
+
   const handleSaveCurrentTemplate = async () => {
     const name = templateNameInput.trim();
     if (!name) {

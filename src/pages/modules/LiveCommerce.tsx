@@ -25,6 +25,7 @@ import MarketingSideBanner from "@/components/marketing/MarketingSideBanner";
 import { LiveFormDialog } from "@/components/live/LiveFormDialog";
 import { ShareLiveModal } from "@/components/live/ShareLiveModal";
 import { LiveMetricsModal } from "@/components/live/LiveMetricsModal";
+import LiveTemplatesPage, { liveStore } from "@/components/live/LiveTemplatesPage";
 
 import LiveAppearanceModal, {
   DeviceConfig,
@@ -84,6 +85,7 @@ function LiveCommerceContent() {
   const [selectedLiveForMetrics, setSelectedLiveForMetrics] = useState<LiveRow | null>(null);
 
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [appearanceTemplateId, setAppearanceTemplateId] = useState<string | null>(null);
   const [savingAppearance, setSavingAppearance] = useState(false);
   const [appearanceData, setAppearanceData] = useState<{
     divulgacao: DeviceConfig<WidgetDivulgacaoSettings> | null;
@@ -155,10 +157,18 @@ function LiveCommerceContent() {
   }, [activeStoreId, loadLives, loadAppearance]);
 
   useEffect(() => {
-    const open = () => setAppearanceOpen(true);
+    const open = (e: Event) => {
+      setAppearanceTemplateId(((e as CustomEvent).detail?.templateId as string | undefined) ?? null);
+      setAppearanceOpen(true);
+    };
     window.addEventListener("live:open-appearance", open);
     return () => window.removeEventListener("live:open-appearance", open);
   }, []);
+
+  useEffect(() => {
+    liveStore.id = storeId || null;
+    window.dispatchEvent(new Event("live:templates-changed"));
+  }, [appearanceOpen, storeId]);
 
   async function handleSaveAppearance(
     divulgacao: DeviceConfig<WidgetDivulgacaoSettings>,
@@ -429,6 +439,7 @@ function LiveCommerceContent() {
         onSave={handleSaveAppearance}
         isSaving={savingAppearance}
         initialData={appearanceData}
+          initialTemplateId={appearanceTemplateId}
         storeId={storeId}
       />
 
@@ -468,11 +479,7 @@ export function LiveCommerce() {
   };
 
   const handleTabChange = (tab: LiveTab) => {
-    if (tab === "aparencia") {
-      setActiveTab("lives");
-      setTimeout(() => window.dispatchEvent(new Event("live:open-appearance")), 60);
-      return;
-    }
+    
     setActiveTab(tab);
   };
 
@@ -491,8 +498,11 @@ export function LiveCommerce() {
       <div className="flex min-w-0 flex-1 flex-col" style={{ paddingRight: 'var(--side-banner-w, 0px)' }}>
 
         <div className="flex-1">
-          {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" ? (
-            <LiveCommerceContent />
+          {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" ? (
+            <>
+              <div className={activeTab === "aparencia" ? "hidden" : ""}><LiveCommerceContent /></div>
+              {activeTab === "aparencia" && <LiveTemplatesPage />}
+            </>
           ) : (
             <div className="p-6 max-w-6xl mx-auto">
               <Card className="border-dashed">
