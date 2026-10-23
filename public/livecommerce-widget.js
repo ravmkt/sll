@@ -962,6 +962,20 @@ function fetchLiveSpotlight(live) {
   function device() { return window.innerWidth <= 768 ? 'mobile' : 'desktop'; }
   function C() { var o = cfg && cfg[device()]; return (o && typeof o === 'object') ? o : {}; }
   function flag(k) { return C()[k] !== false; }
+  /* SLL-STOCK-CFG */
+  function stockTag(qty, big) {
+    var q = Number(qty);
+    var lim = num(C().stockLimit, 3, 1, 99);
+    if (!(q > 0 && q <= lim)) return null;
+    var raw = String(C().stockText || 'Restam {n}').slice(0, 40);
+    var e = el('em', null, raw.replace(/\{n\}/g, String(q)));
+    if (C().stockStyle === 'text') {
+      e.style.cssText = 'display:block;margin-top:3px;font-style:normal;font-weight:700;font-size:' + (big ? 12 : 11) + 'px;color:' + (big ? '#fca5a5' : '#dc2626');
+    } else {
+      e.style.cssText = 'display:inline-block;margin-top:' + (big ? 4 : 3) + 'px;background:#dc2626;color:#fff;font-style:normal;font-weight:800;font-size:' + (big ? 12 : 11) + 'px;padding:' + (big ? '2px 10px' : '1px 8px') + ';border-radius:999px';
+    }
+    return e;
+  }
   function col(v, d) { return /^#[0-9a-f]{3,8}$/i.test(String(v || '')) ? String(v) : d; }
   function num(v, d, min, max) { var n = Number(v); return isFinite(n) ? Math.min(max, Math.max(min, n)) : d; }
   function loadCfg(storeId) {
@@ -1123,13 +1137,8 @@ function fetchLiveSpotlight(live) {
       pe.style.color = col(C().productPriceColor, '#a1a1aa');
       pe.style.fontSize = num(C().productPriceSize, 12, 9, 24) + 'px';
       info.appendChild(pe);
-      var sq = Number(p.stock_qty);
-          if (sq > 0 && sq <= 3) {
-            var sk = el('em', null, 'Restam ' + sq);
-            sk.style.cssText = 'display:inline-block;margin-top:3px;background:#dc2626;color:#fff;font-style:normal;font-weight:800;font-size:11px;padding:1px 8px;border-radius:999px'; /* SLL-BIG-PHOTO */
-            sk.style.fontWeight = '700';
-            info.appendChild(sk);
-          }
+      var skEl = stockTag(p.stock_qty, false);
+      if (skEl) info.appendChild(skEl);
           row.appendChild(info);
       var btn = link(buy(p, r.checkout_url), 'Comprar', 'sll-ao-btn');
       if (btn) row.appendChild(btn);
@@ -1147,12 +1156,8 @@ function fetchLiveSpotlight(live) {
         t.appendChild(el('b', null, onAir.p.name || 'Produto'));
         t.appendChild(el('span', null, money(onAir.price)));
         /* SLL-OV-STOCK */
-        var osq = Number(onAir.p.stock_qty);
-        if (osq > 0 && osq <= 3) {
-          var osk = el('em', null, 'Restam ' + osq);
-          osk.style.cssText = 'display:inline-block;margin-top:4px;background:#dc2626;color:#fff;font-style:normal;font-weight:800;font-size:12px;padding:2px 10px;border-radius:999px';
-          t.appendChild(osk);
-        }
+        var osk = stockTag(onAir.p.stock_qty, true);
+        if (osk) t.appendChild(osk);
         ov.appendChild(t);
         var ob = link(onAir.url, 'Comprar', 'sll-ao-btn');
         if (ob) ov.appendChild(ob);

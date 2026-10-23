@@ -74,6 +74,9 @@ export interface LivePlayerSettings {
   
   showProducts: boolean;
   productNameSize: number;
+  stockLimit?: number;
+  stockText?: string;
+  stockStyle?: "badge" | "text";
   productNameColor: string;
   productPriceSize: number;
   productPriceColor: string;
@@ -201,6 +204,9 @@ export const defaultPlayerSettings: LivePlayerSettings = {
   
   showProducts: true,
   productNameSize: 11,
+    stockLimit: 3,
+    stockText: "Restam {n}",
+    stockStyle: "badge",
   productNameColor: "#1e293b",
   productPriceSize: 12,
   productPriceColor: "#0094ea",
@@ -1033,6 +1039,18 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                           <div className="space-y-1">
                             <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Tam. Nome (px)</label>
                             <Input type="number" value={currentPlayer.productNameSize} onChange={(e) => updateConfig(setPlayerConfig, "productNameSize", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" />
+<div className="col-span-2 mt-1 space-y-1 rounded-md border p-2">
+  <p className="text-[11px] font-bold">Urgência de estoque</p>
+  <label className="text-[10px] text-muted-foreground">Mostrar quando o estoque for até</label>
+  <Input type="number" min={1} max={99} value={currentPlayer.stockLimit ?? 3} onChange={(e) => updateConfig(setPlayerConfig, "stockLimit", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" />
+  <label className="text-[10px] text-muted-foreground">Texto ({"{n}"} = quantidade)</label>
+  <Input value={currentPlayer.stockText ?? "Restam {n}"} maxLength={40} onChange={(e) => updateConfig(setPlayerConfig, "stockText", e.target.value, playerConfig.linked)} className="h-7 rounded-md text-[12px]" />
+  <label className="text-[10px] text-muted-foreground">Estilo</label>
+  <select className="h-7 w-full rounded-md border bg-background px-2 text-[12px]" value={currentPlayer.stockStyle ?? "badge"} onChange={(e) => updateConfig(setPlayerConfig, "stockStyle", e.target.value, playerConfig.linked)}>
+    <option value="badge">Etiqueta destacada</option>
+    <option value="text">Texto simples</option>
+  </select>
+</div>
                           </div>
                           <div className="space-y-1">
                             <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Tam. Preço (px)</label>
