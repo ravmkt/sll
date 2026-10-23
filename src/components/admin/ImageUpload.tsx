@@ -20,8 +20,8 @@ function readSize(file: File): Promise<{ w: number; h: number }> {
   });
 }
 
-export default function ImageUpload({ kind, value, onChange }: { kind: 'banner' | 'popup'; value: string; onChange: (url: string) => void }) {
-  const spec = IMG_SPEC[kind];
+export default function ImageUpload({ kind, value, onChange, format }: { kind: 'banner' | 'popup'; value: string; onChange: (url: string) => void; format?: 'horizontal' | 'vertical' | null }) {
+  const spec = kind === 'banner' && format === 'vertical' ? { w: 600, h: 1200, label: 'Banner vertical' } : IMG_SPEC[kind];
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export default function ImageUpload({ kind, value, onChange }: { kind: 'banner' 
       <input ref={ref} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
       {value ? (
         <div className="space-y-2">
-          <img src={value} alt="" className="w-full rounded-lg border border-slate-700 object-cover" style={{ aspectRatio: spec.w + ' / ' + spec.h, maxWidth: kind === 'popup' ? 360 : '100%' }} />
+          <img src={value} alt="" className="w-full rounded-lg border border-slate-700 object-cover" style={{ aspectRatio: spec.w + ' / ' + spec.h, maxWidth: kind === 'popup' ? 360 : spec.h > spec.w ? 200 : '100%' }} />
           <div className="flex gap-2">
             <button type="button" disabled={busy} onClick={() => ref.current?.click()} className="px-3 py-1.5 rounded-lg text-[13px] font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 disabled:opacity-50">
               {busy ? 'Enviando...' : 'Trocar imagem'}

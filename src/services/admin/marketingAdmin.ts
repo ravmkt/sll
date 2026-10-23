@@ -27,6 +27,7 @@ export interface MktDraft {
   audience: MktAudience;
   store_id?: string | null;
   notice_style?: NoticeStyle;
+  banner_format?: 'horizontal' | 'vertical' | null;
   frequency: MktFrequency;
   starts_at: string | null;
   ends_at: string | null;
@@ -71,6 +72,7 @@ export const FREQUENCY_LABEL: Record<MktFrequency, string> = {
 export const emptyDraft = (kind: MktKind): MktDraft => ({
   kind, title: '', body: '', image_url: '', cta_label: '', cta_url: '', coupon_code: '',
   location: 'all', audience: 'all', frequency: 'always', starts_at: null, ends_at: null, is_active: true,
+  banner_format: 'horizontal',
 });
 
 export async function listItems(kind?: MktKind): Promise<MktItem[]> {

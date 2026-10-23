@@ -244,7 +244,7 @@ const editDraft = (i: MktItem): MktDraft => {
   return { ...i, slides };
 };
 
-function SlidesEditor({ slides, onChange }: { slides: MktSlide[]; onChange: (s: MktSlide[]) => void }) {
+function SlidesEditor({ slides, onChange, format }: { slides: MktSlide[]; onChange: (s: MktSlide[]) => void; format?: 'horizontal' | 'vertical' | null }) {
   const [same, setSame] = useState(() => slides.every((s) => s.starts_at === slides[0]?.starts_at && s.ends_at === slides[0]?.ends_at));
 
   const setImage = (idx: number, url: string) => onChange(slides.map((s, n) => (n === idx ? { ...s, image_url: url } : s)));
@@ -275,7 +275,7 @@ function SlidesEditor({ slides, onChange }: { slides: MktSlide[]; onChange: (s: 
               <button type="button" onClick={() => remove(idx)} className="text-[13px] font-semibold text-rose-400 hover:text-rose-300">Remover</button>
             )}
           </div>
-          <ImageUpload kind="banner" value={s.image_url} onChange={(u) => setImage(idx, u)} />
+          <ImageUpload kind="banner" format={format} value={s.image_url} onChange={(u) => setImage(idx, u)} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <DateTimeField label="Início da imagem" value={s.starts_at} onChange={(x) => setDates(idx, { starts_at: x })} />
             <DateTimeField label="Fim da imagem" value={s.ends_at} onChange={(x) => setDates(idx, { ends_at: x })} />
@@ -304,7 +304,14 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
         <div className="md:col-span-2"><label className={labelCls}>Título (uso interno)</label>
           <input className={inputCls} value={draft.title} onChange={(e) => set('title', e.target.value)} /></div>
         {draft.kind === 'banner' ? (
-              <div className="md:col-span-2"><SlidesEditor key={draft.id ?? 'novo'} slides={draft.slides ?? []} onChange={(s) => set('slides', s)} /></div>
+              <div className="md:col-span-2"><div className="mb-3"><label className={labelCls}>Formato do banner</label>
+                <select className={inputCls} value={draft.banner_format ?? 'horizontal'} onChange={(e) => onChange({ ...draft, banner_format: e.target.value as 'horizontal' | 'vertical', slides: [blankSlide()] })}>
+                  <option value="horizontal">Horizontal (1200 × 180 px)</option>
+                  <option value="vertical">Vertical lateral (600 × 1200 px)</option>
+                </select>
+                {draft.banner_format === 'vertical' && <p className="mt-1 text-[13px] text-slate-500">Aparece na lateral direita do Vidlytics e do Stream Sell, em telas a partir de 1440 px. Não aparece na Home.</p>}
+              </div>
+              <SlidesEditor key={(draft.id ?? 'novo') + ':' + (draft.banner_format ?? 'horizontal')} slides={draft.slides ?? []} format={draft.banner_format} onChange={(s) => set('slides', s)} /></div>
             ) : (
               draft.kind === 'notice' ? (
                   <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
@@ -428,6 +435,7 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
                             <p className="max-w-[260px] truncate text-[15px] font-semibold text-slate-100">{i.title}</p>
                             <span className={'rounded-full px-2 py-0.5 text-xs font-bold ' + st.cls}>{st.label}</span>
                             {i.coupon_code && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-bold text-amber-300">{i.coupon_code}</span>}
+                            {i.kind === 'banner' && i.banner_format === 'vertical' && <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-bold text-violet-300">Vertical</span>}
                           </div>
                           <p className="text-[12px] text-slate-500">{AUDIENCE_LABEL[i.audience]}</p>
                         </div>
