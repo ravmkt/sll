@@ -1146,6 +1146,13 @@ function fetchLiveSpotlight(live) {
         var t = el('div');
         t.appendChild(el('b', null, onAir.p.name || 'Produto'));
         t.appendChild(el('span', null, money(onAir.price)));
+        /* SLL-OV-STOCK */
+        var osq = Number(onAir.p.stock_qty);
+        if (osq > 0 && osq <= 3) {
+          var osk = el('em', null, 'Restam ' + osq);
+          osk.style.cssText = 'display:block;font-style:normal;font-weight:700;font-size:11px;color:#fca5a5';
+          t.appendChild(osk);
+        }
         ov.appendChild(t);
         var ob = link(onAir.url, 'Comprar', 'sll-ao-btn');
         if (ob) ov.appendChild(ob);
