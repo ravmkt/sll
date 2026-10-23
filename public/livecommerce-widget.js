@@ -1051,6 +1051,13 @@ function fetchLiveSpotlight(live) {
     var byId = {};
     prods.forEach(function (p) { byId[p.id] = p; });
     var onAirId = live.spotlight_product_id;
+        /* SLL-BUY-LINK */
+        function buy(p, fallback) {
+          var u = safeUrl(p && p.purchase_url);
+          if (!u) return fallback;
+          var code = live.spotlight_coupon_code || (coupons.length ? coupons[0].code : '');
+          return code ? u + (u.indexOf('?') < 0 ? '?' : '&') + 'promocode=' + encodeURIComponent(code) : u;
+        }
     var w0 = document.querySelector('.sll-yt-wrap');
     if (w0) applyCfg(w0);
     if (st.open === undefined) st.open = device() === 'desktop';
@@ -1116,11 +1123,18 @@ function fetchLiveSpotlight(live) {
       pe.style.color = col(C().productPriceColor, '#a1a1aa');
       pe.style.fontSize = num(C().productPriceSize, 12, 9, 24) + 'px';
       info.appendChild(pe);
-      row.appendChild(info);
-      var btn = link(r.checkout_url, 'Comprar', 'sll-ao-btn');
+      var sq = Number(p.stock_qty);
+          if (sq > 0 && sq <= 3) {
+            var sk = el('em', null, 'Restam ' + sq);
+            sk.style.color = '#dc2626';
+            sk.style.fontWeight = '700';
+            info.appendChild(sk);
+          }
+          row.appendChild(info);
+      var btn = link(buy(p, r.checkout_url), 'Comprar', 'sll-ao-btn');
       if (btn) row.appendChild(btn);
       drawerList.appendChild(row);
-      if (isOn) onAir = { p: p, price: price, url: r.checkout_url };
+      if (isOn) onAir = { p: p, price: price, url: buy(p, r.checkout_url) };
     });
 
     if (st.ov) { st.ov.parentNode && st.ov.parentNode.removeChild(st.ov); st.ov = null; }
@@ -1154,7 +1168,7 @@ function fetchLiveSpotlight(live) {
           api('live_banners?select=title,image_url,link_url&live_id=eq.' + live.id + '&is_active=eq.true&order=display_order.asc')
         ]).then(function (res) {
           var ids = res[0].map(function (r) { return r.product_id; }).filter(function (x) { return UUID.test(x); });
-          return (ids.length ? api('products?select=id,name,price,image_url&id=in.(' + ids.join(',') + ')', 'public') : Promise.resolve([]))
+          return (ids.length ? api('products?select=id,name,price,image_url,checkout_token,purchase_url,stock_qty&id=in.(' + ids.join(',') + ')', 'public') : Promise.resolve([]))
             .then(function (pr) {
               if (st.vid !== vid || !st.box) return;
               return loadCfg(live.store_id).then(function () {
