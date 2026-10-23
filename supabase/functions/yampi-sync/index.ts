@@ -140,6 +140,12 @@ async function syncStore(storeId: string, onlyProduct?: string) {
   const s = { products: 0, variants_updated: 0, variants_added: 0, prices_updated: 0, not_found: 0, failed: 0 };
   try {
     const remote = await fetchRemote(c, storeId, onlyProduct);
+        const toks: { ext: string; token: string; url: string; stock: number }[] = [];
+        for (const y of remote.values()) {
+          for (const k of (y.skus?.data ?? [])) {
+            if (k.token) toks.push({ ext: String(k.id), token: String(k.token), url: String(k.purchase_url || ''), stock: Number(k.total_in_stock) || 0 });
+          }
+        }
     const prods = await pageAll<any>((a, b) =>
       admin.from('products').select('id,external_id,price').eq('store_id', storeId).eq('source_platform', 'yampi').order('id').range(a, b));
     const vars = await pageAll<any>((a, b) =>
@@ -207,6 +213,10 @@ async function syncStore(storeId: string, onlyProduct?: string) {
       }
     }
     for (let i = 0; i < jobs.length; i += 10) await Promise.all(jobs.slice(i, i + 10).map((j) => j()));
+        for (let n = 0; n < toks.length; n += 500) {
+          const { error } = await admin.rpc('yampi_apply_tokens', { p_store: storeId, p_items: toks.slice(n, n + 500) });
+          if (error) s.failed++;
+        }
     let mark = admin.from('products').update({ last_synced_at: now }).eq('store_id', storeId).eq('source_platform', 'yampi');
     if (onlyProduct) mark = mark.eq('id', onlyProduct);
     await mark;
