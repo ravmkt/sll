@@ -982,6 +982,7 @@ function fetchLiveSpotlight(live) {
     wrap.style.boxSizing = 'border-box';
     wrap.style.border = bw ? (bw + 'px solid ' + col(c.borderColor, '#10b981')) : '';
     wrap.style.borderRadius = br + 'px';
+    window.__sllCfg = c;
   }
 
   var css = document.createElement('style');
@@ -1145,6 +1146,8 @@ function fetchLiveSpotlight(live) {
       .then(function (rows) {
         var live = rows[0];
         if (!live || !UUID.test(live.id)) return;
+        window.__sllLiveId = live.id;
+        window.__sllKey = KEY;
         return Promise.all([
           api('live_products?select=product_id,code,display_order,is_on_air,price_override,checkout_url&live_id=eq.' + live.id + '&order=display_order.asc'),
           api('live_coupons?select=code,discount_percent&live_id=eq.' + live.id + '&is_active=eq.true'),
@@ -1187,4 +1190,166 @@ function fetchLiveSpotlight(live) {
   }
 
   setInterval(tick, 1000);
+})();
+/* SLL-LIVE-LAYOUT */
+(function () {
+  if (window.__sllLiveLayout) return;
+  window.__sllLiveLayout = true;
+  var API = 'https://flivmllysdhaydhogmhg.supabase.co/rest/v1/';
+  var SID = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  var count = 0, beatTimer = null, beatId = null, watched = null, mo = null;
+
+  var css = document.createElement('style');
+  css.textContent = [
+    '.sll-3c-top{position:absolute;top:8px;left:8px;right:44px;z-index:6;display:flex;align-items:center;gap:6px;pointer-events:none;font:700 12px/1 system-ui,sans-serif;color:#fff}',
+    '.sll-3c-t{display:none;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.7);font-size:13px}',
+    '.sll-3c-pill{background:rgba(0,0,0,.55);border-radius:999px;padding:4px 8px;display:flex;align-items:center;gap:4px;font-size:11px}',
+    '.sll-3c-live{background:var(--p,#ef4444)}',
+    '.sll-3c-share{display:block;width:calc(100% - 16px);margin:8px;padding:10px;border:2px solid var(--p,#10b981);border-radius:10px;background:#fff;color:#000;font:700 14px system-ui,sans-serif;cursor:pointer}',
+    '.sll-3c-ph{display:none}',
+    '.sll-ao-cp.sll-sp{display:flex;padding:0;overflow:hidden;background:#fff;text-align:initial}',
+    '.sll-cp-a,.sll-cp-b{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 8px;font-weight:800}',
+    '.vl-live-modal.sll-no-chat .vl-live-chat{display:none!important}',
+    '.vl-live-modal.sll-no-share .sll-3c-share{display:none!important}',
+    '.vl-live-modal.sll-no-views .sll-3c-views{display:none!important}',
+    '@media (min-width:901px){',
+    '.vl-live-modal.sll-3c{position:relative!important;--h:min(92vh,720px);--pw:calc((var(--h) - 96px)*9/16);display:grid!important;grid-template-columns:minmax(0,1fr) var(--pw) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;grid-template-areas:"ph pl ch" "ls pl ch" "ad cp sh"!important;gap:10px!important;width:min(96vw,calc(var(--pw) + 680px))!important;max-width:none!important;height:var(--h)!important;max-height:none!important;padding:12px!important;background:#fff!important;box-sizing:border-box!important;overflow:hidden!important}',
+    '.vl-live-modal.sll-3c>.vl-live-modal-close{position:absolute!important;top:6px;right:6px;z-index:20}',
+    '.vl-live-modal.sll-3c .sll-yt-wrap{grid-area:pl;aspect-ratio:auto!important;width:100%!important;max-width:none!important;height:100%!important;margin:0!important;min-height:0}',
+    '.vl-live-modal.sll-3c>.sll-ao-box,.vl-live-modal.sll-3c>.vl-live-modal-body{display:contents!important}',
+    '.vl-live-modal.sll-3c .vl-live-modal-title,.vl-live-modal.sll-3c .vl-live-products,.vl-live-modal.sll-3c .sll-ao-tt,.vl-live-modal.sll-3c .sll-ao-bn,.vl-live-modal.sll-3c .sll-ao-dh{display:none!important}',
+    '.vl-live-modal.sll-3c .sll-3c-t{display:block}',
+    '.vl-live-modal.sll-3c .sll-3c-ph{display:block;grid-area:ph;margin-bottom:-10px;padding:8px;background:var(--p);color:#fff;text-align:center;font:800 13px system-ui,sans-serif;text-transform:uppercase;border:2px solid var(--p);border-bottom:0;border-radius:10px 10px 0 0}',
+    '.vl-live-modal.sll-3c .sll-ao-list{display:block!important;grid-area:ls;overflow-y:auto;min-height:0;padding:8px;background:#fff;border:2px solid var(--p);border-top:0;border-radius:0 0 10px 10px}',
+    '.vl-live-modal.sll-3c .sll-ao-it{background:#fff;border:1.5px solid var(--p);color:#1e293b}',
+    '.vl-live-modal.sll-3c .sll-ao-it.on{box-shadow:0 0 0 2px var(--p)}',
+    '.vl-live-modal.sll-3c .sll-ao-it b{color:var(--pn,#1e293b)}',
+    '.vl-live-modal.sll-3c .sll-ao-it.on b::after{content:"NA LIVE";margin-left:6px;background:var(--p);color:#fff;border-radius:4px;padding:1px 5px;font-size:9px;vertical-align:middle}',
+    '.vl-live-modal.sll-3c .sll-ao-btn{background:var(--p)}',
+    '.vl-live-modal.sll-3c .sll-ao-ad{grid-area:ad;margin:0;display:flex;flex-direction:column;justify-content:center;border:2px solid var(--p)}',
+    '.vl-live-modal.sll-3c .sll-ao-cp{grid-area:cp;margin:0;border:2px solid var(--p);border-radius:10px}',
+    '.vl-live-modal.sll-3c .sll-3c-share{grid-area:sh;margin:0;width:auto}',
+    '.vl-live-modal.sll-3c .vl-live-chat{grid-area:ch;display:flex!important;flex-direction:column;min-height:0;margin:0!important;padding:0!important;border:2px solid var(--p)!important;border-radius:12px;background:#fff!important;overflow:hidden}',
+    '.vl-live-modal.sll-3c .vl-live-chat-title{margin:0!important;padding:8px!important;background:var(--p);color:#fff!important;text-align:center;font-weight:800;text-transform:uppercase}',
+    '.vl-live-modal.sll-3c .vl-live-chat-messages{flex:1;min-height:0;max-height:none!important;height:auto!important;overflow-y:auto;padding:8px;color:#1e293b}',
+    '.vl-live-modal.sll-3c .vl-live-chat-msg{background:#f1f5f9!important;color:#1e293b!important}',
+    '.vl-live-modal.sll-3c .vl-live-chat-msg b{color:var(--p)!important}',
+    '.vl-live-modal.sll-3c .vl-live-chat-form{padding:8px;border-top:1px solid #e2e8f0}',
+    '.vl-live-modal.sll-3c .vl-live-chat-input{background:#fff!important;color:#111!important;border:1px solid var(--p)!important}',
+    '.vl-live-modal.sll-3c .vl-live-chat-send{background:var(--p)!important;color:#fff!important}',
+    '}'
+  ].join('');
+  document.head.appendChild(css);
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function col(v, d) { return /^#[0-9a-f]{3,8}$/i.test(String(v || '')) ? String(v) : d; }
+  function fmt(n) { return n >= 1000 ? (n / 1000).toFixed(1).replace('.0', '') + 'K' : String(n); }
+
+  function shareLive() {
+    var mt = document.querySelector('.vl-live-modal-title');
+    var t = (mt && mt.textContent) || 'ao vivo';
+    var msg = 'Estou assistindo a live "' + t + '" agora! Entra comigo e aproveite as ofertas: ' + window.location.href;
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+  }
+
+  function paintCount() {
+    var n = document.querySelector('.sll-3c-n');
+    var s = fmt(count);
+    if (n && n.textContent !== s) n.textContent = s;
+  }
+  function beat() {
+    var id = window.__sllLiveId, key = window.__sllKey;
+    if (!id || !key) return;
+    fetch(API + 'rpc/live_heartbeat', {
+      method: 'POST',
+      headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', 'Content-Profile': 'live_commerce' },
+      body: JSON.stringify({ p_live_id: id, p_session: SID })
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (n) { if (typeof n === 'number') { count = n; paintCount(); } })
+      .catch(function () {});
+  }
+  function stopBeat() {
+    if (beatTimer) clearInterval(beatTimer);
+    beatTimer = null; beatId = null; count = 0;
+  }
+
+  function sync() {
+    var modal = document.querySelector('.vl-live-modal');
+    if (!modal) {
+      stopBeat(); watched = null;
+      if (mo) { mo.disconnect(); mo = null; }
+      return;
+    }
+    if (watched !== modal) {
+      watched = modal;
+      if (mo) mo.disconnect();
+      mo = new MutationObserver(sync);
+      mo.observe(modal, { childList: true, subtree: true });
+    }
+    var c = window.__sllCfg || {};
+    var wrap = modal.querySelector('.vl-live-player-wrap');
+
+    modal.classList.toggle('sll-3c', window.innerWidth > 900 && !!modal.querySelector('.sll-ao-box'));
+    modal.classList.toggle('sll-no-chat', c.showChat === false);
+    modal.classList.toggle('sll-no-share', c.showShare === false);
+    modal.classList.toggle('sll-no-views', c.showViewerCount === false);
+    modal.style.setProperty('--p', col(c.borderColor, col(c.infoBgColor, '#0094ea')));
+    modal.style.setProperty('--pn', col(c.productNameColor, '#1e293b'));
+
+    if (wrap && !wrap.querySelector('.sll-3c-top')) {
+      var top = el('div', 'sll-3c-top');
+      top.appendChild(el('span', 'sll-3c-t'));
+      top.appendChild(el('span', 'sll-3c-pill sll-3c-live', 'AO VIVO'));
+      var v = el('span', 'sll-3c-pill sll-3c-views');
+      v.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span class="sll-3c-n">0</span>';
+      top.appendChild(v);
+      wrap.appendChild(top);
+      paintCount();
+    }
+    var tt = modal.querySelector('.sll-3c-t');
+    var mt = modal.querySelector('.vl-live-modal-title');
+    if (tt && mt && tt.textContent !== mt.textContent) tt.textContent = mt.textContent;
+
+    if (!modal.querySelector('.sll-3c-ph')) modal.appendChild(el('div', 'sll-3c-ph', 'Produtos da live'));
+
+    var sh = modal.querySelector('.sll-3c-share');
+    if (!sh) {
+      sh = el('button', 'sll-3c-share', 'Compartilhar');
+      sh.type = 'button';
+      sh.onclick = shareLive;
+      modal.appendChild(sh);
+    }
+    sh.style.background = col(c.shareBgColor, '#ffffff');
+    sh.style.color = col(c.shareTextColor, '#000000');
+
+    var cp = modal.querySelector('.sll-ao-cp');
+    if (cp && !cp.getAttribute('data-sll')) {
+      cp.setAttribute('data-sll', '1');
+      var m = /^Cupom\s+(.+?)(?:\s+-\s+(.+))?$/.exec(cp.textContent || '');
+      if (m) {
+        cp.textContent = '';
+        cp.classList.add('sll-sp');
+        var a = el('span', 'sll-cp-a', m[1]);
+        a.style.background = col(c.couponCodeBgColor, '#0094ea');
+        a.style.color = col(c.couponCodeColor, '#ffffff');
+        cp.appendChild(a);
+        if (m[2]) {
+          var b = el('span', 'sll-cp-b', m[2]);
+          b.style.background = col(c.couponTextBgColor, '#ffffff');
+          b.style.color = col(c.couponTextColor, '#000000');
+          cp.appendChild(b);
+        }
+      }
+    }
+
+    if (window.__sllLiveId && beatId !== window.__sllLiveId) { beatId = window.__sllLiveId; beat(); }
+    if (!beatTimer) beatTimer = setInterval(beat, 10000);
+  }
+
+  setInterval(sync, 700);
 })();
