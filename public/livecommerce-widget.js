@@ -968,6 +968,9 @@ function fetchLiveSpotlight(live) {
     '.sll-ao-btn{margin-left:auto;background:#10b981;color:#fff;border-radius:8px;padding:6px 12px;font-weight:700;text-decoration:none;white-space:nowrap}' +
     '.sll-ao-box{background:#0b0b0b;color:#fff;padding:8px;font:12px/1.3 system-ui,sans-serif}' +
     '.sll-ao-cp{background:#f59e0b;color:#111;font-weight:700;border-radius:8px;padding:8px 10px;margin-bottom:8px;text-align:center}' +
+    '.sll-ao-ad{background:#065f46;border:1px solid #10b981;border-radius:10px;padding:8px 10px;margin-bottom:8px;text-align:center}' +
+    '.sll-ao-ad b{display:block;font-size:13px}' +
+    '.sll-ao-ad span{color:#a7f3d0}' +
     '.sll-ao-bn{display:block;margin-bottom:8px}' +
     '.sll-ao-bn img{width:100%;border-radius:8px;display:block}' +
     '.sll-ao-it{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid #27272a;border-radius:10px;margin-bottom:6px}' +
@@ -1023,6 +1026,14 @@ function fetchLiveSpotlight(live) {
       var c = coupons.filter(function (x) { return x.code === live.spotlight_coupon_code; })[0] || coupons[0];
       st.box.appendChild(el('div', 'sll-ao-cp', 'Cupom ' + c.code + (c.discount_percent ? ' - ' + c.discount_percent + '% OFF' : '')));
     }
+    var advs = Array.isArray(live.advantages) ? live.advantages : [];
+    var ai = live.spotlight_advantage_idx;
+    if (typeof ai === 'number' && advs[ai]) {
+      var ad = el('div', 'sll-ao-ad');
+      ad.appendChild(el('b', null, String(advs[ai].title || '')));
+      ad.appendChild(el('span', null, String(advs[ai].description || '')));
+      st.box.appendChild(ad);
+    }
     if (banners.length && safeUrl(banners[0].image_url)) {
       var b = banners[0];
       var holder = link(b.link_url, '', 'sll-ao-bn') || el('div', 'sll-ao-bn');
@@ -1067,7 +1078,7 @@ function fetchLiveSpotlight(live) {
   }
 
   function refresh(vid) {
-    api('lives?select=id,status,spotlight_product_id,spotlight_coupon_code&youtube_video_id=eq.' + encodeURIComponent(vid) + '&order=created_at.desc&limit=1')
+    api('lives?select=id,status,spotlight_product_id,spotlight_coupon_code,advantages,spotlight_advantage_idx&youtube_video_id=eq.' + encodeURIComponent(vid) + '&order=created_at.desc&limit=1')
       .then(function (rows) {
         var live = rows[0];
         if (!live || !UUID.test(live.id)) return;
