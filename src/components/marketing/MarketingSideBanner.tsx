@@ -4,23 +4,28 @@ import { fetchActive, track, type ActiveItem } from '@/services/marketingPublic'
 
 type Loc = 'home' | 'vidlytics' | 'live';
 
-const MIN_WIDTH = 1440;
+// Aparece so em telas com pelo menos 1366 x 560 px
+const QUERY = '(min-width: 1366px) and (min-height: 560px)';
 
-function useWide() {
-  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.innerWidth >= MIN_WIDTH);
+// Largura responsiva: 220-300 px conforme a largura da tela, limitada pela altura visivel (proporcao 1:2)
+const TOP = 'calc(var(--trial-h, 0px) + var(--notice-h, 0px) + 88px)';
+const W = 'min(clamp(220px, 16vw, 300px), calc((100vh - var(--trial-h, 0px) - var(--notice-h, 0px) - 104px) / 2))';
+
+function useFits() {
+  const [ok, setOk] = useState(() => typeof window !== 'undefined' && window.matchMedia(QUERY).matches);
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: ' + MIN_WIDTH + 'px)');
-    const on = () => setWide(mq.matches);
+    const mq = window.matchMedia(QUERY);
+    const on = () => setOk(mq.matches);
     on();
     mq.addEventListener('change', on);
     return () => mq.removeEventListener('change', on);
   }, []);
-  return wide;
+  return ok;
 }
 
 export default function MarketingSideBanner({ location }: { location: Loc }) {
   const { storeId } = useLoja() as { storeId: string | null };
-  const wide = useWide();
+  const fits = useFits();
   const [slides, setSlides] = useState<ActiveItem[]>([]);
   const [idx, setIdx] = useState(0);
   const counted = useRef<Set<string>>(new Set());
@@ -45,19 +50,19 @@ export default function MarketingSideBanner({ location }: { location: Loc }) {
   }, [slides.length]);
 
   const cur = slides.length ? slides[idx % slides.length] : undefined;
-  const visible = wide && !!storeId && !!cur;
+  const visible = fits && !!storeId && !!cur;
 
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty('--side-banner-w', visible ? '316px' : '0px');
+    root.style.setProperty('--side-banner-w', visible ? 'calc(' + W + ' + 32px)' : '0px');
     return () => { root.style.setProperty('--side-banner-w', '0px'); };
   }, [visible]);
 
   useEffect(() => {
-    if (!wide || !storeId || !cur || counted.current.has(cur.id)) return;
+    if (!fits || !storeId || !cur || counted.current.has(cur.id)) return;
     counted.current.add(cur.id);
     track(cur.id, storeId, 'impression');
-  }, [wide, storeId, cur]);
+  }, [fits, storeId, cur]);
 
   if (!visible || !cur || !storeId) return null;
 
@@ -69,12 +74,8 @@ export default function MarketingSideBanner({ location }: { location: Loc }) {
   };
 
   return (
-    <aside
-      className="fixed right-4 z-30"
-      style={{ top: 'calc(var(--trial-h, 0px) + var(--notice-h, 0px) + 88px)', width: 300 }}
-      aria-label="Publicidade"
-    >
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" style={{ width: 300, height: 600 }}>
+    <aside className="fixed right-4 z-30" style={{ top: TOP, width: W }} aria-label="Publicidade">
+      <div className="relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" style={{ aspectRatio: '1 / 2' }}>
         <button
           type="button"
           onClick={go}
