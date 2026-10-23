@@ -957,11 +957,41 @@ function fetchLiveSpotlight(live) {
   var POLL_MS = 4000;
   var UUID = /^[0-9a-f-]{36}$/i;
   var st = { vid: null, box: null, ov: null, timer: null };
+  var cfg = {}, cfgStore = null, cfgAt = 0;
+
+  function device() { return window.innerWidth <= 768 ? 'mobile' : 'desktop'; }
+  function C() { var o = cfg && cfg[device()]; return (o && typeof o === 'object') ? o : {}; }
+  function flag(k) { return C()[k] !== false; }
+  function col(v, d) { return /^#[0-9a-f]{3,8}$/i.test(String(v || '')) ? String(v) : d; }
+  function num(v, d, min, max) { var n = Number(v); return isFinite(n) ? Math.min(max, Math.max(min, n)) : d; }
+  function loadCfg(storeId) {
+    if (!storeId || !UUID.test(storeId)) return Promise.resolve();
+    if (cfgStore === storeId && (Date.now() - cfgAt) < 60000) return Promise.resolve();
+    return api('appearance_settings?select=player_settings&store_id=eq.' + storeId + '&limit=1').then(function (r) {
+      cfg = (r[0] && r[0].player_settings) || {};
+      cfgStore = storeId;
+      cfgAt = Date.now();
+    });
+  }
+  function applyCfg(wrap) {
+    var c = C();
+    var ratio = c.aspectRatio || (device() === 'mobile' ? '9:16' : '16:9');
+    wrap.classList.toggle('sll-yt-portrait', ratio === '9:16');
+    var bw = num(c.borderWidth, 0, 0, 8);
+    var br = num(c.borderRadius, 0, 0, 40);
+    wrap.style.boxSizing = 'border-box';
+    wrap.style.border = bw ? (bw + 'px solid ' + col(c.borderColor, '#10b981')) : '';
+    wrap.style.borderRadius = br + 'px';
+  }
 
   var css = document.createElement('style');
   css.textContent =
     '.sll-yt-wrap{position:relative!important;width:100%!important;height:auto!important;max-height:none!important;aspect-ratio:16/9!important;flex:none!important;padding:0!important;overflow:hidden!important;background:#000}' +
     '.sll-yt-wrap iframe{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;border:0!important}' +
+    '.sll-yt-wrap.sll-yt-portrait{aspect-ratio:9/16!important;max-width:calc(85vh*9/16)!important;margin-left:auto!important;margin-right:auto!important}' +
+    '.sll-ao-tt{font-weight:700;font-size:14px;margin-bottom:8px}' +
+    '.sll-ao-dh{width:100%;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:10px;padding:8px;font-weight:700;margin-bottom:6px;cursor:pointer}' +
+    '.sll-ao-list{display:none}.sll-ao-list.open{display:block}' +
     '.sll-ao-ov{position:absolute;left:8px;right:8px;bottom:8px;z-index:5;display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.82);border:1px solid #10b981;border-radius:12px;padding:8px;color:#fff;font:12px/1.3 system-ui,sans-serif}' +
     '.sll-ao-ov img{width:44px;height:44px;border-radius:8px;object-fit:cover}' +
     '.sll-ao-ov b{display:block;font-size:13px}' +
@@ -970,7 +1000,7 @@ function fetchLiveSpotlight(live) {
     '.sll-ao-cp{background:#f59e0b;color:#111;font-weight:700;border-radius:8px;padding:8px 10px;margin-bottom:8px;text-align:center}' +
     '.sll-ao-ad{background:#065f46;border:1px solid #10b981;border-radius:10px;padding:8px 10px;margin-bottom:8px;text-align:center}' +
     '.sll-ao-ad b{display:block;font-size:13px}' +
-    '.sll-ao-ad span{color:#a7f3d0}' +
+    '.sll-ao-ad span{color:inherit;opacity:.85}' +
     '.sll-ao-bn{display:block;margin-bottom:8px}' +
     '.sll-ao-bn img{width:100%;border-radius:8px;display:block}' +
     '.sll-ao-it{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid #27272a;border-radius:10px;margin-bottom:6px}' +
@@ -1020,18 +1050,32 @@ function fetchLiveSpotlight(live) {
     var byId = {};
     prods.forEach(function (p) { byId[p.id] = p; });
     var onAirId = live.spotlight_product_id;
+    var w0 = document.querySelector('.sll-yt-wrap');
+    if (w0) applyCfg(w0);
+    if (st.open === undefined) st.open = device() === 'desktop';
     st.box.textContent = '';
 
-    if (coupons.length) {
+    if (flag('showTitle') && C().titleText) {
+      var tt = el('div', 'sll-ao-tt', String(C().titleText));
+      tt.style.color = col(C().titleColor, '#fff');
+      st.box.appendChild(tt);
+    }
+    if (coupons.length && flag('showCoupon')) {
       var c = coupons.filter(function (x) { return x.code === live.spotlight_coupon_code; })[0] || coupons[0];
       st.box.appendChild(el('div', 'sll-ao-cp', 'Cupom ' + c.code + (c.discount_percent ? ' - ' + c.discount_percent + '% OFF' : '')));
     }
     var advs = Array.isArray(live.advantages) ? live.advantages : [];
     var ai = live.spotlight_advantage_idx;
-    if (typeof ai === 'number' && advs[ai]) {
+    if (typeof ai === 'number' && advs[ai] && flag('showInfo')) {
       var ad = el('div', 'sll-ao-ad');
-      ad.appendChild(el('b', null, String(advs[ai].title || '')));
-      ad.appendChild(el('span', null, String(advs[ai].description || '')));
+      ad.style.background = col(C().infoBgColor, '#065f46');
+      ad.style.color = col(C().infoTextColor, '#ffffff');
+      var abt = el('b', null, String(advs[ai].title || ''));
+      abt.style.fontSize = num(C().infoSize1, 13, 10, 32) + 'px';
+      ad.appendChild(abt);
+      var abd = el('span', null, String(advs[ai].description || ''));
+      abd.style.fontSize = num(C().infoSize2, 12, 9, 24) + 'px';
+      ad.appendChild(abd);
       st.box.appendChild(ad);
     }
     if (banners.length && safeUrl(banners[0].image_url)) {
@@ -1042,6 +1086,20 @@ function fetchLiveSpotlight(live) {
       st.box.appendChild(holder);
     }
 
+    var drawerList = el('div', 'sll-ao-list' + (st.open ? ' open' : ''));
+    if (flag('showProducts') && lp.length) {
+      var head = el('button', 'sll-ao-dh');
+      head.type = 'button';
+      var lbl = function () { return st.open ? 'Ocultar produtos' : 'Ver produtos (' + lp.length + ')'; };
+      head.textContent = lbl();
+      head.onclick = function () {
+        st.open = !st.open;
+        drawerList.classList.toggle('open', st.open);
+        head.textContent = lbl();
+      };
+      st.box.appendChild(head);
+      st.box.appendChild(drawerList);
+    }
     var onAir = null;
     lp.forEach(function (r) {
       var p = byId[r.product_id] || {};
@@ -1050,12 +1108,17 @@ function fetchLiveSpotlight(live) {
       var row = el('div', 'sll-ao-it' + (isOn ? ' on' : ''));
       if (safeUrl(p.image_url)) { var i = el('img'); i.src = safeUrl(p.image_url); i.alt = ''; row.appendChild(i); }
       var info = el('span');
-      info.appendChild(el('b', null, (r.code ? r.code + '. ' : '') + (p.name || 'Produto')));
-      info.appendChild(el('em', null, money(price)));
+      var nb = el('b', null, (r.code ? r.code + '. ' : '') + (p.name || 'Produto'));
+      nb.style.fontSize = num(C().productNameSize, 13, 9, 24) + 'px';
+      info.appendChild(nb);
+      var pe = el('em', null, money(price));
+      pe.style.color = col(C().productPriceColor, '#a1a1aa');
+      pe.style.fontSize = num(C().productPriceSize, 12, 9, 24) + 'px';
+      info.appendChild(pe);
       row.appendChild(info);
       var btn = link(r.checkout_url, 'Comprar', 'sll-ao-btn');
       if (btn) row.appendChild(btn);
-      st.box.appendChild(row);
+      drawerList.appendChild(row);
       if (isOn) onAir = { p: p, price: price, url: r.checkout_url };
     });
 
@@ -1078,7 +1141,7 @@ function fetchLiveSpotlight(live) {
   }
 
   function refresh(vid) {
-    api('lives?select=id,status,spotlight_product_id,spotlight_coupon_code,advantages,spotlight_advantage_idx&youtube_video_id=eq.' + encodeURIComponent(vid) + '&order=created_at.desc&limit=1')
+    api('lives?select=id,status,spotlight_product_id,spotlight_coupon_code,advantages,spotlight_advantage_idx,store_id&youtube_video_id=eq.' + encodeURIComponent(vid) + '&order=created_at.desc&limit=1')
       .then(function (rows) {
         var live = rows[0];
         if (!live || !UUID.test(live.id)) return;
@@ -1091,7 +1154,10 @@ function fetchLiveSpotlight(live) {
           return (ids.length ? api('products?select=id,name,price,image_url&id=in.(' + ids.join(',') + ')', 'public') : Promise.resolve([]))
             .then(function (pr) {
               if (st.vid !== vid || !st.box) return;
-              render(live, res[0], pr, res[1], res[2]);
+              return loadCfg(live.store_id).then(function () {
+                if (st.vid !== vid || !st.box) return;
+                render(live, res[0], pr, res[1], res[2]);
+              });
             });
         });
       });
