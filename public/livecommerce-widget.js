@@ -148,6 +148,19 @@ return fetchJson(path).then(function (rows) {
   }).catch(function () { return null; });
 }
 
+function getLiveSessionId() {
+  var k = 'sll_live_sid';
+  try {
+    var v = sessionStorage.getItem(k);
+    if (v) return v;
+    v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() :
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (ch) {
+        var r = Math.random() * 16 | 0; return (ch === 'x' ? r : (r & 3 | 8)).toString(16);
+      });
+    sessionStorage.setItem(k, v);
+    return v;
+  } catch (e) { return null; }
+}
 function trackLiveEvent(liveId, eventType, metadata) {
   if (!hasSupabase || !liveId) return;
   supabaseFetch('live_events', {
@@ -798,7 +811,7 @@ function postLiveChatMessage(live, text) {
     body: JSON.stringify({
       live_id: live.id,
       store_id: storeId,
-      author_name: visitorName,
+      session_id: getLiveSessionId(), author_name: visitorName,
       message: text,
       is_from_store: false
     })
