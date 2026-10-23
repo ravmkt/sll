@@ -15,7 +15,7 @@ export default function MarketingBanner({ storeId, location, onActive }: { store
     fetchActive(storeId, location)
       .then((list) => {
         if (!alive) return;
-        const banners = list.filter((i) => i.kind === 'banner');
+        const banners = list.filter((i) => i.kind === 'banner' && i.banner_format !== 'vertical');
         setItems(banners);
         setIdx(0);
         onActive(banners.length > 0);

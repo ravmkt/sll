@@ -21,6 +21,7 @@ import { LiveSidebar, LiveTab } from "@/components/live/LiveSidebar";
 import { LiveVisaoGeral } from "@/components/live/LiveVisaoGeral";
 import type { CommercialDateOccurrence } from "@/lib/commercialDates";
 import { AppFooter } from "@/components/layout/AppFooter";
+import MarketingSideBanner from "@/components/marketing/MarketingSideBanner";
 import { LiveFormDialog } from "@/components/live/LiveFormDialog";
 import { ShareLiveModal } from "@/components/live/ShareLiveModal";
 import { LiveMetricsModal } from "@/components/live/LiveMetricsModal";
@@ -479,6 +480,7 @@ export function LiveCommerce() {
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={{ paddingTop: 'var(--trial-h, 0px)' }}>
       <TopBar actions={<AppToggle moduleKey="live_commerce" />} />
       <div className="flex flex-1">
+      <MarketingSideBanner location="live" />
       <LiveSidebar
         activeTab={activeTab}
         isCollapsed={collapsed}
@@ -486,7 +488,7 @@ export function LiveCommerce() {
         onTabChange={handleTabChange}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col" style={{ paddingRight: 'var(--side-banner-w, 0px)' }}>
 
         <div className="flex-1">
           {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" ? (

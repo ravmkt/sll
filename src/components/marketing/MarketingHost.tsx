@@ -40,7 +40,7 @@ export default function MarketingHost({ storeId, location, showBanner = true, sh
     let alive = true;
     fetchActive(storeId, location).then((list) => {
       if (!alive) return;
-      setItems(list.filter((i) => i.kind === 'banner' || i.kind === 'notice' || seenOk(i)));
+      setItems(list.filter((i) => !(i.kind === 'banner' && i.banner_format === 'vertical')).filter((i) => i.kind === 'banner' || i.kind === 'notice' || seenOk(i)));
     });
     return () => { alive = false; };
   }, [storeId, location]);

@@ -12,6 +12,7 @@ export interface ActiveItem {
   coupon_code: string | null;
   frequency: 'once' | 'session' | 'daily' | 'always';
   notice_style?: 'info' | 'warning' | 'urgent' | null;
+  banner_format?: 'horizontal' | 'vertical' | null;
 }
 
 export async function fetchActive(storeId: string, location: 'home' | 'vidlytics' | 'live'): Promise<ActiveItem[]> {

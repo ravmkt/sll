@@ -25,7 +25,7 @@ export default function DashboardNotice({
     let alive = true;
     fetchActive(storeId, location).then((list) => {
       if (!alive) return;
-      const next = list.find((i) => i.kind === 'banner' && !!i.image_url && !dismissed(i.id)) ?? null;
+      const next = list.find((i) => i.kind === 'banner' && i.banner_format !== 'vertical' && !!i.image_url && !dismissed(i.id)) ?? null;
       setItem(next);
     });
     return () => { alive = false; };

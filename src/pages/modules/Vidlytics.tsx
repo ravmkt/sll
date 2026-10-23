@@ -3,6 +3,7 @@ import { AppFooter } from '@/components/layout/AppFooter';
 import { TopBar } from '@/components/layout/TopBar';
 import ModuleHeader from '@/components/layout/ModuleHeader';
 import MarketingHost from '@/components/marketing/MarketingHost';
+import MarketingSideBanner from '@/components/marketing/MarketingSideBanner';
 import { useLoja } from '@/contexts/LojaContext';
 import AppToggle from '@/components/vidlytics/AppToggle';
 import { VidlyticsSidebar, VidlyticsTab } from '../vidlytics/components/VidlyticsSidebar';
@@ -55,6 +56,7 @@ export default function Vidlytics() {
       <TopBar actions={<AppToggle />} />
 
       <div className="flex flex-1">
+        <MarketingSideBanner location="vidlytics" />
         <VidlyticsSidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -62,7 +64,7 @@ export default function Vidlytics() {
           onToggle={() => setIsSidebarCollapsed((prev) => !prev)}
         />
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col" style={{ paddingRight: 'var(--side-banner-w, 0px)' }}>
           <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 p-6">
             {activeTab === 'visao-geral' && <ModuleHeader module="vidlytics" />}
 
