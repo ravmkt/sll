@@ -1394,3 +1394,48 @@ function fetchLiveSpotlight(live) {
   }
   setInterval(sync, 700);
 })();
+/* SLL-LIVE-LOGO */
+(function () {
+  if (window.__sllLiveLogo) return;
+  window.__sllLiveLogo = true;
+  var API = 'https://flivmllysdhaydhogmhg.supabase.co/rest/v1/';
+  var UUID = /^[0-9a-f-]{36}$/i;
+  var cache = { id: null, url: '', done: false, busy: false };
+
+  function load(sid) {
+    var key = window.__sllKey;
+    if (!key) return;
+    cache.busy = true;
+    fetch(API + 'store_settings_public?select=logo_url,store_name&store_id=eq.' + sid + '&limit=1', {
+      headers: { apikey: key, Authorization: 'Bearer ' + key, 'Accept-Profile': 'public' }
+    }).then(function (r) { return r.ok ? r.json() : []; })
+      .catch(function () { return []; })
+      .then(function (rows) {
+        if (cache.id !== sid) return;
+        var u = rows[0] && rows[0].logo_url;
+        cache.url = /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
+        cache.done = true;
+        cache.busy = false;
+      });
+  }
+
+  function sync() {
+    var l = window.__sllLive;
+    if (!l || !UUID.test(String(l.store_id || ''))) return;
+    if (cache.id !== l.store_id) cache = { id: l.store_id, url: '', done: false, busy: false };
+    if (!cache.done && !cache.busy) load(l.store_id);
+    if (!cache.url) return;
+    var node = document.querySelector('.vl-live-modal .sll-3c-logo');
+    if (!node) return;
+    if (node.tagName === 'IMG') {
+      if (node.getAttribute('src') !== cache.url) node.src = cache.url;
+      return;
+    }
+    var img = document.createElement('img');
+    img.className = 'sll-3c-logo';
+    img.alt = '';
+    img.src = cache.url;
+    node.parentNode.replaceChild(img, node);
+  }
+  setInterval(sync, 700);
+})();
