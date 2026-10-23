@@ -947,3 +947,167 @@ function fetchLiveSpotlight(live) {
     initLiveWidget();
   }
 })();
+
+/* SLL-LIVE-ADDON */
+(function () {
+  if (window.__sllLiveAddon) return;
+  window.__sllLiveAddon = true;
+  var API = 'https://flivmllysdhaydhogmhg.supabase.co/rest/v1/';
+  var KEY = 'sb_publishable_fYM4F5uRs_8DbYF7ozy0hA_eA_Z5XUz';
+  var POLL_MS = 4000;
+  var UUID = /^[0-9a-f-]{36}$/i;
+  var st = { vid: null, box: null, ov: null, timer: null };
+
+  var css = document.createElement('style');
+  css.textContent =
+    '.sll-yt-wrap{position:relative!important;width:100%!important;height:auto!important;max-height:none!important;aspect-ratio:16/9!important;flex:none!important;padding:0!important;overflow:hidden!important;background:#000}' +
+    '.sll-yt-wrap iframe{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;border:0!important}' +
+    '.sll-ao-ov{position:absolute;left:8px;right:8px;bottom:8px;z-index:5;display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.82);border:1px solid #10b981;border-radius:12px;padding:8px;color:#fff;font:12px/1.3 system-ui,sans-serif}' +
+    '.sll-ao-ov img{width:44px;height:44px;border-radius:8px;object-fit:cover}' +
+    '.sll-ao-ov b{display:block;font-size:13px}' +
+    '.sll-ao-btn{margin-left:auto;background:#10b981;color:#fff;border-radius:8px;padding:6px 12px;font-weight:700;text-decoration:none;white-space:nowrap}' +
+    '.sll-ao-box{background:#0b0b0b;color:#fff;padding:8px;font:12px/1.3 system-ui,sans-serif}' +
+    '.sll-ao-cp{background:#f59e0b;color:#111;font-weight:700;border-radius:8px;padding:8px 10px;margin-bottom:8px;text-align:center}' +
+    '.sll-ao-bn{display:block;margin-bottom:8px}' +
+    '.sll-ao-bn img{width:100%;border-radius:8px;display:block}' +
+    '.sll-ao-it{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid #27272a;border-radius:10px;margin-bottom:6px}' +
+    '.sll-ao-it.on{border-color:#10b981;background:rgba(16,185,129,.12)}' +
+    '.sll-ao-it img{width:40px;height:40px;border-radius:6px;object-fit:cover}' +
+    '.sll-ao-it span{flex:1;min-width:0}' +
+    '.sll-ao-it em{display:block;font-style:normal;color:#a1a1aa}';
+  document.head.appendChild(css);
+
+  function safeUrl(u) {
+    try {
+      var x = new URL(String(u || ''), window.location.href);
+      return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href : '';
+    } catch (e) { return ''; }
+  }
+  function money(v) {
+    var n = Number(v);
+    return isFinite(n) ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
+  }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function api(path, schema) {
+    return fetch(API + path, {
+      headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Accept-Profile': schema || 'live_commerce' }
+    }).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; });
+  }
+  function link(url, label, cls) {
+    var u = safeUrl(url);
+    if (!u) return null;
+    var a = el('a', cls, label);
+    a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    return a;
+  }
+
+  function teardown() {
+    if (st.timer) clearInterval(st.timer);
+    if (st.box && st.box.parentNode) st.box.parentNode.removeChild(st.box);
+    if (st.ov && st.ov.parentNode) st.ov.parentNode.removeChild(st.ov);
+    st = { vid: null, box: null, ov: null, timer: null };
+  }
+
+  function render(live, lp, prods, coupons, banners) {
+    var byId = {};
+    prods.forEach(function (p) { byId[p.id] = p; });
+    var onAirId = live.spotlight_product_id;
+    st.box.textContent = '';
+
+    if (coupons.length) {
+      var c = coupons.filter(function (x) { return x.code === live.spotlight_coupon_code; })[0] || coupons[0];
+      st.box.appendChild(el('div', 'sll-ao-cp', 'Cupom ' + c.code + (c.discount_percent ? ' - ' + c.discount_percent + '% OFF' : '')));
+    }
+    if (banners.length && safeUrl(banners[0].image_url)) {
+      var b = banners[0];
+      var holder = link(b.link_url, '', 'sll-ao-bn') || el('div', 'sll-ao-bn');
+      var im = el('img'); im.src = safeUrl(b.image_url); im.alt = b.title || '';
+      holder.appendChild(im);
+      st.box.appendChild(holder);
+    }
+
+    var onAir = null;
+    lp.forEach(function (r) {
+      var p = byId[r.product_id] || {};
+      var isOn = (onAirId && r.product_id === onAirId) || (!onAirId && r.is_on_air);
+      var price = r.price_override != null ? r.price_override : p.price;
+      var row = el('div', 'sll-ao-it' + (isOn ? ' on' : ''));
+      if (safeUrl(p.image_url)) { var i = el('img'); i.src = safeUrl(p.image_url); i.alt = ''; row.appendChild(i); }
+      var info = el('span');
+      info.appendChild(el('b', null, (r.code ? r.code + '. ' : '') + (p.name || 'Produto')));
+      info.appendChild(el('em', null, money(price)));
+      row.appendChild(info);
+      var btn = link(r.checkout_url, 'Comprar', 'sll-ao-btn');
+      if (btn) row.appendChild(btn);
+      st.box.appendChild(row);
+      if (isOn) onAir = { p: p, price: price, url: r.checkout_url };
+    });
+
+    if (st.ov) { st.ov.parentNode && st.ov.parentNode.removeChild(st.ov); st.ov = null; }
+    if (onAir) {
+      var wrap = document.querySelector('.sll-yt-wrap');
+      if (wrap) {
+        var ov = el('div', 'sll-ao-ov');
+        if (safeUrl(onAir.p.image_url)) { var oi = el('img'); oi.src = safeUrl(onAir.p.image_url); oi.alt = ''; ov.appendChild(oi); }
+        var t = el('div');
+        t.appendChild(el('b', null, onAir.p.name || 'Produto'));
+        t.appendChild(el('span', null, money(onAir.price)));
+        ov.appendChild(t);
+        var ob = link(onAir.url, 'Comprar', 'sll-ao-btn');
+        if (ob) ov.appendChild(ob);
+        wrap.appendChild(ov);
+        st.ov = ov;
+      }
+    }
+  }
+
+  function refresh(vid) {
+    api('lives?select=id,status,spotlight_product_id,spotlight_coupon_code&youtube_video_id=eq.' + encodeURIComponent(vid) + '&order=created_at.desc&limit=1')
+      .then(function (rows) {
+        var live = rows[0];
+        if (!live || !UUID.test(live.id)) return;
+        return Promise.all([
+          api('live_products?select=product_id,code,display_order,is_on_air,price_override,checkout_url&live_id=eq.' + live.id + '&order=display_order.asc'),
+          api('live_coupons?select=code,discount_percent&live_id=eq.' + live.id + '&is_active=eq.true'),
+          api('live_banners?select=title,image_url,link_url&live_id=eq.' + live.id + '&is_active=eq.true&order=display_order.asc')
+        ]).then(function (res) {
+          var ids = res[0].map(function (r) { return r.product_id; }).filter(function (x) { return UUID.test(x); });
+          return (ids.length ? api('products?select=id,name,price,image_url&id=in.(' + ids.join(',') + ')', 'public') : Promise.resolve([]))
+            .then(function (pr) {
+              if (st.vid !== vid || !st.box) return;
+              render(live, res[0], pr, res[1], res[2]);
+            });
+        });
+      });
+  }
+
+  function tick() {
+    var f = document.querySelector('iframe[src*="youtube.com/embed/"]');
+    if (!f) { if (st.vid) teardown(); return; }
+    var m = /embed\/([^?&#\/]+)/.exec(f.src);
+    if (!m) return;
+    var vid = m[1];
+    if (f.src.indexOf('controls=0') < 0) {
+      f.src = f.src + (f.src.indexOf('?') < 0 ? '?' : '&') + 'controls=0&modestbranding=1&rel=0&playsinline=1';
+      return;
+    }
+    var wrap = f.parentElement;
+    if (!wrap) return;
+    wrap.classList.add('sll-yt-wrap');
+    if (st.vid === vid && st.box && document.body.contains(st.box)) return;
+    teardown();
+    st.vid = vid;
+    st.box = el('div', 'sll-ao-box');
+    wrap.parentNode.insertBefore(st.box, wrap.nextSibling);
+    refresh(vid);
+    st.timer = setInterval(function () { refresh(vid); }, POLL_MS);
+    try { console.log('[LiveCommerce] addon ativo', vid); } catch (e) {}
+  }
+
+  setInterval(tick, 1000);
+})();
