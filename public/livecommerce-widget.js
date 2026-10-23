@@ -587,7 +587,7 @@ function openLiveModal(live) {
 
   if (live.youtube_video_id) {
     var iframe = document.createElement('iframe');
-    iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(String(live.youtube_video_id)) + '?autoplay=1&mute=0';
+    iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(String(live.youtube_video_id)) + '?autoplay=1&mute=' + (function () { try { var pc = activePlayerCfg; return pc && (pc.autoplayMuted === false || pc.autoplay_muted === false) ? 0 : 1; } catch (e) { return 1; } })() /* SLL-AUTOPLAY */;
     iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
     iframe.allowFullscreen = true;
     playerWrap.appendChild(iframe);
