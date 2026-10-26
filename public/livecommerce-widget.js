@@ -997,7 +997,7 @@ function fetchLiveSpotlight(live) {
   /* SLL-STOCK-CFG */
   function stockTag(qty, big) {
     var q = Number(qty);
-    var lim = num(C().stockLimit, 3, 1, 99);
+    var LV = window.__sllLive || {}; var lim = num(LV.stock_limit != null ? LV.stock_limit : C().stockLimit, 3, 1, 99);
     if (!(q > 0 && q <= lim)) return null;
     var raw = String(C().stockText || 'Restam {n}').slice(0, 40);
     var e = el('em', null, raw.replace(/\{n\}/g, String(q)));
@@ -1200,7 +1200,7 @@ function fetchLiveSpotlight(live) {
   }
 
   function refresh(vid) {
-    api('lives?select=id,status,spotlight_product_id,spotlight_coupon_code,advantages,spotlight_advantage_idx,store_id,viewer_min_display&youtube_video_id=eq.' + encodeURIComponent(vid) + '&order=created_at.desc&limit=1')
+    api('lives?select=id,status,spotlight_product_id,spotlight_coupon_code,advantages,spotlight_advantage_idx,store_id,viewer_min_display,stock_limit&youtube_video_id=eq.' + encodeURIComponent(vid) + '&order=created_at.desc&limit=1')
       .then(function (rows) {
         var live = rows[0];
         if (!live || !UUID.test(live.id)) return;
