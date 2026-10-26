@@ -1,0 +1,1 @@
+export const DEMO_COVER_VIDEO = "/assets/demo-videos/live-cover.mp4";

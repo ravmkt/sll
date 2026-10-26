@@ -1,3 +1,4 @@
+import { DEMO_COVER_VIDEO } from "../../lib/demoVideos";
 import { LiveTemplatesService } from "@/services/LiveTemplatesService";
 import { PromptNameModal, ConfirmDangerModal } from "@/components/common/AppModal";
 import React, { useState, useEffect, useRef } from "react";
@@ -1253,7 +1254,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                             >
                               <video 
                                 ref={(el) => { if (el) { if (config.playVideo) el.play().catch(() => {}); else el.pause(); } }}
-                                src="/demo-videos/demo1.mp4" loop muted playsInline className="w-full h-full" style={{ objectFit: config.objectFit }} 
+                                src={DEMO_COVER_VIDEO} loop muted playsInline className="w-full h-full" style={{ objectFit: config.objectFit }} 
                               />
                               {config.darkenVideo === true && <div className="absolute inset-0 pointer-events-none z-[5] rounded-[inherit]" style={{ background: `linear-gradient(to top, rgba(0,0,0,${0.85 * (config.darkenIntensity ?? 60) / 100}) 0%, rgba(0,0,0,${0.2 * (config.darkenIntensity ?? 60) / 100}) 50%, rgba(0,0,0,${0.4 * (config.darkenIntensity ?? 60) / 100}) 100%)` }} />}
                               {config.showCloseButton && <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-black/40 rounded-full flex items-center justify-center text-white text-[10px] font-bold z-10">✕</div>}
@@ -1290,7 +1291,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[36%] max-w-[105px] h-[16px] bg-slate-300 rounded-b-[0.8rem] z-30"></div>
 
                               <video
-                                src="/demo-videos/demo1.mp4"
+                                src={DEMO_COVER_VIDEO}
                                 autoPlay loop muted playsInline
                                 className="absolute inset-0 w-full h-full object-cover"
                               />
@@ -1661,7 +1662,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                               border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`,
                               borderRadius: `${currentPlayer.borderRadius}px`,
                             }}>
-                              <video src="/demo-videos/demo1.mp4" autoPlay loop muted playsInline className="w-full h-full object-cover opacity-90" />
+                              <video src={DEMO_COVER_VIDEO} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-90" />
                               <div className="absolute top-3 left-3 right-3 flex justify-between items-start gap-2">
                                  <div className="flex items-center gap-2 max-w-[60%]">
                                     <div className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/20 text-[12px] shrink-0">🦋</div>
