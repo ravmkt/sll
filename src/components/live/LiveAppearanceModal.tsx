@@ -1,3 +1,4 @@
+import PreviewStoreBrand from "@/components/live/PreviewStoreBrand";
 import { DEMO_COVER_VIDEO } from "../../lib/demoVideos";
 import { LiveTemplatesService } from "@/services/LiveTemplatesService";
 import { PromptNameModal, ConfirmDangerModal } from "@/components/common/AppModal";
@@ -1635,8 +1636,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                         {/* CABECALHO */}
                         <div className="flex items-center justify-between shrink-0">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[12px] font-black text-slate-500">L</div>
-                            <span className="font-black text-[16px] text-slate-800">Sua Loja</span>
+                            <PreviewStoreBrand />
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="flex items-center gap-1.5 bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
