@@ -26,6 +26,7 @@ import { LiveFormDialog } from "@/components/live/LiveFormDialog";
 import { ShareLiveModal } from "@/components/live/ShareLiveModal";
 import { LiveMetricsModal } from "@/components/live/LiveMetricsModal";
 import LiveTemplatesPage, { liveStore } from "@/components/live/LiveTemplatesPage";
+import LivePresetsPage from "@/components/live/LivePresetsPage";
 
 import LiveAppearanceModal, {
   DeviceConfig,
@@ -459,6 +460,7 @@ const TAB_TITLES: Record<LiveTab, string> = {
   audiencia: "Audiência",
   comentarios: "Comentários",
   aparencia: "Aparência",
+  cupons: "Cupons e Benef\u00edcios",
   treinamento: "Treinamento",
 };
 
@@ -498,10 +500,11 @@ export function LiveCommerce() {
       <div className="flex min-w-0 flex-1 flex-col" style={{ paddingRight: 'var(--side-banner-w, 0px)' }}>
 
         <div className="flex-1">
-          {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" ? (
+          {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" || activeTab === "cupons" ? (
             <>
-              <div className={activeTab === "aparencia" ? "hidden" : ""}><LiveCommerceContent /></div>
+              <div className={activeTab === "aparencia" || activeTab === "cupons" ? "hidden" : ""}><LiveCommerceContent /></div>
               {activeTab === "aparencia" && <LiveTemplatesPage />}
+                     {activeTab === "cupons" && <LivePresetsPage />}
             </>
           ) : (
             <div className="p-6 max-w-6xl mx-auto">

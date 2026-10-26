@@ -11,6 +11,7 @@ import { Radio,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
+import { Ticket as PresetsMenuIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type LiveTab =
@@ -20,6 +21,7 @@ export type LiveTab =
   | 'audiencia'
   | 'comentarios'
   | 'aparencia'
+  | 'cupons'
   | 'treinamento';
 
 interface LiveSidebarProps {
@@ -33,6 +35,7 @@ const MENU_ITEMS: { id: LiveTab; label: string; icon: React.ElementType }[] = [
   { id: 'visao-geral', label: 'Visão Geral', icon: LayoutDashboard },
   { id: 'resultados', label: 'Resultados & Métricas', icon: TrendingUp },
   { id: 'lives', label: 'Lives', icon: Radio },
+  { id: 'cupons', label: 'Cupons e Benef\u00edcios', icon: PresetsMenuIcon },
   { id: 'audiencia', label: 'Audiência', icon: Users },
   { id: 'aparencia', label: 'Aparência', icon: Palette },
 ];

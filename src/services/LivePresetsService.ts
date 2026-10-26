@@ -36,6 +36,18 @@ export const LivePresetsService = {
     return data as LivePreset;
   },
 
+  async update(id: string, p: { title: string; description: string }): Promise<LivePreset> {
+    const { data, error } = await table()
+      .update({ title: p.title, description: p.description })
+      .eq("id", id)
+      .select(COLS)
+      .single();
+    if (error) {
+      if ((error as any).code === "23505") throw new Error("Esse atalho j\u00e1 est\u00e1 salvo.");
+      throw error;
+    }
+    return data as LivePreset;
+  },
   async remove(id: string): Promise<void> {
     const { data, error } = await table().delete().eq("id", id).select("id");
     if (error) throw error;
