@@ -1,2 +1,0 @@
-﻿-- Mantem products.stock_qty = soma de product_variants.stock (widget anon nao le variantes)
--- (cole aqui o mesmo SQL acima)
