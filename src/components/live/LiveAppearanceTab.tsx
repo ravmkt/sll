@@ -188,8 +188,8 @@ const LiveAppearanceTab: React.FC<LiveAppearanceTabProps> = ({
   onWidgetChange,
   onPlayerChange,
 }) => {
-  const [widgetAccordionOpen, setWidgetAccordionOpen] = useState(true);
-  const [playerAccordionOpen, setPlayerAccordionOpen] = useState(true);
+  const [widgetAccordionOpen, setWidgetAccordionOpen] = useState(false);
+  const [playerAccordionOpen, setPlayerAccordionOpen] = useState(false);
 
   return (
     <div className="space-y-5">

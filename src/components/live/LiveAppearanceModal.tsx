@@ -558,7 +558,7 @@ const ElementSubItem = ({
 export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving, initialData, storeId, initialTemplateId }: Props) {
   const [activeTab, setActiveTab] = useState<"divulgacao" | "aovivo" | "player">("divulgacao");
   const [device, setDevice] = useState<"desktop" | "mobile">("mobile");
-  const [openAccordion, setOpenAccordion] = useState<string>("player_visibilidade");
+  const [openAccordion, setOpenAccordion] = useState<string>("");
   const [openSubItem, setOpenSubItem] = useState<string>("");
 
   const [divulgacaoConfig, setDivulgacaoConfig] = useState<DeviceConfig<WidgetDivulgacaoSettings>>({
@@ -587,7 +587,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     if (isOpen) {
       setActiveTab("divulgacao");
       setDevice("mobile");
-      setOpenAccordion("formato");
+      setOpenAccordion("");
       setOpenSubItem("");
       setTemplateNameInput("");
 
@@ -647,6 +647,9 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
   };
 
   // Salvar atualizações no template
+  /* SLL-ACC-CLOSED */
+  useEffect(() => { setOpenAccordion(""); setOpenSubItem(""); }, [selectedTemplateId, activeTab]);
+
   const appliedTplRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isOpen) { appliedTplRef.current = null; return; }
@@ -977,19 +980,19 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
             <h2 className="text-[17px] font-bold tracking-tight text-slate-800">Estilo da Experiência Ao Vivo</h2>
             <div className="flex gap-1.5 bg-slate-100 p-1 rounded-full">
               <button 
-                onClick={() => { setActiveTab("divulgacao"); setOpenAccordion("formato"); setOpenSubItem(""); }} 
+                onClick={() => { setActiveTab("divulgacao"); setOpenAccordion(""); setOpenSubItem(""); }} 
                 className={`px-3.5 py-1 rounded-full text-[12px] font-medium transition-all flex items-center gap-1.5 ${activeTab === "divulgacao" ? "bg-rose-600 text-white shadow-sm font-semibold" : "text-slate-600 hover:text-slate-900"}`}
               >
                 <LayoutTemplate className="w-3 h-3" /> Divulgação
               </button>
               <button 
-                onClick={() => { setActiveTab("aovivo"); setOpenAccordion("formato"); setOpenSubItem(""); }} 
+                onClick={() => { setActiveTab("aovivo"); setOpenAccordion(""); setOpenSubItem(""); }} 
                 className={`px-3.5 py-1 rounded-full text-[12px] font-medium transition-all flex items-center gap-1.5 ${activeTab === "aovivo" ? "bg-rose-600 text-white shadow-sm font-semibold" : "text-slate-600 hover:text-slate-900"}`}
               >
                 <Radio className="w-3 h-3" /> Ao Vivo
               </button>
               <button 
-                onClick={() => { setActiveTab("player"); setOpenAccordion("player_visibilidade"); setOpenSubItem(""); }} 
+                onClick={() => { setActiveTab("player"); setOpenAccordion(""); setOpenSubItem(""); }} 
                 className={`px-3.5 py-1 rounded-full text-[12px] font-medium transition-all flex items-center gap-1.5 ${activeTab === "player" ? "bg-rose-600 text-white shadow-sm font-semibold" : "text-slate-600 hover:text-slate-900"}`}
               >
                 <PlaySquare className="w-3 h-3" /> Player

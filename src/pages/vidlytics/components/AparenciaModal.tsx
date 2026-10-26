@@ -670,7 +670,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const { storeId: activeStoreId, store } = useLoja();
   const [activeTab, setActiveTab] = useState('flutuante');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('mobile');
-  const [openAccordion, setOpenAccordion] = useState<string>('1. Layout & Dimensões');
+  const [openAccordion, setOpenAccordion] = useState<string>('');
   const [localSaving, setLocalSaving] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
 
@@ -700,7 +700,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     if (isOpen) {
       setActiveTab('flutuante');
       setPreviewDevice('mobile');
-      setOpenAccordion('1. Layout & Dimensões');
+      setOpenAccordion('');
       loadStylesList();
       if (!getConfig('desktop', 'carousel_shape') && !getConfig('mobile', 'carousel_shape')) {
         setConfig('desktop', 'carousel_shape', 'portrait');
@@ -953,7 +953,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     if (tabId !== 'basico') setPreviewDevice('mobile');
-    setOpenAccordion('1. Layout & Dimensões');
+    setOpenAccordion('');
   };
 
   const toggleAccordion = (title: string) => {
