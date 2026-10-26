@@ -91,6 +91,13 @@ export interface LivePlayerSettings {
   prodCardPriceColor?: string;
   prodCardBtnBgColor?: string;
   prodCardBtnTextColor?: string;
+  mainColor?: string;
+  titleBgColor?: string;
+  prodCardBorderWidth?: number;
+  stockAnimate?: boolean;
+  couponFontSize?: number;
+  shareText?: string;
+  shareFontSize?: number;
 }
 
 export interface DeviceConfig<T> {
@@ -143,6 +150,8 @@ const MOCK_PRODUCTS = [
 const CART_PRODUCT_IDS = [1, 3, 5, 6, 8, 10];
 const CURRENT_LIVE_PRODUCT_ID = 5;
 const OV_STOCK_DEMO = 1;
+const PREVIEW_TITLE = "Especial Anivers\u00e1rio";
+const BLINK_CSS = "@keyframes sllBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.08)}}.sll-blink{animation:sllBlink 1s ease-in-out infinite}";
 
 const MOCK_STOCK: Record<number, number> = { 2: 2, 4: 8, 5: 1, 7: 3 };
 
@@ -804,6 +813,16 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     }
   };
 
+  const applyMainColor = (v: string) => {
+    const patch = { mainColor: v, borderColor: v, couponCodeBgColor: v, infoBgColor: v, productPriceColor: v, prodCardBorderColor: v, prodCardBtnBgColor: v, prodCardPriceColor: v };
+    setPlayerConfig((prev) => {
+      if (prev.linked) return { ...prev, desktop: { ...prev.desktop, ...patch }, mobile: { ...prev.mobile, ...patch } };
+      return device === "desktop"
+        ? { ...prev, desktop: { ...prev.desktop, ...patch } }
+        : { ...prev, mobile: { ...prev.mobile, ...patch } };
+    });
+  };
+
   const handleReset = () => {
     setOpenSubItem("");
     if (activeTab === "divulgacao") setDivulgacaoConfig({ desktop: { ...defaultDivulgacaoSettings }, mobile: { ...defaultDivulgacaoSettings, width: 80 }, linked: false });
@@ -1110,6 +1129,10 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
               {activeTab === "player" && (
                 <div className="animate-in fade-in duration-200">
                   <AccordionItem id="player_borda" title="1. Borda (Aplica a todos os cards)" openAccordion={openAccordion} setOpenAccordion={setOpenAccordion}>
+<div className="mb-2 space-y-1 rounded-md border border-slate-200 p-2">
+  <ColorInput label={"Cor principal"} value={currentPlayer.mainColor || currentPlayer.borderColor} onChange={(v) => applyMainColor(v)} />
+  <p className="text-[10px] text-muted-foreground">{"Pinta todos os elementos de uma vez. Depois voc\u00ea pode ajustar cada cor individualmente."}</p>
+</div>
                     <div className="grid grid-cols-2 gap-3 mb-2">
                       <ColorInput label="Cor da Borda" value={currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "borderColor", v, playerConfig.linked)} />
                       <div className="space-y-1">
@@ -1133,8 +1156,9 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                         openSubItem={openSubItem}
                         setOpenSubItem={setOpenSubItem}
                       >
-                        <Input value={currentPlayer.titleText} onChange={(e) => updateConfig(setPlayerConfig, "titleText", e.target.value)} placeholder="Título da Live" className="h-7 rounded-md text-[12px]" />
+<p className="text-[10px] text-muted-foreground">{"O t\u00edtulo vem das configura\u00e7\u00f5es da live."}</p>
                         <ColorInput label="Cor do Texto" value={currentPlayer.titleColor} onChange={(v) => updateConfig(setPlayerConfig, "titleColor", v, playerConfig.linked)} />
+<ColorInput label={"Cor do fundo"} value={currentPlayer.titleBgColor || "#000000"} onChange={(v) => updateConfig(setPlayerConfig, "titleBgColor", v, playerConfig.linked)} />
                       </ElementSubItem>
 
                       <ElementSubItem
@@ -1171,6 +1195,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     <option value="badge">Etiqueta destacada</option>
     <option value="text">Texto simples</option>
   </select>
+  <label className="mt-1 flex items-center gap-2 text-[11px]"><input type="checkbox" checked={currentPlayer.stockAnimate === true} onChange={(e) => updateConfig(setPlayerConfig, "stockAnimate", e.target.checked, playerConfig.linked)} /> {"Anima\u00e7\u00e3o (pulsar)"}</label>
 </div>
                       </ElementSubItem>
 
@@ -1185,11 +1210,12 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                         <p className="text-[10px] text-muted-foreground">{"Card do produto em destaque sobre o v\u00eddeo."}</p>
                         <div className="grid grid-cols-2 gap-2 pt-1">
                           <ColorInput label="Cor Borda" value={currentPlayer.prodCardBorderColor || currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBorderColor", v, playerConfig.linked)} />
-                          <ColorInput label="Fundo" value={currentPlayer.prodCardBgColor || "#0f172a"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBgColor", v, playerConfig.linked)} />
-                          <ColorInput label="Cor Nome" value={currentPlayer.prodCardNameColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardNameColor", v, playerConfig.linked)} />
-                          <ColorInput label="Cor Preço" value={currentPlayer.prodCardPriceColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardPriceColor", v, playerConfig.linked)} />
+                          <ColorInput label="Fundo" value={currentPlayer.prodCardBgColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBgColor", v, playerConfig.linked)} />
+                          <ColorInput label="Cor Nome" value={currentPlayer.prodCardNameColor || "#111111"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardNameColor", v, playerConfig.linked)} />
+                          <ColorInput label="Cor Preço" value={currentPlayer.prodCardPriceColor || currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "prodCardPriceColor", v, playerConfig.linked)} />
                           <ColorInput label="Fundo Botão" value={currentPlayer.prodCardBtnBgColor || currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBtnBgColor", v, playerConfig.linked)} />
                           <ColorInput label="Texto Botão" value={currentPlayer.prodCardBtnTextColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBtnTextColor", v, playerConfig.linked)} />
+<div className="space-y-1"><label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{"Espessura da borda (px)"}</label><Input type="number" value={currentPlayer.prodCardBorderWidth ?? currentPlayer.borderWidth} onChange={(e) => updateConfig(setPlayerConfig, "prodCardBorderWidth", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" /></div>
                         </div>
                       </ElementSubItem>
 
@@ -1203,10 +1229,11 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                       >
                         <p className="text-[10px] text-muted-foreground">{"O c\u00f3digo e o desconto v\u00eam do cupom da live. Aqui voc\u00ea ajusta s\u00f3 as cores."}</p>
                         <div className="grid grid-cols-2 gap-2 pt-1">
-                          <ColorInput label="Cor Cód." value={currentPlayer.couponCodeColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeColor", v, playerConfig.linked)} />
-                          <ColorInput label="Fundo Cód." value={currentPlayer.couponCodeBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeBgColor", v, playerConfig.linked)} />
-                          <ColorInput label="Cor Texto" value={currentPlayer.couponTextColor} onChange={(v) => updateConfig(setPlayerConfig, "couponTextColor", v, playerConfig.linked)} />
-                          <ColorInput label="Fundo Texto" value={currentPlayer.couponTextBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponTextBgColor", v, playerConfig.linked)} />
+                          <ColorInput label={"Cor do c\u00f3digo"} value={currentPlayer.couponCodeColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeColor", v, playerConfig.linked)} />
+                          <ColorInput label={"Fundo do c\u00f3digo"} value={currentPlayer.couponCodeBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeBgColor", v, playerConfig.linked)} />
+                          <ColorInput label={"Cor do desconto"} value={currentPlayer.couponTextColor} onChange={(v) => updateConfig(setPlayerConfig, "couponTextColor", v, playerConfig.linked)} />
+                          <ColorInput label={"Fundo do desconto"} value={currentPlayer.couponTextBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponTextBgColor", v, playerConfig.linked)} />
+<div className="space-y-1"><label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{"Altura da fonte (px)"}</label><Input type="number" value={currentPlayer.couponFontSize ?? 13} onChange={(e) => updateConfig(setPlayerConfig, "couponFontSize", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" /></div>
                         </div>
                       </ElementSubItem>
 
@@ -1245,6 +1272,8 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                         <div className="grid grid-cols-2 gap-2">
                           <ColorInput label="Cor Texto" value={currentPlayer.shareTextColor} onChange={(v) => updateConfig(setPlayerConfig, "shareTextColor", v, playerConfig.linked)} />
                           <ColorInput label="Cor Fundo" value={currentPlayer.shareBgColor} onChange={(v) => updateConfig(setPlayerConfig, "shareBgColor", v, playerConfig.linked)} />
+<div className="col-span-2 space-y-1"><label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{"Texto do bot\u00e3o"}</label><Input value={currentPlayer.shareText ?? ""} placeholder="Compartilhar" maxLength={30} onChange={(e) => updateConfig(setPlayerConfig, "shareText", e.target.value, playerConfig.linked)} className="h-7 rounded-md text-[12px]" /></div>
+<div className="space-y-1"><label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{"Altura da fonte (px)"}</label><Input type="number" value={currentPlayer.shareFontSize ?? 14} onChange={(e) => updateConfig(setPlayerConfig, "shareFontSize", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" /></div>
                         </div>
                       </ElementSubItem>
 
@@ -1343,7 +1372,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                                 <div className="w-5 h-5 rounded-full bg-[#0094ea] border border-white/50 flex items-center justify-center text-[7px] font-extrabold text-white shadow">USE</div>
                                 {currentPlayer.showTitle && (
                                   <span className="font-bold text-[11.5px] drop-shadow-md tracking-tight leading-none" style={{ color: currentPlayer.titleColor }}>
-                                    {currentPlayer.titleText}
+                                    {PREVIEW_TITLE}
                                   </span>
                                 )}
                               </div>
@@ -1635,20 +1664,30 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                               <div className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin">
                                 {MOCK_PRODUCTS.map((prod, idx) => {
                                   const isLiveActive = prod.id === CURRENT_LIVE_PRODUCT_ID;
+                                  const bw = currentPlayer.borderWidth;
+                                  const bc = currentPlayer.borderColor;
+                                  const rad = Math.min(currentPlayer.borderRadius, 14);
+                                  const stockEl = renderStockTag(MOCK_STOCK[prod.id], currentPlayer);
                                   return (
-                                    <div key={prod.id} className="flex items-center gap-2 p-1.5 bg-white" style={{ border: `${isLiveActive ? 2 : 1}px solid ${currentPlayer.borderColor}`, borderRadius: `${Math.min(currentPlayer.borderRadius, 10)}px` }}>
-                                      <img loading="lazy" decoding="async" src={prod.img} alt={prod.name} className="w-10 h-10 rounded-md object-cover shrink-0" />
-                                      <div className="flex-1 min-w-0">
-                                        <div className="font-bold leading-tight line-clamp-2" style={{ fontSize: currentPlayer.productNameSize, color: currentPlayer.productNameColor }}>
-                                          {idx + 1}. {prod.name}
-                                          {isLiveActive && (
-                                            <span className="ml-1 px-1 py-0.5 rounded text-[7px] font-black uppercase text-white align-middle" style={{ backgroundColor: currentPlayer.borderColor }}>Na Live</span>
+                                    <div key={prod.id} className="flex items-stretch overflow-hidden" style={{ border: `${bw}px solid ${bc}`, borderRadius: `${rad}px`, backgroundColor: isLiveActive ? bc : "#ffffff" }}>
+                                      <div className="flex w-9 shrink-0 items-center justify-center text-[15px] font-black text-white" style={{ backgroundColor: bc }}>{String(idx + 1).padStart(2, "0")}</div>
+                                      <img loading="lazy" decoding="async" src={prod.img} alt={prod.name} className="h-14 w-11 shrink-0 object-cover" />
+                                      <div className="flex min-w-0 flex-1 items-center gap-2 p-1.5">
+                                        <div className="min-w-0 flex-1">
+                                          <div className="font-bold leading-tight line-clamp-2" style={{ fontSize: currentPlayer.productNameSize, color: isLiveActive ? "#ffffff" : currentPlayer.productNameColor }}>{prod.name}</div>
+                                          <div className="leading-none mt-1 font-semibold" style={{ fontSize: currentPlayer.productPriceSize, color: isLiveActive ? "#ffffff" : currentPlayer.productPriceColor }}>{isLiveActive ? "Por: " + prod.price : prod.price}</div>
+                                          {stockEl && (
+                                            <div className={(currentPlayer.stockAnimate ? "sll-blink " : "") + "mt-1 w-fit"}>
+                                              {currentPlayer.stockAnimate && <style>{BLINK_CSS}</style>}
+                                              {stockEl}
+                                            </div>
                                           )}
                                         </div>
-                                        <div className="leading-none mt-1" style={{ fontSize: currentPlayer.productPriceSize, color: currentPlayer.productPriceColor }}>{prod.price}</div>
-{renderStockTag(MOCK_STOCK[prod.id], currentPlayer)}
+                                        <div className="flex shrink-0 flex-col items-end gap-1">
+                                          {isLiveActive && <span className="text-[8px] font-semibold uppercase text-white">Ao vivo</span>}
+                                          <span className="rounded-full px-3 py-1 text-[10px] font-bold" style={isLiveActive ? { backgroundColor: "#ffffff", color: bc } : { backgroundColor: bc, color: "#ffffff" }}>Comprar</span>
+                                        </div>
                                       </div>
-                                      <span className="px-3 py-1 rounded-full text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>Comprar</span>
                                     </div>
                                   );
                                 })}
@@ -1659,8 +1698,8 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                           {/* COLUNA 2: VIDEO */}
                           <div className="flex flex-col min-h-0 bg-black overflow-hidden" style={{ border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
                             {currentPlayer.showTitle && (
-                              <div className="bg-black text-center py-2 px-2 font-bold text-[13px] truncate shrink-0" style={{ color: currentPlayer.titleColor }}>
-                                {currentPlayer.titleText}
+                              <div className="text-center py-2 px-2 font-bold text-[13px] truncate shrink-0" style={{ color: currentPlayer.titleColor, backgroundColor: currentPlayer.titleBgColor || "#000000" }}>
+                                {PREVIEW_TITLE}
                               </div>
                             )}
                             <div className="relative flex-1 min-h-0">
@@ -1678,26 +1717,29 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                               {(() => {
                                 const cur = MOCK_PRODUCTS.find((p) => p.id === CURRENT_LIVE_PRODUCT_ID) || MOCK_PRODUCTS[0];
                                 return (
-                                  <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2 rounded-lg p-1.5" style={{ display: currentPlayer.showSpotlight === false ? "none" : undefined, backgroundColor: currentPlayer.prodCardBgColor || "#0f172a", border: `1px solid ${currentPlayer.prodCardBorderColor || "transparent"}` }}>
-                                    <img loading="lazy" decoding="async" src={cur.img} alt={cur.name} className="w-10 h-10 rounded-md object-cover shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="font-bold leading-tight line-clamp-2" style={{ fontSize: currentPlayer.productNameSize, color: currentPlayer.prodCardNameColor || "#ffffff" }}>{cur.name}</div>
-                                      <div className="leading-none mt-1" style={{ fontSize: currentPlayer.productPriceSize, color: currentPlayer.prodCardPriceColor || "#ffffff" }}>{cur.price}</div>
-{(() => {
-  const lim = currentPlayer.stockLimit ?? 3;
-  if (!(OV_STOCK_DEMO > 0 && OV_STOCK_DEMO <= lim)) return null;
-  const txt = (currentPlayer.stockText ?? "Restam {n}").replace(/\{n\}/g, String(OV_STOCK_DEMO));
-  return (
-    <>
-      <style>{"@keyframes sllBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.06)}}.sll-blink{animation:sllBlink 1s ease-in-out infinite}"}</style>
-      {currentPlayer.stockStyle === "text"
-        ? <div className="sll-blink font-extrabold mt-1 text-[13px] text-red-400">{txt}</div>
-        : <span className="sll-blink inline-block mt-1 rounded-full bg-red-600 px-3 py-0.5 text-[12px] font-black text-white">{txt}</span>}
-    </>
-  );
-})()}
+                                  <div className="absolute bottom-2 left-2 right-2" style={{ display: currentPlayer.showSpotlight === false ? "none" : undefined }}>
+                                    {(() => {
+                                      const lim = currentPlayer.stockLimit ?? 3;
+                                      if (!(OV_STOCK_DEMO > 0 && OV_STOCK_DEMO <= lim)) return null;
+                                      const txt = (currentPlayer.stockText ?? "Restam {n}").replace(/\{n\}/g, String(OV_STOCK_DEMO));
+                                      const cls = currentPlayer.stockAnimate ? "sll-blink " : "";
+                                      return (
+                                        <>
+                                          <style>{BLINK_CSS}</style>
+                                          {currentPlayer.stockStyle === "text"
+                                            ? <div className={cls + "mb-1 w-fit text-[13px] font-extrabold text-red-400"}>{txt}</div>
+                                            : <span className={cls + "mb-1 inline-block rounded-full bg-red-600 px-3 py-0.5 text-[12px] font-black text-white"}>{txt}</span>}
+                                        </>
+                                      );
+                                    })()}
+                                    <div className="flex items-center gap-2 p-1.5" style={{ backgroundColor: currentPlayer.prodCardBgColor || "#ffffff", border: `${currentPlayer.prodCardBorderWidth ?? currentPlayer.borderWidth}px solid ${currentPlayer.prodCardBorderColor || currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
+                                      <img loading="lazy" decoding="async" src={cur.img} alt={cur.name} className="h-11 w-11 shrink-0 rounded-lg object-cover" />
+                                      <div className="min-w-0 flex-1">
+                                        <div className="font-medium leading-tight line-clamp-2" style={{ fontSize: currentPlayer.productNameSize + 1, color: currentPlayer.prodCardNameColor || "#111111" }}>{cur.name}</div>
+                                        <div className="mt-1 font-bold leading-none" style={{ fontSize: currentPlayer.productPriceSize + 1, color: currentPlayer.prodCardPriceColor || currentPlayer.borderColor }}>{cur.price}</div>
+                                      </div>
+                                      <span className="shrink-0 rounded-full px-3 py-1 text-[10px] font-bold" style={{ backgroundColor: currentPlayer.prodCardBtnBgColor || currentPlayer.borderColor, color: currentPlayer.prodCardBtnTextColor || "#ffffff" }}>Comprar</span>
                                     </div>
-                                    <span className="px-3 py-1 rounded-full text-[10px] font-bold shrink-0" style={{ backgroundColor: currentPlayer.prodCardBtnBgColor || currentPlayer.borderColor, color: currentPlayer.prodCardBtnTextColor || "#ffffff" }}>Comprar</span>
                                   </div>
                                 );
                               })()}
@@ -1712,7 +1754,8 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                               </div>
                               <div className="flex-1" />
                               <div className="p-2 border-t flex items-center gap-2 shrink-0" style={{ borderColor: `${currentPlayer.borderColor}40` }}>
-                                <div className="flex-1 border rounded-md px-3 py-1.5 text-[11.5px] text-slate-400" style={{ borderColor: `${currentPlayer.borderColor}60` }}>Digite sua mensagem...</div>
+                                <div className="flex-1 border px-3 py-1.5 text-[11.5px] text-slate-400" style={{ borderColor: `${currentPlayer.borderColor}60`, borderRadius: `${Math.min(currentPlayer.borderRadius, 14)}px` }}>Digite sua mensagem...</div>
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center text-[17px]">{"\uD83D\uDE0A"}</div>
                                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-white shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>
                                   <Heart className="w-3.5 h-3.5 fill-current" />
                                 </div>
@@ -1731,10 +1774,10 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                           {/* RODAPE: CUPOM */}
                           {currentPlayer.showCoupon ? (
                             <div className="h-[58px] flex overflow-hidden" style={{ border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
-                              <div className="flex items-center justify-center px-2 font-black tracking-wide text-[13px]" style={{ backgroundColor: currentPlayer.couponCodeBgColor, color: currentPlayer.couponCodeColor, width: "50%" }}>
+                              <div className="flex items-center justify-center px-2 font-black tracking-wide text-[13px]" style={{ backgroundColor: currentPlayer.couponCodeBgColor, color: currentPlayer.couponCodeColor, width: "50%", fontSize: currentPlayer.couponFontSize ?? 13 }}>
                                 {currentPlayer.couponCode}
                               </div>
-                              <div className="flex items-center justify-center px-2 font-black text-[13px]" style={{ backgroundColor: currentPlayer.couponTextBgColor, color: currentPlayer.couponTextColor, width: "50%" }}>
+                              <div className="flex items-center justify-center px-2 font-black text-[13px]" style={{ backgroundColor: currentPlayer.couponTextBgColor, color: currentPlayer.couponTextColor, width: "50%", fontSize: currentPlayer.couponFontSize ?? 13 }}>
                                 {currentPlayer.couponText}
                               </div>
                             </div>
@@ -1742,8 +1785,8 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
 
                           {/* RODAPE: COMPARTILHAR */}
                           {currentPlayer.showShare ? (
-                            <div className="h-[58px] flex items-center justify-center gap-2 font-bold text-[14px]" style={{ backgroundColor: currentPlayer.shareBgColor, color: currentPlayer.shareTextColor, border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
-                              Compartilhar <Share2 className="w-4 h-4" />
+                            <div className="h-[58px] flex items-center justify-center gap-2 font-bold text-[14px]" style={{ fontSize: currentPlayer.shareFontSize ?? 14, backgroundColor: currentPlayer.shareBgColor, color: currentPlayer.shareTextColor, border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
+                              {currentPlayer.shareText || "Compartilhar"} <Share2 className="w-4 h-4" />
                             </div>
                           ) : <div />}
                         </div>
