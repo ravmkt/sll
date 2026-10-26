@@ -130,6 +130,7 @@ export function LiveFormDialog({
   const [promoTargetValue, setPromoTargetValue] = useState("");
   const [promoCtaText, setPromoCtaText] = useState("Assista Agora");
   const [whatsappGroupUrl, setWhatsappGroupUrl] = useState("");
+  const [stockLimit, setStockLimit] = useState<number>(3);
   const [promoMediaUrl, setPromoMediaUrl] = useState("");
   const [promoMediaType, setPromoMediaType] = useState<"image" | "video" | "">("");
 
@@ -217,6 +218,7 @@ export function LiveFormDialog({
         setPromoTargetValue(data.promo_target_value || "");
         setPromoCtaText(data.promo_cta_text || "Assista Agora");
         setWhatsappGroupUrl(data.whatsapp_group_url || "");
+        setStockLimit(Number((data as any).stock_limit) > 0 ? Number((data as any).stock_limit) : 3);
         setPromoMediaUrl(data.promo_media_url || "");
         setPromoMediaType((data.promo_media_type as any) || "");
         setSelectedTemplateId(data.appearance_template_id || "preset_padrao");
@@ -554,6 +556,7 @@ export function LiveFormDialog({
         promo_media_url: promoMediaUrl || null,
         promo_media_type: promoMediaType || null,
         whatsapp_group_url: whatsappGroupUrl.trim() || null,
+        stock_limit: Math.max(1, Math.floor(Number(stockLimit) || 3)),
         // Configurações do Template Visual
         appearance_template_id: selectedTemplateId,
         live_widget_config: currentTpl ? {
@@ -1019,7 +1022,21 @@ export function LiveFormDialog({
                       </Button>
                     </div>
 
-                    {liveProducts.length === 0 ? (
+                                        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                      <Label className="text-xs font-semibold text-slate-700">
+                        {"Mostrar o selo \"Restam N\" quando o estoque for at\u00e9"}
+                      </Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={999}
+                        value={stockLimit}
+                        onChange={(e) => setStockLimit(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+                        className="h-8 w-20 text-sm"
+                      />
+                      <span className="text-xs text-slate-500">{"unidades (vale s\u00f3 para esta live)"}</span>
+                    </div>
+{liveProducts.length === 0 ? (
                       <div className="border border-dashed border-slate-200 rounded-2xl py-12 px-4 text-center bg-slate-50/50">
                         <ShoppingBag className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                         <h4 className="text-sm font-bold text-slate-700">Nenhum produto adicionado</h4>
@@ -1064,7 +1081,7 @@ export function LiveFormDialog({
                                     R$ {Number(prod.price || 0).toFixed(2).replace(".", ",")}
                                   </td>
                                   <td className="p-2 text-slate-500">
-                                    {prod.stock !== undefined ? prod.stock : "Disponível"}
+                                    {((prod as any).stock_qty ?? prod.stock) != null ? ((prod as any).stock_qty ?? prod.stock) : "Disponível"}
                                   </td>
                                   <td className="p-2">
                                     <select
