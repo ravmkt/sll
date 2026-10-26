@@ -1195,7 +1195,6 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     <option value="text">Texto simples</option>
   </select>
 <label className="mt-1 flex items-center gap-2 text-[11px]"><input type="checkbox" checked={!!currentPlayer.stockAnimate} onChange={(e) => updateConfig(setPlayerConfig, "stockAnimate", e.target.checked, playerConfig.linked)} />{"Anima\u00e7\u00e3o (destaque pulsante)"}</label>
-  <label className="mt-1 flex items-center gap-2 text-[11px]"><input type="checkbox" checked={currentPlayer.stockAnimate === true} onChange={(e) => updateConfig(setPlayerConfig, "stockAnimate", e.target.checked, playerConfig.linked)} /> {"Anima\u00e7\u00e3o (pulsar)"}</label>
 </div>
                       </ElementSubItem>
 
