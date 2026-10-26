@@ -1156,17 +1156,18 @@ function fetchLiveSpotlight(live) {
       st.box.appendChild(drawerList);
     }
     var onAir = null;
-    lp.forEach(function (r) {
+    lp.forEach(function (r, idx) {
       var p = byId[r.product_id] || {};
       var isOn = (onAirId && r.product_id === onAirId) || (!onAirId && r.is_on_air);
       var price = r.price_override != null ? r.price_override : p.price;
       var row = el('div', 'sll-ao-it' + (isOn ? ' on' : ''));
+      row.appendChild(el('div', 'sll-ao-num', (idx < 9 ? '0' : '') + (idx + 1)));
       if (safeUrl(p.image_url)) { var i = el('img'); i.src = safeUrl(p.image_url); i.alt = ''; row.appendChild(i); }
       var info = el('span');
       var nb = el('b', null, (r.code ? r.code + '. ' : '') + (p.name || 'Produto'));
       nb.style.fontSize = num(C().productNameSize, 13, 9, 24) + 'px';
       info.appendChild(nb);
-      var pe = el('em', null, money(price));
+      var pe = el('em', 'sll-ao-pe', (isOn ? 'Por: ' : '') + money(price));
       pe.style.color = col(C().productPriceColor, '#a1a1aa');
       pe.style.fontSize = num(C().productPriceSize, 12, 9, 24) + 'px';
       info.appendChild(pe);
@@ -1174,7 +1175,10 @@ function fetchLiveSpotlight(live) {
       if (skEl) info.appendChild(skEl);
           row.appendChild(info);
       var btn = link(buy(p, r.checkout_url), 'Comprar', 'sll-ao-btn');
-      if (btn) row.appendChild(btn);
+      var rt = el('div', 'sll-ao-rt');
+      if (isOn) rt.appendChild(el('small', 'sll-ao-live', 'Ao vivo'));
+      if (btn) rt.appendChild(btn);
+      row.appendChild(rt);
       drawerList.appendChild(row);
       if (isOn) onAir = { p: p, price: price, url: buy(p, r.checkout_url) };
     });
@@ -1190,7 +1194,7 @@ function fetchLiveSpotlight(live) {
         t.appendChild(el('span', null, money(onAir.price)));
         /* SLL-OV-STOCK */
         var osk = stockTag(onAir.p.stock_qty, true);
-        if (osk) { osk.className = (C().stockAnimate === true ? 'sll-blink' : ''); osk.style.fontSize = '15px'; osk.style.display = 'block'; osk.style.width = 'fit-content'; t.appendChild(osk); }
+        if (osk) { osk.className = (C().stockAnimate === true ? 'sll-blink' : ''); osk.style.fontSize = '13px'; osk.style.position = 'absolute'; osk.style.left = '0'; osk.style.bottom = 'calc(100% + 4px)'; osk.style.margin = '0'; osk.style.width = 'fit-content'; ov.appendChild(osk); }
         ov.appendChild(t);
         var ob = link(onAir.url, 'Comprar', 'sll-ao-btn');
         if (ob) ov.appendChild(ob);
@@ -1850,4 +1854,78 @@ function fetchLiveSpotlight(live) {
     if (send) form.insertBefore(btn, send); else form.appendChild(btn);
   }
   setInterval(addEmoji, 700);
+})();
+/* SLL-VISUAL-FIX */
+(function () {
+  if (window.__sllVisualFix) return;
+  window.__sllVisualFix = true;
+  var HEX = /^#[0-9a-f]{3,8}$/i;
+  function hx(v, d) { return HEX.test(String(v || '')) ? String(v) : d; }
+  function nn(v, d, min, max) { var n = parseFloat(v); return isFinite(n) ? Math.min(max, Math.max(min, n)) : d; }
+  function imp(e, p, v) { if (e) e.style.setProperty(p, v, 'important'); }
+
+  var css = document.createElement('style');
+  css.textContent = [
+    '.sll-ao-box .sll-ao-it{display:flex;align-items:stretch;gap:0;padding:0;overflow:hidden;border:var(--bw,2px) solid var(--p,#10b981);border-radius:min(var(--r,10px),14px);background:#fff;color:#1e293b}',
+    '.sll-ao-num{flex:none;width:36px;display:flex;align-items:center;justify-content:center;background:var(--p,#10b981);color:#fff;font:900 15px system-ui,sans-serif}',
+    '.sll-ao-box .sll-ao-it>img{width:44px;height:56px;border-radius:0;flex:none;object-fit:cover}',
+    '.sll-ao-box .sll-ao-it>span{display:block;align-self:center;padding:6px 8px}',
+    '.sll-ao-rt{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:4px;padding:6px 8px;flex:none}',
+    '.sll-ao-live{font-size:8px;font-weight:600;text-transform:uppercase;color:#fff}',
+    '.sll-ao-box .sll-ao-it .sll-ao-btn{margin:0;border-radius:999px;padding:4px 12px;font-size:10px;background:var(--p,#10b981);color:#fff}',
+    '.sll-ao-box .sll-ao-it.on{background:var(--p,#10b981)!important}',
+    '.sll-ao-box .sll-ao-it.on b,.sll-ao-box .sll-ao-it.on .sll-ao-pe{color:#fff!important}',
+    '.sll-ao-box .sll-ao-it.on .sll-ao-btn{background:#fff!important;color:var(--p,#10b981)!important}',
+    '.vl-live-modal.sll-3c .sll-ao-it.on b::after{content:none!important}',
+    '.sll-ao-ov{align-items:center;gap:8px;padding:6px}',
+    '.sll-ao-ov b{font-weight:500;line-height:1.2}',
+    '.sll-ao-ov .sll-ao-btn{border-radius:999px;padding:5px 12px;font-size:11px}'
+  ].join('');
+  document.head.appendChild(css);
+
+  function sync() {
+    var c = window.__sllCfg;
+    if (!c) return;
+    var modal = document.querySelector('.vl-live-modal');
+    if (!modal) return;
+    var desk = modal.classList.contains('sll-3c');
+    var show = c.showTitle !== false;
+
+    // Titulo: faixa sobre o video (desktop) ou titulo do modal (celular)
+    var top = modal.querySelector('.sll-3c-top');
+    var tt = modal.querySelector('.sll-3c-t');
+    if (top && desk) imp(top, 'background', show ? hx(c.titleBgColor, '#000000') : 'transparent');
+    else if (top) top.style.removeProperty('background');
+    if (tt) {
+      if (show) { tt.style.removeProperty('display'); imp(tt, 'color', hx(c.titleColor, '#ffffff')); }
+      else imp(tt, 'display', 'none');
+    }
+    var mt = modal.querySelector('.vl-live-modal-title');
+    if (mt && !desk) {
+      if (show) {
+        mt.style.removeProperty('display');
+        imp(mt, 'background', hx(c.titleBgColor, '#000000'));
+        imp(mt, 'color', hx(c.titleColor, '#ffffff'));
+        imp(mt, 'text-align', 'center');
+        imp(mt, 'padding', '6px 10px');
+        imp(mt, 'border-radius', '8px');
+      } else imp(mt, 'display', 'none');
+    }
+
+    // Card do produto no player (mesmos padroes do preview)
+    var ov = document.querySelector('.sll-ao-ov');
+    if (ov) {
+      var bc = hx(c.borderColor, '#10b981');
+      var bw = nn(c.prodCardBorderWidth !== undefined ? c.prodCardBorderWidth : c.borderWidth, 2, 0, 8);
+      imp(ov, 'background', hx(c.prodCardBgColor, '#ffffff'));
+      imp(ov, 'border', bw + 'px solid ' + hx(c.prodCardBorderColor, bc));
+      imp(ov, 'border-radius', nn(c.borderRadius, 12, 0, 40) + 'px');
+      imp(ov.querySelector('b'), 'color', hx(c.prodCardNameColor, '#111111'));
+      imp(ov.querySelector('div > span'), 'color', hx(c.prodCardPriceColor, bc));
+      var ob = ov.querySelector('.sll-ao-btn');
+      imp(ob, 'background', hx(c.prodCardBtnBgColor, bc));
+      imp(ob, 'color', hx(c.prodCardBtnTextColor, '#ffffff'));
+    }
+  }
+  setInterval(sync, 400);
 })();
