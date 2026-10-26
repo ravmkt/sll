@@ -1001,6 +1001,7 @@ function fetchLiveSpotlight(live) {
     if (!(q > 0 && q <= lim)) return null;
     var raw = String(C().stockText || 'Restam {n}').slice(0, 40);
     var e = el('em', null, raw.replace(/\{n\}/g, String(q)));
+        if (C().stockAnimate === true) e.className = 'sll-blink';
     if (C().stockStyle === 'text') {
       e.style.cssText = 'display:block;margin-top:3px;font-style:normal;font-weight:700;font-size:' + (big ? 12 : 11) + 'px;color:' + (big ? '#fca5a5' : '#dc2626');
     } else {
@@ -1189,7 +1190,7 @@ function fetchLiveSpotlight(live) {
         t.appendChild(el('span', null, money(onAir.price)));
         /* SLL-OV-STOCK */
         var osk = stockTag(onAir.p.stock_qty, true);
-        if (osk) { osk.className = 'sll-blink'; osk.style.fontSize = '15px'; osk.style.display = 'block'; osk.style.width = 'fit-content'; t.appendChild(osk); }
+        if (osk) { osk.className = (C().stockAnimate === true ? 'sll-blink' : ''); osk.style.fontSize = '15px'; osk.style.display = 'block'; osk.style.width = 'fit-content'; t.appendChild(osk); }
         ov.appendChild(t);
         var ob = link(onAir.url, 'Comprar', 'sll-ao-btn');
         if (ob) ov.appendChild(ob);
