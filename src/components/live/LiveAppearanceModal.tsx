@@ -157,13 +157,13 @@ const MOCK_STOCK: Record<number, number> = { 2: 2, 4: 8, 5: 1, 7: 3 };
 
 function renderStockTag(qty: number | undefined, p: LivePlayerSettings) {
   const q = Number(qty);
-  const lim = Math.min(99, Math.max(1, Number(p.stockLimit ?? 3)));
+  const lim = 99;
   if (!(q > 0 && q <= lim)) return null;
   const txt = String(p.stockText || "Restam {n}").slice(0, 40).replace(/\{n\}/g, String(q));
   if (p.stockStyle === "text") {
     return <div style={{ marginTop: 3, fontWeight: 700, fontSize: 11, color: "#dc2626" }}>{txt}</div>;
   }
-  return <span style={{ display: "inline-block", marginTop: 3, background: "#dc2626", color: "#fff", fontWeight: 800, fontSize: 11, padding: "1px 8px", borderRadius: 999 }}>{txt}</span>;
+  return <><style>{".sll-blink{animation:sllBlink 1s ease-in-out infinite}@keyframes sllBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.06)}}"}</style><span className={p.stockAnimate ? "sll-blink" : undefined} style={{ display: "inline-block", marginTop: 3, background: "#dc2626", color: "#fff", fontWeight: 800, fontSize: 11, padding: "1px 8px", borderRadius: 999 }}>{txt}</span></>;
 }
 
 // --- CONFIGURAÇÕES BASE ---
@@ -1186,8 +1186,6 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                         </div>
 <div className="mt-2 w-full space-y-1 rounded-md border p-2">
   <p className="text-[11px] font-bold">Urgência de estoque</p>
-  <label className="text-[10px] text-muted-foreground">Mostrar quando o estoque for até</label>
-  <Input type="number" min={1} max={99} value={currentPlayer.stockLimit ?? 3} onChange={(e) => updateConfig(setPlayerConfig, "stockLimit", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" />
   <label className="text-[10px] text-muted-foreground">Texto ({"{n}"} = quantidade)</label>
   <Input value={currentPlayer.stockText ?? "Restam {n}"} maxLength={40} onChange={(e) => updateConfig(setPlayerConfig, "stockText", e.target.value, playerConfig.linked)} className="h-7 rounded-md text-[12px]" />
   <label className="text-[10px] text-muted-foreground">Estilo</label>
@@ -1195,6 +1193,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     <option value="badge">Etiqueta destacada</option>
     <option value="text">Texto simples</option>
   </select>
+<label className="mt-1 flex items-center gap-2 text-[11px]"><input type="checkbox" checked={!!currentPlayer.stockAnimate} onChange={(e) => updateConfig(setPlayerConfig, "stockAnimate", e.target.checked, playerConfig.linked)} />{"Anima\u00e7\u00e3o (destaque pulsante)"}</label>
   <label className="mt-1 flex items-center gap-2 text-[11px]"><input type="checkbox" checked={currentPlayer.stockAnimate === true} onChange={(e) => updateConfig(setPlayerConfig, "stockAnimate", e.target.checked, playerConfig.linked)} /> {"Anima\u00e7\u00e3o (pulsar)"}</label>
 </div>
                       </ElementSubItem>
@@ -1719,7 +1718,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                                 return (
                                   <div className="absolute bottom-2 left-2 right-2" style={{ display: currentPlayer.showSpotlight === false ? "none" : undefined }}>
                                     {(() => {
-                                      const lim = currentPlayer.stockLimit ?? 3;
+                                      const lim = 999;
                                       if (!(OV_STOCK_DEMO > 0 && OV_STOCK_DEMO <= lim)) return null;
                                       const txt = (currentPlayer.stockText ?? "Restam {n}").replace(/\{n\}/g, String(OV_STOCK_DEMO));
                                       const cls = currentPlayer.stockAnimate ? "sll-blink " : "";

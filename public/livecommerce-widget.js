@@ -1356,7 +1356,7 @@ function fetchLiveSpotlight(live) {
     modal.classList.toggle('sll-no-chat', c.showChat === false);
     modal.classList.toggle('sll-no-share', c.showShare === false);
     modal.classList.toggle('sll-no-views', c.showViewerCount === false);
-    modal.style.setProperty('--p', col(c.borderColor, col(c.infoBgColor, '#0094ea')));
+    modal.style.setProperty('--p', col(c.borderColor, col(c.infoBgColor, '#0094ea'))); modal.style.setProperty('--bw', (isNaN(parseFloat(c.borderWidth)) ? 2 : Math.max(0, Math.min(8, parseFloat(c.borderWidth)))) + 'px'); modal.style.setProperty('--r', (isNaN(parseFloat(c.borderRadius)) ? 10 : Math.max(0, Math.min(40, parseFloat(c.borderRadius)))) + 'px');
     modal.style.setProperty('--pn', col(c.productNameColor, '#1e293b'));
 
     if (wrap && !wrap.querySelector('.sll-3c-top')) {
@@ -1729,7 +1729,7 @@ function fetchLiveSpotlight(live) {
         var cc = (typeof col === 'function') ? col(v, fb) : v;
         n.style.setProperty(prop, cc, 'important');
       };
-      pcs(ov, 'border-color', c.prodCardBorderColor, '#ffffff');
+      pcs(ov, 'border-color', c.prodCardBorderColor, '#ffffff'); (function (bw) { bw = parseFloat(bw); if (!isNaN(bw)) ov.style.borderWidth = Math.max(0, Math.min(8, bw)) + 'px'; })(c.prodCardBorderWidth !== undefined ? c.prodCardBorderWidth : c.borderWidth);
       pcs(ov, 'background', c.prodCardBgColor, '#0f172a');
       pcs(nb, 'color', c.prodCardNameColor, '#ffffff');
       pcs(pr, 'color', c.prodCardPriceColor, '#ffffff');
@@ -1783,4 +1783,70 @@ function fetchLiveSpotlight(live) {
     m.classList.toggle('sll-no-share', c.showShare === false);
   }
   setInterval(sync, 300);
+})();
+
+/* SLL-BORDA-UNICA */
+(function () {
+  if (window.__sllBordaUnica) return;
+  window.__sllBordaUnica = true;
+  var st = document.createElement('style');
+  st.id = 'sll-borda-unica-css';
+  st.textContent = [
+    '.vl-live-modal.sll-3c .sll-3c-ph{border-width:var(--bw,2px)!important;border-bottom-width:0!important;border-top-left-radius:var(--r,10px)!important;border-top-right-radius:var(--r,10px)!important}',
+    '.vl-live-modal.sll-3c .sll-ao-list{border-width:var(--bw,2px)!important;border-top-width:0!important;border-radius:0 0 var(--r,10px) var(--r,10px)!important}',
+    '.vl-live-modal.sll-3c .sll-ao-it{border-width:var(--bw,2px)!important;border-radius:min(var(--r,10px),14px)!important}',
+    '.vl-live-modal.sll-3c .sll-ao-ad{border-width:var(--bw,2px)!important;border-radius:var(--r,10px)!important}',
+    '.vl-live-modal.sll-3c .sll-ao-cp{border-width:var(--bw,2px)!important;border-radius:var(--r,10px)!important}',
+    '.vl-live-modal.sll-3c .sll-3c-share{border-width:var(--bw,2px)!important;border-radius:var(--r,10px)!important}',
+    '.vl-live-modal.sll-3c .vl-live-chat{border-width:var(--bw,2px)!important;border-radius:var(--r,12px)!important}',
+    '.vl-live-modal.sll-3c .vl-live-chat-input{border-radius:min(calc(var(--r,10px) * .5),12px)!important}',
+    '.vl-live-chat-form{position:relative}',
+    '.sll-emoji-btn{background:transparent;border:0;font-size:18px;cursor:pointer;flex-shrink:0;width:32px;height:32px;padding:0;line-height:1}',
+    '.sll-emoji-pop{display:none;position:absolute;right:0;bottom:calc(100% + 6px);background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:6px;grid-template-columns:repeat(6,1fr);gap:2px;z-index:20;box-shadow:0 4px 14px rgba(0,0,0,.25)}',
+    '.sll-emoji-pop button{background:none;border:0;font-size:20px;cursor:pointer;padding:4px;line-height:1}'
+  ].join('');
+  document.head.appendChild(st);
+
+  var EMOJIS = ['\uD83D\uDE00', '\uD83D\uDE02', '\uD83D\uDE0D', '\uD83D\uDE0E', '\uD83D\uDE2E', '\uD83D\uDE4F',
+                '\uD83D\uDC4D', '\uD83D\uDC4F', '\uD83D\uDD25', '\u2764\uFE0F', '\uD83C\uDF89', '\uD83D\uDECD\uFE0F'];
+
+  function addEmoji() {
+    var inp = document.getElementById('vl-live-chat-input');
+    if (!inp) return;
+    var form = inp.parentNode;
+    if (!form || form.querySelector('.sll-emoji-btn')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sll-emoji-btn';
+    btn.textContent = '\uD83D\uDE0A';
+    var pop = document.createElement('div');
+    pop.className = 'sll-emoji-pop';
+    EMOJIS.forEach(function (em) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = em;
+      b.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var s = typeof inp.selectionStart === 'number' ? inp.selectionStart : inp.value.length;
+        var e = typeof inp.selectionEnd === 'number' ? inp.selectionEnd : s;
+        if (inp.value.length - (e - s) + em.length <= 300) {
+          inp.value = inp.value.slice(0, s) + em + inp.value.slice(e);
+          var p = s + em.length;
+          inp.focus();
+          try { inp.setSelectionRange(p, p); } catch (x) {}
+        }
+        pop.style.display = 'none';
+      });
+      pop.appendChild(b);
+    });
+    btn.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      pop.style.display = pop.style.display === 'grid' ? 'none' : 'grid';
+    });
+    document.addEventListener('click', function () { pop.style.display = 'none'; });
+    var send = form.querySelector('.vl-live-chat-send');
+    form.appendChild(pop);
+    if (send) form.insertBefore(btn, send); else form.appendChild(btn);
+  }
+  setInterval(addEmoji, 700);
 })();
