@@ -1353,8 +1353,9 @@ export function LiveFormDialog({
                 </Button>
               )}
 
-              {/* BOTÃO SALVAR (Sempre visível em qualquer etapa) */}
-              <Button
+              {/* BOTAO SALVAR: etapa 5 na criacao; qualquer etapa na edicao */}
+{(currentStep === 5 || !!liveId) && (
+<Button
                 type="button"
                 onClick={handleFinalSave}
                 disabled={saving}
@@ -1368,6 +1369,7 @@ export function LiveFormDialog({
                   "Salvar Live"
                 )}
               </Button>
+)}
             </div>
           </div>
 

@@ -104,6 +104,11 @@ var livePlayerConfig = {
   autoplay_muted: true
 };
 
+  function sllPx(v, d) {
+    if (v === undefined || v === null || v === '') return d + 'px';
+    if (typeof v === 'number' || /^\d+(\.\d+)?$/.test(String(v))) return v + 'px';
+    return String(v);
+  }
   function fetchJson(path, options) {
     return supabaseFetch(path, options).then(function (res) {
       if (!res.ok) {
@@ -332,10 +337,10 @@ function renderLiveWidget(live) {
     '.vl-live-cta-btn {' +
       'width:100%; padding:6px 0; background:' + (currentCfg.ctaBgColor || '#22c55e') + ';' +
       'color:' + (currentCfg.ctaTextColor || '#ffffff') + ';' +
-      'font-size:11px; font-weight:700; text-align:center; border:none; border-radius:' + (currentCfg.ctaBorderRadius || '6px') + '; cursor:pointer;' +
+      'font-size:11px; font-weight:700; text-align:center; border:none; border-radius:' + sllPx(currentCfg.ctaBorderRadius, 6) + '; cursor:pointer;' +
       'box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:filter .2s;' +
     '}' +
-    '.vl-live-cta-btn:hover { filter:brightness(1.1); }';
+    '.vl-live-cta-btn:hover { filter:brightness(1.1); }' + ((typeof shape !== 'undefined' && shape === 'circle') ? '' : '.vl-live-container{overflow:visible !important;margin-bottom:34px;}.vl-live-media{border-radius:inherit;}.vl-live-close{margin-left:auto;}.vl-live-cta-btn{position:absolute;left:0;right:0;top:calc(100% + 6px);width:auto;}');
 
   liveWidgetShadow.appendChild(style);
 
@@ -349,7 +354,7 @@ function renderLiveWidget(live) {
       vid.src = mediaUrl;
       vid.muted = true;
       vid.loop = true;
-      vid.autoplay = true;
+      vid.autoplay = currentCfg.playVideo !== false;
       vid.playsInline = true;
       card.appendChild(vid);
     } else {
@@ -375,7 +380,7 @@ function renderLiveWidget(live) {
     } else {
       badge.textContent = 'EM BREVE';
     }
-    topRow.appendChild(badge);
+    if (currentCfg.showBadge === true) topRow.appendChild(badge);
 
     if ((currentCfg.allowClose !== false && currentCfg.showCloseButton !== false)) {
       var closeBtn = document.createElement('button');
@@ -393,7 +398,7 @@ function renderLiveWidget(live) {
     var bottomInfo = document.createElement('div');
     bottomInfo.className = 'vl-live-bottom-info';
 
-    if (currentCfg.showTitle !== false) {
+    if (currentCfg.showPromoTitle === true) {
       var titleEl = document.createElement('p');
       titleEl.className = 'vl-live-title';
       titleEl.textContent = title;
