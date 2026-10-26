@@ -987,6 +987,13 @@ function fetchLiveSpotlight(live) {
   function device() { return window.innerWidth <= 768 ? 'mobile' : 'desktop'; }
   function C() { var o = cfg && cfg[device()]; return (o && typeof o === 'object') ? o : {}; }
   function flag(k) { return C()[k] !== false; }
+  /* SLL-BLINK */
+  (function () {
+    if (document.getElementById('sll-blink-css')) return;
+    var s = document.createElement('style'); s.id = 'sll-blink-css';
+    s.textContent = '@keyframes sllBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.06)}}.sll-blink{animation:sllBlink 1s ease-in-out infinite}';
+    document.head.appendChild(s);
+  })();
   /* SLL-STOCK-CFG */
   function stockTag(qty, big) {
     var q = Number(qty);
@@ -1182,7 +1189,7 @@ function fetchLiveSpotlight(live) {
         t.appendChild(el('span', null, money(onAir.price)));
         /* SLL-OV-STOCK */
         var osk = stockTag(onAir.p.stock_qty, true);
-        if (osk) t.appendChild(osk);
+        if (osk) { osk.className = 'sll-blink'; osk.style.fontSize = '15px'; osk.style.display = 'block'; osk.style.width = 'fit-content'; t.appendChild(osk); }
         ov.appendChild(t);
         var ob = link(onAir.url, 'Comprar', 'sll-ao-btn');
         if (ob) ov.appendChild(ob);

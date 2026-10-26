@@ -142,6 +142,7 @@ const MOCK_PRODUCTS = [
 
 const CART_PRODUCT_IDS = [1, 3, 5, 6, 8, 10];
 const CURRENT_LIVE_PRODUCT_ID = 5;
+const OV_STOCK_DEMO = 1;
 
 const MOCK_STOCK: Record<number, number> = { 2: 2, 4: 8, 5: 1, 7: 3 };
 
@@ -1183,9 +1184,9 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                           <ColorInput label="Cor Borda" value={currentPlayer.prodCardBorderColor || currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBorderColor", v, playerConfig.linked)} />
                           <ColorInput label="Fundo" value={currentPlayer.prodCardBgColor || "#0f172a"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBgColor", v, playerConfig.linked)} />
                           <ColorInput label="Cor Nome" value={currentPlayer.prodCardNameColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardNameColor", v, playerConfig.linked)} />
-                          <ColorInput label="Cor Pre\u00e7o" value={currentPlayer.prodCardPriceColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardPriceColor", v, playerConfig.linked)} />
-                          <ColorInput label="Fundo Bot\u00e3o" value={currentPlayer.prodCardBtnBgColor || currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBtnBgColor", v, playerConfig.linked)} />
-                          <ColorInput label="Texto Bot\u00e3o" value={currentPlayer.prodCardBtnTextColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBtnTextColor", v, playerConfig.linked)} />
+                          <ColorInput label="Cor Preço" value={currentPlayer.prodCardPriceColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardPriceColor", v, playerConfig.linked)} />
+                          <ColorInput label="Fundo Botão" value={currentPlayer.prodCardBtnBgColor || currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBtnBgColor", v, playerConfig.linked)} />
+                          <ColorInput label="Texto Botão" value={currentPlayer.prodCardBtnTextColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBtnTextColor", v, playerConfig.linked)} />
                         </div>
                       </ElementSubItem>
 
@@ -1599,7 +1600,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                       </div>
                     ) : (
                       /* DESKTOP 3 COLUNAS */
-                      <div className="w-full max-w-[1150px] mx-auto h-full max-h-[640px] bg-white rounded-2xl shadow-lg p-3 flex flex-col gap-3 overflow-hidden">
+                      <div className="w-full max-w-[1150px] mx-auto h-[640px] shrink-0 bg-white rounded-2xl shadow-lg p-3 flex flex-col gap-3 overflow-hidden">
                         {/* CABECALHO */}
                         <div className="flex items-center justify-between shrink-0">
                           <div className="flex items-center gap-2">
@@ -1620,7 +1621,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                         </div>
 
                         {/* GRADE 3 COLUNAS + RODAPE */}
-                        <div className="grid grid-cols-3 gap-3 flex-1 min-h-0" style={{ gridTemplateRows: "minmax(0,1fr) auto" }}>
+                        <div className="grid gap-3 flex-1 min-h-0" style={{ gridTemplateColumns: "minmax(0,1fr) calc((640px - 150px) * 9 / 16) minmax(0,1fr)", gridTemplateRows: "minmax(0,1fr) auto" }}>
 
                           {/* COLUNA 1: PRODUTOS */}
                           {currentPlayer.showProducts ? (
@@ -1679,6 +1680,19 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                                     <div className="flex-1 min-w-0">
                                       <div className="font-bold leading-tight line-clamp-2" style={{ fontSize: currentPlayer.productNameSize, color: currentPlayer.prodCardNameColor || "#ffffff" }}>{cur.name}</div>
                                       <div className="leading-none mt-1" style={{ fontSize: currentPlayer.productPriceSize, color: currentPlayer.prodCardPriceColor || "#ffffff" }}>{cur.price}</div>
+{(() => {
+  const lim = currentPlayer.stockLimit ?? 3;
+  if (!(OV_STOCK_DEMO > 0 && OV_STOCK_DEMO <= lim)) return null;
+  const txt = (currentPlayer.stockText ?? "Restam {n}").replace(/\{n\}/g, String(OV_STOCK_DEMO));
+  return (
+    <>
+      <style>{"@keyframes sllBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.06)}}.sll-blink{animation:sllBlink 1s ease-in-out infinite}"}</style>
+      {currentPlayer.stockStyle === "text"
+        ? <div className="sll-blink font-extrabold mt-1 text-[13px] text-red-400">{txt}</div>
+        : <span className="sll-blink inline-block mt-1 rounded-full bg-red-600 px-3 py-0.5 text-[12px] font-black text-white">{txt}</span>}
+    </>
+  );
+})()}
                                     </div>
                                     <span className="px-3 py-1 rounded-full text-[10px] font-bold shrink-0" style={{ backgroundColor: currentPlayer.prodCardBtnBgColor || currentPlayer.borderColor, color: currentPlayer.prodCardBtnTextColor || "#ffffff" }}>Comprar</span>
                                   </div>
