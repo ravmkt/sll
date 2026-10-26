@@ -342,6 +342,9 @@ function renderLiveWidget(live) {
     '}' +
     '.vl-live-cta-btn:hover { filter:brightness(1.1); }' + ((typeof shape !== 'undefined' && shape === 'circle') ? '' : '.vl-live-container{overflow:visible !important;margin-bottom:34px;}.vl-live-media{border-radius:inherit;}.vl-live-close{margin-left:auto;}.vl-live-cta-btn{position:absolute;left:0;right:0;top:calc(100% + 6px);width:auto;}');
 
+  /* SLL-MEDIA-CLIP */
+  var sllIn = Math.max(0, (parseFloat(borderRadius) || 0) - (parseFloat(borderWidth) || 0)) + 'px';
+  style.textContent += '.vl-live-media{border-radius:' + sllIn + ';clip-path:inset(0 round ' + sllIn + ');}';
   liveWidgetShadow.appendChild(style);
 
   var card = document.createElement('div');
