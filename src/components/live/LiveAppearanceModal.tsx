@@ -1129,7 +1129,14 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                           <div className="space-y-1">
                             <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Tam. Nome (px)</label>
                             <Input type="number" value={currentPlayer.productNameSize} onChange={(e) => updateConfig(setPlayerConfig, "productNameSize", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" />
-<div className="col-span-2 mt-1 space-y-1 rounded-md border p-2">
+
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Tam. Preço (px)</label>
+                            <Input type="number" value={currentPlayer.productPriceSize} onChange={(e) => updateConfig(setPlayerConfig, "productPriceSize", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" />
+                          </div>
+                        </div>
+<div className="mt-2 w-full space-y-1 rounded-md border p-2">
   <p className="text-[11px] font-bold">Urgência de estoque</p>
   <label className="text-[10px] text-muted-foreground">Mostrar quando o estoque for até</label>
   <Input type="number" min={1} max={99} value={currentPlayer.stockLimit ?? 3} onChange={(e) => updateConfig(setPlayerConfig, "stockLimit", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" />
@@ -1141,12 +1148,6 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     <option value="text">Texto simples</option>
   </select>
 </div>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Tam. Preço (px)</label>
-                            <Input type="number" value={currentPlayer.productPriceSize} onChange={(e) => updateConfig(setPlayerConfig, "productPriceSize", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" />
-                          </div>
-                        </div>
                       </ElementSubItem>
 
                       <ElementSubItem
@@ -1157,10 +1158,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                         openSubItem={openSubItem}
                         setOpenSubItem={setOpenSubItem}
                       >
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input value={currentPlayer.couponCode} onChange={(e) => updateConfig(setPlayerConfig, "couponCode", e.target.value)} placeholder="Código" className="h-7 rounded-md text-[11px]" />
-                          <Input value={currentPlayer.couponText} onChange={(e) => updateConfig(setPlayerConfig, "couponText", e.target.value)} placeholder="Desconto" className="h-7 rounded-md text-[11px]" />
-                        </div>
+                        <p className="text-[10px] text-muted-foreground">{"O c\u00f3digo e o desconto v\u00eam do cupom da live. Aqui voc\u00ea ajusta s\u00f3 as cores."}</p>
                         <div className="grid grid-cols-2 gap-2 pt-1">
                           <ColorInput label="Cor Cód." value={currentPlayer.couponCodeColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeColor", v, playerConfig.linked)} />
                           <ColorInput label="Fundo Cód." value={currentPlayer.couponCodeBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeBgColor", v, playerConfig.linked)} />
@@ -1179,11 +1177,11 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                       >
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
-                            <Input value={currentPlayer.infoText1} onChange={(e) => updateConfig(setPlayerConfig, "infoText1", e.target.value)} placeholder="Texto 1" className="h-7 rounded-md text-[11px]" />
+                            
                             <Input type="number" placeholder="Tam. px" value={currentPlayer.infoSize1} onChange={(e) => updateConfig(setPlayerConfig, "infoSize1", Number(e.target.value), playerConfig.linked)} className="h-6 rounded-md text-[11px]" />
                           </div>
                           <div className="space-y-1">
-                            <Input value={currentPlayer.infoText2} onChange={(e) => updateConfig(setPlayerConfig, "infoText2", e.target.value)} placeholder="Texto 2" className="h-7 rounded-md text-[11px]" />
+                            
                             <Input type="number" placeholder="Tam. px" value={currentPlayer.infoSize2} onChange={(e) => updateConfig(setPlayerConfig, "infoSize2", Number(e.target.value), playerConfig.linked)} className="h-6 rounded-md text-[11px]" />
                           </div>
                         </div>
