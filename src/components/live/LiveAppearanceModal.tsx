@@ -84,6 +84,13 @@ export interface LivePlayerSettings {
   productNameColor: string;
   productPriceSize: number;
   productPriceColor: string;
+  showSpotlight?: boolean;
+  prodCardBorderColor?: string;
+  prodCardBgColor?: string;
+  prodCardNameColor?: string;
+  prodCardPriceColor?: string;
+  prodCardBtnBgColor?: string;
+  prodCardBtnTextColor?: string;
 }
 
 export interface DeviceConfig<T> {
@@ -135,6 +142,19 @@ const MOCK_PRODUCTS = [
 
 const CART_PRODUCT_IDS = [1, 3, 5, 6, 8, 10];
 const CURRENT_LIVE_PRODUCT_ID = 5;
+
+const MOCK_STOCK: Record<number, number> = { 2: 2, 4: 8, 5: 1, 7: 3 };
+
+function renderStockTag(qty: number | undefined, p: LivePlayerSettings) {
+  const q = Number(qty);
+  const lim = Math.min(99, Math.max(1, Number(p.stockLimit ?? 3)));
+  if (!(q > 0 && q <= lim)) return null;
+  const txt = String(p.stockText || "Restam {n}").slice(0, 40).replace(/\{n\}/g, String(q));
+  if (p.stockStyle === "text") {
+    return <div style={{ marginTop: 3, fontWeight: 700, fontSize: 11, color: "#dc2626" }}>{txt}</div>;
+  }
+  return <span style={{ display: "inline-block", marginTop: 3, background: "#dc2626", color: "#fff", fontWeight: 800, fontSize: 11, padding: "1px 8px", borderRadius: 999 }}>{txt}</span>;
+}
 
 // --- CONFIGURAÇÕES BASE ---
 export const defaultWidgetBase: BaseWidgetSettings = {
@@ -1151,6 +1171,25 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                       </ElementSubItem>
 
                       <ElementSubItem
+                        id="sub_prodcard"
+                        label="Produto no Player"
+                        checked={currentPlayer.showSpotlight !== false}
+                        onToggle={(v) => updateConfig(setPlayerConfig, "showSpotlight", v, playerConfig.linked)}
+                        openSubItem={openSubItem}
+                        setOpenSubItem={setOpenSubItem}
+                      >
+                        <p className="text-[10px] text-muted-foreground">{"Card do produto em destaque sobre o v\u00eddeo."}</p>
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <ColorInput label="Cor Borda" value={currentPlayer.prodCardBorderColor || currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBorderColor", v, playerConfig.linked)} />
+                          <ColorInput label="Fundo" value={currentPlayer.prodCardBgColor || "#0f172a"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBgColor", v, playerConfig.linked)} />
+                          <ColorInput label="Cor Nome" value={currentPlayer.prodCardNameColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardNameColor", v, playerConfig.linked)} />
+                          <ColorInput label="Cor Pre\u00e7o" value={currentPlayer.prodCardPriceColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardPriceColor", v, playerConfig.linked)} />
+                          <ColorInput label="Fundo Bot\u00e3o" value={currentPlayer.prodCardBtnBgColor || currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBtnBgColor", v, playerConfig.linked)} />
+                          <ColorInput label="Texto Bot\u00e3o" value={currentPlayer.prodCardBtnTextColor || "#ffffff"} onChange={(v) => updateConfig(setPlayerConfig, "prodCardBtnTextColor", v, playerConfig.linked)} />
+                        </div>
+                      </ElementSubItem>
+
+                      <ElementSubItem
                         id="sub_coupon"
                         label="Card do Cupom"
                         checked={currentPlayer.showCoupon}
@@ -1603,6 +1642,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                                           )}
                                         </div>
                                         <div className="leading-none mt-1" style={{ fontSize: currentPlayer.productPriceSize, color: currentPlayer.productPriceColor }}>{prod.price}</div>
+{renderStockTag(MOCK_STOCK[prod.id], currentPlayer)}
                                       </div>
                                       <span className="px-3 py-1 rounded-full text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>Comprar</span>
                                     </div>
@@ -1634,13 +1674,13 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                               {(() => {
                                 const cur = MOCK_PRODUCTS.find((p) => p.id === CURRENT_LIVE_PRODUCT_ID) || MOCK_PRODUCTS[0];
                                 return (
-                                  <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2 rounded-lg bg-black/75 p-1.5">
+                                  <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2 rounded-lg p-1.5" style={{ display: currentPlayer.showSpotlight === false ? "none" : undefined, backgroundColor: currentPlayer.prodCardBgColor || "#0f172a", border: `1px solid ${currentPlayer.prodCardBorderColor || "transparent"}` }}>
                                     <img loading="lazy" decoding="async" src={cur.img} alt={cur.name} className="w-10 h-10 rounded-md object-cover shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                      <div className="text-white font-bold leading-tight line-clamp-2" style={{ fontSize: currentPlayer.productNameSize }}>{cur.name}</div>
-                                      <div className="text-white/80 leading-none mt-1" style={{ fontSize: currentPlayer.productPriceSize }}>{cur.price}</div>
+                                      <div className="font-bold leading-tight line-clamp-2" style={{ fontSize: currentPlayer.productNameSize, color: currentPlayer.prodCardNameColor || "#ffffff" }}>{cur.name}</div>
+                                      <div className="leading-none mt-1" style={{ fontSize: currentPlayer.productPriceSize, color: currentPlayer.prodCardPriceColor || "#ffffff" }}>{cur.price}</div>
                                     </div>
-                                    <span className="px-3 py-1 rounded-full text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>Comprar</span>
+                                    <span className="px-3 py-1 rounded-full text-[10px] font-bold shrink-0" style={{ backgroundColor: currentPlayer.prodCardBtnBgColor || currentPlayer.borderColor, color: currentPlayer.prodCardBtnTextColor || "#ffffff" }}>Comprar</span>
                                   </div>
                                 );
                               })()}

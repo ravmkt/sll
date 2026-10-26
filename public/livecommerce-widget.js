@@ -1716,6 +1716,20 @@ function fetchLiveSpotlight(live) {
       colorize(pr, c.productPriceColor);
       size(pr, c.productPriceSize, 1.1, 10, 24);
       setS(ov, 'borderColor', hx(c.borderColor));
+      /* SLL-PROD-CARD */
+      var pcs = function (n, prop, v, fb) {
+        if (!n || !v) return;
+        var cc = (typeof col === 'function') ? col(v, fb) : v;
+        n.style.setProperty(prop, cc, 'important');
+      };
+      pcs(ov, 'border-color', c.prodCardBorderColor, '#ffffff');
+      pcs(ov, 'background', c.prodCardBgColor, '#0f172a');
+      pcs(nb, 'color', c.prodCardNameColor, '#ffffff');
+      pcs(pr, 'color', c.prodCardPriceColor, '#ffffff');
+      pcs(ov.querySelector('.sll-ao-btn'), 'background', c.prodCardBtnBgColor, '#ec4899');
+      pcs(ov.querySelector('.sll-ao-btn'), 'color', c.prodCardBtnTextColor, '#ffffff');
+      if (c.showSpotlight === false) { ov.style.setProperty('display', 'none', 'important'); ov.__sllHid = 1; }
+      else if (ov.__sllHid) { ov.style.removeProperty('display'); ov.__sllHid = 0; }
     }
 
     var cp = document.querySelector('.sll-ao-cp');
