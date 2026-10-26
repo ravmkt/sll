@@ -554,6 +554,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
   const [templateNameInput, setTemplateNameInput] = useState<string>("");
   const [bannerAlert, setBannerAlert] = useState<string>("");
   const [picked, setPicked] = useState<{ id: string; base: string } | null>(null);
+  const [nameDialog, setNameDialog] = useState<{ open: boolean; name: string; error: string; busy: boolean }>({ open: false, name: "", error: "", busy: false });
   useEffect(() => { if (isOpen) setPicked(null); }, [isOpen]);
 
   useEffect(() => {
@@ -708,39 +709,29 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     }
   };
 
+  const buildTplData = () => ({
+    divulgacao: JSON.parse(JSON.stringify(divulgacaoConfig)),
+    aoVivo: JSON.parse(JSON.stringify(aoVivoConfig)),
+    player: JSON.parse(JSON.stringify(playerConfig)),
+  });
+
   const handleSave = async () => {
     const cur = picked ? templates.find((t) => t.id === picked.id) : undefined;
     const now = JSON.stringify([divulgacaoConfig, aoVivoConfig, playerConfig]);
     if (cur && picked && now !== picked.base) {
-      const typed = templateNameInput.trim();
-      const data = {
-        divulgacao: JSON.parse(JSON.stringify(divulgacaoConfig)),
-        aoVivo: JSON.parse(JSON.stringify(aoVivoConfig)),
-        player: JSON.parse(JSON.stringify(playerConfig)),
-      };
+      if (cur.isDefault) {
+        setNameDialog({
+          open: true,
+          name: templateNameInput.trim() || (cur.name + " (personalizado)"),
+          error: "",
+          busy: false,
+        });
+        return;
+      }
       try {
-        if (cur.isDefault) {
-          if (!typed) {
-            notify("Modelo padrão não pode ser alterado. Digite um nome para salvar suas mudanças como novo template.");
-            return;
-          }
-          if (templates.some((t) => t.name.trim().toLowerCase() === typed.toLowerCase())) {
-            notify("Já existe um template com esse nome. Escolha outro nome.");
-            return;
-          }
-          if (!storeId) {
-            notify("Loja não identificada. Recarregue a página.");
-            return;
-          }
-          const created = await LiveTemplatesService.create(storeId, { name: typed, ...data });
-          setTemplates((prev) => [...prev, created]);
-          setSelectedTemplateId(created.id);
-          setPicked({ id: created.id, base: now });
-        } else {
-          const saved = await LiveTemplatesService.update(cur.id, { name: typed || cur.name, ...data });
-          setTemplates((prev) => prev.map((t) => (t.id === saved.id ? saved : t)));
-          setPicked({ id: saved.id, base: now });
-        }
+        const saved = await LiveTemplatesService.update(cur.id, { name: templateNameInput.trim() || cur.name, ...buildTplData() });
+        setTemplates((prev) => prev.map((t) => (t.id === saved.id ? saved : t)));
+        setPicked({ id: saved.id, base: now });
       } catch (e) {
         console.error(e);
         notify("Não foi possível salvar o template. Tente novamente.");
@@ -748,6 +739,35 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
       }
     }
     onSave(divulgacaoConfig, aoVivoConfig, playerConfig);
+  };
+
+  const confirmNewTemplate = async () => {
+    const typed = nameDialog.name.trim();
+    if (!typed) {
+      setNameDialog((p) => ({ ...p, error: "Digite um nome para o template." }));
+      return;
+    }
+    if (templates.some((t) => t.name.trim().toLowerCase() === typed.toLowerCase())) {
+      setNameDialog((p) => ({ ...p, error: "Já existe um template com esse nome. Escolha outro." }));
+      return;
+    }
+    if (!storeId) {
+      setNameDialog((p) => ({ ...p, error: "Loja não identificada. Recarregue a página." }));
+      return;
+    }
+    setNameDialog((p) => ({ ...p, busy: true, error: "" }));
+    try {
+      const created = await LiveTemplatesService.create(storeId, { name: typed, ...buildTplData() });
+      setTemplates((prev) => [...prev, created]);
+      setSelectedTemplateId(created.id);
+      setTemplateNameInput(typed);
+      setPicked({ id: created.id, base: JSON.stringify([divulgacaoConfig, aoVivoConfig, playerConfig]) });
+      setNameDialog({ open: false, name: "", error: "", busy: false });
+      onSave(divulgacaoConfig, aoVivoConfig, playerConfig);
+    } catch (e) {
+      console.error(e);
+      setNameDialog((p) => ({ ...p, busy: false, error: "Não foi possível salvar o template. Tente novamente." }));
+    }
   };
 
   const handleReset = () => {
@@ -1732,7 +1752,50 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
           </div>
         </div>
 
-      </DialogContent>
+      {/* SLL-NAME-DIALOG */}
+          <Dialog open={nameDialog.open} onOpenChange={(v) => { if (!v && !nameDialog.busy) setNameDialog((p) => ({ ...p, open: false })); }}>
+            <DialogContent className="max-w-md">
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-slate-800">Salvar como novo template</h3>
+                  <p className="text-sm text-slate-600">
+                    Os modelos padrão não podem ser alterados. Dê um nome para guardar suas mudanças como um template seu. Ele será aplicado na sua loja.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500">Nome do template</label>
+                  <Input
+                    autoFocus
+                    value={nameDialog.name}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => setNameDialog((p) => ({ ...p, name: e.target.value, error: "" }))}
+                    onKeyDown={(e) => { if (e.key === "Enter") confirmNewTemplate(); }}
+                    placeholder="Ex.: Minha live de verão"
+                    className="h-10 text-sm"
+                  />
+                  {nameDialog.error && <p className="text-xs font-semibold text-rose-600">{nameDialog.error}</p>}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    disabled={nameDialog.busy}
+                    onClick={() => setNameDialog((p) => ({ ...p, open: false }))}
+                    className="h-9 text-sm"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    disabled={nameDialog.busy}
+                    onClick={confirmNewTemplate}
+                    className="h-9 bg-rose-600 text-sm text-white hover:bg-rose-700"
+                  >
+                    {nameDialog.busy ? "Salvando..." : "Salvar e aplicar"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </DialogContent>
     </Dialog>
   );
 }
