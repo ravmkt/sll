@@ -815,7 +815,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
   };
 
   const applyMainColor = (v: string) => {
-    const patch = { mainColor: v, borderColor: v, couponCodeBgColor: v, infoBgColor: v, productPriceColor: v, prodCardBorderColor: v, prodCardBtnBgColor: v, prodCardPriceColor: v };
+    const patch = { mainColor: v, borderColor: v, titleBgColor: v, couponCodeBgColor: v, couponTextColor: v, infoBgColor: v, productPriceColor: v, prodCardBorderColor: v, prodCardBtnBgColor: v, prodCardPriceColor: v };
     setPlayerConfig((prev) => {
       if (prev.linked) return { ...prev, desktop: { ...prev.desktop, ...patch }, mobile: { ...prev.mobile, ...patch } };
       return device === "desktop"
@@ -1129,11 +1129,11 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
 
               {activeTab === "player" && (
                 <div className="animate-in fade-in duration-200">
-                  <AccordionItem id="player_borda" title="1. Borda (Aplica a todos os cards)" openAccordion={openAccordion} setOpenAccordion={setOpenAccordion}>
 <div className="mb-2 space-y-1 rounded-md border border-slate-200 p-2">
   <ColorInput label={"Cor principal"} value={currentPlayer.mainColor || currentPlayer.borderColor} onChange={(v) => applyMainColor(v)} />
   <p className="text-[10px] text-muted-foreground">{"Pinta todos os elementos de uma vez. Depois voc\u00ea pode ajustar cada cor individualmente."}</p>
 </div>
+                  <AccordionItem id="player_borda" title="1. Borda (Aplica a todos os cards)" openAccordion={openAccordion} setOpenAccordion={setOpenAccordion}>
                     <div className="grid grid-cols-2 gap-3 mb-2">
                       <ColorInput label="Cor da Borda" value={currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "borderColor", v, playerConfig.linked)} />
                       <div className="space-y-1">
