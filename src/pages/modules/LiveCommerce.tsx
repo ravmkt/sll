@@ -26,6 +26,7 @@ import { LiveFormDialog } from "@/components/live/LiveFormDialog";
 import { ShareLiveModal } from "@/components/live/ShareLiveModal";
 import { LiveMetricsModal } from "@/components/live/LiveMetricsModal";
 import LiveTemplatesPage, { liveStore } from "@/components/live/LiveTemplatesPage";
+import LiveDeleteHost from "@/components/live/LiveDeleteHost";
 import LivePresetsPage from "@/components/live/LivePresetsPage";
 
 import LiveAppearanceModal, {
@@ -213,8 +214,20 @@ function LiveCommerceContent() {
     setFormOpen(true);
   };
 
-  const handleDelete = async (liveId: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta live? Essa ação não pode ser desfeita.")) return;
+  useEffect(() => {
+    const h = (e: Event) => {
+      const id = (e as CustomEvent).detail?.id as string | undefined;
+      if (id) runDelete(id);
+    };
+    window.addEventListener("live:delete-confirmed", h);
+    return () => window.removeEventListener("live:delete-confirmed", h);
+  });
+
+  const handleDelete = (liveId: string) => {
+    window.dispatchEvent(new CustomEvent("live:delete-ask", { detail: { id: liveId } }));
+  };
+
+  const runDelete = async (liveId: string) => {
     try {
       await LiveCommerceDatabaseService.deleteLive(liveId);
       toast.success("Live excluída.");
@@ -504,6 +517,7 @@ export function LiveCommerce() {
             <>
               <div className={activeTab === "aparencia" || activeTab === "cupons" ? "hidden" : ""}><LiveCommerceContent /></div>
               {activeTab === "aparencia" && <LiveTemplatesPage />}
+              <LiveDeleteHost />
                      {activeTab === "cupons" && <LivePresetsPage />}
             </>
           ) : (

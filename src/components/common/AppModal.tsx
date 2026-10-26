@@ -71,6 +71,7 @@ interface ConfirmDangerProps {
   open: boolean;
   title?: string;
   itemName: string;
+  message?: string;
   confirmLabel?: string;
   busy?: boolean;
   onClose: () => void;
@@ -81,6 +82,7 @@ export function ConfirmDangerModal({
   open,
   title = "EXCLUIR ITEM",
   itemName,
+  message,
   confirmLabel = "Excluir",
   busy = false,
   onClose,
@@ -107,8 +109,14 @@ export function ConfirmDangerModal({
         <AlertTriangle className="h-9 w-9 stroke-[1.75] text-amber-500" />
       </div>
       <WarnBanner>
-        Esta ação é irreversível. O item <strong className="font-bold text-amber-950">"{itemName}"</strong> será removido
-        permanentemente.
+        {message ? (
+          message
+        ) : (
+          <>
+            Esta ação é irreversível. O item <strong className="font-bold text-amber-950">"{itemName}"</strong> será removido
+            permanentemente.
+          </>
+        )}
       </WarnBanner>
     </AppModal>
   );
