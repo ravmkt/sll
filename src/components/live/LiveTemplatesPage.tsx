@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { INITIAL_TEMPLATES } from "@/components/live/LiveAppearanceModal";
 import type { LiveAppearanceTemplate } from "@/components/live/LiveAppearanceModal";
 import { LiveTemplatesService } from "@/services/LiveTemplatesService";
+import { ConfirmDangerModal } from "@/components/common/AppModal";
 
 // Preenchido pelo LiveCommerce com o id da loja ativa
 export const liveStore: { id: string | null } = { id: null };
@@ -87,6 +88,7 @@ export default function LiveTemplatesPage() {
   const [customs, setCustoms] = useState<LiveAppearanceTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [delTpl, setDelTpl] = useState<LiveAppearanceTemplate | null>(null);
 
   const load = useCallback(async () => {
     const id = liveStore.id;
@@ -109,7 +111,7 @@ export default function LiveTemplatesPage() {
   }, [load]);
 
   const remove = async (t: LiveAppearanceTemplate) => {
-    if (!window.confirm(`Deseja realmente excluir o template "${t.name}"?`)) return;
+    setDelTpl(null);
     try {
       await LiveTemplatesService.remove(t.id);
       setCustoms((prev) => prev.filter((x) => x.id !== t.id));
@@ -135,6 +137,14 @@ export default function LiveTemplatesPage() {
         </Button>
       </div>
 
+      <ConfirmDangerModal
+        open={!!delTpl}
+        title="EXCLUIR TEMPLATE"
+        itemName={delTpl?.name || ""}
+        onClose={() => setDelTpl(null)}
+        onConfirm={() => { if (delTpl) remove(delTpl); }}
+      />
+
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>
       )}
@@ -159,7 +169,7 @@ export default function LiveTemplatesPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {customs.map((t) => (
-              <TemplateCard key={t.id} t={t} onRemove={remove} />
+              <TemplateCard key={t.id} t={t} onRemove={(x) => setDelTpl(x)} />
             ))}
           </div>
         )}

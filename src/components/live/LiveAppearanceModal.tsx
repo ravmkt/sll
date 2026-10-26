@@ -1,4 +1,5 @@
 import { LiveTemplatesService } from "@/services/LiveTemplatesService";
+import { PromptNameModal, ConfirmDangerModal } from "@/components/common/AppModal";
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -554,6 +555,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
   const [templateNameInput, setTemplateNameInput] = useState<string>("");
   const [bannerAlert, setBannerAlert] = useState<string>("");
   const [picked, setPicked] = useState<{ id: string; base: string } | null>(null);
+  const [delAsk, setDelAsk] = useState<string | null>(null);
   const [nameDialog, setNameDialog] = useState<{ open: boolean; name: string; error: string; busy: boolean }>({ open: false, name: "", error: "", busy: false });
   useEffect(() => { if (isOpen) setPicked(null); }, [isOpen]);
 
@@ -691,11 +693,16 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
     }
   };
 
-  const handleDeleteCurrentTemplate = async () => {
+  const handleDeleteCurrentTemplate = () => {
+    const c = templates.find((t) => t.id === selectedTemplateId);
+    if (c && !c.isDefault) setDelAsk(c.id);
+  };
+
+  const doDeleteCurrentTemplate = async () => {
     const current = templates.find(t => t.id === selectedTemplateId);
     if (!current || current.isDefault) return;
 
-    if (!confirm(`Deseja realmente excluir o template "${current.name}"?`)) return;
+    setDelAsk(null);
 
     try {
       await LiveTemplatesService.remove(current.id);
@@ -1753,48 +1760,27 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
         </div>
 
       {/* SLL-NAME-DIALOG */}
-          <Dialog open={nameDialog.open} onOpenChange={(v) => { if (!v && !nameDialog.busy) setNameDialog((p) => ({ ...p, open: false })); }}>
-            <DialogContent className="max-w-md">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="text-base font-bold text-slate-800">Salvar como novo template</h3>
-                  <p className="text-sm text-slate-600">
-                    Os modelos padrão não podem ser alterados. Dê um nome para guardar suas mudanças como um template seu. Ele será aplicado na sua loja.
-                  </p>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-500">Nome do template</label>
-                  <Input
-                    autoFocus
-                    value={nameDialog.name}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => setNameDialog((p) => ({ ...p, name: e.target.value, error: "" }))}
-                    onKeyDown={(e) => { if (e.key === "Enter") confirmNewTemplate(); }}
-                    placeholder="Ex.: Minha live de verão"
-                    className="h-10 text-sm"
-                  />
-                  {nameDialog.error && <p className="text-xs font-semibold text-rose-600">{nameDialog.error}</p>}
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    disabled={nameDialog.busy}
-                    onClick={() => setNameDialog((p) => ({ ...p, open: false }))}
-                    className="h-9 text-sm"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    disabled={nameDialog.busy}
-                    onClick={confirmNewTemplate}
-                    className="h-9 bg-rose-600 text-sm text-white hover:bg-rose-700"
-                  >
-                    {nameDialog.busy ? "Salvando..." : "Salvar e aplicar"}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <PromptNameModal
+            open={nameDialog.open}
+            title="Salvar como novo template"
+            message="Os modelos padrão não podem ser alterados. Dê um nome para guardar suas mudanças como um template seu. Ele será aplicado na sua loja."
+            label="Nome do template"
+            placeholder="Ex.: Minha live de verão"
+            value={nameDialog.name}
+            error={nameDialog.error}
+            busy={nameDialog.busy}
+            confirmLabel="Salvar e aplicar"
+            onChange={(v) => setNameDialog((s) => ({ ...s, name: v, error: "" }))}
+            onConfirm={confirmNewTemplate}
+            onClose={() => setNameDialog((s) => ({ ...s, open: false }))}
+          />
+          <ConfirmDangerModal
+            open={delAsk !== null}
+            title="EXCLUIR TEMPLATE"
+            itemName={templates.find((t) => t.id === delAsk)?.name || ""}
+            onClose={() => setDelAsk(null)}
+            onConfirm={doDeleteCurrentTemplate}
+          />
         </DialogContent>
     </Dialog>
   );
