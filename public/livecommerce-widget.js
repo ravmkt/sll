@@ -314,7 +314,7 @@ function renderLiveWidget(live) {
     '.vl-live-media { width:100%; height:100%; object-fit:' + (currentCfg.objectFit || 'cover') + '; display:block; }' +
     '.vl-live-overlay-grad {' +
       'position:absolute; inset:0;' +
-      'background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%);' +
+      /* SLL-DARKEN */ 'background:' + (function () { var on = currentCfg.darkenVideo === true; if (!on) return 'none'; var n = Number(currentCfg.darkenIntensity); var k = (isFinite(n) ? Math.min(100, Math.max(0, n)) : 100) / 100; return 'linear-gradient(to top, rgba(0,0,0,' + (0.85 * k).toFixed(2) + ') 0%, rgba(0,0,0,' + (0.2 * k).toFixed(2) + ') 50%, rgba(0,0,0,' + (0.4 * k).toFixed(2) + ') 100%)'; })() + ';' +
       'display:flex; flex-direction:column; justify-content:space-between; padding:10px; box-sizing:border-box;' +
     '}' +
     '.vl-live-top-row { display:flex; justify-content:space-between; align-items:flex-start; width:100%; }' +

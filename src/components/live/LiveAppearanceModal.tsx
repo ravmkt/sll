@@ -12,6 +12,8 @@ import {
 
 // --- INTERFACES ---
 export interface BaseWidgetSettings {
+  darkenVideo?: boolean;
+  darkenIntensity?: number;
   format: "circular" | "square" | "portrait" | "landscape";
   objectFit: "cover" | "contain" | "fill";
   width: number;
