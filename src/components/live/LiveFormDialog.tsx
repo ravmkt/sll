@@ -1,4 +1,8 @@
 import { LiveTemplatesService } from "@/services/LiveTemplatesService";
+import { LivePresetsService } from "@/services/LivePresetsService";
+import type { LivePreset } from "@/services/LivePresetsService";
+import { ConfirmDangerModal } from "@/components/common/AppModal";
+import { Bookmark, X } from "lucide-react";
 import React, { useState, useEffect, useMemo } from "react";
 import { LiveCommerceDatabaseService } from '@/services/LiveCommerceDatabaseService';
 import { Button } from "@/components/ui/button";
@@ -92,6 +96,23 @@ export function LiveFormDialog({
   const [advantages, setAdvantages] = useState<PromotionAdvantage[]>([
     { id: "a_1", title: "", description: "" }
   ]);
+
+  // --- ATALHOS (cupons e vantagens salvos como padrao) ---
+  const [presets, setPresets] = useState<LivePreset[]>([]);
+  const [delPreset, setDelPreset] = useState<LivePreset | null>(null);
+  const [delBusy, setDelBusy] = useState(false);
+
+  useEffect(() => {
+    if (!open || !storeId) {
+      setPresets([]);
+      return;
+    }
+    let cancelled = false;
+    LivePresetsService.list(storeId)
+      .then((r) => { if (!cancelled) setPresets(r); })
+      .catch(() => { if (!cancelled) setPresets([]); });
+    return () => { cancelled = true; };
+  }, [open, storeId]);
 
   // --- PASSO 3: PRODUTOS ---
   const [liveProducts, setLiveProducts] = useState<LiveProductItem[]>([]);
@@ -318,6 +339,69 @@ export function LiveFormDialog({
     setAdvantages(updated);
   };
 
+  // --- HANDLERS ATALHOS ---
+  const applyPreset = (p: LivePreset) => {
+    if (p.kind === "coupon") {
+      const code = p.title.trim().toUpperCase();
+      if (coupons.some((c) => c.code.trim().toUpperCase() === code)) {
+        toast.info("Esse cupom já está na lista.");
+        return;
+      }
+      const list = coupons.filter((c) => c.code.trim() || c.description.trim());
+      list.push({ id: "c_" + Date.now(), code, description: p.description });
+      list.push({ id: "c_" + (Date.now() + 1), code: "", description: "" });
+      setCoupons(list);
+    } else {
+      if (advantages.some((a) => a.title.trim().toLowerCase() === p.title.trim().toLowerCase())) {
+        toast.info("Essa vantagem já está na lista.");
+        return;
+      }
+      const list = advantages.filter((a) => a.title.trim() || a.description.trim());
+      list.push({ id: "a_" + Date.now(), title: p.title, description: p.description });
+      list.push({ id: "a_" + (Date.now() + 1), title: "", description: "" });
+      setAdvantages(list);
+    }
+  };
+
+  const saveRowAsPreset = async (kind: "coupon" | "advantage", idx: number) => {
+    const row: any = kind === "coupon" ? coupons[idx] : advantages[idx];
+    const t = String((kind === "coupon" ? row?.code : row?.title) || "").trim();
+    if (!t) {
+      toast.error(kind === "coupon" ? "Preencha o código do cupom antes de salvar como padrão." : "Preencha o título da vantagem antes de salvar como padrão.");
+      return;
+    }
+    if (!storeId) {
+      toast.error("Loja não identificada. Recarregue a página.");
+      return;
+    }
+    try {
+      const created = await LivePresetsService.create(storeId, {
+        kind,
+        title: kind === "coupon" ? t.toUpperCase() : t,
+        description: String(row?.description || "").trim(),
+      });
+      setPresets((prev) => [...prev, created]);
+      toast.success("Salvo como padrão. Ele já aparece nos atalhos.");
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível salvar o atalho.");
+    }
+  };
+
+  const confirmDeletePreset = async () => {
+    if (!delPreset) return;
+    setDelBusy(true);
+    try {
+      await LivePresetsService.remove(delPreset.id);
+      setPresets((prev) => prev.filter((x) => x.id !== delPreset.id));
+      setDelPreset(null);
+      toast.success("Atalho removido.");
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível remover o atalho.");
+    } finally {
+      setDelBusy(false);
+    }
+  };
+
   // --- HANDLERS PASSO 3 ---
   const openProductSelectionModal = () => {
     const initialSet = new Set(liveProducts.map(p => p.product_id));
@@ -525,7 +609,15 @@ export function LiveFormDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <ConfirmDangerModal
+            open={delPreset !== null}
+            title="EXCLUIR ATALHO"
+            itemName={delPreset?.title || ""}
+            busy={delBusy}
+            onClose={() => setDelPreset(null)}
+            onConfirm={confirmDeletePreset}
+          />
+          <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[94vh] flex flex-col p-0 overflow-hidden bg-white shadow-2xl rounded-2xl border-0 [&>button]:hidden">
           
           {/* CABEÇALHO */}
@@ -752,7 +844,46 @@ export function LiveFormDialog({
                       </p>
                     </div>
 
-                    {/* BLOCO CUPONS */}
+                    {/* SLL-PRESETS-PANEL */}
+                        <div className="rounded-xl border border-sky-100 bg-sky-50/40 p-3 space-y-2">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                            <Bookmark className="w-3.5 h-3.5 text-sky-600" /> Atalhos salvos
+                          </p>
+                          {presets.length === 0 ? (
+                            <p className="text-[11px] text-slate-500">
+                              Nenhum atalho ainda. Preencha uma linha e clique no marcador para salvar como padrão e reutilizar em outras lives.
+                            </p>
+                          ) : (
+                            <>
+                              <p className="text-[11px] text-slate-500">Clique para adicionar à live. O X remove o atalho da lista.</p>
+                              <div className="flex flex-wrap gap-2">
+                                {presets.map((p) => (
+                                  <span key={p.id} className="inline-flex items-center rounded-full border border-slate-200 bg-white text-xs shadow-sm">
+                                    <button
+                                      type="button"
+                                      onClick={() => applyPreset(p)}
+                                      title={p.description || p.title}
+                                      className="inline-flex max-w-[260px] items-center gap-1.5 truncate px-3 py-1 font-semibold text-slate-700 hover:text-sky-700"
+                                    >
+                                      {p.kind === "coupon" ? <Tag className="w-3 h-3 text-rose-500" /> : <Gift className="w-3 h-3 text-amber-500" />}
+                                      <span className="truncate">{p.title}{p.description ? " · " + p.description : ""}</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setDelPreset(p)}
+                                      title="Excluir atalho"
+                                      className="pr-2 text-slate-400 hover:text-rose-600"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* BLOCO CUPONS */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -767,7 +898,7 @@ export function LiveFormDialog({
                             <tr>
                               <th className="py-2 px-3 w-[200px]">Código do Cupom</th>
                               <th className="py-2 px-3">Descrição / Regra (ex: 15% OFF acima de R$150)</th>
-                              <th className="py-2 px-3 w-[60px] text-center">Excluir</th>
+                              <th className="py-2 px-3 w-[84px] text-center">Excluir</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
@@ -790,7 +921,8 @@ export function LiveFormDialog({
                                   />
                                 </td>
                                 <td className="p-2 text-center">
-                                  <button
+                                  <button type="button" onClick={() => saveRowAsPreset("coupon", idx)} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-md transition-colors" title="Salvar como padrão"><Bookmark className="w-3.5 h-3.5" /></button>
+<button
                                     type="button"
                                     onClick={() => handleRemoveCoupon(idx)}
                                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
@@ -821,7 +953,7 @@ export function LiveFormDialog({
                             <tr>
                               <th className="py-2 px-3 w-[220px]">Título da Vantagem</th>
                               <th className="py-2 px-3">Descrição / Condição</th>
-                              <th className="py-2 px-3 w-[60px] text-center">Excluir</th>
+                              <th className="py-2 px-3 w-[84px] text-center">Excluir</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
@@ -844,7 +976,8 @@ export function LiveFormDialog({
                                   />
                                 </td>
                                 <td className="p-2 text-center">
-                                  <button
+                                  <button type="button" onClick={() => saveRowAsPreset("advantage", idx)} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-md transition-colors" title="Salvar como padrão"><Bookmark className="w-3.5 h-3.5" /></button>
+<button
                                     type="button"
                                     onClick={() => handleRemoveAdvantage(idx)}
                                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
