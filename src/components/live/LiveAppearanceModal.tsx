@@ -1560,184 +1560,136 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                       </div>
                     ) : (
                       /* DESKTOP 3 COLUNAS */
-                      <div className="flex gap-4 sm:gap-5 w-full max-w-[1150px] mx-auto h-full max-h-[640px] justify-center items-stretch py-1">
-                        
-                        {/* COLUNA 1: PRODUTOS */}
-                        <div className="flex flex-col gap-3 w-full max-w-[340px] flex-1">
-                          {currentPlayer.showProducts && (
-                            <div className="flex-1 flex flex-col min-h-0 bg-white overflow-hidden shadow-sm" style={{ border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
-                              <div className="text-white text-center py-2 font-bold text-[13px] tracking-wide uppercase shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>
+                      <div className="w-full max-w-[1150px] mx-auto h-full max-h-[640px] bg-white rounded-2xl shadow-lg p-3 flex flex-col gap-3 overflow-hidden">
+                        {/* CABECALHO */}
+                        <div className="flex items-center justify-between shrink-0">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[12px] font-black text-slate-500">L</div>
+                            <span className="font-black text-[16px] text-slate-800">Sua Loja</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="flex items-center gap-1.5 bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />AO VIVO
+                            </span>
+                            {currentPlayer.showViewerCount && (
+                              <span className="flex items-center gap-1 bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                                <Eye className="w-3 h-3" /> 1
+                              </span>
+                            )}
+                            <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 text-[13px] flex items-center justify-center leading-none">x</span>
+                          </div>
+                        </div>
+
+                        {/* GRADE 3 COLUNAS + RODAPE */}
+                        <div className="grid grid-cols-3 gap-3 flex-1 min-h-0" style={{ gridTemplateRows: "minmax(0,1fr) auto" }}>
+
+                          {/* COLUNA 1: PRODUTOS */}
+                          {currentPlayer.showProducts ? (
+                            <div className="flex flex-col min-h-0 bg-white overflow-hidden" style={{ border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
+                              <div className="text-white text-center py-2 font-bold text-[12px] tracking-wide uppercase shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>
                                 PRODUTOS DA LIVE
                               </div>
-                              <div className="flex-1 overflow-y-auto p-2.5 space-y-2 scrollbar-thin bg-slate-50">
+                              <div className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin">
                                 {MOCK_PRODUCTS.map((prod, idx) => {
-                                  const isInCart = CART_PRODUCT_IDS.includes(prod.id);
                                   const isLiveActive = prod.id === CURRENT_LIVE_PRODUCT_ID;
-
                                   return (
-                                    <div 
-                                      key={prod.id} 
-                                      className="flex items-center bg-white shadow-sm overflow-hidden h-[62px]" 
-                                      style={{ border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}
-                                    >
-                                        <div 
-                                          className="w-[32px] h-full flex items-center justify-center font-black text-[13px] text-white shrink-0 tracking-tight"
-                                          style={{ backgroundColor: currentPlayer.borderColor }}
-                                        >
-                                          {String(idx + 1).padStart(2, '0')}
+                                    <div key={prod.id} className="flex items-center gap-2 p-1.5 bg-white" style={{ border: `${isLiveActive ? 2 : 1}px solid ${currentPlayer.borderColor}`, borderRadius: `${Math.min(currentPlayer.borderRadius, 10)}px` }}>
+                                      <img loading="lazy" decoding="async" src={prod.img} alt={prod.name} className="w-10 h-10 rounded-md object-cover shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-bold leading-tight line-clamp-2" style={{ fontSize: currentPlayer.productNameSize, color: currentPlayer.productNameColor }}>
+                                          {idx + 1}. {prod.name}
+                                          {isLiveActive && (
+                                            <span className="ml-1 px-1 py-0.5 rounded text-[7px] font-black uppercase text-white align-middle" style={{ backgroundColor: currentPlayer.borderColor }}>Na Live</span>
+                                          )}
                                         </div>
-
-                                        <img loading="lazy" decoding="async" 
-                                          src={prod.img} 
-                                          className="w-[56px] h-full object-cover shrink-0" 
-                                          alt={prod.name} 
-                                        />
-
-                                        <div className="flex-1 min-w-0 px-2.5 py-1">
-                                          <div className="flex items-center gap-1.5">
-                                            <div 
-                                              style={{ fontSize: currentPlayer.productNameSize, color: currentPlayer.productNameColor }} 
-                                              className="leading-tight line-clamp-1 font-bold flex-1"
-                                            >
-                                              {prod.name}
-                                            </div>
-                                            {isLiveActive && (
-                                              <span 
-                                                className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase text-white shrink-0 animate-pulse leading-none"
-                                                style={{ backgroundColor: currentPlayer.borderColor }}
-                                              >
-                                                Na Live
-                                              </span>
-                                            )}
-                                          </div>
-                                          <div className="text-[10px] text-slate-400 line-through mt-0.5">De: {prod.oldPrice}</div>
-                                          <div style={{ fontSize: currentPlayer.productPriceSize, color: currentPlayer.productPriceColor }} className="font-extrabold leading-none mt-0.5">Por: {prod.price}</div>
-                                        </div>
-
-                                        <div className="pr-2.5 shrink-0">
-                                          <div 
-                                            className="w-6 h-6 rounded-full flex items-center justify-center shadow-sm" 
-                                            style={{ 
-                                              backgroundColor: isInCart ? currentPlayer.borderColor : "#f1f5f9"
-                                            }}
-                                          >
-                                            <ShoppingCart 
-                                              className="w-3.5 h-3.5" 
-                                              style={{
-                                                color: isInCart ? "#FFFFFF" : currentPlayer.borderColor
-                                              }}
-                                            />
-                                          </div>
-                                        </div>
+                                        <div className="leading-none mt-1" style={{ fontSize: currentPlayer.productPriceSize, color: currentPlayer.productPriceColor }}>{prod.price}</div>
+                                      </div>
+                                      <span className="px-3 py-1 rounded-full text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>Comprar</span>
                                     </div>
                                   );
                                 })}
                               </div>
-                              <div className="border-t p-2 flex justify-between items-center bg-white shrink-0" style={{ borderColor: `${currentPlayer.borderColor}40` }}>
-                                  <div className="flex items-center text-[11px] font-bold text-slate-600">
-                                    <ShoppingCart className="w-3.5 h-3.5 mr-1.5" style={{ color: currentPlayer.borderColor }}/> 
-                                    6 Produtos adicionados
-                                  </div>
-                                  <div className="text-[11px] font-bold flex items-center cursor-pointer hover:underline" style={{ color: currentPlayer.borderColor }}>
-                                    Finalizar <ExternalLink className="w-3 h-3 ml-1" />
-                                  </div>
-                              </div>
                             </div>
-                          )}
+                          ) : <div />}
 
-                          {currentPlayer.showInfo && (
-                            <div className="h-[58px] flex-shrink-0 flex flex-col items-center justify-center shadow-sm w-full overflow-hidden" 
-                                  style={{ backgroundColor: currentPlayer.infoBgColor, color: currentPlayer.infoTextColor, border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
-                                <div className="font-black tracking-tight leading-none" style={{ fontSize: currentPlayer.infoSize1 }}>{currentPlayer.infoText1}</div>
-                                <div className="font-semibold opacity-90 mt-1" style={{ fontSize: currentPlayer.infoSize2 }}>{currentPlayer.infoText2}</div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* COLUNA 2: PLAYER VÍDEO */}
-                        <div className="flex flex-col gap-3 w-full max-w-[340px] flex-1">
-                            <div className="flex-1 min-h-0 relative bg-black overflow-hidden shadow-lg w-full" style={{
-                              border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`,
-                              borderRadius: `${currentPlayer.borderRadius}px`,
-                            }}>
-                              <video src={DEMO_COVER_VIDEO} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-90" />
-                              <div className="absolute top-3 left-3 right-3 flex justify-between items-start gap-2">
-                                 <div className="flex items-center gap-2 max-w-[60%]">
-                                    <div className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/20 text-[12px] shrink-0">🦋</div>
-                                    {currentPlayer.showTitle && (
-                                      <span style={{ color: currentPlayer.titleColor }} className="font-bold text-[13px] drop-shadow-md truncate leading-tight">
-                                        {currentPlayer.titleText}
-                                      </span>
-                                    )}
-                                 </div>
-                                 <div className="flex flex-col items-end gap-1.5 shrink-0">
-                                    <div className="flex items-center gap-1.5 text-white text-[9.5px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-sm" style={{ backgroundColor: currentPlayer.borderColor }}>
-                                       <Radio className="w-2.5 h-2.5 animate-pulse"/> Ao Vivo
-                                    </div>
-                                    {currentPlayer.showViewerCount && (
-                                       <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md text-white text-[9.5px] font-semibold px-2 py-0.5 rounded-full border border-white/20 shadow-sm">
-                                         <Eye className="w-2.5 h-2.5" /> 1.2K
-                                       </div>
-                                    )}
-                                    {currentPlayer.autoplayMuted && (
-                                       <div className="bg-black/40 backdrop-blur-md p-1 rounded-full text-white border border-white/20">
-                                         <VolumeX className="w-3 h-3"/>
-                                       </div>
-                                    )}
-                                 </div>
-                              </div>
-                            </div>
-
-                            {currentPlayer.showCoupon && (
-                              <div className="h-[58px] flex-shrink-0 flex overflow-hidden shadow-sm w-full" style={{ border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
-                                <div className="flex items-center justify-center px-4 font-black tracking-widest text-[16px]" style={{ backgroundColor: currentPlayer.couponCodeBgColor, color: currentPlayer.couponCodeColor, width: '50%' }}>
-                                  {currentPlayer.couponCode}
-                                </div>
-                                <div className="flex items-center justify-center px-4 font-black text-[17px]" style={{ backgroundColor: currentPlayer.couponTextBgColor, color: currentPlayer.couponTextColor, width: '50%' }}>
-                                  {currentPlayer.couponText}
-                                </div>
+                          {/* COLUNA 2: VIDEO */}
+                          <div className="flex flex-col min-h-0 bg-black overflow-hidden" style={{ border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
+                            {currentPlayer.showTitle && (
+                              <div className="bg-black text-center py-2 px-2 font-bold text-[13px] truncate shrink-0" style={{ color: currentPlayer.titleColor }}>
+                                {currentPlayer.titleText}
                               </div>
                             )}
-                        </div>
-
-                        {/* COLUNA 3: CHAT */}
-                        <div className="flex flex-col gap-3 w-full max-w-[340px] flex-1">
-                          {currentPlayer.showChat && (
-                            <div className="flex-1 flex flex-col min-h-0 bg-white overflow-hidden shadow-sm" style={{ border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
-                              <div className="text-white text-center py-2 font-bold text-[13px] tracking-wide uppercase shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>
-                                CHAT
+                            <div className="relative flex-1 min-h-0">
+                              <video src={DEMO_COVER_VIDEO} autoPlay loop muted playsInline className="absolute inset-0 w-full h-full" style={{ objectFit: "cover" }} />
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center gap-1">
+                                  <span className="w-1 h-4 bg-white rounded-sm" /><span className="w-1 h-4 bg-white rounded-sm" />
+                                </div>
                               </div>
-                              <div className="flex-1 flex flex-col overflow-hidden relative bg-white">
-                                  <div className="flex-1 overflow-y-auto p-3 space-y-3.5 pb-12 scrollbar-thin">
-                                    {[1,2,3,4,5].map(i => (
-                                      <div key={i} className="flex gap-2 items-start text-[11px] leading-tight">
-                                        <img loading="lazy" decoding="async" src={`https://i.pravatar.cc/100?img=${i+10}`} className="w-5 h-5 rounded-full border border-slate-200 shrink-0" alt="Avatar" />
-                                        <div className="text-slate-600 pt-0.5">
-                                          <span className="font-bold text-slate-800">@usuario{i}</span> Oi, qual o valor? Vocês entregam para SP?
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                  <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-gradient-to-t from-white via-white to-transparent">
-                                    <div className="bg-white border rounded-full py-1.5 px-3 text-[11.5px] text-slate-400 flex justify-between items-center shadow-sm" style={{ borderColor: currentPlayer.borderColor }}>
-                                        Chat...
-                                        <div className="w-5 h-5 rounded-full flex items-center justify-center text-white cursor-pointer" style={{ backgroundColor: currentPlayer.borderColor }}>
-                                          <Heart className="w-3 h-3 fill-current"/>
-                                        </div>
+                              {currentPlayer.autoplayMuted && (
+                                <div className="absolute top-2 right-2 bg-black/50 p-1 rounded-full text-white">
+                                  <VolumeX className="w-3 h-3" />
+                                </div>
+                              )}
+                              {(() => {
+                                const cur = MOCK_PRODUCTS.find((p) => p.id === CURRENT_LIVE_PRODUCT_ID) || MOCK_PRODUCTS[0];
+                                return (
+                                  <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2 rounded-lg bg-black/75 p-1.5">
+                                    <img loading="lazy" decoding="async" src={cur.img} alt={cur.name} className="w-10 h-10 rounded-md object-cover shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-white font-bold leading-tight line-clamp-2" style={{ fontSize: currentPlayer.productNameSize }}>{cur.name}</div>
+                                      <div className="text-white/80 leading-none mt-1" style={{ fontSize: currentPlayer.productPriceSize }}>{cur.price}</div>
                                     </div>
+                                    <span className="px-3 py-1 rounded-full text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>Comprar</span>
                                   </div>
+                                );
+                              })()}
+                            </div>
+                          </div>
+
+                          {/* COLUNA 3: CHAT */}
+                          {currentPlayer.showChat ? (
+                            <div className="flex flex-col min-h-0 bg-white overflow-hidden" style={{ border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
+                              <div className="text-white text-center py-2 font-bold text-[12px] tracking-wide uppercase shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>
+                                CHAT DA LIVE
+                              </div>
+                              <div className="flex-1" />
+                              <div className="p-2 border-t flex items-center gap-2 shrink-0" style={{ borderColor: `${currentPlayer.borderColor}40` }}>
+                                <div className="flex-1 border rounded-md px-3 py-1.5 text-[11.5px] text-slate-400" style={{ borderColor: `${currentPlayer.borderColor}60` }}>Digite sua mensagem...</div>
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white shrink-0" style={{ backgroundColor: currentPlayer.borderColor }}>
+                                  <Heart className="w-3.5 h-3.5 fill-current" />
+                                </div>
                               </div>
                             </div>
-                          )}
+                          ) : <div />}
 
-                          {currentPlayer.showShare && (
-                            <button className="h-[58px] flex-shrink-0 w-full flex items-center justify-center gap-2 shadow-sm font-bold text-[15px] transition-transform hover:scale-[1.01] overflow-hidden" 
-                                    style={{ backgroundColor: currentPlayer.shareBgColor, color: currentPlayer.shareTextColor, border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
-                                Compartilhar <Share2 className="w-4 h-4 ml-1" />
-                            </button>
-                          )}
+                          {/* RODAPE: BENEFICIO */}
+                          {currentPlayer.showInfo ? (
+                            <div className="h-[58px] flex flex-col items-center justify-center overflow-hidden text-center" style={{ backgroundColor: currentPlayer.infoBgColor, color: currentPlayer.infoTextColor, border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
+                              <div className="font-black tracking-tight leading-none" style={{ fontSize: currentPlayer.infoSize1 }}>{currentPlayer.infoText1}</div>
+                              <div className="font-semibold opacity-90 mt-1" style={{ fontSize: currentPlayer.infoSize2 }}>{currentPlayer.infoText2}</div>
+                            </div>
+                          ) : <div />}
+
+                          {/* RODAPE: CUPOM */}
+                          {currentPlayer.showCoupon ? (
+                            <div className="h-[58px] flex overflow-hidden" style={{ border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
+                              <div className="flex items-center justify-center px-2 font-black tracking-wide text-[13px]" style={{ backgroundColor: currentPlayer.couponCodeBgColor, color: currentPlayer.couponCodeColor, width: "50%" }}>
+                                {currentPlayer.couponCode}
+                              </div>
+                              <div className="flex items-center justify-center px-2 font-black text-[13px]" style={{ backgroundColor: currentPlayer.couponTextBgColor, color: currentPlayer.couponTextColor, width: "50%" }}>
+                                {currentPlayer.couponText}
+                              </div>
+                            </div>
+                          ) : <div />}
+
+                          {/* RODAPE: COMPARTILHAR */}
+                          {currentPlayer.showShare ? (
+                            <div className="h-[58px] flex items-center justify-center gap-2 font-bold text-[14px]" style={{ backgroundColor: currentPlayer.shareBgColor, color: currentPlayer.shareTextColor, border: `${currentPlayer.borderWidth}px solid ${currentPlayer.borderColor}`, borderRadius: `${currentPlayer.borderRadius}px` }}>
+                              Compartilhar <Share2 className="w-4 h-4" />
+                            </div>
+                          ) : <div />}
                         </div>
-
                       </div>
                     )}
                   </div>
