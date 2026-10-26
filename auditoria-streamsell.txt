@@ -1,0 +1,717 @@
+=== 1. LEGADO: arquivos (bytes, caminho) ===
+   94814  vidlytics\backup-src-20260919-172331\components\live\LiveAppearanceModal.tsx
+   12103  vidlytics\backup-src-20260919-172331\components\live\LiveAppearanceTab.tsx
+   62975  vidlytics\backup-src-20260919-172331\components\live\LiveFormDialog.tsx
+   22196  vidlytics\backup-src-20260919-172331\components\live\LiveMetricsModal.tsx
+   13049  vidlytics\backup-src-20260919-172331\components\live\ShareLiveModal.tsx
+   13361  vidlytics\backup-src-20260919-172331\components\AppSidebar.tsx
+    2546  vidlytics\backup-src-20260919-172331\components\VideoThumbnail.tsx
+    2033  vidlytics\backup-src-20260919-172331\hooks\useLiveChat.ts
+    1006  vidlytics\backup-src-20260919-172331\hooks\useLiveSpotlight.ts
+   13763  vidlytics\backup-src-20260919-172331\lib\analytics.ts
+    3262  vidlytics\backup-src-20260919-172331\lib\plans.ts
+    7402  vidlytics\backup-src-20260919-172331\lib\videoEmbeds.ts
+  204417  vidlytics\backup-src-20260919-172331\pages\AppearancePage.tsx
+   39673  vidlytics\backup-src-20260919-172331\pages\BillingPage.tsx
+   13587  vidlytics\backup-src-20260919-172331\pages\HelpArticlesPage.tsx
+   56035  vidlytics\backup-src-20260919-172331\pages\IntegrationPage.tsx
+   41641  vidlytics\backup-src-20260919-172331\pages\LandingPage.tsx
+   31770  vidlytics\backup-src-20260919-172331\pages\LiveAdminPage.tsx
+   15728  vidlytics\backup-src-20260919-172331\pages\LiveCommercePage.tsx
+   19220  vidlytics\backup-src-20260919-172331\pages\PlansPage.tsx
+   88450  vidlytics\backup-src-20260919-172331\pages\StoragePage.tsx
+   62499  vidlytics\backup-src-20260919-172331\pages\StoriesWidgetPage.tsx
+   55084  vidlytics\backup-src-20260919-172331\pages\StoryDetailsPage.tsx
+   51799  vidlytics\backup-src-20260919-172331\pages\StoryPreviewPage.tsx
+   12532  vidlytics\backup-src-20260919-172331\pages\SupportPage.tsx
+   34519  vidlytics\backup-src-20260919-172331\pages\VideoEditPage.tsx
+   31881  vidlytics\backup-src-20260919-172331\pages\VideoGalleryPage.tsx
+   21990  vidlytics\backup-src-20260919-172331\pages\VideoPerformancePage.tsx
+    3117  vidlytics\backup-src-20260919-172331\services\integrations.ts
+    2236  vidlytics\backup-src-20260919-172331\services\youtube.ts
+   10471  vidlytics\backup-src-20260919-172331\App.tsx
+    9919  vidlytics\public\vidlytics-tracking.js
+  326574  vidlytics\public\widget.backup.20260918_150035.js
+  340705  vidlytics\public\widget.js
+   94814  vidlytics\src\components\live\LiveAppearanceModal.tsx
+   12103  vidlytics\src\components\live\LiveAppearanceTab.tsx
+   62975  vidlytics\src\components\live\LiveFormDialog.tsx
+   22705  vidlytics\src\components\live\LiveMetricsModal.tsx
+   13050  vidlytics\src\components\live\ShareLiveModal.tsx
+   13361  vidlytics\src\components\AppSidebar.tsx
+    2546  vidlytics\src\components\VideoThumbnail.tsx
+    2722  vidlytics\src\hooks\useLiveChat.ts
+    1369  vidlytics\src\hooks\useLiveSpotlight.ts
+   13763  vidlytics\src\lib\analytics.ts
+     725  vidlytics\src\lib\modules.ts
+    3822  vidlytics\src\lib\plans.ts
+    7402  vidlytics\src\lib\videoEmbeds.ts
+  208701  vidlytics\src\pages\AppearancePage.tsx
+   39810  vidlytics\src\pages\BillingPage.tsx
+   13587  vidlytics\src\pages\HelpArticlesPage.tsx
+   56035  vidlytics\src\pages\IntegrationPage.tsx
+   42319  vidlytics\src\pages\LandingPage.tsx
+   34173  vidlytics\src\pages\LiveAdminPage.tsx
+   15871  vidlytics\src\pages\LiveCommercePage.tsx
+   19334  vidlytics\src\pages\PlansPage.tsx
+   88450  vidlytics\src\pages\StoragePage.tsx
+   62499  vidlytics\src\pages\StoriesWidgetPage.tsx
+   56170  vidlytics\src\pages\StoryDetailsPage.tsx
+   51799  vidlytics\src\pages\StoryPreviewPage.tsx
+   12532  vidlytics\src\pages\SupportPage.tsx
+   34519  vidlytics\src\pages\VideoEditPage.tsx
+   31881  vidlytics\src\pages\VideoGalleryPage.tsx
+   21990  vidlytics\src\pages\VideoPerformancePage.tsx
+    3117  vidlytics\src\services\integrations.ts
+    2236  vidlytics\src\services\youtube.ts
+   10671  vidlytics\src\App.tsx
+    6317  vidlytics\supabase\functions\fetch-thumbnail\index.ts
+    3053  vidlytics\supabase\functions\fetch-youtube-live\index.ts
+   15669  vidlytics\supabase\functions\import-pinterest-video\index.ts
+    3708  vidlytics\supabase\functions\instagram-auth\index.ts
+    2642  vidlytics\supabase\functions\proxy-xml\index.ts
+    3998  vidlytics\supabase\functions\universal-conversion\index.ts
+    7275  vidlytics\supabase\migrations\0013_unify_db_schema_and_tracking.sql
+    4199  vidlytics\supabase\migrations\20260908000000_plans_and_live_commerce.sql
+    2945  vidlytics\supabase\migrations\20260915000000_live_commerce_v2.sql
+     139  vidlytics\supabase\migrations\20260916000000_fix_coupon_discount.sql
+     719  vidlytics\supabase\migrations\20260916000001_update_store_settings_public_view_live.sql
+     212  vidlytics\supabase\migrations\20260918000000_add_live_appearance_template.sql
+    2142  vidlytics\supabase\migrations\20260918000001_live_chat_and_spotlight.sql
+     646  vidlytics\supabase\migrations\20260918000002_sync_lives_is_active.sql
+    2908  vidlytics\supabase\migrations\20260918170000_create_live_settings_table.sql
+     227  vidlytics\supabase\migrations\20260919000000_live_spotlight_coupon_advantage.sql
+   81821  vidlytics\widget-part1.js
+   99933  vidlytics\widget-part2.js
+   72997  vidlytics\widget-part4.js
+   16857  vidlytics\widget-picker-extract.js
+    9919  vidlytics - BK 19-09\public\vidlytics-tracking.js
+  326574  vidlytics - BK 19-09\public\widget.backup.20260918_150035.js
+  340705  vidlytics - BK 19-09\public\widget.js
+   94814  vidlytics - BK 19-09\src\components\live\LiveAppearanceModal.tsx
+   12103  vidlytics - BK 19-09\src\components\live\LiveAppearanceTab.tsx
+   62975  vidlytics - BK 19-09\src\components\live\LiveFormDialog.tsx
+   22705  vidlytics - BK 19-09\src\components\live\LiveMetricsModal.tsx
+   13050  vidlytics - BK 19-09\src\components\live\ShareLiveModal.tsx
+   13361  vidlytics - BK 19-09\src\components\AppSidebar.tsx
+    2546  vidlytics - BK 19-09\src\components\VideoThumbnail.tsx
+    2034  vidlytics - BK 19-09\src\hooks\useLiveChat.ts
+   31770  vidlytics - BK 19-09\src\hooks\useLiveSpotlight.ts
+   13763  vidlytics - BK 19-09\src\lib\analytics.ts
+    3263  vidlytics - BK 19-09\src\lib\plans.ts
+    7402  vidlytics - BK 19-09\src\lib\videoEmbeds.ts
+  208701  vidlytics - BK 19-09\src\pages\AppearancePage.tsx
+   39673  vidlytics - BK 19-09\src\pages\BillingPage.tsx
+   13587  vidlytics - BK 19-09\src\pages\HelpArticlesPage.tsx
+   56035  vidlytics - BK 19-09\src\pages\IntegrationPage.tsx
+   42319  vidlytics - BK 19-09\src\pages\LandingPage.tsx
+   31770  vidlytics - BK 19-09\src\pages\LiveAdminPage.tsx
+   16167  vidlytics - BK 19-09\src\pages\LiveCommercePage.tsx
+   19656  vidlytics - BK 19-09\src\pages\PlansPage.tsx
+   88450  vidlytics - BK 19-09\src\pages\StoragePage.tsx
+   62499  vidlytics - BK 19-09\src\pages\StoriesWidgetPage.tsx
+   56170  vidlytics - BK 19-09\src\pages\StoryDetailsPage.tsx
+   51799  vidlytics - BK 19-09\src\pages\StoryPreviewPage.tsx
+   12532  vidlytics - BK 19-09\src\pages\SupportPage.tsx
+   34519  vidlytics - BK 19-09\src\pages\VideoEditPage.tsx
+   31881  vidlytics - BK 19-09\src\pages\VideoGalleryPage.tsx
+   21990  vidlytics - BK 19-09\src\pages\VideoPerformancePage.tsx
+    3117  vidlytics - BK 19-09\src\services\integrations.ts
+    2236  vidlytics - BK 19-09\src\services\youtube.ts
+   10472  vidlytics - BK 19-09\src\App.tsx
+    6317  vidlytics - BK 19-09\supabase\functions\fetch-thumbnail\index.ts
+    3053  vidlytics - BK 19-09\supabase\functions\fetch-youtube-live\index.ts
+   15669  vidlytics - BK 19-09\supabase\functions\import-pinterest-video\index.ts
+    3708  vidlytics - BK 19-09\supabase\functions\instagram-auth\index.ts
+    2642  vidlytics - BK 19-09\supabase\functions\proxy-xml\index.ts
+    3998  vidlytics - BK 19-09\supabase\functions\universal-conversion\index.ts
+    7275  vidlytics - BK 19-09\supabase\migrations\0013_unify_db_schema_and_tracking.sql
+    4199  vidlytics - BK 19-09\supabase\migrations\20260908000000_plans_and_live_commerce.sql
+    2945  vidlytics - BK 19-09\supabase\migrations\20260915000000_live_commerce_v2.sql
+     139  vidlytics - BK 19-09\supabase\migrations\20260916000000_fix_coupon_discount.sql
+     719  vidlytics - BK 19-09\supabase\migrations\20260916000001_update_store_settings_public_view_live.sql
+     212  vidlytics - BK 19-09\supabase\migrations\20260918000000_add_live_appearance_template.sql
+    2142  vidlytics - BK 19-09\supabase\migrations\20260918000001_live_chat_and_spotlight.sql
+     646  vidlytics - BK 19-09\supabase\migrations\20260918000002_sync_lives_is_active.sql
+    2908  vidlytics - BK 19-09\supabase\migrations\20260918170000_create_live_settings_table.sql
+     227  vidlytics - BK 19-09\supabase\migrations\20260919000000_live_spotlight_coupon_advantage.sql
+
+=== 2. SLL: arquivos ===
+    2169  e2e\live-commerce-flow.spec.ts
+    4555  e2e\sll-loader-gtm.spec.ts
+   38583  public\livecommerce-widget.js
+    4864  public\sll-loader.js
+    7927  public\sll-tracking.js
+  393339  public\vidlytics-widget.js
+     880  src\components\admin\AdminGuard.tsx
+   10939  src\components\admin\ComboSection.tsx
+   32094  src\components\admin\DashboardTab.tsx
+   33490  src\components\admin\EmailCampaigns.tsx
+    4185  src\components\admin\EmailFunnel.tsx
+   23005  src\components\admin\InfraCostsCard.tsx
+    4657  src\components\admin\InfraQuotaCards.tsx
+    3190  src\components\admin\MarketingKpi.tsx
+    4791  src\components\admin\ModuleAccessPanel.tsx
+   17068  src\components\admin\ModuloDetalhe.tsx
+    8829  src\components\admin\ModuloVitrineEditor.tsx
+    8164  src\components\admin\NoahUsageTab.tsx
+   34431  src\components\admin\NpsPanel.tsx
+   27513  src\components\admin\PrecosTab.tsx
+    2276  src\components\admin\StoreAiCreditsCard.tsx
+   20531  src\components\admin\StoreModals.tsx
+   19960  src\components\admin\storeTabs.tsx
+    4304  src\components\admin\storeUi.tsx
+    5683  src\components\afiliados\ReferralDetailsTable.tsx
+    6151  src\components\afiliados\ReferralEarningsChart.tsx
+    6588  src\components\afiliados\ReferralSimulator.tsx
+    4994  src\components\assinaturas\SubscriptionModuleCard.tsx
+    1930  src\components\auth\ModuleGate.tsx
+    3729  src\components\auth\SubscriptionGate.tsx
+    4368  src\components\checkout\OrderBumpCard.tsx
+   10490  src\components\configuracoes\PlatformConnectCard.tsx
+    7387  src\components\configuracoes\SocialConnectRow.tsx
+   12765  src\components\dashboard\CalendarioComercialHub.tsx
+    2605  src\components\dashboard\DashboardNotice.tsx
+    1882  src\components\dashboard\ModuleAppBadge.tsx
+    3761  src\components\dashboard\ModuleTrialButton.tsx
+    2709  src\components\dashboard\SubscribeModalButton.tsx
+    8254  src\components\dashboard\useDashboardData.ts
+    3732  src\components\feedback\FeedbackWidget.tsx
+   12444  src\components\feedback\NpsWizardGate.tsx
+    2071  src\components\layout\DashboardLayout.tsx
+    3309  src\components\layout\ModuleHeader.tsx
+    6646  src\components\layout\ModuleSwitcher.tsx
+    3537  src\components\layout\PortalHeader.tsx
+    4879  src\components\layout\TopBar.tsx
+    7340  src\components\layout\TrialExpiredModal.tsx
+    4071  src\components\layout\TrialModulesDialog.tsx
+   96987  src\components\live\LiveAppearanceModal.tsx
+   12103  src\components\live\LiveAppearanceTab.tsx
+   65022  src\components\live\LiveFormDialog.tsx
+   20572  src\components\live\LiveMetricsModal.tsx
+    8963  src\components\live\LiveOverview.tsx
+   21916  src\components\live\LiveOverviewLayout.tsx
+    5479  src\components\live\LiveSidebar.tsx
+   26806  src\components\live\LiveVisaoGeral.tsx
+   13365  src\components\live\ShareLiveModal.tsx
+    3676  src\components\marketing\MarketingBanner.tsx
+    7627  src\components\marketing\MarketingHost.tsx
+    3923  src\components\marketing\MarketingSideBanner.tsx
+    2899  src\components\onboarding\OnboardingGuard.tsx
+   10805  src\components\onboarding\StepConnection.tsx
+    3594  src\components\onboarding\StepSummary.tsx
+   15414  src\components\planos\ModuloPlanoModal.tsx
+    4182  src\components\planos\PlanCard.tsx
+    1301  src\components\streamsell\StreamSellLayout.tsx
+   15836  src\components\support\NoahChatWidget.tsx
+    9468  src\components\vidlytics\appearance\TemplatesCarousel.tsx
+    1899  src\components\vidlytics\AppToggle.tsx
+    6872  src\components\vidlytics\InstagramImportModal.tsx
+   14490  src\components\vidlytics\MarketStudyModal.tsx
+   11432  src\components\vidlytics\ProximasDatasComerciais.tsx
+    2594  src\components\vidlytics\TikTokImportModal.tsx
+    7421  src\components\vidlytics\VidlyticsLayout.tsx
+     729  src\hooks\admin\useFxRate.ts
+    1040  src\hooks\admin\useIsSuperadmin.ts
+    4388  src\hooks\useLandingPlans.ts
+    2536  src\hooks\useLiveChat.ts
+    2080  src\hooks\useLiveCockpit.ts
+    2722  src\hooks\useLiveSpotlight.ts
+    1685  src\hooks\useModuleAppEnabled.ts
+    3449  src\hooks\useModuleTrials.ts
+    4792  src\hooks\useStagingPublish.ts
+     918  src\hooks\useStoreSector.ts
+     974  src\hooks\useTrialDays.ts
+     595  src\lib\streamSell\contract.ts
+     893  src\lib\modules.ts
+   15860  src\modules\streamsell\Overview.tsx
+    2838  src\modules\streamsell\StreamSellLayout.tsx
+    4275  src\pages\afiliados\ClubeRules.tsx
+   19178  src\pages\afiliados\IndicaEGanha.tsx
+    2317  src\pages\checkout\BillingSuccess.tsx
+   27093  src\pages\checkout\CheckoutPage.tsx
+   26179  src\pages\configuracoes\SettingsPage.tsx
+   14688  src\pages\dicas\DicasNoah.tsx
+   16393  src\pages\integracao\IntegrationPage.tsx
+   25356  src\pages\landing\VidlyticsLanding.tsx
+    1679  src\pages\legal\AboutPage.tsx
+    4594  src\pages\legal\PrivacyPage.tsx
+    3000  src\pages\legal\TermsPage.tsx
+   34377  src\pages\modules\LiveAdminPage.tsx
+   20034  src\pages\modules\LiveCommerce.tsx
+    9559  src\pages\onboarding\OnboardingPage.tsx
+   12954  src\pages\planos\Planos.tsx
+    4390  src\pages\planos\PlanosGatePage.tsx
+    2643  src\pages\streamsell\Destinos.tsx
+     334  src\pages\streamsell\LegacyLiveRedirect.tsx
+    8312  src\pages\streamsell\LiveCockpit.tsx
+    5419  src\pages\vidlytics\components\ModuleSelectorDropdown.tsx
+   45615  src\pages\vidlytics\tabs\ResultadosTab.tsx
+   36538  src\pages\vidlytics\tabs\VisaoGeralTab.tsx
+   39611  src\pages\Dashboard.tsx
+   14350  src\pages\Metricas.tsx
+    4206  src\services\admin\couponsMarketing.ts
+    6116  src\services\admin\emailCampaigns.ts
+    4008  src\services\admin\marketingAdmin.ts
+    1171  src\services\admin\moduleAccess.ts
+    5182  src\services\plans\getPlansShowcase.ts
+     919  src\services\streamSell\adapters\index.ts
+     717  src\services\streamSell\adapters\site.ts
+     308  src\services\streamSell\adapters\types.ts
+    7313  src\services\streamSell\streamSellService.ts
+   10201  src\services\LiveCommerceDatabaseService.ts
+    3318  src\services\LiveTemplatesService.ts
+    1007  src\services\marketingPublic.ts
+    1142  src\services\moduleAppService.ts
+    3977  src\services\seasonalTips.ts
+     567  src\services\supabaseClients.ts
+    2236  src\services\youtube.ts
+    4503  src\tests\services.test.ts
+    1153  src\tests\supabase-schemas.test.ts
+   13365  src\App.tsx
+    2776  supabase\functions\fetch-youtube-live\index.ts
+    5241  supabase\functions\instagram-auth\index.ts
+    7718  supabase\functions\noah-admin\index.ts
+   14964  supabase\functions\noah-support\index.ts
+   15495  supabase\functions\send-billing-emails\index.ts
+    5950  supabase\functions\send-cancel-email\index.ts
+    8177  supabase\functions\send-payment-reminder\index.ts
+    7030  supabase\functions\send-subscription-email\index.ts
+   13041  supabase\functions\update-sector-benchmarks\index.ts
+    1771  supabase\migrations\20260929_multi_subscriptions_billing_anchor.sql
+    3883  supabase\migrations\20261005_commercial_dates.sql
+    3126  supabase\migrations\20261005_commercial_dates_sectors.sql
+   18612  supabase\migrations\20261009_commercial_date_tips.sql
+   19950  supabase\migrations\20261009_commercial_date_tips_full.sql
+    3119  supabase\migrations\20261010_referral_details_per_subscription.sql
+    3853  supabase\migrations\20261012_dashboard_modulos_pulso.sql
+     692  supabase\migrations\20261012_logos_png_modulos.sql
+    7098  supabase\migrations\20261014_staging_sandbox.sql
+    1969  supabase\migrations\20261014_tips_scope.sql
+    5634  supabase\migrations\20261015_seasonal_stage_tips.sql
+    4435  supabase\migrations\20261017180000_email_drafts_blocks.sql
+   14826  supabase\migrations\20261018_sll_master_core.sql
+     535  supabase\migrations\20261022_live_attribution.sql
+   12849  supabase\migrations\20261022_stream_sell_fase1.sql
+    5797  supabase\migrations\20261031_module_trial.sql
+    6501  supabase\migrations\20261103_trial_por_modulo.sql
+    4768  supabase\migrations\20261203_email_tracking.sql
+    5893  supabase\migrations\20261204_email_builder.sql
+    3553  supabase\migrations\20261206_nps_options.sql
+   23422  supabase\migrations\20261209100000_nps_surveys.sql
+    2928  supabase\rollback\20261022_stream_sell_fase1_rollback.sql
+     854  supabase\affiliate_views_security_invoker.sql
+     907  supabase\anon_grants_hardening_phase_a.sql
+     847  supabase\anon_public_close_write_grants.sql
+    1341  supabase\hardening_profiles_live_limits.sql
+  339680  prod-widget-check.js
+  563189  vidlytics_legado_backup.sql
+
+=== 3. SLL: rotas ===
+e2e\live-commerce-flow.spec.ts:37: await page.screenshot({ path: 'e2e/screenshots/live-commerce-module.png', fullPage: true });
+src\components\layout\ModuleSwitcher.tsx:15: { key: 'live_commerce', name: 'Stream Sell', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/stream-sell', icon: Radio },
+src\components\vidlytics\VidlyticsLayout.tsx:38: { id: "live_commerce", name: "Stream Sell", path: "/live-commerce" },
+src\pages\vidlytics\components\ModuleSelectorDropdown.tsx:43: path: '/dashboard/modules/stream-sell',
+src\App.tsx:141: <Route path="/stream-sell" element={<Navigate to="/dashboard/modules/stream-sell" replace />} />
+src\App.tsx:142: <Route path="/stream-sell/destinos" element={<Navigate to="/dashboard/modules/stream-sell/destinos" replace />} />
+src\App.tsx:143: <Route path="/stream-sell/live/:id/admin" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/admin" />} />
+src\App.tsx:144: <Route path="/stream-sell/live/:id/cockpit" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/cockpit" />} />
+src\App.tsx:145: <Route path="/dashboard/modules/live-commerce" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell" />} />
+src\App.tsx:146: <Route path="/dashboard/modules/live-commerce/admin/:id" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/admin" />} />
+src\App.tsx:148: path="/dashboard/modules/stream-sell/live/:id/cockpit"
+src\App.tsx:160: path="/dashboard/modules/stream-sell/destinos"
+src\App.tsx:172: path="/dashboard/modules/stream-sell"
+src\App.tsx:184: path="/dashboard/modules/stream-sell/live/:id/admin"
+
+=== 4. Migracoes e Edge Functions (live) ===
+--- F:\RODRIGO VICENTE\DYAD\vidlytics ---
+(sem supabase\migrations)
+(sem supabase\functions)
+--- F:\RODRIGO VICENTE\DYAD\sll-hub ---
+     535  supabase\migrations\20261022_live_attribution.sql
+   12849  supabase\migrations\20261022_stream_sell_fase1.sql
+    2776  supabase\functions\fetch-youtube-live\index.ts
+
+=== 5. Widgets ===
+   38583  F:\RODRIGO VICENTE\DYAD\sll-hub\public\livecommerce-widget.js
+
+=== 6. Assistente (passos) ===
+src\components\live\LiveFormDialog.tsx:73: const [currentStep, setCurrentStep] = useState<number>(1);
+src\components\live\LiveFormDialog.tsx:81: // --- PASSO 1: YOUTUBE & TRANSMISSÃO ---
+src\components\live\LiveFormDialog.tsx:88: // --- PASSO 2: AÇÕES PROMOCIONAIS ---
+src\components\live\LiveFormDialog.tsx:96: // --- PASSO 3: PRODUTOS ---
+src\components\live\LiveFormDialog.tsx:105: // --- PASSO 4: DIVULGAÇÃO ---
+src\components\live\LiveFormDialog.tsx:115: // --- PASSO 5: TEMA & APARÊNCIA ---
+src\components\live\LiveFormDialog.tsx:142: setCurrentStep(1);
+src\components\live\LiveFormDialog.tsx:280: // --- HANDLERS PASSO 2 ---
+src\components\live\LiveFormDialog.tsx:321: // --- HANDLERS PASSO 3 ---
+src\components\live\LiveFormDialog.tsx:432: toast.error("Informe o título da live no Passo 1.");
+src\components\live\LiveFormDialog.tsx:433: setCurrentStep(1);
+src\components\live\LiveFormDialog.tsx:518: const handleNextFromStep1 = () => {
+src\components\live\LiveFormDialog.tsx:523: setCurrentStep(2);
+src\components\live\LiveFormDialog.tsx:543: {/* STEPPER VISUAL (5 PASSOS) */}
+src\components\live\LiveFormDialog.tsx:547: {/* PASSO 01 */}
+src\components\live\LiveFormDialog.tsx:550: onClick={() => setCurrentStep(1)}
+src\components\live\LiveFormDialog.tsx:552: currentStep === 1
+src\components\live\LiveFormDialog.tsx:563: {/* PASSO 02 */}
+src\components\live\LiveFormDialog.tsx:566: onClick={() => handleNextFromStep1()}
+src\components\live\LiveFormDialog.tsx:568: currentStep === 2
+src\components\live\LiveFormDialog.tsx:579: {/* PASSO 03 */}
+src\components\live\LiveFormDialog.tsx:582: onClick={() => { if (title.trim()) setCurrentStep(3); }}
+src\components\live\LiveFormDialog.tsx:584: currentStep === 3
+src\components\live\LiveFormDialog.tsx:595: {/* PASSO 04 */}
+src\components\live\LiveFormDialog.tsx:598: onClick={() => { if (title.trim()) setCurrentStep(4); }}
+src\components\live\LiveFormDialog.tsx:600: currentStep === 4
+src\components\live\LiveFormDialog.tsx:611: {/* PASSO 05 */}
+src\components\live\LiveFormDialog.tsx:614: onClick={() => { if (title.trim()) setCurrentStep(5); }}
+src\components\live\LiveFormDialog.tsx:616: currentStep === 5
+src\components\live\LiveFormDialog.tsx:638: {currentStep === 1 && (
+src\components\live\LiveFormDialog.tsx:744: {currentStep === 2 && (
+src\components\live\LiveFormDialog.tsx:868: {currentStep === 3 && (
+src\components\live\LiveFormDialog.tsx:971: {currentStep === 4 && (
+src\components\live\LiveFormDialog.tsx:1087: 5. TEMA & APARÊNCIA DA LIVE (NOVO PASSO!)
+src\components\live\LiveFormDialog.tsx:1089: {currentStep === 5 && (
+src\components\live\LiveFormDialog.tsx:1179: {/* RODAPÉ COM NAVEGAÇÃO DOS PASSOS E BOTÃO SALVAR GLOBAL */}
+src\components\live\LiveFormDialog.tsx:1182: {currentStep > 1 ? (
+src\components\live\LiveFormDialog.tsx:1186: onClick={() => setCurrentStep(prev => prev - 1)}
+src\components\live\LiveFormDialog.tsx:1207: {currentStep < 5 && (
+src\components\live\LiveFormDialog.tsx:1212: if (currentStep === 1) handleNextFromStep1();
+src\components\live\LiveFormDialog.tsx:1213: else if (currentStep === 2) setCurrentStep(3);
+src\components\live\LiveFormDialog.tsx:1214: else if (currentStep === 3) setCurrentStep(4);
+src\components\live\LiveFormDialog.tsx:1215: else if (currentStep === 4) setCurrentStep(5);
+
+=== 7. Chat, viewers, cupom, checkout ===
+public\livecommerce-widget.js:93: show_viewer_count: true,
+public\livecommerce-widget.js:94: show_chat: true,
+public\livecommerce-widget.js:452: var liveChatPollTimer = null;
+public\livecommerce-widget.js:457: var liveChatSeenIds = {};
+public\livecommerce-widget.js:492: '.vl-live-chat{margin-top:14px;border-top:1px solid #1e293b;padding-top:12px;}' +
+public\livecommerce-widget.js:493: '.vl-live-chat-title{color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;margin:0 0 8px;}' +
+public\livecommerce-widget.js:494: '.vl-live-chat-messages{max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}' +
+public\livecommerce-widget.js:495: '.vl-live-chat-msg{font-size:12px;color:#e2e8f0;background:#1e293b;border-radius:8px;padding:6px 10px;max-width:85%;word-break:break-word;align-self:flex-start;}' +
+public\livecommerce-widget.js:496: '.vl-live-chat-msg.vl-mine{background:#312e81;align-self:flex-end;text-align:right;}' +
+public\livecommerce-widget.js:497: '.vl-live-chat-msg b{display:block;font-size:10px;color:#64748b;margin-bottom:2px;}' +
+public\livecommerce-widget.js:498: '.vl-live-chat-form{display:flex;gap:6px;}' +
+public\livecommerce-widget.js:499: '.vl-live-chat-input{flex:1;background:#1e293b;border:1px solid #334155;border-radius:20px;padding:8px 12px;color:#fff;font-size:12px;outline:none;}' +
+public\livecommerce-widget.js:500: '.vl-live-chat-send{background:#22c55e;color:#0f172a;border:none;border-radius:50%;width:32px;height:32px;font-size:14px;cursor:pointer;flex-shrink:0;}' +
+public\livecommerce-widget.js:625: var chatWrap = document.createElement('div');
+public\livecommerce-widget.js:626: chatWrap.className = 'vl-live-chat';
+public\livecommerce-widget.js:628: var chatTitle = document.createElement('p');
+public\livecommerce-widget.js:629: chatTitle.className = 'vl-live-chat-title';
+public\livecommerce-widget.js:630: chatTitle.textContent = 'Chat da live';
+public\livecommerce-widget.js:631: chatWrap.appendChild(chatTitle);
+public\livecommerce-widget.js:633: var chatMessages = document.createElement('div');
+public\livecommerce-widget.js:634: chatMessages.className = 'vl-live-chat-messages';
+public\livecommerce-widget.js:635: chatMessages.id = 'vl-live-chat-messages';
+public\livecommerce-widget.js:636: chatWrap.appendChild(chatMessages);
+public\livecommerce-widget.js:638: var chatForm = document.createElement('div');
+public\livecommerce-widget.js:639: chatForm.className = 'vl-live-chat-form';
+public\livecommerce-widget.js:641: var chatInput = document.createElement('input');
+public\livecommerce-widget.js:642: chatInput.className = 'vl-live-chat-input';
+public\livecommerce-widget.js:643: chatInput.type = 'text';
+public\livecommerce-widget.js:644: chatInput.maxLength = 300;
+public\livecommerce-widget.js:645: chatInput.placeholder = 'Digite sua mensagem...';
+public\livecommerce-widget.js:646: chatInput.id = 'vl-live-chat-input';
+public\livecommerce-widget.js:648: var chatSend = document.createElement('button');
+public\livecommerce-widget.js:649: chatSend.className = 'vl-live-chat-send';
+public\livecommerce-widget.js:650: chatSend.textContent = '\u27a4';
+public\livecommerce-widget.js:651: chatSend.onclick = function () {
+public\livecommerce-widget.js:652: var val = chatInput.value.trim();
+public\livecommerce-widget.js:654: postLiveChatMessage(live, val);
+public\livecommerce-widget.js:655: chatInput.value = '';
+public\livecommerce-widget.js:657: chatInput.addEventListener('keydown', function (e) {
+public\livecommerce-widget.js:658: if (e.key === 'Enter') chatSend.onclick();
+public\livecommerce-widget.js:661: chatForm.appendChild(chatInput);
+public\livecommerce-widget.js:662: chatForm.appendChild(chatSend);
+public\livecommerce-widget.js:663: chatWrap.appendChild(chatForm);
+public\livecommerce-widget.js:664: body.appendChild(chatWrap);
+public\livecommerce-widget.js:682: stopLiveRealtime();
+public\livecommerce-widget.js:683: if (liveChatPollTimer) { clearInterval(liveChatPollTimer); liveChatPollTimer = null; }
+public\livecommerce-widget.js:685: liveChatSeenIds = {};
+public\livecommerce-widget.js:694: function stopLiveRealtime() {
+public\livecommerce-widget.js:701: function startLiveRealtime(live) {
+public\livecommerce-widget.js:703: stopLiveRealtime();
+public\livecommerce-widget.js:705: var topic = 'realtime:sll-live-' + live.id;
+public\livecommerce-widget.js:706: var wsUrl = supabaseUrl.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(supabaseAnonKey) + '&vsn=1.0.0';
+public\livecommerce-widget.js:722: { event: 'INSERT', schema: 'live_commerce', table: 'live_chat_messages', filter: 'live_id=eq.' + live.id }
+public\livecommerce-widget.js:735: if (d.table === 'live_chat_messages') fetchLiveChatMessages(live);
+public\livecommerce-widget.js:746: liveRt.timer = setTimeout(function () { if (!liveRt.stopped) startLiveRealtime(live); }, Math.min(30000, 2000 * liveRt.tries));
+public\livecommerce-widget.js:751: startLiveRealtime(live);
+public\livecommerce-widget.js:754: fetchLiveChatMessages(live);
+public\livecommerce-widget.js:755: liveChatPollTimer = setInterval(function () { fetchLiveChatMessages(live); }, 4000);
+public\livecommerce-widget.js:761: function fetchLiveChatMessages(live) {
+public\livecommerce-widget.js:764: 'live_chat_messages?select=*&live_id=eq.' + encodeURIComponent(live.id) +
+public\livecommerce-widget.js:771: var container = document.getElementById('vl-live-chat-messages');
+public\livecommerce-widget.js:774: if (liveChatSeenIds[m.id]) return;
+public\livecommerce-widget.js:775: liveChatSeenIds[m.id] = true;
+public\livecommerce-widget.js:777: msgEl.className = 'vl-live-chat-msg' + (m.is_from_store ? ' vl-mine' : '');
+public\livecommerce-widget.js:789: function postLiveChatMessage(live, text) {
+public\livecommerce-widget.js:795: supabaseFetch('live_chat_messages', {
+src\components\live\LiveAppearanceModal.tsx:51: showCoupon: boolean;
+src\components\live\LiveAppearanceModal.tsx:52: couponCode: string;
+src\components\live\LiveAppearanceModal.tsx:53: couponCodeColor: string;
+src\components\live\LiveAppearanceModal.tsx:54: couponCodeBgColor: string;
+src\components\live\LiveAppearanceModal.tsx:55: couponText: string;
+src\components\live\LiveAppearanceModal.tsx:56: couponTextColor: string;
+src\components\live\LiveAppearanceModal.tsx:57: couponTextBgColor: string;
+src\components\live\LiveAppearanceModal.tsx:71: showViewerCount: boolean;
+src\components\live\LiveAppearanceModal.tsx:72: showChat: boolean;
+src\components\live\LiveAppearanceModal.tsx:178: showCoupon: true,
+src\components\live\LiveAppearanceModal.tsx:179: couponCode: "VIDLYTICS10",
+src\components\live\LiveAppearanceModal.tsx:180: couponCodeColor: "#FFFFFF",
+src\components\live\LiveAppearanceModal.tsx:181: couponCodeBgColor: "#0094ea",
+src\components\live\LiveAppearanceModal.tsx:182: couponText: "10% OFF",
+src\components\live\LiveAppearanceModal.tsx:183: couponTextColor: "#000000",
+src\components\live\LiveAppearanceModal.tsx:184: couponTextBgColor: "#FFFFFF",
+src\components\live\LiveAppearanceModal.tsx:198: showViewerCount: true,
+src\components\live\LiveAppearanceModal.tsx:199: showChat: true,
+src\components\live\LiveAppearanceModal.tsx:229: couponCodeBgColor: "#0094ea",
+src\components\live\LiveAppearanceModal.tsx:230: couponCodeColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:231: couponTextBgColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:232: couponTextColor: "#0094ea",
+src\components\live\LiveAppearanceModal.tsx:240: couponCodeBgColor: "#0094ea",
+src\components\live\LiveAppearanceModal.tsx:241: couponCodeColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:242: couponTextBgColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:243: couponTextColor: "#0094ea",
+src\components\live\LiveAppearanceModal.tsx:295: couponCode: "VIDLYTICS10",
+src\components\live\LiveAppearanceModal.tsx:296: couponCodeBgColor: "#000000",
+src\components\live\LiveAppearanceModal.tsx:297: couponCodeColor: "#eab308",
+src\components\live\LiveAppearanceModal.tsx:298: couponText: "10% OFF",
+src\components\live\LiveAppearanceModal.tsx:299: couponTextBgColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:300: couponTextColor: "#000000",
+src\components\live\LiveAppearanceModal.tsx:310: couponCode: "VIDLYTICS10",
+src\components\live\LiveAppearanceModal.tsx:311: couponCodeBgColor: "#000000",
+src\components\live\LiveAppearanceModal.tsx:312: couponCodeColor: "#eab308",
+src\components\live\LiveAppearanceModal.tsx:313: couponText: "10% OFF",
+src\components\live\LiveAppearanceModal.tsx:314: couponTextBgColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:315: couponTextColor: "#000000",
+src\components\live\LiveAppearanceModal.tsx:344: couponCode: "LIVE15",
+src\components\live\LiveAppearanceModal.tsx:345: couponCodeBgColor: "#e7191f",
+src\components\live\LiveAppearanceModal.tsx:346: couponCodeColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:347: couponTextBgColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:348: couponTextColor: "#e7191f",
+src\components\live\LiveAppearanceModal.tsx:357: couponCode: "LIVE15",
+src\components\live\LiveAppearanceModal.tsx:358: couponCodeBgColor: "#e7191f",
+src\components\live\LiveAppearanceModal.tsx:359: couponCodeColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:360: couponTextBgColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:361: couponTextColor: "#e7191f",
+src\components\live\LiveAppearanceModal.tsx:388: couponCode: "NIVER20",
+src\components\live\LiveAppearanceModal.tsx:389: couponCodeBgColor: "#ec4899",
+src\components\live\LiveAppearanceModal.tsx:390: couponCodeColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:391: couponTextBgColor: "#fdf2f8",
+src\components\live\LiveAppearanceModal.tsx:392: couponTextColor: "#ec4899",
+src\components\live\LiveAppearanceModal.tsx:401: couponCode: "NIVER20",
+src\components\live\LiveAppearanceModal.tsx:402: couponCodeBgColor: "#ec4899",
+src\components\live\LiveAppearanceModal.tsx:403: couponCodeColor: "#ffffff",
+src\components\live\LiveAppearanceModal.tsx:404: couponTextBgColor: "#fdf2f8",
+src\components\live\LiveAppearanceModal.tsx:405: couponTextColor: "#ec4899",
+src\components\live\LiveAppearanceModal.tsx:1045: id="sub_coupon"
+src\components\live\LiveAppearanceModal.tsx:1046: label="Card do Cupom"
+src\components\live\LiveAppearanceModal.tsx:1047: checked={currentPlayer.showCoupon}
+src\components\live\LiveAppearanceModal.tsx:1048: onToggle={(v) => updateConfig(setPlayerConfig, "showCoupon", v, playerConfig.linked)}
+src\components\live\LiveAppearanceModal.tsx:1053: <Input value={currentPlayer.couponCode} onChange={(e) => updateConfig(setPlayerConfig, "couponCode", e.target.value)} placeholder="Código" className="h-7 rounded-md text-[11px]" />
+src\components\live\LiveAppearanceModal.tsx:1054: <Input value={currentPlayer.couponText} onChange={(e) => updateConfig(setPlayerConfig, "couponText", e.target.value)} placeholder="Desconto" className="h-7 rounded-md text-[11px]" />
+src\components\live\LiveAppearanceModal.tsx:1057: <ColorInput label="Cor Cód." value={currentPlayer.couponCodeColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeColor", v, playerConfig.linked)} />
+src\components\live\LiveAppearanceModal.tsx:1058: <ColorInput label="Fundo Cód." value={currentPlayer.couponCodeBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeBgColor", v, playerConfig.linked)} />
+src\components\live\LiveAppearanceModal.tsx:1059: <ColorInput label="Cor Texto" value={currentPlayer.couponTextColor} onChange={(v) => updateConfig(setPlayerConfig, "couponTextColor", v, playerConfig.linked)} />
+src\components\live\LiveAppearanceModal.tsx:1060: <ColorInput label="Fundo Texto" value={currentPlayer.couponTextBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponTextBgColor", v, playerConfig.linked)} />
+src\components\live\LiveAppearanceModal.tsx:1102: <ElementSubItem id="sub_viewers" label="Contador de espectadores" checked={currentPlayer.showViewerCount} onToggle={(v) => updateConfig(setPlayerConfig, "showViewerCount", v, playerConfig.linked)} openSubItem={openSubItem} setOpenSubItem={setOpenSubItem} hasSettings={false} />
+src\components\live\LiveAppearanceModal.tsx:1103: <ElementSubItem id="sub_chat" label="Chat ao vivo" checked={currentPlayer.showChat} onToggle={(v) => updateConfig(setPlayerConfig, "showChat", v, playerConfig.linked)} openSubItem={openSubItem} setOpenSubItem={setOpenSubItem} hasSettings={false} />
+src\components\live\LiveAppearanceModal.tsx:1175: { id: "chat",     label: "Com Chat" },
+src\components\live\LiveAppearanceModal.tsx:1201: {/* CUPOM & INFO */}
+src\components\live\LiveAppearanceModal.tsx:1203: {currentPlayer.showCoupon && (
+src\components\live\LiveAppearanceModal.tsx:1205: <div className="text-center py-0.5 text-[7.5px] font-black uppercase tracking-tight" style={{ backgroundColor: currentPlayer.couponCodeBgColor, color: currentPlayer.couponCodeColor }}>
+src\components\live\LiveAppearanceModal.tsx:1206: {currentPlayer.couponCode}
+src\components\live\LiveAppearanceModal.tsx:1208: <div className="text-center py-0.5 text-[7.5px] font-bold" style={{ backgroundColor: currentPlayer.couponTextBgColor, color: currentPlayer.couponTextColor }}>
+src\components\live\LiveAppearanceModal.tsx:1209: {currentPlayer.couponText}
+src\components\live\LiveAppearanceModal.tsx:1232: {currentPlayer.showViewerCount && (
+src\components\live\LiveAppearanceModal.tsx:1244: {currentPlayer.showChat && (
+src\components\live\LiveAppearanceModal.tsx:1245: <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white border shadow transition ${phone.id === 'chat' ? 'bg-white/30 border-white' : 'bg-black/45 border-white/20'}`}>
+src\components\live\LiveAppearanceModal.tsx:1274: {/* CHAT */}
+src\components\live\LiveAppearanceModal.tsx:1275: {phone.id === 'chat' && currentPlayer.showChat && (
+src\components\live\LiveAppearanceModal.tsx:1287: <span className="text-slate-400 text-[8.5px] font-medium">Chat...</span>
+src\components\live\LiveAppearanceModal.tsx:1570: {currentPlayer.showViewerCount && (
+src\components\live\LiveAppearanceModal.tsx:1584: {currentPlayer.showCoupon && (
+src\components\live\LiveAppearanceModal.tsx:1586: <div className="flex items-center justify-center px-4 font-black tracking-widest text-[16px]" style={{ backgroundColor: currentPlayer.couponCodeBgColor, color: currentPlayer.couponCodeColor, width: '50%' }}>
+src\components\live\LiveAppearanceModal.tsx:1587: {currentPlayer.couponCode}
+src\components\live\LiveAppearanceModal.tsx:1589: <div className="flex items-center justify-center px-4 font-black text-[17px]" style={{ backgroundColor: currentPlayer.couponTextBgColor, color: currentPlayer.couponTextColor, width: '50%' }}>
+src\components\live\LiveAppearanceModal.tsx:1590: {currentPlayer.couponText}
+src\components\live\LiveAppearanceModal.tsx:1596: {/* COLUNA 3: CHAT */}
+src\components\live\LiveAppearanceModal.tsx:1598: {currentPlayer.showChat && (
+src\components\live\LiveAppearanceModal.tsx:1601: CHAT
+src\components\live\LiveAppearanceModal.tsx:1616: Chat...
+src\components\live\LiveAppearanceTab.tsx:169: show_viewer_count: boolean;
+src\components\live\LiveAppearanceTab.tsx:170: show_chat: boolean;
+src\components\live\LiveAppearanceTab.tsx:308: checked={playerConfig.show_viewer_count}
+src\components\live\LiveAppearanceTab.tsx:309: onChange={(e) => onPlayerChange({ ...playerConfig, show_viewer_count: e.target.checked })}
+src\components\live\LiveAppearanceTab.tsx:313: label="Exibir chat ao vivo"
+src\components\live\LiveAppearanceTab.tsx:314: checked={playerConfig.show_chat}
+src\components\live\LiveAppearanceTab.tsx:315: onChange={(e) => onPlayerChange({ ...playerConfig, show_chat: e.target.checked })}
+src\components\live\LiveFormDialog.tsx:35: export interface PromotionCoupon {
+src\components\live\LiveFormDialog.tsx:49: coupon_code?: string;
+src\components\live\LiveFormDialog.tsx:89: const [coupons, setCoupons] = useState<PromotionCoupon[]>([
+src\components\live\LiveFormDialog.tsx:148: setCoupons([{ id: "c_1", code: "", description: "" }]);
+src\components\live\LiveFormDialog.tsx:204: if (data.coupons && Array.isArray(data.coupons) && data.coupons.length > 0) {
+src\components\live\LiveFormDialog.tsx:205: setCoupons([...data.coupons, { id: "c_" + Date.now(), code: "", description: "" }]);
+src\components\live\LiveFormDialog.tsx:206: } else if (data.coupon_code) {
+src\components\live\LiveFormDialog.tsx:207: setCoupons([
+src\components\live\LiveFormDialog.tsx:208: { id: "c_1", code: data.coupon_code, description: data.coupon_discount || "" },
+src\components\live\LiveFormDialog.tsx:212: setCoupons([{ id: "c_1", code: "", description: "" }]);
+src\components\live\LiveFormDialog.tsx:225: const couponTexts = data.product_coupon_texts || {};
+src\components\live\LiveFormDialog.tsx:229: coupon_code: couponTexts[pid] || ""
+src\components\live\LiveFormDialog.tsx:281: const handleCouponChange = (index: number, field: "code" | "description", val: string) => {
+src\components\live\LiveFormDialog.tsx:282: const updated = [...coupons];
+src\components\live\LiveFormDialog.tsx:289: setCoupons(updated);
+src\components\live\LiveFormDialog.tsx:292: const handleRemoveCoupon = (index: number) => {
+src\components\live\LiveFormDialog.tsx:293: if (coupons.length === 1) {
+src\components\live\LiveFormDialog.tsx:294: setCoupons([{ id: "c_" + Date.now(), code: "", description: "" }]);
+src\components\live\LiveFormDialog.tsx:297: const updated = coupons.filter((_, i) => i !== index);
+src\components\live\LiveFormDialog.tsx:298: setCoupons(updated);
+src\components\live\LiveFormDialog.tsx:344: return { product_id: pid, coupon_code: "", cta_text: "Comprar Agora" };
+src\components\live\LiveFormDialog.tsx:354: const handleProductCouponChange = (productId: string, couponCode: string) => {
+src\components\live\LiveFormDialog.tsx:355: setLiveProducts(prev => prev.map(p => p.product_id === productId ? { ...p, coupon_code: couponCode } : p));
+src\components\live\LiveFormDialog.tsx:379: const validCouponCodes = useMemo(() => {
+src\components\live\LiveFormDialog.tsx:380: return coupons.map(c => c.code.trim()).filter(Boolean);
+src\components\live\LiveFormDialog.tsx:381: }, [coupons]);
+src\components\live\LiveFormDialog.tsx:440: const cleanedCoupons = coupons.filter(c => c.code.trim().length > 0);
+src\components\live\LiveFormDialog.tsx:444: const productCouponMap: Record<string, string> = {};
+src\components\live\LiveFormDialog.tsx:447: if (p.coupon_code && p.coupon_code.trim()) productCouponMap[p.product_id] = p.coupon_code.trim();
+src\components\live\LiveFormDialog.tsx:462: coupons: cleanedCoupons,
+src\components\live\LiveFormDialog.tsx:464: product_coupon_texts: productCouponMap,
+src\components\live\LiveFormDialog.tsx:483: let previousCouponCodes: string[] = [];
+src\components\live\LiveFormDialog.tsx:486: previousCouponCodes = Array.isArray(prev?.coupons)
+src\components\live\LiveFormDialog.tsx:487: ? prev.coupons.map((c: any) => String(c?.code || ""))
+src\components\live\LiveFormDialog.tsx:501: savedId, storeId, liveProducts, cleanedCoupons, previousCouponCodes,
+src\components\live\LiveFormDialog.tsx:768: <th className="py-2 px-3 w-[200px]">Código do Cupom</th>
+src\components\live\LiveFormDialog.tsx:774: {coupons.map((coupon, idx) => (
+src\components\live\LiveFormDialog.tsx:775: <tr key={coupon.id} className="hover:bg-slate-50/50">
+src\components\live\LiveFormDialog.tsx:779: value={coupon.code}
+src\components\live\LiveFormDialog.tsx:780: onChange={(e) => handleCouponChange(idx, "code", e.target.value)}
+src\components\live\LiveFormDialog.tsx:787: value={coupon.description}
+src\components\live\LiveFormDialog.tsx:788: onChange={(e) => handleCouponChange(idx, "description", e.target.value)}
+src\components\live\LiveFormDialog.tsx:795: onClick={() => handleRemoveCoupon(idx)}
+src\components\live\LiveFormDialog.tsx:797: title="Excluir cupom"
+src\components\live\LiveFormDialog.tsx:906: <th className="py-2.5 px-3 w-40">Cupom Vinculado</th>
+src\components\live\LiveFormDialog.tsx:938: value={item.coupon_code || ""}
+src\components\live\LiveFormDialog.tsx:939: onChange={(e) => handleProductCouponChange(prod.id, e.target.value)}
+src\components\live\LiveFormDialog.tsx:942: <option value="">Sem cupom específico</option>
+src\components\live\LiveFormDialog.tsx:943: {validCouponCodes.map(code => (
+src\components\live\LiveFormDialog.tsx:1042: placeholder="https://chat.whatsapp.com/..."
+src\components\live\LiveMetricsModal.tsx:31: viewers: number;
+src\components\live\LiveMetricsModal.tsx:50: const [peakViewers, setPeakViewers] = useState(0);
+src\components\live\LiveMetricsModal.tsx:96: setPeakViewers(0);
+src\components\live\LiveMetricsModal.tsx:123: if (ev.event_type === "peak_viewers") {
+src\components\live\LiveMetricsModal.tsx:142: setPeakViewers(peak);
+src\components\live\LiveMetricsModal.tsx:314: <p className="text-lg font-bold text-slate-800 mt-1">{peakViewers.toLocaleString("pt-BR")} pessoas</p>
+src\components\live\LiveMetricsModal.tsx:319: <MessageSquare className="w-3.5 h-3.5 text-emerald-500" /> Chat & Comentários
+src\components\live\LiveMetricsModal.tsx:345: Pico da Live: {peakViewers} simultâneos
+src\components\live\LiveMetricsModal.tsx:373: dataKey="viewers"
+src\components\live\LiveOverviewLayout.tsx:16: peakViewers: number; peakLimit: number;
+src\components\live\LiveOverviewLayout.tsx:29: views: number; chatMessages: number; productClicks: number;
+src\components\live\LiveOverviewLayout.tsx:53: "Uma boa live começa antes de entrar no ar. Escolha 3 produtos-chave, prepare uma demonstração de cada um e deixe um cupom exclusivo pronto. Apresente o benefício antes de falar do preço.";
+src\components\live\LiveOverviewLayout.tsx:179: <div className="my-3"><span className="text-2xl font-extrabold text-slate-900">{num(u.peakViewers)}</span> <span className="text-xs text-slate-500">de {num(u.peakLimit)} ao vivo</span></div>
+src\components\live\LiveOverviewLayout.tsx:180: <ProgressBar value={pct(u.peakViewers, u.peakLimit)} />
+src\components\live\LiveOverviewLayout.tsx:181: <div className="mt-2 flex justify-between text-[11px] text-slate-500"><span>Capacidade simultânea</span><span>{pct(u.peakViewers, u.peakLimit)}%</span></div>
+src\components\live\LiveOverviewLayout.tsx:254: { icon: MessageSquare, label: "Mensagens no chat", v: e.chatMessages },
+src\components\live\LiveVisaoGeral.tsx:24: pending: ['order_pending', 'checkout_started'],
+src\components\live\LiveVisaoGeral.tsx:44: peak_viewers: number | null;
+src\components\live\LiveVisaoGeral.tsx:75: 0: { title: 'Liquidação ao vivo', text: 'Faça uma live de início de ano com 3 produtos-chave e um cupom exclusivo para quem assistir até o fim.' },
+src\components\live\LiveVisaoGeral.tsx:77: 2: { title: 'Dia da Mulher e Páscoa', text: 'Monte uma live de presentes por faixa de preço e fixe o link do produto no chat.' },
+src\components\live\LiveVisaoGeral.tsx:79: 4: { title: 'Dia das Mães e Namorados', text: 'Responda dúvidas de presente no chat e use o WhatsApp como apoio para fechar a compra.' },
+src\components\live\LiveVisaoGeral.tsx:81: 6: { title: 'Preparação para o Dia dos Pais', text: 'Programe a live uma semana antes e deixe os produtos do cupom já vinculados à transmissão.' },
+src\components\live\LiveVisaoGeral.tsx:82: 7: { title: 'Dia dos Pais', text: 'Comece a live pelo produto mais vendido e repita o cupom a cada 10 minutos para quem entrou depois.' },
+src\components\live\LiveVisaoGeral.tsx:84: 9: { title: 'Dia das Crianças e Black Friday', text: 'Faça uma live-teste de Black Friday agora: treine o cockpit, o chat e a troca de produtos em destaque.' },
+src\components\live\LiveVisaoGeral.tsx:147: const [chatCount, setChatCount] = useState(0);
+src\components\live\LiveVisaoGeral.tsx:173: .select('id,title,status,scheduled_at,started_at,ended_at,youtube_thumbnail_url,peak_viewers,views_count,featured_product_ids')
+src\components\live\LiveVisaoGeral.tsx:194: lc.from('live_chat_messages')
+src\components\live\LiveVisaoGeral.tsx:199: .then(({ count }) => { if (alive) setChatCount(count ?? 0); });
+src\components\live\LiveVisaoGeral.tsx:277: const peak = lives.reduce((m, l) => Math.max(m, l.peak_viewers || 0), 0);
+src\components\live\LiveVisaoGeral.tsx:446: { l: 'Mensagens no chat', v: chatCount, i: MessageSquare },
+src\hooks\useLiveChat.ts:3: import type { RealtimeChannel } from "@supabase/supabase-js";
+src\hooks\useLiveChat.ts:5: export interface LiveChatMessage {
+src\hooks\useLiveChat.ts:15: export function useLiveChat(liveId: string | null, storeId: string | null) {
+src\hooks\useLiveChat.ts:16: const [messages, setMessages] = useState<LiveChatMessage[]>([]);
+src\hooks\useLiveChat.ts:19: const channelRef = useRef<RealtimeChannel | null>(null);
+src\hooks\useLiveChat.ts:26: .from("live_chat_messages")
+src\hooks\useLiveChat.ts:46: .channel(`live-chat-${liveId}`)
+src\hooks\useLiveChat.ts:52: table: "live_chat_messages",
+src\hooks\useLiveChat.ts:56: setMessages((prev) => [...prev, payload.new as LiveChatMessage]);
+src\hooks\useLiveChat.ts:64: supabaseLiveCommerce.removeChannel(channel);
+src\hooks\useLiveChat.ts:72: .from("live_chat_messages")
+src\hooks\useLiveCockpit.ts:38: .channel(`cockpit-${liveId}`)
+src\hooks\useLiveCockpit.ts:40: .on('postgres_changes', { event: '*', schema: 'live_commerce', table: 'live_coupons', filter: `live_id=eq.${liveId}` }, schedule)
+src\hooks\useLiveCockpit.ts:51: supabase.removeChannel(ch);
+src\hooks\useLiveSpotlight.ts:6: couponCode: string | null;
+src\hooks\useLiveSpotlight.ts:16: }, [initial.productId, initial.couponCode, initial.advantageIdx]);
+src\hooks\useLiveSpotlight.ts:35: const setCoupon = useCallback(
+src\hooks\useLiveSpotlight.ts:36: async (couponCode: string | null) => {
+src\hooks\useLiveSpotlight.ts:37: setSpotlight((prev) => ({ ...prev, couponCode }));
+src\hooks\useLiveSpotlight.ts:42: .update({ spotlight_coupon_code: couponCode })
+src\hooks\useLiveSpotlight.ts:46: setError(err?.message ?? "Erro ao atualizar cupom em destaque");
+src\hooks\useLiveSpotlight.ts:70: setSpotlight({ productId: null, couponCode: null, advantageIdx: null });
+src\hooks\useLiveSpotlight.ts:77: spotlight_coupon_code: null,
+src\hooks\useLiveSpotlight.ts:87: return { spotlight, setProduct, setCoupon, setAdvantage, clearAll, error };
+src\pages\modules\LiveAdminPage.tsx:4: import { useLiveChat } from '@/hooks/useLiveChat';
+src\pages\modules\LiveAdminPage.tsx:21: interface Coupon {
+src\pages\modules\LiveAdminPage.tsx:49: const [coupons, setCoupons] = useState<Coupon[]>([]);
+src\pages\modules\LiveAdminPage.tsx:53: activeViewers: 0,
+src\pages\modules\LiveAdminPage.tsx:54: peakViewers: 0,
+src\pages\modules\LiveAdminPage.tsx:61: const [chatInput, setChatInput] = useState('');
+src\pages\modules\LiveAdminPage.tsx:63: // Spotlight sincronizado em tempo real (produto, cupom, vantagem)
+src\pages\modules\LiveAdminPage.tsx:66: couponCode: string | null;
+src\pages\modules\LiveAdminPage.tsx:68: }>({ productId: null, couponCode: null, advantageIdx: null });
+src\pages\modules\LiveAdminPage.tsx:71: const { messages, sendMessage, error: chatError } = useLiveChat(liveId || null, storeId);
+src\pages\modules\LiveAdminPage.tsx:80: .select('title, store_id, featured_product_ids, coupons, advantages, live_widget_config, spotlight_product_id, spotlight_coupon_code, spotlight_advantage_idx')
+src\pages\modules\LiveAdminPage.tsx:118: setCoupons(Array.isArray(live.coupons) ? live.coupons : []);
+src\pages\modules\LiveAdminPage.tsx:146: couponCode: live.spotlight_coupon_code || null,
+src\pages\modules\LiveAdminPage.tsx:161: const activeCoupon = coupons.find(c => c.code === spotlight.couponCode);
+src\pages\modules\LiveAdminPage.tsx:168: const toggleCoupon = (coupon: Coupon) => {
+src\pages\modules\LiveAdminPage.tsx:169: if (spotlight.couponCode === coupon.code) {
+src\pages\modules\LiveAdminPage.tsx:170: updateSpotlight({ couponCode: null });
+src\pages\modules\LiveAdminPage.tsx:172: updateSpotlight({ couponCode: coupon.code });
+src\pages\modules\LiveAdminPage.tsx:173: sendMessage('Loja Oficial', `🏷️ Cupom ativado: use ${coupon.code} para ${coupon.description}!`, true).catch(console.error);
+src\pages\modules\LiveAdminPage.tsx:183: if (!chatInput.trim()) return;
+src\pages\modules\LiveAdminPage.tsx:184: sendMessage('Você (Loja Oficial)', chatInput, true).catch(console.error);
+src\pages\modules\LiveAdminPage.tsx:185: setChatInput('');
+src\pages\modules\LiveAdminPage.tsx:229: {(spotlightError || chatError) && (
+src\pages\modules\LiveAdminPage.tsx:232: <span>{spotlightError || chatError}</span>
+src\pages\modules\LiveAdminPage.tsx:314: <Users className="w-2.5 h-2.5" /> {metrics.activeViewers}
+src\pages\modules\LiveAdminPage.tsx:320: {activeCoupon && (
+src\pages\modules\LiveAdminPage.tsx:326: {activeCoupon.code}
+src\pages\modules\LiveAdminPage.tsx:329: {activeCoupon.description}
+src\pages\modules\LiveAdminPage.tsx:501: <Tag className="w-4 h-4 text-sky-400" /> Cupons Cadastrados ({coupons.length})
+src\pages\modules\LiveAdminPage.tsx:503: {spotlight.couponCode && (
+src\pages\modules\LiveAdminPage.tsx:504: <button onClick={() => updateSpotlight({ couponCode: null })} className="text-[11px] text-slate-400 hover:text-rose-400 transition">
+src\pages\modules\LiveAdminPage.tsx:505: Desativar Cupom
+src\pages\modules\LiveAdminPage.tsx:510: {coupons.length === 0 ? (
+src\pages\modules\LiveAdminPage.tsx:511: <p className="text-xs text-slate-500 italic px-1">Nenhum cupom cadastrado para esta live.</p>
+src\pages\modules\LiveAdminPage.tsx:514: {coupons.map(coupon => {
+src\pages\modules\LiveAdminPage.tsx:515: const isSelected = spotlight.couponCode === coupon.code;
+src\pages\modules\LiveAdminPage.tsx:518: key={coupon.code}
+src\pages\modules\LiveAdminPage.tsx:519: onClick={() => toggleCoupon(coupon)}
+src\pages\modules\LiveAdminPage.tsx:528: <span><strong>{coupon.code}</strong> — {coupon.description}</span>
+src\pages\modules\LiveAdminPage.tsx:598: <span className="text-xl font-black text-white">{metrics.activeViewers}</span>
+src\pages\modules\LiveAdminPage.tsx:605: <span className="text-xl font-black text-white">{metrics.peakViewers}</span>
+src\pages\modules\LiveAdminPage.tsx:644: <MessageSquare className="w-3.5 h-3.5 text-blue-400" /> Chat ao Vivo
+src\pages\modules\LiveAdminPage.tsx:680: onClick={() => setChatInput(prev => prev + emoji)}
+src\pages\modules\LiveAdminPage.tsx:687: onClick={() => setChatInput('Corre que está acabando!')}
+src\pages\modules\LiveAdminPage.tsx:697: value={chatInput}
+src\pages\modules\LiveAdminPage.tsx:698: onChange={(e) => setChatInput(e.target.value)}
+src\pages\streamsell\LiveCockpit.tsx:6: addCoupon, setCouponActive, setLiveStatus, setProductOnAir,
+src\pages\streamsell\LiveCockpit.tsx:12: 'coupon.activate': 'Cupom ativado', 'coupon.deactivate': 'Cupom desativado',
+src\pages\streamsell\LiveCockpit.tsx:48: const { live, products, coupons } = data;
+src\pages\streamsell\LiveCockpit.tsx:113: {coupons.length === 0 && <p className="text-xs text-slate-400">Nenhum cupom. Crie um abaixo.</p>}
+src\pages\streamsell\LiveCockpit.tsx:114: {coupons.map((c) => (
+src\pages\streamsell\LiveCockpit.tsx:123: onClick={() => run(`c-${c.id}`, () => setCouponActive(live, c, !c.isActive))}
+src\pages\streamsell\LiveCockpit.tsx:136: run('add-coupon', async () => { await addCoupon(live, code, Number(percent)); setCode(''); });
+src\services\LiveCommerceDatabaseService.ts:93: coupons: { code: string; description: string }[],
+src\services\LiveCommerceDatabaseService.ts:94: previousCouponCodes: string[],
+src\services\LiveCommerceDatabaseService.ts:152: coupons.forEach((c) => {
+src\services\LiveCommerceDatabaseService.ts:157: const removed = previousCouponCodes
+src\services\LiveCommerceDatabaseService.ts:162: .from('live_coupons').delete().eq('live_id', liveId).in('code', removed);
+src\services\LiveCommerceDatabaseService.ts:167: .from('live_coupons')
+src\services\LiveCommerceDatabaseService.ts:172: const couponInserts: any[] = [];
+src\services\LiveCommerceDatabaseService.ts:179: .from('live_coupons').update({ discount_percent: c.percent }).eq('id', row.id);
+src\services\LiveCommerceDatabaseService.ts:183: couponInserts.push({
+src\services\LiveCommerceDatabaseService.ts:192: if (couponInserts.length) {
+src\services\LiveCommerceDatabaseService.ts:193: const { error } = await supabaseLiveCommerce.from('live_coupons').insert(couponInserts);

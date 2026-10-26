@@ -932,6 +932,12 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
             </ElementSubItem>
           )}
 
+          <ElementSubItem id="sub_darken" label="Escurecer vídeo" checked={config.darkenVideo === true} onToggle={(v) => { updateFn("darkenVideo", v); if (v && config.darkenIntensity == null) updateFn("darkenIntensity", 60); }} openSubItem={openSubItem} setOpenSubItem={setOpenSubItem}>
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Intensidade: {config.darkenIntensity ?? 60}%</label>
+              <input type="range" min={0} max={100} step={5} value={config.darkenIntensity ?? 60} onChange={(e) => updateFn("darkenIntensity", Number(e.target.value))} className="w-full accent-rose-600" />
+            </div>
+          </ElementSubItem>
           <ElementSubItem id="sub_video" label="Reproduzir Vídeo" checked={config.playVideo} onToggle={(v) => updateFn("playVideo", v)} openSubItem={openSubItem} setOpenSubItem={setOpenSubItem} hasSettings={false} />
           <ElementSubItem id="sub_close" label="Exibir Botão Fechar (X)" checked={config.showCloseButton} onToggle={(v) => updateFn("showCloseButton", v)} openSubItem={openSubItem} setOpenSubItem={setOpenSubItem} hasSettings={false} />
         </div>
@@ -1249,6 +1255,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                                 ref={(el) => { if (el) { if (config.playVideo) el.play().catch(() => {}); else el.pause(); } }}
                                 src="/demo-videos/demo1.mp4" loop muted playsInline className="w-full h-full" style={{ objectFit: config.objectFit }} 
                               />
+                              {config.darkenVideo === true && <div className="absolute inset-0 pointer-events-none z-[5] rounded-[inherit]" style={{ background: `linear-gradient(to top, rgba(0,0,0,${0.85 * (config.darkenIntensity ?? 60) / 100}) 0%, rgba(0,0,0,${0.2 * (config.darkenIntensity ?? 60) / 100}) 50%, rgba(0,0,0,${0.4 * (config.darkenIntensity ?? 60) / 100}) 100%)` }} />}
                               {config.showCloseButton && <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-black/40 rounded-full flex items-center justify-center text-white text-[10px] font-bold z-10">✕</div>}
                               {!config.playVideo && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center z-10"><PlaySquare className="w-3.5 h-3.5 ml-0.5 fill-white text-white"/></div>}
                               {activeTab === "divulgacao" && (config as WidgetDivulgacaoSettings).showCountdown && (
