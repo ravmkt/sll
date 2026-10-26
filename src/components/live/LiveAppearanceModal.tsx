@@ -1229,10 +1229,10 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                       >
                         <p className="text-[10px] text-muted-foreground">{"O c\u00f3digo e o desconto v\u00eam do cupom da live. Aqui voc\u00ea ajusta s\u00f3 as cores."}</p>
                         <div className="grid grid-cols-2 gap-2 pt-1">
-                          <ColorInput label={"Cor do c\u00f3digo"} value={currentPlayer.couponCodeColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeColor", v, playerConfig.linked)} />
-                          <ColorInput label={"Fundo do c\u00f3digo"} value={currentPlayer.couponCodeBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeBgColor", v, playerConfig.linked)} />
-                          <ColorInput label={"Cor do desconto"} value={currentPlayer.couponTextColor} onChange={(v) => updateConfig(setPlayerConfig, "couponTextColor", v, playerConfig.linked)} />
-                          <ColorInput label={"Fundo do desconto"} value={currentPlayer.couponTextBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponTextBgColor", v, playerConfig.linked)} />
+                          <ColorInput label={"Cor c\u00f3d."} value={currentPlayer.couponCodeColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeColor", v, playerConfig.linked)} />
+                          <ColorInput label={"Fundo c\u00f3d."} value={currentPlayer.couponCodeBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponCodeBgColor", v, playerConfig.linked)} />
+                          <ColorInput label={"Cor desc."} value={currentPlayer.couponTextColor} onChange={(v) => updateConfig(setPlayerConfig, "couponTextColor", v, playerConfig.linked)} />
+                          <ColorInput label={"Fundo desc."} value={currentPlayer.couponTextBgColor} onChange={(v) => updateConfig(setPlayerConfig, "couponTextBgColor", v, playerConfig.linked)} />
 <div className="space-y-1"><label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{"Altura da fonte (px)"}</label><Input type="number" value={currentPlayer.couponFontSize ?? 13} onChange={(e) => updateConfig(setPlayerConfig, "couponFontSize", Number(e.target.value), playerConfig.linked)} className="h-7 rounded-md text-[12px]" /></div>
                         </div>
                       </ElementSubItem>
