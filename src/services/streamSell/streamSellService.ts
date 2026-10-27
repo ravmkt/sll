@@ -284,6 +284,7 @@ export async function listStudioChat(liveId: string): Promise<StudioChatMessage[
     .from('live_chat_messages')
     .select('id, author_name, message, created_at, is_from_store')
     .eq('live_id', liveId)
+    .eq('archived', false)
     .order('created_at', { ascending: false })
     .limit(100);
   if (error) throw error;

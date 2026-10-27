@@ -81,6 +81,7 @@ export default function LiveEstudio() {
   const [syncKey, setSyncKey] = useState(0);
   const [pinId, setPinId] = useState<string | null>(null);
   const [evOpen, setEvOpen] = useState(false);
+  const [menu, setMenu] = useState<'adv' | 'cp' | null>(null);
   const [q, setQ] = useState('');
   const [found, setFound] = useState<CatalogProduct[]>([]);
   const [searching, setSearching] = useState(false);
@@ -195,8 +196,6 @@ export default function LiveEstudio() {
   const chips: { label: string; icon: ReactNode; text: string; ok: boolean }[] = [
     { label: 'Cadastre-se na live', icon: <UserPlus className="w-3 h-3" />, text: 'Cadastre-se na live e seja avisado das pr\u00f3ximas: [[cadastro]]', ok: true },
     { label: 'Link na tela', icon: <Link2 className="w-3 h-3" />, text: 'O link de compra est\u00e1 na tela, \u00e9 s\u00f3 tocar em Comprar!', ok: true },
-    { label: 'Frete gr\u00e1tis ativo', icon: <Truck className="w-3 h-3" />, text: activeAdv ? `${activeAdv.title} ${activeAdv.description}`.trim() : '', ok: !!activeAdv },
-    { label: activeCoupon ? `Use o cupom ${activeCoupon.code}` : 'Use o cupom', icon: <Tag className="w-3 h-3" />, text: activeCoupon ? `Use o cupom ${activeCoupon.code} e ganhe ${activeCoupon.discountPercent ?? 0}% de desconto!` : '', ok: !!activeCoupon },
   ];
 
   return (
@@ -440,6 +439,39 @@ export default function LiveEstudio() {
             })}
           </div>
           <div className="flex flex-wrap gap-1.5 pt-2">
+            {menu && <div className="fixed inset-0 z-10" onClick={() => setMenu(null)} />}
+            <div className="relative">
+              <button type="button" onClick={() => setMenu(menu === 'adv' ? null : 'adv')} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100">
+                <Truck className="w-3 h-3" />{"Benef\u00edcios"}<ChevronDown className="w-3 h-3" />
+              </button>
+              {menu === 'adv' && (
+                <div className="absolute bottom-full left-0 z-20 mb-1 w-64 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                  {live.advantages.length === 0 && <p className="p-2 text-xs text-slate-400">{"Nenhum benef\u00edcio cadastrado."}</p>}
+                  {live.advantages.map((a) => (
+                    <button key={a.id} type="button" disabled={sending} onClick={() => { post(`${a.title} ${a.description}`.trim()); setMenu(null); }} className="block w-full rounded-lg px-2 py-1.5 text-left hover:bg-slate-50 disabled:opacity-50">
+                      <b className="block text-xs text-slate-800">{a.title}</b>
+                      <span className="block truncate text-[11px] text-slate-500">{a.description}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              <button type="button" onClick={() => setMenu(menu === 'cp' ? null : 'cp')} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100">
+                <Tag className="w-3 h-3" />Cupons<ChevronDown className="w-3 h-3" />
+              </button>
+              {menu === 'cp' && (
+                <div className="absolute bottom-full left-0 z-20 mb-1 w-64 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                  {coupons.length === 0 && <p className="p-2 text-xs text-slate-400">{"Nenhum cupom cadastrado."}</p>}
+                  {coupons.map((c) => (
+                    <button key={c.id} type="button" disabled={sending} onClick={() => { post(`Use o cupom ${c.code} e ganhe ${c.discountPercent ?? 0}% de desconto!`); setMenu(null); }} className="block w-full rounded-lg px-2 py-1.5 text-left hover:bg-slate-50 disabled:opacity-50">
+                      <b className="block text-xs text-slate-800">{c.code}</b>
+                      <span className="block text-[11px] text-slate-500">{c.discountPercent ?? 0}% OFF</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {chips.map((c) => (
               <button key={c.label} type="button" disabled={!c.ok || sending} onClick={() => post(c.text)}
                 className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40">

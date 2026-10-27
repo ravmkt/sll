@@ -6,6 +6,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import LiveChatHistory from "@/components/live/LiveChatHistory";
 import { Eye, TrendingUp, MessageSquare, ShoppingBag, MousePointerClick, RefreshCw, DollarSign, ShoppingCart, ArrowUpRight, CheckCircle2, Sparkles, Heart, MessageCircle, Share2, Play } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -445,7 +446,8 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
           </Button>
         </div>
 
-      </DialogContent>
+      <div className="px-6 pb-6"><LiveChatHistory liveId={(live as any).id} /></div>
+</DialogContent>
     </Dialog>
   );
 }

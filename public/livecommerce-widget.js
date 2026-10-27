@@ -991,7 +991,7 @@ function fetchLiveChatMessages(live) {
   if (!hasSupabase || !live || !live.id) return;
   supabaseFetch(
     'live_chat_messages?select=*&live_id=eq.' + encodeURIComponent(live.id) +
-    '&order=created_at.asc&limit=100',
+    '&archived=eq.false&order=created_at.asc&limit=100',
     { method: 'GET' }
   )
     .then(function (res) { return res.ok ? res.json() : []; })
@@ -1003,7 +1003,8 @@ function fetchLiveChatMessages(live) {
         if (liveChatSeenIds[m.id]) return;
         liveChatSeenIds[m.id] = true;
         var msgEl = document.createElement('div');
-        msgEl.className = 'vl-live-chat-msg' + (m.is_from_store ? ' vl-mine' : '');
+        var own = !m.is_from_store && m.session_id && m.session_id === getLiveSessionId();
+        msgEl.className = 'vl-live-chat-msg' + (own ? ' vl-own' : '') + (m.is_from_store ? ' vl-store' : '');
         var author = document.createElement('b');
         author.textContent = m.is_from_store ? (live.store_name || 'Loja') : (m.author_name || 'Visitante');
         msgEl.appendChild(author);
@@ -2890,4 +2891,69 @@ function fetchLiveSpotlight(live) {
   }
 
   setInterval(function () { addHeaderBtn(); linkify(); }, 500);
+})();
+
+/* SLL-CHAT-V2 */
+;(function () {
+  if (window.__sllChatV2) return;
+  window.__sllChatV2 = true;
+  var css = document.createElement('style');
+  css.textContent = [
+    '.sll-hd-r .sll-mute-btn{order:1}.sll-hd-r .sll-3c-views{order:2}.sll-hd-r .sll-3c-live{order:3}.sll-hd-r .sll-reg-btn{order:4}',
+    '.vl-live-chat-msg{width:fit-content;max-width:85%;box-sizing:border-box;margin-left:0!important;margin-right:auto!important}',
+    '.vl-live-chat-msg.vl-own{margin-left:auto!important;margin-right:0!important}',
+    '.vl-live-modal .vl-live-chat-msg.vl-own,.vl-live-modal.sll-3c .vl-live-chat-msg.vl-own{background:#e0f2fe!important;color:#0f172a!important}',
+    '.vl-live-modal .vl-live-chat-msg.vl-store,.vl-live-modal.sll-3c .vl-live-chat-msg.vl-store{background:var(--p,#0094ea)!important;color:#fff!important;box-shadow:0 1px 4px rgba(0,0,0,.25)}',
+    '.vl-live-modal .vl-live-chat-msg.vl-store b,.vl-live-modal.sll-3c .vl-live-chat-msg.vl-store b{color:#fff!important;margin:0!important;display:inline!important}',
+    '.sll-chat-hd{display:flex;align-items:center;gap:6px;margin-bottom:3px}',
+    '.sll-chat-av{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:none;background:#fff;color:var(--p,#0094ea);display:flex;align-items:center;justify-content:center;font:800 11px system-ui,sans-serif}'
+  ].join('');
+  document.head.appendChild(css);
+
+  function info() {
+    var m = document.querySelector('.vl-live-modal');
+    if (!m) return null;
+    var n = m.querySelector('.sll-hd-name');
+    var lg = m.querySelector('.sll-hd-logo');
+    return {
+      name: n ? String(n.textContent || '').trim() : '',
+      logo: lg && lg.tagName === 'IMG' ? (lg.getAttribute('src') || '') : ''
+    };
+  }
+
+  function decorate() {
+    var list = document.querySelectorAll('.vl-live-modal .vl-live-chat-msg.vl-store:not([data-sll-av="1"])');
+    if (!list.length) return;
+    var i = info();
+    if (!i || !i.name) return;
+    for (var k = 0; k < list.length; k++) {
+      var msg = list[k];
+      if (msg.getAttribute('data-sll-av') === '0' && !i.logo) continue;
+      var b = msg.querySelector('b');
+      if (!b) continue;
+      var row = msg.querySelector('.sll-chat-hd');
+      if (!row) {
+        row = document.createElement('div');
+        row.className = 'sll-chat-hd';
+        msg.insertBefore(row, b);
+        row.appendChild(b);
+      }
+      var old = row.querySelector('.sll-chat-av');
+      if (old) row.removeChild(old);
+      var av;
+      if (i.logo) {
+        av = document.createElement('img');
+        av.src = i.logo;
+        av.alt = '';
+      } else {
+        av = document.createElement('span');
+        av.textContent = i.name.charAt(0).toUpperCase();
+      }
+      av.className = 'sll-chat-av';
+      row.insertBefore(av, row.firstChild);
+      b.textContent = i.name;
+      msg.setAttribute('data-sll-av', i.logo ? '1' : '0');
+    }
+  }
+  setInterval(decorate, 400);
 })();

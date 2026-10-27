@@ -49,6 +49,7 @@ export default function LiveReactivateHost() {
       setError(err?.message || "Nao foi possivel reativar a live.");
       return;
     }
+    await (lc as any).schema("live_commerce").rpc("archive_live_chat", { p_live_id: ask.id });
     window.dispatchEvent(new CustomEvent("live:reactivated", { detail: { id: ask.id, scheduled_at: iso } }));
     setBusy(false);
     setAsk(null);
