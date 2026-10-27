@@ -502,8 +502,33 @@ function renderLiveWidget(live) {
     trackLiveEvent(live.id, 'product_click', { source: onCta ? 'promo_cta' : 'promo_card' });
     if (isLive) { openLiveModal(live); return; }
     var pm = live.promo_media_url ? safeUrl(live.promo_media_url) : '';
+    var openCta = function () {
+      var go = function (u) {
+        u = safeUrl(u);
+        if (u) window.open(u, '_blank', 'noopener,noreferrer');
+        else openLiveModal(live);
+      };
+      if (live.whatsapp_group_url) { go(live.whatsapp_group_url); return; }
+      if (typeof fetchJson !== 'function') { openLiveModal(live); return; }
+      fetchJson('lives?select=whatsapp_group_url&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) {
+        var gu = rows && rows[0] && rows[0].whatsapp_group_url;
+        if (gu) live.whatsapp_group_url = gu;
+        go(gu);
+      }).catch(function () { openLiveModal(live); });
+    };
     var showMedia = function () {
-      if (pm && window.SLL && window.SLL.promoMedia) window.SLL.promoMedia(pm, live.promo_media_type, live.title);
+      if (pm && window.SLL && window.SLL.promoMedia) {
+        var cfgX = (typeof currentCfg !== 'undefined' && currentCfg) ? currentCfg : {};
+        var ctaLbl = (typeof ctaText !== 'undefined' && ctaText) ? ctaText : (live.promo_cta_text || 'Participe');
+        window.SLL.promoMedia(pm, live.promo_media_type, live.title, {
+          scheduledAt: live.scheduled_at || '',
+          showCTA: cfgX.showCTA !== false,
+          ctaText: ctaLbl,
+          ctaBg: cfgX.ctaBgColor || '',
+          ctaColor: cfgX.ctaTextColor || '',
+          onCta: openCta
+        });
+      }
       else openLiveModal(live);
     };
     if (onCta) {
@@ -2360,6 +2385,7 @@ function fetchLiveSpotlight(live) {
 })();
 ;(function () {
   /* SLL-PROMO-MEDIA */
+  /* SLL-PROMO-V2 */
   if (window.__sllPromoMedia) return;
   window.__sllPromoMedia = true;
   window.SLL = window.SLL || {};
@@ -2367,15 +2393,21 @@ function fetchLiveSpotlight(live) {
   css.textContent = [
     '.sll-pm{position:fixed;inset:0;z-index:2147483002;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}',
     '.sll-pm-box{position:relative;max-width:min(94vw,520px);max-height:92vh;display:flex;flex-direction:column;align-items:center;gap:8px}',
-    '.sll-pm-box video,.sll-pm-box img{max-width:100%;max-height:84vh;border-radius:12px;background:#000;display:block}',
-    '.sll-pm-t{color:#fff;font:700 14px system-ui,sans-serif;text-align:center}',
+    '.sll-pm-box video,.sll-pm-box img{max-width:100%;max-height:62vh;border-radius:12px;background:#000;display:block}',
+    '.sll-pm-box{min-width:min(88vw,300px)}',
+    '.sll-pm-head{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px}',
+    '.sll-pm-t{color:#fff;font:800 16px system-ui,sans-serif;text-align:center;line-height:1.25}',
+    '.sll-pm-cd{background:#e11d48;color:#fff;font:800 18px system-ui,sans-serif;padding:6px 16px;border-radius:999px;letter-spacing:.5px}',
+    '.sll-pm-cta{width:100%;padding:15px 18px;border:0;border-radius:14px;background:#e11d48;color:#fff;font:800 17px system-ui,sans-serif;cursor:pointer;animation:sll-pm-pulse 1.4s infinite}',
+    '@keyframes sll-pm-pulse{0%{box-shadow:0 0 0 0 rgba(225,29,72,.65)}70%{box-shadow:0 0 0 16px rgba(225,29,72,0)}100%{box-shadow:0 0 0 0 rgba(225,29,72,0)}}',
     '.sll-pm-x{position:absolute;top:-14px;right:-14px;width:32px;height:32px;border:0;border-radius:50%;background:#fff;color:#111;font:700 18px/1 system-ui,sans-serif;cursor:pointer}'
   ].join('');
   document.head.appendChild(css);
 
-  var cur = null;
+  var cur = null, tick = null;
   function close() {
     if (!cur) return;
+    if (tick) { clearInterval(tick); tick = null; }
     var v = cur.querySelector('video');
     if (v) { try { v.pause(); } catch (e) {} }
     if (cur.parentNode) cur.parentNode.removeChild(cur);
@@ -2384,7 +2416,8 @@ function fetchLiveSpotlight(live) {
   }
   function onKey(e) { if (e.key === 'Escape') close(); }
 
-  window.SLL.promoMedia = function (url, type, title) {
+  window.SLL.promoMedia = function (url, type, title, opts) {
+    opts = opts || {};
     if (!url) return;
     close();
     var isVideo = type === 'video' || (type !== 'image' && /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(url));
@@ -2405,12 +2438,45 @@ function fetchLiveSpotlight(live) {
       m.alt = '';
       m.src = url;
     }
-    box.appendChild(m);
+    var head = document.createElement('div');
+    head.className = 'sll-pm-head';
     if (title) {
       var tt = document.createElement('div');
       tt.className = 'sll-pm-t';
       tt.textContent = String(title);
-      box.appendChild(tt);
+      head.appendChild(tt);
+    }
+    var target = opts.scheduledAt ? new Date(opts.scheduledAt).getTime() : 0;
+    if (target && target > Date.now()) {
+      var cd = document.createElement('div');
+      cd.className = 'sll-pm-cd';
+      head.appendChild(cd);
+      var p2 = function (n) { return (n < 10 ? '0' : '') + n; };
+      var paint = function () {
+        var d = target - Date.now();
+        if (d <= 0) {
+          cd.textContent = 'Come\u00E7ando agora!';
+          if (tick) { clearInterval(tick); tick = null; }
+          return;
+        }
+        var s = Math.floor(d / 1000);
+        var dd = Math.floor(s / 86400);
+        cd.textContent = 'Come\u00E7a em ' + (dd > 0 ? dd + 'd ' : '') + p2(Math.floor((s % 86400) / 3600)) + ':' + p2(Math.floor((s % 3600) / 60)) + ':' + p2(s % 60);
+      };
+      paint();
+      tick = setInterval(paint, 1000);
+    }
+    if (head.firstChild) box.appendChild(head);
+    box.appendChild(m);
+    if (opts.showCTA && typeof opts.onCta === 'function') {
+      var cta = document.createElement('button');
+      cta.type = 'button';
+      cta.className = 'sll-pm-cta';
+      cta.textContent = String(opts.ctaText || 'Participe');
+      if (opts.ctaBg) cta.style.background = opts.ctaBg;
+      if (opts.ctaColor) cta.style.color = opts.ctaColor;
+      cta.onclick = function (e) { e.stopPropagation(); opts.onCta(); };
+      box.appendChild(cta);
     }
     var x = document.createElement('button');
     x.type = 'button';
