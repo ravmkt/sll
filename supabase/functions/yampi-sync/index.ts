@@ -17,6 +17,36 @@ const EVENTS = ['product.inventory.updated', 'product.updated', 'order.paid'];
 const COLS = 'store_id,alias,user_token,user_secret,webhook_secret,webhook_status,webhook_hmac_key';
 const admin = createClient(BASE, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
+/* SLL-LIVE-SALE: grava venda atribuida a uma live (utm_source=stream_sell, utm_campaign=<id da live>) */
+async function recordLiveSale(storeId: string, raw: string) {
+  try {
+    const evt = JSON.parse(raw);
+    if (String(evt?.event ?? '') !== 'order.paid') return;
+    const o = evt?.resource ?? evt?.data ?? {};
+    const orderId = String(o.id ?? o.number ?? '');
+    const total = Number(o.value_total ?? o.total ?? o.value ?? 0) || 0;
+    const m =
+      raw.match(/"utm_campaign"\s*:\s*"([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"/i) ??
+      raw.match(/live_([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+    const liveId = m ? m[1].toLowerCase() : '';
+    const fromLive = /stream_sell/.test(raw) || /live_[0-9a-f]{8}-/i.test(raw);
+    console.log('yampi-order', JSON.stringify({ store: storeId, order: orderId, total, live: liveId || null, fromLive, keys: Object.keys(o).slice(0, 40).join(',') }));
+    if (!orderId || !liveId || !fromLive) return;
+
+    const { data: live } = await admin.schema('live_commerce').from('lives').select('id').eq('id', liveId).eq('store_id', storeId).maybeSingle();
+    if (!live) { console.warn('yampi-order: live nao pertence a loja', liveId); return; }
+
+    const row = { total, module: 'stream_sell', source_id: liveId, status: 'paid' };
+    const { data: ex } = await admin.from('sll_conversions').select('id').eq('store_id', storeId).eq('order_id', orderId).maybeSingle();
+    const res = ex
+      ? await admin.from('sll_conversions').update(row).eq('id', ex.id)
+      : await admin.from('sll_conversions').insert({ store_id: storeId, order_id: orderId, ...row });
+    if (res.error) console.error('yampi-order: erro ao gravar', res.error.message);
+  } catch (e) {
+    console.error('yampi-order: falha', e instanceof Error ? e.message : String(e));
+  }
+}
+
 type Conn = { store_id: string; alias: string; user_token: string; user_secret: string; webhook_secret: string; webhook_status: string | null; webhook_hmac_key: string | null };
 
 async function yampi(c: Conn, path: string, init: RequestInit = {}) {
@@ -247,6 +277,7 @@ Deno.serve(async (req) => {
       console.log('yampi-hmac', JSON.stringify({ store: c.store_id, key: !!c.webhook_hmac_key, header: !!hdr, ok: kind }));
       if (Deno.env.get('YAMPI_HMAC_ENFORCE') === 'true' && c.webhook_hmac_key && !kind) return json({ error: 'invalid signature' }, 401);
       await admin.from('yampi_connections').update({ dirty_at: new Date().toISOString() }).eq('store_id', c.store_id);
+      await recordLiveSale(c.store_id, raw);
       EdgeRuntime.waitUntil(syncStore(c.store_id).catch(() => null));
       return json({ ok: true });
     }
