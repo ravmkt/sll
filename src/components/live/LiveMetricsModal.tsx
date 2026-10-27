@@ -7,7 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import LiveChatHistory from "@/components/live/LiveChatHistory";
-import { Eye, TrendingUp, MessageSquare, ShoppingBag, MousePointerClick, RefreshCw, DollarSign, ShoppingCart, ArrowUpRight, CheckCircle2, Sparkles, Heart, MessageCircle, Share2, Play } from 'lucide-react';
+import { Eye, TrendingUp, MessageSquare, ShoppingBag, MousePointerClick, RefreshCw, DollarSign, ShoppingCart, ArrowUpRight, CheckCircle2, Sparkles, Heart, MessageCircle, Share2, Play, X, HelpCircle } from 'lucide-react';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer
@@ -96,7 +97,7 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
           setTotalViews(0);
           setPeakViewers(0);
           setAvgViewTime("0m 0s");
-          setCommentsCount(0);
+          
           setProductClicks(0);
           setOrdersCount(0);
           setTimelineData([]);
@@ -174,6 +175,17 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
     loadMetrics();
   }, [open, live]);
 
+  useEffect(() => {
+    if (!open || !live) return;
+    let alive = true;
+    (supabaseLiveCommerce as any)
+      .from("live_chat_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("live_id", live.id)
+      .then(({ count }: any) => { if (alive) setCommentsCount(count ?? 0); });
+    return () => { alive = false; };
+  }, [open, live]);
+
   if (!live) return null;
 
   const convRate = productClicks > 0 ? ((ordersCount / productClicks) * 100).toFixed(1) : "0.0";
@@ -183,7 +195,10 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
       <DialogContent className="max-w-5xl max-h-[92vh] flex flex-col p-0 overflow-hidden bg-white rounded-2xl shadow-2xl border-0 [&>button]:hidden">
         
         {/* CABEÇALHO */}
-        <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between">
+        <div className="relative shrink-0 pl-6 pr-14 py-4 border-b bg-slate-50 flex items-center justify-between">
+          <button type="button" onClick={() => onOpenChange(false)} aria-label="Fechar" className="absolute right-4 top-4 cursor-pointer rounded-md p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700">
+            <X className="h-4 w-4" />
+          </button>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600 shadow-sm">
               <TrendingUp className="w-5 h-5" />
@@ -252,7 +267,7 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
                           R$ {potentialRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </p>
                         <p className="text-[11px] font-medium text-slate-500">
-                          Intenção Total Gerada
+                          <span className="inline-flex items-center gap-1">{"Inten\u00e7\u00e3o Total Gerada"}<TooltipProvider delayDuration={150}><UITooltip><TooltipTrigger asChild><span className="inline-flex cursor-help"><HelpCircle className="h-3 w-3 text-slate-400" /></span></TooltipTrigger><TooltipContent side="top" className="max-w-[260px] rounded-lg border-0 bg-slate-900 px-3 py-2 text-xs leading-snug text-white shadow-lg">{"Soma estimada do valor dos produtos que receberam cliques direcionados ao checkout ou WhatsApp durante a transmiss\u00e3o."}</TooltipContent></UITooltip></TooltipProvider></span>
                         </p>
                       </div>
                     </CardContent>
@@ -430,23 +445,20 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
                   </div>
                 )}
               </div>
+            <LiveChatHistory liveId={(live as any).id} />
             </>
           )}
         </div>
 
         {/* RODAPÉ */}
-        <div className="px-6 py-3 border-t bg-slate-50 flex items-center justify-end">
+        <div className="shrink-0 px-6 py-3 border-t bg-slate-50 flex items-center justify-end">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
             className="h-9 px-5 text-xs font-semibold rounded-xl"
-          >
-            Fechar
-          </Button>
+          >Fechar Resumo</Button>
         </div>
-
-      <div className="px-6 pb-6"><LiveChatHistory liveId={(live as any).id} /></div>
 </DialogContent>
     </Dialog>
   );

@@ -220,10 +220,10 @@ export default function LiveEstudio() {
             type="button"
             disabled={busy === 'status'}
             onClick={() => run('status', () => setLiveStatus(live, isLive ? 'finished' : 'live'))}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-60 ${btnOn}`}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-60 ml-auto shrink-0 ${isLive ? 'border border-red-600 bg-white text-red-600 hover:bg-red-50' : 'bg-red-600 text-white shadow-sm hover:bg-red-700'}`}
           >
             {busy === 'status' ? <Loader2 className="w-4 h-4 animate-spin" /> : isLive ? <Square className="w-4 h-4" /> : <Radio className="w-4 h-4" />}
-            {isLive ? 'Encerrar live' : 'Iniciar live'}
+            {isLive ? 'Encerrar transmiss\u00e3o' : 'Iniciar live'}
           </button>
         )}
       </div>
@@ -237,7 +237,7 @@ export default function LiveEstudio() {
         <Chip icon={<TrendingUp className="w-3.5 h-3.5" />} label="Pico" value={String(stats.peak)} level={trend} />
         <Chip icon={<Clock className="w-3.5 h-3.5" />} label="No ar" value={dur} level={isLive ? 'ok' : 'off'} />
         <Chip icon={<MessageSquare className="w-3.5 h-3.5" />} label="Msgs/min" value={String(perMin)} level={!isLive ? 'off' : perMin > 0 ? 'ok' : 'warn'} />
-        <Chip icon={<Signal className="w-3.5 h-3.5" />} label="Sinal" value={"indispon\u00edvel"} level="off" />
+        <Chip icon={<Signal className="w-3.5 h-3.5" />} label="Sinal" value={isLive ? "indispon\u00edvel" : finished ? "encerrado" : "Aguardando transmiss\u00e3o"} level={isLive || finished ? "off" : "warn"} />
         <button type="button" onClick={resync} title={"Recarrega s\u00f3 o player deste painel, sem interromper a transmiss\u00e3o"}
           className="flex items-center justify-center gap-2 bg-white rounded-xl border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50">
           <RefreshCw className="w-3.5 h-3.5" />{"Ressincronizar player"}
