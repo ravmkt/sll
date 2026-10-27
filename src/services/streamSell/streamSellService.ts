@@ -319,3 +319,39 @@ export async function addAdvantage(live: CockpitLive, title: string, description
   const up = await (lc as any).from('lives').update({ advantages: [...list, item] }).eq('id', live.id);
   if (up.error) throw up.error;
 }
+
+/* ===== ESTUDIO V3 ===== */
+export interface CatalogProduct {
+  id: string;
+  name: string;
+  price: number | null;
+  image_url: string | null;
+}
+
+export async function searchCatalog(storeId: string, term: string): Promise<CatalogProduct[]> {
+  const q = term.trim().replace(/[%,()]/g, ' ');
+  if (q.length < 2) return [];
+  const { data, error } = await (supabase as any)
+    .from('products')
+    .select('id, name, price, image_url')
+    .eq('store_id', storeId)
+    .ilike('name', `%${q}%`)
+    .limit(8);
+  if (error) throw error;
+  return (data || []) as CatalogProduct[];
+}
+
+export async function linkProduct(live: { id: string; storeId: string }, productId: string, code: number) {
+  const base: Record<string, unknown> = { live_id: live.id, product_id: productId, code, display_order: code };
+  let res = await (lc as any).from('live_products').insert({ ...base, store_id: live.storeId });
+  if (res.error && /store_id|column/i.test(res.error.message || '')) {
+    res = await (lc as any).from('live_products').insert(base);
+  }
+  if (res.error) throw res.error;
+}
+
+export async function deleteStudioChat(id: string) {
+  const { data, error } = await (lc as any).from('live_chat_messages').delete().eq('id', id).select('id');
+  if (error) throw error;
+  if (!data || data.length === 0) throw new Error('Sem permissao para apagar esta mensagem');
+}
