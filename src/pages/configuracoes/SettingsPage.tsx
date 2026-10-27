@@ -41,7 +41,7 @@ const DEFAULT_FORM: FormState = {
   store_name: '',
   reply_display_name: '',
   store_url: '',
-  platform: 'Bagy',
+  platform: '',
   contact_name: '',
   contact_email: '',
   owner_contact_email: '',
@@ -125,7 +125,7 @@ const SettingsPage: React.FC = () => {
             store?.reply_display_name ||
             abbreviateStoreName(settingsRow?.store_name || store?.name || ''),
           store_url: settingsRow?.store_url || store?.url || '',
-          platform: settingsRow?.platform || store?.platform || 'Bagy',
+          platform: settingsRow?.platform || store?.platform || '',
           contact_name: store?.contact_name || '',
           contact_email: settingsRow?.contact_email || store?.contact_email || '',
           owner_contact_email: settingsRow?.owner_contact_email || store?.owner_contact_email || '',

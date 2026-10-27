@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, Link2, Loader2, RefreshCw, Repeat, X } from 'lucide-react';
 import { getYampiStatus, saveYampiCredentials } from '@/services/yampiService';
@@ -21,6 +21,7 @@ const keyOf = (p: string) =>
 
 export default function PlatformConnectCard({ storeId, platform, platforms, onChangePlatform }: Props) {
   const key = keyOf(platform || '');
+  const selectValue = platforms.find((p) => keyOf(p) === key) ?? '';
   const supported = SUPPORTED.includes(key);
   const [connected, setConnected] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -33,8 +34,26 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
   const [logoIdx, setLogoIdx] = useState(0);
   const [syncing, setSyncing] = useState(false);
   const [info, setInfo] = useState<SyncInfo | null>(null);
+  const [yampiOn, setYampiOn] = useState(false);
+  const userPicked = useRef(false);
 
   useEffect(() => { setLogoIdx(0); }, [key]);
+
+  useEffect(() => {
+    if (!storeId) return;
+    let alive = true;
+    getYampiStatus(storeId)
+      .then((s) => { if (alive) setYampiOn(!!s.connected); })
+      .catch(() => { /* sem conexao salva */ });
+    return () => { alive = false; };
+  }, [storeId]);
+
+  useEffect(() => {
+    if (!yampiOn || userPicked.current || key === 'yampi') return;
+    const y = platforms.find((p) => keyOf(p) === 'yampi');
+    if (y) onChangePlatform(y);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yampiOn, key, platforms]);
 
   useEffect(() => {
     let alive = true;
@@ -58,6 +77,7 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
       setOpen(false);
       setToken('');
       setSecret('');
+      setYampiOn(true);
       showSuccess('Yampi conectada.');
       registerYampiWebhook(storeId).then((r) => setInfo((i) => ({ last_sync_at: i?.last_sync_at ?? null, webhook_status: r.status }))).catch(() => { /* cron cobre */ });
     } catch (e) {
@@ -155,8 +175,8 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
       {changing && (
         <div className="space-y-2">
           <select
-            value={platform}
-            onChange={(e) => { onChangePlatform(e.target.value); setChanging(false); }}
+            value={selectValue}
+            onChange={(e) => { userPicked.current = true; onChangePlatform(e.target.value); setChanging(false); }}
             className="w-full md:w-72 px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
           >
             <option value="">Selecione...</option>
