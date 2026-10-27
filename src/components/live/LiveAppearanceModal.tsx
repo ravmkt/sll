@@ -42,7 +42,10 @@ export interface WidgetDivulgacaoSettings extends BaseWidgetSettings {
   countdownBorderRadius: string;
 }
 
-export interface WidgetAoVivoSettings extends BaseWidgetSettings {}
+export interface WidgetAoVivoSettings extends BaseWidgetSettings {
+  afterEnd?: "hide" | "signup" | "minutes";
+  afterEndMinutes?: number;
+}
 
 export interface LivePlayerSettings {
   borderColor: string;
@@ -203,7 +206,9 @@ export const defaultDivulgacaoSettings: WidgetDivulgacaoSettings = {
 export const defaultAoVivoSettings: WidgetAoVivoSettings = {
   ...defaultWidgetBase,
   ctaText: "AO VIVO",
-  ctaBgColor: "#0094ea"
+  ctaBgColor: "#0094ea",
+  afterEnd: "hide",
+  afterEndMinutes: 10
 };
 
 export const defaultPlayerSettings: LivePlayerSettings = {

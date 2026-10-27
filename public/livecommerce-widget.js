@@ -497,11 +497,11 @@ function renderLiveWidget(live) {
       }).catch(function () {});
     } catch (e) {}
   }
-  if (isLive && typeof fetchJson === 'function') { var __endT = setInterval(function () { if (!document.body.contains(host)) { clearInterval(__endT); return; } fetchJson('lives?select=status&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) { var st = rows && rows[0] && rows[0].status; if (st && st !== 'live') { clearInterval(__endT); try { host.remove(); } catch (e) {} liveWidgetRoot = null; } }).catch(function () {}); }, 15000); }
+  if (isLive && typeof fetchJson === 'function') { var __endT = setInterval(function () { if (!document.body.contains(host)) { clearInterval(__endT); return; } fetchJson('lives?select=status&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) { var st = rows && rows[0] && rows[0].status; if (st && st !== 'live') { clearInterval(__endT); try { window.__sllEndHost(host, live, (typeof card !== 'undefined' ? card : null), (typeof currentCfg !== 'undefined' ? currentCfg : {})); } catch (e) {} liveWidgetRoot = null; } }).catch(function () {}); }, 15000); }
   card.addEventListener('click', function (ev) {
     var onCta = !!(ev.target && ev.target.closest && ev.target.closest('.vl-live-cta-btn,.vl-live-circle-cta'));
     trackLiveEvent(live.id, 'product_click', { source: onCta ? 'promo_cta' : 'promo_card' });
-    if (isLive) { if (typeof fetchJson !== 'function') { openLiveModal(live); return; } fetchJson('lives?select=status&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) { var st = rows && rows[0] && rows[0].status; if (st && st !== 'live') { try { host.remove(); } catch (e) {} liveWidgetRoot = null; if (window.__sllEndedShow) window.__sllEndedShow(live.id, live.title); } else openLiveModal(live); }).catch(function () { openLiveModal(live); }); return; }
+    if (isLive) { if (typeof fetchJson !== 'function') { openLiveModal(live); return; } fetchJson('lives?select=status&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) { var st = rows && rows[0] && rows[0].status; if (st && st !== 'live') { try { window.__sllEndHost(host, live, (typeof card !== 'undefined' ? card : null), (typeof currentCfg !== 'undefined' ? currentCfg : {})); } catch (e) {} liveWidgetRoot = null; if (window.__sllEndedShow) window.__sllEndedShow(live.id, live.title); } else openLiveModal(live); }).catch(function () { openLiveModal(live); }); return; }
     var pm = live.promo_media_url ? safeUrl(live.promo_media_url) : '';
     var openCta = function () {
       var go = function (u) {
@@ -2667,3 +2667,27 @@ function fetchLiveSpotlight(live) {
   };
 })();
 /* SLL-LIVE-ENDED-END */
+
+
+/* SLL-END-MODE */
+;(function () {
+  if (window.__sllEndHost) return;
+  window.__sllEndHost = function (host, live, card, cfg) {
+    try {
+      var mode = window.__sllEndMode || (cfg && cfg.afterEnd) || 'hide';
+      var mins = parseFloat(window.__sllEndMinutes || (cfg && cfg.afterEndMinutes)) || 10;
+      if (mode !== 'signup' && mode !== 'minutes') { host.remove(); return; }
+      if (host.__sllEnded) return;
+      host.__sllEnded = true;
+      if (card && card.querySelectorAll) {
+        var btns = card.querySelectorAll('.vl-live-cta-btn,.vl-live-circle-cta');
+        for (var i = 0; i < btns.length; i++) btns[i].textContent = 'Avise-me da pr\u00f3xima live';
+      }
+      if (mode === 'minutes') {
+        setTimeout(function () { try { host.remove(); } catch (e) {} }, mins * 60000);
+      }
+    } catch (e) {
+      try { host.remove(); } catch (x) {}
+    }
+  };
+})();
