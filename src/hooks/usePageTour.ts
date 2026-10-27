@@ -43,8 +43,20 @@ async function markDone(uid: string, key: string) {
   } catch { /* ignora */ }
 }
 
+export function isVisible(el: Element | null): boolean {
+  if (!el) return false;
+  const h = el as HTMLElement;
+  if (!h.getClientRects().length) return false;
+  const r = h.getBoundingClientRect();
+  return r.width > 0 && r.height > 0 && getComputedStyle(h).visibility !== 'hidden';
+}
+
+export function visibleSteps(steps: TourStep[]): TourStep[] {
+  return steps.filter((s) => isVisible(document.querySelector(s.element)));
+}
+
 function runTour(steps: TourStep[], onEnd: () => void): Driver | null {
-  const valid = steps.filter((s) => document.querySelector(s.element));
+  const valid = visibleSteps(steps);
   if (!valid.length) return null;
 
   const d: Driver = driver({
@@ -120,7 +132,7 @@ export function usePageTour(tourKey: string, steps: TourStep[]) {
       let tries = 0;
       const tick = () => {
         if (cancelled) return;
-        const ready = stepsRef.current.some((s) => document.querySelector(s.element));
+        const ready = visibleSteps(stepsRef.current).length > 0;
         const blocked = document.querySelector('[role="dialog"]:not(.driver-popover)');
         if (ready && !blocked) { start(); return; }
         if (++tries < 25) timer = window.setTimeout(tick, 400);

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import PageTour from "@/components/tour/PageTour";
+import type { TourStep } from "@/hooks/usePageTour";
 import { Palette, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { INITIAL_TEMPLATES } from "@/components/live/LiveAppearanceModal";
@@ -84,6 +86,12 @@ function TemplateCard({
   );
 }
 
+const APARENCIA_TOUR: TourStep[] = [
+  { element: '[data-tour="aparencia-novo"]', title: 'Novo template', description: 'Crie um tema pr\u00f3prio para o widget de divulga\u00e7\u00e3o, o selo "ao vivo" e o player.', side: 'bottom' },
+  { element: '[data-tour="aparencia-fabrica"]', title: 'Modelos de f\u00e1brica', description: 'Escolha um modelo e clique em Personalizar. O original nunca \u00e9 sobrescrito: ao salvar, voc\u00ea cria uma c\u00f3pia com o seu nome.', side: 'top' },
+  { element: '[data-tour="aparencia-meus"]', title: 'Meus templates', description: 'Seus temas salvos ficam aqui para editar ou excluir.', side: 'top' },
+];
+
 export default function LiveTemplatesPage() {
   const [customs, setCustoms] = useState<LiveAppearanceTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,6 +131,7 @@ export default function LiveTemplatesPage() {
 
   return (
     <div className="w-full space-y-6 p-6">
+      <PageTour tourKey="live-aparencia" steps={APARENCIA_TOUR} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800">
@@ -132,7 +141,7 @@ export default function LiveTemplatesPage() {
             Escolha um tema para personalizar ou crie o seu. Os modelos de fábrica nunca são sobrescritos: ao salvar, você dá um nome e cria uma cópia.
           </p>
         </div>
-        <Button onClick={() => openEditor("preset_padrao")} className="gap-2 bg-rose-600 text-white hover:bg-rose-700">
+        <Button data-tour="aparencia-novo" onClick={() => openEditor("preset_padrao")} className="gap-2 bg-rose-600 text-white hover:bg-rose-700">
           <Plus className="h-4 w-4" /> Novo template
         </Button>
       </div>
@@ -149,7 +158,7 @@ export default function LiveTemplatesPage() {
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>
       )}
 
-      <section className="space-y-3">
+      <section data-tour="aparencia-fabrica" className="space-y-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Modelos de fábrica</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {INITIAL_TEMPLATES.map((t) => (
@@ -158,7 +167,7 @@ export default function LiveTemplatesPage() {
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section data-tour="aparencia-meus" className="space-y-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Meus templates</h3>
         {loading ? (
           <p className="text-sm text-slate-400">Carregando...</p>

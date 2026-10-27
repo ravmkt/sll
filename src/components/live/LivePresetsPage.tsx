@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import PageTour from "@/components/tour/PageTour";
+import type { TourStep } from "@/hooks/usePageTour";
 import { Gift, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppModal, ConfirmDangerModal } from "@/components/common/AppModal";
@@ -72,6 +74,11 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: () => void; la
     </button>
   );
 }
+
+const CUPONS_TOUR: TourStep[] = [
+  { element: '[data-tour="presets-cupons"]', title: 'Cupons', description: 'Cadastre c\u00f3digos de desconto reutiliz\u00e1veis. Eles aparecem como atalhos ao criar uma live.', side: 'bottom' },
+  { element: '[data-tour="presets-avisos"]', title: 'Avisos', description: 'Comunicados como "Sorteio no final da live". Use o interruptor Ativo para pausar sem excluir.', side: 'top' },
+];
 
 export default function LivePresetsPage() {
   const [presets, setPresets] = useState<LivePreset[]>([]);
@@ -163,7 +170,7 @@ export default function LivePresetsPage() {
     const rows = presets.filter((p) => p.kind === kind);
     const isCoupon = kind === "coupon";
     return (
-      <section className="space-y-3">
+      <section data-tour={isCoupon ? "presets-cupons" : "presets-avisos"} className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
             {isCoupon ? <Tag className="h-4 w-4 text-rose-500" /> : <Gift className="h-4 w-4 text-amber-500" />}
@@ -245,6 +252,7 @@ export default function LivePresetsPage() {
 
   return (
     <div className="w-full space-y-6 p-6">
+      <PageTour tourKey="live-cupons" steps={CUPONS_TOUR} />
       <div>
         <h2 className="text-lg font-bold text-slate-800">{T.title}</h2>
         <p className="mt-0.5 text-sm text-slate-500">{T.sub}</p>

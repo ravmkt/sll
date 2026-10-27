@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import PageTour from "@/components/tour/PageTour";
+import type { TourStep } from "@/hooks/usePageTour";
 import { DollarSign, Eye, MousePointerClick, RefreshCw, ShoppingCart, TrendingUp } from 'lucide-react';
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { supabaseLiveCommerce, supabasePublic } from '@/services/supabaseClients';
@@ -104,6 +106,13 @@ function Kpi({ icon, label, value, tone }: { icon: React.ReactNode; label: strin
 }
 
 type SortKey = 'title' | 'date' | 'peak' | 'views' | 'clicks' | 'orders' | 'revenue' | 'ticket';
+
+const RESULTADOS_TOUR: TourStep[] = [
+  { element: '[data-tour="resultados-periodo"]', title: 'Per\u00edodo', description: 'Escolha 7, 30, 90 dias ou tudo. Todos os n\u00fameros da p\u00e1gina seguem esse filtro.', side: 'bottom' },
+  { element: '[data-tour="resultados-kpis"]', title: 'Indicadores', description: 'Faturamento das lives, pedidos aprovados, pico de audi\u00eancia e cliques em produtos.', side: 'bottom' },
+  { element: '[data-tour="resultados-grafico"]', title: 'Evolu\u00e7\u00e3o', description: 'Compare vendas e visualiza\u00e7\u00f5es dia a dia. Clique nas etiquetas para mostrar ou ocultar cada s\u00e9rie.', side: 'top' },
+  { element: '[data-tour="resultados-tabela"]', title: 'Desempenho por live', description: 'Clique nos t\u00edtulos das colunas para ordenar e descobrir suas melhores lives.', side: 'top' },
+];
 
 export default function LiveResultadosPage() {
   const [lives, setLives] = useState<LiveRow[]>([]);
@@ -252,6 +261,7 @@ export default function LiveResultadosPage() {
 
   return (
     <div className="w-full space-y-6 p-6">
+      <PageTour tourKey="live-resultados" steps={RESULTADOS_TOUR} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
@@ -259,7 +269,7 @@ export default function LiveResultadosPage() {
           </h2>
           <p className="text-sm text-slate-500">{T.sub}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div data-tour="resultados-periodo" className="flex flex-wrap items-center gap-2">
           {PERIODS.map((p) => (
             <button
               key={p.k}
@@ -278,14 +288,14 @@ export default function LiveResultadosPage() {
 
       {error && <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div data-tour="resultados-kpis" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi icon={<DollarSign className="h-5 w-5 text-emerald-600" />} tone="bg-emerald-50" label={T.kRev} value={brl(model.totals.revenue)} />
         <Kpi icon={<ShoppingCart className="h-5 w-5 text-sky-600" />} tone="bg-sky-50" label={T.kOrd} value={num(model.totals.orders)} />
         <Kpi icon={<Eye className="h-5 w-5 text-rose-600" />} tone="bg-rose-50" label={T.kPeak} value={num(model.historicPeak)} />
         <Kpi icon={<MousePointerClick className="h-5 w-5 text-amber-600" />} tone="bg-amber-50" label={T.kClk} value={num(model.totals.clicks)} />
       </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <section data-tour="resultados-grafico" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-bold text-slate-800">{T.chart}</h3>
           <div className="flex items-center gap-2">
@@ -332,7 +342,7 @@ export default function LiveResultadosPage() {
         )}
       </section>
 
-      <section className="space-y-3">
+      <section data-tour="resultados-tabela" className="space-y-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{T.table}</h3>
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full min-w-[900px] text-left text-sm">

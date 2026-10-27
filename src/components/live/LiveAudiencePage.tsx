@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import PageTour from "@/components/tour/PageTour";
+import type { TourStep } from "@/hooks/usePageTour";
 import { BellRing, Download, MessageCircle, Phone, RefreshCw, Search, UserPlus, Users } from 'lucide-react';
 import { supabaseLiveCommerce as supabase } from '@/services/supabaseClients';
 import { liveStore } from '@/components/live/LiveTemplatesPage';
@@ -100,6 +102,13 @@ function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode; label
     </div>
   );
 }
+
+const AUDIENCIA_TOUR: TourStep[] = [
+  { element: '[data-tour="audiencia-metricas"]', title: 'Sua audi\u00eancia', description: 'Total de inscritos, contatos com WhatsApp e novos cadastros dos \u00faltimos 7 dias.', side: 'bottom' },
+  { element: '[data-tour="audiencia-regua"]', title: 'R\u00e9gua de notifica\u00e7\u00e3o', description: 'Ative os avisos autom\u00e1ticos: lembrete 24h antes e "Estamos ao vivo!" na hora de iniciar.', side: 'bottom' },
+  { element: '[data-tour="audiencia-busca"]', title: 'Busca', description: 'Encontre pessoas por nome, e-mail, WhatsApp ou live de origem.', side: 'bottom' },
+  { element: '[data-tour="audiencia-tabela"]', title: 'Cadastros', description: 'Use o bot\u00e3o Enviar para chamar a pessoa no WhatsApp com a mensagem pronta.', side: 'top' },
+];
 
 export default function LiveAudiencePage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -216,6 +225,7 @@ export default function LiveAudiencePage() {
 
   return (
     <div className="w-full space-y-5 p-6">
+      <PageTour tourKey="live-audiencia" steps={AUDIENCIA_TOUR} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
@@ -233,13 +243,13 @@ export default function LiveAudiencePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div data-tour="audiencia-metricas" className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <MetricCard icon={<Users className="h-5 w-5 text-rose-600" />} tone="bg-rose-50" label={T.cardTotal} value={stats.total} />
         <MetricCard icon={<Phone className="h-5 w-5 text-emerald-600" />} tone="bg-emerald-50" label={T.cardWa} value={stats.wa} />
         <MetricCard icon={<UserPlus className="h-5 w-5 text-sky-600" />} tone="bg-sky-50" label={T.cardNew} value={stats.recent} />
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div data-tour="audiencia-regua" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50">
@@ -272,7 +282,7 @@ export default function LiveAudiencePage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative w-full max-w-md">
+        <div data-tour="audiencia-busca" className="relative w-full max-w-md">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={T.search} className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-rose-400" />
         </div>
@@ -285,7 +295,7 @@ export default function LiveAudiencePage() {
 
       {error && <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
 
-      <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div data-tour="audiencia-tabela" className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[900px] table-fixed text-left text-sm">
           <colgroup>
             <col className="w-[18%]" />
