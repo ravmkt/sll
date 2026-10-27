@@ -452,6 +452,42 @@ function renderLiveWidget(live) {
   }
 
   if (isCircle && currentCfg.showCTA !== false) { var circleCta = document.createElement('button'); circleCta.className = 'vl-live-circle-cta'; circleCta.textContent = ctaText; card.appendChild(circleCta); } /* SLL-BUBBLE-FIX-CTA */
+  /* SLL-DIV-CTA */
+  (function () {
+    try {
+      var round = (shape === 'circle' || shape === 'circular');
+      var bwPx = parseFloat(borderWidth) || 0;
+      var inner = Math.max(0, (parseFloat(borderRadius) || 0) - bwPx) + 'px';
+      var fx = document.createElement('style');
+      fx.textContent =
+        '.vl-live-container{background:transparent !important;overflow:visible !important;}' +
+        '.vl-live-media{background:#000;border-radius:' + inner + ' !important;clip-path:none !important;}' +
+        '.vl-live-overlay-grad{border-radius:' + inner + ' !important;clip-path:none !important;}' +
+        '.vl-live-cta-btn.sll-cta-out{position:absolute !important;left:50% !important;top:100% !important;right:auto !important;bottom:auto !important;transform:translateX(-50%);margin-top:8px !important;width:auto !important;min-width:96px;padding:6px 18px !important;white-space:nowrap;z-index:4;}' +
+        '.vl-live-countdown.sll-cd-top{position:absolute !important;top:8px;left:8px;right:auto !important;width:auto !important;z-index:4;border-radius:999px !important;padding:3px 10px !important;}';
+      liveWidgetShadow.appendChild(fx);
+
+      var btn = card.querySelector('.vl-live-cta-btn');
+      if (currentCfg.showCTA === false) {
+        if (btn && btn.parentNode) btn.parentNode.removeChild(btn);
+      } else if (!round) {
+        if (!btn) {
+          btn = document.createElement('button');
+          btn.className = 'vl-live-cta-btn';
+          btn.textContent = ctaText;
+        }
+        if (btn.parentNode !== card) card.appendChild(btn);
+        btn.classList.add('sll-cta-out');
+        card.style.marginBottom = '44px';
+      }
+
+      if (!round) {
+        var cd = card.querySelector('.vl-live-countdown');
+        if (cd) { card.appendChild(cd); cd.classList.add('sll-cd-top'); }
+      }
+    } catch (e) { if (window.console) console.warn('SLL-DIV-CTA', e); }
+  })();
+
   card.addEventListener('click', function () {
     trackLiveEvent(live.id, 'product_click', { source: 'promo_card' });
     openLiveModal(live);
