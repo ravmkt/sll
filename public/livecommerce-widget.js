@@ -2493,3 +2493,175 @@ function fetchLiveSpotlight(live) {
     if (isVideo) { try { var p = m.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
   };
 })();
+
+/* SLL-LIVE-ENDED-START */
+(function () {
+  if (window.__sllLiveEnded) return;
+  window.__sllLiveEnded = true;
+  var of = window.fetch;
+  if (typeof of !== 'function') return;
+  var ctx = { base: '', key: '', auth: '', profile: '' };
+  var seen = {}, shown = {}, checking = {};
+  function noop() {}
+
+  function hget(h, n) {
+    if (!h) return '';
+    try {
+      if (typeof h.get === 'function') return h.get(n) || '';
+      for (var k in h) { if (String(k).toLowerCase() === n) return h[k]; }
+    } catch (e) {}
+    return '';
+  }
+  function capture(input, init) {
+    var url = typeof input === 'string' ? input : ((input && input.url) || '');
+    var i = url.indexOf('/rest/v1/');
+    if (i < 0) return url;
+    ctx.base = url.slice(0, i);
+    var h = (init && init.headers) || (input && input.headers);
+    var k = hget(h, 'apikey'); if (k) ctx.key = k;
+    var a = hget(h, 'authorization'); if (a) ctx.auth = a;
+    if (/\/rest\/v1\/live/.test(url)) {
+      var p = hget(h, 'accept-profile'); if (p) ctx.profile = p;
+    }
+    return url;
+  }
+  function hdr(extra) {
+    var o = {
+      apikey: ctx.key,
+      Authorization: ctx.auth || ('Bearer ' + ctx.key),
+      'Accept-Profile': ctx.profile || 'live_commerce'
+    };
+    for (var k in extra) o[k] = extra[k];
+    return o;
+  }
+  function isEnded(s) { return s === 'finished' || s === 'ended'; }
+
+  function handle(d) {
+    var rows = Array.isArray(d) ? d : (d && typeof d === 'object' ? [d] : []);
+    var present = {};
+    rows.forEach(function (r) {
+      if (!r || !r.id) return;
+      present[r.id] = 1;
+      if (r.status === 'live') seen[r.id] = r;
+      else if (isEnded(r.status) && seen[r.id]) end(r.id, r);
+    });
+    Object.keys(seen).forEach(function (id) { if (!present[id] && !shown[id]) verify(id); });
+  }
+  function verify(id) {
+    if (!ctx.base || !ctx.key) return;
+    var t = Date.now();
+    if (checking[id] && t - checking[id] < 8000) return;
+    checking[id] = t;
+    of(ctx.base + '/rest/v1/lives?select=id,status&id=eq.' + encodeURIComponent(id), { headers: hdr({}) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!Array.isArray(d)) return;
+        if (d.length === 0 || isEnded(d[0].status)) end(id, d[0] || seen[id]);
+      })
+      .catch(noop);
+  }
+  function end(id, row) {
+    if (shown[id]) return;
+    shown[id] = 1;
+    var title = (row && row.title) || (seen[id] && seen[id].title) || '';
+    show(id, title);
+  }
+
+  function el(tag, css, text) {
+    var e = document.createElement(tag);
+    if (css) e.style.cssText = css;
+    if (text) e.textContent = text;
+    return e;
+  }
+  function maskPhone(v) {
+    var d = String(v).replace(/\D/g, '').slice(0, 11);
+    if (d.length > 6) return '(' + d.slice(0, 2) + ') ' + d.slice(2, d.length > 10 ? 7 : 6) + '-' + d.slice(d.length > 10 ? 7 : 6);
+    if (d.length > 2) return '(' + d.slice(0, 2) + ') ' + d.slice(2);
+    return d;
+  }
+  function errText(s) {
+    if (s.indexOf('invalid_name') > -1) return 'Informe seu nome.';
+    if (s.indexOf('invalid_email') > -1) return 'E-mail inv\u00e1lido.';
+    if (s.indexOf('invalid_phone') > -1) return 'WhatsApp inv\u00e1lido (use DDD + n\u00famero).';
+    return 'N\u00e3o foi poss\u00edvel enviar agora. Tente novamente.';
+  }
+
+  function show(id, title) {
+    if (document.getElementById('sll-live-ended')) return;
+    var ov = el('div', 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;');
+    ov.id = 'sll-live-ended';
+    var box = el('div', 'background:#fff;color:#0f172a;border-radius:20px;width:100%;max-width:400px;padding:24px;box-shadow:0 25px 60px rgba(0,0,0,.35);max-height:92vh;overflow:auto;box-sizing:border-box;');
+    function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+
+    var x = el('button', 'float:right;border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:#64748b;', '\u00d7');
+    x.type = 'button'; x.setAttribute('aria-label', 'Fechar'); x.onclick = close;
+    box.appendChild(x);
+    box.appendChild(el('div', 'font-size:11px;font-weight:800;letter-spacing:.08em;color:#e11d48;text-transform:uppercase;', 'Live encerrada'));
+    box.appendChild(el('h2', 'margin:6px 0 4px;font-size:20px;font-weight:800;', 'Obrigado por participar!'));
+    if (title) box.appendChild(el('p', 'margin:0 0 6px;font-size:13px;color:#475569;font-weight:600;', title));
+    box.appendChild(el('p', 'margin:0 0 16px;font-size:13px;color:#475569;', 'Deixe seus dados para ser avisado da pr\u00f3xima live.'));
+
+    var form = el('form', 'display:flex;flex-direction:column;gap:10px;');
+    var css = 'width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:12px;padding:11px 12px;font-size:14px;outline:none;';
+    function field(ph, type, ac) {
+      var i = el('input', css); i.placeholder = ph; i.type = type; i.autocomplete = ac; i.required = true;
+      form.appendChild(i); return i;
+    }
+    var fn = field('Seu nome', 'text', 'name');
+    var fe = field('Seu e-mail', 'email', 'email');
+    var fp = field('Seu WhatsApp', 'tel', 'tel');
+    fp.oninput = function () { fp.value = maskPhone(fp.value); };
+    var err = el('p', 'margin:0;font-size:12px;color:#e11d48;min-height:14px;');
+    form.appendChild(err);
+    var btn = el('button', 'border:0;border-radius:12px;padding:12px;font-size:14px;font-weight:700;color:#fff;background:#e11d48;cursor:pointer;', 'Quero ser avisado');
+    btn.type = 'submit';
+    form.appendChild(btn);
+    var no = el('button', 'border:0;background:transparent;font-size:12px;color:#64748b;cursor:pointer;padding:4px;', 'Agora n\u00e3o');
+    no.type = 'button'; no.onclick = close;
+    form.appendChild(no);
+
+    form.onsubmit = function (ev) {
+      ev.preventDefault();
+      err.textContent = '';
+      if (!ctx.base || !ctx.key) { err.textContent = errText(''); return; }
+      btn.disabled = true; btn.textContent = 'Enviando...';
+      of(ctx.base + '/rest/v1/rpc/register_live_lead', {
+        method: 'POST',
+        headers: hdr({ 'Content-Type': 'application/json', 'Content-Profile': ctx.profile || 'live_commerce' }),
+        body: JSON.stringify({ p_live_id: id, p_name: fn.value, p_email: fe.value, p_whatsapp: fp.value })
+      }).then(function (r) {
+        if (r.ok) {
+          box.innerHTML = '';
+          box.appendChild(el('h2', 'margin:8px 0 6px;font-size:20px;font-weight:800;', 'Tudo certo!'));
+          box.appendChild(el('p', 'margin:0 0 16px;font-size:14px;color:#475569;', 'Voc\u00ea ser\u00e1 avisado(a) na pr\u00f3xima live.'));
+          var ok = el('button', 'border:0;border-radius:12px;padding:12px;font-size:14px;font-weight:700;color:#fff;background:#0f172a;cursor:pointer;width:100%;', 'Fechar');
+          ok.type = 'button'; ok.onclick = close; box.appendChild(ok);
+          return;
+        }
+        return r.text().then(function (t) {
+          err.textContent = errText(t || '');
+          btn.disabled = false; btn.textContent = 'Quero ser avisado';
+        });
+      }).catch(function () {
+        err.textContent = errText('');
+        btn.disabled = false; btn.textContent = 'Quero ser avisado';
+      });
+    };
+
+    box.appendChild(form);
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+  }
+
+  window.fetch = function (input, init) {
+    var url = capture(input, init);
+    var p = of.apply(this, arguments);
+    if (/\/rest\/v1\/lives(\?|$)/.test(url)) {
+      p.then(function (r) {
+        try { r.clone().json().then(handle, noop); } catch (e) {}
+      }, noop);
+    }
+    return p;
+  };
+})();
+/* SLL-LIVE-ENDED-END */
