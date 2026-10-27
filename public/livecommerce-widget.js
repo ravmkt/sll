@@ -265,7 +265,7 @@ function renderLiveWidget(live) {
   if (currentCfg.enabled === false) return;
 
   var isLive = live.status === 'live';
-  var shape = currentCfg.shape || currentCfg.format || 'portrait';
+  var shape = currentCfg.shape || currentCfg.format || 'portrait'; if (shape === 'circular') { shape = 'circle'; } /* SLL-BUBBLE-FIX */
   var format = shape;
   var isCircle = shape === 'circular' || shape === 'circle';
   var width = Number(currentCfg.width) || (isCircle ? 90 : 180);
@@ -345,6 +345,7 @@ function renderLiveWidget(live) {
   /* SLL-MEDIA-CLIP2 */
   var sllIn = Math.max(0, (parseFloat(borderRadius) || 0) - (parseFloat(borderWidth) || 0)) + 'px';
   style.textContent += '.vl-live-media,.vl-live-overlay-grad{border-radius:' + sllIn + ' !important;clip-path:inset(0 round ' + sllIn + ') !important;}';
+  if (isCircle) { style.textContent += '.vl-live-container{overflow:visible !important;margin-bottom:40px;}.vl-live-container .vl-live-circle-cta{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:8px;padding:5px 14px;white-space:nowrap;background:' + (currentCfg.ctaBgColor || '#ec4899') + ';color:' + (currentCfg.ctaTextColor || '#ffffff') + ';border:none;border-radius:' + sllPx(currentCfg.ctaBorderRadius, 999) + ';font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);}'; } /* SLL-BUBBLE-FIX-CSS */
   liveWidgetShadow.appendChild(style);
 
   var card = document.createElement('div');
@@ -450,6 +451,7 @@ function renderLiveWidget(live) {
     }
   }
 
+  if (isCircle && currentCfg.showCTA !== false) { var circleCta = document.createElement('button'); circleCta.className = 'vl-live-circle-cta'; circleCta.textContent = ctaText; card.appendChild(circleCta); } /* SLL-BUBBLE-FIX-CTA */
   card.addEventListener('click', function () {
     trackLiveEvent(live.id, 'product_click', { source: 'promo_card' });
     openLiveModal(live);
