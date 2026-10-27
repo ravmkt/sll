@@ -1241,7 +1241,7 @@ function fetchLiveSpotlight(live) {
     if (!m) return;
     var vid = m[1];
     if (f.src.indexOf('controls=0') < 0) {
-      f.src = f.src + (f.src.indexOf('?') < 0 ? '?' : '&') + 'controls=0&modestbranding=1&rel=0&playsinline=1';
+      f.src = f.src + (f.src.indexOf('?') < 0 ? '?' : '&') + 'controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1';
       return;
     }
     var wrap = f.parentElement;
@@ -1977,4 +1977,94 @@ function fetchLiveSpotlight(live) {
     '.vl-live-modal.sll-3c .sll-3c-share{text-transform:none!important}'
   ].join('');
   document.head.appendChild(css);
+})();
+
+;(function () {
+  /* SLL-MUTE-BTN */
+  var css = document.createElement('style');
+  css.textContent = [
+    '.sll-mute-btn{display:none;align-items:center;justify-content:center;width:36px;height:36px;padding:0;border:0;border-radius:999px;background:#111;color:#fff;cursor:pointer;flex:none;transition:transform .15s}',
+    '.sll-mute-btn:hover{transform:scale(1.08)}',
+    '.sll-mute-btn svg{width:18px;height:18px}',
+    '@media (min-width:901px){.vl-live-modal.sll-3c .sll-mute-btn{display:inline-flex}}'
+  ].join('');
+  document.head.appendChild(css);
+
+  var ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+  var OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>';
+
+  var muted = true, lastSrc = '';
+
+  function ifr() { return document.querySelector('.vl-live-modal iframe[src*="youtube.com/embed/"]'); }
+  function send(f, o) { try { f.contentWindow.postMessage(JSON.stringify(o), '*'); } catch (e) {} }
+  function listen(f) { send(f, { event: 'listening', id: 1, channel: 'widget' }); }
+
+  function paint() {
+    var b = document.querySelector('.sll-mute-btn');
+    if (!b) return;
+    var html = muted ? OFF : ON;
+    if (b.getAttribute('data-m') !== (muted ? '1' : '0')) {
+      b.innerHTML = html;
+      b.setAttribute('data-m', muted ? '1' : '0');
+    }
+    var t = muted ? 'Ativar som' : 'Silenciar';
+    b.title = t;
+    b.setAttribute('aria-label', t);
+  }
+
+  window.addEventListener('message', function (e) {
+    if (!/youtube/i.test(String(e.origin))) return;
+    var d = e.data;
+    if (typeof d === 'string') { try { d = JSON.parse(d); } catch (x) { return; } }
+    if (d && d.event === 'infoDelivery' && d.info && typeof d.info.muted === 'boolean') {
+      muted = d.info.muted;
+      paint();
+    }
+  });
+
+  function toggle() {
+    var f = ifr();
+    if (!f) return;
+    if (f.src.indexOf('enablejsapi=1') < 0) {
+      f.src = f.src.replace(/([?&])mute=[01]/, '$1mute=' + (muted ? 0 : 1));
+      muted = !muted;
+      paint();
+      return;
+    }
+    if (muted) {
+      send(f, { event: 'command', func: 'unMute', args: [] });
+      send(f, { event: 'command', func: 'setVolume', args: [100] });
+      send(f, { event: 'command', func: 'playVideo', args: [] });
+    } else {
+      send(f, { event: 'command', func: 'mute', args: [] });
+    }
+    muted = !muted;
+    paint();
+  }
+
+  setInterval(function () {
+    var r = document.querySelector('.vl-live-modal .sll-hd-r');
+    if (!r) return;
+    var b = r.querySelector('.sll-mute-btn');
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sll-mute-btn';
+      b.onclick = toggle;
+      var live = r.querySelector('.sll-3c-live');
+      if (live && live.nextSibling) r.insertBefore(b, live.nextSibling);
+      else r.appendChild(b);
+    }
+    var f = ifr();
+    if (f && f.src !== lastSrc) {
+      lastSrc = f.src;
+      muted = /[?&]mute=1/.test(f.src);
+      if (!f.getAttribute('data-sll-lst')) {
+        f.setAttribute('data-sll-lst', '1');
+        f.addEventListener('load', function () { setTimeout(function () { listen(f); }, 300); });
+      }
+      setTimeout(function () { listen(f); }, 1200);
+    }
+    paint();
+  }, 400);
 })();
