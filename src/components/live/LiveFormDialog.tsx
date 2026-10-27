@@ -1187,9 +1187,9 @@ export function LiveFormDialog({
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-slate-700">Link do Grupo de WhatsApp (opcional)</Label>
+                        <Label className="text-xs font-semibold text-slate-700">Link do CTA (link de destino)</Label>
                         <Input
-                          placeholder="https://chat.whatsapp.com/..."
+                          placeholder="https://... (grupo do WhatsApp, página, produto)"
                           value={whatsappGroupUrl}
                           onChange={(e) => setWhatsappGroupUrl(e.target.value)}
                           className="h-10 text-sm"
