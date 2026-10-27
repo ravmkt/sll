@@ -27,6 +27,8 @@ import { ShareLiveModal } from "@/components/live/ShareLiveModal";
 import { LiveMetricsModal } from "@/components/live/LiveMetricsModal";
 import LiveTemplatesPage, { liveStore } from "@/components/live/LiveTemplatesPage";
 import LiveDeleteHost from "@/components/live/LiveDeleteHost";
+import LiveReactivateHost from "@/components/live/LiveReactivateHost";
+import { RotateCcw } from "lucide-react";
 import LivePresetsPage from "@/components/live/LivePresetsPage";
 
 import LiveAppearanceModal, {
@@ -208,6 +210,22 @@ function LiveCommerceContent() {
     setEditingLiveId(null);
     setFormOpen(true);
   };
+
+  useEffect(() => {
+    const h = (e: Event) => {
+      const d = (e as CustomEvent).detail as { id: string; scheduled_at: string };
+      setLives((prev) =>
+        prev.map((l) =>
+          l.id === d.id
+            ? ({ ...l, status: "scheduled", scheduled_at: d.scheduled_at, started_at: null, ended_at: null, is_active: true } as any)
+            : l,
+        ),
+      );
+      toast.success("Live reativada e agendada.");
+    };
+    window.addEventListener("live:reactivated", h);
+    return () => window.removeEventListener("live:reactivated", h);
+  }, []);
 
   const handleEdit = (liveId: string) => {
     setEditingLiveId(liveId);
@@ -411,7 +429,12 @@ function LiveCommerceContent() {
                     <Button variant="outline" size="icon" onClick={() => handleShare(live)} title="Divulgar">
                       <Share2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => handleEdit(live.id)} title="Editar">
+                    {live.status === "finished" && (
+                            <Button variant="outline" size="icon" onClick={() => window.dispatchEvent(new CustomEvent("live:reactivate-ask", { detail: { id: live.id, title: live.title } }))} title="Reativar">
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button variant="outline" size="icon" onClick={() => handleEdit(live.id)} title="Editar">
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button variant="outline" size="icon" onClick={() => handleDelete(live.id)} title="Excluir" className="text-destructive hover:bg-destructive/10">
@@ -518,6 +541,7 @@ export function LiveCommerce() {
               <div className={activeTab === "aparencia" || activeTab === "cupons" ? "hidden" : ""}><LiveCommerceContent /></div>
               {activeTab === "aparencia" && <LiveTemplatesPage />}
               <LiveDeleteHost />
+              <LiveReactivateHost />
                      {activeTab === "cupons" && <LivePresetsPage />}
             </>
           ) : (
