@@ -6,6 +6,7 @@ import { AppFooter } from '@/components/layout/AppFooter';
 import { TopBar } from '@/components/layout/TopBar';
 import { Sidebar } from '@/components/layout/Sidebar';
 import PortalHeader from '@/components/layout/PortalHeader';
+import RouteTour from '@/components/tour/RouteTour';
 import MarketingHost from '@/components/marketing/MarketingHost';
 import { useTouchStoreActivity } from '@/hooks/useTouchStoreActivity';
 
@@ -36,6 +37,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           <main className={`relative w-full flex-1 px-4 py-8 sm:px-6 lg:px-8 ${mkLocation === 'home' ? '2xl:pr-[17rem]' : 'mx-auto max-w-7xl'}`}>
             <div className="mx-auto w-full max-w-[76rem] space-y-6">
               <PortalHeader />
+              <RouteTour />
               {children}
             </div>
           </main>
