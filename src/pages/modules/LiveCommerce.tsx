@@ -207,6 +207,20 @@ function LiveCommerceContent() {
     });
   }, [lives, search, statusFilter]);
 
+  useEffect(() => {
+    const w = window as any;
+    const open = () => {
+      setEditingLiveId(null);
+      setFormOpen(true);
+    };
+    if (w.__sllOpenCreate) {
+      w.__sllOpenCreate = false;
+      open();
+    }
+    window.addEventListener("live:create-from-date", open);
+    return () => window.removeEventListener("live:create-from-date", open);
+  });
+
   const handleCreateNew = () => {
     setEditingLiveId(null);
     setFormOpen(true);
@@ -512,9 +526,18 @@ export function LiveCommerce() {
     }
   }, []);
 
+  useEffect(() => {
+    const h = () => {
+      (window as any).__sllOpenCreate = true;
+      setActiveTab("lives");
+    };
+    window.addEventListener("live:go-create", h);
+    return () => window.removeEventListener("live:go-create", h);
+  }, []);
+
   const handleCreateLive = (occ: CommercialDateOccurrence) => {
     setActiveTab("lives");
-    setTimeout(() => window.dispatchEvent(new CustomEvent("live:create-from-date", { detail: { title: "Live " + occ.name, date: occ.date.toISOString() } })), 60);
+    (window as any).__sllOpenCreate = true;
   };
 
   const handleTabChange = (tab: LiveTab) => {
