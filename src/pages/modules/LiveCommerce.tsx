@@ -1,4 +1,5 @@
 import LiveAudiencePage from "@/components/live/LiveAudiencePage";
+import LiveResultadosPage from "@/components/live/LiveResultadosPage";
 import { useLocation } from "react-router-dom";
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
@@ -552,13 +553,13 @@ export function LiveCommerce() {
       <div className="flex min-w-0 flex-1 flex-col" style={{ paddingRight: activeTab === 'visao-geral' ? 'var(--side-banner-w, 0px)' : 0 }}>
 
         <div className="flex-1">
-          {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" ? (
+          {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" || activeTab === "resultados" ? (
             <>
-              <div className={activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" ? "hidden" : ""}><LiveCommerceContent /></div>
+              <div className={activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" || activeTab === "resultados" ? "hidden" : ""}><LiveCommerceContent /></div>
               {activeTab === "aparencia" && <LiveTemplatesPage />}
               <LiveDeleteHost />
               <LiveReactivateHost />
-                     {activeTab === "cupons" && <LivePresetsPage />}{activeTab === "audiencia" && <LiveAudiencePage />}
+                     {activeTab === "cupons" && <LivePresetsPage />}{activeTab === "audiencia" && <LiveAudiencePage />}{activeTab === "resultados" && <LiveResultadosPage />}
             </>
           ) : (
             <div className="p-6 max-w-6xl mx-auto">
