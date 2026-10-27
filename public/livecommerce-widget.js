@@ -707,7 +707,7 @@ card.onclick = function () {
 
   var chatTitle = document.createElement('p');
   chatTitle.className = 'vl-live-chat-title';
-  chatTitle.textContent = 'Chat da live';
+  chatTitle.textContent = 'Chat';
   chatWrap.appendChild(chatTitle);
 
   var chatMessages = document.createElement('div');
@@ -1405,6 +1405,11 @@ function fetchLiveSpotlight(live) {
     }
     sh.style.background = col(c.shareBgColor, '#ffffff');
     sh.style.color = col(c.shareTextColor, '#000000');
+      /* SLL-SHARE-TEXT */
+      var shTxt = String(c.shareText == null ? '' : c.shareText).trim() || 'Compartilhar';
+      if (sh.textContent !== shTxt) sh.textContent = shTxt;
+      var shFs = parseFloat(c.shareFontSize);
+      sh.style.fontSize = (isFinite(shFs) && shFs >= 8 && shFs <= 40 ? shFs : 14) + 'px';
 
     var cp = modal.querySelector('.sll-ao-cp');
     if (cp && !cp.getAttribute('data-sll')) {
@@ -1962,4 +1967,14 @@ function fetchLiveSpotlight(live) {
     if (window.__sllCfg && !cfgAt) cfgAt = now;
     if ((cfgAt && now - cfgAt >= 450) || now - seenAt >= 4000) m.classList.add('sll-cfg-ok');
   }, 40);
+})();
+
+;(function () {
+  /* SLL-TITULOS-IGUAIS */
+  var css = document.createElement('style');
+  css.textContent = [
+    '.vl-live-modal.sll-3c .vl-live-chat-title{font:800 13px system-ui,sans-serif!important;line-height:normal!important;letter-spacing:0!important}',
+    '.vl-live-modal.sll-3c .sll-3c-share{text-transform:none!important}'
+  ].join('');
+  document.head.appendChild(css);
 })();
