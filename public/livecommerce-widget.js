@@ -2691,3 +2691,151 @@ function fetchLiveSpotlight(live) {
     }
   };
 })();
+
+/* SLL-REG-LIVE */
+;(function () {
+  if (window.__sllRegLive) return;
+  window.__sllRegLive = true;
+  var BASE = 'https://flivmllysdhaydhogmhg.supabase.co/rest/v1/';
+  var MARK = '[[cadastro]]';
+
+  var css = document.createElement('style');
+  css.textContent = [
+    '.sll-reg-btn{display:none;align-items:center;gap:6px;height:36px;padding:0 14px;border:0;border-radius:999px;background:var(--p,#e11d48);color:#fff;font:700 13px system-ui,sans-serif;cursor:pointer;flex:none;white-space:nowrap;transition:transform .15s}',
+    '.sll-reg-btn:hover{transform:scale(1.05)}',
+    '.sll-reg-btn svg{width:16px;height:16px}',
+    '@media (min-width:901px){.vl-live-modal.sll-3c .sll-reg-btn{display:inline-flex}}',
+    '.sll-reg-link{display:inline-block;margin-top:4px;padding:5px 12px;border-radius:999px;background:var(--p,#e11d48);color:#fff!important;font-weight:700;text-decoration:none!important;cursor:pointer}'
+  ].join('');
+  document.head.appendChild(css);
+
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>';
+
+  function el(tag, css, text) {
+    var e = document.createElement(tag);
+    if (css) e.style.cssText = css;
+    if (text) e.textContent = text;
+    return e;
+  }
+  function maskPhone(v) {
+    var d = String(v).replace(/\D/g, '').slice(0, 11);
+    if (d.length > 6) return '(' + d.slice(0, 2) + ') ' + d.slice(2, d.length > 10 ? 7 : 6) + '-' + d.slice(d.length > 10 ? 7 : 6);
+    if (d.length > 2) return '(' + d.slice(0, 2) + ') ' + d.slice(2);
+    return d;
+  }
+  function errText(s) {
+    if (s.indexOf('invalid_name') > -1) return 'Informe seu nome.';
+    if (s.indexOf('invalid_email') > -1) return 'E-mail inv\u00e1lido.';
+    if (s.indexOf('invalid_phone') > -1) return 'WhatsApp inv\u00e1lido (use DDD + n\u00famero).';
+    return 'N\u00e3o foi poss\u00edvel enviar agora. Tente novamente.';
+  }
+
+  function openForm() {
+    if (document.getElementById('sll-reg-modal')) return;
+    var key = window.__sllKey, id = window.__sllLiveId;
+    var ov = el('div', 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;');
+    ov.id = 'sll-reg-modal';
+    var box = el('div', 'background:#fff;color:#0f172a;border-radius:20px;width:100%;max-width:400px;padding:24px;box-shadow:0 25px 60px rgba(0,0,0,.35);max-height:92vh;overflow:auto;box-sizing:border-box;');
+    function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+
+    var x = el('button', 'float:right;border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:#64748b;', '\u00d7');
+    x.type = 'button'; x.setAttribute('aria-label', 'Fechar'); x.onclick = close;
+    box.appendChild(x);
+    box.appendChild(el('h2', 'margin:0 0 4px;font-size:20px;font-weight:800;', 'Cadastre-se na live'));
+    box.appendChild(el('p', 'margin:0 0 16px;font-size:13px;color:#475569;', 'Deixe seus dados para ser avisado das pr\u00f3ximas lives.'));
+
+    var form = el('form', 'display:flex;flex-direction:column;gap:10px;');
+    var icss = 'width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:12px;padding:11px 12px;font-size:14px;outline:none;';
+    function field(ph, type, ac) {
+      var i = el('input', icss); i.placeholder = ph; i.type = type; i.autocomplete = ac; i.required = true;
+      form.appendChild(i); return i;
+    }
+    var fn = field('Seu nome', 'text', 'name');
+    var fe = field('Seu e-mail', 'email', 'email');
+    var fp = field('Seu WhatsApp', 'tel', 'tel');
+    fp.oninput = function () { fp.value = maskPhone(fp.value); };
+    var err = el('p', 'margin:0;font-size:12px;color:#e11d48;min-height:14px;');
+    form.appendChild(err);
+    var btn = el('button', 'border:0;border-radius:12px;padding:12px;font-size:14px;font-weight:700;color:#fff;background:#e11d48;cursor:pointer;', 'Quero ser avisado');
+    btn.type = 'submit';
+    form.appendChild(btn);
+
+    form.onsubmit = function (ev) {
+      ev.preventDefault();
+      err.textContent = '';
+      if (!key || !id) { err.textContent = errText(''); return; }
+      btn.disabled = true; btn.textContent = 'Enviando...';
+      fetch(BASE + 'rpc/register_live_lead', {
+        method: 'POST',
+        headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', 'Content-Profile': 'live_commerce' },
+        body: JSON.stringify({ p_live_id: id, p_name: fn.value, p_email: fe.value, p_whatsapp: fp.value })
+      }).then(function (r) {
+        if (r.ok) {
+          box.innerHTML = '';
+          box.appendChild(el('h2', 'margin:8px 0 6px;font-size:20px;font-weight:800;', 'Tudo certo!'));
+          box.appendChild(el('p', 'margin:0 0 16px;font-size:14px;color:#475569;', 'Voc\u00ea ser\u00e1 avisado(a) na pr\u00f3xima live.'));
+          var ok = el('button', 'border:0;border-radius:12px;padding:12px;font-size:14px;font-weight:700;color:#fff;background:#0f172a;cursor:pointer;width:100%;', 'Fechar');
+          ok.type = 'button'; ok.onclick = close; box.appendChild(ok);
+          return;
+        }
+        return r.text().then(function (t) {
+          err.textContent = errText(t || '');
+          btn.disabled = false; btn.textContent = 'Quero ser avisado';
+        });
+      }).catch(function () {
+        err.textContent = errText('');
+        btn.disabled = false; btn.textContent = 'Quero ser avisado';
+      });
+    };
+
+    box.appendChild(form);
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    setTimeout(function () { try { fn.focus(); } catch (e) {} }, 50);
+  }
+  window.__sllOpenReg = openForm;
+
+  // Botao no cabecalho, ao lado do mudo / AO VIVO
+  function addHeaderBtn() {
+    var r = document.querySelector('.vl-live-modal .sll-hd-r');
+    if (!r || r.querySelector('.sll-reg-btn')) return;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sll-reg-btn';
+    b.title = 'Cadastre-se na live';
+    b.innerHTML = ICON + '<span>Cadastrar</span>';
+    b.onclick = openForm;
+    var mute = r.querySelector('.sll-mute-btn');
+    var live = r.querySelector('.sll-3c-live');
+    var ref = mute || live;
+    if (ref && ref.nextSibling) r.insertBefore(b, ref.nextSibling);
+    else r.appendChild(b);
+  }
+
+  // Link no chat: troca [[cadastro]] por um botao clicavel
+  function linkify() {
+    var chat = document.querySelector('.vl-live-modal .vl-live-chat');
+    if (!chat) return;
+    var w = document.createTreeWalker(chat, NodeFilter.SHOW_TEXT, null);
+    var hits = [], n;
+    while ((n = w.nextNode())) { if (n.nodeValue && n.nodeValue.indexOf(MARK) > -1) hits.push(n); }
+    hits.forEach(function (node) {
+      var parts = node.nodeValue.split(MARK);
+      var par = node.parentNode;
+      if (!par) return;
+      par.insertBefore(document.createTextNode(parts[0]), node);
+      par.insertBefore(document.createElement('br'), node);
+      var a = document.createElement('a');
+      a.className = 'sll-reg-link';
+      a.href = '#';
+      a.textContent = 'Cadastrar agora';
+      a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); openForm(); });
+      par.insertBefore(a, node);
+      if (parts[1]) par.insertBefore(document.createTextNode(parts[1]), node);
+      par.removeChild(node);
+    });
+  }
+
+  setInterval(function () { addHeaderBtn(); linkify(); }, 500);
+})();

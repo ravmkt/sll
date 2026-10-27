@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, Package, Radio, Square, Tag, Activity, Gift, Eye, TrendingUp,
   MessageSquare, Send, Clock, Signal, RefreshCw, Volume2, VolumeX, ExternalLink, Search,
-  Plus, Pin, Trash2, ChevronDown, Link2, Truck, X,
+  Plus, Pin, Trash2, ChevronDown, Link2, Truck, UserPlus, X,
 } from 'lucide-react';
 import { useLiveCockpit } from '@/hooks/useLiveCockpit';
 import {
@@ -193,6 +193,7 @@ export default function LiveEstudio() {
   const btnMute = 'bg-slate-100 hover:bg-slate-200 text-slate-700';
 
   const chips: { label: string; icon: ReactNode; text: string; ok: boolean }[] = [
+    { label: 'Cadastre-se na live', icon: <UserPlus className="w-3 h-3" />, text: 'Cadastre-se na live e seja avisado das pr\u00f3ximas: [[cadastro]]', ok: true },
     { label: 'Link na tela', icon: <Link2 className="w-3 h-3" />, text: 'O link de compra est\u00e1 na tela, \u00e9 s\u00f3 tocar em Comprar!', ok: true },
     { label: 'Frete gr\u00e1tis ativo', icon: <Truck className="w-3 h-3" />, text: activeAdv ? `${activeAdv.title} ${activeAdv.description}`.trim() : '', ok: !!activeAdv },
     { label: activeCoupon ? `Use o cupom ${activeCoupon.code}` : 'Use o cupom', icon: <Tag className="w-3 h-3" />, text: activeCoupon ? `Use o cupom ${activeCoupon.code} e ganhe ${activeCoupon.discountPercent ?? 0}% de desconto!` : '', ok: !!activeCoupon },
@@ -429,7 +430,7 @@ export default function LiveEstudio() {
                   m.is_from_store ? 'ml-auto bg-sky-600 text-white' : question ? 'bg-amber-50 border border-amber-300 text-slate-800' : 'bg-slate-100 text-slate-800'
                 }`}>
                   <b className={`block text-[10px] ${m.is_from_store ? 'text-sky-100' : 'text-slate-500'}`}>{m.author_name || 'Visitante'}{question ? ' \u00b7 d\u00favida' : ''}</b>
-                  {m.message}
+                  {m.message.split('[[cadastro]]').join(' (link de cadastro)')}
                   <span className="absolute -top-2 right-1 hidden group-hover:flex gap-1 rounded-md bg-white border border-slate-200 shadow px-1 py-0.5">
                     <button type="button" title="Fixar no topo" onClick={() => setPinId(m.id)} className="text-slate-500 hover:text-amber-600"><Pin className="w-3.5 h-3.5" /></button>
                     <button type="button" title="Apagar" onClick={() => run(`d-${m.id}`, async () => { await deleteStudioChat(m.id); setChat((c) => c.filter((x) => x.id !== m.id)); })} className="text-slate-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
