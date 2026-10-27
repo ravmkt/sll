@@ -1,3 +1,4 @@
+import LiveAudiencePage from "@/components/live/LiveAudiencePage";
 import { useLocation } from "react-router-dom";
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
@@ -536,13 +537,13 @@ export function LiveCommerce() {
       <div className="flex min-w-0 flex-1 flex-col" style={{ paddingRight: 'var(--side-banner-w, 0px)' }}>
 
         <div className="flex-1">
-          {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" || activeTab === "cupons" ? (
+          {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" ? (
             <>
-              <div className={activeTab === "aparencia" || activeTab === "cupons" ? "hidden" : ""}><LiveCommerceContent /></div>
+              <div className={activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" ? "hidden" : ""}><LiveCommerceContent /></div>
               {activeTab === "aparencia" && <LiveTemplatesPage />}
               <LiveDeleteHost />
               <LiveReactivateHost />
-                     {activeTab === "cupons" && <LivePresetsPage />}
+                     {activeTab === "cupons" && <LivePresetsPage />}{activeTab === "audiencia" && <LiveAudiencePage />}
             </>
           ) : (
             <div className="p-6 max-w-6xl mx-auto">

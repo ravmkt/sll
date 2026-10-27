@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, MessageCircle, RefreshCw, Search, Users } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseLiveCommerce as supabase } from '@/services/supabaseClients';
 
 type Lead = {
   id: string;
