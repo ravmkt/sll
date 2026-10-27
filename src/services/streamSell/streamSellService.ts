@@ -303,3 +303,19 @@ export async function sendStudioChat(liveId: string, text: string) {
   });
   if (error) throw error;
 }
+
+export async function addAdvantage(live: CockpitLive, title: string, description: string) {
+  const t = title.trim();
+  const d = description.trim();
+  if (!t) throw new Error('Informe o titulo do beneficio');
+  const { data, error } = await (lc as any).from('lives').select('advantages').eq('id', live.id).maybeSingle();
+  if (error) throw error;
+  const list = Array.isArray(data?.advantages) ? data.advantages : [];
+  const item = {
+    id: (globalThis.crypto && 'randomUUID' in globalThis.crypto) ? globalThis.crypto.randomUUID() : String(Date.now()),
+    title: t,
+    description: d,
+  };
+  const up = await (lc as any).from('lives').update({ advantages: [...list, item] }).eq('id', live.id);
+  if (up.error) throw up.error;
+}
