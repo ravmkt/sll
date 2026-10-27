@@ -2236,3 +2236,47 @@ function fetchLiveSpotlight(live) {
     };
   };
 })();
+/* SLL-LOOP-END */
+(function () {
+  var last = 0, lastSrc = '';
+  function cfg() { try { return window.__sllCfg || {}; } catch (e) { return {}; } }
+  function loopOn() { return cfg().loopVideo === true; }
+  function ifr() { return document.querySelector('.vl-live-modal iframe[src*="youtube.com/embed/"]'); }
+  function send(f, o) { try { f.contentWindow.postMessage(JSON.stringify(o), '*'); } catch (e) {} }
+  function listen(f) { send(f, { event: 'listening', id: 1, channel: 'widget' }); }
+  function restart(f) {
+    var now = Date.now();
+    if (now - last < 1500) return;
+    last = now;
+    send(f, { event: 'command', func: 'seekTo', args: [0, true] });
+    send(f, { event: 'command', func: 'playVideo', args: [] });
+  }
+  window.addEventListener('message', function (e) {
+    if (!/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(e.origin || '')) return;
+    var f = ifr();
+    if (!f || e.source !== f.contentWindow) return;
+    var d = e.data;
+    if (typeof d === 'string') { try { d = JSON.parse(d); } catch (x) { return; } }
+    if (!d || typeof d !== 'object') return;
+    var st = d.event === 'onStateChange' ? d.info : ((d.event === 'infoDelivery' && d.info) ? d.info.playerState : undefined);
+    if (st === 0 && loopOn()) restart(f);
+  });
+  setInterval(function () {
+    var f = ifr();
+    if (f && f.src !== lastSrc) {
+      lastSrc = f.src;
+      f.addEventListener('load', function () { setTimeout(function () { listen(f); }, 300); });
+      setTimeout(function () { listen(f); }, 1200);
+      setTimeout(function () { listen(f); }, 3000);
+    }
+    var v = document.querySelector('.vl-live-modal .vl-live-player-wrap video');
+    if (v) {
+      v.loop = loopOn();
+      if (v.ended && loopOn()) { try { v.currentTime = 0; v.play(); } catch (e) {} }
+    }
+  }, 500);
+  window.__sllLoopDebug = function () {
+    var f = ifr();
+    return { loopVideo: cfg().loopVideo, chaves: Object.keys(cfg()).length, iframe: f ? f.src : null };
+  };
+})();
