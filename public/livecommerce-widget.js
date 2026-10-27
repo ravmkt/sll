@@ -498,6 +498,58 @@ function renderLiveWidget(live) {
     } catch (e) {}
   }
   if (isLive && typeof fetchJson === 'function') { var __endT = setInterval(function () { if (!document.body.contains(host)) { clearInterval(__endT); return; } fetchJson('lives?select=status&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) { var st = rows && rows[0] && rows[0].status; if (st && st !== 'live') { clearInterval(__endT); try { window.__sllEndHost(host, live, (typeof card !== 'undefined' ? card : null), (typeof currentCfg !== 'undefined' ? currentCfg : {})); } catch (e) {} liveWidgetRoot = null; } }).catch(function () {}); }, 15000); }
+  /* SLL-PROMO-REFRESH */
+  if (!isLive && typeof fetchJson === 'function') {
+    (function () {
+      var tm = null, fails = 0, busy = false;
+      function inDom() { return document.body.contains(host); }
+      function stop() { if (tm) { clearTimeout(tm); tm = null; } }
+      function done() { stop(); document.removeEventListener('visibilitychange', onVis); }
+      function delay() {
+        var t0 = live.scheduled_at ? new Date(live.scheduled_at).getTime() : 0;
+        var left = t0 ? t0 - Date.now() : 0;
+        var base = left > 3600000 ? 60000 : (left > 300000 ? 30000 : 10000);
+        base = Math.min(120000, base * Math.pow(2, Math.min(fails, 3)));
+        return base + Math.random() * 4000;
+      }
+      function schedule() { stop(); if (!inDom()) { done(); return; } tm = setTimeout(check, delay()); }
+      function rerender(nl) {
+        done();
+        try { host.remove(); } catch (e) {}
+        liveWidgetRoot = null;
+        var go = function () { renderLiveWidget(nl); };
+        if (typeof loadPromoCfg === 'function') loadPromoCfg(nl).then(go, go); else go();
+      }
+      function check() {
+        tm = null;
+        if (!inDom()) { done(); return; }
+        if (document.hidden || busy) return;
+        busy = true;
+        fetchJson('lives?select=status,scheduled_at&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) {
+          busy = false;
+          fails = 0;
+          var r = rows && rows[0];
+          if (!r) { schedule(); return; }
+          if (r.status === 'live') { rerender(Object.assign({}, live, { status: 'live', scheduled_at: r.scheduled_at || live.scheduled_at })); return; }
+          if (/^(finished|ended|cancelled|canceled)$/.test(String(r.status))) {
+            done();
+            try { host.remove(); } catch (e) {}
+            liveWidgetRoot = null;
+            return;
+          }
+          if (r.scheduled_at && live.scheduled_at && new Date(r.scheduled_at).getTime() !== new Date(live.scheduled_at).getTime()) {
+            rerender(Object.assign({}, live, { scheduled_at: r.scheduled_at }));
+            return;
+          }
+          schedule();
+        }).catch(function () { busy = false; fails++; schedule(); });
+      }
+      function onVis() { if (!document.hidden && !tm && !busy) { if (inDom()) check(); else done(); } }
+      document.addEventListener('visibilitychange', onVis);
+      schedule();
+    })();
+  }
+  
   card.addEventListener('click', function (ev) {
     var onCta = !!(ev.target && ev.target.closest && ev.target.closest('.vl-live-cta-btn,.vl-live-circle-cta'));
     trackLiveEvent(live.id, 'product_click', { source: onCta ? 'promo_cta' : 'promo_card' });
