@@ -48,3 +48,5 @@ nps-master.ps1
 *.bak2
 
 public/*.bak*
+
+supabase/.local-cron-*.sql
