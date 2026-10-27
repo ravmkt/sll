@@ -179,24 +179,27 @@ export default function LivePresetsPage() {
           <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">{T.empty}</div>
         ) : (
           <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full min-w-[820px] table-fixed text-left text-sm">
+            <table className="w-full min-w-[760px] table-fixed text-left text-sm">
               <colgroup>
                 <col className="w-[80px]" />
                 <col />
-                <col className="w-[90px]" />
-                <col className="w-[90px]" />
-                <col className="w-[130px]" />
-                <col className="w-[100px]" />
+                <col className="w-[110px]" />
+                <col className="w-[150px]" />
                 <col className="w-[110px]" />
               </colgroup>
               <thead className="bg-slate-50 text-[11px] font-bold uppercase text-slate-500">
                 <tr>
                   <th className="p-3 text-center">{T.colActive}</th>
-                  <th className="p-3">{(isCoupon ? T.colCode : T.colTitle) + " / " + T.colDesc}</th>
+                  <th className="p-3">{isCoupon ? (T.colCode + " / " + T.colDesc) : "T\u00edtulo / mensagem"}</th>
                   <th className="p-3 text-center">{T.colLives}</th>
-                  <th className="p-3 text-center">{T.colUses}</th>
-                  <th className="p-3 text-center">{T.colViews}</th>
-                  <th className="p-3 text-center">{T.colClicks}</th>
+                  <th
+                    className="p-3 text-center"
+                    title={isCoupon
+                      ? "Quantidade de vezes que o cupom foi realmente utilizado em compras (contagem do pr\u00f3prio cupom)."
+                      : "Total de espectadores que estavam nas lives em que este aviso foi exibido."}
+                  >
+                    {isCoupon ? "Usos reais" : "Alcance (views)"}
+                  </th>
                   <th className="p-3 text-center">{T.colActions}</th>
                 </tr>
               </thead>
@@ -215,9 +218,7 @@ export default function LivePresetsPage() {
                         <div className="truncate text-xs text-slate-500">{p.description || "\u2014"}</div>
                       </td>
                       <td className={"p-3 text-center tabular-nums" + dim}>{fmt(m?.lives_count)}</td>
-                      <td className={"p-3 text-center font-semibold tabular-nums" + dim}>{isCoupon ? fmt(m?.uses) : "\u2014"}</td>
-                      <td className={"p-3 text-center tabular-nums" + dim}>{fmt(m?.views)}</td>
-                      <td className={"p-3 text-center tabular-nums" + dim}>{fmt(m?.clicks)}</td>
+                      <td className={"p-3 text-center font-semibold tabular-nums" + dim}>{fmt(isCoupon ? m?.uses : m?.views)}</td>
                       <td className="p-3 text-center">
                         <button type="button" onClick={() => openEdit(p)} className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-sky-50 hover:text-sky-600">
                           <Pencil className="h-4 w-4" />
