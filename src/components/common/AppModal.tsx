@@ -22,9 +22,10 @@ interface ShellProps {
   children: React.ReactNode;
   footer: React.ReactNode;
   onOpenAutoFocus?: (e: Event) => void;
+  maxWidth?: string;
 }
 
-export function AppModal({ open, title, onClose, busy = false, children, footer, onOpenAutoFocus }: ShellProps) {
+export function AppModal({ open, title, onClose, busy = false, children, footer, onOpenAutoFocus, maxWidth = "max-w-md" }: ShellProps) {
   return (
     <DialogPrimitive.Root
       open={open}
@@ -37,7 +38,7 @@ export function AppModal({ open, title, onClose, busy = false, children, footer,
         <DialogPrimitive.Content
           aria-describedby={undefined}
           onOpenAutoFocus={onOpenAutoFocus}
-          className="fixed left-1/2 top-1/2 z-[100] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+          className={"fixed left-1/2 top-1/2 z-[100] flex max-h-[90vh] w-[calc(100%-2rem)] flex-col " + maxWidth + " -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"}
         >
           <div className="flex items-center justify-between px-7 pb-2 pt-6">
             <DialogPrimitive.Title className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
@@ -50,7 +51,7 @@ export function AppModal({ open, title, onClose, busy = false, children, footer,
               <X className="h-4 w-4" />
             </DialogPrimitive.Close>
           </div>
-          <div className="flex flex-col items-center px-7 py-5">{children}</div>
+          <div className="flex min-h-0 flex-col items-center overflow-y-auto px-7 py-5">{children}</div>
           <div className="flex items-center justify-center gap-3 px-7 pb-6 pt-2">{footer}</div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
