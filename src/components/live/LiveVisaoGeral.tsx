@@ -443,7 +443,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 <p className="text-sm text-slate-400">Nenhuma live agendada.</p>
                 <button
                   type="button"
-                  onClick={() => navigate('/dashboard/modules/stream-sell', { state: { tab: 'lives' } })}
+                  onClick={() => window.dispatchEvent(new Event('live:go-create'))}
                   className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#DC2626] px-8 py-3 text-sm font-bold text-white shadow-md shadow-red-200 transition hover:bg-[#B91C1C] active:scale-[0.98]"
                 >
                   <Plus size={16} /> Criar live
