@@ -488,9 +488,40 @@ function renderLiveWidget(live) {
     } catch (e) { if (window.console) console.warn('SLL-DIV-CTA', e); }
   })();
 
-  card.addEventListener('click', function () {
-    trackLiveEvent(live.id, 'product_click', { source: 'promo_card' });
-    openLiveModal(live);
+  /* SLL-PROMO-CLICK */
+  if (!isLive && !live.whatsapp_group_url && typeof fetchJson === 'function') {
+    try {
+      fetchJson('lives?select=whatsapp_group_url&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) {
+        var gu = rows && rows[0] && rows[0].whatsapp_group_url;
+        if (gu) live.whatsapp_group_url = gu;
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  card.addEventListener('click', function (ev) {
+    var onCta = !!(ev.target && ev.target.closest && ev.target.closest('.vl-live-cta-btn,.vl-live-circle-cta'));
+    trackLiveEvent(live.id, 'product_click', { source: onCta ? 'promo_cta' : 'promo_card' });
+    if (isLive) { openLiveModal(live); return; }
+    var pm = live.promo_media_url ? safeUrl(live.promo_media_url) : '';
+    var showMedia = function () {
+      if (pm && window.SLL && window.SLL.promoMedia) window.SLL.promoMedia(pm, live.promo_media_type, live.title);
+      else openLiveModal(live);
+    };
+    if (onCta) {
+      var openGroup = function (u) {
+        u = safeUrl(u);
+        if (u) window.open(u, '_blank', 'noopener,noreferrer');
+        else showMedia();
+      };
+      if (live.whatsapp_group_url) { openGroup(live.whatsapp_group_url); return; }
+      if (typeof fetchJson !== 'function') { showMedia(); return; }
+      fetchJson('lives?select=whatsapp_group_url&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) {
+        var gu = rows && rows[0] && rows[0].whatsapp_group_url;
+        if (gu) live.whatsapp_group_url = gu;
+        openGroup(gu);
+      }).catch(function () { showMedia(); });
+      return;
+    }
+    showMedia();
   });
 
   liveWidgetShadow.appendChild(card);
@@ -2326,4 +2357,73 @@ function fetchLiveSpotlight(live) {
     window.__sllOwDebug = { hasProd: hasProd, hasChat: hasChat, ad: adV, cp: cpV, share: shV, cols: cols.join(' '), areas: rows.join(' ') };
   }
   setInterval(run, 250);
+})();
+;(function () {
+  /* SLL-PROMO-MEDIA */
+  if (window.__sllPromoMedia) return;
+  window.__sllPromoMedia = true;
+  window.SLL = window.SLL || {};
+  var css = document.createElement('style');
+  css.textContent = [
+    '.sll-pm{position:fixed;inset:0;z-index:2147483002;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}',
+    '.sll-pm-box{position:relative;max-width:min(94vw,520px);max-height:92vh;display:flex;flex-direction:column;align-items:center;gap:8px}',
+    '.sll-pm-box video,.sll-pm-box img{max-width:100%;max-height:84vh;border-radius:12px;background:#000;display:block}',
+    '.sll-pm-t{color:#fff;font:700 14px system-ui,sans-serif;text-align:center}',
+    '.sll-pm-x{position:absolute;top:-14px;right:-14px;width:32px;height:32px;border:0;border-radius:50%;background:#fff;color:#111;font:700 18px/1 system-ui,sans-serif;cursor:pointer}'
+  ].join('');
+  document.head.appendChild(css);
+
+  var cur = null;
+  function close() {
+    if (!cur) return;
+    var v = cur.querySelector('video');
+    if (v) { try { v.pause(); } catch (e) {} }
+    if (cur.parentNode) cur.parentNode.removeChild(cur);
+    cur = null;
+    document.removeEventListener('keydown', onKey, true);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+
+  window.SLL.promoMedia = function (url, type, title) {
+    if (!url) return;
+    close();
+    var isVideo = type === 'video' || (type !== 'image' && /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(url));
+    var ov = document.createElement('div');
+    ov.className = 'sll-pm';
+    var box = document.createElement('div');
+    box.className = 'sll-pm-box';
+    var m;
+    if (isVideo) {
+      m = document.createElement('video');
+      m.controls = true;
+      m.autoplay = true;
+      m.playsInline = true;
+      m.setAttribute('playsinline', '');
+      m.src = url;
+    } else {
+      m = document.createElement('img');
+      m.alt = '';
+      m.src = url;
+    }
+    box.appendChild(m);
+    if (title) {
+      var tt = document.createElement('div');
+      tt.className = 'sll-pm-t';
+      tt.textContent = String(title);
+      box.appendChild(tt);
+    }
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'sll-pm-x';
+    x.setAttribute('aria-label', 'Fechar');
+    x.textContent = '\u00D7';
+    x.onclick = close;
+    box.appendChild(x);
+    ov.appendChild(box);
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    document.body.appendChild(ov);
+    cur = ov;
+    document.addEventListener('keydown', onKey, true);
+    if (isVideo) { try { var p = m.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+  };
 })();
