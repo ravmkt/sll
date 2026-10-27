@@ -1199,6 +1199,8 @@ function fetchLiveSpotlight(live) {
         var ob = link(onAir.url, 'Comprar', 'sll-ao-btn');
         if (ob) ov.appendChild(ob);
         wrap.appendChild(ov);
+        ov.classList.add('sll-ov-new');
+        setTimeout(function () { ov.classList.remove('sll-ov-new'); }, 600);
         st.ov = ov;
       }
     }
@@ -1222,6 +1224,9 @@ function fetchLiveSpotlight(live) {
               if (st.vid !== vid || !st.box) return;
               return loadCfg(live.store_id).then(function () {
                 if (st.vid !== vid || !st.box) return;
+                var rsig = JSON.stringify([live, res[0], pr, res[1], res[2], cfg]);
+                if (st.rsig === rsig && st.box.firstChild) return;
+                st.rsig = rsig;
                 render(live, res[0], pr, res[1], res[2]);
               });
             });
@@ -1928,4 +1933,22 @@ function fetchLiveSpotlight(live) {
     }
   }
   setInterval(sync, 400);
+})();
+/* SLL-NO-FLASH */
+(function () {
+  if (window.__sllNoFlash) return;
+  window.__sllNoFlash = true;
+  var css = document.createElement('style');
+  css.textContent = '.vl-live-modal:not(.sll-cfg-ok){visibility:hidden!important}.sll-ao-ov.sll-ov-new{visibility:hidden!important}';
+  document.head.appendChild(css);
+  var cur = null, seenAt = 0, cfgAt = 0;
+  setInterval(function () {
+    var m = document.querySelector('.vl-live-modal');
+    if (!m) { cur = null; return; }
+    var now = Date.now();
+    if (m !== cur) { cur = m; seenAt = now; cfgAt = 0; }
+    if (m.classList.contains('sll-cfg-ok')) return;
+    if (window.__sllCfg && !cfgAt) cfgAt = now;
+    if ((cfgAt && now - cfgAt >= 450) || now - seenAt >= 4000) m.classList.add('sll-cfg-ok');
+  }, 40);
 })();
