@@ -52,7 +52,7 @@ export default function LivePresetsPage() {
     const storeId = liveStore.id;
     const title = form.kind === "coupon" ? form.title.trim().toUpperCase() : form.title.trim();
     if (!title) {
-      setForm((f) => ({ ...f, error: form.kind === "coupon" ? "Informe o código do cupom." : "Informe o título do benefício." }));
+      setForm((f) => ({ ...f, error: form.kind === "coupon" ? "Informe o código do cupom." : "Informe o título do aviso." }));
       return;
     }
     if (!storeId) {
@@ -94,10 +94,10 @@ export default function LivePresetsPage() {
         <div className="flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
             {isCoupon ? <Tag className="h-4 w-4 text-rose-500" /> : <Gift className="h-4 w-4 text-amber-500" />}
-            {isCoupon ? "Cupons" : "Benefícios"}
+            {isCoupon ? "Cupons" : "Avisos"}
           </h3>
           <Button size="sm" onClick={() => openNew(kind)} className="h-8 gap-1.5 bg-rose-600 text-xs text-white hover:bg-rose-700">
-            <Plus className="h-3.5 w-3.5" /> {isCoupon ? "Novo cupom" : "Novo benefício"}
+            <Plus className="h-3.5 w-3.5" /> {isCoupon ? "Novo cupom" : "Novo aviso"}
           </Button>
         </div>
         {loading ? (
@@ -155,7 +155,7 @@ export default function LivePresetsPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <div>
-        <h2 className="text-lg font-bold text-slate-800">Cupons e Benefícios</h2>
+        <h2 className="text-lg font-bold text-slate-800">Cupons e Avisos</h2>
         <p className="mt-0.5 text-sm text-slate-500">
           Atalhos reutilizáveis nas suas lives. Lives, visualizações e cliques somam as lives em que o atalho foi usado.
         </p>
@@ -168,7 +168,7 @@ export default function LivePresetsPage() {
 
       <AppModal
         open={form.open}
-        title={(form.id ? "EDITAR " : "NOVO ") + (isCouponForm ? "CUPOM" : "BENEFÍCIO")}
+        title={(form.id ? "EDITAR " : "NOVO ") + (isCouponForm ? "CUPOM" : "AVISO")}
         busy={form.busy}
         onClose={() => setForm(EMPTY)}
         footer={
@@ -184,7 +184,7 @@ export default function LivePresetsPage() {
       >
         <div className="w-full space-y-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-600">{isCouponForm ? "Código do cupom" : "Título do benefício"}</label>
+            <label className="text-xs font-bold text-slate-600">{isCouponForm ? "Código do cupom" : "Título do aviso"}</label>
             <input
               autoFocus
               value={form.title}
@@ -214,7 +214,7 @@ export default function LivePresetsPage() {
 
       <ConfirmDangerModal
         open={!!del}
-        title={del?.kind === "coupon" ? "EXCLUIR CUPOM" : "EXCLUIR BENEFÍCIO"}
+        title={del?.kind === "coupon" ? "EXCLUIR CUPOM" : "EXCLUIR AVISO"}
         itemName={del?.title || ""}
         busy={delBusy}
         onClose={() => setDel(null)}

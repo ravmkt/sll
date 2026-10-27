@@ -17,7 +17,7 @@ const EVENT_LABEL: Record<string, string> = {
   'live.start': 'Live iniciada', 'live.end': 'Live encerrada',
   'product.show': 'Produto no ar', 'product.hide': 'Produto retirado',
   'coupon.activate': 'Cupom ativado', 'coupon.deactivate': 'Cupom desativado',
-  'advantage.activate': 'Benef\u00edcio no ar', 'advantage.deactivate': 'Benef\u00edcio retirado',
+  'advantage.activate': 'Aviso no ar', 'advantage.deactivate': 'Aviso retirado',
   'banner.show': 'Banner no ar', 'banner.hide': 'Banner retirado',
   product_click: 'Clique em produto', view: 'Visualiza\u00e7\u00e3o', page_view: 'Visualiza\u00e7\u00e3o',
 };
@@ -304,7 +304,7 @@ export default function LiveEstudio() {
             {([
               ['Produto', onAir?.name, () => setProductOnAir(live, null), 'rm-p'],
               ['Cupom', activeCoupon ? `${activeCoupon.code} (${activeCoupon.discountPercent ?? 0}%)` : undefined, () => setCouponActive(live, activeCoupon!, false), 'rm-c'],
-              ['Benef\u00edcio', activeAdv?.title, () => setAdvantageActive(live, null), 'rm-a'],
+              ['Aviso', activeAdv?.title, () => setAdvantageActive(live, null), 'rm-a'],
             ] as [string, string | undefined, () => Promise<unknown>, string][]).map(([label, val, fn, key]) => (
               <div key={key} className="flex items-center gap-2 text-[11px]">
                 <span className="w-16 shrink-0 text-slate-400">{label}</span>
@@ -364,7 +364,7 @@ export default function LiveEstudio() {
           </section>
 
           <section className={`${card} space-y-2`}>
-            <h2 className="text-sm font-bold flex items-center gap-2"><Tag className="w-4 h-4" />{"Cupons e benef\u00edcios rel\u00e2mpago"}</h2>
+            <h2 className="text-sm font-bold flex items-center gap-2"><Tag className="w-4 h-4" />{"Cupons"}</h2>
             {coupons.length === 0 && <p className="text-xs text-slate-400">Nenhum cupom. Crie um abaixo.</p>}
             {coupons.map((c) => (
               <div key={c.id} className={`flex items-center justify-between gap-2 p-1.5 rounded-xl border ${c.isActive ? 'border-red-400 bg-red-50' : 'border-slate-100'}`}>
@@ -384,8 +384,12 @@ export default function LiveEstudio() {
               <button type="submit" disabled={!!busy || !code.trim()} className="text-[11px] font-bold px-3 rounded-lg bg-slate-900 text-white disabled:opacity-60">Criar</button>
             </form>
 
-            <div className="border-t border-slate-100 pt-2 space-y-1.5">
-              {live.advantages.length === 0 && <p className="text-xs text-slate-400">{"Nenhum benef\u00edcio cadastrado nesta live."}</p>}
+            </section>
+
+          <section className={`${card} space-y-2`}>
+            <h2 className="text-sm font-bold flex items-center gap-2"><Gift className="w-4 h-4" />Avisos</h2>
+            <div className="space-y-1.5">
+              {live.advantages.length === 0 && <p className="text-xs text-slate-400">{"Nenhum aviso cadastrado nesta live."}</p>}
               {live.advantages.map((a, i) => {
                 const on = live.activeAdvantageIdx === i;
                 return (
@@ -402,7 +406,7 @@ export default function LiveEstudio() {
                 );
               })}
               <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); run('add-adv', async () => { await addAdvantage(live, advTitle, advDesc); setAdvTitle(''); setAdvDesc(''); }); }}>
-                <input value={advTitle} onChange={(e) => setAdvTitle(e.target.value)} placeholder={"T\u00edtulo do benef\u00edcio"} className={`${input} flex-1`} />
+                <input value={advTitle} onChange={(e) => setAdvTitle(e.target.value)} placeholder={"T\u00edtulo do aviso"} className={`${input} flex-1`} />
                 <input value={advDesc} onChange={(e) => setAdvDesc(e.target.value)} placeholder={"Descri\u00e7\u00e3o (opcional)"} className={`${input} flex-1`} />
                 <button type="submit" disabled={!!busy || !advTitle.trim()} className="text-[11px] font-bold px-3 rounded-lg bg-slate-900 text-white disabled:opacity-60">Adicionar</button>
               </form>
@@ -442,11 +446,11 @@ export default function LiveEstudio() {
             {menu && <div className="fixed inset-0 z-10" onClick={() => setMenu(null)} />}
             <div className="relative">
               <button type="button" onClick={() => setMenu(menu === 'adv' ? null : 'adv')} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100">
-                <Truck className="w-3 h-3" />{"Benef\u00edcios"}<ChevronDown className="w-3 h-3" />
+                <Truck className="w-3 h-3" />{"Avisos"}<ChevronDown className="w-3 h-3" />
               </button>
               {menu === 'adv' && (
                 <div className="absolute bottom-full left-0 z-20 mb-1 w-64 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
-                  {live.advantages.length === 0 && <p className="p-2 text-xs text-slate-400">{"Nenhum benef\u00edcio cadastrado."}</p>}
+                  {live.advantages.length === 0 && <p className="p-2 text-xs text-slate-400">{"Nenhum aviso cadastrado."}</p>}
                   {live.advantages.map((a) => (
                     <button key={a.id} type="button" disabled={sending} onClick={() => { post(`${a.title} ${a.description}`.trim()); setMenu(null); }} className="block w-full rounded-lg px-2 py-1.5 text-left hover:bg-slate-50 disabled:opacity-50">
                       <b className="block text-xs text-slate-800">{a.title}</b>

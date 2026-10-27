@@ -185,7 +185,7 @@ export async function setCouponActive(live: CockpitLive, coupon: CockpitCoupon, 
 
 export async function setAdvantageActive(live: CockpitLive, idx: number | null) {
   const adv = idx == null ? null : live.advantages[idx];
-  if (idx != null && !adv) throw new Error('Beneficio nao encontrado');
+  if (idx != null && !adv) throw new Error('Aviso nao encontrado');
   const up = await lc.from('lives').update({ spotlight_advantage_idx: idx }).eq('id', live.id);
   if (up.error) throw up.error;
   return dispatchLiveEvent(live.activeDestinations, {
@@ -308,7 +308,7 @@ export async function sendStudioChat(liveId: string, text: string) {
 export async function addAdvantage(live: CockpitLive, title: string, description: string) {
   const t = title.trim();
   const d = description.trim();
-  if (!t) throw new Error('Informe o titulo do beneficio');
+  if (!t) throw new Error('Informe o titulo do aviso');
   const { data, error } = await (lc as any).from('lives').select('advantages').eq('id', live.id).maybeSingle();
   if (error) throw error;
   const list = Array.isArray(data?.advantages) ? data.advantages : [];

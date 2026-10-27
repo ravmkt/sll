@@ -497,7 +497,7 @@ const TAB_TITLES: Record<LiveTab, string> = {
   audiencia: "Audiência",
   comentarios: "Comentários",
   aparencia: "Aparência",
-  cupons: "Cupons e Benef\u00edcios",
+  cupons: "Cupons e Avisos",
   treinamento: "Treinamento",
 };
 

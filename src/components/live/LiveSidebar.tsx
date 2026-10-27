@@ -35,7 +35,7 @@ const MENU_ITEMS: { id: LiveTab; label: string; icon: React.ElementType }[] = [
   { id: 'visao-geral', label: 'Visão Geral', icon: LayoutDashboard },
   { id: 'resultados', label: 'Resultados & Métricas', icon: TrendingUp },
   { id: 'lives', label: 'Lives', icon: Radio },
-  { id: 'cupons', label: 'Cupons e Benef\u00edcios', icon: PresetsMenuIcon },
+  { id: 'cupons', label: 'Cupons e Avisos', icon: PresetsMenuIcon },
   { id: 'audiencia', label: 'Audiência', icon: Users },
   { id: 'aparencia', label: 'Aparência', icon: Palette },
 ];

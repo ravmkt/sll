@@ -543,7 +543,7 @@ export default function LiveAdmin() {
             <div className="pt-3 border-t border-slate-800">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <Gift className="w-4 h-4 text-indigo-400" /> Vantagens e Benefícios ({advantages.length})
+                  <Gift className="w-4 h-4 text-indigo-400" /> Avisos ({advantages.length})
                 </h3>
                 {spotlight.advantageIdx !== null && (
                   <button onClick={() => updateSpotlight({ advantageIdx: null })} className="text-[11px] text-slate-400 hover:text-rose-400 transition">
