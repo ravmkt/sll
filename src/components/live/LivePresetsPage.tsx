@@ -153,7 +153,7 @@ export default function LivePresetsPage() {
   const isCouponForm = form.kind === "coupon";
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
+    <div className="w-full space-y-6 p-6">
       <div>
         <h2 className="text-lg font-bold text-slate-800">Cupons e Avisos</h2>
         <p className="mt-0.5 text-sm text-slate-500">

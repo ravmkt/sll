@@ -122,7 +122,7 @@ export default function LiveTemplatesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
+    <div className="w-full space-y-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800">
@@ -151,7 +151,7 @@ export default function LiveTemplatesPage() {
 
       <section className="space-y-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Modelos de fábrica</h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {INITIAL_TEMPLATES.map((t) => (
             <TemplateCard key={t.id} t={t} />
           ))}
@@ -167,7 +167,7 @@ export default function LiveTemplatesPage() {
             Você ainda não criou templates. Personalize um modelo de fábrica e salve com um nome.
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {customs.map((t) => (
               <TemplateCard key={t.id} t={t} onRemove={(x) => setDelTpl(x)} />
             ))}

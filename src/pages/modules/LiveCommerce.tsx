@@ -303,7 +303,7 @@ function LiveCommerceContent() {
   }
 
   return (
-    <div className="space-y-6 p-6 max-w-6xl mx-auto">
+    <div className="w-full space-y-6 p-6">
       <PageTour tourKey="live-lives" steps={LIVES_TOUR} />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -526,7 +526,7 @@ export function LiveCommerce() {
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={{ paddingTop: 'var(--trial-h, 0px)' }}>
       <TopBar actions={<AppToggle moduleKey="live_commerce" />} />
       <div className="flex flex-1">
-      <MarketingSideBanner location="live" />
+      {/* SLL-BANNER-ONLY-HOME */}{activeTab === "visao-geral" && <MarketingSideBanner location="live" />}
       <LiveSidebar
         activeTab={activeTab}
         isCollapsed={collapsed}
@@ -534,7 +534,7 @@ export function LiveCommerce() {
         onTabChange={handleTabChange}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col" style={{ paddingRight: 'var(--side-banner-w, 0px)' }}>
+      <div className="flex min-w-0 flex-1 flex-col" style={{ paddingRight: activeTab === 'visao-geral' ? 'var(--side-banner-w, 0px)' : 0 }}>
 
         <div className="flex-1">
           {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" ? (
