@@ -325,9 +325,9 @@ function LiveCommerceContent() {
             <Radio className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Stream Sell</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Minhas Lives</h1>
             <p className="text-muted-foreground text-sm">
-              Programe, divulgue e gerencie todas as suas lives em um só lugar.
+              {"Gerencie, agende e acompanhe suas transmiss\u00f5es ao vivo."}
             </p>
           </div>
         </div>
@@ -371,16 +371,18 @@ function LiveCommerceContent() {
             className="pl-9"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-        >
-          <option value="all">Todos os status</option>
-          <option value="scheduled">Programadas</option>
-          <option value="live">Ao vivo</option>
-          <option value="finished">Finalizadas</option>
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          {([["all", "Todas"], ["scheduled", "Agendadas"], ["live", "Ao Vivo"], ["finished", "Finalizadas"]] as const).map(([k, label]) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setStatusFilter(k)}
+              className={"rounded-full border px-4 py-1.5 text-sm font-semibold transition " + (statusFilter === k ? "border-rose-600 bg-rose-600 text-white" : "border-input bg-background text-muted-foreground hover:bg-muted")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {filteredLives.length === 0 ? (
@@ -421,15 +423,14 @@ function LiveCommerceContent() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {!["finished", "ended"].includes(String(live.status)) && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleOpenAdminPanel(live.id)}
-                        title="Estúdio da Live"
-                        className="text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300"
-                      >
+                    {["finished", "ended"].includes(String(live.status)) ? (
+                      <Button onClick={() => handleOpenMetrics(live)} className="gap-2 bg-red-600 hover:bg-red-700 text-white">
+                        Ver Resumo da Live
+                      </Button>
+                    ) : (
+                      <Button onClick={() => handleOpenAdminPanel(live.id)} className="gap-2 bg-red-600 hover:bg-red-700 text-white">
                         <MonitorPlay className="h-4 w-4" />
+                        {"Entrar no Est\u00fadio da Live \u2192"}
                       </Button>
                     )}
                     <Button
