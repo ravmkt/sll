@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DollarSign, Eye, MousePointerClick, RefreshCw, ShoppingCart, TrendingUp } from 'lucide-react';
-import { Area, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { supabaseLiveCommerce, supabasePublic } from '@/services/supabaseClients';
 import { liveStore } from '@/components/live/LiveTemplatesPage';
 
@@ -114,6 +114,9 @@ export default function LiveResultadosPage() {
   const [period, setPeriod] = useState(30);
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [asc, setAsc] = useState(false);
+  const [show, setShow] = useState({ rev: true, views: true });
+  const toggleSeries = (k: 'rev' | 'views') =>
+    setShow((s) => (s[k] && !(k === 'rev' ? s.views : s.rev) ? s : { ...s, [k]: !s[k] }));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -283,7 +286,27 @@ export default function LiveResultadosPage() {
       </div>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h3 className="mb-3 text-sm font-bold text-slate-800">{T.chart}</h3>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-bold text-slate-800">{T.chart}</h3>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-pressed={show.rev}
+              onClick={() => toggleSeries('rev')}
+              className={'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (show.rev ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-400 line-through')}
+            >
+              <span className={'h-2.5 w-2.5 rounded-full ' + (show.rev ? 'bg-emerald-500' : 'bg-slate-300')} /> {T.sRev}
+            </button>
+            <button
+              type="button"
+              aria-pressed={show.views}
+              onClick={() => toggleSeries('views')}
+              className={'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (show.views ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-200 bg-white text-slate-400 line-through')}
+            >
+              <span className={'h-2.5 w-2.5 rounded-full ' + (show.views ? 'bg-red-600' : 'bg-slate-300')} /> {T.sViews}
+            </button>
+          </div>
+        </div>
         {model.series.length === 0 ? (
           <p className="py-16 text-center text-sm text-slate-400">{loading ? T.loading : T.chartEmpty}</p>
         ) : (
@@ -298,12 +321,11 @@ export default function LiveResultadosPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={24} />
-                <YAxis yAxisId="rev" tick={{ fontSize: 11 }} tickFormatter={(v: number) => 'R$ ' + num(v)} width={80} />
-                <YAxis yAxisId="views" orientation="right" tick={{ fontSize: 11 }} allowDecimals={false} width={44} />
+                <YAxis yAxisId="rev" tick={{ fontSize: 11 }} tickFormatter={(v: number) => 'R$ ' + num(v)} width={80} hide={!show.rev} />
+                <YAxis yAxisId="views" orientation="right" tick={{ fontSize: 11 }} allowDecimals={false} width={44} hide={!show.views} />
                 <Tooltip formatter={(v: any, n: any) => (n === T.sRev ? brl(Number(v)) : num(Number(v)))} />
-                <Legend />
-                <Area yAxisId="rev" type="monotone" dataKey="rev" name={T.sRev} stroke="#10b981" strokeWidth={2} fill="url(#resRev)" />
-                <Line yAxisId="views" type="monotone" dataKey="views" name={T.sViews} stroke="#dc2626" strokeWidth={2} dot={false} />
+                <Area yAxisId="rev" type="monotone" dataKey="rev" name={T.sRev} stroke="#10b981" strokeWidth={2} fill="url(#resRev)" hide={!show.rev} />
+                <Line yAxisId="views" type="monotone" dataKey="views" name={T.sViews} stroke="#dc2626" strokeWidth={2} dot={false} hide={!show.views} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
