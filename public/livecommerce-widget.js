@@ -497,10 +497,11 @@ function renderLiveWidget(live) {
       }).catch(function () {});
     } catch (e) {}
   }
+  if (isLive && typeof fetchJson === 'function') { var __endT = setInterval(function () { if (!document.body.contains(host)) { clearInterval(__endT); return; } fetchJson('lives?select=status&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) { var st = rows && rows[0] && rows[0].status; if (st && st !== 'live') { clearInterval(__endT); try { host.remove(); } catch (e) {} liveWidgetRoot = null; } }).catch(function () {}); }, 15000); }
   card.addEventListener('click', function (ev) {
     var onCta = !!(ev.target && ev.target.closest && ev.target.closest('.vl-live-cta-btn,.vl-live-circle-cta'));
     trackLiveEvent(live.id, 'product_click', { source: onCta ? 'promo_cta' : 'promo_card' });
-    if (isLive) { openLiveModal(live); return; }
+    if (isLive) { if (typeof fetchJson !== 'function') { openLiveModal(live); return; } fetchJson('lives?select=status&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) { var st = rows && rows[0] && rows[0].status; if (st && st !== 'live') { try { host.remove(); } catch (e) {} liveWidgetRoot = null; if (window.__sllEndedShow) window.__sllEndedShow(live.id, live.title); } else openLiveModal(live); }).catch(function () { openLiveModal(live); }); return; }
     var pm = live.promo_media_url ? safeUrl(live.promo_media_url) : '';
     var openCta = function () {
       var go = function (u) {
@@ -2591,7 +2592,7 @@ function fetchLiveSpotlight(live) {
     var ov = el('div', 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;');
     ov.id = 'sll-live-ended';
     var box = el('div', 'background:#fff;color:#0f172a;border-radius:20px;width:100%;max-width:400px;padding:24px;box-shadow:0 25px 60px rgba(0,0,0,.35);max-height:92vh;overflow:auto;box-sizing:border-box;');
-    function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+    function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); var m = document.querySelector('.vl-live-modal'); if (m) { var o = (m.parentNode && m.parentNode !== document.body) ? m.parentNode : m; if (o.parentNode) o.parentNode.removeChild(o); } document.body.style.overflow = ''; } /* SLL-ENCERRAMENTO-P1 */
 
     var x = el('button', 'float:right;border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:#64748b;', '\u00d7');
     x.type = 'button'; x.setAttribute('aria-label', 'Fechar'); x.onclick = close;
@@ -2653,6 +2654,7 @@ function fetchLiveSpotlight(live) {
     document.body.appendChild(ov);
   }
 
+  window.__sllEndedShow = show;
   window.fetch = function (input, init) {
     var url = capture(input, init);
     var p = of.apply(this, arguments);
