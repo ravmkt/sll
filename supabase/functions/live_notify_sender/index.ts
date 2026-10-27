@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const EVO_URL = (Deno.env.get("EVOLUTION_URL") ?? "").replace(/\/+$/, "");
+const EVO_URL = (Deno.env.get("EVOLUTION_API_URL") ?? Deno.env.get("EVOLUTION_URL") ?? "").replace(/\/+$/, "");
 const EVO_KEY = Deno.env.get("EVOLUTION_API_KEY") ?? "";
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const MAIL_FROM = Deno.env.get("MAIL_FROM") ?? "";
@@ -10,6 +10,7 @@ const APP_URL = (Deno.env.get("APP_URL") ?? "").replace(/\/+$/, "");
 const SECRET = Deno.env.get("INTERNAL_TEST_SECRET") ?? "";
 
 const db = createClient(SB_URL, SB_KEY, { db: { schema: "live_commerce" } });
+const pub = createClient(SB_URL, SB_KEY);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const rnd = (a: number, b: number) => Math.floor(a + Math.random() * (b - a + 1));
 const json = (o: unknown, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "Content-Type": "application/json" } });
@@ -27,8 +28,7 @@ const DEFAULTS: Record<string, { subject: string; body: string }> = {
 };
 
 const pick = (o: any, keys: string[]) => { for (const k of keys) if (o?.[k] != null && o[k] !== "") return o[k]; return null; };
-const enabled = (s: any, ch: string, tr: string) =>
-  !!(s?.[`${ch}_${tr}`] ?? s?.[`${tr}_${ch}`] ?? s?.rules?.[ch]?.[tr] ?? s?.[`${ch}_${tr === "24h" ? "24h" : "on_air"}`]);
+const enabled = (s: any, _ch: string, tr: string) => !!s?.enabled && !!(tr === "24h" ? s?.before_24h : s?.on_start);
 
 function normPhone(raw: unknown): string | null {
   let d = String(raw ?? "").replace(/\D/g, "");
@@ -37,7 +37,7 @@ function normPhone(raw: unknown): string | null {
 }
 
 function render(tpl: string, v: Record<string, string>) {
-  return tpl.replace(/\{(nome|titulo_live|link_live|data)\}/g, (_m, k) => v[k] ?? "");
+  return tpl.replace(/\{(nome|titulo_live|link_live|link|data|hora|loja)\}/g, (_m, k) => v[k] ?? "");
 }
 
 Deno.serve(async (req) => {
@@ -64,7 +64,9 @@ Deno.serve(async (req) => {
     const storeId = live.store_id;
     const { data: settings } = await db.from("live_notify_settings").select("*").eq("store_id", storeId).maybeSingle();
     const { data: tpls } = await db.from("live_notify_templates").select("*").eq("store_id", storeId);
-    const { data: inst } = await db.from("store_whatsapp_instances").select("*").eq("store_id", storeId).maybeSingle();
+    const { data: storeRow } = await pub.from("stores").select("name").eq("id", storeId).maybeSingle();
+    const lojaNome = String(storeRow?.name ?? "");
+    const inst = settings?.evolution_instance ? { instance_name: String(settings.evolution_instance), instance_token: settings.evolution_token as string | null, status: String(settings.evolution_status ?? "") } : null;
     const { data: leads } = await db.from("live_leads").select("*").eq("live_id", live.id).or("unsubscribed.is.null,unsubscribed.eq.false");
     if (!leads?.length) continue;
 
@@ -77,12 +79,12 @@ Deno.serve(async (req) => {
       if (stop) break;
       if (!enabled(settings, channel, trigger)) continue;
 
-      const row = (tpls ?? []).find((t: any) => t.channel === channel && (t.trigger === trigger || t.trigger_type === trigger));
+      const row = (tpls ?? []).find((t: any) => t.channel === channel && t.kind === (trigger === "24h" ? "before_24h" : "on_start"));
       let text = String(pick(row, ["body", "message", "content", "text"]) ?? DEFAULTS[trigger].body);
       const subject = String(pick(row, ["subject", "title"]) ?? DEFAULTS[trigger].subject);
 
       if (channel === "whatsapp") {
-        const missing = REQUIRED.filter((v) => !text.includes(v));
+        const missing = REQUIRED.filter((v) => !(v === "{link_live}" ? (text.includes("{link_live}") || text.includes("{link}")) : text.includes(v)));
         if (missing.length) { out.push({ live: live.id, channel, trigger, skipped: "TEMPLATE_SEM_VARIAVEIS", missing }); continue; }
         if (!inst || !["open", "connected"].includes(String(inst.status))) { out.push({ live: live.id, channel, trigger, skipped: "WHATSAPP_DESCONECTADO" }); continue; }
         if (!text.includes("responda SAIR")) text += `\n\n${OPTOUT}`;
@@ -90,7 +92,7 @@ Deno.serve(async (req) => {
 
       for (const lead of leads) {
         if (Date.now() - t0 > BUDGET_MS) { stop = true; break; }
-        const vars = { nome: String(pick(lead, ["name", "nome"]) ?? "").trim().split(" ")[0] || "tudo bem", titulo_live: String(live.title ?? "Live"), link_live: link, data: when };
+        const vars = { nome: String(pick(lead, ["name", "nome"]) ?? "").trim().split(" ")[0] || "tudo bem", titulo_live: String(live.title ?? "Live"), link_live: link, link: link, data: when, loja: lojaNome, hora: live.scheduled_at ? new Date(live.scheduled_at).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }) : "" };
         const to = channel === "whatsapp" ? normPhone(pick(lead, ["whatsapp", "phone", "telefone"])) : String(pick(lead, ["email"]) ?? "").trim();
         if (!to) continue;
 

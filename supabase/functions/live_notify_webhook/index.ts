@@ -7,7 +7,7 @@ const json = (o: unknown, s = 200) => new Response(JSON.stringify(o), { status: 
 Deno.serve(async (req) => {
   try {
     const u = new URL(req.url);
-    if (!SECRET || u.searchParams.get("secret") !== SECRET) return json({ error: "unauthorized" }, 401);
+    const WHS = Deno.env.get("NOTIFY_WEBHOOK_SECRET") ?? ""; const okHdr = !!WHS && req.headers.get("x-webhook-secret") === WHS; const okQs = !!SECRET && u.searchParams.get("secret") === SECRET; if (!okHdr && !okQs) return json({ error: "unauthorized" }, 401);
     const evt = await req.json();
     const event = String(evt?.event ?? "").toLowerCase();
     if (!event.includes("messages") || !event.includes("upsert")) return json({ ok: true, ignored: event });
@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     const tail = phone.slice(-9);
 
     const instance = String(evt?.instance ?? "");
-    const { data: inst } = await db.from("store_whatsapp_instances").select("store_id").eq("instance_name", instance).maybeSingle();
+    const { data: inst } = await db.from("live_notify_settings").select("store_id").eq("evolution_instance", instance).maybeSingle();
     if (!inst) return json({ ok: true, ignored: "instancia desconhecida" });
 
     const { data: lives } = await db.from("lives").select("id").eq("store_id", inst.store_id);

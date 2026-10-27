@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import PlatformConnectCard from '@/components/configuracoes/PlatformConnectCard';
+import WhatsAppConnections from '@/components/configuracoes/WhatsAppConnections';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 const LOGO_BUCKET = 'store-assets';
@@ -544,6 +545,8 @@ const SettingsPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <WhatsAppConnections storeId={storeId || ''} />
 
         {/* 3. MÉTRICAS */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-5">

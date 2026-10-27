@@ -78,15 +78,16 @@ function csvCell(v: string): string {
   return '"' + String(v ?? '').replace(/"/g, '""') + '"';
 }
 
-function Switch({ on, onChange, label }: { on: boolean; onChange: () => void; label: string }) {
+function Switch({ on, onChange, label, disabled }: { on: boolean; onChange: () => void; label: string; disabled?: boolean }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
       title={label}
+      disabled={disabled}
       onClick={onChange}
-      className={'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ' + (on ? 'bg-emerald-500' : 'bg-slate-300')}
+      className={'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40 ' + (on ? 'bg-emerald-500' : 'bg-slate-300')}
     >
       <span className={'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ' + (on ? 'translate-x-[22px]' : 'translate-x-0.5')} />
     </button>
@@ -122,6 +123,7 @@ export default function LiveAudiencePage() {
   const [notifyError, setNotifyError] = useState('');
   const [msg, setMsg] = useState(T.msgDefault);
   const [tplOpen, setTplOpen] = useState(false);
+  const [waOn, setWaOn] = useState<boolean | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -228,7 +230,7 @@ export default function LiveAudiencePage() {
 
   return (
     <div className="w-full space-y-5 p-6">
-      <WhatsAppConnectCard />
+      <WhatsAppConnectCard onStatus={setWaOn} />
       <PageTour tourKey="live-audiencia" steps={AUDIENCIA_TOUR} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -268,7 +270,7 @@ export default function LiveAudiencePage() {
             <span className={'rounded-full px-2.5 py-0.5 text-[11px] font-bold ' + (notify.enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500')}>
               {notify.enabled ? T.ruleOn : T.ruleOff}
             </span>
-            <Switch on={notify.enabled} label={notify.enabled ? T.ruleOff : T.ruleOn} onChange={() => saveNotify({ ...notify, enabled: !notify.enabled })} />
+            <Switch disabled={waOn !== true && !notify.enabled} on={notify.enabled} label={notify.enabled ? T.ruleOff : T.ruleOn} onChange={() => saveNotify({ ...notify, enabled: !notify.enabled })} />
           </div>
         </div>
         <div className={'mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-slate-100 pt-3 text-sm text-slate-700 ' + (notify.enabled ? '' : 'opacity-50')}>
@@ -286,7 +288,8 @@ export default function LiveAudiencePage() {
           {'Ver / editar templates'}
         </button>
         <NotifyTemplatesModal open={tplOpen} onClose={() => setTplOpen(false)} />
-        {notifyError && <p className="mt-2 text-xs font-semibold text-rose-600">{notifyError}</p>}
+        {waOn === false && <p className="mt-2 text-xs font-semibold text-amber-700">{"Conecte o WhatsApp em Configura\u00e7\u00f5es para ligar a r\u00e9gua. Sem conex\u00e3o, os avisos de WhatsApp n\u00e3o s\u00e3o enviados."}</p>}
+              {notifyError && <p className="mt-2 text-xs font-semibold text-rose-600">{notifyError}</p>}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
