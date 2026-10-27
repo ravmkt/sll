@@ -1912,7 +1912,9 @@ function fetchLiveSpotlight(live) {
     var desk = modal.classList.contains('sll-3c');
     var show = c.showTitle !== false;
 
-    // Titulo: faixa sobre o video (desktop) ou titulo do modal (celular)
+    /* SLL-SO-VIDEO */ if (window.__sllOnlyVideo) window.__sllOnlyVideo(modal, c);
+
+      // Titulo: faixa sobre o video (desktop) ou titulo do modal (celular)
     var top = modal.querySelector('.sll-3c-top');
     var tt = modal.querySelector('.sll-3c-t');
     if (top && desk) imp(top, 'background', show ? hx(c.titleBgColor, '#000000') : 'transparent');
@@ -2067,4 +2069,54 @@ function fetchLiveSpotlight(live) {
     }
     paint();
   }, 400);
+})();
+
+;(function () {
+  /* SLL-SO-VIDEO-CSS */
+  var css = document.createElement('style');
+  css.textContent = [
+    '.vl-live-modal.sll-off-prod.sll-off-prod .sll-3c-ph,.vl-live-modal.sll-off-prod.sll-off-prod .sll-ao-list,.vl-live-modal.sll-off-prod.sll-off-prod .sll-ao-ov,.vl-live-modal.sll-off-prod.sll-off-prod .vl-live-products{display:none!important}',
+    '.vl-live-modal.sll-off-chat.sll-off-chat .vl-live-chat{display:none!important}',
+    '.vl-live-modal.sll-off-share.sll-off-share .sll-3c-share{display:none!important}',
+    '.vl-live-modal.sll-off-cp.sll-off-cp .sll-ao-cp{display:none!important}',
+    '.vl-live-modal.sll-off-ad.sll-off-ad .sll-ao-ad{display:none!important}',
+    '@media (min-width:901px){',
+    '.vl-live-modal.sll-3c.sll-only-video{grid-template-columns:minmax(0,1fr) var(--pw) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important;grid-template-areas:"hd hd hd" ". pl ."!important}',
+    '.vl-live-modal.sll-3c.sll-col-l0:not(.sll-col-r0):not(.sll-only-video){grid-template-columns:0 var(--pw) minmax(0,1fr)!important}',
+    '.vl-live-modal.sll-3c.sll-col-r0:not(.sll-col-l0):not(.sll-only-video){grid-template-columns:minmax(0,1fr) var(--pw) 0!important}',
+    '}'
+  ].join('');
+  document.head.appendChild(css);
+
+  function anyOn(c, re) {
+    var found = false, on = false;
+    Object.keys(c || {}).forEach(function (k) {
+      if (/^show/i.test(k) && re.test(k)) { found = true; if (c[k] !== false) on = true; }
+    });
+    return found ? on : true;
+  }
+
+  window.__sllOnlyVideo = function (modal, c) {
+    try {
+      if (!modal || !c || typeof c !== 'object') return;
+      var prod = c.showProducts !== false;
+      var chat = c.showChat !== false;
+      var share = c.showShare !== false;
+      var cp = anyOn(c, /coupon|cupom/i);
+      var ad = anyOn(c, /info|advant|benef|frete/i);
+      var left = prod || ad;
+      var right = chat || share;
+      var only = !prod && !chat && !share && !cp && !ad;
+      var cl = modal.classList;
+      cl.toggle('sll-off-prod', !prod);
+      cl.toggle('sll-off-chat', !chat);
+      cl.toggle('sll-off-share', !share);
+      cl.toggle('sll-off-cp', !cp);
+      cl.toggle('sll-off-ad', !ad);
+      cl.toggle('sll-col-l0', !left);
+      cl.toggle('sll-col-r0', !right);
+      cl.toggle('sll-only-video', only);
+      window.__sllOnlyVideoDebug = { prod: prod, chat: chat, share: share, cp: cp, ad: ad, only: only };
+    } catch (e) {}
+  };
 })();
