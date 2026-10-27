@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Hourglass, CheckCircle2, DollarSign, Clock, Users, Globe, CalendarClock, ArrowRight,
-  Eye, MessageSquare, MousePointerClick, Link2, Check, Share2, Radio, Trophy,
+  Eye, MessageSquare, MousePointerClick, Link2, Check, Share2, Radio, Trophy, Plus,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
@@ -12,6 +12,7 @@ import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
 import { listScopedTips, pickTip, plainText, type ScopedTip } from '@/services/scopedTips';
 import { getSeasonalTip, type SeasonalTip } from '@/services/seasonalTips';
 import ModuleHeader from '@/components/layout/ModuleHeader';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { CommercialDateOccurrence } from '@/lib/commercialDates';
 
 const CLUBE_PATH = '/dashboard/afiliados';
@@ -86,10 +87,22 @@ const LIVE_TIPS: Record<number, { title: string; text: string }> = {
   11: { title: 'Natal e Réveillon', text: 'Mostre prazos de entrega ao vivo e priorize produtos de pronta-entrega.' },
 };
 
-function Stat(props: { label: string; value: string; sub: string; icon: React.ElementType; tone: string; badge?: string; children?: React.ReactNode }) {
+function Tip({ text, children }: { text?: string; children: React.ReactElement }) {
+  if (!text) return children;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[260px] rounded-lg border-0 bg-slate-900 px-3 py-2 text-xs leading-snug text-white shadow-lg">
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function Stat(props: { label: string; value: string; sub: string; icon: React.ElementType; tone: string; badge?: string; tip?: string; children?: React.ReactNode }) {
   const Icon = props.icon;
   return (
-    <div className={card}>
+    <Tip text={props.tip}><div className={card}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -104,14 +117,14 @@ function Stat(props: { label: string; value: string; sub: string; icon: React.El
           <Icon size={18} />
         </div>
       </div>
-    </div>
+    </div></Tip>
   );
 }
 
-function Meter(props: { label: string; value: string; of: string; pct: number | null; icon: React.ElementType; foot: string }) {
+function Meter(props: { label: string; value: string; of: string; pct: number | null; icon: React.ElementType; foot: string; tip?: string }) {
   const Icon = props.icon;
   return (
-    <div className={card}>
+    <Tip text={props.tip}><div className={card}>
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{props.label}</p>
         <Icon size={15} className="text-[#DC2626]" />
@@ -130,7 +143,7 @@ function Meter(props: { label: string; value: string; of: string; pct: number | 
           </div>
         )}
       </div>
-    </div>
+    </div></Tip>
   );
 }
 
@@ -329,7 +342,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   };
 
   return (
-    <>
+    <TooltipProvider delayDuration={150}>
       <div className="mx-auto max-w-7xl space-y-6 p-6 pb-4">
         <ModuleHeader module="live" />
         <div>
@@ -358,10 +371,10 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            <Stat label="Aguardando pagamento" badge={`${pendingOrders} pedidos`} value={brl(pendingRevenue)} sub="Pix / Boleto em live" icon={Hourglass} tone="bg-amber-50 text-amber-500" />
-            <Stat label="Vendas pagas" badge={`${paidOrders} pedidos`} value={brl(paidRevenue)} sub="Faturamento aprovado" icon={CheckCircle2} tone="bg-emerald-50 text-emerald-500" />
-            <Stat label="Faturamento indicações" badge="Comissões" value={brl(0)} sub="" icon={DollarSign} tone="bg-sky-50 text-sky-500">
-              <button type="button" onClick={() => navigate(CLUBE_PATH)} className="mt-2 rounded-md bg-sky-500 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-sky-600">
+            <Stat label="Aguardando pagamento" badge={`${pendingOrders} pedidos`} value={brl(pendingRevenue)} sub="Pix / Boleto em live" icon={Hourglass} tone="bg-red-50 text-[#DC2626]" tip={"Pedidos gerados nas lives (Pix ou boleto) que ainda aguardam a confirma\u00e7\u00e3o do pagamento."} />
+            <Stat label="Vendas pagas" badge={`${paidOrders} pedidos`} value={brl(paidRevenue)} sub="Faturamento aprovado" icon={CheckCircle2} tone="bg-red-50 text-[#DC2626]" tip={"Pedidos das lives com pagamento aprovado no per\u00edodo selecionado."} />
+            <Stat label="Faturamento indicações" badge="Comissões" value={brl(0)} sub="" icon={DollarSign} tone="bg-red-50 text-[#DC2626]" tip={"Comiss\u00f5es recebidas de lojistas que voc\u00ea indicou pelo Clube SLL."}>
+              <button type="button" onClick={() => navigate(CLUBE_PATH)} className="mt-2 cursor-pointer rounded-md bg-[#DC2626] px-2.5 py-1 text-[11px] font-bold text-white transition-colors hover:bg-[#B91C1C]">
                 Acessar o Clube SLL
               </button>
             </Stat>
@@ -371,10 +384,10 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         <div>
           <h3 className={`${sectionTitle} mb-3 px-1`}>Consumo do plano</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Meter label="Horas de transmissão" value={`${hours.toFixed(1).replace('.', ',')} h`} of="de —" pct={null} icon={Clock} foot="Neste mês" />
-            <Meter label="Pico de espectadores" value={fmtInt(peak)} of="de —" pct={null} icon={Users} foot="Ao vivo" />
-            <Meter label="Destinos ativos" value={String(1 + connected.length)} of="conectado(s)" pct={null} icon={Globe} foot={destLabel} />
-            <div className={card}>
+            <Meter label="Horas de transmissão" value={`${hours.toFixed(1).replace('.', ',')} h`} of="de —" pct={null} icon={Clock} tip={"Tempo total transmitido ao vivo neste m\u00eas, comparado \u00e0 franquia do plano."} foot="Neste mês" />
+            <Meter label="Pico de espectadores" value={fmtInt(peak)} of="de —" pct={null} icon={Users} tip={"Maior n\u00famero de espectadores simult\u00e2neos j\u00e1 registrado em uma live."} foot="Ao vivo" />
+            <Meter label="Destinos ativos" value={String(1 + connected.length)} of="conectado(s)" pct={null} icon={Globe} tip={"Canais onde suas lives s\u00e3o exibidas: seu site e as plataformas conectadas."} foot={destLabel} />
+            <Tip text={"Situa\u00e7\u00e3o da assinatura do m\u00f3dulo e a data da pr\u00f3xima renova\u00e7\u00e3o."}><div className={card}>
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Ciclo da conta</p>
                 <CalendarClock size={15} className="text-[#DC2626]" />
@@ -384,12 +397,12 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
               <div className="mt-2 border-t border-slate-100 pt-2 text-[11px] text-slate-400">
                 {cycle?.label || 'Renovação:'} {cycle?.date || '—'}
               </div>
-            </div>
+            </div></Tip>
           </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className={card}>
+          <Tip text={"Live ao vivo ou a pr\u00f3xima agendada, com atalho para abrir o Est\u00fadio."}><div className={card}>
             <div className="mb-3 flex items-center gap-2">
               <Radio size={16} className="text-[#DC2626]" />
               <h3 className="text-base font-black text-slate-900">Próxima live</h3>
@@ -426,16 +439,20 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 </button>
               </div>
             ) : (
-              <div className="py-6 text-center text-sm text-slate-400">
-                Nenhuma live agendada.
-                <button type="button" onClick={() => navigate('/dashboard/modules/stream-sell', { state: { tab: 'lives' } })} className="mt-2 block w-full text-xs font-bold text-[#DC2626] hover:underline">
-                  Criar uma live
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <p className="text-sm text-slate-400">Nenhuma live agendada.</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard/modules/stream-sell', { state: { tab: 'lives' } })}
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#DC2626] px-8 py-3 text-sm font-bold text-white shadow-md shadow-red-200 transition hover:bg-[#B91C1C] active:scale-[0.98]"
+                >
+                  <Plus size={16} /> Criar live
                 </button>
               </div>
             )}
-          </div>
+          </div></Tip>
 
-          <div className={card}>
+          <Tip text={"Visualiza\u00e7\u00f5es, mensagens e cliques gerados pelas suas lives no per\u00edodo."}><div className={card}>
             <div className="mb-3 flex items-center gap-2">
               <Trophy size={16} className="text-[#DC2626]" />
               <h3 className="text-base font-black text-slate-900">Engajamento das lives</h3>
@@ -448,7 +465,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 { l: 'Cliques no WhatsApp', v: count(EV.whatsapp), i: MessageSquare },
               ].map((m) => (
                 <div key={m.l} className="rounded-xl border border-slate-100 p-3">
-                  <p className="flex items-center gap-1 text-[10px] font-semibold uppercase text-slate-500"><m.i size={12} />{m.l}</p>
+                  <p className="flex items-center gap-1 text-[10px] font-semibold uppercase text-slate-500"><m.i size={12} className="text-[#DC2626]" />{m.l}</p>
                   <p className="mt-1 text-xl font-extrabold text-slate-900">{fmtInt(m.v)}</p>
                 </div>
               ))}
@@ -466,7 +483,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 ))}
               </ol>
             )}
-          </div>
+          </div></Tip>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -511,7 +528,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
           <VidlyticsAcademy variant="vidlytics" />
         </div>
       </div>
-    </>
+    </TooltipProvider>
   );
 }
 
