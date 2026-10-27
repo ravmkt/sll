@@ -944,6 +944,34 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
 
       <AccordionItem id="elementos" title="4. Elementos Visíveis" openAccordion={openAccordion} setOpenAccordion={setOpenAccordion}>
         <div className="space-y-2">
+          {!isDivulgacao && (
+  <div className="mb-2 space-y-1.5 rounded-md border border-slate-200 p-2" data-sll="SLL-AFTER-END-UI">
+    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{"Ap\u00f3s encerrar a live"}</label>
+    <select
+      value={config.afterEnd || "hide"}
+      onChange={(e) => updateFn("afterEnd", e.target.value)}
+      className="h-7 w-full rounded-md border border-slate-200 bg-white px-2 text-[12px]"
+    >
+      <option value="hide">{"Esconder a bolha"}</option>
+      <option value="signup">{"Virar \"Avise-me da pr\u00f3xima live\""}</option>
+      <option value="minutes">{"Avise-me por alguns minutos e depois sumir"}</option>
+    </select>
+    {config.afterEnd === "minutes" && (
+      <div className="flex items-center gap-2">
+        <label className="text-[11px] text-slate-500">{"Sumir ap\u00f3s (min)"}</label>
+        <Input
+          type="number"
+          min={1}
+          max={1440}
+          value={config.afterEndMinutes ?? 10}
+          onChange={(e) => updateFn("afterEndMinutes", Math.max(1, Number(e.target.value) || 10))}
+          className="h-7 w-20 rounded-md text-[12px]"
+        />
+      </div>
+    )}
+    <p className="text-[10px] text-muted-foreground">{"Define o que a bolha faz na loja depois que a live \u00e9 encerrada."}</p>
+  </div>
+)}
           <ElementSubItem
             id="sub_cta"
             label="Botão de Ação (CTA)"
