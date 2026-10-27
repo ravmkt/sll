@@ -433,15 +433,6 @@ function LiveCommerceContent() {
                         {"Entrar no Est\u00fadio da Live \u2192"}
                       </Button>
                     )}
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleOpenMetrics(live)}
-                      title="Métricas da Live"
-                      className="text-rose-600 hover:bg-rose-50 hover:border-rose-300"
-                    >
-                      <TrendingUp className="h-4 w-4" />
-                    </Button>
                     <Button variant="outline" size="icon" onClick={() => handleShare(live)} title="Divulgar">
                       <Share2 className="h-4 w-4" />
                     </Button>
