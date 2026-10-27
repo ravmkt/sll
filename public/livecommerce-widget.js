@@ -1257,6 +1257,17 @@ function fetchLiveSpotlight(live) {
     try { console.log('[LiveCommerce] addon ativo', vid); } catch (e) {}
   }
 
+  /* SLL-MUTE-FIX */
+  function fixMute() {
+    var f = document.querySelector('iframe[src*="youtube.com/embed/"]');
+    if (!f || !cfgStore || f.src.indexOf('controls=0') < 0) return;
+    if (f.getAttribute('data-sll-mute')) return;
+    f.setAttribute('data-sll-mute', '1');
+    if (C().autoplayMuted === false && f.src.indexOf('mute=1') >= 0) {
+      f.src = f.src.replace(/([?&])mute=1/, '$1mute=0');
+    }
+  }
+  setInterval(fixMute, 400);
   setInterval(tick, 1000);
 })();
 /* SLL-LIVE-LAYOUT */
