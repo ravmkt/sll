@@ -58,7 +58,7 @@ const T = {
 const EMPTY = { open: false, id: null as string | null, kind: "coupon" as Kind, title: "", description: "", error: "", busy: false };
 const fmt = (n: number | undefined) => new Intl.NumberFormat("pt-BR").format(n ?? 0);
 const inputCls =
-  "h-10 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-[#0088ff] focus:ring-2 focus:ring-sky-100";
+  "h-10 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-[#DC2626] focus:ring-2 focus:ring-red-100";
 
 function Switch({ on, onChange, label }: { on: boolean; onChange: () => void; label: string }) {
   return (
@@ -273,7 +273,7 @@ export default function LivePresetsPage() {
             <Button variant="outline" disabled={form.busy} onClick={() => setForm(EMPTY)} className="h-10 flex-1 rounded-2xl text-xs font-bold">
               {T.cancel}
             </Button>
-            <Button disabled={form.busy} onClick={save} className="h-10 flex-1 rounded-2xl bg-[#0088ff] text-xs font-bold text-white hover:bg-[#0077e6]">
+            <Button disabled={form.busy} onClick={save} className="h-10 flex-1 rounded-2xl bg-[#DC2626] text-xs font-bold text-white hover:bg-[#B91C1C]">
               {form.busy ? T.saving : T.save}
             </Button>
           </>
