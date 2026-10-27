@@ -4,6 +4,7 @@ import type { TourStep } from "@/hooks/usePageTour";
 import { BellRing, Download, MessageCircle, Phone, RefreshCw, Search, UserPlus, Users } from 'lucide-react';
 import { supabaseLiveCommerce as supabase } from '@/services/supabaseClients';
 import { liveStore } from '@/components/live/LiveTemplatesPage';
+import NotifyTemplatesModal from '@/components/live/NotifyTemplatesModal';
 
 type Lead = {
   id: string;
@@ -119,6 +120,7 @@ export default function LiveAudiencePage() {
   const [notify, setNotify] = useState<Notify>(DEFAULT_NOTIFY);
   const [notifyError, setNotifyError] = useState('');
   const [msg, setMsg] = useState(T.msgDefault);
+  const [tplOpen, setTplOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -278,6 +280,10 @@ export default function LiveAudiencePage() {
           </label>
         </div>
         <p className="mt-2 text-[11px] text-slate-400">{T.ruleNote}</p>
+        <button type="button" onClick={() => setTplOpen(true)} className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+          {'Ver / editar templates'}
+        </button>
+        <NotifyTemplatesModal open={tplOpen} onClose={() => setTplOpen(false)} />
         {notifyError && <p className="mt-2 text-xs font-semibold text-rose-600">{notifyError}</p>}
       </div>
 
