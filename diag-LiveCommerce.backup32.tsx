@@ -1,3 +1,4 @@
+import LiveAudiencePage from "@/components/live/LiveAudiencePage";
 import { useLocation } from "react-router-dom";
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
@@ -27,6 +28,8 @@ import { ShareLiveModal } from "@/components/live/ShareLiveModal";
 import { LiveMetricsModal } from "@/components/live/LiveMetricsModal";
 import LiveTemplatesPage, { liveStore } from "@/components/live/LiveTemplatesPage";
 import LiveDeleteHost from "@/components/live/LiveDeleteHost";
+import LiveReactivateHost from "@/components/live/LiveReactivateHost";
+import { RotateCcw } from "lucide-react";
 import LivePresetsPage from "@/components/live/LivePresetsPage";
 
 import LiveAppearanceModal, {
@@ -204,10 +207,40 @@ function LiveCommerceContent() {
     });
   }, [lives, search, statusFilter]);
 
+  useEffect(() => {
+    const w = window as any;
+    const open = () => {
+      setEditingLiveId(null);
+      setFormOpen(true);
+    };
+    if (w.__sllOpenCreate) {
+      w.__sllOpenCreate = false;
+      open();
+    }
+    window.addEventListener("live:create-from-date", open);
+    return () => window.removeEventListener("live:create-from-date", open);
+  });
+
   const handleCreateNew = () => {
     setEditingLiveId(null);
     setFormOpen(true);
   };
+
+  useEffect(() => {
+    const h = (e: Event) => {
+      const d = (e as CustomEvent).detail as { id: string; scheduled_at: string };
+      setLives((prev) =>
+        prev.map((l) =>
+          l.id === d.id
+            ? ({ ...l, status: "scheduled", scheduled_at: d.scheduled_at, started_at: null, ended_at: null, is_active: true } as any)
+            : l,
+        ),
+      );
+      toast.success("Live reativada e agendada.");
+    };
+    window.addEventListener("live:reactivated", h);
+    return () => window.removeEventListener("live:reactivated", h);
+  }, []);
 
   const handleEdit = (liveId: string) => {
     setEditingLiveId(liveId);
@@ -248,7 +281,7 @@ function LiveCommerceContent() {
   };
 
   const handleOpenAdminPanel = (liveId: string) => {
-    navigate(`/dashboard/modules/stream-sell/live/${liveId}/cockpit`);
+    navigate(`/dashboard/modules/stream-sell/live/${liveId}/estudio`);
   };
 
   const onFormSaved = async () => {
@@ -284,7 +317,7 @@ function LiveCommerceContent() {
   }
 
   return (
-    <div className="space-y-6 p-6 max-w-6xl mx-auto">
+    <div className="w-full space-y-6 p-6">
       <PageTour tourKey="live-lives" steps={LIVES_TOUR} />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -292,9 +325,9 @@ function LiveCommerceContent() {
             <Radio className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Stream Sell</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Minhas Lives</h1>
             <p className="text-muted-foreground text-sm">
-              Programe, divulgue e gerencie todas as suas lives em um só lugar.
+              {"Gerencie, agende e acompanhe suas transmiss\u00f5es ao vivo."}
             </p>
           </div>
         </div>
@@ -338,16 +371,18 @@ function LiveCommerceContent() {
             className="pl-9"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-        >
-          <option value="all">Todos os status</option>
-          <option value="scheduled">Programadas</option>
-          <option value="live">Ao vivo</option>
-          <option value="finished">Finalizadas</option>
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          {([["all", "Todas"], ["scheduled", "Agendadas"], ["live", "Ao Vivo"], ["finished", "Finalizadas"]] as const).map(([k, label]) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setStatusFilter(k)}
+              className={"rounded-full border px-4 py-1.5 text-sm font-semibold transition " + (statusFilter === k ? "border-rose-600 bg-rose-600 text-white" : "border-input bg-background text-muted-foreground hover:bg-muted")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {filteredLives.length === 0 ? (
@@ -388,15 +423,14 @@ function LiveCommerceContent() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {!["finished", "ended"].includes(String(live.status)) && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleOpenAdminPanel(live.id)}
-                        title="Cockpit da Live"
-                        className="text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300"
-                      >
+                    {["finished", "ended"].includes(String(live.status)) ? (
+                      <Button onClick={() => handleOpenMetrics(live)} className="gap-2 bg-red-600 hover:bg-red-700 text-white">
+                        Ver Resumo da Live
+                      </Button>
+                    ) : (
+                      <Button onClick={() => handleOpenAdminPanel(live.id)} className="gap-2 bg-red-600 hover:bg-red-700 text-white">
                         <MonitorPlay className="h-4 w-4" />
+                        {"Entrar no Est\u00fadio da Live \u2192"}
                       </Button>
                     )}
                     <Button
@@ -411,7 +445,12 @@ function LiveCommerceContent() {
                     <Button variant="outline" size="icon" onClick={() => handleShare(live)} title="Divulgar">
                       <Share2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => handleEdit(live.id)} title="Editar">
+                    {live.status === "finished" && (
+                            <Button variant="outline" size="icon" onClick={() => window.dispatchEvent(new CustomEvent("live:reactivate-ask", { detail: { id: live.id, title: live.title } }))} title="Reativar">
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button variant="outline" size="icon" onClick={() => handleEdit(live.id)} title="Editar">
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button variant="outline" size="icon" onClick={() => handleDelete(live.id)} title="Excluir" className="text-destructive hover:bg-destructive/10">
@@ -473,7 +512,7 @@ const TAB_TITLES: Record<LiveTab, string> = {
   audiencia: "Audiência",
   comentarios: "Comentários",
   aparencia: "Aparência",
-  cupons: "Cupons e Benef\u00edcios",
+  cupons: "Cupons e Avisos",
   treinamento: "Treinamento",
 };
 
@@ -488,9 +527,18 @@ export function LiveCommerce() {
     }
   }, []);
 
+  useEffect(() => {
+    const h = () => {
+      (window as any).__sllOpenCreate = true;
+      setActiveTab("lives");
+    };
+    window.addEventListener("live:go-create", h);
+    return () => window.removeEventListener("live:go-create", h);
+  }, []);
+
   const handleCreateLive = (occ: CommercialDateOccurrence) => {
     setActiveTab("lives");
-    setTimeout(() => window.dispatchEvent(new CustomEvent("live:create-from-date", { detail: { title: "Live " + occ.name, date: occ.date.toISOString() } })), 60);
+    (window as any).__sllOpenCreate = true;
   };
 
   const handleTabChange = (tab: LiveTab) => {
@@ -502,7 +550,7 @@ export function LiveCommerce() {
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={{ paddingTop: 'var(--trial-h, 0px)' }}>
       <TopBar actions={<AppToggle moduleKey="live_commerce" />} />
       <div className="flex flex-1">
-      <MarketingSideBanner location="live" />
+      {/* SLL-BANNER-ONLY-HOME */}{activeTab === "visao-geral" && <MarketingSideBanner location="live" />}
       <LiveSidebar
         activeTab={activeTab}
         isCollapsed={collapsed}
@@ -510,15 +558,16 @@ export function LiveCommerce() {
         onTabChange={handleTabChange}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col" style={{ paddingRight: 'var(--side-banner-w, 0px)' }}>
+      <div className="flex min-w-0 flex-1 flex-col" style={{ paddingRight: activeTab === 'visao-geral' ? 'var(--side-banner-w, 0px)' : 0 }}>
 
         <div className="flex-1">
-          {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" || activeTab === "cupons" ? (
+          {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" ? (
             <>
-              <div className={activeTab === "aparencia" || activeTab === "cupons" ? "hidden" : ""}><LiveCommerceContent /></div>
+              <div className={activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" ? "hidden" : ""}><LiveCommerceContent /></div>
               {activeTab === "aparencia" && <LiveTemplatesPage />}
               <LiveDeleteHost />
-                     {activeTab === "cupons" && <LivePresetsPage />}
+              <LiveReactivateHost />
+                     {activeTab === "cupons" && <LivePresetsPage />}{activeTab === "audiencia" && <LiveAudiencePage />}
             </>
           ) : (
             <div className="p-6 max-w-6xl mx-auto">

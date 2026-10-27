@@ -1,3 +1,4 @@
+import WhatsAppConnectCard from "@/components/live/WhatsAppConnectCard";
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
@@ -227,6 +228,7 @@ export default function LiveAudiencePage() {
 
   return (
     <div className="w-full space-y-5 p-6">
+      <WhatsAppConnectCard />
       <PageTour tourKey="live-audiencia" steps={AUDIENCIA_TOUR} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
