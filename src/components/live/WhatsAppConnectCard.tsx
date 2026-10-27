@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, MessageCircle, QrCode } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { AppModal, ConfirmDangerModal } from "@/components/common/AppModal";
 
 type St = { state: "none" | "connecting" | "connected"; qr?: string | null; number?: string | null };
