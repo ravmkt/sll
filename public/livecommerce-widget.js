@@ -2199,3 +2199,38 @@ function fetchLiveSpotlight(live) {
   }
   setInterval(run, 250);
 })();
+
+;(function () {
+  /* SLL-HD-STACK */
+  var css = document.createElement('style');
+  css.textContent = [
+    '@media (min-width:901px){',
+    '.vl-live-modal.sll-3c.sll-hd-stack{--pw:calc((var(--h) - 190px)*9/16)!important}',
+    '.vl-live-modal.sll-3c.sll-hd-stack .sll-3c-hd{flex-wrap:wrap!important;height:auto!important;row-gap:6px;padding:0 44px 6px 4px!important}',
+    '.vl-live-modal.sll-3c.sll-hd-stack .sll-hd-name{flex:1 1 0!important;min-width:0;font-size:20px!important}',
+    '.vl-live-modal.sll-3c.sll-hd-stack .sll-hd-r{flex:0 0 100%!important;order:3;justify-content:flex-start;flex-wrap:wrap;gap:8px}',
+    '}'
+  ].join('');
+  document.head.appendChild(css);
+
+  function tick() {
+    var m = document.querySelector('.vl-live-modal.sll-3c');
+    if (!m || !m.querySelector('.sll-3c-hd')) return;
+    var narrow = window.innerWidth > 900 && m.clientWidth < 480;
+    if (m.classList.contains('sll-hd-stack') !== narrow) m.classList.toggle('sll-hd-stack', narrow);
+  }
+  setInterval(tick, 300);
+
+  window.__sllHdDebug = function () {
+    var m = document.querySelector('.vl-live-modal.sll-3c');
+    if (!m) return 'modal nao encontrado';
+    var hd = m.querySelector('.sll-3c-hd');
+    return {
+      modalW: m.clientWidth,
+      stack: m.classList.contains('sll-hd-stack'),
+      hdH: hd ? hd.offsetHeight : null,
+      pw: getComputedStyle(m).getPropertyValue('--pw'),
+      inlinePw: m.style.getPropertyValue('--pw')
+    };
+  };
+})();
