@@ -231,7 +231,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
                 </div>
               </div>
               <Link to={nl.cockpitHref} className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 py-3 font-medium text-white transition hover:bg-red-700">
-                Abrir Cockpit da Live <ArrowRight className="h-4 w-4" />
+                Abrir Estúdio da Live <ArrowRight className="h-4 w-4" />
               </Link>
               <p className="mt-2 text-center text-[11px] text-slate-500">Revise seus produtos e teste a transmissão antes de começar.</p>
             </>

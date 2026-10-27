@@ -247,3 +247,59 @@ export async function listDestinations(): Promise<DestinationRow[]> {
   if (error) throw error;
   return (data || []) as DestinationRow[];
 }
+
+/* ===== ESTUDIO ===== */
+export interface StudioInfo {
+  youtube_video_id: string | null;
+  youtube_url: string | null;
+  started_at: string | null;
+}
+export interface StudioStats { current: number; peak: number }
+export interface StudioChatMessage {
+  id: string;
+  author_name: string | null;
+  message: string;
+  created_at: string;
+  is_from_store?: boolean | null;
+}
+
+export async function getStudioInfo(liveId: string): Promise<StudioInfo | null> {
+  const { data, error } = await (lc as any)
+    .from('lives')
+    .select('youtube_video_id, youtube_url, started_at')
+    .eq('id', liveId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data ?? null) as StudioInfo | null;
+}
+
+export async function getStudioStats(liveId: string): Promise<StudioStats> {
+  const { data, error } = await (lc as any).rpc('live_studio_stats', { p_live_id: liveId });
+  if (error) throw error;
+  return { current: Number(data?.current) || 0, peak: Number(data?.peak) || 0 };
+}
+
+export async function listStudioChat(liveId: string): Promise<StudioChatMessage[]> {
+  const { data, error } = await (lc as any)
+    .from('live_chat_messages')
+    .select('id, author_name, message, created_at, is_from_store')
+    .eq('live_id', liveId)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return ((data || []) as StudioChatMessage[]).reverse();
+}
+
+export async function sendStudioChat(liveId: string, text: string) {
+  const msg = text.trim().slice(0, 500);
+  if (!msg) throw new Error('Digite uma mensagem');
+  const { data: l } = await (lc as any).from('lives').select('store_id').eq('id', liveId).maybeSingle();
+  const { error } = await (lc as any).from('live_chat_messages').insert({
+    live_id: liveId,
+    store_id: l?.store_id ?? null,
+    author_name: 'Loja',
+    message: msg,
+    is_from_store: true,
+  });
+  if (error) throw error;
+}

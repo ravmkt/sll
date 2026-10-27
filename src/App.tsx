@@ -1,3 +1,4 @@
+import LiveCockpitRedirect from '@/pages/streamsell/LiveCockpitRedirect';
 import VidlyticsLanding from '@/pages/landing/VidlyticsLanding';
 import CheckoutIntentWatcher from '@/components/auth/CheckoutIntentWatcher';
 import AuthRedirect from '@/components/auth/AuthRedirect';
@@ -141,11 +142,12 @@ function AppRoutes() {
         <Route path="/stream-sell" element={<Navigate to="/dashboard/modules/stream-sell" replace />} />
         <Route path="/stream-sell/destinos" element={<Navigate to="/dashboard/modules/stream-sell/destinos" replace />} />
         <Route path="/stream-sell/live/:id/admin" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/admin" />} />
-        <Route path="/stream-sell/live/:id/cockpit" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/cockpit" />} />
+        <Route path="/stream-sell/live/:id/estudio" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/cockpit" />} />
+        <Route path="/stream-sell/live/:id/cockpit" element={<LiveCockpitRedirect />} />
         <Route path="/dashboard/modules/live-commerce" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell" />} />
             <Route path="/dashboard/modules/live-commerce/admin/:id" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/admin" />} />
             <Route
-              path="/dashboard/modules/stream-sell/live/:id/cockpit"
+              path="/dashboard/modules/stream-sell/live/:id/estudio"
               element={
                 user ? (
                   <SubscriptionGate>

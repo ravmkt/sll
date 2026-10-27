@@ -266,7 +266,7 @@ function LiveCommerceContent() {
   };
 
   const handleOpenAdminPanel = (liveId: string) => {
-    navigate(`/dashboard/modules/stream-sell/live/${liveId}/cockpit`);
+    navigate(`/dashboard/modules/stream-sell/live/${liveId}/estudio`);
   };
 
   const onFormSaved = async () => {
@@ -411,7 +411,7 @@ function LiveCommerceContent() {
                         variant="outline"
                         size="icon"
                         onClick={() => handleOpenAdminPanel(live.id)}
-                        title="Cockpit da Live"
+                        title="Estúdio da Live"
                         className="text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300"
                       >
                         <MonitorPlay className="h-4 w-4" />

@@ -419,10 +419,10 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 </div>
                 <button
                   type="button"
-                  onClick={() => navigate(`/dashboard/modules/stream-sell/live/${next.id}/cockpit`)}
+                  onClick={() => navigate(`/dashboard/modules/stream-sell/live/${next.id}/estudio`)}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#DC2626] py-2.5 text-xs font-bold text-white hover:bg-[#B91C1C]"
                 >
-                  Abrir Cockpit da Live <ArrowRight size={14} />
+                  Abrir Estúdio da Live <ArrowRight size={14} />
                 </button>
               </div>
             ) : (

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   DollarSign, Hourglass, CheckCircle2, Users, Clock, Eye, Radio, Zap, CalendarCheck,
@@ -192,7 +192,7 @@ export default function Overview() {
           </div>
           <div className="mt-auto pt-5">
             <Link to="/streamsell/lives" className={`${btnPrimary} block text-center font-medium`}>
-              Abrir Cockpit da Live →
+              Abrir Estúdio da Live →
             </Link>
             <p className="mt-2 text-center text-xs text-slate-400">
               Revise seus produtos e teste a transmissão antes de começar.
