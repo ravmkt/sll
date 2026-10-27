@@ -179,26 +179,24 @@ export default function LivePresetsPage() {
           <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">{T.empty}</div>
         ) : (
           <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full min-w-[900px] table-fixed text-left text-sm">
+            <table className="w-full min-w-[820px] table-fixed text-left text-sm">
               <colgroup>
-                <col className="w-[72px]" />
-                <col className="w-[22%]" />
+                <col className="w-[80px]" />
                 <col />
-                <col className="w-[80px]" />
-                <col className="w-[80px]" />
-                <col className="w-[130px]" />
                 <col className="w-[90px]" />
+                <col className="w-[90px]" />
+                <col className="w-[130px]" />
                 <col className="w-[100px]" />
+                <col className="w-[110px]" />
               </colgroup>
               <thead className="bg-slate-50 text-[11px] font-bold uppercase text-slate-500">
                 <tr>
                   <th className="p-3 text-center">{T.colActive}</th>
-                  <th className="p-3">{isCoupon ? T.colCode : T.colTitle}</th>
-                  <th className="p-3">{T.colDesc}</th>
-                  <th className="p-3 text-right">{T.colLives}</th>
-                  <th className="p-3 text-right">{T.colUses}</th>
-                  <th className="p-3 text-right">{T.colViews}</th>
-                  <th className="p-3 text-right">{T.colClicks}</th>
+                  <th className="p-3">{(isCoupon ? T.colCode : T.colTitle) + " / " + T.colDesc}</th>
+                  <th className="p-3 text-center">{T.colLives}</th>
+                  <th className="p-3 text-center">{T.colUses}</th>
+                  <th className="p-3 text-center">{T.colViews}</th>
+                  <th className="p-3 text-center">{T.colClicks}</th>
                   <th className="p-3 text-center">{T.colActions}</th>
                 </tr>
               </thead>
@@ -212,12 +210,14 @@ export default function LivePresetsPage() {
                       <td className="p-3 text-center">
                         <Switch on={on} onChange={() => toggle(p)} label={on ? T.pause : T.activate} />
                       </td>
-                      <td className={"truncate p-3 font-bold text-slate-800" + dim}>{p.title}</td>
-                      <td className={"truncate p-3 text-slate-600" + dim}>{p.description || "\u2014"}</td>
-                      <td className={"p-3 text-right tabular-nums" + dim}>{fmt(m?.lives_count)}</td>
-                      <td className={"p-3 text-right font-semibold tabular-nums" + dim}>{isCoupon ? fmt(m?.uses) : "\u2014"}</td>
-                      <td className={"p-3 text-right tabular-nums" + dim}>{fmt(m?.views)}</td>
-                      <td className={"p-3 text-right tabular-nums" + dim}>{fmt(m?.clicks)}</td>
+                      <td className={"p-3" + dim}>
+                        <div className="truncate font-bold text-slate-800">{p.title}</div>
+                        <div className="truncate text-xs text-slate-500">{p.description || "\u2014"}</div>
+                      </td>
+                      <td className={"p-3 text-center tabular-nums" + dim}>{fmt(m?.lives_count)}</td>
+                      <td className={"p-3 text-center font-semibold tabular-nums" + dim}>{isCoupon ? fmt(m?.uses) : "\u2014"}</td>
+                      <td className={"p-3 text-center tabular-nums" + dim}>{fmt(m?.views)}</td>
+                      <td className={"p-3 text-center tabular-nums" + dim}>{fmt(m?.clicks)}</td>
                       <td className="p-3 text-center">
                         <button type="button" onClick={() => openEdit(p)} className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-sky-50 hover:text-sky-600">
                           <Pencil className="h-4 w-4" />
