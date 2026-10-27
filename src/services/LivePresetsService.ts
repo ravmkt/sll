@@ -9,6 +9,7 @@ export interface PresetMetrics {
 }
 
 export interface LivePreset {
+  active?: boolean;
   id: string;
   store_id: string;
   kind: "coupon" | "advantage";
@@ -16,7 +17,7 @@ export interface LivePreset {
   description: string;
 }
 
-const COLS = "id,store_id,kind,title,description";
+const COLS = "id,store_id,kind,title,description, active";
 const table = () => (lc as any).schema("live_commerce").from("live_presets");
 
 export const LivePresetsService = {
@@ -31,6 +32,11 @@ export const LivePresetsService = {
       throw error;
     }
     return data as LivePreset;
+  },
+
+  async setActive(id: string, active: boolean): Promise<void> {
+    const { error } = await table().update({ active }).eq("id", id);
+    if (error) throw error;
   },
 
   async metrics(storeId: string): Promise<Record<string, PresetMetrics>> {
