@@ -2957,3 +2957,73 @@ function fetchLiveSpotlight(live) {
   }
   setInterval(decorate, 400);
 })();
+
+/* SLL-DEEPLINK */
+;(function () {
+  if (window.__sllDeepLink) return;
+  window.__sllDeepLink = true;
+  var q;
+  try { q = new URLSearchParams(location.search); } catch (e) { return; }
+  var id = q.get('sll_live');
+  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return;
+  var signup = q.get('sll_cadastro') === '1';
+  var KEY = 'sb_publishable_fYM4F5uRs_8DbYF7ozy0hA_eA_Z5XUz';
+  var API = 'https://flivmllysdhaydhogmhg.supabase.co/rest/v1/';
+
+  function cleanUrl() {
+    try {
+      var u = new URL(location.href);
+      u.searchParams.delete('sll_live');
+      u.searchParams.delete('sll_cadastro');
+      history.replaceState(null, '', u.toString());
+    } catch (e) {}
+  }
+  function until(fn, ms) {
+    var t0 = Date.now();
+    (function loop() {
+      var ok = false;
+      try { ok = fn(); } catch (e) {}
+      if (!ok && Date.now() - t0 < ms) setTimeout(loop, 400);
+    })();
+  }
+  function findCard() {
+    var all = document.body.getElementsByTagName('*');
+    for (var i = 0; i < all.length; i++) {
+      var sr = all[i].shadowRoot;
+      if (sr) {
+        var c = sr.querySelector('.vl-live-container');
+        if (c) return c;
+      }
+    }
+    return null;
+  }
+
+  fetch(API + 'lives?select=id,status&id=eq.' + id + '&limit=1', {
+    headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Accept-Profile': 'live_commerce' }
+  }).then(function (r) { return r.ok ? r.json() : []; })
+    .catch(function () { return []; })
+    .then(function (rows) {
+      var row = rows && rows[0];
+      if (!row) return;
+      if (signup) {
+        until(function () {
+          if (typeof window.__sllOpenReg !== 'function') return false;
+          window.__sllKey = KEY;
+          window.__sllLiveId = id;
+          window.__sllOpenReg();
+          cleanUrl();
+          return true;
+        }, 20000);
+      } else if (row.status === 'live') {
+        until(function () {
+          var c = findCard();
+          if (!c) return false;
+          c.click();
+          cleanUrl();
+          return true;
+        }, 20000);
+      } else {
+        cleanUrl();
+      }
+    });
+})();
