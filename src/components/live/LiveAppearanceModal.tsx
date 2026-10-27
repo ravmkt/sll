@@ -76,6 +76,7 @@ export interface LivePlayerSettings {
   showViewerCount: boolean;
   showChat: boolean;
   autoplayMuted: boolean;
+  loopVideo?: boolean;
   
   showProducts: boolean;
   productNameSize: number;
@@ -1279,6 +1280,7 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
                       <ElementSubItem id="sub_viewers" label="Contador de espectadores" checked={currentPlayer.showViewerCount} onToggle={(v) => updateConfig(setPlayerConfig, "showViewerCount", v, playerConfig.linked)} openSubItem={openSubItem} setOpenSubItem={setOpenSubItem} hasSettings={false} />
                       <ElementSubItem id="sub_chat" label="Chat ao vivo" checked={currentPlayer.showChat} onToggle={(v) => updateConfig(setPlayerConfig, "showChat", v, playerConfig.linked)} openSubItem={openSubItem} setOpenSubItem={setOpenSubItem} hasSettings={false} />
                       <ElementSubItem id="sub_mute" label="Iniciar com som desativado" checked={currentPlayer.autoplayMuted} onToggle={(v) => updateConfig(setPlayerConfig, "autoplayMuted", v, playerConfig.linked)} openSubItem={openSubItem} setOpenSubItem={setOpenSubItem} hasSettings={false} />
+                      <ElementSubItem id="sub_loop" label={"Exibir em loop"} checked={currentPlayer.loopVideo === true} onToggle={(v) => updateConfig(setPlayerConfig, "loopVideo", v, playerConfig.linked)} openSubItem={openSubItem} setOpenSubItem={setOpenSubItem} hasSettings={false} />
                     </div>
                   </AccordionItem>
                 </div>
