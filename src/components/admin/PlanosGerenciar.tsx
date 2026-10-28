@@ -29,8 +29,8 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
   const sig = sorted.map((p) => `${p.id}:${p.price_monthly_cents}:${p.price_semiannual_cents}:${p.price_annual_cents}`).join('|');
   const [d, setD] = useState<Record<string, D>>({});
   const [anchor, setAnchor] = useState('');
-  const [ds, setDs] = useState('10');
-  const [da, setDa] = useState('20');
+  const [ds, setDs] = useState('5');
+  const [da, setDa] = useState('10');
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,8 +49,8 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
     setD(next);
     setAnchor(toReais(base));
     if (first && first.price_monthly_cents > 0) {
-      if (first.price_semiannual_cents > 0) setDs(String(Math.max(0, Math.round((1 - first.price_semiannual_cents / (first.price_monthly_cents * 6)) * 100))));
-      if (first.price_annual_cents > 0) setDa(String(Math.max(0, Math.round((1 - first.price_annual_cents / (first.price_monthly_cents * 12)) * 100))));
+      if (first.price_semiannual_cents > 0) setDs(String(Math.round((first.price_semiannual_cents / first.price_monthly_cents) * 100) / 100).replace('.', ','));
+      if (first.price_annual_cents > 0) setDa(String(Math.round((first.price_annual_cents / first.price_monthly_cents) * 100) / 100).replace('.', ','));
     }
   }, [sig]);
 
@@ -85,17 +85,17 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
   const suggest = () => {
     const base = toCents(anchor);
     if (!Number.isFinite(base) || base <= 0) { toast.error('Informe o preço âncora do plano mais básico.'); return; }
-    const dsn = num(ds) || 0;
-    const dan = num(da) || 0;
+    const dsn = num(ds) || 6;
+    const dan = num(da) || 12;
     setD((prev) => {
       const next = { ...prev };
       sorted.forEach((p) => {
-        const x = num(prev[p.id]?.x || '1');
+        const x = p.id === sorted[0].id ? 1 : num(prev[p.id]?.x || '1');
         if (!Number.isFinite(x) || x <= 0) return;
-        const m = Math.round((base * x) / 100) * 100;
-        const s = Math.round((m * 6 * (1 - dsn / 100)) / 100) * 100;
-        const a = Math.round((m * 12 * (1 - dan / 100)) / 100) * 100;
-        next[p.id] = { ...prev[p.id], m: toReais(m), s: toReais(s), a: toReais(a) };
+        const m = Math.round(base * x);
+        const s = Math.round(m * dsn);
+        const a = Math.round(m * dan);
+        next[p.id] = { ...prev[p.id], x: p.id === sorted[0].id ? '1' : prev[p.id].x, m: toReais(m), s: toReais(s), a: toReais(a) };
       });
       return next;
     });
@@ -154,18 +154,18 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
             <input value={anchor} onChange={(e) => setAnchor(e.target.value)} className={`${INPUT} w-40`} />
           </label>
           <label className="space-y-1">
-            <span className={LBL}>Desc. semestral %</span>
+            <span className={LBL}>Meses pagos (semestral)</span>
             <input value={ds} onChange={(e) => setDs(e.target.value)} className={`${INPUT} w-24`} />
           </label>
           <label className="space-y-1">
-            <span className={LBL}>Desc. anual %</span>
+            <span className={LBL}>Meses pagos (anual)</span>
             <input value={da} onChange={(e) => setDa(e.target.value)} className={`${INPUT} w-24`} />
           </label>
           <button type="button" onClick={suggest} className="cursor-pointer rounded-lg bg-[#fd8539] px-4 py-2 text-[13px] font-bold text-white">
             Sugerir escadinha
           </button>
           <p className="basis-full text-xs text-slate-500">
-            Preço de cada plano = âncora × multiplicador do card. Semestral e anual = mensal × meses, menos o desconto. Ajuste à mão antes de salvar. Preços só afetam novas assinaturas.
+            {'Semestral = mensal x meses pagos; anual = mensal x meses pagos. O 1\u00ba plano da ordem recebe exatamente a \u00e2ncora. Pre\u00e7os s\u00f3 afetam novas assinaturas.'}
           </p>
         </div>
       )}
@@ -214,7 +214,7 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
                       {showAnchor && (
                   <label className="flex items-center gap-2 text-xs text-slate-400">
                     Multiplicador da âncora
-                    <input value={v.x} onChange={(e) => setField(p.id, { x: e.target.value })} className={`${INPUT} w-20 text-right`} />
+                    <input value={v.x} disabled={pi === 0} onChange={(e) => setField(p.id, { x: e.target.value })} className={`${INPUT} w-20 text-right disabled:opacity-50`} />
                     <span>×</span>
                   </label>
                 )}
