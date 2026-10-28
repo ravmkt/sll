@@ -79,10 +79,8 @@ function QuickEdit({ plan, onClose, onSaved }: { plan: DynamicPlan; onClose: () 
             rows={4}
             value={featuresText}
             onChange={(e) => setFeaturesText(e.target.value)}
-            placeholder={"Até 50 vídeos ativos
-Suporte prioritário via WhatsApp
-Métricas de cliques e receita"}
-            className={${INPUT} resize-y text-xs}
+            placeholder="Até 50 vídeos ativos&#10;Suporte prioritário via WhatsApp&#10;Métricas de cliques e receita"
+            className={`${INPUT} resize-y text-xs`}
           />
         </label>
         <label className="flex items-center gap-2 text-[13px] text-slate-300">
@@ -149,3 +147,5 @@ export default function ModulePlansCard({ slug, onManage }: { slug: string; onMa
     </div>
   );
 }
+
+
