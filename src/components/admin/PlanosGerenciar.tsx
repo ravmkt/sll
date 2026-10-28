@@ -38,7 +38,8 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
     const base = first?.price_monthly_cents || 0;
     const next: Record<string, D> = {};
     sorted.forEach((p, i) => {
-      const ratio = base > 0 ? Math.round((p.price_monthly_cents / base) * 100) / 100 : (DEFAULT_X[i] ?? i + 1);
+      const raw = base > 0 ? Math.round((p.price_monthly_cents / base) * 100) / 100 : 0;
+      const ratio = raw > 0 ? raw : (DEFAULT_X[i] ?? i + 1);
       next[p.id] = {
         m: toReais(p.price_monthly_cents),
         s: toReais(p.price_semiannual_cents),
@@ -49,8 +50,8 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
     setD(next);
     setAnchor(toReais(base));
     if (first && first.price_monthly_cents > 0) {
-      if (first.price_semiannual_cents > 0) setDs(String(Math.round((first.price_semiannual_cents / first.price_monthly_cents) * 100) / 100).replace('.', ','));
-      if (first.price_annual_cents > 0) setDa(String(Math.round((first.price_annual_cents / first.price_monthly_cents) * 100) / 100).replace('.', ','));
+      if (first.price_semiannual_cents > 0) { const r = Math.round((first.price_semiannual_cents / first.price_monthly_cents) * 100) / 100; if (r >= 1 && r <= 6) setDs(String(r).replace('.', ',')); }
+      if (first.price_annual_cents > 0) { const r = Math.round((first.price_annual_cents / first.price_monthly_cents) * 100) / 100; if (r >= 1 && r <= 12) setDa(String(r).replace('.', ',')); }
     }
   }, [sig]);
 
@@ -100,6 +101,27 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
       return next;
     });
     toast.message('Sugestão aplicada. Ajuste cada card e clique em Salvar.');
+  };
+
+  const calcOne = (id: string, quiet = false) => {
+    const v = d[id];
+    if (!v) return false;
+    const mo = toCents(v.m);
+    if (!Number.isFinite(mo) || mo <= 0) {
+      if (!quiet) toast.error('Informe o pre\u00e7o mensal deste plano.');
+      return false;
+    }
+    const ms = num(ds) || 5;
+    const ma = num(da) || 10;
+    setField(id, { s: toReais(Math.round(mo * ms)), a: toReais(Math.round(mo * ma)) });
+    return true;
+  };
+
+  const calcAll = () => {
+    let n = 0;
+    sorted.forEach((p) => { if (calcOne(p.id, true)) n++; });
+    if (n === 0) toast.error('Nenhum plano com pre\u00e7o mensal preenchido.');
+    else toast.message(`Ciclos calculados em ${n} plano(s). Confira e clique em Salvar.`);
   };
 
   const save = async (p: DynamicPlan, quiet = false) => {
@@ -164,6 +186,9 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
           <button type="button" onClick={suggest} className="cursor-pointer rounded-lg bg-[#fd8539] px-4 py-2 text-[13px] font-bold text-white">
             Sugerir escadinha
           </button>
+          <button type="button" onClick={calcAll} className="cursor-pointer rounded-lg bg-white/10 px-4 py-2 text-[13px] font-bold text-slate-100 hover:bg-white/15">
+            Calcular ciclos de todos
+          </button>
           <p className="basis-full text-xs text-slate-500">
             {'Semestral = mensal x meses pagos; anual = mensal x meses pagos. O 1\u00ba plano da ordem recebe exatamente a \u00e2ncora. Pre\u00e7os s\u00f3 afetam novas assinaturas.'}
           </p>
@@ -201,6 +226,9 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
                   <label className="space-y-1"><span className={LBL}>Semestral</span><input value={v.s} onChange={(e) => setField(p.id, { s: e.target.value })} className={INPUT} /></label>
                   <label className="space-y-1"><span className={LBL}>Anual</span><input value={v.a} onChange={(e) => setField(p.id, { a: e.target.value })} className={INPUT} /></label>
                 </div>
+                <button type="button" onClick={() => calcOne(p.id)} className="w-full cursor-pointer rounded-lg bg-white/5 px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/10">
+                  Calcular ciclos (mensal x {ds || '5'} e x {da || '10'})
+                </button>
                 {(semi || ann) && (
                   <p className="text-xs font-semibold text-emerald-400">
                     {[semi && `Semestral: ${semi}`, ann && `Anual: ${ann}`].filter(Boolean).join('  |  ')}
