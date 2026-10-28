@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { updateDynamicPlan, type DynamicPlan } from '@/services/admin/plansAdmin';
 import { cycleInfo } from '@/components/admin/cycleInfo';
@@ -24,7 +25,7 @@ type Props = {
 };
 
 export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtitleOf, renderMargin, onEdit, onSaved }: Props) {
-  const sorted = useMemo(() => [...plans].sort((a, b) => a.price_monthly_cents - b.price_monthly_cents), [plans]);
+  const sorted = useMemo(() => [...plans].sort((a, b) => (((a as any).sort_order ?? 0) - ((b as any).sort_order ?? 0)) || (a.price_monthly_cents - b.price_monthly_cents)), [plans]);
   const sig = sorted.map((p) => `${p.id}:${p.price_monthly_cents}:${p.price_semiannual_cents}:${p.price_annual_cents}`).join('|');
   const [d, setD] = useState<Record<string, D>>({});
   const [anchor, setAnchor] = useState('');
@@ -58,6 +59,27 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
   const dirty = (p: DynamicPlan) => {
     const v = d[p.id];
     return !!v && (toCents(v.m) !== p.price_monthly_cents || toCents(v.s) !== p.price_semiannual_cents || toCents(v.a) !== p.price_annual_cents);
+  };
+
+  const move = async (id: string, dir: -1 | 1) => {
+    const i = sorted.findIndex((x) => x.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= sorted.length) return;
+    const list = sorted.map((x) => x.id);
+    [list[i], list[j]] = [list[j], list[i]];
+    setBusy('order');
+    try {
+      for (let k = 0; k < list.length; k++) {
+        const { error } = await (supabase as any).from('dynamic_plans').update({ sort_order: k + 1 }).eq('id', list[k]);
+        if (error) throw new Error(error.message);
+      }
+      toast.success('Ordem salva.');
+      await onSaved();
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro ao salvar a ordem.');
+    } finally {
+      setBusy(null);
+    }
   };
 
   const suggest = () => {
@@ -152,7 +174,7 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
         <p className="rounded-2xl border border-slate-800 bg-[#111524] px-4 py-8 text-center text-[13px] text-slate-500">Nenhum plano cadastrado.</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {sorted.map((p) => {
+          {sorted.map((p, pi) => {
             const v = d[p.id];
             if (!v) return null;
             const mo = toCents(v.m);
@@ -184,7 +206,12 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
                     {[semi && `Semestral: ${semi}`, ann && `Anual: ${ann}`].filter(Boolean).join('  |  ')}
                   </p>
                 )}
-                {showAnchor && (
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <span>Ordem {pi + 1}</span>
+                        <button type="button" title="Subir" disabled={busy !== null || pi === 0} onClick={() => move(p.id, -1)} className="rounded-md bg-slate-800 px-2 py-1 font-bold text-slate-200 disabled:opacity-30">{'\u2191'}</button>
+                        <button type="button" title="Descer" disabled={busy !== null || pi === sorted.length - 1} onClick={() => move(p.id, 1)} className="rounded-md bg-slate-800 px-2 py-1 font-bold text-slate-200 disabled:opacity-30">{'\u2193'}</button>
+                      </div>
+                      {showAnchor && (
                   <label className="flex items-center gap-2 text-xs text-slate-400">
                     Multiplicador da âncora
                     <input value={v.x} onChange={(e) => setField(p.id, { x: e.target.value })} className={`${INPUT} w-20 text-right`} />
