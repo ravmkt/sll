@@ -1,0 +1,16 @@
+﻿cd "F:\RODRIGO VICENTE\DYAD\sll-hub"
+
+# 1) Salvar o HTML da área de transferência (backup do anterior, se existir)
+$dest = "public\landing\index.html"
+New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
+if (Test-Path $dest) { Copy-Item $dest "$dest.bak" -Force }
+Get-Clipboard -Raw | Set-Content -Path $dest -Encoding UTF8
+
+# 2) Testar build
+npm run build
+
+# 3) Sincronizar com GitHub (a Vercel faz o deploy automático no push)
+git add .
+git commit -m "feat(landing): nova landing dark SLL Hub, Vidlytics e StreamSell"
+git push origin main
+
