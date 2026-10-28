@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+﻿import { supabase } from '@/lib/supabase';
 
 export type PlanLimits = {
   views?: number | null;
@@ -19,6 +19,7 @@ export type DynamicPlan = {
   price_semiannual_cents: number;
   price_annual_cents: number;
   limits_config: PlanLimits | null;
+  features?: string[] | null;
   is_recommended: boolean;
   sort_order: number;
   is_active: boolean;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Pencil, Tag, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { listDynamicPlans, updateDynamicPlan, type DynamicPlan } from '@/services/admin/plansAdmin';
@@ -11,9 +11,9 @@ const toCents = (v: string) => Math.round(Number(v.replace(',', '.')) * 100);
 function statsText(st?: PlanStat): string {
   const parts = [`${int(st?.total ?? 0)} loja(s)`, `${int(st?.paying ?? 0)} pagante(s)`];
   if (st?.trial) parts.push(`${int(st.trial)} em trial`);
-  if (st?.lifetime) parts.push(`${int(st.lifetime)} vitalícia(s)`);
+  if (st?.lifetime) parts.push(`${int(st.lifetime)} vitalÃ­cia(s)`);
   if (st?.past_due) parts.push(`${int(st.past_due)} inadimplente(s)`);
-  return parts.join(' · ');
+  return parts.join(' Â· ');
 }
 
 function QuickEdit({ plan, onClose, onSaved }: { plan: DynamicPlan; onClose: () => void; onSaved: () => void }) {
@@ -22,11 +22,12 @@ function QuickEdit({ plan, onClose, onSaved }: { plan: DynamicPlan; onClose: () 
   const [ps, setPs] = useState(toReais(plan.price_semiannual_cents));
   const [pa, setPa] = useState(toReais(plan.price_annual_cents));
   const [active, setActive] = useState(plan.is_active);
+  const [featuresText, setFeaturesText] = useState(Array.isArray(plan.features) ? plan.features.join('\n') : '');
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
     const cents = [toCents(pm), toCents(ps), toCents(pa)];
-    if (!name.trim() || cents.some((c) => !Number.isFinite(c) || c < 0)) { toast.error('Valores inválidos.'); return; }
+    if (!name.trim() || cents.some((c) => !Number.isFinite(c) || c < 0)) { toast.error('Valores invÃ¡lidos.'); return; }
     setBusy(true);
     try {
       await updateDynamicPlan(plan.id, {
@@ -35,6 +36,7 @@ function QuickEdit({ plan, onClose, onSaved }: { plan: DynamicPlan; onClose: () 
         price_semiannual_cents: cents[1],
         price_annual_cents: cents[2],
         limits_config: plan.limits_config ?? {},
+        features: featuresText.split('\n').map((f) => f.trim()).filter(Boolean),
         is_recommended: plan.is_recommended,
         is_active: active,
       });
@@ -42,7 +44,7 @@ function QuickEdit({ plan, onClose, onSaved }: { plan: DynamicPlan; onClose: () 
       onSaved();
       onClose();
     } catch (e: any) {
-      toast.error(e?.message || 'Não foi possível salvar.');
+      toast.error(e?.message || 'NÃ£o foi possÃ­vel salvar.');
     } finally {
       setBusy(false);
     }
@@ -71,14 +73,26 @@ function QuickEdit({ plan, onClose, onSaved }: { plan: DynamicPlan; onClose: () 
           <F label="Semestral (R$)" value={ps} set={setPs} />
           <F label="Anual (R$)" value={pa} set={setPa} />
         </div>
+                <label className="block space-y-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Benefícios na Landing Page (um por linha)</span>
+          <textarea
+            rows={4}
+            value={featuresText}
+            onChange={(e) => setFeaturesText(e.target.value)}
+            placeholder={"Até 50 vídeos ativos
+Suporte prioritário via WhatsApp
+Métricas de cliques e receita"}
+            className={${INPUT} resize-y text-xs}
+          />
+        </label>
         <label className="flex items-center gap-2 text-[13px] text-slate-300">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Plano ativo
         </label>
-        <p className="text-xs text-slate-600">O preço vale só para novas assinaturas. Limites e add-ons continuam em Preços.</p>
+        <p className="text-xs text-slate-600">O preÃ§o vale sÃ³ para novas assinaturas. Limites e add-ons continuam em PreÃ§os.</p>
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-[13px] font-bold text-slate-200 hover:bg-white/10">Cancelar</button>
           <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#fd8539] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40">
-            {busy ? 'Salvando…' : 'Salvar'}
+            {busy ? 'Salvandoâ€¦' : 'Salvar'}
           </button>
         </div>
       </div>
@@ -102,24 +116,24 @@ export default function ModulePlansCard({ slug, onManage }: { slug: string; onMa
 
   return (
     <div className={`${CARD} space-y-3`}>
-      <p className="flex items-center gap-2 text-[15px] font-bold text-white"><Tag size={14} className="text-[#fd8539]" /> Planos do módulo</p>
+      <p className="flex items-center gap-2 text-[15px] font-bold text-white"><Tag size={14} className="text-[#fd8539]" /> Planos do mÃ³dulo</p>
       {plans === null ? (
         <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />
       ) : plans.length === 0 ? (
-        <p className="text-[13px] text-slate-500">Este módulo ainda não tem planos.</p>
+        <p className="text-[13px] text-slate-500">Este mÃ³dulo ainda nÃ£o tem planos.</p>
       ) : (
         <ul className="divide-y divide-white/5">
           {plans.map((p) => (
             <li key={p.id} className="flex items-center justify-between gap-2 py-2">
               <div className="min-w-0">
                 <p className="truncate text-[13px] font-bold text-white">{p.plan_name}</p>
-                <p className="text-[13px] text-slate-500">{brl(p.price_monthly_cents)}/mês · {statsText(stats[p.id])}</p>
+                <p className="text-[13px] text-slate-500">{brl(p.price_monthly_cents)}/mÃªs Â· {statsText(stats[p.id])}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${p.is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-400'}`}>
                   {p.is_active ? 'Ativo' : 'Inativo'}
                 </span>
-                <button type="button" onClick={() => setEditing(p)} title="Editar preço" className="cursor-pointer rounded-md bg-white/5 p-1.5 text-slate-300 hover:bg-white/10">
+                <button type="button" onClick={() => setEditing(p)} title="Editar preÃ§o" className="cursor-pointer rounded-md bg-white/5 p-1.5 text-slate-300 hover:bg-white/10">
                   <Pencil size={13} />
                 </button>
               </div>
@@ -127,9 +141,9 @@ export default function ModulePlansCard({ slug, onManage }: { slug: string; onMa
           ))}
         </ul>
       )}
-      <p className="text-xs text-slate-600">Lojas que entram por combo não aparecem nos planos individuais.</p>
+      <p className="text-xs text-slate-600">Lojas que entram por combo nÃ£o aparecem nos planos individuais.</p>
       <button type="button" onClick={onManage} className="w-full cursor-pointer rounded-lg bg-white/5 px-3 py-2 text-[13px] font-bold text-slate-200 hover:bg-white/10">
-        Limites e add-ons (Preços)
+        Limites e add-ons (PreÃ§os)
       </button>
       {editing && <QuickEdit plan={editing} onClose={() => setEditing(null)} onSaved={load} />}
     </div>

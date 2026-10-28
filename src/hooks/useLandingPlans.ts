@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 const sb: any = supabase;
@@ -26,9 +26,9 @@ const BASE_CYCLES: LandingCycle[] = [
 ];
 
 const TAGS: Record<string, string> = {
-  starter: 'Para quem está começando',
-  pro: 'Operação ativa',
-  scale: 'Grandes lojas e alto tráfego',
+  starter: 'Para quem estÃ¡ comeÃ§ando',
+  pro: 'OperaÃ§Ã£o ativa',
+  scale: 'Grandes lojas e alto trÃ¡fego',
 };
 
 const num = (v: unknown) => Number(v ?? 0) || 0;
@@ -39,12 +39,12 @@ const discount = (monthly: number, total: number, months: number) =>
 
 function buildFeatures(l: any): string[] {
   const out: string[] = [];
-  if (num(l?.max_videos) > 0) out.push(`Até ${int(num(l.max_videos))} vídeos ativos na loja`);
-  if (num(l?.views) > 0) out.push(`Até ${int(num(l.views))} visualizações/mês`);
+  if (num(l?.max_videos) > 0) out.push(`AtÃ© ${int(num(l.max_videos))} vÃ­deos ativos na loja`);
+  if (num(l?.views) > 0) out.push(`AtÃ© ${int(num(l.views))} visualizaÃ§Ãµes/mÃªs`);
   if (num(l?.storage_gb) > 0) out.push(`${int(num(l.storage_gb))} GB de armazenamento`);
-  if (num(l?.ai_messages) > 0) out.push(`${int(num(l.ai_messages))} mensagens de IA/mês`);
-  if (l?.tracking) out.push('Métricas completas de receita e cliques');
-  if (l?.badge_removable) out.push('Remoção da marca SLL do widget');
+  if (num(l?.ai_messages) > 0) out.push(`${int(num(l.ai_messages))} mensagens de IA/mÃªs`);
+  if (l?.tracking) out.push('MÃ©tricas completas de receita e cliques');
+  if (l?.badge_removable) out.push('RemoÃ§Ã£o da marca SLL do widget');
   return out;
 }
 
@@ -55,7 +55,7 @@ export function useLandingPlans(): State {
     let alive = true;
     (async () => {
       const { data, error } = await sb
-        .from('dynamic_plans')
+        .schema('landingpage').from('v_plans')
         .select('id, plan_tier, plan_name, price_monthly_cents, price_semiannual_cents, price_annual_cents, limits_config, is_recommended, sort_order')
         .eq('is_active', true)
         .eq('is_combo', false)
@@ -84,15 +84,15 @@ export function useLandingPlans(): State {
           views: num(r.limits_config?.views),
           price: {
             mensal: brl(m),
-            semestral: s > 0 ? brl(Math.round(s / 6)) : '—',
-            anual: a > 0 ? brl(Math.round(a / 12)) : '—',
+            semestral: s > 0 ? brl(Math.round(s / 6)) : 'â€”',
+            anual: a > 0 ? brl(Math.round(a / 12)) : 'â€”',
           },
           billing: {
-            mensal: `R$ ${brl(m)} cobrado todo mês`,
-            semestral: s > 0 ? `R$ ${brl(s)} a cada 6 meses` : 'Indisponível neste ciclo',
-            anual: a > 0 ? `R$ ${brl(a)} por ano, em até 12x` : 'Indisponível neste ciclo',
+            mensal: `R$ ${brl(m)} cobrado todo mÃªs`,
+            semestral: s > 0 ? `R$ ${brl(s)} a cada 6 meses` : 'IndisponÃ­vel neste ciclo',
+            anual: a > 0 ? `R$ ${brl(a)} por ano, em atÃ© 12x` : 'IndisponÃ­vel neste ciclo',
           },
-          features: buildFeatures(r.limits_config),
+          features: (Array.isArray(r.features) && r.features.length > 0) ? r.features : buildFeatures(r.limits_config),
         };
       });
 
