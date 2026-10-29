@@ -2398,9 +2398,9 @@ function fetchLiveSpotlight(live) {
     var n = 1 + (hasProd ? 1 : 0) + (hasChat ? 1 : 0);
     var cols = [];
     var full = hasProd && hasChat;
-    if (hasProd) cols.push(full ? 'minmax(0,3fr)' : 'minmax(0,1fr)');
+    if (hasProd) cols.push('minmax(0,1fr)');
     cols.push('var(--pw)');
-    if (hasChat) cols.push(full ? 'minmax(0,2fr)' : 'minmax(0,1fr)');
+    if (hasChat) cols.push('minmax(0,1fr)');
 
     function row(a, b, d) {
       var r = [];
