@@ -24,11 +24,12 @@ const DELAY_MAX = 12;
 
 const DEFAULTS: Record<string, { subject: string; body: string }> = {
   "24h": { subject: "Amanhã tem live: {titulo_live}", body: "Olá, {nome}! 👋\nA live \"{titulo_live}\" começa em {data}.\nEntre por aqui: {link_live}" },
+  "1h": { subject: "Falta 1 hora: {titulo_live}", body: "Ol\u00e1, {nome}!\nA live \"{titulo_live}\" come\u00e7a em 1 hora ({data}).\nEntre por aqui: {link_live}" },
   on_air: { subject: "Estamos no ar: {titulo_live}", body: "Olá, {nome}! 🔴\nA live \"{titulo_live}\" começou agora.\nEntre por aqui: {link_live}" },
 };
 
 const pick = (o: any, keys: string[]) => { for (const k of keys) if (o?.[k] != null && o[k] !== "") return o[k]; return null; };
-const enabled = (s: any, _ch: string, tr: string) => !!s?.enabled && !!(tr === "24h" ? s?.before_24h : s?.on_start);
+const kindOf = (tr: string) => (tr === "24h" ? "before_24h" : tr === "1h" ? "before_1h" : "on_start"); const enabled = (s: any, ch: string, tr: string) => !!s?.enabled && (ch === "email" ? s?.email_enabled !== false : s?.whatsapp_enabled !== false) && !!s?.[kindOf(tr)];
 
 function normPhone(raw: unknown): string | null {
   let d = String(raw ?? "").replace(/\D/g, "");
@@ -49,12 +50,12 @@ Deno.serve(async (req) => {
 
   const now = new Date();
   const in24 = new Date(now.getTime() + 24 * 3600e3);
-  const jobs: { live: any; trigger: "24h" | "on_air" }[] = [];
+  const jobs: { live: any; trigger: "24h" | "1h" | "on_air" }[] = [];
 
   const { data: soon } = await db.from("lives").select("*")
     .not("status", "in", "(live,ended,finished,cancelled)")
-    .gt("scheduled_at", now.toISOString()).lte("scheduled_at", in24.toISOString());
-  for (const l of soon ?? []) jobs.push({ live: l, trigger: "24h" });
+    .gt("scheduled_at", new Date(now.getTime() + 55 * 60000).toISOString()).lte("scheduled_at", in24.toISOString());
+  for (const l of soon ?? []) { const ms = new Date(l.scheduled_at).getTime() - now.getTime(); if (ms > 23 * 3600000) jobs.push({ live: l, trigger: "24h" }); else if (ms > 55 * 60000 && ms <= 60 * 60000) jobs.push({ live: l, trigger: "1h" }); }
   const { data: air } = await db.from("lives").select("*").eq("status", "live");
   for (const l of air ?? []) jobs.push({ live: l, trigger: "on_air" });
 
@@ -67,7 +68,7 @@ Deno.serve(async (req) => {
     const { data: storeRow } = await pub.from("stores").select("name").eq("id", storeId).maybeSingle();
     const lojaNome = String(storeRow?.name ?? "");
     const inst = settings?.evolution_instance ? { instance_name: String(settings.evolution_instance), instance_token: settings.evolution_token as string | null, status: String(settings.evolution_status ?? "") } : null;
-    const { data: leads } = await db.from("live_leads").select("*").eq("live_id", live.id).or("unsubscribed.is.null,unsubscribed.eq.false");
+    const { data: leads } = await db.from("live_leads").select("*").eq("store_id", live.store_id).or("unsubscribed.is.null,unsubscribed.eq.false");
     if (!leads?.length) continue;
 
     const link = String(pick(live, ["public_url", "share_url"]) ?? `${APP_URL}/live/${live.id}`);
@@ -79,7 +80,7 @@ Deno.serve(async (req) => {
       if (stop) break;
       if (!enabled(settings, channel, trigger)) continue;
 
-      const row = (tpls ?? []).find((t: any) => t.channel === channel && t.kind === (trigger === "24h" ? "before_24h" : "on_start"));
+      const row = (tpls ?? []).find((t: any) => t.channel === channel && t.kind === kindOf(trigger));
       let text = String(pick(row, ["body", "message", "content", "text"]) ?? DEFAULTS[trigger].body);
       const subject = String(pick(row, ["subject", "title"]) ?? DEFAULTS[trigger].subject);
 
