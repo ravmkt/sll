@@ -5,7 +5,7 @@ import { supabaseLiveCommerce as supabase } from '@/services/supabaseClients';
 import { liveStore } from '@/components/live/LiveTemplatesPage';
 
 type Channel = 'whatsapp' | 'email';
-type Kind = 'before_24h' | 'on_start';
+type Kind = 'before_24h' | 'before_1h' | 'on_start';
 type Tpl = { subject: string; body: string };
 
 const DEFAULTS: Record<string, Tpl> = {
@@ -14,6 +14,8 @@ const DEFAULTS: Record<string, Tpl> = {
   'email:before_24h': { subject: 'Amanh\u00e3 tem live: {titulo_live}', body: 'Ol\u00e1, {nome}!\n\nAmanh\u00e3, {data} \u00e0s {hora}, a {loja} far\u00e1 uma live: {titulo_live}.\n\nGaranta seu lugar: {link}' },
   'email:on_start': { subject: 'Estamos ao vivo: {titulo_live}', body: 'Ol\u00e1, {nome}!\n\nA live "{titulo_live}" da {loja} come\u00e7ou agora.\n\nEntre: {link}' },
 };
+DEFAULTS['whatsapp:before_1h'] = { subject: '', body: 'Ol\u00e1, {nome}! Falta 1 hora para a live na {loja}: {titulo_live}. Entre aqui: {link}' };
+DEFAULTS['email:before_1h'] = { subject: 'Falta 1 hora: {titulo_live}', body: 'Ol\u00e1, {nome}!\n\nA live "{titulo_live}" da {loja} come\u00e7a em 1 hora ({hora}).\n\nEntre: {link}' };
 const VARS = ['{nome}', '{loja}', '{titulo_live}', '{data}', '{hora}', '{link}'];
 const SAMPLE: Record<string, string> = {
   nome: 'Maria', loja: 'Sua Loja', titulo_live: 'Especial Anivers\u00e1rio', data: '28/10', hora: '19:00', link: 'https://sualoja.com.br/?sll_live=...',
@@ -94,8 +96,9 @@ export default function NotifyTemplatesModal({ open, onClose }: { open: boolean;
           <button type="button" className={tab(channel === 'whatsapp')} onClick={() => setChannel('whatsapp')}><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</button>
           <button type="button" className={tab(channel === 'email')} onClick={() => setChannel('email')}><Mail className="h-3.5 w-3.5" /> E-mail</button>
         </div>
-        <div className="grid grid-cols-2 gap-1 rounded-2xl bg-slate-100 p-1">
-          <button type="button" className={tab(kind === 'before_24h')} onClick={() => setKind('before_24h')}>{'Lembrete 24h antes'}</button>
+        <div className="grid grid-cols-3 gap-1 rounded-2xl bg-slate-100 p-1">
+          <button type="button" className={tab(kind === 'before_24h')} onClick={() => setKind('before_24h')}>{'24h antes'}</button>
+              <button type="button" className={tab(kind === 'before_1h')} onClick={() => setKind('before_1h')}>{'1h antes'}</button>
           <button type="button" className={tab(kind === 'on_start')} onClick={() => setKind('on_start')}>{'Estamos ao vivo'}</button>
         </div>
 
@@ -129,7 +132,7 @@ export default function NotifyTemplatesModal({ open, onClose }: { open: boolean;
           <button type="button" className="cursor-pointer font-bold text-[#DC2626] hover:underline" onClick={() => set(DEFAULTS[k])}>{'Restaurar padr\u00e3o'}</button>
         </div>
         {msg && <p className="text-xs font-semibold text-slate-700">{msg}</p>}
-        <p className="text-[11px] text-amber-700">{'Aten\u00e7\u00e3o: o envio autom\u00e1tico ainda n\u00e3o est\u00e1 ativo. Estes textos ser\u00e3o usados quando o disparo for implantado.'}</p>
+        <p className="text-[11px] text-amber-700">{'No WhatsApp, o texto precisa conter {nome}, {titulo_live} e {link}; sem isso o envio \u00e9 ignorado.'}</p>
       </div>
     </AppModal>
   );

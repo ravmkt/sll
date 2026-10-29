@@ -2,7 +2,7 @@ import WhatsAppConnectCard from "@/components/live/WhatsAppConnectCard";
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
-import { BellRing, Download, MessageCircle, Phone, RefreshCw, Search, UserPlus, Users } from 'lucide-react';
+import { BellRing, Download, Mail, MessageCircle, Phone, RefreshCw, Search, UserPlus, Users } from 'lucide-react';
 import { supabaseLiveCommerce as supabase } from '@/services/supabaseClients';
 import { liveStore } from '@/components/live/LiveTemplatesPage';
 import NotifyTemplatesModal from '@/components/live/NotifyTemplatesModal';
@@ -17,7 +17,7 @@ type Lead = {
   created_at: string;
 };
 
-type Notify = { enabled: boolean; before24h: boolean; onStart: boolean };
+type Notify = { enabled: boolean; whatsappEnabled: boolean; emailEnabled: boolean; before24h: boolean; before1h: boolean; onStart: boolean };
 
 const T = {
   title: 'Audi\u00eancia',
@@ -36,8 +36,9 @@ const T = {
   ruleOn: 'Ativado',
   ruleOff: 'Desativado',
   opt24: 'Lembrete 24h antes da live',
+  opt1h: 'Lembrete 1h antes da live',
   optStart: 'Aviso "Estamos ao vivo!" na hora de iniciar',
-  ruleNote: 'A configura\u00e7\u00e3o \u00e9 salva por loja. O envio autom\u00e1tico depende da integra\u00e7\u00e3o de WhatsApp/e-mail.',
+  ruleNote: 'A configura\u00e7\u00e3o \u00e9 salva por loja. Cada canal liga e desliga separado. O e-mail ainda n\u00e3o tem link de descadastro: mantenha desligado at\u00e9 liberarmos.',
   ruleErr: 'N\u00e3o foi poss\u00edvel salvar a configura\u00e7\u00e3o. Tente novamente.',
   msgLabel: 'Mensagem do bot\u00e3o WhatsApp',
   msgDefault: 'Ol\u00e1, {nome}! Passando para avisar da nossa pr\u00f3xima live. Quer receber o link?',
@@ -45,7 +46,7 @@ const T = {
   sendTitle: 'Enviar mensagem pelo WhatsApp',
 };
 
-const DEFAULT_NOTIFY: Notify = { enabled: false, before24h: true, onStart: true };
+const DEFAULT_NOTIFY: Notify = { enabled: false, whatsappEnabled: true, emailEnabled: false, before24h: true, before1h: false, onStart: true };
 
 function digits(v: string): string {
   return String(v || '').replace(/\D/g, '');
@@ -108,7 +109,7 @@ function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode; label
 
 const AUDIENCIA_TOUR: TourStep[] = [
   { element: '[data-tour="audiencia-metricas"]', title: 'Sua audi\u00eancia', description: 'Total de inscritos, contatos com WhatsApp e novos cadastros dos \u00faltimos 7 dias.', side: 'bottom' },
-  { element: '[data-tour="audiencia-regua"]', title: 'R\u00e9gua de notifica\u00e7\u00e3o', description: 'Ative os avisos autom\u00e1ticos: lembrete 24h antes e "Estamos ao vivo!" na hora de iniciar.', side: 'bottom' },
+  { element: '[data-tour="audiencia-regua"]', title: 'R\u00e9gua de notifica\u00e7\u00e3o', description: 'Ative os avisos autom\u00e1ticos: escolha os canais (WhatsApp e e-mail) e os momentos: 24h antes, 1h antes e na hora de iniciar.', side: 'bottom' },
   { element: '[data-tour="audiencia-busca"]', title: 'Busca', description: 'Encontre pessoas por nome, e-mail, WhatsApp ou live de origem.', side: 'bottom' },
   { element: '[data-tour="audiencia-tabela"]', title: 'Cadastros', description: 'Use o bot\u00e3o Enviar para chamar a pessoa no WhatsApp com a mensagem pronta.', side: 'top' },
 ];
@@ -154,11 +155,11 @@ export default function LiveAudiencePage() {
       const db = (supabase as any).schema('live_commerce');
       const { data, error: err } = await db
         .from('live_notify_settings')
-        .select('enabled,before_24h,on_start')
+        .select('enabled,before_24h,before_1h,on_start,whatsapp_enabled,email_enabled')
         .eq('store_id', storeId)
         .maybeSingle();
       if (err) throw err;
-      if (data) setNotify({ enabled: !!data.enabled, before24h: !!data.before_24h, onStart: !!data.on_start });
+      if (data) setNotify({ enabled: !!data.enabled, whatsappEnabled: data.whatsapp_enabled !== false, emailEnabled: data.email_enabled === true, before24h: !!data.before_24h, before1h: !!data.before_1h, onStart: !!data.on_start });
     } catch (e) {
       console.error('[Audiencia/notify]', e);
     }
@@ -179,7 +180,7 @@ export default function LiveAudiencePage() {
     try {
       const db = (supabase as any).schema('live_commerce');
       const { error: err } = await db.from('live_notify_settings').upsert(
-        { store_id: storeId, enabled: next.enabled, before_24h: next.before24h, on_start: next.onStart, updated_at: new Date().toISOString() },
+        { store_id: storeId, enabled: next.enabled, whatsapp_enabled: next.whatsappEnabled, email_enabled: next.emailEnabled, before_24h: next.before24h, before_1h: next.before1h, on_start: next.onStart, updated_at: new Date().toISOString() },
         { onConflict: 'store_id' }
       );
       if (err) throw err;
@@ -273,11 +274,26 @@ export default function LiveAudiencePage() {
             <Switch disabled={waOn !== true && !notify.enabled} on={notify.enabled} label={notify.enabled ? T.ruleOff : T.ruleOn} onChange={() => saveNotify({ ...notify, enabled: !notify.enabled })} />
           </div>
         </div>
-        <div className={'mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-slate-100 pt-3 text-sm text-slate-700 ' + (notify.enabled ? '' : 'opacity-50')}>
+        <div className={'mt-3 flex flex-wrap items-center gap-x-8 gap-y-2 border-t border-slate-100 pt-3 text-sm text-slate-700 ' + (notify.enabled ? '' : 'opacity-50')}>
+              <div className="inline-flex items-center gap-2 font-semibold">
+                <MessageCircle className="h-4 w-4 text-emerald-600" /> WhatsApp
+                <Switch disabled={!notify.enabled} on={notify.whatsappEnabled} label="WhatsApp" onChange={() => saveNotify({ ...notify, whatsappEnabled: !notify.whatsappEnabled })} />
+              </div>
+              <div className="inline-flex items-center gap-2 font-semibold">
+                <Mail className="h-4 w-4 text-sky-600" /> E-mail
+                <Switch disabled={!notify.enabled} on={notify.emailEnabled} label="E-mail" onChange={() => saveNotify({ ...notify, emailEnabled: !notify.emailEnabled })} />
+                {notify.emailEnabled && <span className="text-[11px] font-semibold text-amber-700">sem link de descadastro</span>}
+              </div>
+            </div>
+            <div className={'mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-700 ' + (notify.enabled ? '' : 'opacity-50')}>
           <label className="inline-flex items-center gap-2">
             <input type="checkbox" checked={notify.before24h} disabled={!notify.enabled} onChange={() => saveNotify({ ...notify, before24h: !notify.before24h })} className="h-4 w-4 accent-rose-600" />
             {T.opt24}
           </label>
+              <label className="inline-flex items-center gap-2">
+                <input type="checkbox" checked={notify.before1h} disabled={!notify.enabled} onChange={() => saveNotify({ ...notify, before1h: !notify.before1h })} className="h-4 w-4 accent-rose-600" />
+                {T.opt1h}
+              </label>
           <label className="inline-flex items-center gap-2">
             <input type="checkbox" checked={notify.onStart} disabled={!notify.enabled} onChange={() => saveNotify({ ...notify, onStart: !notify.onStart })} className="h-4 w-4 accent-rose-600" />
             {T.optStart}
