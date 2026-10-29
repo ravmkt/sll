@@ -694,7 +694,11 @@ function closeLiveModal() {
   }
 }
 
+window.__sllCloseLive = function () { return closeLiveModal(); };
+window.__sllFetchJson = function (p, o) { return fetchJson(p, o); };
+window.__sllTrack = function (i, t, m) { return trackLiveEvent(i, t, m); };
 function openLiveModal(live) {
+  try { window.__sllLastLive = live; } catch (e) {}
   if (!document.getElementById('vl-live-modal-styles')) {
     var style = document.createElement('style');
     style.id = 'vl-live-modal-styles';
@@ -3026,4 +3030,85 @@ function fetchLiveSpotlight(live) {
         cleanUrl();
       }
     });
+})();
+
+/* SLL-BUY-BUBBLE */
+;(function () {
+  if (window.__sllBuyBubble) return;
+  window.__sllBuyBubble = true;
+
+  var css = document.createElement('style');
+  css.textContent = [
+    '.sll-grp-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 14px;border:0;border-radius:999px;background:#16a34a;color:#fff;font:700 13px system-ui,sans-serif;cursor:pointer;flex:none;white-space:nowrap;order:5}',
+    '.sll-grp-btn:hover{background:#15803d}',
+    '.vl-live-modal-body>.sll-grp-btn{display:flex;width:100%;margin:0 0 10px}'
+  ].join('');
+  document.head.appendChild(css);
+
+  function safeUrl(u) {
+    try {
+      var x = new URL(String(u || ''), window.location.href);
+      return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href : '';
+    } catch (e) { return ''; }
+  }
+
+  var asked = {};
+  function ensure(live) {
+    if (!live || live.whatsapp_group_url || asked[live.id] || !window.__sllFetchJson) return;
+    asked[live.id] = 1;
+    window.__sllFetchJson('lives?select=whatsapp_group_url&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {})
+      .then(function (rows) {
+        var u = rows && rows[0] && rows[0].whatsapp_group_url;
+        if (u) live.whatsapp_group_url = u;
+      }).catch(function () {});
+  }
+
+  function sync() {
+    var m = document.querySelector('.vl-live-modal');
+    if (!m) return;
+    var live = window.__sllLastLive;
+    ensure(live);
+    var u = safeUrl(live && live.whatsapp_group_url);
+    var b = m.querySelector('.sll-grp-btn');
+    if (!u) { if (b && b.parentNode) b.parentNode.removeChild(b); return; }
+    var wide = window.innerWidth > 900 && m.classList.contains('sll-3c');
+    var host = wide ? m.querySelector('.sll-hd-r') : m.querySelector('.vl-live-modal-body');
+    if (!host) return;
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sll-grp-btn';
+      b.textContent = 'Entrar no grupo';
+      b.onclick = function () {
+        var l = window.__sllLastLive;
+        var go = safeUrl(l && l.whatsapp_group_url);
+        if (!go) return;
+        try { if (window.__sllTrack) window.__sllTrack(l.id, 'product_click', { source: 'group_btn' }); } catch (e) {}
+        window.open(go, '_blank', 'noopener,noreferrer');
+      };
+    }
+    if (b.parentNode !== host) {
+      if (wide) host.appendChild(b); else host.insertBefore(b, host.firstChild);
+    }
+  }
+  setInterval(sync, 500);
+
+  // Comprar: registra o clique, fecha o painel e segue na mesma aba.
+  // Na pagina seguinte a bolha da live continua la; tocar nela reabre player e chat.
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest && e.target.closest('a.sll-ao-btn');
+    if (!a || !a.closest('.vl-live-modal') || !a.href) return;
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    var url = safeUrl(a.href);
+    if (!url) return;
+    e.preventDefault();
+    try {
+      var l = window.__sllLastLive;
+      if (l && window.__sllTrack) window.__sllTrack(l.id, 'product_click', { source: 'buy_bubble' });
+    } catch (x) {}
+    setTimeout(function () {
+      try { if (window.__sllCloseLive) window.__sllCloseLive(); } catch (x) {}
+      setTimeout(function () { window.location.href = url; }, 150);
+    }, 0);
+  }, true);
 })();
