@@ -64,6 +64,12 @@ interface LiveFormDialogProps {
   onSaved: () => void;
 }
 
+function parsePrice(raw?: string): number | null {
+  const s = String(raw ?? "").replace(/[^\d.,]/g, "").trim();
+  if (!s) return null;
+  return s.includes(",") ? Number(s.replace(/\./g, "").replace(",", ".")) : Number(s);
+}
+
 export function LiveFormDialog({
   open,
   onOpenChange,
@@ -116,6 +122,21 @@ export function LiveFormDialog({
 
   // --- PASSO 3: PRODUTOS ---
   const [liveProducts, setLiveProducts] = useState<LiveProductItem[]>([]);
+  const [priceOverrides, setPriceOverrides] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!open || !liveId) { setPriceOverrides({}); return; }
+    let cancelled = false;
+    LiveCommerceDatabaseService.getLiveProductPrices(liveId)
+      .then((m) => { if (!cancelled) setPriceOverrides(m); })
+      .catch(() => {
+        if (!cancelled) {
+          setPriceOverrides({});
+          toast.warning("N\u00e3o foi poss\u00edvel carregar os pre\u00e7os da live. Confira antes de salvar.");
+        }
+      });
+    return () => { cancelled = true; };
+  }, [open, liveId]);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [modalSearch, setModalSearch] = useState("");
   const [modalCategory, setModalCategory] = useState("all");
@@ -437,6 +458,15 @@ export function LiveFormDialog({
     setLiveProducts(prev => prev.filter(p => p.product_id !== productId));
   };
 
+  const handlePriceChange = (productId: string, value: string) => {
+    const v = value.replace(/[^\d.,]/g, "");
+    setPriceOverrides(prev => {
+      const next = { ...prev };
+      if (v) next[productId] = v; else delete next[productId];
+      return next;
+    });
+  };
+
   const handleProductCouponChange = (productId: string, couponCode: string) => {
     setLiveProducts(prev => prev.map(p => p.product_id === productId ? { ...p, coupon_code: couponCode } : p));
   };
@@ -526,6 +556,16 @@ export function LiveFormDialog({
       const cleanedCoupons = coupons.filter(c => c.code.trim().length > 0);
       const cleanedAdvantages = advantages.filter(a => a.title.trim().length > 0);
       const productIds = liveProducts.map(p => p.product_id);
+      const priceMap: Record<string, number | null> = {};
+      for (const p of liveProducts) {
+        const v = parsePrice(priceOverrides[p.product_id]);
+        if (v !== null && (!Number.isFinite(v) || v <= 0)) {
+          toast.error("Pre\u00e7o da live inv\u00e1lido. Use um valor maior que zero ou deixe vazio.");
+          setSaving(false);
+          return;
+        }
+        priceMap[p.product_id] = v;
+      }
       const productCtaMap: Record<string, string> = {};
       const productCouponMap: Record<string, string> = {};
       liveProducts.forEach(p => {
@@ -585,7 +625,7 @@ export function LiveFormDialog({
       if (savedId) {
         try {
           await LiveCommerceDatabaseService.syncLiveItems(
-            savedId, storeId, liveProducts, cleanedCoupons, previousCouponCodes,
+            savedId, storeId, liveProducts, cleanedCoupons, previousCouponCodes, priceMap,
           );
         } catch (syncErr: any) {
           console.error(syncErr);
@@ -1052,6 +1092,7 @@ export function LiveFormDialog({
                               <th className="py-2.5 px-3 w-12 text-center">Thumb</th>
                               <th className="py-2.5 px-3">Nome do Produto</th>
                               <th className="py-2.5 px-3 w-28">Preço</th>
+<th className="py-2.5 px-3 w-36">{"Pre\u00e7o na live"}</th>
                               <th className="py-2.5 px-3 w-24">Estoque</th>
                               <th className="py-2.5 px-3 w-40">Cupom Vinculado</th>
                               <th className="py-2.5 px-3 w-16 text-center">Ações</th>
@@ -1080,6 +1121,21 @@ export function LiveFormDialog({
                                   <td className="p-2 font-bold text-slate-700">
                                     R$ {Number(prod.price || 0).toFixed(2).replace(".", ",")}
                                   </td>
+<td className="p-2">
+  <input
+    inputMode="decimal"
+    value={priceOverrides[prod.id] ?? ""}
+    onChange={(e) => handlePriceChange(prod.id, e.target.value)}
+    placeholder={Number(prod.price || 0).toFixed(2).replace(".", ",")}
+    className="w-full h-7 rounded border border-slate-200 bg-white text-[11px] px-1.5 text-slate-700 outline-none focus:border-rose-400"
+  />
+  {(() => {
+    const v = parsePrice(priceOverrides[prod.id]);
+    return v !== null && Number.isFinite(v) && v >= Number(prod.price || 0)
+      ? <span className="block text-[10px] text-amber-600">{"Sem desconto: n\u00e3o aparece riscado"}</span>
+      : null;
+  })()}
+</td>
                                   <td className="p-2 text-slate-500">
                                     {((prod as any).stock_qty ?? prod.stock) != null ? ((prod as any).stock_qty ?? prod.stock) : "Disponível"}
                                   </td>

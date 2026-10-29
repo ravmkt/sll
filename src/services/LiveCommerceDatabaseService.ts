@@ -86,12 +86,26 @@ export const LiveCommerceDatabaseService = {
     return data as LiveItem;
   },
 
+  async getLiveProductPrices(liveId: string): Promise<Record<string, string>> {
+    const { data, error } = await supabaseLiveCommerce
+      .from('live_products')
+      .select('product_id, price_override')
+      .eq('live_id', liveId);
+    if (error) throw error;
+    const out: Record<string, string> = {};
+    (data || []).forEach((r: any) => {
+      if (r.price_override != null) out[r.product_id] = Number(r.price_override).toFixed(2).replace('.', ',');
+    });
+    return out;
+  },
+
   async syncLiveItems(
     liveId: string,
     storeId: string,
     items: { product_id: string }[],
     coupons: { code: string; description: string }[],
     previousCouponCodes: string[],
+    priceOverrides: Record<string, number | null> = {},
   ) {
     // ---- Produtos ----
     const { data: lp, error: lpErr } = await supabaseLiveCommerce
@@ -123,6 +137,7 @@ export const LiveCommerceDatabaseService = {
       const row = byProduct.get(wanted[i]);
       if (row) {
         const patch: Record<string, any> = { display_order: i };
+        if (wanted[i] in priceOverrides) patch.price_override = priceOverrides[wanted[i]];
         if (!row.code) patch.code = nextCode();
         const { error } = await supabaseLiveCommerce.from('live_products').update(patch).eq('id', row.id);
         if (error) throw error;
@@ -133,6 +148,7 @@ export const LiveCommerceDatabaseService = {
           product_id: wanted[i],
           code: nextCode(),
           display_order: i,
+          price_override: priceOverrides[wanted[i]] ?? null,
         });
       }
     }
