@@ -123,12 +123,26 @@ export function LiveFormDialog({
   // --- PASSO 3: PRODUTOS ---
   const [liveProducts, setLiveProducts] = useState<LiveProductItem[]>([]);
   const [priceOverrides, setPriceOverrides] = useState<Record<string, string>>({});
+  const [priceModes, setPriceModes] = useState<Record<string, "brl" | "pct">>({});
+  const resolveLivePrice = (pid: string): number | null => {
+    const raw = parsePrice(priceOverrides[pid]);
+    if (raw === null) return null;
+    if (!Number.isFinite(raw) || raw <= 0) return NaN;
+    if (priceModes[pid] !== "pct") return raw;
+    if (raw < 1 || raw > 99) return NaN;
+    const base = Number(products.find((x) => x.id === pid)?.price || 0);
+    return base > 0 ? Math.round(base * (100 - raw)) / 100 : NaN;
+  };
+  const handlePriceMode = (pid: string, mode: "brl" | "pct") => {
+    setPriceModes((prev) => ({ ...prev, [pid]: mode }));
+    setPriceOverrides((prev) => ({ ...prev, [pid]: "" }));
+  };
 
   useEffect(() => {
-    if (!open || !liveId) { setPriceOverrides({}); return; }
+    if (!open || !liveId) { setPriceOverrides({}); setPriceModes({}); return; }
     let cancelled = false;
     LiveCommerceDatabaseService.getLiveProductPrices(liveId)
-      .then((m) => { if (!cancelled) setPriceOverrides(m); })
+      .then((m) => { if (!cancelled) { setPriceOverrides(m); setPriceModes({}); } })
       .catch(() => {
         if (!cancelled) {
           setPriceOverrides({});
@@ -558,7 +572,7 @@ export function LiveFormDialog({
       const productIds = liveProducts.map(p => p.product_id);
       const priceMap: Record<string, number | null> = {};
       for (const p of liveProducts) {
-        const v = parsePrice(priceOverrides[p.product_id]);
+        const v = resolveLivePrice(p.product_id);
         if (v !== null && (!Number.isFinite(v) || v <= 0)) {
           toast.error("Pre\u00e7o da live inv\u00e1lido. Use um valor maior que zero ou deixe vazio.");
           setSaving(false);
@@ -1092,7 +1106,7 @@ export function LiveFormDialog({
                               <th className="py-2.5 px-3 w-12 text-center">Thumb</th>
                               <th className="py-2.5 px-3">Nome do Produto</th>
                               <th className="py-2.5 px-3 w-28">Preço</th>
-<th className="py-2.5 px-3 w-36">{"Pre\u00e7o na live"}</th>
+<th className="py-2.5 px-3 w-52">{"Pre\u00e7o na live"}</th>
                               <th className="py-2.5 px-3 w-24">Estoque</th>
                               <th className="py-2.5 px-3 w-40">Cupom Vinculado</th>
                               <th className="py-2.5 px-3 w-16 text-center">Ações</th>
@@ -1122,20 +1136,30 @@ export function LiveFormDialog({
                                     R$ {Number(prod.price || 0).toFixed(2).replace(".", ",")}
                                   </td>
 <td className="p-2">
-  <input
-    inputMode="decimal"
-    value={priceOverrides[prod.id] ?? ""}
-    onChange={(e) => handlePriceChange(prod.id, e.target.value)}
-    placeholder={Number(prod.price || 0).toFixed(2).replace(".", ",")}
-    className="w-full h-7 rounded border border-slate-200 bg-white text-[11px] px-1.5 text-slate-700 outline-none focus:border-rose-400"
-  />
-  {(() => {
-    const v = parsePrice(priceOverrides[prod.id]);
-    return v !== null && Number.isFinite(v) && v >= Number(prod.price || 0)
-      ? <span className="block text-[10px] text-amber-600">{"Sem desconto: n\u00e3o aparece riscado"}</span>
-      : null;
-  })()}
-</td>
+                                    <div className="flex items-center gap-1">
+                                      <div className="inline-flex shrink-0 overflow-hidden rounded border border-slate-200 text-[10px] font-bold">
+                                        <button type="button" onClick={() => handlePriceMode(prod.id, "brl")} className={priceModes[prod.id] !== "pct" ? "bg-rose-600 px-1.5 py-1 text-white" : "bg-white px-1.5 py-1 text-slate-500"}>R$</button>
+                                        <button type="button" onClick={() => handlePriceMode(prod.id, "pct")} className={priceModes[prod.id] === "pct" ? "bg-rose-600 px-1.5 py-1 text-white" : "bg-white px-1.5 py-1 text-slate-500"}>%</button>
+                                      </div>
+                                      <input
+                                        inputMode="decimal"
+                                        value={priceOverrides[prod.id] ?? ""}
+                                        onChange={(e) => handlePriceChange(prod.id, e.target.value)}
+                                        placeholder={priceModes[prod.id] === "pct" ? "Ex: 20" : Number(prod.price || 0).toFixed(2).replace(".", ",")}
+                                        className="h-7 w-full min-w-0 rounded border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 outline-none focus:border-rose-400"
+                                      />
+                                    </div>
+                                    {(() => {
+                                      if (parsePrice(priceOverrides[prod.id]) === null) return null;
+                                      const fin = resolveLivePrice(prod.id);
+                                      const base = Number(prod.price || 0);
+                                      if (fin === null || !Number.isFinite(fin)) {
+                                        return <span className="block text-[10px] text-red-600">{priceModes[prod.id] === "pct" ? "Use de 1 a 99%" : "Valor inv\u00e1lido"}</span>;
+                                      }
+                                      if (fin >= base) return <span className="block text-[10px] text-amber-600">{"Sem desconto: n\u00e3o aparece riscado"}</span>;
+                                      return <span className="block text-[10px] text-emerald-700">{"Final: R$ " + fin.toFixed(2).replace(".", ",")}</span>;
+                                    })()}
+                                  </td>
                                   <td className="p-2 text-slate-500">
                                     {((prod as any).stock_qty ?? prod.stock) != null ? ((prod as any).stock_qty ?? prod.stock) : "Disponível"}
                                   </td>

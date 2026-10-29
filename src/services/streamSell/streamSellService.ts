@@ -24,6 +24,7 @@ export interface CockpitProduct {
   isOnAir: boolean;
   name: string;
   price: number | null;
+  basePrice?: number | null;
   image: string | null;
 }
 export interface CockpitCoupon {
@@ -81,7 +82,7 @@ export async function getCockpit(liveId: string): Promise<CockpitData | null> {
 
   const [lp, cp] = await Promise.all([
     lc.from('live_products')
-      .select('id, product_id, code, display_order, is_on_air')
+      .select('id, product_id, code, display_order, is_on_air, price_override')
       .eq('live_id', liveId)
       .order('display_order', { ascending: true }),
     lc.from('live_coupons')
@@ -125,7 +126,8 @@ export async function getCockpit(liveId: string): Promise<CockpitData | null> {
         order: r.display_order ?? 0,
         isOnAir: !!r.is_on_air,
         name: p?.name ?? 'Produto removido',
-        price: p?.price ?? null,
+        price: r.price_override != null ? Number(r.price_override) : (p?.price ?? null),
+        basePrice: p?.price ?? null,
         image: p?.image_url ?? null,
       };
     }),

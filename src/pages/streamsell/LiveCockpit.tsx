@@ -281,7 +281,7 @@ export default function LiveEstudio() {
                 {onAir.image && <img src={onAir.image} alt="" className="w-11 h-11 rounded-lg object-cover shrink-0" />}
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-semibold text-slate-900 line-clamp-2 leading-tight">{onAir.name}</p>
-                  <p className="text-[11px] font-bold text-emerald-700">{brl(onAir.price)}</p>
+                  <p className="text-[11px] font-bold text-emerald-700">{onAir.basePrice != null && onAir.price != null && onAir.price < onAir.basePrice && <s className="mr-1 font-normal text-slate-400">{brl(onAir.basePrice)}</s>}{brl(onAir.price)}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-bold text-white">Comprar</span>
               </div>
@@ -352,7 +352,7 @@ export default function LiveEstudio() {
                   {p.image && <img src={p.image} alt="" className="w-10 h-10 rounded-lg object-cover" />}
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold truncate">{p.name}</p>
-                    <p className="text-[11px] text-slate-500">{brl(p.price)}</p>
+                    <p className="text-[11px] text-slate-500">{p.basePrice != null && p.price != null && p.price < p.basePrice && <s className="mr-1 text-slate-400">{brl(p.basePrice)}</s>}{brl(p.price)}</p>
                   </div>
                   <button type="button" disabled={!!busy}
                     onClick={() => run(`p-${p.id}`, () => setProductOnAir(live, p.isOnAir ? null : p))}
