@@ -1321,7 +1321,7 @@ function fetchLiveSpotlight(live) {
       var nb = el('b', null, (r.code ? r.code + '. ' : '') + (p.name || 'Produto'));
       nb.style.fontSize = num(C().productNameSize, 13, 9, 24) + 'px';
       info.appendChild(nb);
-      var pe = el('em', 'sll-ao-pe', (isOn ? 'Por: ' : '') + money(price));
+      var pe = el('em', 'sll-ao-pe', ((isOn && window.innerWidth <= 900) ? 'Por: ' : '') + money(price)); /* SLL-DESK-V2-PRICE */ if (window.innerWidth > 900 && r.price_override != null && p.price != null && Number(r.price_override) < Number(p.price)) { pe.insertBefore(el('s', 'sll-ao-old', money(p.price)), pe.firstChild); }
       pe.style.color = col(C().productPriceColor, '#a1a1aa');
       pe.style.fontSize = num(C().productPriceSize, 12, 9, 24) + 'px';
       info.appendChild(pe);
@@ -3237,4 +3237,231 @@ function fetchLiveSpotlight(live) {
     var base = f.src.replace(/([?&])_r=\d+/, '$1').replace(/[?&]$/, '');
     f.src = base + (base.indexOf('?') < 0 ? '?' : '&') + '_r=' + Date.now();
   }, 3000);
+})();
+
+;(function () {
+  /* SLL-DESK-V2 */
+  if (window.__sllDeskV2) return;
+  window.__sllDeskV2 = true;
+
+  var Q = '.vl-live-modal.sll-3c.sll-3c';
+  var css = document.createElement('style');
+  css.textContent = [
+    '@media (min-width:901px){',
+    /* bordas suaves */
+    Q + ' .sll-ao-list{background:#f8fafc!important;border:1px solid #e2e8f0!important;border-top:0!important;padding:8px!important}',
+    Q + ' .sll-3c-ph{border:0!important}',
+    Q + ' .vl-live-chat{border:1px solid #e2e8f0!important}',
+    Q + ' .sll-ao-ad{border:1px solid #e2e8f0!important;padding:10px 12px;font-size:13px}',
+    Q + ' .sll-ao-ad b{font-size:15px}',
+    /* cards de produto */
+    Q + ' .sll-ao-list .sll-ao-it{position:relative;display:flex!important;align-items:center!important;gap:10px!important;padding:8px!important;margin:0 0 8px!important;border:1px solid #e2e8f0!important;border-radius:10px!important;box-shadow:none!important;background:#fff;color:#1e293b}',
+    Q + ' .sll-ao-list .sll-ao-it.on{border-color:transparent!important;box-shadow:0 2px 10px rgba(0,0,0,.18)!important}',
+    Q + ' .sll-ao-list .sll-ao-it>.sll-ao-num{position:absolute!important;left:12px;top:12px;width:20px!important;height:20px;min-width:0;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 11px/1 system-ui,sans-serif!important;z-index:2;box-shadow:0 0 0 2px #fff;background:var(--p,#10b981);color:#fff}',
+    Q + ' .sll-ao-list .sll-ao-it>img{width:72px!important;height:72px!important;border-radius:8px!important;object-fit:cover;flex:none}',
+    Q + ' .sll-ao-list .sll-ao-it.on>img{width:80px!important;height:80px!important}',
+    Q + ' .sll-ao-list .sll-ao-it>span{flex:1;min-width:0;padding:0!important;align-self:center}',
+    Q + ' .sll-ao-list .sll-ao-it b{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;line-height:1.3;font-weight:600}',
+    Q + ' .sll-ao-list .sll-ao-it .sll-ao-pe{display:block;font-size:16px!important;font-weight:800!important;font-style:normal;margin-top:2px;color:#1e293b!important}',
+    Q + ' .sll-ao-list .sll-ao-it.on .sll-ao-pe{color:#fff!important}',
+    Q + ' .sll-ao-old{font-size:11px;font-weight:500;text-decoration:line-through;opacity:.75;margin-right:6px}',
+    Q + ' .sll-ao-list .sll-ao-it>.sll-ao-rt{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:6px;padding:0!important;flex:none}',
+    Q + ' .sll-ao-list .sll-ao-it .sll-ao-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;min-width:96px;padding:0 16px;font-size:13px;font-weight:700;border-radius:999px;text-decoration:none;cursor:pointer}',
+    /* selo AO VIVO */
+    Q + ' .sll-ao-list .sll-ao-it .sll-ao-live{display:inline-flex;align-items:center;gap:5px;background:#fff;color:#b91c1c;font:800 11px/1 system-ui,sans-serif;text-transform:uppercase;padding:4px 8px;border-radius:999px}',
+    Q + ' .sll-ao-list .sll-ao-it .sll-ao-live::before{content:"";width:7px;height:7px;border-radius:50%;background:#ef4444;animation:sll-dot-pulse 1.2s infinite}',
+    '@keyframes sll-dot-pulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.7)}70%{box-shadow:0 0 0 6px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}',
+    /* rodape */
+    Q + ' .sll-ao-cp{border:1px solid #e2e8f0!important;box-shadow:0 2px 8px rgba(0,0,0,.12)}',
+    Q + ' .sll-ao-cp:not(.sll-sp){display:flex;align-items:center;justify-content:center;gap:8px}',
+    Q + ' .sll-cp-a,' + Q + ' .sll-cp-b{font-size:15px;padding:12px 8px}',
+    Q + ' .sll-cp-copy{flex:none;align-self:stretch;border:0;background:#0f172a;color:#fff;font:700 12px system-ui,sans-serif;padding:0 12px;cursor:pointer}',
+    Q + ' .sll-3c-share{justify-self:end;align-self:center;width:auto!important;margin:0!important;padding:6px 12px!important;font:600 12px system-ui,sans-serif!important;border:1px solid #cbd5e1!important;border-radius:8px!important}',
+    /* chat */
+    Q + ' .sll-chat-empty{margin:auto;padding:24px 8px;text-align:center;color:#64748b;font:500 13px system-ui,sans-serif}',
+    Q + ' .sll-chat-welcome{position:sticky;top:0;z-index:1;background:#f1f5f9;color:#334155;border-radius:8px;padding:8px 10px;margin-bottom:6px;font:500 12px/1.35 system-ui,sans-serif}',
+    '}'
+  ].join('');
+  document.head.appendChild(css);
+
+  /* ---------- contraste (WCAG 4,5:1) ---------- */
+  var WHITE = { r: 255, g: 255, b: 255, a: 1 };
+  var DARK = { r: 17, g: 17, b: 17, a: 1 };
+  var TARGETS = [
+    ['Titulo do produto', '.sll-ao-list .sll-ao-it b'],
+    ['Preco', '.sll-ao-list .sll-ao-pe'],
+    ['Botao Comprar', '.sll-ao-btn'],
+    ['Numero do produto', '.sll-ao-num'],
+    ['Selo de estoque', '.sll-ao-list .sll-ao-it em:not(.sll-ao-pe), .sll-ao-ov em'],
+    ['Selo AO VIVO', '.sll-ao-live, .sll-3c-live'],
+    ['Faixa de titulo (Produtos)', '.sll-3c-ph'],
+    ['Faixa de titulo (Chat)', '.vl-live-chat-title'],
+    ['Presente', '.sll-ao-ad'],
+    ['Cupom (codigo)', '.sll-cp-a'],
+    ['Cupom (percentual)', '.sll-cp-b'],
+    ['Cupom (texto)', '.sll-ao-cp:not(.sll-sp)'],
+    ['Botao Copiar', '.sll-cp-copy'],
+    ['Compartilhar', '.sll-3c-share']
+  ];
+
+  function par(s) {
+    var m = /rgba?\(([^)]+)\)/.exec(s || '');
+    if (!m) return null;
+    var a = m[1].split(/[ ,\/]+/).filter(Boolean).map(parseFloat);
+    if (a.length < 3 || isNaN(a[0]) || isNaN(a[1]) || isNaN(a[2])) return null;
+    return { r: a[0], g: a[1], b: a[2], a: (a.length > 3 && !isNaN(a[3])) ? a[3] : 1 };
+  }
+  function lin(v) { v = v / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+  function lum(c) { return 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b); }
+  function ratio(a, b) {
+    var x = lum(a), y = lum(b);
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  }
+  function mix(top, base) {
+    var a = top.a;
+    return { r: top.r * a + base.r * (1 - a), g: top.g * a + base.g * (1 - a), b: top.b * a + base.b * (1 - a), a: 1 };
+  }
+  function bgOf(el) {
+    var layers = [], n = el;
+    while (n && n.nodeType === 1) {
+      var c = par(getComputedStyle(n).backgroundColor);
+      if (c && c.a > 0) { layers.push(c); if (c.a >= 1) break; }
+      n = n.parentElement;
+    }
+    var base = WHITE;
+    for (var i = layers.length - 1; i >= 0; i--) base = mix(layers[i], base);
+    return base;
+  }
+  function autoOn() {
+    var c = window.__sllCfg || {};
+    return !(c.autoContrast === false || c.contrastAutoFix === false);
+  }
+  function fixContrast(m) {
+    var on = autoOn();
+    var rep = window.__sllContrastReport = window.__sllContrastReport || {};
+    TARGETS.forEach(function (t) {
+      var list = m.querySelectorAll(t[1]);
+      for (var i = 0; i < list.length; i++) {
+        var el = list[i];
+        if (!on) {
+          if (el.getAttribute('data-sll-ct')) { el.style.removeProperty('color'); el.removeAttribute('data-sll-ct'); }
+          continue;
+        }
+        if (!el.getClientRects().length || !String(el.textContent || '').trim()) continue;
+        var cs = getComputedStyle(el);
+        var fg = par(cs.color);
+        if (!fg) continue;
+        var bg = bgOf(el);
+        var fgm = fg.a < 1 ? mix(fg, bg) : fg;
+        var r = ratio(fgm, bg);
+        if (r >= 4.5) continue;
+        var w = ratio(WHITE, bg), k = ratio(DARK, bg);
+        var pick = w >= k ? '#FFFFFF' : '#111111';
+        el.style.setProperty('color', pick, 'important');
+        el.setAttribute('data-sll-ct', '1');
+        rep[t[0]] = { de: cs.color, razao: Math.round(r * 100) / 100, para: pick, razaoFinal: Math.round(Math.max(w, k) * 100) / 100 };
+      }
+    });
+  }
+
+  /* ---------- botao Copiar do cupom ---------- */
+  function copyText(txt) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(txt);
+    return new Promise(function (res, rej) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = txt;
+        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (ok) res(); else rej(new Error('copy'));
+      } catch (e) { rej(e); }
+    });
+  }
+  function addCopy(m) {
+    var cp = m.querySelector('.sll-ao-cp');
+    if (!cp || !cp.getAttribute('data-sll') || cp.querySelector('.sll-cp-copy')) return;
+    var a = cp.querySelector('.sll-cp-a');
+    var src = String(a ? a.textContent : cp.textContent) || '';
+    var mm = /[A-Z0-9][A-Z0-9_-]{2,}/.exec(src);
+    var code = mm ? mm[0] : src.replace(/^\s*cupom\s*/i, '').split(/\s+/)[0];
+    if (!code) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sll-cp-copy';
+    btn.textContent = 'Copiar';
+    btn.setAttribute('aria-label', 'Copiar cupom ' + code);
+    btn.onclick = function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      copyText(code).then(function () {
+        btn.textContent = 'Copiado!';
+        clearTimeout(btn._t);
+        btn._t = setTimeout(function () { btn.textContent = 'Copiar'; }, 2000);
+      }, function () {
+        btn.textContent = 'Falhou';
+        clearTimeout(btn._t);
+        btn._t = setTimeout(function () { btn.textContent = 'Copiar'; }, 2000);
+      });
+    };
+    cp.appendChild(btn);
+  }
+
+  /* ---------- chat vazio e boas-vindas ---------- */
+  function welcome() {
+    var L = window.__sllLive || {}, c = window.__sllCfg || {};
+    var v = L.welcome_message || L.chat_welcome_message || c.chatWelcomeMessage || c.welcomeMessage || '';
+    return String(v || '').trim().slice(0, 200);
+  }
+  function chat(m) {
+    var box = m.querySelector('.vl-live-chat-messages');
+    if (!box) return;
+    var has = box.querySelector('.vl-live-chat-msg');
+    var ph = box.querySelector('.sll-chat-empty');
+    if (has && ph) ph.parentNode.removeChild(ph);
+    if (!has && !ph) {
+      ph = document.createElement('div');
+      ph.className = 'sll-chat-empty';
+      ph.textContent = 'Seja o primeiro a comentar';
+      box.appendChild(ph);
+    }
+    var w = welcome();
+    var pin = box.querySelector('.sll-chat-welcome');
+    if (w && !pin) {
+      pin = document.createElement('div');
+      pin.className = 'sll-chat-welcome';
+      pin.textContent = w;
+      box.insertBefore(pin, box.firstChild);
+    } else if (pin && !w) {
+      pin.parentNode.removeChild(pin);
+    } else if (pin && pin.textContent !== w) {
+      pin.textContent = w;
+    }
+  }
+
+  /* ---------- limpeza do "Por:" ---------- */
+  function cleanPrice(m) {
+    var pes = m.querySelectorAll('.sll-ao-pe');
+    for (var i = 0; i < pes.length; i++) {
+      var nodes = pes[i].childNodes;
+      for (var j = 0; j < nodes.length; j++) {
+        if (nodes[j].nodeType === 3 && /^\s*Por:\s*/.test(nodes[j].nodeValue)) {
+          nodes[j].nodeValue = nodes[j].nodeValue.replace(/^\s*Por:\s*/, '');
+        }
+      }
+    }
+  }
+
+  function tick() {
+    if (window.innerWidth <= 900) return;
+    var m = document.querySelector('.vl-live-modal.sll-3c');
+    if (!m) return;
+    try { cleanPrice(m); } catch (e) {}
+    try { addCopy(m); } catch (e) {}
+    try { chat(m); } catch (e) {}
+    try { fixContrast(m); } catch (e) {}
+  }
+  setInterval(tick, 500);
 })();
