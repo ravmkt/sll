@@ -1,3 +1,4 @@
+import { NOTIFICACOES_ATIVAS } from "@/config/features";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -194,7 +195,7 @@ export default function LiveEstudio() {
   const btnMute = 'bg-slate-100 hover:bg-slate-200 text-slate-700';
 
   const chips: { label: string; icon: ReactNode; text: string; ok: boolean }[] = [
-    { label: 'Cadastre-se na live', icon: <UserPlus className="w-3 h-3" />, text: 'Cadastre-se na live e seja avisado das pr\u00f3ximas: [[cadastro]]', ok: true },
+    ...(NOTIFICACOES_ATIVAS ? [{ label: 'Cadastre-se na live', icon: <UserPlus className="w-3 h-3" />, text: 'Cadastre-se na live e seja avisado das pr\u00f3ximas: [[cadastro]]', ok: true }] : []),
     { label: 'Link na tela', icon: <Link2 className="w-3 h-3" />, text: 'O link de compra est\u00e1 na tela, \u00e9 s\u00f3 tocar em Comprar!', ok: true },
   ];
 

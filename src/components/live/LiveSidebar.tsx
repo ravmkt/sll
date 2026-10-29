@@ -1,3 +1,4 @@
+import { NOTIFICACOES_ATIVAS } from "@/config/features";
 import React from 'react';
 import { Radio,
   LayoutDashboard,
@@ -36,7 +37,7 @@ const MENU_ITEMS: { id: LiveTab; label: string; icon: React.ElementType }[] = [
   { id: 'resultados', label: 'Resultados & Métricas', icon: TrendingUp },
   { id: 'lives', label: 'Lives', icon: Radio },
   { id: 'cupons', label: 'Cupons e Avisos', icon: PresetsMenuIcon },
-  { id: 'audiencia', label: 'Audiência', icon: Users },
+  ...(NOTIFICACOES_ATIVAS ? [{ id: 'audiencia', label: 'Audiência', icon: Users }] : []),
   { id: 'aparencia', label: 'Aparência', icon: Palette },
 ];
 

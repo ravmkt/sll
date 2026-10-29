@@ -1,3 +1,4 @@
+import { NOTIFICACOES_ATIVAS } from "@/config/features";
 import WhatsAppConnectCard from "@/components/live/WhatsAppConnectCard";
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTour from "@/components/tour/PageTour";
@@ -114,7 +115,7 @@ const AUDIENCIA_TOUR: TourStep[] = [
   { element: '[data-tour="audiencia-tabela"]', title: 'Cadastros', description: 'Use o bot\u00e3o Enviar para chamar a pessoa no WhatsApp com a mensagem pronta.', side: 'top' },
 ];
 
-export default function LiveAudiencePage() {
+function LiveAudiencePageInner() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [titles, setTitles] = useState<Record<string, string>>({});
   const [q, setQ] = useState('');
@@ -369,4 +370,16 @@ export default function LiveAudiencePage() {
       </div>
     </div>
   );
+}
+
+export default function LiveAudiencePage() {
+  if (!NOTIFICACOES_ATIVAS) {
+    return (
+      <div className="mx-auto max-w-xl p-10 text-center">
+        <h2 className="text-lg font-black uppercase tracking-tight text-slate-900 dark:text-white">Audiência em breve</h2>
+        <p className="mt-2 text-sm text-slate-500">Os avisos automáticos por WhatsApp e e-mail estão desativados por enquanto.</p>
+      </div>
+    );
+  }
+  return <LiveAudiencePageInner />;
 }

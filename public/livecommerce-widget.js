@@ -3112,3 +3112,77 @@ function fetchLiveSpotlight(live) {
     }, 0);
   }, true);
 })();
+
+/* SLL-NOTIF-OFF */
+(function () {
+  if (window.SLL_NOTIFICACOES_ATIVAS === true) return;
+  var BASE = 'https://flivmllysdhaydhogmhg.supabase.co/rest/v1/';
+  var st = document.createElement('style');
+  st.textContent = '.sll-reg-btn,#sll-reg-modal,#sll-live-ended{display:none!important}';
+  (document.head || document.documentElement).appendChild(st);
+
+  function safe(u) {
+    try {
+      var x = new URL(String(u || ''), window.location.href);
+      return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href : '';
+    } catch (e) { return ''; }
+  }
+  function el(tag, css, text) {
+    var e = document.createElement(tag);
+    if (css) e.style.cssText = css;
+    if (text) e.textContent = text;
+    return e;
+  }
+  function groupUrl(cb) {
+    var key = window.__sllKey, id = window.__sllLiveId;
+    if (!key || !id) { cb(''); return; }
+    fetch(BASE + 'lives?select=whatsapp_group_url&id=eq.' + encodeURIComponent(String(id)) + '&limit=1', {
+      headers: { apikey: key, Authorization: 'Bearer ' + key, 'Accept-Profile': 'live_commerce' }
+    }).then(function (r) { return r.json(); }).then(function (rows) {
+      cb(safe(rows && rows[0] && rows[0].whatsapp_group_url));
+    }).catch(function () { cb(''); });
+  }
+  function show() {
+    var ov = el('div', 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;');
+    ov.id = 'sll-live-ended-msg';
+    var box = el('div', 'background:#fff;color:#0f172a;border-radius:20px;width:100%;max-width:380px;padding:28px 24px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.35);box-sizing:border-box;');
+    box.appendChild(el('div', 'font-size:20px;font-weight:800;margin-bottom:8px;', 'Live encerrada'));
+    box.appendChild(el('div', 'font-size:14px;color:#475569;margin-bottom:18px;', 'Obrigado por assistir!'));
+    var actions = el('div', 'display:flex;flex-direction:column;gap:10px;');
+    box.appendChild(actions);
+    var closeBtn = el('button', 'border:0;border-radius:999px;padding:11px 16px;background:#e2e8f0;color:#0f172a;font-weight:700;font-size:14px;cursor:pointer;', 'Fechar');
+    closeBtn.type = 'button';
+    function close() {
+      if (ov.parentNode) ov.parentNode.removeChild(ov);
+      var o = document.getElementById('sll-live-ended');
+      if (o && o.parentNode) o.parentNode.removeChild(o);
+      var b = document.querySelector('.vl-live-modal-close');
+      if (b) b.click();
+      setTimeout(function () {
+        var m = document.querySelector('.vl-live-modal');
+        if (m) {
+          var w = (m.parentNode && m.parentNode !== document.body) ? m.parentNode : m;
+          if (w.parentNode) w.parentNode.removeChild(w);
+        }
+      }, 400);
+    }
+    closeBtn.onclick = close;
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    actions.appendChild(closeBtn);
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    groupUrl(function (u) {
+      if (!u || !ov.parentNode) return;
+      box.insertBefore(el('div', 'font-size:13px;color:#64748b;margin:-8px 0 14px;', 'Acompanhe as pr\u00f3ximas novidades no grupo.'), actions);
+      var a = el('a', 'display:block;border-radius:999px;padding:12px 16px;background:#16a34a;color:#fff;font-weight:800;font-size:14px;text-decoration:none;', 'Entrar no grupo do WhatsApp');
+      a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      actions.insertBefore(a, closeBtn);
+    });
+  }
+  function check() {
+    var r = document.getElementById('sll-reg-modal');
+    if (r && r.parentNode) r.parentNode.removeChild(r);
+    if (document.getElementById('sll-live-ended') && !document.getElementById('sll-live-ended-msg')) show();
+  }
+  new MutationObserver(check).observe(document.documentElement, { childList: true, subtree: true });
+})();
