@@ -1879,7 +1879,7 @@ function fetchLiveSpotlight(live) {
     return Math.max(a, b) / Math.min(a, b) >= 3;
   }
   function setS(e, p, v) { if (e && v && e.style[p] !== v) e.style[p] = v; }
-  function colorize(e, c) { if (e && HEX.test(String(c || '')) && legible(c, e)) setS(e, 'color', c); }
+  function colorize(e, c) { if (e && HEX.test(String(c || ''))) setS(e, 'color', c); }
   function size(e, v, k, min, max) {
     var n = Number(v);
     if (e && isFinite(n) && n > 0) setS(e, 'fontSize', Math.min(max, Math.max(min, Math.round(n * k))) + 'px');
@@ -3262,7 +3262,7 @@ function fetchLiveSpotlight(live) {
     Q + ' .sll-ao-list .sll-ao-it.on>img{width:80px!important;height:80px!important}',
     Q + ' .sll-ao-list .sll-ao-it>span{flex:1;min-width:0;padding:0!important;align-self:center}',
     Q + ' .sll-ao-list .sll-ao-it b{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;line-height:1.3;font-weight:600}',
-    Q + ' .sll-ao-list .sll-ao-it .sll-ao-pe{display:block;font-size:16px!important;font-weight:800!important;font-style:normal;margin-top:2px;color:#1e293b!important}',
+    Q + ' .sll-ao-list .sll-ao-it .sll-ao-pe{display:block;font-size:16px!important;font-weight:800!important;font-style:normal;margin-top:2px}',
     Q + ' .sll-ao-list .sll-ao-it.on .sll-ao-pe{color:#fff!important}',
     Q + ' .sll-ao-old{font-size:11px;font-weight:500;text-decoration:line-through;opacity:.75;margin-right:6px}',
     Q + ' .sll-ao-list .sll-ao-it>.sll-ao-rt{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:6px;padding:0!important;flex:none}',
@@ -3461,7 +3461,7 @@ function fetchLiveSpotlight(live) {
     try { cleanPrice(m); } catch (e) {}
     try { addCopy(m); } catch (e) {}
     try { chat(m); } catch (e) {}
-    try { fixContrast(m); } catch (e) {}
+    /* SLL-CONTRASTE-SO-AVISO: o contraste so e avisado no painel; a loja usa as cores do lojista */
   }
   setInterval(tick, 500);
 })();

@@ -1158,7 +1158,8 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3.5 scrollbar-thin">
+            {activeTab === "player" && <ContrastWarnings config={currentPlayer as unknown as Record<string, unknown>} />}
+                  <div className="flex-1 overflow-y-auto p-3.5 scrollbar-thin">
               {activeTab === "divulgacao" && renderWidgetSettings(currentDivulgacao, (k:any, v:any) => updateConfig(setDivulgacaoConfig, k, v, divulgacaoConfig.linked), true)}
               {activeTab === "aovivo" && renderWidgetSettings(currentAoVivo, (k:any, v:any) => updateConfig(setAoVivoConfig, k, v, aoVivoConfig.linked), false)}
 
@@ -1168,7 +1169,6 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
   <ColorInput label={"Cor principal"} value={currentPlayer.mainColor || currentPlayer.borderColor} onChange={(v) => applyMainColor(v)} />
   <p className="text-[10px] text-muted-foreground">{"Pinta todos os elementos de uma vez. Depois voc\u00ea pode ajustar cada cor individualmente."}</p>
 </div>
-                  <ContrastWarnings config={currentPlayer as unknown as Record<string, unknown>} />
                   <AccordionItem id="player_borda" title="1. Borda (Aplica a todos os cards)" openAccordion={openAccordion} setOpenAccordion={setOpenAccordion}>
                     <div className="grid grid-cols-2 gap-3 mb-2">
                       <ColorInput label="Cor da Borda" value={currentPlayer.borderColor} onChange={(v) => updateConfig(setPlayerConfig, "borderColor", v, playerConfig.linked)} />

@@ -51,29 +51,40 @@ interface Pair {
   id: string;
   label: string;
   fgKey: string;
+  fgFallbackKey?: string;
   fgDefault?: string;
   bgKey?: string;
-  bgDefault: string;
+  bgFallbackKey?: string;
+  bgDefault?: string;
 }
 
 const PAIRS: Pair[] = [
-  { id: 'productName', label: 'Titulo do produto (sobre o card branco)', fgKey: 'productNameColor', bgDefault: '#FFFFFF' },
-  { id: 'couponCode', label: 'Cupom: codigo', fgKey: 'couponCodeColor', fgDefault: '#ffffff', bgKey: 'couponCodeBgColor', bgDefault: '#0094ea' },
-  { id: 'couponText', label: 'Cupom: percentual', fgKey: 'couponTextColor', fgDefault: '#000000', bgKey: 'couponTextBgColor', bgDefault: '#ffffff' },
-  { id: 'info', label: 'Bloco Presente', fgKey: 'infoTextColor', fgDefault: '#ffffff', bgKey: 'infoBgColor', bgDefault: '#065f46' },
+  { id: 'title', label: 'T\u00edtulo sobre o v\u00eddeo', fgKey: 'titleColor', fgDefault: '#ffffff', bgKey: 'titleBgColor', bgDefault: '#000000' },
+  { id: 'productName', label: 'Nome do produto (card branco)', fgKey: 'productNameColor', bgDefault: '#FFFFFF' },
+  { id: 'productPrice', label: 'Pre\u00e7o do produto (card branco)', fgKey: 'productPriceColor', bgDefault: '#FFFFFF' },
+  { id: 'prodCardName', label: 'Produto no Player: nome', fgKey: 'prodCardNameColor', fgDefault: '#111111', bgKey: 'prodCardBgColor', bgDefault: '#ffffff' },
+  { id: 'prodCardPrice', label: 'Produto no Player: pre\u00e7o', fgKey: 'prodCardPriceColor', fgFallbackKey: 'borderColor', bgKey: 'prodCardBgColor', bgDefault: '#ffffff' },
+  { id: 'prodCardBtn', label: 'Produto no Player: bot\u00e3o Comprar', fgKey: 'prodCardBtnTextColor', fgDefault: '#ffffff', bgKey: 'prodCardBtnBgColor', bgFallbackKey: 'borderColor', bgDefault: '#10b981' },
+  { id: 'couponCode', label: 'Cupom: c\u00f3digo', fgKey: 'couponCodeColor', fgDefault: '#ffffff', bgKey: 'couponCodeBgColor', bgDefault: '#0094ea' },
+  { id: 'couponText', label: 'Cupom: desconto', fgKey: 'couponTextColor', fgDefault: '#000000', bgKey: 'couponTextBgColor', bgDefault: '#ffffff' },
+  { id: 'info', label: 'Card Informativo', fgKey: 'infoTextColor', fgDefault: '#ffffff', bgKey: 'infoBgColor', bgDefault: '#065f46' },
+  { id: 'share', label: 'Card Compartilhar', fgKey: 'shareTextColor', fgDefault: '#000000', bgKey: 'shareBgColor', bgDefault: '#ffffff' },
 ];
 
-function pick(cfg: Record<string, unknown>, key: string | undefined, fallback: string | undefined): string | null {
+function valid(cfg: Record<string, unknown>, key?: string): string | null {
   const v = key ? cfg[key] : undefined;
-  if (typeof v === 'string' && toRgb(v)) return v;
-  return fallback ?? null;
+  return typeof v === 'string' && toRgb(v) ? v : null;
+}
+
+function pick(cfg: Record<string, unknown>, key?: string, fallbackKey?: string, fallback?: string): string | null {
+  return valid(cfg, key) ?? valid(cfg, fallbackKey) ?? fallback ?? null;
 }
 
 export function checkAppearance(cfg: Record<string, unknown>): ContrastIssue[] {
   const out: ContrastIssue[] = [];
   for (const p of PAIRS) {
-    const fg = pick(cfg, p.fgKey, p.fgDefault);
-    const bg = pick(cfg, p.bgKey, p.bgDefault);
+    const fg = pick(cfg, p.fgKey, p.fgFallbackKey, p.fgDefault);
+    const bg = pick(cfg, p.bgKey, p.bgFallbackKey, p.bgDefault);
     if (!fg || !bg) continue;
     const ratio = contrastRatio(fg, bg);
     if (ratio === null) continue;
