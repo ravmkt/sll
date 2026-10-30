@@ -27,6 +27,14 @@ const EV = {
 };
 
 type Periodo = 'today' | '7' | '30' | 'custom';
+
+const fmtTempo = (h: number) => {
+  const t = Math.round(h * 3600);
+  const hh = Math.floor(t / 3600);
+  const mm = Math.floor((t % 3600) / 60);
+  const ss = t % 60;
+  return `${hh}h ${String(mm).padStart(2, '0')}min ${String(ss).padStart(2, '0')}s`;
+};
 const PERIODOS: { key: Periodo; label: string }[] = [
   { key: 'today', label: 'Hoje' },
   { key: '7', label: '7 dias' },
@@ -281,11 +289,26 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   }, [topProducts, names]);
 
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
-  const monthLives = lives.filter((l) => l.started_at && new Date(l.started_at).getTime() >= monthStart);
-  const hours = monthLives.reduce((s, l) => {
+  const fromMs = (() => {
+    if (periodo === 'custom' && cs) return new Date(String(cs).slice(0, 10) + 'T00:00:00').getTime();
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    if (periodo !== 'today' && periodo !== 'custom') d.setDate(d.getDate() - (Number(periodo) - 1));
+    return d.getTime();
+  })();
+  const toMs = periodo === 'custom' && ce ? new Date(String(ce).slice(0, 10) + 'T23:59:59.999').getTime() : Date.now();
+  const periodLives = lives.filter((l) => {
+    if (!l.started_at) return false;
+    const st = new Date(l.started_at).getTime();
+    const en = l.ended_at ? new Date(l.ended_at).getTime() : Date.now();
+    return st <= toMs && en >= fromMs;
+  });
+  void monthStart;
+  const hours = periodLives.reduce((s, l) => {
     if (!l.started_at) return s;
     const end = l.ended_at ? new Date(l.ended_at).getTime() : Date.now();
-    return s + Math.max(0, end - new Date(l.started_at).getTime()) / 3600000;
+    const stClip = Math.max(new Date(l.started_at).getTime(), fromMs);
+    return s + Math.max(0, Math.min(end, toMs) - stClip) / 3600000;
   }, 0);
   const peak = lives.reduce((m, l) => Math.max(m, l.peak_viewers || 0), 0);
   const connected = dests.filter((d) => d.status === 'connected').map((d) => d.platform);
@@ -384,7 +407,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         <div>
           <h3 className={`${sectionTitle} mb-3 px-1`}>Consumo do plano</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Meter label="Tempo de transmissão" value={`${hours.toFixed(1).replace('.', ',')} h`} of="de —" pct={null} icon={Clock} tip={"Tempo total transmitido ao vivo no período selecionado."} foot="Neste mês" />
+            <Meter label={"Tempo de transmiss\u00e3o"} value={fmtTempo(hours)} of="" pct={null} icon={Clock} tip={"Tempo total transmitido ao vivo no per\u00edodo selecionado."} foot={periodo === 'today' ? 'Hoje' : periodo === '7' ? '\u00daltimos 7 dias' : periodo === '30' ? '\u00daltimos 30 dias' : String(cs).slice(0, 10).split('-').reverse().join('/') + ' a ' + String(ce).slice(0, 10).split('-').reverse().join('/')} />
             <Meter label="Pico de espectadores" value={fmtInt(peak)} of="de —" pct={null} icon={Users} tip={"Maior n\u00famero de espectadores simult\u00e2neos j\u00e1 registrado em uma live."} foot="Ao vivo" />
             <Meter label="Destinos ativos" value={String(1 + connected.length)} of="conectado(s)" pct={null} icon={Globe} tip={"Canais onde suas lives s\u00e3o exibidas: seu site e as plataformas conectadas."} foot={destLabel} />
             <Tip text={"Situa\u00e7\u00e3o da assinatura do m\u00f3dulo e a data da pr\u00f3xima renova\u00e7\u00e3o."}><div className={card}>
