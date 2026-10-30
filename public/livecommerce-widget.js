@@ -208,16 +208,32 @@ function getLiveSessionIdStored() {
     return v;
   } catch (e) { return null; }
 }
+/* SLL-METRICS-V1 */
+function getVisitorId() {
+  var k = 'sll_vid';
+  try {
+    var v = localStorage.getItem(k);
+    if (v) return v;
+    v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() :
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (ch) {
+        var r = Math.random() * 16 | 0; return (ch === 'x' ? r : (r & 3 | 8)).toString(16);
+      });
+    localStorage.setItem(k, v);
+    return v;
+  } catch (e) { return getLiveSessionId(); }
+}
 function trackLiveEvent(liveId, eventType, metadata) {
   if (!hasSupabase || !liveId) return;
+  var md = {};
+  var src = metadata || {};
+  for (var key in src) { if (Object.prototype.hasOwnProperty.call(src, key)) md[key] = src[key]; }
+  md.visitor_id = getVisitorId();
+  var row = { live_id: liveId, event_type: eventType, metadata: md };
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(md.product_id || ''))) row.product_id = md.product_id;
   supabaseFetch('live_events', {
     method: 'POST',
     headers: { 'Prefer': 'return=minimal' },
-    body: JSON.stringify({
-      live_id: liveId,
-      event_type: eventType,
-      metadata: metadata || {}
-    })
+    body: JSON.stringify(row)
   }).catch(function () {});
 }
 
@@ -552,7 +568,7 @@ function renderLiveWidget(live) {
   
   card.addEventListener('click', function (ev) {
     var onCta = !!(ev.target && ev.target.closest && ev.target.closest('.vl-live-cta-btn,.vl-live-circle-cta'));
-    trackLiveEvent(live.id, 'product_click', { source: onCta ? 'promo_cta' : 'promo_card' });
+    trackLiveEvent(live.id, 'promo_click', { source: onCta ? 'promo_cta' : 'promo_card' });
     if (isLive) { if (typeof fetchJson !== 'function') { openLiveModal(live); return; } fetchJson('lives?select=status&id=eq.' + encodeURIComponent(String(live.id)) + '&limit=1', {}).then(function (rows) { var st = rows && rows[0] && rows[0].status; if (st && st !== 'live') { try { window.__sllEndHost(host, live, (typeof card !== 'undefined' ? card : null), (typeof currentCfg !== 'undefined' ? currentCfg : {})); } catch (e) {} liveWidgetRoot = null; if (window.__sllEndedShow) window.__sllEndedShow(live.id, live.title); } else openLiveModal(live); }).catch(function () { openLiveModal(live); }); return; }
     var pm = live.promo_media_url ? safeUrl(live.promo_media_url) : '';
     var openCta = function () {
@@ -604,7 +620,7 @@ function renderLiveWidget(live) {
 
   liveWidgetShadow.appendChild(card);
   currentLiveData = live;
-  trackLiveEvent(live.id, 'view', { source: 'promo_card' });
+  try { var vk = 'sll_viewed_' + live.id; if (!localStorage.getItem(vk)) { localStorage.setItem(vk, '1'); trackLiveEvent(live.id, 'view', { source: 'promo_card' }); } } catch (e) { trackLiveEvent(live.id, 'view', { source: 'promo_card' }); }
 }
 
 window.SLL = window.SLL || {};
@@ -1328,7 +1344,7 @@ function fetchLiveSpotlight(live) {
       var skEl = stockTag(p.stock_qty, false);
       if (skEl) info.appendChild(skEl);
           row.appendChild(info);
-      var btn = link(buy(p, r.checkout_url), 'Comprar', 'sll-ao-btn');
+      var btn = link(buy(p, r.checkout_url), 'Comprar', 'sll-ao-btn'); if (btn && r.product_id) btn.setAttribute('data-pid', r.product_id);
       var rt = el('div', 'sll-ao-rt');
       if (isOn) rt.appendChild(el('small', 'sll-ao-live', 'Ao vivo'));
       if (btn) rt.appendChild(btn);
@@ -1350,7 +1366,7 @@ function fetchLiveSpotlight(live) {
         var osk = stockTag(onAir.p.stock_qty, true);
         if (osk) { osk.className = (C().stockAnimate === true ? 'sll-blink' : ''); osk.style.fontSize = '13px'; osk.style.position = 'absolute'; osk.style.left = '0'; osk.style.bottom = 'calc(100% + 4px)'; osk.style.margin = '0'; osk.style.width = 'fit-content'; ov.appendChild(osk); }
         ov.appendChild(t);
-        var ob = link(onAir.url, 'Comprar', 'sll-ao-btn');
+        var ob = link(onAir.url, 'Comprar', 'sll-ao-btn'); if (ob && onAir.p && onAir.p.id) ob.setAttribute('data-pid', onAir.p.id);
         if (ob) ov.appendChild(ob);
         wrap.appendChild(ov);
         ov.classList.add('sll-ov-new');
@@ -3111,7 +3127,7 @@ function fetchLiveSpotlight(live) {
     e.preventDefault();
     try {
       var l = window.__sllLastLive;
-      if (l && window.__sllTrack) window.__sllTrack(l.id, 'product_click', { source: 'buy_bubble' });
+      if (l && window.__sllTrack) window.__sllTrack(l.id, 'product_click', { source: 'buy_bubble', product_id: a.getAttribute('data-pid') || null });
     } catch (x) {}
     setTimeout(function () {
       try { if (window.__sllCloseLive) window.__sllCloseLive(); } catch (x) {}
