@@ -300,24 +300,6 @@ export default function LiveEstudio() {
             )}
           </div>
 
-          <section className={`${card} space-y-1.5 max-w-[340px] mx-auto`}>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">No ar agora</h2>
-            {([
-              ['Produto', onAir?.name, () => setProductOnAir(live, null), 'rm-p'],
-              ['Cupom', activeCoupon ? `${activeCoupon.code} (${activeCoupon.discountPercent ?? 0}%)` : undefined, () => setCouponActive(live, activeCoupon!, false), 'rm-c'],
-              ['Aviso', activeAdv?.title, () => setAdvantageActive(live, null), 'rm-a'],
-            ] as [string, string | undefined, () => Promise<unknown>, string][]).map(([label, val, fn, key]) => (
-              <div key={key} className="flex items-center gap-2 text-[11px]">
-                <span className="w-16 shrink-0 text-slate-400">{label}</span>
-                <b className={`flex-1 truncate ${val ? 'text-emerald-600' : 'text-slate-400'}`}>{val ?? 'Nenhum'}</b>
-                {val && (
-                  <button type="button" disabled={!!busy} onClick={() => run(key, fn)} className="text-[10px] font-bold text-red-600 hover:underline disabled:opacity-50">
-                    {"Remover destaque"}
-                  </button>
-                )}
-              </div>
-            ))}
-          </section>
         </div>
 
         {/* CENTRO: vitrine e gatilhos */}
