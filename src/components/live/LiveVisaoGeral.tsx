@@ -22,7 +22,6 @@ const EV = {
   click: ['product_click', 'click'],
   paid: ['purchase', 'order_paid'],
   pending: ['order_pending', 'checkout_started'],
-  signup: ['signup_click', 'group_click', 'whatsapp_click'],
 };
 
 type Periodo = 'today' | '7' | '30' | 'custom';
@@ -165,6 +164,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   const [dests, setDests] = useState<{ platform: string; status: string }[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [chatCount, setChatCount] = useState(0);
+  const [metrics, setMetrics] = useState<{ views: number; clicks: number; signups: number; top: [string, number][] }>({ views: 0, clicks: 0, signups: 0, top: [] });
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [cycle, setCycle] = useState<{ status: string; label: string; date: string } | null>(null);
@@ -206,6 +206,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
     let alive = true;
     lc.from('live_events')
       .select('event_type,product_id,metadata')
+      .in('event_type', [...EV.paid, ...EV.pending])
       .eq('store_id', storeId)
       .gte('created_at', startIso)
       .lte('created_at', endIso)
@@ -213,10 +214,22 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
       .then(({ data }) => { if (alive) setEvents((data || []) as unknown as EventRow[]); });
     lc.from('live_chat_messages')
       .select('id', { count: 'exact', head: true })
+      .eq('is_from_store', false)
       .eq('store_id', storeId)
       .gte('created_at', startIso)
       .lte('created_at', endIso)
       .then(({ count }) => { if (alive) setChatCount(count ?? 0); });
+    (lc as any).rpc('live_overview_metrics', { p_store_id: storeId, p_start: startIso, p_end: endIso })
+      .then(({ data }: any) => {
+        if (!alive || !data) return;
+        const d = data as any;
+        setMetrics({
+          views: Number(d.views) || 0,
+          clicks: Number(d.clicks) || 0,
+          signups: Number(d.signups) || 0,
+          top: Array.isArray(d.top) ? d.top.map((r: any) => [String(r.product_id), Number(r.n) || 0] as [string, number]) : [],
+        });
+      });
     supabase
       .from('sll_conversions')
       .select('order_id,total,status,module,source_id')
@@ -264,17 +277,11 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   const paidOrders = paidSales.length || count(EV.paid);
   const pendingRevenue = pendingSales.length ? salesSum(pendingSales) : sum(EV.pending);
   const pendingOrders = pendingSales.length || count(EV.pending);
-  const viewsEv = count(EV.view);
-  const clicksEv = count(EV.click);
+  const viewsEv = metrics.views;
+  const clicksEv = metrics.clicks;
+  const signupEv = metrics.signups;
 
-  const topProducts = useMemo(() => {
-    const acc = new Map<string, number>();
-    events.filter((e) => EV.click.includes(e.event_type)).forEach((e) => {
-      const pid = e.product_id || String((e.metadata as any)?.product_id || '');
-      if (pid) acc.set(pid, (acc.get(pid) || 0) + 1);
-    });
-    return [...acc.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-  }, [events]);
+  const topProducts = useMemo(() => metrics.top, [metrics]);
 
   useEffect(() => {
     const ids = topProducts.map(([id]) => id).filter((id) => !names[id]);
@@ -484,7 +491,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 { l: 'Visualizações', v: viewsEv, i: Eye },
                 { l: 'Mensagens no chat', v: chatCount, i: MessageSquare },
                 { l: 'Cliques em produtos', v: clicksEv, i: MousePointerClick },
-                { l: 'Cliques em cadastro/grupo', v: count(EV.signup), i: UserPlus },
+                { l: 'Cliques em cadastro', v: signupEv, i: UserPlus },
               ].map((m) => (
                 <div key={m.l} className="rounded-xl border border-slate-100 p-3">
                   <p className="flex items-center gap-1 text-[10px] font-semibold uppercase text-slate-500"><m.i size={12} className="text-[#DC2626]" />{m.l}</p>
