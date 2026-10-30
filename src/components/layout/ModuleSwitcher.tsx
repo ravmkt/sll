@@ -12,7 +12,7 @@ type Item = { key: string; name: string; category: string; path: string; icon: E
 // O logotipo vem do cadastro do modulo (hub_modules.logo_url); "logo" e a alternativa local.
 const SWITCHER_MODULES: Item[] = [
   { key: 'vidlytics', name: 'Vidlytics Stories', category: 'Vídeos Interativos', path: '/dashboard/modules/vidlytics', icon: Layers, logo: '/assets/vidlytics-logo-ico.png' },
-  { key: 'live_commerce', name: 'Stream Sell', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/stream-sell', icon: Radio },
+  { key: 'live_commerce', name: 'Stream Sell', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/stream-sell', icon: Radio, logo: '/assets/stream-sell-logo-ico.png' },
   { key: 'gamification', name: 'Gamificação', category: 'Engajamento & Prêmios', path: '/dashboard/modules/gamificacao', icon: Gamepad2, soon: true },
 ];
 
@@ -59,7 +59,7 @@ export function ModuleSwitcher() {
 
   const withLogo = (m: Item): Item => {
     const c = catalog.find((x) => x.slug === m.key);
-    return { ...m, logo: c?.logo_url || m.logo };
+    return { ...m, logo: m.logo || c?.logo_url };
   };
 
   const current = useMemo(() => {
@@ -108,8 +108,8 @@ export function ModuleSwitcher() {
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${m.soon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'} ${isCurrent ? 'bg-blue-50/80 text-[#0094eb]' : 'text-slate-700 hover:bg-slate-50'}`}
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${isCurrent ? 'border-[#0094eb]/30 bg-white' : 'border-slate-100 bg-slate-50'}`}>
-                      <Logo src={m.logo} Icon={m.icon} size={26} />
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-white ${isCurrent ? 'border-[#0094eb]/40' : 'border-slate-200'}`}>
+                      <Logo src={m.logo} Icon={m.icon} size={34} />
                     </div>
                     <div className="truncate">
                       <p className="truncate text-xs font-semibold leading-tight">{m.name}</p>
