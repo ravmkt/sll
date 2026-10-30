@@ -72,9 +72,14 @@ export function TopBar({ actions }: { actions?: ReactNode; [k: string]: unknown 
             aria-label="Menu da conta"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-100"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-100"
           >
-            <User className="h-4 w-4" />
+            {/* SLL-HEADER-AVATAR */}
+            {logo && !logoFailed ? (
+              <img src={logo} alt={storeName} className="h-full w-full object-cover" onError={() => setLogoFailed(true)} />
+            ) : (
+              <User className="h-4 w-4" />
+            )}
           </button>
           {open && (
             <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl">
