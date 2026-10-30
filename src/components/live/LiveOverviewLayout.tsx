@@ -166,7 +166,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between text-slate-500">
-              <span className="text-[11px] font-medium uppercase tracking-wide">Horas de transmissão</span><Clock className="h-4 w-4 text-red-600" />
+              <span className="text-[11px] font-medium uppercase tracking-wide">Tempo de transmissão</span><Clock className="h-4 w-4 text-red-600" />
             </div>
             <div className="my-3"><span className="text-2xl font-extrabold text-slate-900">{num(u.hoursUsed)}</span> <span className="text-xs text-slate-500">de {num(u.hoursLimit)} horas</span></div>
             <ProgressBar value={pct(u.hoursUsed, u.hoursLimit)} />

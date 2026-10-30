@@ -129,7 +129,7 @@ export default function Overview() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className={card}>
             <div className="flex items-center justify-between text-slate-500">
-              <p className="text-sm font-medium">Horas de Transmissão</p><Clock className="h-4 w-4" />
+              <p className="text-sm font-medium">Tempo de transmissão</p><Clock className="h-4 w-4" />
             </div>
             <p className="mt-2 text-xl font-bold text-slate-900">{data.hoursUsed} de {data.hoursLimit} horas</p>
             <p className="text-xs text-slate-400">Franquia mensal {hoursPct}%</p>

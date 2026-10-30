@@ -384,7 +384,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         <div>
           <h3 className={`${sectionTitle} mb-3 px-1`}>Consumo do plano</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Meter label="Horas de transmissão" value={`${hours.toFixed(1).replace('.', ',')} h`} of="de —" pct={null} icon={Clock} tip={"Tempo total transmitido ao vivo neste m\u00eas, comparado \u00e0 franquia do plano."} foot="Neste mês" />
+            <Meter label="Tempo de transmissão" value={`${hours.toFixed(1).replace('.', ',')} h`} of="de —" pct={null} icon={Clock} tip={"Tempo total transmitido ao vivo no período selecionado."} foot="Neste mês" />
             <Meter label="Pico de espectadores" value={fmtInt(peak)} of="de —" pct={null} icon={Users} tip={"Maior n\u00famero de espectadores simult\u00e2neos j\u00e1 registrado em uma live."} foot="Ao vivo" />
             <Meter label="Destinos ativos" value={String(1 + connected.length)} of="conectado(s)" pct={null} icon={Globe} tip={"Canais onde suas lives s\u00e3o exibidas: seu site e as plataformas conectadas."} foot={destLabel} />
             <Tip text={"Situa\u00e7\u00e3o da assinatura do m\u00f3dulo e a data da pr\u00f3xima renova\u00e7\u00e3o."}><div className={card}>
