@@ -1270,10 +1270,15 @@ function fetchLiveSpotlight(live) {
     var onAirId = live.spotlight_product_id;
         /* SLL-BUY-LINK */
         function buy(p, fallback) {
-          var u = safeUrl(p && p.purchase_url);
-          if (!u) return fallback;
+          /* SLL-BUY-V2 */
           var code = live.spotlight_coupon_code || (coupons.length ? coupons[0].code : '');
-          return code ? u + (u.indexOf('?') < 0 ? '?' : '&') + 'promocode=' + encodeURIComponent(code) : u;
+          var u = safeUrl(p && p.purchase_url) || safeUrl(fallback);
+          if (!u) return fallback;
+          try {
+            var o = new URL(u);
+            if (code) o.searchParams.set('promocode', code);
+            return o.href;
+          } catch (e) { return u; }
         }
     var w0 = document.querySelector('.sll-yt-wrap');
     if (w0) applyCfg(w0);
