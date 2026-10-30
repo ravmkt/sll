@@ -558,7 +558,7 @@ function renderLiveWidget(live) {
     var openCta = function () {
       var go = function (u) {
         u = safeUrl(u);
-        if (u) window.open(u, '_blank', 'noopener,noreferrer');
+        if (u) { trackLiveEvent(live.id, 'group_click', { source: 'promo_cta' }); window.open(u, '_blank', 'noopener,noreferrer'); }
         else openLiveModal(live);
       };
       if (live.whatsapp_group_url) { go(live.whatsapp_group_url); return; }
@@ -587,7 +587,7 @@ function renderLiveWidget(live) {
     if (onCta) {
       var openGroup = function (u) {
         u = safeUrl(u);
-        if (u) window.open(u, '_blank', 'noopener,noreferrer');
+        if (u) { trackLiveEvent(live.id, 'group_click', { source: 'promo_cta' }); window.open(u, '_blank', 'noopener,noreferrer'); }
         else showMedia();
       };
       if (live.whatsapp_group_url) { openGroup(live.whatsapp_group_url); return; }
@@ -2850,6 +2850,14 @@ function fetchLiveSpotlight(live) {
     document.body.appendChild(ov);
     setTimeout(function () { try { fn.focus(); } catch (e) {} }, 50);
   }
+  function clickSignup(src) {
+    try {
+      var l = window.__sllLastLive;
+      var i = (l && l.id) || window.__sllLiveId;
+      if (window.__sllTrack && i) window.__sllTrack(i, 'signup_click', { source: src }); /* SLL-SIGNUP-TRACK */
+    } catch (e) {}
+    openForm();
+  }
   window.__sllOpenReg = openForm;
 
   // Botao no cabecalho, ao lado do mudo / AO VIVO
@@ -2861,7 +2869,7 @@ function fetchLiveSpotlight(live) {
     b.className = 'sll-reg-btn';
     b.title = 'Cadastre-se na live';
     b.innerHTML = ICON + '<span>Cadastrar</span>';
-    b.onclick = openForm;
+    b.onclick = function () { clickSignup('header_btn'); };
     var mute = r.querySelector('.sll-mute-btn');
     var live = r.querySelector('.sll-3c-live');
     var ref = mute || live;
@@ -2886,7 +2894,7 @@ function fetchLiveSpotlight(live) {
       a.className = 'sll-reg-link';
       a.href = '#';
       a.textContent = 'Cadastrar agora';
-      a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); openForm(); });
+      a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); clickSignup('chat_link'); });
       par.insertBefore(a, node);
       if (parts[1]) par.insertBefore(document.createTextNode(parts[1]), node);
       par.removeChild(node);
@@ -3082,7 +3090,7 @@ function fetchLiveSpotlight(live) {
         var l = window.__sllLastLive;
         var go = safeUrl(l && l.whatsapp_group_url);
         if (!go) return;
-        try { if (window.__sllTrack) window.__sllTrack(l.id, 'product_click', { source: 'group_btn' }); } catch (e) {}
+        try { if (window.__sllTrack) window.__sllTrack(l.id, 'group_click', { source: 'group_btn' }); } catch (e) {}
         window.open(go, '_blank', 'noopener,noreferrer');
       };
     }
@@ -3175,6 +3183,7 @@ function fetchLiveSpotlight(live) {
       box.insertBefore(el('div', 'font-size:13px;color:#64748b;margin:-8px 0 14px;', 'Acompanhe as pr\u00f3ximas novidades no grupo.'), actions);
       var a = el('a', 'display:block;border-radius:999px;padding:12px 16px;background:#16a34a;color:#fff;font-weight:800;font-size:14px;text-decoration:none;', 'Entrar no grupo do WhatsApp');
       a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.addEventListener('click', function () { try { var l = window.__sllLastLive; var i = (l && l.id) || window.__sllLiveId; if (window.__sllTrack && i) window.__sllTrack(i, 'group_click', { source: 'ended_modal' }); } catch (e) {} });
       actions.insertBefore(a, closeBtn);
     });
   }

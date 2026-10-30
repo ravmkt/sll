@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Hourglass, CheckCircle2, DollarSign, Clock, Users, Globe, CalendarClock, ArrowRight,
-  Eye, MessageSquare, MousePointerClick, Link2, Check, Share2, Radio, Trophy, Plus,
-} from 'lucide-react';
+  Eye, MessageSquare, MousePointerClick, Link2, Check, Share2, Radio, Trophy, Plus, UserPlus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
 import { useLoja } from '@/contexts/LojaContext';
@@ -23,7 +22,7 @@ const EV = {
   click: ['product_click', 'click'],
   paid: ['purchase', 'order_paid'],
   pending: ['order_pending', 'checkout_started'],
-  whatsapp: ['whatsapp_click'],
+  signup: ['signup_click', 'group_click', 'whatsapp_click'],
 };
 
 type Periodo = 'today' | '7' | '30' | 'custom';
@@ -485,7 +484,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 { l: 'Visualizações', v: viewsEv, i: Eye },
                 { l: 'Mensagens no chat', v: chatCount, i: MessageSquare },
                 { l: 'Cliques em produtos', v: clicksEv, i: MousePointerClick },
-                { l: 'Cliques no WhatsApp', v: count(EV.whatsapp), i: MessageSquare },
+                { l: 'Cliques em cadastro/grupo', v: count(EV.signup), i: UserPlus },
               ].map((m) => (
                 <div key={m.l} className="rounded-xl border border-slate-100 p-3">
                   <p className="flex items-center gap-1 text-[10px] font-semibold uppercase text-slate-500"><m.i size={12} className="text-[#DC2626]" />{m.l}</p>
