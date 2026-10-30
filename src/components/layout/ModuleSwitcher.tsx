@@ -84,10 +84,10 @@ export function ModuleSwitcher() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50"
+        className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200/90 bg-white px-3 h-9 text-sm font-medium text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50"
       >
         <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-        <Logo src={current.logo} Icon={current.icon} size={20} />
+        <Logo src={current.logo} Icon={current.icon} size={24} />
         <span className="font-semibold text-slate-800">{current.name}</span>
         <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
