@@ -491,7 +491,8 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 { l: 'Visualizações', v: viewsEv, i: Eye },
                 { l: 'Mensagens no chat', v: chatCount, i: MessageSquare },
                 { l: 'Cliques em produtos', v: clicksEv, i: MousePointerClick },
-                { l: 'Cliques em cadastro', v: signupEv, i: UserPlus },
+                { l: 'Cliques em cadastro/grupo', v: signupEv, i: UserPlus },
+              { l: 'Compartilhamentos', v: shareEv, i: Share2 },
               ].map((m) => (
                 <div key={m.l} className="rounded-xl border border-slate-100 p-3">
                   <p className="flex items-center gap-1 text-[10px] font-semibold uppercase text-slate-500"><m.i size={12} className="text-[#DC2626]" />{m.l}</p>
