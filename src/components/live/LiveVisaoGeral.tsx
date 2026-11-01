@@ -557,7 +557,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         </div>
 
         <div className="w-full [&>*]:!w-full [&>*]:!max-w-none">
-          <VidlyticsAcademy variant="vidlytics" />
+          <VidlyticsAcademy variant="streamsell" />
         </div>
       </div>
     </TooltipProvider>
