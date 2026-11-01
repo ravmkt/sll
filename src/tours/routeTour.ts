@@ -7,6 +7,7 @@ const INTRO: Record<string, Intro> = {
   '/dashboard/integracao': { title: 'Instala\u00e7\u00e3o & Script', desc: 'Copie o script do SLL e confira se ele est\u00e1 instalado e funcionando na sua loja.' },
   '/dashboard/assinaturas': { title: 'Assinatura & Planos', desc: 'Veja seu plano atual, os m\u00f3dulos contratados e o status da assinatura.' },
   '/dashboard/planos': { title: 'Planos', desc: 'Compare os planos e escolha o ideal para a sua loja.' },
+  '/dashboard/insights-noah': { title: 'Insights do Noah', desc: 'Dicas pr\u00e1ticas do Noah para vender mais com seus v\u00eddeos e lives.' },
   '/dashboard/dicas': { title: 'Insights do Noah', desc: 'Dicas pr\u00e1ticas do Noah para vender mais com seus v\u00eddeos e lives.' },
   '/dashboard/pedidos-dos-lojistas': { title: 'Pedidos dos lojistas', desc: 'Sugira melhorias e vote nas ideias de outros lojistas.' },
   '/dashboard/afiliados': { title: 'Clube SLL', desc: 'Indique lojistas e acompanhe suas indica\u00e7\u00f5es e comiss\u00f5es.' },

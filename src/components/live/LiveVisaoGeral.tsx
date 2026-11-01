@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link as NoahRouterLink } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Hourglass, CheckCircle2, DollarSign, Clock, Users, Globe, CalendarClock, ArrowRight,
@@ -523,6 +524,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
               <p className="text-sm font-bold text-slate-800">{noahTip.title}</p>
               <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{noahTip.text}</p>
             </div>
+                  <NoahRouterLink to="/dashboard/insights-noah" className="self-end text-xs font-bold text-[#DC2626] hover:underline">Ver mais dicas &rarr;</NoahRouterLink>
           </div>
 
           <div className="flex h-full flex-col justify-between space-y-4 rounded-2xl border border-[#DC2626]/60 bg-white p-5 shadow-sm transition-all hover:border-[#DC2626]">

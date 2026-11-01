@@ -293,7 +293,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
             <h3 className="text-xl font-bold text-slate-900">Dica do <span className="font-semibold text-red-600">Noah</span></h3>
           </div>
           <p className="text-sm leading-relaxed text-slate-700">{p.tip || DEFAULT_TIP}</p>
-          <Link to={p.tipsHref ?? "/dashboard/dicas"} className="mt-auto pt-4 text-right text-xs font-semibold text-blue-600 hover:underline">Ver mais dicas →</Link>
+          <Link to={p.tipsHref ?? "/dashboard/insights-noah"} className="mt-auto pt-4 text-right text-xs font-semibold text-blue-600 hover:underline">Ver mais dicas →</Link>
         </div>
 
         <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

@@ -630,7 +630,7 @@ export default function VisaoGeralTab() {
             {vidTips.length > 0 && (
               <button
                 type="button"
-                onClick={() => navigate('/dashboard/dicas/vidlytics')}
+                onClick={() => navigate('/dashboard/insights-noah')}
                 className="self-end text-xs font-bold text-[#0094eb] hover:underline cursor-pointer"
               >
                 Ver mais dicas →

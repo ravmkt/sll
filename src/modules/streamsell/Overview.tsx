@@ -249,7 +249,7 @@ export default function Overview() {
           <p className="mt-4 text-sm leading-relaxed text-slate-600">
             Uma boa live começa antes de entrar no ar. Escolha 3 produtos-chave, prepare uma demonstração de cada um e deixe um cupom exclusivo pronto. Apresente o benefício antes de falar do preço.
           </p>
-          <Link to="/streamsell/dicas" className="mt-auto pt-4 text-sm font-medium text-red-600 hover:text-red-700">
+          <Link to="/dashboard/insights-noah" className="mt-auto pt-4 text-sm font-medium text-red-600 hover:text-red-700">
             Ver mais dicas →
           </Link>
         </div>
