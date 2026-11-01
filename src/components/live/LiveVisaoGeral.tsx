@@ -279,7 +279,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   const pendingOrders = pendingSales.length || count(EV.pending);
   const viewsEv = metrics.views;
   const clicksEv = metrics.clicks;
-  const signupEv = metrics.signups;
+  const signupEv = metrics.signups; const shareEv = Number((metrics as any).shares) || 0;
 
   const topProducts = useMemo(() => metrics.top, [metrics]);
 
