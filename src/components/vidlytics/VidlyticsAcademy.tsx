@@ -69,6 +69,23 @@ export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 
     el.scrollBy({ left: dir * Math.max(252, el.clientWidth * 0.8), behavior: 'smooth' });
   };
 
+  // ACADEMY_VAZIO_STREAMSELL
+  if (streamsell && PLAYLIST_ID && !loading && videos.length === 0 && !error) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p className="text-sm font-semibold text-slate-800">SLL Academy</p>
+        <p className="mt-1 text-xs text-slate-500">Novos v&iacute;deos em breve.</p>
+        <a
+          href={SS_PLAYLIST_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700"
+        >
+          Ver playlist no YouTube
+        </a>
+      </div>
+    );
+  }
   if (!PLAYLIST_ID || (!loading && videos.length === 0 && !error)) return null;
 
   const arrowCls =
