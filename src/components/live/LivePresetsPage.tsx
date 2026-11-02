@@ -12,7 +12,7 @@ type Kind = "coupon" | "advantage";
 
 const T = {
   title: "Cupons e Avisos",
-  sub: "Atalhos reutiliz\u00e1veis nas suas lives. Use cupons para ofertas e avisos para comunicados (ex.: Sorteio no final). O interruptor pausa ou reativa sem excluir.",
+  sub: "Cadastre cupons para ofertas e avisos para comunicados. Lembre-se de cadastrar o cupom na sua plataforma de ecommerce.",
   coupons: "Cupons",
   notices: "Avisos",
   newCoupon: "Novo cupom",
