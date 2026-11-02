@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
 import { DollarSign, Eye, MousePointerClick, RefreshCw, ShoppingCart, TrendingUp } from 'lucide-react';
-import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { supabaseLiveCommerce, supabasePublic } from '@/services/supabaseClients';
 import { liveStore } from '@/components/live/LiveTemplatesPage';
 
@@ -83,12 +83,16 @@ async function loadOrders(ids: string[]): Promise<Ord[]> {
   const pub: any = supabasePublic;
   const out: Ord[] = [];
   for (const part of chunks(ids, 40)) {
-    let res = await pub.from('orders').select('live_id,total_amount,status,created_at').in('live_id', part).limit(5000);
-    if (res.error) {
-      res = await pub.from('orders').select('live_id,total_amount,created_at').in('live_id', part).limit(5000);
-      if (res.error) throw res.error;
-    }
-    out.push(...((res.data || []) as Ord[]));
+    const { data, error } = await pub
+      .from('sll_conversions')
+      .select('source_id,total,status,created_at')
+      .in('source_id', part)
+      .eq('status', 'paid')
+      .limit(5000);
+    if (error) throw error;
+    ((data || []) as any[]).forEach((r) =>
+      out.push({ live_id: String(r.source_id), total_amount: r.total, status: r.status, created_at: r.created_at }),
+    );
   }
   return out;
 }
@@ -124,6 +128,9 @@ export default function LiveResultadosPage() {
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [asc, setAsc] = useState(false);
   const [show, setShow] = useState({ rev: true, views: true });
+  const [mode, setMode] = useState<'sum' | 'live'>('sum');
+  const [liveMetric, setLiveMetric] = useState<'views' | 'rev'>('views');
+  const [selLives, setSelLives] = useState<string[] | null>(null);
   const toggleSeries = (k: 'rev' | 'views') =>
     setShow((s) => (s[k] && !(k === 'rev' ? s.views : s.rev) ? s : { ...s, [k]: !s[k] }));
 
@@ -232,6 +239,71 @@ export default function LiveResultadosPage() {
     return { totals, historicPeak, series, rows };
   }, [lives, events, orders, period]);
 
+  const candidates = useMemo(() => {
+    const cutoff = period > 0 ? Date.now() - period * 86400000 : 0;
+    return lives
+      .filter((l) => /^(finished|ended|live)$/i.test(String(l.status)) && (!cutoff || new Date(liveDate(l)).getTime() >= cutoff))
+      .sort((a, b) => new Date(liveDate(b)).getTime() - new Date(liveDate(a)).getTime())
+      .slice(0, 12);
+  }, [lives, period]);
+
+  const chosen = useMemo(() => {
+    const base = selLives ?? candidates.slice(0, 5).map((l) => l.id);
+    return candidates.filter((l) => base.includes(l.id)).slice(0, 5);
+  }, [candidates, selLives]);
+
+  const toggleLive = (id: string) => {
+    const base = chosen.map((l) => l.id);
+    setSelLives(base.includes(id) ? base.filter((x) => x !== id) : base.length < 5 ? [...base, id] : base);
+  };
+
+  const curves = useMemo(() => {
+    const COLORS = ['#dc2626', '#2563eb', '#10b981', '#f59e0b', '#7c3aed'];
+    const lines: { key: string; id: string; name: string; color: string }[] = [];
+    const perLive: Record<string, Record<number, number>> = {};
+    const endMin: Record<string, number> = {};
+    let maxMin = 0;
+    let grand = 0;
+    chosen.forEach((l, i) => {
+      const start = new Date(l.started_at || l.scheduled_at || l.created_at).getTime();
+      const buckets: Record<number, number> = {};
+      let last = 0;
+      const add = (iso: string, v: number) => {
+        const m = Math.floor((new Date(iso).getTime() - start) / 60000);
+        if (m < 0 || m > 720) return;
+        buckets[m] = (buckets[m] || 0) + v;
+        grand += v;
+        if (m > last) last = m;
+      };
+      if (liveMetric === 'views') {
+        events.forEach((e) => { if (e.live_id === l.id && e.event_type === 'view') add(e.created_at, 1); });
+      } else {
+        orders.forEach((o) => {
+          if (o.live_id === l.id && (o.status == null || APPROVED.test(String(o.status)))) add(o.created_at, Number(o.total_amount) || 0);
+        });
+      }
+      const endAt = l.ended_at ? Math.floor((new Date(l.ended_at).getTime() - start) / 60000) : 0;
+      const end = Math.min(720, Math.max(last, endAt, 0));
+      perLive[l.id] = buckets;
+      endMin[l.id] = end;
+      if (end > maxMin) maxMin = end;
+      lines.push({ key: 'k' + i, id: l.id, name: (l.title || 'Live') + ' \u00b7 ' + fmtDay(dayKey(liveDate(l))), color: COLORS[i % COLORS.length] });
+    });
+    const data: any[] = [];
+    if (grand > 0) {
+      const acc: Record<string, number> = {};
+      for (let m = 0; m <= maxMin; m++) {
+        const row: any = { min: m };
+        lines.forEach((ln) => {
+          acc[ln.id] = (acc[ln.id] || 0) + (perLive[ln.id][m] || 0);
+          row[ln.key] = m <= endMin[ln.id] ? acc[ln.id] : null;
+        });
+        data.push(row);
+      }
+    }
+    return { data, lines };
+  }, [chosen, events, orders, liveMetric]);
+
   const sorted = useMemo(() => {
     const r = [...model.rows];
     r.sort((a: any, b: any) => {
@@ -317,7 +389,71 @@ export default function LiveResultadosPage() {
             </button>
           </div>
         </div>
-        {model.series.length === 0 ? (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+              {(['sum', 'live'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={mode === m}
+                  onClick={() => setMode(m)}
+                  className={'rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (mode === m ? 'border-[#DC2626] bg-[#DC2626] text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')}
+                >
+                  {m === 'sum' ? 'Soma' : 'Por live'}
+                </button>
+              ))}
+              {mode === 'live' && (
+                <>
+                  <span className="mx-1 h-4 w-px bg-slate-200" />
+                  {(['views', 'rev'] as const).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      aria-pressed={liveMetric === k}
+                      onClick={() => setLiveMetric(k)}
+                      className={'rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (liveMetric === k ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')}
+                    >
+                      {k === 'views' ? T.sViews : T.sRev}
+                    </button>
+                  ))}
+                  <span className="mx-1 h-4 w-px bg-slate-200" />
+                  {candidates.map((l) => {
+                    const on = chosen.some((c) => c.id === l.id);
+                    return (
+                      <button
+                        key={l.id}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => toggleLive(l.id)}
+                        title={on ? 'Ocultar live' : chosen.length >= 5 ? 'Limite de 5 lives' : 'Mostrar live'}
+                        className={'rounded-full border px-3 py-1 text-xs font-semibold transition-colors ' + (on ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50')}
+                      >
+                        {(l.title || 'Live').slice(0, 18) + ' ' + fmtDay(dayKey(liveDate(l)))}
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+            {mode === 'live' ? (
+              curves.data.length === 0 ? (
+                <p className="py-16 text-center text-sm text-slate-400">{loading ? T.loading : T.chartEmpty}</p>
+              ) : (
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={curves.data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="min" type="number" domain={[0, 'dataMax']} tick={{ fontSize: 11 }} tickFormatter={(v: number) => v + ' min'} />
+                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={80} tickFormatter={(v: number) => (liveMetric === 'rev' ? 'R$ ' + num(v) : num(v))} />
+                      <Tooltip labelFormatter={(v: any) => 'Minuto ' + v} formatter={(v: any, n: any) => [liveMetric === 'rev' ? brl(Number(v)) : num(Number(v)), n]} />
+                      <Legend />
+                      {curves.lines.map((ln) => (
+                        <Line key={ln.key} type="monotone" dataKey={ln.key} name={ln.name} stroke={ln.color} strokeWidth={2} dot={false} connectNulls={false} />
+                      ))}
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              )
+            ) : model.series.length === 0 ? (
           <p className="py-16 text-center text-sm text-slate-400">{loading ? T.loading : T.chartEmpty}</p>
         ) : (
           <div className="h-80 w-full">
