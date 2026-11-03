@@ -377,7 +377,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mx-auto max-w-7xl space-y-6 p-6 pb-4">
-        <PageTour tourKey="live-visao-geral" steps={VISAO_STREAM_TOUR} />
+        <PageTour tourKey="live-visao-geral-v2" steps={VISAO_STREAM_TOUR} />
         <VisaoGeralTourTags />
         <ModuleHeader module="live" />
         <div>
@@ -573,32 +573,62 @@ export default LiveVisaoGeral;
 
 /* SLL-TOUR-VISAO-GERAL */
 const VISAO_STREAM_TOUR: TourStep[] = [
-  { element: '[data-tour="sg-fat"]', title: 'Faturamento das lives', description: 'Pedidos aguardando pagamento, vendas confirmadas e comiss\u00f5es do Clube SLL. Troque o per\u00edodo no filtro.', side: 'bottom' },
-  { element: '[data-tour="sg-consumo"]', title: 'Consumo do plano', description: 'Tempo transmitido, pico de espectadores e canais usados, comparados ao seu plano.', side: 'top' },
-  { element: '[data-tour="sg-proxima"]', title: 'Pr\u00f3xima live', description: 'Veja a live ao vivo ou a pr\u00f3xima agendada e crie uma nova com um clique.', side: 'top' },
-  { element: '[data-tour="sg-engaj"]', title: 'Engajamento', description: 'Visualiza\u00e7\u00f5es, cliques em produtos, mensagens no chat e cadastros gerados pelas suas lives.', side: 'top' },
+  { element: '[data-tour="sg-header"]', title: 'Bem-vindo ao Stream Sell', description: 'Esta \u00e9 a central das suas lives. Em poucos passos voc\u00ea v\u00ea quanto vendeu, quanto do plano usou e o que fazer na pr\u00f3xima transmiss\u00e3o.', side: 'bottom' },
+  { element: '[data-tour="sg-periodo"]', title: 'Filtre por per\u00edodo', description: 'Escolha Hoje, 7 dias, 30 dias ou Personalizado. Faturamento, tempo de transmiss\u00e3o e engajamento mudam conforme o per\u00edodo.', side: 'bottom' },
+  { element: '[data-tour="sg-aguardando"]', title: 'Aguardando pagamento', description: 'Pedidos feitos durante as lives com Pix ou boleto que ainda n\u00e3o foram pagos. Acompanhe para n\u00e3o perder a venda.', side: 'bottom' },
+  { element: '[data-tour="sg-pagas"]', title: 'Vendas pagas', description: 'Pedidos das lives com pagamento aprovado. \u00c9 o faturamento real gerado pelo Stream Sell no per\u00edodo.', side: 'bottom' },
+  { element: '[data-tour="sg-indic"]', title: 'Faturamento de indica\u00e7\u00f5es', description: 'Comiss\u00f5es que voc\u00ea recebe ao indicar o Stream Sell para outros lojistas. O bot\u00e3o abre o Clube SLL.', side: 'bottom' },
+  { element: '[data-tour="sg-consumo"]', title: 'Consumo do plano', description: 'Tempo transmitido, pico de espectadores, destinos conectados e o ciclo da assinatura. Confira antes de uma live grande.', side: 'bottom' },
+  { element: '[data-tour="sg-proxima"]', title: 'Pr\u00f3xima live', description: 'A live ao vivo ou a pr\u00f3xima agendada. Use Abrir Est\u00fadio da Live para transmitir e conversar com o p\u00fablico, ou Criar live se n\u00e3o houver nenhuma.', side: 'top' },
+  { element: '[data-tour="sg-engaj"]', title: 'Engajamento das lives', description: 'Visualiza\u00e7\u00f5es, mensagens no chat, cliques em produtos, cadastros e compartilhamentos, al\u00e9m do ranking dos produtos mais clicados.', side: 'top' },
+  { element: '[data-tour="sg-noah"]', title: 'Dica do Noah', description: 'Uma dica pr\u00e1tica para a \u00e9poca do ano e o tipo da sua loja. Use Ver mais dicas para ver todas.', side: 'top' },
+  { element: '[data-tour="sg-clube"]', title: 'Clube SLL', description: 'Copie seu link de indica\u00e7\u00e3o e ganhe comiss\u00f5es e benef\u00edcios por cada lojista que assinar.', side: 'top' },
   { element: '[data-tour="sg-academy"]', title: 'SLL Academy', description: 'Aulas r\u00e1pidas para configurar a live, apresentar produtos e vender mais.', side: 'top' },
-  { element: '[data-tour="sg-noah"]', title: 'Dica do Noah', description: 'Uma dica pr\u00e1tica para melhorar seus resultados. Use "Ver mais dicas" para ver todas.', side: 'top' },
+  { element: '[data-tour="sg-menu-resultados"]', title: 'Resultados & M\u00e9tricas', description: 'Gr\u00e1fico e tabela por live: faturamento, visualiza\u00e7\u00f5es e compara\u00e7\u00e3o entre transmiss\u00f5es.', side: 'right' },
+  { element: '[data-tour="sg-menu-lives"]', title: 'Lives', description: 'Crie, agende e gerencie suas lives. Daqui voc\u00ea abre o Est\u00fadio, reativa uma live encerrada e divulga.', side: 'right' },
+  { element: '[data-tour="sg-menu-cupons"]', title: 'Cupons e Avisos', description: 'Cadastre cupons e avisos prontos para enviar no chat e exibir sobre o player durante a live.', side: 'right' },
+  { element: '[data-tour="sg-menu-aparencia"]', title: 'Apar\u00eancia', description: 'Personalize cores, bordas, bolha, divulga\u00e7\u00e3o e player, e salve modelos para reaproveitar.', side: 'right' },
 ];
 
-const VISAO_TAGS: [string, RegExp, 'section' | 'card'][] = [
-  ['sg-fat', /vendas pagas/i, 'section'],
-  ['sg-consumo', /tempo de transmiss/i, 'card'],
-  ['sg-proxima', /pr(?:o|\u00f3)xima live/i, 'card'],
-  ['sg-engaj', /engajamento/i, 'card'],
-  ['sg-academy', /sll academy/i, 'card'],
-  ['sg-noah', /dica do noah/i, 'card'],
+type VisaoTagKind = 'card' | 'grid' | 'parent' | 'menu';
+
+const VISAO_TAGS: [string, RegExp, VisaoTagKind][] = [
+  ['sg-header', /^sua proxima live vende mais$/, 'card'],
+  ['sg-periodo', /^hoje$/, 'parent'],
+  ['sg-aguardando', /^aguardando pagamento$/, 'card'],
+  ['sg-pagas', /^vendas pagas$/, 'card'],
+  ['sg-indic', /^faturamento indicacoes$/, 'card'],
+  ['sg-consumo', /^tempo de transmissao$/, 'grid'],
+  ['sg-proxima', /^proxima live$/, 'card'],
+  ['sg-engaj', /^engajamento das lives$/, 'card'],
+  ['sg-noah', /^dica do noah$/, 'card'],
+  ['sg-clube', /^receba comissoes e beneficios/, 'card'],
+  ['sg-academy', /^(sll ?academy|aprenda a configurar sua live)/, 'card'],
+  ['sg-menu-resultados', /^resultados (&|e) metricas$/, 'menu'],
+  ['sg-menu-lives', /^lives$/, 'menu'],
+  ['sg-menu-cupons', /^cupons e avisos$/, 'menu'],
+  ['sg-menu-aparencia', /^aparencia$/, 'menu'],
 ];
 
-function tagContainer(el: Element, kind: 'section' | 'card'): Element | null {
-  if (kind === 'section') {
-    const s = el.closest('section');
-    if (s) return s;
-  }
+const tourNorm = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+function tourOwnText(el: Element): string {
+  if (el.tagName === 'IMG') return tourNorm(el.getAttribute('alt') || '');
+  let t = '';
+  el.childNodes.forEach((n) => { if (n.nodeType === 3) t += n.textContent || ''; });
+  return tourNorm(t);
+}
+
+function tagContainer(el: Element, kind: VisaoTagKind): Element | null {
+  if (kind === 'menu') return el.closest('a,button,li');
+  if (kind === 'parent') return el.parentElement;
   let n: Element | null = el.parentElement;
   while (n && n.tagName !== 'MAIN' && n.tagName !== 'BODY') {
     const r = n.getBoundingClientRect();
-    if (/rounded-/.test(n.getAttribute('class') || '') && r.height >= 80 && r.width >= 200) return n;
+    if (/rounded-/.test(n.getAttribute('class') || '') && r.height >= 80 && r.width >= 200) {
+      return kind === 'grid' ? n.parentElement : n;
+    }
     n = n.parentElement;
   }
   return null;
@@ -607,14 +637,21 @@ function tagContainer(el: Element, kind: 'section' | 'card'): Element | null {
 function VisaoGeralTourTags() {
   useEffectTour(() => {
     const run = () => {
-      const main: Element = document.querySelector('main') || document.body;
-      if (!main) return;
-      const leaves = Array.from(main.querySelectorAll('h1,h2,h3,h4,p,span,div,b')).filter((e) => e.children.length === 0 && !e.closest('aside,nav,header'));
-      VISAO_TAGS.forEach(([id, rx, kind]) => {
-        if (main.querySelector('[data-tour="' + id + '"]')) return;
-        const hit = leaves.find((e) => rx.test(e.textContent || ''));
+      const missing = VISAO_TAGS.filter(([id]) => !document.querySelector('[data-tour="' + id + '"]'));
+      if (!missing.length) return;
+      const items: [Element, string][] = [];
+      document.body.querySelectorAll('h1,h2,h3,h4,p,span,div,b,a,button,li,label,img').forEach((e) => {
+        const t = tourOwnText(e);
+        if (t) items.push([e, t]);
+      });
+      missing.forEach(([id, rx, kind]) => {
+        const hit = items.find(([e, t]) => {
+          if (!rx.test(t)) return false;
+          const left = e.getBoundingClientRect().left;
+          return kind === 'menu' ? left < 300 : left >= 250 && !e.closest('aside,nav,header');
+        });
         if (!hit) return;
-        const box = tagContainer(hit, kind);
+        const box = tagContainer(hit[0], kind);
         if (box && !box.hasAttribute('data-tour')) box.setAttribute('data-tour', id);
       });
     };
