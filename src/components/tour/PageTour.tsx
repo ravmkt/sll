@@ -16,16 +16,22 @@ export default function PageTour({ tourKey, steps, inline = false }: Props) {
     if (inline) return;
     const w = window as any;
     const reg: Set<string> = (w.__sllTourReg = w.__sllTourReg || new Set<string>());
-    const publish = () => {
-      const on = reg.size > 0;
+    const emit = (on: boolean) => {
       if (w.__sllTourAvailable === on) return;
       w.__sllTourAvailable = on;
       window.dispatchEvent(new CustomEvent('sll:tour-available', { detail: on }));
     };
+    const publish = () => {
+      window.clearTimeout(w.__sllTourPubT);
+      if (reg.size > 0) { emit(true); return; }
+      w.__sllTourPubT = window.setTimeout(() => emit(reg.size > 0), 900);
+    };
+    let misses = 0;
     const check = () => {
       const v = visibleSteps(stepsRef.current).length > 0;
       setVisible(v);
-      if (v) reg.add(tourKey); else reg.delete(tourKey);
+      if (v) { misses = 0; reg.add(tourKey); }
+      else if (++misses >= 3) reg.delete(tourKey);
       publish();
     };
     const sync = () => setHosted(!!w.__sllTourHost);
