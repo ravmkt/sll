@@ -409,9 +409,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
             <Stat label="Aguardando pagamento" badge={`${pendingOrders} pedidos`} value={brl(pendingRevenue)} sub="Pix / Boleto em live" icon={Hourglass} tone="bg-red-50 text-[#DC2626]" tip={"Pedidos gerados nas lives (Pix ou boleto) que ainda aguardam a confirma\u00e7\u00e3o do pagamento."} />
             <Stat label="Vendas pagas" badge={`${paidOrders} pedidos`} value={brl(paidRevenue)} sub="Faturamento aprovado" icon={CheckCircle2} tone="bg-red-50 text-[#DC2626]" tip={"Pedidos das lives com pagamento aprovado no per\u00edodo selecionado."} />
             <Stat label="Faturamento indicações" badge="Comissões" value={brl(0)} sub="" icon={DollarSign} tone="bg-red-50 text-[#DC2626]" tip={"Comiss\u00f5es recebidas de lojistas que voc\u00ea indicou pelo Clube SLL."}>
-              <button type="button" onClick={() => navigate(CLUBE_PATH)} className="mt-2 cursor-pointer rounded-md bg-[#DC2626] px-2.5 py-1 text-[11px] font-bold text-white transition-colors hover:bg-[#B91C1C]">
-                Acessar o Clube SLL
-              </button>
+              <div className="mt-3 flex w-full justify-end"><button type="button" onClick={() => navigate(CLUBE_PATH)} className="cursor-pointer text-xs font-bold text-[#DC2626] hover:underline">Acessar o Clube SLL &rarr;</button></div>
             </Stat>
           </div>
         </div>
@@ -437,7 +435,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Tip text={"Lives ao vivo e agendadas, com atalho para abrir o Est\u00fadio."}><div className={card}>
+          <Tip text={"Lives ao vivo e agendadas, com atalho para abrir o Est\u00fadio."}><div className={`${card} flex h-full flex-col`}>
             <div className="mb-3 flex items-center gap-2">
               <Radio size={16} className="text-[#DC2626]" />
               <h3 className="text-base font-black text-slate-900">{"Pr\u00f3ximas lives"}</h3>
@@ -498,13 +496,12 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 </div>
               );
             })()}
-          </div></Tip>
+          <div className="mt-auto flex justify-end pt-3"><button type="button" onClick={() => window.dispatchEvent(new CustomEvent('live:go-tab', { detail: 'lives' }))} className="cursor-pointer text-xs font-bold text-[#DC2626] hover:underline">{"Ver todas as lives \u2192"}</button></div></div></Tip>
 
-          <Tip text={"Visualiza\u00e7\u00f5es, mensagens e cliques gerados pelas suas lives no per\u00edodo."}><div className={card}>
+          <Tip text={"Visualiza\u00e7\u00f5es, mensagens e cliques gerados pelas suas lives no per\u00edodo."}><div className={`${card} flex h-full flex-col`}>
             <div className="mb-3 flex items-center gap-2">
               <Trophy size={16} className="text-[#DC2626]" />
               <h3 className="text-base font-black text-slate-900">Engajamento das lives</h3>
-                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('live:go-tab', { detail: 'resultados' }))} className="ml-auto cursor-pointer text-xs font-semibold text-[#DC2626] hover:underline">{"Ver resultados e m\u00e9tricas \u2192"}</button>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
@@ -533,7 +530,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 ))}
               </ol>
             )}
-          </div></Tip>
+          {/* SLL-LINKS-PADRAO */}<div className="mt-auto flex justify-end pt-3"><button type="button" onClick={() => window.dispatchEvent(new CustomEvent('live:go-tab', { detail: 'resultados' }))} className="cursor-pointer text-xs font-bold text-[#DC2626] hover:underline">{"Ver resultados e m\u00e9tricas \u2192"}</button></div></div></Tip>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -562,11 +559,11 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
               >
                 {copied ? (<><Check className="h-4 w-4" />LINK COPIADO!</>) : (<><Link2 className="h-4 w-4" />COPIAR MEU LINK DE INDICAÇÃO</>)}
               </button>
-              <div className="text-center">
+              <div className="flex justify-end">
                 <a
                   href={CLUBE_PATH}
                   onClick={(e) => { e.preventDefault(); navigate(CLUBE_PATH); }}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 transition-colors hover:text-[#DC2626]"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-[#DC2626] hover:underline"
                 >
                   Acessar painel de indicações →
                 </a>
@@ -590,7 +587,7 @@ const VISAO_STREAM_TOUR: TourStep[] = [
   { element: '[data-tour="sg-periodo"]', title: 'Filtre por per\u00edodo', description: 'Escolha o per\u00edodo desejado. Faturamento, tempo de transmiss\u00e3o e engajamento mudam conforme o per\u00edodo.', side: 'bottom' },
   { element: '[data-tour="sg-aguardando"]', title: 'Aguardando pagamento', description: 'Pedidos feitos durante as lives com Pix ou boleto que ainda n\u00e3o foram pagos. Acompanhe para n\u00e3o perder a venda.', side: 'bottom' },
   { element: '[data-tour="sg-pagas"]', title: 'Vendas pagas', description: 'Pedidos das lives com pagamento aprovado. \u00c9 o faturamento real gerado pelo Stream Sell no per\u00edodo.', side: 'bottom' },
-  { element: '[data-tour="sg-indic"]', title: 'Faturamento de indica\u00e7\u00f5es', description: 'Comiss\u00f5es que voc\u00ea recebe ao indicar o Stream Sell para outros lojistas. O bot\u00e3o abre o Clube SLL.', side: 'bottom' },
+  { element: '[data-tour="sg-indic"]', title: 'Faturamento de indica\u00e7\u00f5es', description: 'Comiss\u00f5es que voc\u00ea recebe ao indicar o Stream Sell para outros lojistas. O link no rodap\u00e9 abre o Clube SLL.', side: 'bottom' },
   { element: '[data-tour="sg-consumo"]', title: 'Consumo', description: 'Tempo transmitido, pico de espectadores, destinos conectados e o ciclo da assinatura.', side: 'bottom' },
   { element: '[data-tour="sg-proxima"]', title: 'Pr\u00f3ximas lives', description: 'Todas as lives ao vivo e agendadas. Use Abrir Est\u00fadio da Live para preparar e iniciar cada uma.', side: 'top' },
   { element: '[data-tour="sg-engaj"]', title: 'Engajamento das lives', description: 'Visualiza\u00e7\u00f5es, mensagens no chat, cliques em produtos, cadastros e compartilhamentos, al\u00e9m do ranking dos produtos mais clicados.', side: 'top' },

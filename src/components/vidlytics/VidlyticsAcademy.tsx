@@ -161,7 +161,7 @@ export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 
         href={SUBSCRIBE_URL}
         target="_blank"
         rel="noreferrer"
-        className="mt-auto inline-flex items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
+        className={`mt-auto inline-flex items-center gap-1.5 self-end text-xs font-bold hover:underline ${streamsell ? 'text-[#DC2626]' : 'text-[#0094eb]'}`}
       >
         <Play className="h-3.5 w-3.5" /> Assistir e se inscrever <ArrowRight className="h-3 w-3" />
       </a>
