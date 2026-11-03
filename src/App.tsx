@@ -23,6 +23,7 @@ import { AdminGuard } from '@/components/admin/AdminGuard';
 import { GlobalTrialBanner } from '@/components/layout/GlobalTrialBanner';
 import TrialExpiredModal from '@/components/layout/TrialExpiredModal';
 import AdminMasterPage from '@/pages/admin/AdminMasterPage';
+import DashboardShell from '@/components/layout/DashboardShell';
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -81,7 +82,8 @@ function AppRoutes() {
       {user && <TrialExpiredModal />}
 
       <><CheckoutIntentWatcher /><OnboardingGuard /><SocialPopupOverlay /><ScrollToTop />
-      <Routes>
+      <DashboardShell>
+          <Routes>
         <Route path="/sobre" element={<AboutPage />} />
         <Route path="/privacidade" element={<PrivacyPage />} />
         <Route path="/termos" element={<TermsPage />} />
@@ -332,7 +334,7 @@ function AppRoutes() {
         <Route path="/checkout/:id" element={user ? <CheckoutIdRedirect /> : <Navigate to="/auth" replace />} />
         <Route path="/redefinir-senha" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
-      </Routes></>
+      </Routes></DashboardShell></>
     </Suspense>
   );
 }

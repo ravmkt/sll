@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLoja } from '@/contexts/LojaContext';
@@ -12,7 +12,10 @@ import { useTouchStoreActivity } from '@/hooks/useTouchStoreActivity';
 
 const KEY = 'sll_sidebar_collapsed';
 
-export function DashboardLayout({ children }: { children: ReactNode }) {
+// true quando o DashboardShell ja renderiza o layout acima das rotas
+export const InShellContext = createContext(false);
+
+export function DashboardFrame({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { storeId } = useLoja() as { storeId: string | null };
   useTouchStoreActivity();
@@ -47,6 +50,12 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       <MarketingHost storeId={storeId} location={mkLocation} showBanner={mkLocation !== 'home'} />
     </div>
   );
+}
+
+export function DashboardLayout({ children }: { children: ReactNode }) {
+  const inShell = useContext(InShellContext);
+  if (inShell) return <>{children}</>;
+  return <DashboardFrame>{children}</DashboardFrame>;
 }
 
 export default DashboardLayout;
