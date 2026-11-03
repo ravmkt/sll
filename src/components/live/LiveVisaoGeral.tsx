@@ -377,7 +377,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mx-auto max-w-7xl space-y-6 p-6 pb-4">
-        <PageTour tourKey="live-visao-geral-v5" steps={VISAO_STREAM_TOUR} />
+        <PageTour tourKey="live-visao-geral-v6" steps={VISAO_STREAM_TOUR} />
         <VisaoGeralTourTags />
         <ModuleHeader module="live" />
         <div>
@@ -417,7 +417,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         </div>
 
         <div>
-          <h3 className={`${sectionTitle} mb-3 px-1`}>Consumo do plano</h3>
+          <h3 className={`${sectionTitle} mb-3 px-1`}>Consumo</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Meter label={"Tempo de transmiss\u00e3o"} value={fmtTempo(hours)} of="" pct={null} icon={Clock} tip={"Tempo total transmitido ao vivo no per\u00edodo selecionado."} foot={periodo === 'today' ? 'Hoje' : periodo === '7' ? '\u00daltimos 7 dias' : periodo === '30' ? '\u00daltimos 30 dias' : String(cs).slice(0, 10).split('-').reverse().join('/') + ' a ' + String(ce).slice(0, 10).split('-').reverse().join('/')} />
             <Meter label="Pico de espectadores" value={fmtInt(peak)} of="de —" pct={null} icon={Users} tip={"Maior n\u00famero de espectadores simult\u00e2neos j\u00e1 registrado em uma live."} foot="Ao vivo" />
@@ -437,54 +437,67 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Tip text={"Live ao vivo ou a pr\u00f3xima agendada, com atalho para abrir o Est\u00fadio."}><div className={card}>
+          <Tip text={"Lives ao vivo e agendadas, com atalho para abrir o Est\u00fadio."}><div className={card}>
             <div className="mb-3 flex items-center gap-2">
               <Radio size={16} className="text-[#DC2626]" />
-              <h3 className="text-base font-black text-slate-900">Próxima live</h3>
+              <h3 className="text-base font-black text-slate-900">{"Pr\u00f3ximas lives"}</h3>
             </div>
-            {next ? (
-              <div className="space-y-3">
-                <div className="flex gap-3">
-                  <div className="flex h-20 w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                    {next.youtube_thumbnail_url ? (
-                      <img src={next.youtube_thumbnail_url} alt={next.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <Radio className="text-slate-300" />
-                    )}
+            {(() => {
+              const items: any[] = (lives as any[])
+                .filter((l) => l.status === 'live' || (l.status === 'scheduled' && l.scheduled_at && new Date(l.scheduled_at).getTime() >= Date.now() - 3600000))
+                .sort((a, b) => (a.status === 'live' ? 0 : 1) - (b.status === 'live' ? 0 : 1) || new Date(a.scheduled_at || 0).getTime() - new Date(b.scheduled_at || 0).getTime());
+              if (next && !items.some((l) => l.id === (next as any).id)) items.unshift(next as any);
+              if (items.length === 0) {
+                return (
+                  <div className="flex flex-col items-center gap-3 py-6 text-center">
+                    <p className="text-sm text-slate-400">Nenhuma live agendada.</p>
+                    <button
+                      type="button"
+                      onClick={() => window.dispatchEvent(new Event('live:go-create'))}
+                      className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#DC2626] px-8 py-3 text-sm font-bold text-white shadow-md shadow-red-200 transition hover:bg-[#B91C1C] active:scale-[0.98]"
+                    >
+                      <Plus size={16} /> Criar live
+                    </button>
                   </div>
-                  <div className="min-w-0">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${next.status === 'live' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-700'}`}>
-                      {next.status === 'live' ? 'Ao vivo' : 'Agendada'}
-                    </span>
-                    <p className="mt-1 truncate text-sm font-bold text-slate-900">{next.title}</p>
-                    {next.scheduled_at && (
-                      <p className="text-xs text-slate-500">
-                        {new Date(next.scheduled_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    )}
-                    <p className="text-xs text-slate-400">{(next.featured_product_ids || []).length} produto(s) vinculado(s)</p>
-                  </div>
+                );
+              }
+              return (
+                <div className="max-h-[380px] space-y-3 overflow-y-auto pr-1">
+                  {items.map((lv) => (
+                    <div key={lv.id} className="space-y-2 rounded-xl border border-slate-100 p-2">
+                      <div className="flex gap-3">
+                        <div className="flex h-16 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                          {lv.youtube_thumbnail_url ? (
+                            <img src={lv.youtube_thumbnail_url} alt={lv.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <Radio className="text-slate-300" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${lv.status === 'live' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-700'}`}>
+                            {lv.status === 'live' ? 'Ao vivo' : 'Agendada'}
+                          </span>
+                          <p className="mt-1 truncate text-sm font-bold text-slate-900">{lv.title}</p>
+                          {lv.scheduled_at && (
+                            <p className="text-xs text-slate-500">
+                              {new Date(lv.scheduled_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          )}
+                          <p className="text-xs text-slate-400">{(lv.featured_product_ids || []).length} produto(s) vinculado(s)</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/dashboard/modules/stream-sell/live/${lv.id}/estudio`)}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#DC2626] py-2 text-xs font-bold text-white hover:bg-[#B91C1C]"
+                      >
+                        {"Abrir Est\u00fadio da Live"} <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/dashboard/modules/stream-sell/live/${next.id}/estudio`)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#DC2626] py-2.5 text-xs font-bold text-white hover:bg-[#B91C1C]"
-                >
-                  Abrir Estúdio da Live <ArrowRight size={14} />
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-3 py-6 text-center">
-                <p className="text-sm text-slate-400">Nenhuma live agendada.</p>
-                <button
-                  type="button"
-                  onClick={() => window.dispatchEvent(new Event('live:go-create'))}
-                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#DC2626] px-8 py-3 text-sm font-bold text-white shadow-md shadow-red-200 transition hover:bg-[#B91C1C] active:scale-[0.98]"
-                >
-                  <Plus size={16} /> Criar live
-                </button>
-              </div>
-            )}
+              );
+            })()}
           </div></Tip>
 
           <Tip text={"Visualiza\u00e7\u00f5es, mensagens e cliques gerados pelas suas lives no per\u00edodo."}><div className={card}>
@@ -578,7 +591,7 @@ const VISAO_STREAM_TOUR: TourStep[] = [
   { element: '[data-tour="sg-pagas"]', title: 'Vendas pagas', description: 'Pedidos das lives com pagamento aprovado. \u00c9 o faturamento real gerado pelo Stream Sell no per\u00edodo.', side: 'bottom' },
   { element: '[data-tour="sg-indic"]', title: 'Faturamento de indica\u00e7\u00f5es', description: 'Comiss\u00f5es que voc\u00ea recebe ao indicar o Stream Sell para outros lojistas. O bot\u00e3o abre o Clube SLL.', side: 'bottom' },
   { element: '[data-tour="sg-consumo"]', title: 'Consumo', description: 'Tempo transmitido, pico de espectadores, destinos conectados e o ciclo da assinatura.', side: 'bottom' },
-  { element: '[data-tour="sg-proxima"]', title: 'Pr\u00f3xima live', description: 'A live ao vivo ou a pr\u00f3xima agendada.', side: 'top' },
+  { element: '[data-tour="sg-proxima"]', title: 'Pr\u00f3ximas lives', description: 'Todas as lives ao vivo e agendadas. Use Abrir Est\u00fadio da Live para preparar e iniciar cada uma.', side: 'top' },
   { element: '[data-tour="sg-engaj"]', title: 'Engajamento das lives', description: 'Visualiza\u00e7\u00f5es, mensagens no chat, cliques em produtos, cadastros e compartilhamentos, al\u00e9m do ranking dos produtos mais clicados.', side: 'top' },
   { element: '[data-tour="sg-noah"]', title: 'Dica do Noah', description: 'Dicas pr\u00e1ticas para a \u00e9poca do ano de acordo com o nicho da sua loja. Use Ver mais dicas para ver todas.', side: 'top' },
   { element: '[data-tour="sg-clube"]', title: 'Clube SLL', description: 'Copie seu link de indica\u00e7\u00e3o e ganhe comiss\u00f5es e benef\u00edcios por cada lojista que assinar.', side: 'top' },
@@ -593,7 +606,7 @@ const VISAO_TAGS: [string, RegExp, VisaoTagKind][] = [
   ['sg-pagas', /^vendas pagas$/, 'card'],
   ['sg-indic', /^faturamento indicacoes$/, 'card'],
   ['sg-consumo', /^tempo de transmissao$/, 'grid'],
-  ['sg-proxima', /^proxima live$/, 'card'],
+  ['sg-proxima', /^proximas lives$/, 'card'],
   ['sg-engaj', /^engajamento das lives$/, 'card'],
   ['sg-noah', /^dica do noah$/, 'card'],
   ['sg-clube', /^receba comissoes e beneficios/, 'card'],
