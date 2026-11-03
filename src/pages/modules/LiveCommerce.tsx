@@ -41,6 +41,7 @@ import LiveAppearanceModal, {
 } from "@/components/live/LiveAppearanceModal";
 
 const LIVES_TOUR: TourStep[] = [
+  { element: '[data-tour="live-cabecalho"]', title: 'Minhas Lives', description: 'Aqui voc\u00ea gerencia, agenda e acompanha suas transmiss\u00f5es ao vivo.', side: 'bottom' },
   { element: '[data-tour="live-nova"]', title: 'Nova Live', description: 'Programe uma live com o vídeo do YouTube e os produtos que serão apresentados.', side: 'bottom' },
   { element: '[data-tour="live-aparencia"]', title: 'Aparência', description: 'Defina como o widget de divulgação, o selo "ao vivo" e o player aparecem na sua loja.', side: 'bottom' },
   { element: '[data-tour="live-filtros"]', title: 'Busca e filtros', description: 'Encontre lives pelo título e filtre por programadas, ao vivo ou finalizadas.', side: 'bottom' },
@@ -312,6 +313,8 @@ function LiveCommerceContent() {
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
+<PageTour tourKey="live-lives" steps={LIVES_TOUR} />
+<div className="w-full px-6 pt-6"><h2 data-tour="live-cabecalho" className="flex items-center gap-2 text-xl font-bold text-slate-900"><Radio className="h-5 w-5 text-rose-600" /> Minhas Lives</h2></div>
         <RefreshCw className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -323,7 +326,7 @@ function LiveCommerceContent() {
       {/* SLL-LIVES-VISUAL */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+          <h2 data-tour="live-cabecalho" className="flex items-center gap-2 text-xl font-bold text-slate-900">
             <Radio className="h-5 w-5 text-rose-600" /> Minhas Lives
           </h2>
           <p className="text-sm text-slate-500">
