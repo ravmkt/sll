@@ -14,9 +14,9 @@ export const DASHBOARD_TOUR: TourStep[] = [
     side: 'top',
   },
   {
-    element: '[data-tour="acesso-rapido"]',
-    title: 'Acesso r\u00e1pido',
-    description: 'Atalhos para o que voc\u00ea mais usa: v\u00eddeos e cat\u00e1logo, Insights do Noah com dicas pr\u00e1ticas para a sua loja, instala\u00e7\u00e3o dos m\u00f3dulos, assinatura e planos e o Clube SLL.',
+    element: '[data-tour="calendario-mensal"]',
+    title: 'Calend\u00e1rio do m\u00eas',
+    description: 'Veja o m\u00eas com as datas comemorativas e as lives agendadas. Passe o mouse sobre os dias marcados para ver os detalhes.',
     side: 'right',
   },
   {
