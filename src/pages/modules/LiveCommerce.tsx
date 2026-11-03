@@ -3,7 +3,7 @@ import LiveResultadosPage from "@/components/live/LiveResultadosPage";
 import { useLocation } from "react-router-dom";
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { LiveCommerceDatabaseService } from "@/services/LiveCommerceDatabaseService";
 import { MODULES } from "@/lib/modules";
 import { useLoja } from "@/contexts/LojaContext";
@@ -142,6 +142,7 @@ function LiveCommerceContent() {
     );
   }, [currentStore]);
 
+  const livesLoadedOnce = useRef(false);
   useEffect(() => {
     async function loadData() {
       if (!activeStoreId) {
@@ -150,14 +151,14 @@ function LiveCommerceContent() {
       }
       setStoreId(activeStoreId);
       try {
-        setLoading(true);
+        if (!livesLoadedOnce.current) setLoading(true);
         const prods = await LiveCommerceDatabaseService.getProducts(activeStoreId);
         setProducts((prods || []) as any);
         await Promise.all([loadLives(activeStoreId), loadAppearance(activeStoreId)]);
       } catch (err: any) {
         toast.error("Erro ao carregar dados do Stream Sell: " + (err?.message || ""));
       } finally {
-        setLoading(false);
+        livesLoadedOnce.current = true; setLoading(false);
       }
     }
     loadData();
@@ -312,10 +313,18 @@ function LiveCommerceContent() {
 
   if (loading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-<PageTour tourKey="live-lives" steps={LIVES_TOUR} />
-<div className="w-full px-6 pt-6"><h2 data-tour="live-cabecalho" className="flex items-center gap-2 text-xl font-bold text-slate-900"><Radio className="h-5 w-5 text-rose-600" /> Minhas Lives</h2></div>
-        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+      <div className="w-full space-y-6 p-6">
+        <PageTour tourKey="live-lives" steps={LIVES_TOUR} />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 data-tour="live-cabecalho" className="flex items-center gap-2 text-xl font-bold text-slate-900">
+              <Radio className="h-5 w-5 text-rose-600" /> Minhas Lives
+            </h2>
+          </div>
+        </div>
+        <div className="flex h-96 items-center justify-center">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
