@@ -377,7 +377,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mx-auto max-w-7xl space-y-6 p-6 pb-4">
-        <PageTour tourKey="live-visao-geral-v3" steps={VISAO_STREAM_TOUR} />
+        <PageTour tourKey="live-visao-geral-v4" steps={VISAO_STREAM_TOUR} />
         <VisaoGeralTourTags />
         <ModuleHeader module="live" />
         <div>
@@ -582,11 +582,11 @@ const VISAO_STREAM_TOUR: TourStep[] = [
   { element: '[data-tour="sg-engaj"]', title: 'Engajamento das lives', description: 'Visualiza\u00e7\u00f5es, mensagens no chat, cliques em produtos, cadastros e compartilhamentos, al\u00e9m do ranking dos produtos mais clicados.', side: 'top' },
   { element: '[data-tour="sg-noah"]', title: 'Dica do Noah', description: 'Dicas pr\u00e1ticas para a \u00e9poca do ano de acordo com o nicho da sua loja. Use Ver mais dicas para ver todas.', side: 'top' },
   { element: '[data-tour="sg-clube"]', title: 'Clube SLL', description: 'Copie seu link de indica\u00e7\u00e3o e ganhe comiss\u00f5es e benef\u00edcios por cada lojista que assinar.', side: 'top' },
-  { element: '[data-tour="sg-academy"]', title: 'SLL Academy', description: 'Videoaulas r\u00e1pidas para configurar sua live, apresentar seus produtos e vender mais com Live Commerce. Assista aqui e inscreva-se no canal para n\u00e3o perder as novidades.', side: 'top' },
+  { element: '[data-tour="sg-academy-card"]', title: 'SLL Academy', description: 'Aulas r\u00e1pidas para configurar sua live, apresentar seus produtos e vender mais com Live Commerce. Assista aos v\u00eddeos aqui e use "Assistir e se inscrever" para seguir o canal no YouTube.', side: 'top' },
   { element: '[data-tour="sg-menu-aparencia"]', title: 'Apar\u00eancia', description: 'Personalize cores, bordas, bolha, divulga\u00e7\u00e3o e player, e salve modelos para reaproveitar.', side: 'right' },
 ];
 
-type VisaoTagKind = 'card' | 'grid' | 'parent' | 'menu';
+type VisaoTagKind = 'card' | 'grid' | 'parent' | 'menu' | 'wide';
 
 const VISAO_TAGS: [string, RegExp, VisaoTagKind][] = [
   ['sg-periodo', /^hoje$/, 'parent'],
@@ -598,7 +598,7 @@ const VISAO_TAGS: [string, RegExp, VisaoTagKind][] = [
   ['sg-engaj', /^engajamento das lives$/, 'card'],
   ['sg-noah', /^dica do noah$/, 'card'],
   ['sg-clube', /^receba comissoes e beneficios/, 'card'],
-  ['sg-academy', /^(sll ?academy|aprenda a configurar sua live)/, 'card'],
+  ['sg-academy-card', /^aprenda a configurar sua live/, 'wide'],
   ['sg-menu-aparencia', /^aparencia$/, 'menu'],
 ];
 
@@ -618,7 +618,9 @@ function tagContainer(el: Element, kind: VisaoTagKind): Element | null {
   let n: Element | null = el.parentElement;
   while (n && n.tagName !== 'MAIN' && n.tagName !== 'BODY') {
     const r = n.getBoundingClientRect();
-    if (/rounded-/.test(n.getAttribute('class') || '') && r.height >= 80 && r.width >= 200) {
+    const minW = kind === 'wide' ? 500 : 200;
+    const minH = kind === 'wide' ? 200 : 80;
+    if (/rounded-/.test(n.getAttribute('class') || '') && r.height >= minH && r.width >= minW) {
       return kind === 'grid' ? n.parentElement : n;
     }
     n = n.parentElement;
