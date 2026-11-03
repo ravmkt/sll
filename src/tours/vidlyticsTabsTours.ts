@@ -7,15 +7,17 @@ export const RESULTADOS_TOUR: TourStep[] = [
   { element: '[data-tour="rs-performance"]', title: 'Performance e intera\u00e7\u00e3o', description: 'Visualiza\u00e7\u00f5es, cliques em CTA, engajamento social e CTR dos seus v\u00eddeos no per\u00edodo.', side: 'bottom' },
   { element: '[data-tour="rs-grafico"]', title: 'Evolu\u00e7\u00e3o di\u00e1ria e funil', description: 'Acompanhe dia a dia como visualiza\u00e7\u00f5es e cliques evoluem. Use os controles do gr\u00e1fico para ajustar a visualiza\u00e7\u00e3o.', side: 'top' },
   { element: '[data-tour="rs-benchmark"]', title: 'Benchmark do setor', description: 'Compare seus n\u00fameros com a m\u00e9dia de mercado e veja onde h\u00e1 espa\u00e7o para melhorar.', side: 'top' },
+  { element: '[data-tour="rs-como-benchmark"]', title: 'Como funciona o benchmark do setor?', description: 'Entenda como o benchmark do setor \u00e9 calculado e como interpretar a compara\u00e7\u00e3o com a m\u00e9dia de mercado.', side: 'top' },
 ];
 export const RESULTADOS_TAGS: TagRule[] = [
   ['rs-subabas', /^visao geral$/, 'parent'],
   ['rs-grafico', /^evolucao diaria de engajamento/, 'card'],
-  ['rs-benchmark', /benchmark/, 'card'],
+  ['rs-como-benchmark', /^como funciona o benchmark do setor/, 'card'],
+  ['rs-benchmark', /^benchmark/, 'card'],
 ];
 
 export const STORIES_TOUR: TourStep[] = [
-  { element: '[data-tour="st-novo"]', title: 'Novo Story', description: 'Crie uma r\u00e9gua de Stories com v\u00eddeos, layout, seletor CSS e p\u00e1ginas onde ela deve aparecer.', side: 'bottom' },
+  { element: '[data-tour="st-novo"]', title: 'Novo Story', description: 'Crie novos Stories.', side: 'bottom' },
   { element: '[data-tour="st-filtros"]', title: 'Busca e filtros', description: 'Procure pelo nome e filtre por Todos, Ativos ou Inativos.', side: 'bottom' },
   { element: '[data-tour="st-tabela"]', title: 'Seus Stories', description: 'Veja layout, v\u00eddeos, p\u00e1ginas, visualiza\u00e7\u00f5es, CTR e status. Use os \u00edcones para editar ou excluir e as caixas para excluir v\u00e1rios de uma vez.', side: 'top' },
 ];
@@ -27,22 +29,22 @@ export const BIBLIOTECA_TOUR: TourStep[] = [
 ];
 
 export const COMENTARIOS_TOUR: TourStep[] = [
-  { element: '[data-tour="co-resumo"]', title: 'Resumo dos coment\u00e1rios', description: 'Vis\u00e3o r\u00e1pida do que est\u00e1 aguardando modera\u00e7\u00e3o e do volume de coment\u00e1rios.', side: 'bottom' },
   { element: '[data-tour="co-filtros"]', title: 'Busca e filtros', description: 'Pesquise por autor ou texto e filtre os coment\u00e1rios para encontrar o que precisa.', side: 'bottom' },
   { element: '[data-tour="co-tabela"]', title: 'Modera\u00e7\u00e3o', description: 'Aprove, rejeite, responda ou exclua cada coment\u00e1rio. As respostas aparecem para o cliente com a identidade da sua loja.', side: 'top' },
+  { element: '[data-tour="co-moderacao"]', title: 'Modera\u00e7\u00e3o de conte\u00fado', description: 'Configure como os coment\u00e1rios s\u00e3o moderados antes de aparecer nos seus v\u00eddeos.', side: 'top' },
+  { element: '[data-tour="co-alertas"]', title: 'Alertas de coment\u00e1rios', description: 'Ative os alertas para ser avisado quando chegarem novos coment\u00e1rios nos seus v\u00eddeos.', side: 'top' },
 ];
-export const COMENTARIOS_TAGS: TagRule[] = [['co-tabela', /./, 'table']];
+export const COMENTARIOS_TAGS: TagRule[] = [
+  ['co-tabela', /./, 'table'],
+  ['co-moderacao', /^moderacao de conteudo/, 'card'],
+  ['co-alertas', /^alertas de comentarios/, 'card'],
+];
 
 export const APARENCIA_TOUR: TourStep[] = [
-  {
-    element: '[data-tour="aparencia-cabecalho"]',
-    title: 'Apar\u00eancia dos widgets',
-    description: 'Aqui voc\u00ea gerencia os estilos visuais dos seus widgets: crie estilos pr\u00f3prios, defina o padr\u00e3o e aproveite os templates prontos.',
-    side: 'bottom',
-  },
-  { element: '[data-tour="ap-estilos"]', title: 'Seus Estilos', description: 'Estilos visuais criados e salvos por voc\u00ea para os widgets. Edite, exclua ou defina qual \u00e9 o padr\u00e3o.', side: 'bottom' },
   { element: '[data-tour="ap-novo"]', title: 'Criar Novo Estilo', description: 'Monte um estilo do zero: cores, bordas, bot\u00f5es e textos dos widgets.', side: 'left' },
+  { element: '[data-tour="ap-estilos-lista"]', title: 'Seus Estilos', description: 'Estilos visuais criados e salvos por voc\u00ea para os widgets. Edite, exclua ou defina qual \u00e9 o padr\u00e3o.', side: 'bottom' },
   { element: '[data-tour="ap-templates"]', title: 'Templates prontos', description: 'Parta de um modelo pronto: visualize, personalize e use como padr\u00e3o da loja.', side: 'top' },
 ];
+export const APARENCIA_TAGS: TagRule[] = [['ap-estilos-lista', /./, 'list']];
 
 export const BIBLIOTECA_TAGS: TagRule[] = [['bi-tabela', /./, 'table']];

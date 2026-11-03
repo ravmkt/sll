@@ -1,3 +1,5 @@
+import { VISAO_GERAL_TAGS } from '@/tours/visaoGeralVidlyticsTour';
+import TourTagger from '@/tours/TourTagger';
 import { setModuleAppEnabled } from '@/services/moduleAppService';
 import PageTour from '@/components/tour/PageTour';
 import { visaoGeralTour } from '@/tours/visaoGeralVidlyticsTour';
@@ -381,6 +383,7 @@ export default function VisaoGeralTab() {
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-300">
 <PageTour tourKey="vidlytics-visao-geral" steps={visaoGeralTour} />
+        <TourTagger rules={VISAO_GERAL_TAGS} />
       
       {void [replyName, appLoading, appSaving, appError, handleToggleApp]}
 

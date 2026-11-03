@@ -1,3 +1,5 @@
+import { APARENCIA_TAGS } from '@/tours/vidlyticsTabsTours';
+import TourTagger from '@/tours/TourTagger';
 import PageTour from '@/components/tour/PageTour';
 import { APARENCIA_TOUR } from '@/tours/vidlyticsTabsTours';
 import React, { useState } from 'react';
@@ -112,6 +114,7 @@ const AparenciaTab: React.FC = () => {
   return (
     <div className="p-6 space-y-8">
       <PageTour tourKey="vidlytics-aparencia" steps={APARENCIA_TOUR} />
+        <TourTagger rules={APARENCIA_TAGS} />
       <div data-tour="aparencia-cabecalho" className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
