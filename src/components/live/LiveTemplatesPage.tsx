@@ -11,14 +11,6 @@ import { ConfirmDangerModal } from "@/components/common/AppModal";
 // Preenchido pelo LiveCommerce com o id da loja ativa
 export const liveStore: { id: string | null } = { id: null };
 
-const FORMATS: Record<string, string> = {
-  portrait: "Retrato 9:16",
-  landscape: "Paisagem 16:9",
-  square: "Quadrado 1:1",
-  circle: "Circular",
-  circular: "Circular",
-};
-
 function openEditor(templateId: string) {
   window.dispatchEvent(new CustomEvent("live:open-appearance", { detail: { templateId } }));
 }
@@ -61,13 +53,11 @@ function TemplateCard({
   const d: any = t.divulgacao?.desktop || {};
   const src = imageFor(t.name);
   const [failed, setFailed] = useState(false);
-  const format = FORMATS[String(d.format || "portrait")] || "Retrato 9:16";
 
   return (
     <div className="flex w-[320px] max-w-full shrink-0 flex-col gap-2">
-      <div className="flex items-center justify-between gap-2 px-1">
-        <span className="truncate text-sm font-medium text-slate-600">{t.name}</span>
-        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{format}</span>
+      <div className="px-1">
+        <span className="block truncate text-sm font-medium text-slate-600">{t.name}</span>
       </div>
 
       <div
@@ -113,7 +103,7 @@ function TemplateCard({
 
 const APARENCIA_TOUR: TourStep[] = [
   { element: '[data-tour="aparencia-novo"]', title: 'Novo template', description: 'Crie um tema pr\u00f3prio para o widget de divulga\u00e7\u00e3o, o selo "ao vivo" e o player.', side: 'bottom' },
-  { element: '[data-tour="aparencia-fabrica"]', title: 'Modelos de f\u00e1brica', description: 'Escolha um modelo e clique em Visualizar. O original nunca \u00e9 sobrescrito: ao salvar, voc\u00ea cria uma c\u00f3pia com o seu nome.', side: 'top' },
+  { element: '[data-tour="aparencia-fabrica"]', title: 'Templates padr\u00e3o', description: 'Escolha um modelo e clique em Visualizar. O original nunca \u00e9 sobrescrito: ao salvar, voc\u00ea cria uma c\u00f3pia com o seu nome.', side: 'top' },
   { element: '[data-tour="aparencia-meus"]', title: 'Meus templates', description: 'Seus temas salvos ficam aqui para editar ou excluir.', side: 'top' },
 ];
 
@@ -184,7 +174,7 @@ export default function LiveTemplatesPage() {
       )}
 
       <section data-tour="aparencia-fabrica" className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{"Modelos de f\u00e1brica"}</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{"Templates padr\u00e3o"}</h3>
         <div className="flex flex-wrap gap-6">
           {INITIAL_TEMPLATES.map((t) => (
             <TemplateCard key={t.id} t={t} />
