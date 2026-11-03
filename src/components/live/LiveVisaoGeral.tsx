@@ -377,7 +377,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   return (
     <TooltipProvider delayDuration={150}>
       <div className="mx-auto max-w-7xl space-y-6 p-6 pb-4">
-        <PageTour tourKey="live-visao-geral-v2" steps={VISAO_STREAM_TOUR} />
+        <PageTour tourKey="live-visao-geral-v3" steps={VISAO_STREAM_TOUR} />
         <VisaoGeralTourTags />
         <ModuleHeader module="live" />
         <div>
@@ -573,27 +573,22 @@ export default LiveVisaoGeral;
 
 /* SLL-TOUR-VISAO-GERAL */
 const VISAO_STREAM_TOUR: TourStep[] = [
-  { element: '[data-tour="sg-header"]', title: 'Bem-vindo ao Stream Sell', description: 'Esta \u00e9 a central das suas lives. Em poucos passos voc\u00ea v\u00ea quanto vendeu, quanto do plano usou e o que fazer na pr\u00f3xima transmiss\u00e3o.', side: 'bottom' },
-  { element: '[data-tour="sg-periodo"]', title: 'Filtre por per\u00edodo', description: 'Escolha Hoje, 7 dias, 30 dias ou Personalizado. Faturamento, tempo de transmiss\u00e3o e engajamento mudam conforme o per\u00edodo.', side: 'bottom' },
+  { element: '[data-tour="sg-periodo"]', title: 'Filtre por per\u00edodo', description: 'Escolha o per\u00edodo desejado. Faturamento, tempo de transmiss\u00e3o e engajamento mudam conforme o per\u00edodo.', side: 'bottom' },
   { element: '[data-tour="sg-aguardando"]', title: 'Aguardando pagamento', description: 'Pedidos feitos durante as lives com Pix ou boleto que ainda n\u00e3o foram pagos. Acompanhe para n\u00e3o perder a venda.', side: 'bottom' },
   { element: '[data-tour="sg-pagas"]', title: 'Vendas pagas', description: 'Pedidos das lives com pagamento aprovado. \u00c9 o faturamento real gerado pelo Stream Sell no per\u00edodo.', side: 'bottom' },
   { element: '[data-tour="sg-indic"]', title: 'Faturamento de indica\u00e7\u00f5es', description: 'Comiss\u00f5es que voc\u00ea recebe ao indicar o Stream Sell para outros lojistas. O bot\u00e3o abre o Clube SLL.', side: 'bottom' },
-  { element: '[data-tour="sg-consumo"]', title: 'Consumo do plano', description: 'Tempo transmitido, pico de espectadores, destinos conectados e o ciclo da assinatura. Confira antes de uma live grande.', side: 'bottom' },
-  { element: '[data-tour="sg-proxima"]', title: 'Pr\u00f3xima live', description: 'A live ao vivo ou a pr\u00f3xima agendada. Use Abrir Est\u00fadio da Live para transmitir e conversar com o p\u00fablico, ou Criar live se n\u00e3o houver nenhuma.', side: 'top' },
+  { element: '[data-tour="sg-consumo"]', title: 'Consumo', description: 'Tempo transmitido, pico de espectadores, destinos conectados e o ciclo da assinatura.', side: 'bottom' },
+  { element: '[data-tour="sg-proxima"]', title: 'Pr\u00f3xima live', description: 'A live ao vivo ou a pr\u00f3xima agendada.', side: 'top' },
   { element: '[data-tour="sg-engaj"]', title: 'Engajamento das lives', description: 'Visualiza\u00e7\u00f5es, mensagens no chat, cliques em produtos, cadastros e compartilhamentos, al\u00e9m do ranking dos produtos mais clicados.', side: 'top' },
-  { element: '[data-tour="sg-noah"]', title: 'Dica do Noah', description: 'Uma dica pr\u00e1tica para a \u00e9poca do ano e o tipo da sua loja. Use Ver mais dicas para ver todas.', side: 'top' },
+  { element: '[data-tour="sg-noah"]', title: 'Dica do Noah', description: 'Dicas pr\u00e1ticas para a \u00e9poca do ano de acordo com o nicho da sua loja. Use Ver mais dicas para ver todas.', side: 'top' },
   { element: '[data-tour="sg-clube"]', title: 'Clube SLL', description: 'Copie seu link de indica\u00e7\u00e3o e ganhe comiss\u00f5es e benef\u00edcios por cada lojista que assinar.', side: 'top' },
-  { element: '[data-tour="sg-academy"]', title: 'SLL Academy', description: 'Aulas r\u00e1pidas para configurar a live, apresentar produtos e vender mais.', side: 'top' },
-  { element: '[data-tour="sg-menu-resultados"]', title: 'Resultados & M\u00e9tricas', description: 'Gr\u00e1fico e tabela por live: faturamento, visualiza\u00e7\u00f5es e compara\u00e7\u00e3o entre transmiss\u00f5es.', side: 'right' },
-  { element: '[data-tour="sg-menu-lives"]', title: 'Lives', description: 'Crie, agende e gerencie suas lives. Daqui voc\u00ea abre o Est\u00fadio, reativa uma live encerrada e divulga.', side: 'right' },
-  { element: '[data-tour="sg-menu-cupons"]', title: 'Cupons e Avisos', description: 'Cadastre cupons e avisos prontos para enviar no chat e exibir sobre o player durante a live.', side: 'right' },
+  { element: '[data-tour="sg-academy"]', title: 'SLL Academy', description: 'Videoaulas r\u00e1pidas para configurar sua live, apresentar seus produtos e vender mais com Live Commerce. Assista aqui e inscreva-se no canal para n\u00e3o perder as novidades.', side: 'top' },
   { element: '[data-tour="sg-menu-aparencia"]', title: 'Apar\u00eancia', description: 'Personalize cores, bordas, bolha, divulga\u00e7\u00e3o e player, e salve modelos para reaproveitar.', side: 'right' },
 ];
 
 type VisaoTagKind = 'card' | 'grid' | 'parent' | 'menu';
 
 const VISAO_TAGS: [string, RegExp, VisaoTagKind][] = [
-  ['sg-header', /^sua proxima live vende mais$/, 'card'],
   ['sg-periodo', /^hoje$/, 'parent'],
   ['sg-aguardando', /^aguardando pagamento$/, 'card'],
   ['sg-pagas', /^vendas pagas$/, 'card'],
@@ -604,9 +599,6 @@ const VISAO_TAGS: [string, RegExp, VisaoTagKind][] = [
   ['sg-noah', /^dica do noah$/, 'card'],
   ['sg-clube', /^receba comissoes e beneficios/, 'card'],
   ['sg-academy', /^(sll ?academy|aprenda a configurar sua live)/, 'card'],
-  ['sg-menu-resultados', /^resultados (&|e) metricas$/, 'menu'],
-  ['sg-menu-lives', /^lives$/, 'menu'],
-  ['sg-menu-cupons', /^cupons e avisos$/, 'menu'],
   ['sg-menu-aparencia', /^aparencia$/, 'menu'],
 ];
 
