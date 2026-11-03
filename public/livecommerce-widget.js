@@ -367,7 +367,20 @@ function renderLiveWidget(live) {
   var card = document.createElement('div');
   card.className = 'vl-live-container';
 
-  if (mediaUrl) {
+  var sllYt = (isLive && live.youtube_video_id) ? String(live.youtube_video_id) : ''; /* SLL-BUBBLE-LIVE */
+  if (sllYt) {
+    var ytw = document.createElement('div');
+    ytw.className = 'vl-live-media';
+    ytw.style.cssText = 'position:relative;overflow:hidden;background:#000;';
+    var ytf = document.createElement('iframe');
+    ytf.src = 'https://www.youtube.com/embed/' + encodeURIComponent(sllYt) + '?autoplay=1&mute=1&controls=0&playsinline=1&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1';
+    ytf.setAttribute('allow', 'autoplay; encrypted-media');
+    ytf.setAttribute('title', title);
+    ytf.setAttribute('tabindex', '-1');
+    ytf.style.cssText = 'position:absolute;top:50%;left:50%;height:100%;aspect-ratio:16/9;min-width:100%;transform:translate(-50%,-50%);border:0;pointer-events:none;';
+    ytw.appendChild(ytf);
+    card.appendChild(ytw);
+  } else if (mediaUrl) {
     if (mediaType === 'video') {
       var vid = document.createElement('video');
       vid.className = 'vl-live-media';
