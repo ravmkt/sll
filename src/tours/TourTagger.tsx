@@ -65,13 +65,18 @@ export default function TourTagger({ rules }: { rules: TagRule[] }) {
             if (tx && !skip(e) && visible(e)) items!.push([e, tx]);
           });
         }
-        const hit = items.find(([, tx]) => rx.test(tx));
-        if (!hit) return;
-        const el = hit[0];
-        if (kind === 'self') put(id, el.closest('button') || el);
-        else if (kind === 'parent') put(id, (el.closest('button') || el).parentElement);
-        else if (kind === 'wide') put(id, card(el, 500, 200));
-        else put(id, card(el));
+        const hits = (items as [Element, string][]).filter(([, tx]) => rx.test(tx));
+        for (const [el] of hits) {
+          let target: Element | null = null;
+          if (kind === 'self') target = el.closest('button') || el;
+          else if (kind === 'parent') target = (el.closest('button') || el).parentElement;
+          else if (kind === 'wide') target = card(el, 500, 200) || card(el, 300, 120) || card(el);
+          else target = card(el) || card(el, 100, 40);
+          if (target && !target.hasAttribute('data-tour')) {
+            put(id, target);
+            break;
+          }
+        }
       });
     };
     run();
