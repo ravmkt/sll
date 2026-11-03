@@ -21,7 +21,7 @@ const VERSIONS: Record<string, string> = {
   '/dashboard/insights-noah': 'v2',
   '/dashboard/dicas': 'v2',
   '/dashboard/pedidos-dos-lojistas': 'v2',
-  '/dashboard/afiliados': 'v3',
+  '/dashboard/afiliados': 'v4',
 };
 
 const clean = (p: string) => p.replace(/\/+$/, '') || '/';
@@ -157,9 +157,19 @@ function clubeSteps(main: Element): TourStep[] {
     'Estimativa do quanto voc\u00ea deve receber em comiss\u00f5es nos pr\u00f3ximos 12 meses, com base nas lojas que voc\u00ea j\u00e1 indicou.',
     'bottom');
 
-  put(first([/^saldo disponivel/, /^saldo a liberar/], 'card'), 'cl-saldo',
+  put(first([/^saldo a liberar/], 'card'), 'cl-liberar',
+    'Saldo a liberar',
+    'Comiss\u00f5es j\u00e1 geradas pelas lojas que voc\u00ea indicou, mas que ainda est\u00e3o dentro do prazo de libera\u00e7\u00e3o. Quando o prazo termina, o valor passa automaticamente para o saldo dispon\u00edvel.',
+    'bottom');
+
+  put(first([/^saldo disponivel/], 'card'), 'cl-saldo',
     'Saldo dispon\u00edvel',
-    'Valor j\u00e1 liberado para saque. O saldo a liberar ainda est\u00e1 aguardando libera\u00e7\u00e3o e passa a dispon\u00edvel quando for liberado. Com saldo dispon\u00edvel, voc\u00ea pede o saque via PIX.',
+    'Valor j\u00e1 liberado e pronto para saque. Com saldo dispon\u00edvel e acima do m\u00ednimo, voc\u00ea solicita o saque via PIX.',
+    'bottom');
+
+  put(first([/^lojas indicadas/], 'card'), 'cl-lojas',
+    'Lojas indicadas',
+    'Quantidade de lojas que j\u00e1 se cadastraram pelo seu link. Quanto mais lojas assinando, maior a sua comiss\u00e3o recorrente por m\u00eas.',
     'bottom');
 
   put(first([/^meus saques/], 'card'), 'cl-saques',
