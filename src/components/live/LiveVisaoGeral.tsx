@@ -596,7 +596,7 @@ function tagContainer(el: Element, kind: 'section' | 'card'): Element | null {
     if (s) return s;
   }
   let n: Element | null = el.parentElement;
-  while (n && n.tagName !== 'MAIN') {
+  while (n && n.tagName !== 'MAIN' && n.tagName !== 'BODY') {
     const r = n.getBoundingClientRect();
     if (/rounded-/.test(n.getAttribute('class') || '') && r.height >= 80 && r.width >= 200) return n;
     n = n.parentElement;
@@ -607,9 +607,9 @@ function tagContainer(el: Element, kind: 'section' | 'card'): Element | null {
 function VisaoGeralTourTags() {
   useEffectTour(() => {
     const run = () => {
-      const main = document.querySelector('main');
+      const main: Element = document.querySelector('main') || document.body;
       if (!main) return;
-      const leaves = Array.from(main.querySelectorAll('h1,h2,h3,h4,p,span,div,b')).filter((e) => e.children.length === 0);
+      const leaves = Array.from(main.querySelectorAll('h1,h2,h3,h4,p,span,div,b')).filter((e) => e.children.length === 0 && !e.closest('aside,nav,header'));
       VISAO_TAGS.forEach(([id, rx, kind]) => {
         if (main.querySelector('[data-tour="' + id + '"]')) return;
         const hit = leaves.find((e) => rx.test(e.textContent || ''));
