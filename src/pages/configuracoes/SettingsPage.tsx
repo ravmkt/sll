@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService } from '@/services/SLLDatabaseService';
 import { useLoja } from '@/contexts/LojaContext';
 import {
-  Loader2, Save, Image as ImageIcon, X,
+  Loader2, Save, Image as ImageIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import PlatformConnectCard from '@/components/configuracoes/PlatformConnectCard';
@@ -104,6 +104,7 @@ const SettingsPage: React.FC = () => {
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -174,7 +175,7 @@ const SettingsPage: React.FC = () => {
     if (!form.contact_email.trim() || !form.contact_email.includes('@'))
       return 'Informe um e-mail de atendimento válido.';
     if (!form.owner_contact_email.trim() || !form.owner_contact_email.includes('@'))
-      return 'Informe um e-mail do dono da loja válido.';
+      return 'Informe um e-mail de contato da loja válido.';
     if (!form.whatsapp_number.trim()) return 'O número de WhatsApp é obrigatório.';
     if (!form.whatsapp_message_template.trim()) return 'A mensagem padrão de WhatsApp é obrigatória.';
     if (!form.sector_id) return 'Selecione o setor da loja.';
@@ -323,22 +324,20 @@ const SettingsPage: React.FC = () => {
           </button>
         </div>
 
-        {/* 1. DADOS DA LOJA */}
+        {/* 1. DADOS DA LOJA */} {/* SLL-LAYOUT-V2 */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-6">
           <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
             <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
               1. Dados da Loja
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-              Informações cadastrais e identidade da sua marca.
+              Informa&ccedil;&otilde;es cadastrais, identidade da marca e canais de contato.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Nome da Loja *
-              </label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nome da Loja *</label>
               <input
                 type="text"
                 value={form.store_name}
@@ -349,25 +348,7 @@ const SettingsPage: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Responder como *
-              </label>
-              <input
-                type="text"
-                value={form.reply_display_name}
-                onChange={(e) => setForm((p) => ({ ...p, reply_display_name: e.target.value }))}
-                placeholder="Ex: Uziane"
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              />
-              <p className="text-[10px] text-slate-400">
-                Nome exibido nas respostas aos comentários dos clientes.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                URL da Loja *
-              </label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">URL da Loja *</label>
               <input
                 type="text"
                 value={form.store_url}
@@ -378,12 +359,8 @@ const SettingsPage: React.FC = () => {
               />
             </div>
 
-            
-
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Setor da Loja *
-              </label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Setor da Loja *</label>
               <select
                 value={form.sector_id}
                 onChange={(e) => setForm((p) => ({ ...p, sector_id: e.target.value }))}
@@ -396,10 +373,22 @@ const SettingsPage: React.FC = () => {
               </select>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Responder como *</label>
+              <input
+                type="text"
+                value={form.reply_display_name}
+                onChange={(e) => setForm((p) => ({ ...p, reply_display_name: e.target.value }))}
+                placeholder="Ex: Uziane"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
+              />
+              <p className="text-[10px] text-slate-400">
+                Nome exibido nas respostas aos coment&aacute;rios dos clientes.
+              </p>
+            </div>
+
             <div className="space-y-2 md:col-span-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Logo da Loja (opcional)
-              </label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Logotipo da Loja</label>
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 flex items-center justify-center shrink-0">
                   {logoPreview ? (
@@ -408,30 +397,35 @@ const SettingsPage: React.FC = () => {
                     <ImageIcon className="w-6 h-6 text-slate-400" />
                   )}
                 </div>
-                <div className="flex items-center gap-2"> {/* SLL-LOGO-X */}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleLogoChange}
-                    className="text-xs font-bold text-slate-600 dark:text-slate-300 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-[#0094eb] file:text-white file:font-black file:text-xs file:cursor-pointer cursor-pointer"
-                  />
-                  {logoPreview && (
-                    <button
-                      type="button"
-                      onClick={handleRemoveLogo}
-                      className="h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#111524] hover:bg-rose-50 dark:hover:bg-rose-950/40 shrink-0"
-                    >
-                      <X size={16} className="text-rose-500" />
-                    </button>
-                  )}
-                </div>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleLogoChange}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="px-4 py-2 rounded-xl bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-black cursor-pointer"
+                >
+                  {logoPreview ? 'Trocar logo' : 'Enviar logo'}
+                </button>
+                {logoPreview && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveLogo}
+                    className="text-xs font-bold text-slate-400 hover:text-rose-500 cursor-pointer"
+                  >
+                    Remover
+                  </button>
+                )}
               </div>
+              <p className="text-[10px] text-slate-400">JPG, PNG ou WEBP.</p>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Nome do Contato *
-              </label>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nome do Contato *</label>
               <input
                 type="text"
                 value={form.contact_name}
@@ -442,22 +436,18 @@ const SettingsPage: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                E-mail do Dono da Loja *
-              </label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">E-mail de Contato da Loja *</label>
               <input
                 type="email"
                 value={form.owner_contact_email}
                 onChange={(e) => setForm((p) => ({ ...p, owner_contact_email: e.target.value }))}
-                placeholder="Ex: dono@minhaloja.com.br"
+                placeholder="Ex: contato@minhaloja.com.br"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                WhatsApp do Dono da Loja
-              </label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">WhatsApp de Contato da Loja</label>
               <input
                 type="tel"
                 value={form.owner_whatsapp}
@@ -468,14 +458,10 @@ const SettingsPage: React.FC = () => {
                 placeholder="Ex: (41) 99999-9999"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
-              <p className="text-[10px] text-slate-400">
-                Contato direto com o dono. Nao e o numero do botao de WhatsApp dos videos.
-              </p>
             </div>
+
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                E-mail de Atendimento *
-              </label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">E-mail de Atendimento *</label>
               <input
                 type="email"
                 value={form.contact_email}
@@ -484,40 +470,9 @@ const SettingsPage: React.FC = () => {
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
             </div>
-          </div>
-        </div>
 
-        {/* 2. PLATAFORMA */}
-        <PlatformConnectCard storeId={storeId || ''} platform={form.platform} platforms={PLATAFORMAS} onChangePlatform={(p) => setForm((prev) => ({ ...prev, platform: p }))} />
-
-
-        {/* 3. WHATSAPP */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div>
-              <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                3. Integração WhatsApp
-              </h2>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                Número receptor e mensagem automática enviada pelos clientes nos vídeos.
-              </p>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.whatsapp_enabled}
-                onChange={(e) => setForm((p) => ({ ...p, whatsapp_enabled: e.target.checked }))}
-                className="h-4 w-4 accent-[#0094eb]"
-              />
-              <span className="text-[10px] font-black uppercase text-slate-400">Ativo</span>
-            </label>
-          </div>
-
-          <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Número do WhatsApp *
-              </label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">WhatsApp de Atendimento *</label>
               <input
                 type="tel"
                 value={form.whatsapp_number}
@@ -528,22 +483,37 @@ const SettingsPage: React.FC = () => {
                 placeholder="Ex: (41) 99999-9999"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
               />
+              <p className="text-[10px] text-slate-400">
+                N&uacute;mero que recebe as mensagens do bot&atilde;o de WhatsApp nos v&iacute;deos.
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Mensagem Padrão de Contato *
-              </label>
+            <div className="space-y-2 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mensagem Padr&atilde;o de Contato *</label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.whatsapp_enabled}
+                    onChange={(e) => setForm((p) => ({ ...p, whatsapp_enabled: e.target.checked }))}
+                    className="h-4 w-4 accent-[#0094eb]"
+                  />
+                  <span className="text-[10px] font-black uppercase text-slate-400">WhatsApp ativo</span>
+                </label>
+              </div>
               <textarea
                 rows={3}
                 value={form.whatsapp_message_template}
                 onChange={(e) => setForm((p) => ({ ...p, whatsapp_message_template: e.target.value }))}
-                placeholder="Ex: Olá! Tenho interesse nesse produto que vi no vídeo: {{story_title}}"
+                placeholder="Ex: Ol&aacute;! Tenho interesse nesse produto que vi no v&iacute;deo: {{story_title}}"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb] resize-none"
               />
             </div>
           </div>
         </div>
+
+        {/* 2. PLATAFORMA */}
+        <PlatformConnectCard storeId={storeId || ''} platform={form.platform} platforms={PLATAFORMAS} onChangePlatform={(p) => setForm((prev) => ({ ...prev, platform: p }))} />
 
 
         {/* 3. MÉTRICAS */}
