@@ -504,6 +504,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
             <div className="mb-3 flex items-center gap-2">
               <Trophy size={16} className="text-[#DC2626]" />
               <h3 className="text-base font-black text-slate-900">Engajamento das lives</h3>
+                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('live:go-tab', { detail: 'resultados' }))} className="ml-auto cursor-pointer text-xs font-semibold text-[#DC2626] hover:underline">{"Ver resultados e m\u00e9tricas \u2192"}</button>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[

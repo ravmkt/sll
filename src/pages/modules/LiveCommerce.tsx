@@ -512,6 +512,15 @@ export function LiveCommerce() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<LiveTab>((((location.state as { tab?: LiveTab } | null)?.tab) as LiveTab) || "visao-geral");
+
+  useEffect(() => {
+    const h = (e: Event) => {
+      const tab = (e as CustomEvent).detail;
+      if (typeof tab === "string" && tab) setActiveTab(tab as any);
+    };
+    window.addEventListener("live:go-tab", h);
+    return () => window.removeEventListener("live:go-tab", h);
+  }, []);
   useEffect(() => {
     if ((location.state as { openAppearance?: boolean } | null)?.openAppearance) {
       const t = setTimeout(() => window.dispatchEvent(new Event("live:open-appearance")), 500);
