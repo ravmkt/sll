@@ -2,7 +2,7 @@ import ClearCacheButton from '@/components/layout/ClearCacheButton';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CreditCard, LogOut, Settings, User } from 'lucide-react';
+import { CreditCard, LogOut, Plug, Settings, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
@@ -85,6 +85,7 @@ export function TopBar({ actions }: { actions?: ReactNode; [k: string]: unknown 
             <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl">
               <p className="truncate px-3 py-2 text-xs font-bold text-slate-500">{storeName}</p>
               <button type="button" className={item} onClick={() => go('/dashboard/settings')}><Settings className="h-4 w-4" /> Configurações</button>
+              <button type="button" className={item} onClick={() => go('/dashboard/integracao')}><Plug className="h-4 w-4" /> Instalação & Script</button>
               <button type="button" className={item} onClick={() => go('/dashboard/assinaturas')}><CreditCard className="h-4 w-4" /> Assinatura e planos</button>
               <button type="button" className={`${item} text-rose-600 hover:bg-rose-50`} onClick={() => { setOpen(false); void signOut(); }}>
                 <LogOut className="h-4 w-4" /> Sair

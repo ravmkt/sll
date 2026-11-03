@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Package, Lightbulb, Crown, Plug,
-  CreditCard, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Gift, MessageSquarePlus } from 'lucide-react';
+  LayoutDashboard, Package, Lightbulb, Crown, LogOut, PanelLeftClose, PanelLeftOpen, Gift, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
 
@@ -36,15 +35,6 @@ const GROUPS: Group[] = [
       { name: 'Insights do Noah', icon: Lightbulb, path: '/dashboard/dicas' },
   { name: 'Pedidos dos lojistas', icon: MessageSquarePlus, path: '/dashboard/pedidos-dos-lojistas' },
       { name: 'Clube SLL (Indique e Ganhe)', icon: Crown, path: '/dashboard/afiliados' },
-    ],
-  },
-  {
-    title: 'Sistema',
-    bottom: true,
-    items: [
-      { name: 'Instalação & Script', icon: Plug, path: '/dashboard/integracao' },
-      { name: 'Configurações', icon: Settings, path: '/dashboard/settings' },
-      { name: 'Assinatura & Planos', icon: CreditCard, path: '/dashboard/assinaturas' },
     ],
   },
 ];
