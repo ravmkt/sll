@@ -11,7 +11,7 @@ type Item = { key: string; name: string; category: string; path: string; icon: E
 // Modulo novo = uma linha aqui. "key" deve ser igual ao module_key / plans.modules.
 // O logotipo vem do cadastro do modulo (hub_modules.logo_url); "logo" e a alternativa local.
 const SWITCHER_MODULES: Item[] = [
-  { key: 'vidlytics', name: 'Vidlytics Stories', category: 'Vídeos Interativos', path: '/dashboard/modules/vidlytics', icon: Layers, logo: '/assets/vidlytics-logo-ico.png' },
+  { key: 'vidlytics', name: 'Vidlytics', category: 'Vídeos Interativos', path: '/dashboard/modules/vidlytics', icon: Layers, logo: '/assets/vidlytics-logo-ico.png' },
   { key: 'live_commerce', name: 'Stream Sell', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/stream-sell', icon: Radio, logo: '/assets/stream-sell-logo-ico.png' },
   { key: 'gamification', name: 'Gamificação', category: 'Engajamento & Prêmios', path: '/dashboard/modules/gamificacao', icon: Gamepad2, soon: true },
 ];

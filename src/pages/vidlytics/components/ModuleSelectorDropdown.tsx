@@ -29,7 +29,7 @@ export function ModuleSelectorDropdown() {
   const modules: ModuleItem[] = [
     {
       id: 'vidlytics',
-      name: 'Vidlytics Stories',
+      name: 'Vidlytics',
       category: 'Vídeos Interativos',
       path: '/dashboard/modules/vidlytics',
       icon: Layers,
