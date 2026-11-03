@@ -76,7 +76,7 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: () => void; la
 }
 
 const CUPONS_TOUR: TourStep[] = [
-  { element: '[data-tour="presets-cupons"]', title: 'Cupons', description: 'Cadastre c\u00f3digos de desconto reutiliz\u00e1veis. Eles aparecem como atalhos ao criar uma live.', side: 'bottom' },
+  { element: '[data-tour="presets-cupons"]', title: 'Cupons', description: 'Cadastre cupons de desconto. IMPORTANTE: Os cupons devem estar cadastrados na sua plataforma.', side: 'bottom' },
   { element: '[data-tour="presets-avisos"]', title: 'Avisos', description: 'Comunicados como "Sorteio no final da live". Use o interruptor Ativo para pausar sem excluir.', side: 'top' },
 ];
 
