@@ -702,7 +702,7 @@ export default function ResultadosTab() {
           </div>
 
           {/* BANNER BENCHMARK DO SETOR */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+          <div data-tour="rs-como-benchmark" className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0094eb] flex items-center justify-center border border-sky-100 flex-shrink-0">
                 <Compass className="w-5 h-5" />

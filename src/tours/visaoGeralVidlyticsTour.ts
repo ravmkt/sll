@@ -39,7 +39,7 @@ export const visaoGeralTour: TourStep[] = [
     side: 'top',
   },
   {
-    element: '[data-tour="vg-academy"]',
+    element: '[data-tour="academy"]',
     title: 'SLL Academy',
     description: 'Aulas r\u00e1pidas para usar o Vidlytics e vender mais com v\u00eddeos. Assista aqui e acompanhe o canal no YouTube.',
     side: 'top',
@@ -49,5 +49,4 @@ export const visaoGeralTour: TourStep[] = [
 export const VISAO_GERAL_TAGS: TagRule[] = [
   ['vg-datas', /^proximas datas comerciais$/, 'card'],
   ['vg-noah', /^dica do noah$/, 'card'],
-  ['vg-academy', /^sll academy$/, 'wide'],
 ];
