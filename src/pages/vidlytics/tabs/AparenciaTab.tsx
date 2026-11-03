@@ -112,7 +112,7 @@ const AparenciaTab: React.FC = () => {
   return (
     <div className="p-6 space-y-8">
       <PageTour tourKey="vidlytics-aparencia" steps={APARENCIA_TOUR} />
-      <div className="flex justify-between items-center">
+      <div data-tour="aparencia-cabecalho" className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <Palette className="text-[#0094eb]" size={28} />

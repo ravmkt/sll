@@ -34,6 +34,12 @@ export const COMENTARIOS_TOUR: TourStep[] = [
 export const COMENTARIOS_TAGS: TagRule[] = [['co-tabela', /./, 'table']];
 
 export const APARENCIA_TOUR: TourStep[] = [
+  {
+    element: '[data-tour="aparencia-cabecalho"]',
+    title: 'Apar\u00eancia dos widgets',
+    description: 'Aqui voc\u00ea gerencia os estilos visuais dos seus widgets: crie estilos pr\u00f3prios, defina o padr\u00e3o e aproveite os templates prontos.',
+    side: 'bottom',
+  },
   { element: '[data-tour="ap-estilos"]', title: 'Seus Estilos', description: 'Estilos visuais criados e salvos por voc\u00ea para os widgets. Edite, exclua ou defina qual \u00e9 o padr\u00e3o.', side: 'bottom' },
   { element: '[data-tour="ap-novo"]', title: 'Criar Novo Estilo', description: 'Monte um estilo do zero: cores, bordas, bot\u00f5es e textos dos widgets.', side: 'left' },
   { element: '[data-tour="ap-templates"]', title: 'Templates prontos', description: 'Parta de um modelo pronto: visualize, personalize e use como padr\u00e3o da loja.', side: 'top' },
