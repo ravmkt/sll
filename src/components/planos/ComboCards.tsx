@@ -28,7 +28,7 @@ function Logo({ name, url }: { name: string; url: string | null }) {
   return url ? (
     <img src={url} alt={name} title={name} className="h-14 w-14 shrink-0 rounded-xl object-contain" />
   ) : (
-    <span title={name} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#0091ff]/10 text-xl font-black text-[#0091ff]">
+    <span title={name} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-xl font-black text-amber-700">
       {name.charAt(0).toUpperCase()}
     </span>
   );
@@ -69,7 +69,7 @@ export default function ComboCards({
               key={c.id}
               className={cn(
                 "relative flex flex-col rounded-2xl border-2 bg-white p-5 shadow-sm transition-shadow hover:shadow-xl",
-                pop ? "border-[#fd8539] shadow-lg" : "border-slate-200"
+                pop ? "border-amber-500 shadow-lg ring-2 ring-amber-400/30" : "border-slate-200"
               )}
             >
               {pop && (
@@ -127,7 +127,7 @@ export default function ComboCards({
                   onClick={() => onSelect(c)}
                   className={cn(
                     "w-full cursor-pointer rounded-full py-3 text-xs font-black uppercase tracking-wider text-white transition-colors",
-                    pop ? "bg-[#fd8539] hover:bg-[#e8742a]" : "bg-[#3b63fb] hover:bg-[#2f52d6]"
+                    pop ? "bg-[#fd8539] hover:bg-[#e8742a]" : "bg-amber-600 hover:bg-amber-700"
                   )}
                 >
                   Assinar combo

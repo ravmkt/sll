@@ -226,6 +226,7 @@ export default function Planos() {
         {shownAddons.length > 0 && (
           <section className="mx-auto max-w-6xl space-y-5">
             <div className="space-y-1 text-center">
+              <span className="inline-block rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-700">{"Expans\u00e3o & Limites extras"}</span>
               <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Turbine sua conta com Add-ons</h2>
               <p className="text-sm font-medium text-slate-500">Mais capacidade sem trocar de plano. Adicione a qualquer momento.</p>
             </div>
@@ -234,7 +235,7 @@ export default function Planos() {
                 const Icon = addonIcon(a);
                 return (
                   <div key={a.id} className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0091ff]/10 text-[#0091ff]">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600">
                       <Icon size={22} />
                     </span>
                     <h3 className="text-base font-black text-slate-900">{a.upsell_headline || a.name}</h3>
@@ -246,7 +247,7 @@ export default function Planos() {
                     <button
                       type="button"
                       onClick={() => handleAddon(a)}
-                      className="cursor-pointer rounded-full bg-[#3b63fb] py-2.5 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-[#2f52d6]"
+                      className="cursor-pointer rounded-full bg-emerald-600 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-emerald-600/20 transition-colors hover:bg-emerald-700"
                     >
                       Adicionar ao plano
                     </button>

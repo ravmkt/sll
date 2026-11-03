@@ -1,3 +1,5 @@
+import BillingProfileCard from '@/components/billing/BillingProfileCard';
+import InvoiceHistory from '@/components/billing/InvoiceHistory';
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
@@ -110,6 +112,8 @@ export default function Assinaturas() {
             </div>
           </>
         )}
+              <BillingProfileCard />
+        <InvoiceHistory />
       </div>
     </DashboardLayout>
   );

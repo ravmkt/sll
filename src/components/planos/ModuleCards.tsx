@@ -49,7 +49,7 @@ export default function ModuleCards({ byModule, mods, cycle, onOpen }: Props) {
                   </div>
                 )}
                 {badge && (
-                  <span className="shrink-0 rounded-md bg-yellow-400 px-2 py-1 text-[10px] font-black uppercase text-slate-900">{badge}</span>
+                  <span className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-black uppercase text-blue-700">{badge}</span>
                 )}
               </div>
 
@@ -93,7 +93,7 @@ export default function ModuleCards({ byModule, mods, cycle, onOpen }: Props) {
                   disabled={tiers.length === 0}
                   onClick={() => onOpen(slug)}
                   className={cn(
-                    "w-full cursor-pointer rounded-full bg-[#3b63fb] py-3 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-[#2f52d6]",
+                    "w-full cursor-pointer rounded-full bg-[#0091ff] py-3 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-[#0070f3]",
                     "disabled:cursor-not-allowed disabled:opacity-40"
                   )}
                 >
