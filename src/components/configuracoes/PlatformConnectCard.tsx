@@ -105,7 +105,7 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-5">
       <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-        <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">2. Plataforma de E-commerce</h2>
+        <h2 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">Plataforma de E-commerce</h2>
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
           Conecte sua loja para importar produtos, variações e manter estoque e preços sincronizados.
         </p>

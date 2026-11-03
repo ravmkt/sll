@@ -289,7 +289,7 @@ const SettingsPage: React.FC = () => {
 
   const inputCls = 'w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]';
   const labelCls = 'text-[10px] font-black uppercase tracking-widest text-slate-400';
-  const cardCls = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 space-y-5';
+  const cardCls = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 space-y-5 h-full';
   const saveBtnCls = 'bg-[#0094eb] hover:bg-[#0082cf] text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0';
   const previewMessage = (form.whatsapp_message_template || '').replace(/\{\{\s*story_title\s*\}\}/g, 'Vestido Floral Midi');
 
@@ -320,7 +320,7 @@ const SettingsPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      {/* SLL-SETTINGS-V3 */}
+      {/* SLL-SETTINGS-V4 */}
       <div className="space-y-6 pb-20 font-sans">
         <form
           noValidate
@@ -344,7 +344,7 @@ const SettingsPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
             {/* IDENTIDADE DA LOJA */}
             <div className={cardCls}>
               <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -446,18 +446,20 @@ const SettingsPage: React.FC = () => {
             </div>
 
             {/* PLATAFORMA CONECTADA */}
-            <PlatformConnectCard
-              storeId={storeId || ''}
-              platform={form.platform}
-              platforms={PLATAFORMAS}
-              onChangePlatform={(p) => setForm((prev) => ({ ...prev, platform: p }))}
-            />
+            <div className="h-full [&>*]:h-full">
+              <PlatformConnectCard
+                storeId={storeId || ''}
+                platform={form.platform}
+                platforms={PLATAFORMAS}
+                onChangePlatform={(p) => setForm((prev) => ({ ...prev, platform: p }))}
+              />
+            </div>
 
             {/* WHATSAPP & ATENDIMENTO */}
             <div className={cardCls}>
               <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div>
-                  <h2 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">WhatsApp &amp; Atendimento</h2>
+                  <h2 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">Atendimento</h2>
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                     Canal que o cliente final usa para falar com a loja.
                   </p>
