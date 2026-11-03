@@ -21,12 +21,6 @@ export const visaoGeralTour: TourStep[] = [
     side: 'top',
   },
   {
-    element: '[data-tour="vg-indique"]',
-    title: 'Indique e ganhe',
-    description: 'Compartilhe o seu link, indique outras lojas e receba comiss\u00e3o recorrente pelo Clube SLL.',
-    side: 'top',
-  },
-  {
     element: '[data-tour="vg-datas"]',
     title: 'Datas comerciais',
     description: 'Veja as pr\u00f3ximas datas fortes de venda do seu setor e planeje seus v\u00eddeos e campanhas com anteced\u00eancia.',
@@ -36,6 +30,12 @@ export const visaoGeralTour: TourStep[] = [
     element: '[data-tour="vg-noah"]',
     title: 'Dica do Noah',
     description: 'Dicas pr\u00e1ticas do Noah para a \u00e9poca do ano e o nicho da sua loja. Use Ver mais dicas para ver todas.',
+    side: 'top',
+  },
+  {
+    element: '[data-tour="vg-indique"]',
+    title: 'Clube SLL',
+    description: 'Compartilhe o seu link, indique outras lojas e receba comiss\u00e3o recorrente pelo Clube SLL.',
     side: 'top',
   },
   {

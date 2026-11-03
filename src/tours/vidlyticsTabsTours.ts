@@ -29,10 +29,10 @@ export const BIBLIOTECA_TOUR: TourStep[] = [
 ];
 
 export const COMENTARIOS_TOUR: TourStep[] = [
+  { element: '[data-tour="co-moderacao"]', title: 'Modera\u00e7\u00e3o de conte\u00fado', description: 'Configure como os coment\u00e1rios s\u00e3o moderados antes de aparecer nos seus v\u00eddeos.', side: 'bottom' },
+  { element: '[data-tour="co-alertas"]', title: 'Alertas de coment\u00e1rios', description: 'Ative os alertas para ser avisado quando chegarem novos coment\u00e1rios nos seus v\u00eddeos.', side: 'bottom' },
   { element: '[data-tour="co-filtros"]', title: 'Busca e filtros', description: 'Pesquise por autor ou texto e filtre os coment\u00e1rios para encontrar o que precisa.', side: 'bottom' },
   { element: '[data-tour="co-tabela"]', title: 'Modera\u00e7\u00e3o', description: 'Aprove, rejeite, responda ou exclua cada coment\u00e1rio. As respostas aparecem para o cliente com a identidade da sua loja.', side: 'top' },
-  { element: '[data-tour="co-moderacao"]', title: 'Modera\u00e7\u00e3o de conte\u00fado', description: 'Configure como os coment\u00e1rios s\u00e3o moderados antes de aparecer nos seus v\u00eddeos.', side: 'top' },
-  { element: '[data-tour="co-alertas"]', title: 'Alertas de coment\u00e1rios', description: 'Ative os alertas para ser avisado quando chegarem novos coment\u00e1rios nos seus v\u00eddeos.', side: 'top' },
 ];
 export const COMENTARIOS_TAGS: TagRule[] = [
   ['co-tabela', /./, 'table'],
