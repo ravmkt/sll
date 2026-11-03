@@ -104,6 +104,7 @@ const SettingsPage: React.FC = () => {
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
+  const sllLogoInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -286,287 +287,317 @@ const SettingsPage: React.FC = () => {
     );
   }
 
+  const inputCls = 'w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]';
+  const labelCls = 'text-[10px] font-black uppercase tracking-widest text-slate-400';
+  const cardCls = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 space-y-5';
+  const saveBtnCls = 'bg-[#0094eb] hover:bg-[#0082cf] text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0';
+  const previewMessage = (form.whatsapp_message_template || '').replace(/\{\{\s*story_title\s*\}\}/g, 'Vestido Floral Midi');
+
+  const Switch = ({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={onToggle}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer ${on ? 'bg-[#0094eb]' : 'bg-slate-300 dark:bg-slate-700'}`}
+    >
+      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
+    </button>
+  );
+
+  const SaveContent = () => (
+    saving ? (
+      <>
+        <Loader2 className="h-4 w-4 animate-spin" /> Salvando...
+      </>
+    ) : (
+      <>
+        <Save size={18} /> Salvar Alterações
+      </>
+    )
+  );
+
   return (
     <DashboardLayout>
-    <div className="space-y-8 pb-20 font-sans">
-      <form
-        noValidate
-        className="space-y-8"
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSave();
-        }}
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              Configurações da Loja
-            </h1>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
-              Esses dados são usados por todos os módulos contratados.
-            </p>
-          </div>
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-[#0094eb] hover:bg-[#0082cf] text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 self-start sm:self-auto shrink-0"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Salvando...
-              </>
-            ) : (
-              <>
-                <Save size={18} /> Salvar Configurações
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* 1. DADOS DA LOJA */} {/* SLL-LAYOUT-V2 */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-              1. Dados da Loja
-            </h2>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-              Informa&ccedil;&otilde;es cadastrais, identidade da marca e canais de contato.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nome da Loja *</label>
-              <input
-                type="text"
-                value={form.store_name}
-                onChange={(e) => setForm((p) => ({ ...p, store_name: e.target.value }))}
-                placeholder="Ex: Loja da Ana Moda Feminina"
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">URL da Loja *</label>
-              <input
-                type="text"
-                value={form.store_url}
-                onChange={(e) => setForm((p) => ({ ...p, store_url: e.target.value }))}
-                onBlur={(e) => setForm((p) => ({ ...p, store_url: formatStoreUrl(e.target.value) }))}
-                placeholder="Ex: minhaloja.com.br"
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Setor da Loja *</label>
-              <select
-                value={form.sector_id}
-                onChange={(e) => setForm((p) => ({ ...p, sector_id: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              >
-                <option value="">Selecione...</option>
-                {sectors.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Responder como *</label>
-              <input
-                type="text"
-                value={form.reply_display_name}
-                onChange={(e) => setForm((p) => ({ ...p, reply_display_name: e.target.value }))}
-                placeholder="Ex: Uziane"
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              />
-              <p className="text-[10px] text-slate-400">
-                Nome exibido nas respostas aos coment&aacute;rios dos clientes.
+      {/* SLL-SETTINGS-V3 */}
+      <div className="space-y-6 pb-20 font-sans">
+        <form
+          noValidate
+          className="space-y-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSave();
+          }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                Configurações da Loja
+              </h1>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
+                Gerencie a identidade da sua marca, integrações e canais de contato.
               </p>
             </div>
+            <button type="submit" disabled={saving} className={`${saveBtnCls} self-start sm:self-auto`}>
+              <SaveContent />
+            </button>
+          </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Logotipo da Loja</label>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+            {/* IDENTIDADE DA LOJA */}
+            <div className={cardCls}>
+              <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h2 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">Identidade da Loja</h2>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                  Informações públicas que representam a sua marca.
+                </p>
+              </div>
+
               <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 flex items-center justify-center shrink-0">
+                <div className="h-20 w-20 rounded-2xl overflow-hidden bg-slate-100 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 flex items-center justify-center shrink-0">
                   {logoPreview ? (
                     <img src={logoPreview} className="w-full h-full object-cover" alt="Logo" />
                   ) : (
-                    <ImageIcon className="w-6 h-6 text-slate-400" />
+                    <ImageIcon className="w-7 h-7 text-slate-400" />
                   )}
                 </div>
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleLogoChange}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => logoInputRef.current?.click()}
-                  className="px-4 py-2 rounded-xl bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-black cursor-pointer"
-                >
-                  {logoPreview ? 'Trocar logo' : 'Enviar logo'}
-                </button>
-                {logoPreview && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveLogo}
-                    className="text-xs font-bold text-slate-400 hover:text-rose-500 cursor-pointer"
-                  >
-                    Remover
-                  </button>
-                )}
-              </div>
-              <p className="text-[10px] text-slate-400">JPG, PNG ou WEBP.</p>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nome do Contato *</label>
-              <input
-                type="text"
-                value={form.contact_name}
-                onChange={(e) => setForm((p) => ({ ...p, contact_name: e.target.value }))}
-                placeholder="Ex: Ana Silva"
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">E-mail de Contato da Loja *</label>
-              <input
-                type="email"
-                value={form.owner_contact_email}
-                onChange={(e) => setForm((p) => ({ ...p, owner_contact_email: e.target.value }))}
-                placeholder="Ex: contato@minhaloja.com.br"
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">WhatsApp de Contato da Loja</label>
-              <input
-                type="tel"
-                value={form.owner_whatsapp}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, owner_whatsapp: e.target.value.replace(/[^\d+\-() ]/g, '') }))
-                }
-                onBlur={(e) => setForm((p) => ({ ...p, owner_whatsapp: formatWhatsapp(e.target.value) }))}
-                placeholder="Ex: (41) 99999-9999"
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">E-mail de Atendimento *</label>
-              <input
-                type="email"
-                value={form.contact_email}
-                onChange={(e) => setForm((p) => ({ ...p, contact_email: e.target.value }))}
-                placeholder="Ex: atendimento@minhaloja.com.br"
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">WhatsApp de Atendimento *</label>
-              <input
-                type="tel"
-                value={form.whatsapp_number}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, whatsapp_number: e.target.value.replace(/[^\d+\-() ]/g, '') }))
-                }
-                onBlur={(e) => setForm((p) => ({ ...p, whatsapp_number: formatWhatsapp(e.target.value) }))}
-                placeholder="Ex: (41) 99999-9999"
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]"
-              />
-              <p className="text-[10px] text-slate-400">
-                N&uacute;mero que recebe as mensagens do bot&atilde;o de WhatsApp nos v&iacute;deos.
-              </p>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <div className="flex items-center justify-between">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mensagem Padr&atilde;o de Contato *</label>
-                <label className="flex items-center gap-2 cursor-pointer">
+                <div className="space-y-1.5">
+                  <span className={labelCls}>Logo da loja</span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => sllLogoInputRef.current?.click()}
+                      className="px-4 py-2 rounded-xl bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-black cursor-pointer"
+                    >
+                      {logoPreview ? 'Trocar logo' : 'Enviar logo'}
+                    </button>
+                    {logoPreview && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        className="text-xs font-bold text-slate-400 hover:text-rose-500 cursor-pointer"
+                      >
+                        Remover
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-400">JPG, PNG ou WEBP.</p>
                   <input
-                    type="checkbox"
-                    checked={form.whatsapp_enabled}
-                    onChange={(e) => setForm((p) => ({ ...p, whatsapp_enabled: e.target.checked }))}
-                    className="h-4 w-4 accent-[#0094eb]"
+                    ref={sllLogoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      handleLogoChange(e);
+                      e.target.value = '';
+                    }}
                   />
-                  <span className="text-[10px] font-black uppercase text-slate-400">WhatsApp ativo</span>
-                </label>
+                </div>
               </div>
-              <textarea
-                rows={3}
-                value={form.whatsapp_message_template}
-                onChange={(e) => setForm((p) => ({ ...p, whatsapp_message_template: e.target.value }))}
-                placeholder="Ex: Ol&aacute;! Tenho interesse nesse produto que vi no v&iacute;deo: {{story_title}}"
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb] resize-none"
-              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className={labelCls}>Nome da Loja *</label>
+                  <input
+                    type="text"
+                    value={form.store_name}
+                    onChange={(e) => setForm((p) => ({ ...p, store_name: e.target.value }))}
+                    placeholder="Ex: Loja da Ana Moda Feminina"
+                    className={inputCls}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>Responder como *</label>
+                  <input
+                    type="text"
+                    value={form.reply_display_name}
+                    onChange={(e) => setForm((p) => ({ ...p, reply_display_name: e.target.value }))}
+                    placeholder="Ex: Ana"
+                    className={inputCls}
+                  />
+                  <p className="text-[10px] text-slate-400">Nome exibido nas respostas aos comentários dos clientes.</p>
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>URL da Loja *</label>
+                  <input
+                    type="text"
+                    value={form.store_url}
+                    onChange={(e) => setForm((p) => ({ ...p, store_url: e.target.value }))}
+                    onBlur={(e) => setForm((p) => ({ ...p, store_url: formatStoreUrl(e.target.value) }))}
+                    placeholder="Ex: minhaloja.com.br"
+                    className={inputCls}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>Setor da Loja *</label>
+                  <select
+                    value={form.sector_id}
+                    onChange={(e) => setForm((p) => ({ ...p, sector_id: e.target.value }))}
+                    className={inputCls}
+                  >
+                    <option value="">Selecione...</option>
+                    {sectors.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* 2. PLATAFORMA */}
-        <PlatformConnectCard storeId={storeId || ''} platform={form.platform} platforms={PLATAFORMAS} onChangePlatform={(p) => setForm((prev) => ({ ...prev, platform: p }))} />
-
-
-        {/* 3. MÉTRICAS */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-5">
-          <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-              4. Métricas
-            </h2>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-              Monitore o comportamento do cliente final e as interações com seus vídeos.
-            </p>
-          </div>
-
-          <div className="flex items-start justify-between gap-4 p-5 rounded-2xl bg-slate-50 dark:bg-[#111524]/60 border border-slate-100 dark:border-slate-800">
-            <div className="space-y-0.5">
-              <label className="text-xs font-black text-slate-800 dark:text-white block">
-                Ativar métricas e analytics
-              </label>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
-                Coleta métricas de visualização, retenção e cliques em tempo real na loja.
-              </p>
-            </div>
-            <input
-              type="checkbox"
-              checked={form.stories_enabled}
-              onChange={(e) => setForm((p) => ({ ...p, stories_enabled: e.target.checked }))}
-              className="h-5 w-5 accent-[#0094eb] mt-0.5"
+            {/* PLATAFORMA CONECTADA */}
+            <PlatformConnectCard
+              storeId={storeId || ''}
+              platform={form.platform}
+              platforms={PLATAFORMAS}
+              onChangePlatform={(p) => setForm((prev) => ({ ...prev, platform: p }))}
             />
-          </div>
-        </div>
 
-        <div className="flex justify-end pt-4">
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-[#0094eb] hover:bg-[#0082cf] text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Salvando...
-              </>
-            ) : (
-              <>
-                <Save size={18} /> Salvar Configurações
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-    </div>
+            {/* WHATSAPP & ATENDIMENTO */}
+            <div className={cardCls}>
+              <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div>
+                  <h2 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">WhatsApp &amp; Atendimento</h2>
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                    Canal que o cliente final usa para falar com a loja.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">{form.whatsapp_enabled ? 'Ativo' : 'Inativo'}</span>
+                  <Switch
+                    on={form.whatsapp_enabled}
+                    label="Ativar WhatsApp"
+                    onToggle={() => setForm((p) => ({ ...p, whatsapp_enabled: !p.whatsapp_enabled }))}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className={labelCls}>WhatsApp de atendimento *</label>
+                  <input
+                    type="tel"
+                    value={form.whatsapp_number}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, whatsapp_number: e.target.value.replace(/[^\d+\-() ]/g, '') }))
+                    }
+                    onBlur={(e) => setForm((p) => ({ ...p, whatsapp_number: formatWhatsapp(e.target.value) }))}
+                    placeholder="Ex: (41) 99999-9999"
+                    className={inputCls}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>E-mail de atendimento *</label>
+                  <input
+                    type="email"
+                    value={form.contact_email}
+                    onChange={(e) => setForm((p) => ({ ...p, contact_email: e.target.value }))}
+                    placeholder="Ex: atendimento@minhaloja.com.br"
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className={labelCls}>Mensagem padrão de contato *</label>
+                <textarea
+                  rows={3}
+                  value={form.whatsapp_message_template}
+                  onChange={(e) => setForm((p) => ({ ...p, whatsapp_message_template: e.target.value }))}
+                  placeholder="Ex: Olá! Tenho interesse nesse produto que vi no vídeo: {{story_title}}"
+                  className={`${inputCls} resize-none`}
+                />
+                <p className="text-[10px] text-slate-400">
+                  Use {'{{story_title}}'} para inserir o título do vídeo automaticamente.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <span className={labelCls}>Como o cliente envia</span>
+                <div className="rounded-2xl bg-[#e7ded3] dark:bg-[#0b141a] p-4">
+                  <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-[#d9fdd3] dark:bg-[#005c4b] px-3.5 py-2.5 shadow-sm">
+                    <p className="text-xs font-medium text-slate-800 dark:text-white whitespace-pre-wrap break-words">
+                      {previewMessage || 'Sua mensagem aparecerá aqui.'}
+                    </p>
+                    <p className="mt-1 text-right text-[9px] text-slate-500 dark:text-slate-300">agora</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* DADOS ADMINISTRATIVOS */}
+            <div className={cardCls}>
+              <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h2 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">Dados Administrativos &amp; Operação</h2>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                  Visível só para o SLL Hub. Seus clientes não veem estes dados.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className={labelCls}>Nome do responsável *</label>
+                  <input
+                    type="text"
+                    value={form.contact_name}
+                    onChange={(e) => setForm((p) => ({ ...p, contact_name: e.target.value }))}
+                    placeholder="Ex: Ana Silva"
+                    className={inputCls}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>E-mail de contato da loja *</label>
+                  <input
+                    type="email"
+                    value={form.owner_contact_email}
+                    onChange={(e) => setForm((p) => ({ ...p, owner_contact_email: e.target.value }))}
+                    placeholder="Ex: dono@minhaloja.com.br"
+                    className={inputCls}
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <label className={labelCls}>WhatsApp de contato da loja</label>
+                  <input
+                    type="tel"
+                    value={form.owner_whatsapp}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, owner_whatsapp: e.target.value.replace(/[^\d+\-() ]/g, '') }))
+                    }
+                    onBlur={(e) => setForm((p) => ({ ...p, owner_whatsapp: formatWhatsapp(e.target.value) }))}
+                    placeholder="Ex: (41) 99999-9999"
+                    className={inputCls}
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Usado para avisos do sistema. Não é o número do botão de WhatsApp dos vídeos.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-[#111524]/60 border border-slate-100 dark:border-slate-800">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-black text-slate-800 dark:text-white block">Ativar métricas e analytics</span>
+                  <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Coleta visualizações, retenção e cliques em tempo real na loja.
+                  </p>
+                </div>
+                <Switch
+                  on={form.stories_enabled}
+                  label="Ativar métricas e analytics"
+                  onToggle={() => setForm((p) => ({ ...p, stories_enabled: !p.stories_enabled }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button type="submit" disabled={saving} className={saveBtnCls}>
+              <SaveContent />
+            </button>
+          </div>
+        </form>
+      </div>
     </DashboardLayout>
   );
 };
 
 export default SettingsPage;
-
