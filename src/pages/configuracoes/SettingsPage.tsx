@@ -408,12 +408,12 @@ const SettingsPage: React.FC = () => {
                     <ImageIcon className="w-6 h-6 text-slate-400" />
                   )}
                 </div>
-                <div className="flex-1 flex items-center gap-2">
+                <div className="flex items-center gap-2"> {/* SLL-LOGO-X */}
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     onChange={handleLogoChange}
-                    className="flex-1 text-xs font-bold text-slate-600 dark:text-slate-300 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-[#0094eb] file:text-white file:font-black file:text-xs file:cursor-pointer cursor-pointer"
+                    className="text-xs font-bold text-slate-600 dark:text-slate-300 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-[#0094eb] file:text-white file:font-black file:text-xs file:cursor-pointer cursor-pointer"
                   />
                   {logoPreview && (
                     <button
