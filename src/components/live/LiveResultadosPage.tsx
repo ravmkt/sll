@@ -37,11 +37,12 @@ const T = {
   loading: 'Carregando...',
 };
 
-const PERIODS: { k: number; label: string }[] = [
-  { k: 7, label: '7 dias' },
-  { k: 30, label: '30 dias' },
-  { k: 90, label: '90 dias' },
-  { k: 0, label: 'Tudo' },
+type Periodo = 'today' | '7' | '30' | 'custom';
+const PERIODOS: { key: Periodo; label: string }[] = [
+  { key: 'today', label: 'Hoje' },
+  { key: '7', label: '7 dias' },
+  { key: '30', label: '30 dias' },
+  { key: 'custom', label: 'Personalizado' },
 ];
 
 const APPROVED = /^(paid|approved|captured|confirmed|completed|aprovado|pago)$/i;
@@ -124,7 +125,20 @@ export default function LiveResultadosPage() {
   const [orders, setOrders] = useState<Ord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [period, setPeriod] = useState(30);
+  const [periodo, setPeriodo] = useState<Periodo>('30');
+  const [cs, setCs] = useState('');
+  const [ce, setCe] = useState('');
+  const { fromMs, toMs } = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    if (periodo === 'custom') {
+      const f = cs ? new Date(cs + 'T00:00:00').getTime() : d.getTime() - 29 * 86400000;
+      const e = ce ? new Date(ce + 'T23:59:59.999').getTime() : Date.now();
+      return { fromMs: f, toMs: Math.max(f, e) };
+    }
+    if (periodo !== 'today') d.setDate(d.getDate() - (Number(periodo) - 1));
+    return { fromMs: d.getTime(), toMs: Date.now() };
+  }, [periodo, cs, ce]);
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [asc, setAsc] = useState(false);
   const [show, setShow] = useState({ rev: true, views: true });
@@ -169,8 +183,8 @@ export default function LiveResultadosPage() {
   useEffect(() => { load(); }, [load]);
 
   const model = useMemo(() => {
-    const cutoff = period > 0 ? Date.now() - period * 86400000 : 0;
-    const inPeriod = (iso: string) => !cutoff || new Date(iso).getTime() >= cutoff;
+    const cutoff = fromMs;
+    const inPeriod = (iso: string) => { const tt = new Date(iso).getTime(); return tt >= cutoff && tt <= toMs; };
 
     const eventPeak: Record<string, number> = {};
     events.forEach((e) => {
@@ -210,8 +224,8 @@ export default function LiveResultadosPage() {
     const series: { d: string; label: string; rev: number; views: number }[] = [];
     const keys = Object.keys(days).sort();
     if (keys.length > 0) {
-      const start = period > 0 ? new Date(cutoff) : new Date(keys[0] + 'T12:00:00');
-      const end = new Date();
+      const start = new Date(cutoff);
+      const end = new Date(toMs);
       for (let t = new Date(start.getFullYear(), start.getMonth(), start.getDate()), i = 0; t <= end && i < 400; t.setDate(t.getDate() + 1), i++) {
         const k = t.toLocaleDateString('sv-SE');
         series.push({ d: k, label: fmtDay(k), rev: days[k]?.rev || 0, views: days[k]?.views || 0 });
@@ -237,15 +251,15 @@ export default function LiveResultadosPage() {
       });
 
     return { totals, historicPeak, series, rows };
-  }, [lives, events, orders, period]);
+  }, [lives, events, orders, fromMs, toMs]);
 
   const candidates = useMemo(() => {
-    const cutoff = period > 0 ? Date.now() - period * 86400000 : 0;
+    const cutoff = fromMs;
     return lives
-      .filter((l) => /^(finished|ended|live)$/i.test(String(l.status)) && (!cutoff || new Date(liveDate(l)).getTime() >= cutoff))
+      .filter((l) => /^(finished|ended|live)$/i.test(String(l.status)) && (new Date(liveDate(l)).getTime() >= cutoff && new Date(liveDate(l)).getTime() <= toMs))
       .sort((a, b) => new Date(liveDate(b)).getTime() - new Date(liveDate(a)).getTime())
       .slice(0, 12);
-  }, [lives, period]);
+  }, [lives, fromMs, toMs]);
 
   const chosen = useMemo(() => {
     const base = selLives ?? candidates.slice(0, 5).map((l) => l.id);
@@ -342,16 +356,34 @@ export default function LiveResultadosPage() {
           <p className="text-sm text-slate-500">{T.sub}</p>
         </div>
         <div data-tour="resultados-periodo" className="flex flex-wrap items-center gap-2">
-          {PERIODS.map((p) => (
-            <button
-              key={p.k}
-              type="button"
-              onClick={() => setPeriod(p.k)}
-              className={'rounded-full border px-4 py-1.5 text-xs font-bold transition-colors ' + (period === p.k ? 'border-[#DC2626] bg-[#DC2626] text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')}
-            >
-              {p.label}
-            </button>
-          ))}
+          <div className="flex items-center rounded-xl border border-slate-200 bg-white p-0.5 shadow-sm">
+            {PERIODOS.map((p) => (
+              <button
+                key={p.key}
+                type="button"
+                onClick={() => {
+                  if (p.key === 'custom' && !cs) {
+                    const s = new Date();
+                    s.setDate(s.getDate() - 29);
+                    const f = (x: Date) => x.toLocaleDateString('sv-SE');
+                    setCs(f(s));
+                    setCe(f(new Date()));
+                  }
+                  setPeriodo(p.key);
+                }}
+                className={'cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ' + (periodo === p.key ? 'bg-[#DC2626] text-white' : 'text-slate-600 hover:bg-slate-50')}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          {periodo === 'custom' && (
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <input type="date" value={cs} max={ce || undefined} onChange={(e) => setCs(e.target.value)} className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#DC2626]" />
+              <span>{'at\u00e9'}</span>
+              <input type="date" value={ce} min={cs || undefined} onChange={(e) => setCe(e.target.value)} className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#DC2626]" />
+            </div>
+          )}
           <button type="button" onClick={load} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
             <RefreshCw className={'h-3.5 w-3.5 ' + (loading ? 'animate-spin' : '')} /> {T.reload}
           </button>
