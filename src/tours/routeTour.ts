@@ -21,7 +21,7 @@ const VERSIONS: Record<string, string> = {
   '/dashboard/insights-noah': 'v2',
   '/dashboard/dicas': 'v2',
   '/dashboard/pedidos-dos-lojistas': 'v2',
-  '/dashboard/afiliados': 'v2',
+  '/dashboard/afiliados': 'v3',
 };
 
 const clean = (p: string) => p.replace(/\/+$/, '') || '/';
@@ -131,36 +131,64 @@ function pedidosSteps(main: Element): TourStep[] {
 }
 
 /* ---------- Clube SLL ---------- */
-const CLUBE_HINTS: [RegExp, string, string][] = [
-  [/saque/, 'Seus saques', 'Hist\u00f3rico dos saques solicitados e o status de cada um. Quando houver saldo dispon\u00edvel, voc\u00ea pode pedir um novo saque.'],
-  [/link/, 'Seu link de indica\u00e7\u00e3o', 'Este \u00e9 o seu link exclusivo. Copie e compartilhe com outros lojistas: cada loja que assinar por ele gera comiss\u00e3o recorrente todo m\u00eas.'],
-  [/nivel|beneficio/, 'Seu n\u00edvel no Clube', 'Veja em que n\u00edvel voc\u00ea est\u00e1 e quais benef\u00edcios j\u00e1 desbloqueou.'],
-];
-
 function clubeSteps(main: Element): TourStep[] {
   const s: TourStep[] = [];
-  const extras: [string, RegExp, string, string][] = [
-    ['cl-ind', /^suas indicacoes/, 'Suas indica\u00e7\u00f5es', 'Veja todas as lojas que voc\u00ea indicou e a situa\u00e7\u00e3o de cada uma: quem j\u00e1 se cadastrou e quem j\u00e1 assinou e est\u00e1 gerando comiss\u00e3o.'],
-    ['cl-ganhos', /^seus ganhos/, 'Seus ganhos', 'Acompanhe quanto voc\u00ea j\u00e1 ganhou em comiss\u00f5es e o saldo dispon\u00edvel para saque.'],
-    ['cl-simule', /^simule seus ganhos/, 'Simule seus ganhos', 'Descubra quanto pode ganhar: informe quantas lojas pretende indicar e veja a estimativa de comiss\u00e3o recorrente por m\u00eas.'],
-    ['cl-metas', /^suas metas/, 'Suas metas', 'Acompanhe seu progresso no Clube. Ao bater cada meta voc\u00ea sobe de n\u00edvel e desbloqueia benef\u00edcios exclusivos.'],
-  ];
-  const found = extras.map((x) => find(main, x[1], 'card'));
-  const avoid = found.filter((x): x is Element => !!x);
+  const used: Element[] = [];
+  const put = (el: Element | null, id: string, title: string, desc: string, side: Side) => {
+    if (!el || used.includes(el)) return;
+    used.push(el);
+    add(s, el, id, title, desc, side);
+  };
+  const first = (rxs: RegExp[], kind: 'section' | 'card' | 'self'): Element | null => {
+    for (const rx of rxs) {
+      const el = find(main, rx, kind);
+      if (el) return el;
+    }
+    return null;
+  };
 
-  autoBlocks(main, 4, avoid).forEach((b, i) => {
-    const heading = txt(b.querySelector('h2,h3,h4,legend'));
-    const probe = norm(heading + ' ' + (b.textContent || '').slice(0, 200));
-    const hint = CLUBE_HINTS.find((h) => h[0].test(probe));
-    add(s, b, 'cl-b' + (i + 1),
-      hint ? hint[1] : heading || 'Clube SLL',
-      hint ? hint[2] : 'Acompanhe aqui as informa\u00e7\u00f5es desta \u00e1rea do Clube SLL.',
-      'bottom');
-  });
-  extras.forEach((x, i) => add(s, found[i], x[0], x[2], x[3], 'top'));
+  put(first([/^ative o seu link de indicacao/, /^link bloqueado/, /^gerando seu link/, /^https?:\/\//], 'card'), 'cl-link',
+    'Seu link de indica\u00e7\u00e3o',
+    'Este \u00e9 o seu link exclusivo do Clube. Leia e aceite as regras para ativ\u00e1-lo, depois copie e compartilhe com outros lojistas. Cada loja que assinar por ele gera comiss\u00e3o recorrente todo m\u00eas.',
+    'bottom');
+
+  put(first([/^previsao 12 meses/], 'card'), 'cl-previsao',
+    'Previs\u00e3o de 12 meses',
+    'Estimativa do quanto voc\u00ea deve receber em comiss\u00f5es nos pr\u00f3ximos 12 meses, com base nas lojas que voc\u00ea j\u00e1 indicou.',
+    'bottom');
+
+  put(first([/^saldo disponivel/, /^saldo a liberar/], 'card'), 'cl-saldo',
+    'Saldo dispon\u00edvel',
+    'Valor j\u00e1 liberado para saque. O saldo a liberar ainda est\u00e1 aguardando libera\u00e7\u00e3o e passa a dispon\u00edvel quando for liberado. Com saldo dispon\u00edvel, voc\u00ea pede o saque via PIX.',
+    'bottom');
+
+  put(first([/^meus saques/], 'card'), 'cl-saques',
+    'Meus saques',
+    'Hist\u00f3rico dos saques que voc\u00ea pediu e o status de cada um. H\u00e1 um valor m\u00ednimo para sacar e os pagamentos saem em um dia fixo do m\u00eas, para a chave PIX informada.',
+    'top');
+
+  put(first([/^suas indicacoes/], 'card'), 'cl-ind',
+    'Suas indica\u00e7\u00f5es',
+    'Veja todas as lojas que voc\u00ea indicou e a situa\u00e7\u00e3o de cada uma: quem j\u00e1 se cadastrou e quem j\u00e1 assinou e est\u00e1 gerando comiss\u00e3o.',
+    'top');
+
+  put(first([/^seus ganhos/], 'card'), 'cl-ganhos',
+    'Seus ganhos',
+    'Acompanhe as comiss\u00f5es recebidas ao longo do tempo. Troque o per\u00edodo para ver o total ganho em cada intervalo.',
+    'top');
+
+  put(first([/^simule seus ganhos/], 'card'), 'cl-simule',
+    'Simule seus ganhos',
+    'Escolha o m\u00f3dulo indicado, o plano e quantas lojas pretende indicar para ver a estimativa de comiss\u00e3o por m\u00eas, em 12 meses e em 24 meses.',
+    'top');
+
+  put(first([/^suas metas/], 'card'), 'cl-metas',
+    'Suas metas',
+    'Acompanhe seu progresso no Clube. Ao bater cada meta voc\u00ea sobe de n\u00edvel e desbloqueia benef\u00edcios exclusivos.',
+    'top');
+
   return s;
 }
-
 const CUSTOM: Record<string, (main: Element) => TourStep[]> = {
   '/dashboard/insights-noah': insightsSteps,
   '/dashboard/dicas': insightsSteps,
