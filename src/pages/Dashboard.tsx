@@ -24,7 +24,8 @@ import { ClubeTermsModal } from '@/components/afiliados/ClubeTermsModal';
 import { TERMS_VERSION } from '@/components/afiliados/clubeTerms';
 import PageTour from '@/components/tour/PageTour';
 import CalendarioComercialHub from '@/components/dashboard/CalendarioComercialHub';
-import { DASHBOARD_TOUR } from '@/tours/dashboardTour';
+import { DASHBOARD_TOUR, DASHBOARD_TAGS } from '@/tours/dashboardTour';
+import TourTagger from '@/tours/TourTagger';
 
 // dash-v11-noah-size
 type Periodo = 'today' | '7' | '30' | 'month' | 'custom';
@@ -598,7 +599,8 @@ export default function Dashboard() {
             <CalendarioComercialHub />
           </div>
         </div>
-        <PageTour tourKey="dashboard" steps={DASHBOARD_TOUR} />
+        <PageTour tourKey="dashboard-v2" steps={DASHBOARD_TOUR} />
+<TourTagger rules={DASHBOARD_TAGS} />
         {/* Clube + Academy */}
         <div className="mb-4">
           <h2 className="text-xl font-bold leading-tight text-slate-900">Para ir além, no seu tempo</h2>
