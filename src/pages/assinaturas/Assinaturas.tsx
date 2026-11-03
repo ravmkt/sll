@@ -1,4 +1,5 @@
 import BillingProfileCard from '@/components/billing/BillingProfileCard';
+import PaymentMethodCard from '@/components/billing/PaymentMethodCard';
 import InvoiceHistory from '@/components/billing/InvoiceHistory';
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -42,10 +43,11 @@ export default function Assinaturas() {
     load();
   }, [storeId]);
 
-  const totalMensalCents = subscriptions.reduce((acc, s) => {
-    if (s.status === "canceled" || !s.plan) return acc;
-    return acc + s.plan.price_cents;
-  }, 0);
+  const totalMensalCents = Math.round(subscriptions.reduce((acc, s) => {
+    if (s.status === "canceled" || s.status === "lifetime") return acc;
+    const months = s.billing_cycle === "yearly" ? 12 : s.billing_cycle === "semiannual" ? 6 : 1;
+    return acc + (s.price_cents + ((s as any).addons_cents ?? 0)) / months;
+  }, 0));
 
   if (loading) {
     return (
@@ -101,7 +103,7 @@ export default function Assinaturas() {
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 flex items-center justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-wider text-slate-400">Total consolidado mensal</p>
+                <p className="text-xs font-black uppercase tracking-wider text-slate-400">Equivalente mensal consolidado</p>
                 <p className="text-2xl font-black text-slate-900">
                   R$ {(totalMensalCents / 100).toFixed(2).replace(".", ",")}
                 </p>
@@ -112,7 +114,8 @@ export default function Assinaturas() {
             </div>
           </>
         )}
-              <BillingProfileCard />
+              <PaymentMethodCard />
+        <BillingProfileCard />
         <InvoiceHistory />
       </div>
     </DashboardLayout>
