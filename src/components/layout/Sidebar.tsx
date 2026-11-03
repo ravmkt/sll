@@ -34,7 +34,7 @@ const GROUPS: Group[] = [
     items: [
       { name: 'Insights do Noah', icon: Lightbulb, path: '/dashboard/dicas' },
   { name: 'Pedidos dos lojistas', icon: MessageSquarePlus, path: '/dashboard/pedidos-dos-lojistas' },
-      { name: 'Clube SLL (Indique e Ganhe)', icon: Crown, path: '/dashboard/afiliados' },
+      { name: 'Clube SLL', icon: Crown, path: '/dashboard/afiliados' },
     ],
   },
 ];
@@ -138,7 +138,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         {GROUPS.map(renderGroup)}
       </nav>
 
-      <div className="flex min-h-0 flex-1 items-center justify-center px-4">
+      <div className="flex min-h-0 flex-1 items-end justify-center px-4 pb-4">
         {hasTour && (
           <button
             type="button"
