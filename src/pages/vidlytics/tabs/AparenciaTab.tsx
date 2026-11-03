@@ -1,3 +1,5 @@
+import PageTour from '@/components/tour/PageTour';
+import { APARENCIA_TOUR } from '@/tours/vidlyticsTabsTours';
 import React, { useState } from 'react';
 import { Plus, Palette, Star, Pencil, Trash2, Eye } from 'lucide-react';
 import AparenciaModal from '../components/AparenciaModal';
@@ -109,6 +111,7 @@ const AparenciaTab: React.FC = () => {
 
   return (
     <div className="p-6 space-y-8">
+      <PageTour tourKey="vidlytics-aparencia" steps={APARENCIA_TOUR} />
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
@@ -126,14 +129,14 @@ const AparenciaTab: React.FC = () => {
       ) : (
         <>
           {/* SEÇÃO 1: SEUS ESTILOS */}
-          <section>
+          <section data-tour="ap-estilos">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">Seus Estilos</h3>
                 <p className="text-sm text-slate-500">Estilos criados e salvos por você.</p>
               </div>
               <button
-                onClick={openNewStyle}
+                data-tour="ap-novo" onClick={openNewStyle}
                 className="flex items-center gap-2 bg-[#0094eb] hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm text-sm"
               >
                 <Plus size={16} />
@@ -159,7 +162,7 @@ const AparenciaTab: React.FC = () => {
           </section>
 
           {/* SEÇÃO 2: TEMPLATES (Carrossel Horizontal com Mockups) */}
-          <section className="space-y-2">
+          <section data-tour="ap-templates" className="space-y-2">
             <div>
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">Templates</h3>
             </div>

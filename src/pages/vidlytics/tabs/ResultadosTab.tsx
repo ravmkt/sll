@@ -1,3 +1,6 @@
+import PageTour from '@/components/tour/PageTour';
+import TourTagger from '@/tours/TourTagger';
+import { RESULTADOS_TOUR, RESULTADOS_TAGS } from '@/tours/vidlyticsTabsTours';
 import MarketStudyModal from '@/components/vidlytics/MarketStudyModal';
 import InsightsPanel from '@/components/vidlytics/InsightsPanel';
 import VideoRetentionModal from '@/components/vidlytics/VideoRetentionModal';
@@ -372,7 +375,9 @@ export default function ResultadosTab() {
       {/* CABEÇALHO DA PÁGINA DE RESULTADOS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Resultados</h2>
+          <PageTour tourKey="vidlytics-resultados" steps={RESULTADOS_TOUR} />
+        <TourTagger rules={RESULTADOS_TAGS} />
+        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Resultados</h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Métricas reais de <strong className="text-[#0094eb] font-semibold">{nicho}</strong> comparadas aos benchmarks nacionais de 2026.
           </p>
@@ -445,7 +450,7 @@ export default function ResultadosTab() {
               <span className="text-[11px] text-slate-400 font-medium">Período: {formatDateBR(start)} a {formatDateBR(end)}</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div data-tour="rs-financeiro" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div data-card-tip="Pedidos iniciados a partir dos seus vídeos que ainda não tiveram o pagamento confirmado. Exige integração de pedidos." className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
@@ -509,7 +514,7 @@ export default function ResultadosTab() {
               {loading && <span className="text-[11px] text-slate-400 font-medium">Carregando...</span>}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div data-tour="rs-performance" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Visualizações */}
               <div data-card-tip="Quantas vezes os seus vídeos foram abertos e assistidos no período." className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div className="space-y-1">

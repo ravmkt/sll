@@ -1,3 +1,6 @@
+import PageTour from '@/components/tour/PageTour';
+import TourTagger from '@/tours/TourTagger';
+import { BIBLIOTECA_TOUR, BIBLIOTECA_TAGS } from '@/tours/vidlyticsTabsTours';
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Search,
@@ -1046,13 +1049,15 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       {/* Topo com Ações */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Biblioteca</h1>
+          <PageTour tourKey="vidlytics-biblioteca" steps={BIBLIOTECA_TOUR} />
+        <TourTagger rules={BIBLIOTECA_TAGS} />
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Biblioteca</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             Gerencie os vídeos e imagens hospedados no seu plano e monitore o consumo de espaço.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full xl:w-auto xl:flex-shrink-0">
+        <div data-tour="bi-acoes" className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full xl:w-auto xl:flex-shrink-0">
           <button
             type="button"
             className="h-10 w-full xl:w-[140px] px-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 hover:border-slate-300 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition whitespace-nowrap cursor-pointer"
@@ -1148,7 +1153,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Pesquisar pelo nome do arquivo..."
+            data-tour="bi-pesquisa" placeholder="Pesquisar pelo nome do arquivo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-11 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] placeholder:text-slate-400"

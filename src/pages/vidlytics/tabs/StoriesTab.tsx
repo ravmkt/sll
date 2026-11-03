@@ -1,3 +1,5 @@
+import PageTour from '@/components/tour/PageTour';
+import { STORIES_TOUR } from '@/tours/vidlyticsTabsTours';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Eye, Pencil, Trash2, Send, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { useLoja } from '../../../contexts/LojaContext';
@@ -172,7 +174,8 @@ export default function StoriesTab() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
+      <PageTour tourKey="vidlytics-stories" steps={STORIES_TOUR} />
+        {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Stories</h2>
@@ -181,7 +184,7 @@ export default function StoriesTab() {
           </p>
         </div>
         <button
-          onClick={handleNewStory}
+          data-tour="st-novo" onClick={handleNewStory}
           className="flex items-center gap-2 rounded-xl bg-[#0094EB] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#0080cb] transition"
         >
           <Plus size={18} />
@@ -190,7 +193,7 @@ export default function StoriesTab() {
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+      <div data-tour="st-filtros" className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -228,7 +231,7 @@ export default function StoriesTab() {
       )}
 
       {/* Tabela de Stories */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+      <div data-tour="st-tabela" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <div>
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="border-b border-slate-100 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">

@@ -1,3 +1,6 @@
+import PageTour from '@/components/tour/PageTour';
+import TourTagger from '@/tours/TourTagger';
+import { COMENTARIOS_TOUR, COMENTARIOS_TAGS } from '@/tours/vidlyticsTabsTours';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ShieldCheck,
@@ -311,7 +314,9 @@ export const ComentariosTab: React.FC = () => {
 
   return (
     <div className="space-y-5 relative">
-      {/* Toasts */}
+      <PageTour tourKey="vidlytics-comentarios" steps={COMENTARIOS_TOUR} />
+        <TourTagger rules={COMENTARIOS_TAGS} />
+        {/* Toasts */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {toasts.map((toast) => (
           <div
@@ -335,7 +340,7 @@ export const ComentariosTab: React.FC = () => {
       </div>
 
       {/* Cards superiores */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div data-tour="co-resumo" className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center gap-2.5 mb-3">
             <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#0094eb] flex items-center justify-center shrink-0">
@@ -399,7 +404,7 @@ export const ComentariosTab: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+          <div data-tour="co-filtros" className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
             <div className="sm:col-span-6 relative">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
