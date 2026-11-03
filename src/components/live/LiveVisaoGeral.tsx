@@ -109,7 +109,7 @@ function Tip({ text, children }: { text?: string; children: React.ReactElement }
   );
 }
 
-function Stat(props: { label: string; value: string; sub: string; icon: React.ElementType; tone: string; badge?: string; tip?: string; children?: React.ReactNode }) {
+function Stat(props: { label: string; value: string; sub: string; icon: React.ElementType; tone: string; badge?: string; tip?: string; footer?: React.ReactNode; children?: React.ReactNode }) {
   const Icon = props.icon;
   return (
     <Tip text={props.tip}><div className={card}>
@@ -127,6 +127,7 @@ function Stat(props: { label: string; value: string; sub: string; icon: React.El
           <Icon size={18} />
         </div>
       </div>
+      {props.footer && <div className="mt-3 flex justify-end">{props.footer}</div>}
     </div></Tip>
   );
 }
@@ -408,9 +409,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
           <div className="grid gap-4 md:grid-cols-3">
             <Stat label="Aguardando pagamento" badge={`${pendingOrders} pedidos`} value={brl(pendingRevenue)} sub="Pix / Boleto em live" icon={Hourglass} tone="bg-red-50 text-[#DC2626]" tip={"Pedidos gerados nas lives (Pix ou boleto) que ainda aguardam a confirma\u00e7\u00e3o do pagamento."} />
             <Stat label="Vendas pagas" badge={`${paidOrders} pedidos`} value={brl(paidRevenue)} sub="Faturamento aprovado" icon={CheckCircle2} tone="bg-red-50 text-[#DC2626]" tip={"Pedidos das lives com pagamento aprovado no per\u00edodo selecionado."} />
-            <Stat label="Faturamento indicações" badge="Comissões" value={brl(0)} sub="" icon={DollarSign} tone="bg-red-50 text-[#DC2626]" tip={"Comiss\u00f5es recebidas de lojistas que voc\u00ea indicou pelo Clube SLL."}>
-              <div className="mt-3 flex w-full justify-end"><button type="button" onClick={() => navigate(CLUBE_PATH)} className="cursor-pointer text-xs font-bold text-[#DC2626] hover:underline">Acessar o Clube SLL &rarr;</button></div>
-            </Stat>
+            <Stat label="Faturamento indicações" badge="Comissões" value={brl(0)} sub="" icon={DollarSign} tone="bg-red-50 text-[#DC2626]" tip={"Comiss\u00f5es recebidas de lojistas que voc\u00ea indicou pelo Clube SLL."} footer={<button type="button" onClick={() => navigate(CLUBE_PATH)} className="cursor-pointer text-xs font-bold text-[#DC2626] hover:underline">Acessar o Clube SLL &rarr;</button>} />
           </div>
         </div>
 
