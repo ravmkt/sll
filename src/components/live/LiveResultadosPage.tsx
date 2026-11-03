@@ -112,7 +112,7 @@ function Kpi({ icon, label, value, tone }: { icon: React.ReactNode; label: strin
 type SortKey = 'title' | 'date' | 'peak' | 'views' | 'clicks' | 'orders' | 'revenue' | 'ticket';
 
 const RESULTADOS_TOUR: TourStep[] = [
-  { element: '[data-tour="resultados-periodo"]', title: 'Per\u00edodo', description: 'Escolha 7, 30, 90 dias ou tudo. Todos os n\u00fameros da p\u00e1gina seguem esse filtro.', side: 'bottom' },
+  { element: '[data-tour="resultados-periodo"]', title: 'Per\u00edodo', description: 'Escolha o per\u00edodo desejado. Todos os n\u00fameros da p\u00e1gina seguem esse filtro.', side: 'bottom' },
   { element: '[data-tour="resultados-kpis"]', title: 'Indicadores', description: 'Faturamento das lives, pedidos aprovados, pico de audi\u00eancia e cliques em produtos.', side: 'bottom' },
   { element: '[data-tour="resultados-grafico"]', title: 'Evolu\u00e7\u00e3o', description: 'Compare vendas e visualiza\u00e7\u00f5es dia a dia. Clique nas etiquetas para mostrar ou ocultar cada s\u00e9rie.', side: 'top' },
   { element: '[data-tour="resultados-tabela"]', title: 'Desempenho por live', description: 'Clique nos t\u00edtulos das colunas para ordenar e descobrir suas melhores lives.', side: 'top' },
