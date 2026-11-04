@@ -236,7 +236,9 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-        {PURPOSES.map((p) => {
+        {[['support', 'feedback'], ['insights', 'benchmarks']].map((keys, ci) => (
+        <div key={ci} className="space-y-4">
+        {PURPOSES.filter((p) => keys.includes(p.key)).map((p) => {
           const d = draft[p.key];
           if (!d) return null;
           const u = byPurpose[p.key];
@@ -306,6 +308,8 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
             </section>
           );
         })}
+        </div>
+        ))}
       </div>
 
       <AiLimitsCard />
