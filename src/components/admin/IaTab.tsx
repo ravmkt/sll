@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useFxRate } from '../../hooks/admin/useFxRate';
 import AiLimitsCard from '@/components/admin/AiLimitsCard';
+import BenchmarkUpdateCard from '@/components/admin/BenchmarkUpdateCard';
 
 const sb: any = supabase;
 
@@ -234,7 +235,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         {PURPOSES.map((p) => {
           const d = draft[p.key];
           if (!d) return null;
@@ -290,6 +291,8 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
                   {"Usar busca na web"}
                 </label>
               )}
+
+              {p.key === 'benchmarks' && <BenchmarkUpdateCard />}
 
               <div className="flex items-center justify-between border-t border-white/10 pt-3">
                 <p className="text-xs text-slate-400">

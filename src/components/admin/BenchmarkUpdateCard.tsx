@@ -16,7 +16,6 @@ type Result = {
   unchanged: string[];
   quota_exceeded?: boolean;
 };
-type Cfg = { model: string; use_web_search: boolean; enabled: boolean };
 
 function nextAuto(): Date {
   const n = Date.now();
@@ -30,7 +29,7 @@ export default function BenchmarkUpdateCard() {
   const [count, setCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
-  const [cfg, setCfg] = useState<Cfg | null>(null);
+  const [enabled, setEnabled] = useState(true);
   const [progress, setProgress] = useState('');
 
   const load = useCallback(async () => {
@@ -41,17 +40,12 @@ export default function BenchmarkUpdateCard() {
   }, []);
 
   const loadCfg = useCallback(async () => {
-    const { data } = await sb
-      .from('admin_ai_settings')
-      .select('model, use_web_search, enabled')
-      .eq('purpose', 'benchmarks')
-      .maybeSingle();
-    if (data) setCfg({ model: data.model, use_web_search: !!data.use_web_search, enabled: !!data.enabled });
+    const { data } = await sb.from('admin_ai_settings').select('enabled').eq('purpose', 'benchmarks').maybeSingle();
+    if (data) setEnabled(!!data.enabled);
   }, []);
 
   useEffect(() => { void load(); void loadCfg(); }, [load, loadCfg]);
 
-  const enabled = cfg ? cfg.enabled : true;
   const next = nextAuto();
 
   const run = async (dry = false) => {
@@ -124,43 +118,36 @@ export default function BenchmarkUpdateCard() {
   const issues = result ? [...result.failed, ...result.rejected] : [];
 
   return (
-    <section className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-100">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h3 className="text-base font-extrabold">Benchmarks de mercado por setor</h3>
-          <p className="mt-0.5 text-xs text-slate-400">
-            {count} {count === 1 ? 'setor' : 'setores'} {'\u00b7'} {'\u00fa'}ltima atualiza{'\u00e7\u00e3'}o: {last ? new Date(last).toLocaleString('pt-BR') : 'nunca'}
-          </p>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
-            <CalendarClock className="h-3.5 w-3.5" />
-            {'Pr\u00f3xima atualiza\u00e7\u00e3o autom\u00e1tica: ' + next.toLocaleDateString('pt-BR') + ' \u00e0s 06:00 (Bras\u00edlia)'}
-          </p>
-          {cfg && (
-            <p className="mt-1 text-[11px] text-slate-500">
-              {'IA: ' + cfg.model + ' \u00b7 busca na web: ' + (cfg.use_web_search ? 'sim' : 'n\u00e3o') + ' \u00b7 ajuste o modelo no cart\u00e3o Benchmarks de mercado acima.'}
-            </p>
-          )}
-          {!enabled && <p className="mt-1 text-[12px] font-bold text-amber-300">{'A IA de benchmarks est\u00e1 desligada. Ligue no cart\u00e3o acima para atualizar.'}</p>}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={busy || !enabled}
-            onClick={() => void run(false)}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
-          >
-            {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-            {busy ? (progress || 'Pesquisando na web...') : 'Atualizar Benchmarks via IA'}
-          </button>
-          <button
-            type="button"
-            disabled={busy || !enabled}
-            onClick={() => void run(true)}
-            className="cursor-pointer rounded-lg border border-slate-600 px-4 py-2 text-[13px] font-bold text-slate-200 hover:bg-white/10 disabled:opacity-40"
-          >
-            Simular (sem gravar)
-          </button>
-        </div>
+    <div className="space-y-3 border-t border-white/10 pt-3">
+      <div className="space-y-1 text-xs text-slate-400">
+        <p>
+          {count} {count === 1 ? 'setor' : 'setores'} {'\u00b7'} {'\u00fa'}ltima atualiza{'\u00e7\u00e3'}o: {last ? new Date(last).toLocaleString('pt-BR') : 'nunca'}
+        </p>
+        <p className="flex items-center gap-1.5">
+          <CalendarClock className="h-3.5 w-3.5" />
+          {'Pr\u00f3xima atualiza\u00e7\u00e3o autom\u00e1tica: ' + next.toLocaleDateString('pt-BR') + ' \u00e0s 06:00 (Bras\u00edlia)'}
+        </p>
+        {!enabled && <p className="font-bold text-amber-300">{'A IA de benchmarks est\u00e1 desligada. Ligue e salve acima para atualizar.'}</p>}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={busy || !enabled}
+          onClick={() => void run(false)}
+          className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+        >
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+          {busy ? (progress || 'Pesquisando na web...') : 'Atualizar Benchmarks via IA'}
+        </button>
+        <button
+          type="button"
+          disabled={busy || !enabled}
+          onClick={() => void run(true)}
+          className="cursor-pointer rounded-lg border border-slate-600 px-4 py-2 text-[13px] font-bold text-slate-200 hover:bg-white/10 disabled:opacity-40"
+        >
+          Simular (sem gravar)
+        </button>
       </div>
 
       {result && (
@@ -180,6 +167,6 @@ export default function BenchmarkUpdateCard() {
           )}
         </div>
       )}
-    </section>
+    </div>
   );
 }
