@@ -9,7 +9,6 @@ import FxRateCard from '@/components/admin/FxRateCard';
 import LojasTab from '@/components/admin/LojasTab';
 import MarketingTab from '@/components/admin/MarketingTab';
 import NoahPage from '@/components/admin/NoahPage'; import SaquesTab from '@/components/admin/SaquesTab';
-import BenchmarkUpdateCard from '@/components/admin/BenchmarkUpdateCard';
 
 export default function AdminMasterPage() {
   const [, setParams] = useSearchParams();
@@ -39,9 +38,7 @@ export default function AdminMasterPage() {
       ) : tab === 'modulos' ? (
         <ModulosTab onOpenPlans={(slug) => { setPlanModule(slug); setTab('precos'); }} onOpenStore={(id) => { setParams({ tab: 'lojas', loja: id }); setTab('lojas'); }} />
       ) : (
-        <div className="space-y-5">
-          <BenchmarkUpdateCard />
-        </div>
+        <p className="text-sm text-slate-500">Esta aba foi movida para IA &amp; Suporte Noah.</p>
       )}
     </MasterLayout>
   );

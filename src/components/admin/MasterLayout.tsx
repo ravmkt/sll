@@ -1,7 +1,7 @@
 import type { ElementType, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFxRate } from '../../hooks/admin/useFxRate';
-import { Bot, ArrowLeft, Layers, LayoutDashboard, Lightbulb, Megaphone, ShieldCheck, Store, Tag, Wallet } from 'lucide-react';
+import { Bot, ArrowLeft, Layers, LayoutDashboard, Megaphone, ShieldCheck, Store, Tag, Wallet } from 'lucide-react';
 
 export type MasterTab = 'dashboard' | 'lojas' | 'modulos' | 'precos' | 'marketing' | 'insights' | 'noah' | 'saques';
 
@@ -11,7 +11,6 @@ const ITEMS: { id: MasterTab; label: string; icon: ElementType }[] = [
   { id: 'modulos', label: 'Módulos', icon: Layers },
   { id: 'precos', label: 'Preços', icon: Tag },
   { id: 'marketing', label: 'Marketing', icon: Megaphone },
-  { id: 'insights', label: 'Insights', icon: Lightbulb },
   { id: 'noah', label: 'IA & Suporte Noah', icon: Bot }, { id: 'saques', label: 'Saques', icon: Wallet },
 ];
 

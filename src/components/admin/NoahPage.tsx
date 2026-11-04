@@ -3,6 +3,7 @@ import { LifeBuoy } from 'lucide-react';
 import NoahSupportTab from '@/components/master/NoahSupportTab';
 import NoahUsageTab from '@/components/admin/NoahUsageTab';
 import IaTab from '@/components/admin/IaTab';
+import BenchmarkUpdateCard from '@/components/admin/BenchmarkUpdateCard';
 
 type Preset = 'today' | '7' | '15' | '30' | '90' | 'month' | 'custom';
 
@@ -76,6 +77,7 @@ export default function NoahPage() {
       <NoahSupportTab range={range} />
       <div className="mt-8"><NoahUsageTab range={range} /></div>
       <div className="mt-8"><IaTab range={range} /></div>
+      <div className="mt-6"><BenchmarkUpdateCard /></div>
     </div>
   );
 }

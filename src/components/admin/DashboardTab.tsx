@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { BenchmarkAlertItems, useBenchmarkAlerts } from '@/components/admin/BenchmarkAlerts';
 import type { ElementType } from 'react';
 import {
   Area, AreaChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -327,11 +328,12 @@ const s = data?.stores;
   const aiNear: AlertRow[] = withPlan
     .filter((r) => r.credits_used / r.credits_total >= 0.9)
     .map((r) => ({ id: r.store_id, name: creditNames[r.store_id] ?? 'Loja', what: 'Noah IA', pct: Math.min(100, Math.round((r.credits_used / r.credits_total) * 100)) }));
+  const bmAlerts = useBenchmarkAlerts();
   const nearLimit = [...(health?.alerts.near_limit ?? []), ...aiNear];
   const pastDue = health?.alerts.past_due ?? [];
   const noScript = health?.alerts.no_script ?? [];
-  const totalAlerts = health ? nearLimit.length + pastDue.length + noScript.length : 0;
-  const critical = pastDue.length > 0;
+  const totalAlerts = (health ? nearLimit.length + pastDue.length + noScript.length : 0) + bmAlerts.length;
+  const critical = pastDue.length > 0 || bmAlerts.some((a) => a.level === 'critical');
   const conv = health && health.trial_ended > 0 ? Math.round((health.trial_converted / health.trial_ended) * 100) : null;
   const monthly = (new Date(range.end).getTime() - new Date(range.start).getTime()) / 86400000 > 62;
   const series = origin.map((r) => ({
@@ -389,6 +391,7 @@ const s = data?.stores;
             ? <span className={`rounded-full px-2.5 py-0.5 text-xs font-black ${critical ? 'bg-rose-500 text-white' : 'bg-amber-500 text-black'}`}>{totalAlerts} PONTO(S) PEDEM ATENÇÃO</span>
             : <span className="text-[13px] text-emerald-400">Tudo certo por aqui</span>)}
         </div>
+              <BenchmarkAlertItems items={bmAlerts} />
         {healthErr ? (
           <p className="text-[13px] text-rose-300">Não foi possível carregar os alertas: {healthErr}</p>
         ) : !health ? (
