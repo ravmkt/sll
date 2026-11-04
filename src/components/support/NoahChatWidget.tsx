@@ -1,12 +1,14 @@
 import { getModuleAppEnabled } from '@/services/moduleAppService';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { Loader2, MessageCircle, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { buildSupportUrl } from '@/config/support';
 import { submitVote } from '@/services/feedback';
+import NoahPackModal from '@/components/billing/NoahPackModal';
 
 const sb: any = supabase;
 
@@ -24,11 +26,6 @@ const HIDDEN_ON = ['/admin-master', '/dashboard/onboarding', '/auth'];
 const GREETING = 'Olá! Sou o Noah, assistente do SLL Hub. Como posso te ajudar agora?';
 const FALLBACK = 'Não consegui responder agora. Tente de novo em instantes ou chame nosso time no WhatsApp.';
 const MAX_LEN = 500;
-const DEFAULT_ACTIONS = [
-  { type: 'upgrade', label: 'Fazer upgrade de plano', href: '/dashboard/assinaturas' },
-  { type: 'recharge', label: 'Comprar pacote extra', href: '/dashboard/assinaturas?addon=ai_messages' },
-];
-
 function Avatar({ size, className = '' }: { size: number; className?: string }) {
   const [failed, setFailed] = useState(false);
   if (failed) {
@@ -97,7 +94,6 @@ function waUrl(cfg: any, name?: string | null, id?: string | null): string {
 
 export default function NoahChatWidget() {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   const { store, storeId } = useLoja() as { store: any; storeId: string | null };
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([{ role: 'assistant', content: GREETING }]);
@@ -107,6 +103,7 @@ export default function NoahChatWidget() {
   const [appStatus, setAppStatus] = useState<boolean | undefined>(undefined);
   const [cfg, setCfg] = useState<any>(null);
   const [limitHit, setLimitHit] = useState(false);
+  const [packOpen, setPackOpen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -214,15 +211,11 @@ export default function NoahChatWidget() {
               >
                 {m.animate ? <Typewriter text={m.content} onTick={scrollDown} /> : m.role === 'assistant' ? <Md text={m.content} /> : m.content}
                 {m.cta === 'limit' && (
-                  <div className="mt-2 flex flex-col gap-1.5">
-                    {[...(m.actions?.length ? m.actions : DEFAULT_ACTIONS), { type: 'whatsapp', label: 'Continuar no WhatsApp (atendimento humano)', href: whatsapp }].map((a, k) => (
-                      <button key={a.type} type="button" onClick={() => { if (a.type === 'whatsapp') { window.open(a.href, '_blank', 'noopener,noreferrer'); return; } setOpen(false); navigate(a.href); }}
-                        className={a.type === 'whatsapp' ? 'cursor-pointer rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600' : k === 0
-                          ? 'cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#007fcc]'
-                          : 'cursor-pointer rounded-lg border border-[#0094eb] px-3 py-1.5 text-xs font-semibold text-[#0094eb] hover:bg-sky-50'}>
-                        {a.label}
-                      </button>
-                    ))}
+                  <div className="mt-2">
+                    <button type="button" onClick={() => setPackOpen(true)}
+                      className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-3 py-2 text-xs font-semibold text-white hover:bg-[#007fcc]">
+                      Fazer upgrade de plano
+                    </button>
                   </div>
                 )}
                 {m.id && (
@@ -306,6 +299,12 @@ export default function NoahChatWidget() {
           {waMode ? <WaIcon /> : open ? <X className="h-3 w-3" /> : <MessageCircle className="h-3 w-3" />}
         </span>
       </button>
+    {packOpen && storeId && createPortal(
+        <div className="relative z-[100]">
+          <NoahPackModal storeId={storeId} onClose={() => setPackOpen(false)} />
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
