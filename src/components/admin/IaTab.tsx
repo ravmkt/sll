@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useFxRate } from '../../hooks/admin/useFxRate';
+import AiLimitsCard from '@/components/admin/AiLimitsCard';
 
 const sb: any = supabase;
 
@@ -304,6 +305,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
         })}
       </div>
 
+      <AiLimitsCard />
       <section className={CARD + ' space-y-3'}>
         <h3 className="text-base font-extrabold">{"Custo por loja"}</h3>
         {usageErr && (

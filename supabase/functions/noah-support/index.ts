@@ -132,6 +132,22 @@ Deno.serve(async (req) => {
   const free = freeReply(lastText);
   if (free) return json({ reply: free, free: true });
 
+  // Limite diario por loja (configurado no Master, aba IA). 0 ou vazio = sem limite.
+  const { data: lim } = await admin.from("admin_ai_settings").select("daily_limit_per_store").eq("purpose", "support").maybeSingle();
+  const dailyLimit = Number(lim?.daily_limit_per_store ?? 0);
+  if (dailyLimit > 0) {
+    const dayStart = new Date(`${new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" })}T00:00:00-03:00`).toISOString();
+    const { count } = await admin.schema("noah").from("usage_log")
+      .select("*", { count: "exact", head: true })
+      .eq("store_id", storeId).eq("purpose", "support").gte("created_at", dayStart);
+    if ((count ?? 0) >= dailyLimit) {
+      return json({
+        reply: "Voc\u00ea atingiu o limite de perguntas do Noah por hoje. Volte amanh\u00e3 ou fale agora com nosso time pelo **Chamar no WhatsApp**, no bot\u00e3o abaixo do chat.",
+        limit_reached: true, reason: "daily_limit", actions: [],
+      });
+    }
+  }
+
   // Trava de credito (atomica)
   const { data: credit, error: creditErr } = await admin.rpc("noah_consume_credit", { p_store_id: storeId });
   if (creditErr || !credit) {
