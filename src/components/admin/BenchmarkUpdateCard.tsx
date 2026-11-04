@@ -89,16 +89,38 @@ export default function BenchmarkUpdateCard() {
 
   const run = async (dry = false) => { /* SLL-RODADAS */
     setBusy(true);
-    const LIMIT = 2;
+    const LIMIT = 1;
+    const PAUSE_S = 10;
+    const RETRY_WAIT_S = 60;
+    const MAX_RETRY = 2;
+    const wait = async (s: number, label: string) => {
+      for (let i = s; i > 0; i--) {
+        setProgress(`${label} ${i}s...`);
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    };
     const acc: any = { updated: 0, unchanged: [], failed: [], rejected: [], quota_exceeded: false, dry_run: dry, year: new Date().getFullYear(), models: [], web_search: false, updated_at: new Date().toISOString() };
     try {
       let offset = 0;
       let total = 0;
       for (let round = 1; round <= 20; round++) {
-        setProgress(`Rodada ${round}${total ? ` de ${Math.ceil(total / LIMIT)}` : ''}...`);
-        const { data, error } = await sb.functions.invoke('update-sector-benchmarks', { body: { offset, limit: LIMIT, ...(dry ? { dry_run: true } : {}) } });
-        if (error || data?.error) {
-          acc.failed.push({ sector: `Rodada ${round}`, reason: data?.error || error?.message || 'Falha na chamada.' });
+        const tag = `Rodada ${round}${total ? ` de ${Math.ceil(total / LIMIT)}` : ''}`;
+        let data: any = null;
+        let callError = '';
+        for (let attempt = 0; attempt <= MAX_RETRY; attempt++) {
+          setProgress(`${tag}${attempt ? ` (tentativa ${attempt + 1})` : ''}...`);
+          const res = await sb.functions.invoke('update-sector-benchmarks', { body: { offset, limit: LIMIT, ...(dry ? { dry_run: true } : {}) } });
+          if (res.error || res.data?.error) {
+            callError = res.data?.error || res.error?.message || 'Falha na chamada.';
+            data = null;
+            break;
+          }
+          data = res.data;
+          if (!data.quota_exceeded) break;
+          if (attempt < MAX_RETRY) await wait(RETRY_WAIT_S, `${tag}: cota atingida, aguardando`);
+        }
+        if (!data) {
+          acc.failed.push({ sector: `Rodada ${round}`, reason: callError });
           break;
         }
         acc.updated += data.updated ?? 0;
@@ -113,13 +135,14 @@ export default function BenchmarkUpdateCard() {
         const next = data.next_offset ?? (total && offset + LIMIT < total ? offset + LIMIT : null);
         if (next == null || next <= offset) break;
         offset = next;
+        await wait(PAUSE_S, `${tag} conclu\u00edda. Pr\u00f3xima em`);
       }
       const label = dry ? 'simulados' : 'atualizados';
       acc.summary = acc.quota_exceeded && acc.updated === 0
         ? 'A cota do Gemini foi excedida (429).'
         : `Benchmarks ${acc.year} ${label}: ${acc.updated} de ${total || '?'} setores.`;
       setResult(acc as Result);
-      if (acc.quota_exceeded) toast.error('Cota do Gemini excedida (429).');
+      if (acc.quota_exceeded) toast.error('Cota do Gemini excedida (429) mesmo ap\u00f3s novas tentativas.');
       else if (dry) toast.success(`Simula\u00e7\u00e3o: ${acc.updated} setores teriam sido atualizados. Nada foi gravado.`);
       else if (acc.updated > 0) toast.success(`Benchmarks atualizados: ${acc.updated} setores.`);
       else toast.warning('Nenhum setor foi atualizado.');
