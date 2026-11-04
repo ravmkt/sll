@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAi } from "../_shared/ai.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -219,60 +220,43 @@ Deno.serve(async (req) => {
     const system = docs.length
       ? `${baseSystem}\n\nDOCUMENTAÇÃO DE SUPORTE (fonte de verdade; se conflitar com as regras acima, esta prevalece)\n${docs.join("\n\n---\n")}`
       : baseSystem;
-    const MODELS = [...new Set([cfg?.model || MODEL, "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview", "gemini-3.7-flash", "gemini-flash-latest"])];
-    let data: any = null;
-    let usedModel = "";
-    for (const m of MODELS) {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents: contents.map((x) => ({ role: x.role, parts: [{ text: x.text }] })),
-          generationConfig: { temperature: 0.4, maxOutputTokens: 1500, thinkingConfig: { thinkingBudget: 0 } },
-        }),
+    let ai: Awaited<ReturnType<typeof callAi>>;
+    try {
+      ai = await callAi({
+        purpose: "support",
+        storeId,
+        source: "noah-support",
+        model: cfg?.model || MODEL,
+        system,
+        contents: contents.map((x) => ({ role: x.role as "user" | "model", text: x.text })),
+        temperature: 0.4,
+        maxOutputTokens: 1500,
+        thinkingBudget: 0,
       });
-      if (res.ok) {
-        data = await res.json().catch(() => null);
-        if (data) { usedModel = m; break; }
-        continue;
-      }
-      console.error("noah-support gemini", m, res.status, (await res.text()).slice(0, 300));
-      if (res.status === 400 || res.status === 404 || res.status === 429 || res.status >= 500) continue;
-      break;
+    } catch (e) {
+      console.error("noah-support ai", (e as Error).message);
+      await refund();
+      return json({ error: "IA_INDISPONIVEL" }, 502);
     }
-    if (!data) { await refund(); return json({ error: "IA_INDISPONIVEL" }, 502); }
 
-    const reply = String(data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text ?? "").join("") ?? "").trim();
+    const reply = ai.text.trim();
     if (!reply) { await refund(); return json({ error: "IA_VAZIA" }, 502); }
-    const finish = String(data?.candidates?.[0]?.finishReason ?? "");
+    const finish = ai.finishReason;
     const truncated = finish === "MAX_TOKENS";
-    if (truncated) console.warn("noah-support truncated", usedModel, storeId);
+    if (truncated) console.warn("noah-support truncated", ai.model, storeId);
     const replyOut = truncated ? reply + "\n\n(Resposta longa. Envie \"continue\" para ver o restante.)" : reply;
 
-    const usage = data?.usageMetadata ?? {};
-    const pt = Number(usage.promptTokenCount ?? 0);
-    const tt = Number(usage.totalTokenCount ?? 0);
-    const ct = tt > pt ? tt - pt : Number(usage.candidatesTokenCount ?? 0);
+    // noah_logs fica so com a pergunta e o motivo de termino; o custo vai para noah.usage_log dentro do callAi
     const { error: logErr } = await admin.from("noah_logs").insert({
       store_id: storeId,
-      model: usedModel,
-      prompt_tokens: pt,
-      completion_tokens: ct,
-      total_tokens: tt || pt + ct,
+      model: ai.model,
+      prompt_tokens: ai.promptTokens,
+      completion_tokens: ai.completionTokens,
+      total_tokens: ai.totalTokens,
       user_message: lastText.slice(0, 500),
       finish_reason: finish || null,
     });
     if (logErr) console.error("noah_logs", logErr.message);
-    const { error: usageErr } = await admin.schema("noah").rpc("log_usage", {
-      p_store_id: storeId,
-      p_purpose: "support",
-      p_model: usedModel,
-      p_prompt: pt,
-      p_completion: ct,
-      p_source: "noah-support",
-    });
-    if (usageErr) console.error("noah.log_usage", usageErr.message);
 
     return json({
       reply: replyOut,

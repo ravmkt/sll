@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAi } from "../_shared/ai.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -6,7 +7,7 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const INTERNAL_SECRET = Deno.env.get("INTERNAL_TEST_SECRET") ?? "";
 const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const API = "https://generativelanguage.googleapis.com/v1beta";
-const DEFAULT_MODELS = ["gemini-flash-latest", "gemini-3.1-flash-lite"];
+const DEFAULT_MODELS = ["gemini-2.5-flash", "gemini-3.1-flash-lite"];
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -76,44 +77,26 @@ async function listGeminiModels(): Promise<{ ok: boolean; status: number; models
 }
 
 async function askGemini(prompt: string, ctx: Ctx) {
-  const errs: string[] = [];
-  for (const m of ctx.models) {
-    if (ctx.quota) { errs.push("cota do Gemini excedida (429)"); break; }
-    if (Date.now() - ctx.start > 110000) { errs.push("prazo global excedido"); break; }
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 35000);
-    try {
-      const res = await fetch(`${API}/models/${m}:generateContent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY },
-        signal: ctrl.signal,
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          ...(ctx.search ? { tools: [{ google_search: {} }] } : {}),
-          generationConfig: { temperature: 0.1 },
-        }),
-      });
-      if (!res.ok) {
-        errs.push(`${m} ${res.status} ${(await res.text()).replace(/\s+/g, " ").slice(0, 140)}`);
-        if (res.status === 429) { ctx.quota = true; break; }
-        continue;
-      }
-      const j = await res.json();
-      const cand = j?.candidates?.[0];
-      const text = (cand?.content?.parts ?? []).map((p: any) => p?.text ?? "").join("");
-      const sources = ((cand?.groundingMetadata?.groundingChunks ?? []) as any[])
-        .map((ch) => String(ch?.web?.title ?? "").trim())
-        .filter(Boolean);
-      return { text, sources: [...new Set(sources)], model: m };
-    } catch (e) {
-      errs.push(`${m} ${(e as Error).message}`);
-    } finally {
-      clearTimeout(timer);
-    }
+  if (ctx.quota) throw new Error("Gemini falhou: cota do Gemini excedida (429)");
+  try {
+    const r = await callAi({
+      purpose: "benchmarks",
+      storeId: null,
+      source: "update-sector-benchmarks",
+      models: ctx.models,
+      search: ctx.search,
+      prompt,
+      temperature: 0.1,
+      timeoutMs: 35000,
+      deadline: ctx.start + 110000,
+      stopOnQuota: true,
+    });
+    return { text: r.text, sources: r.sources, model: r.model };
+  } catch (e) {
+    if ((e as any)?.quota) ctx.quota = true;
+    throw new Error(`Gemini falhou: ${(e as Error).message}`);
   }
-  throw new Error(`Gemini falhou: ${errs.join(" | ")}`);
 }
-
 async function processSector(s: any, cur: Row | undefined, year: number, nowIso: string, ctx: Ctx) {
   const rejected: { sector: string; reason: string }[] = [];
   let ans;
