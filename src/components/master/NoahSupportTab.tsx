@@ -124,11 +124,11 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
   const [rows, setRows] = useState<Row[]>([]);
   const [models, setModels] = useState<ModelRow[]>([]);
   const [cfg, setCfg] = useState<Settings | null>(null);
-  const [form, setForm] = useState<Settings | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Partial<Item> | null>(null);
   const [saving, setSaving] = useState(false);
-  const [savingCfg, setSavingCfg] = useState(false);
+
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [storesOpen, setStoresOpen] = useState(false);
   const [nm, setNm] = useState({ model: '', inUsd: '', outUsd: '' });
@@ -153,7 +153,6 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
     else if (s.data) {
       const d = { ...s.data, usd_brl: Number(s.data.usd_brl) } as Settings;
       setCfg(d);
-      setForm((f) => f ?? d);
     }
     setLoading(false);
   }, [range]);
@@ -182,22 +181,6 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
     return s;
   }, [rows, cost]);
   const unpriced = rows.filter((r) => !priceMap.has(r.model)).map((r) => r.model);
-
-  const saveCfg = async () => {
-    if (!form) return;
-    const num = form.whatsapp_number.replace(/\D/g, '');
-    if (num.length < 10) return showError('Informe o WhatsApp com DDI e DDD.');
-    setSavingCfg(true);
-    const { error } = await sb.from('noah_settings').update({
-      whatsapp_number: num,
-      whatsapp_message: form.whatsapp_message.trim(),
-      usd_brl: Number(form.usd_brl) > 0 ? Number(form.usd_brl) : 5.5,
-    }).eq('id', 1);
-    setSavingCfg(false);
-    if (error) return showError(error.message);
-    showSuccess('Configurações salvas.');
-    void load();
-  };
 
   const updatePrice = async (model: string, field: 'input_usd' | 'output_usd', v: string) => {
     const num = Number(v.replace(',', '.'));
@@ -356,30 +339,6 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
           <button type="button" onClick={() => setStoresOpen(true)} className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-white hover:bg-white/5">
             <Store className="h-4 w-4 text-[#0094eb]" /> Ver consumo por lojas
           </button>
-
-          {form && (
-            <div className={`${card} space-y-4`}>
-              
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                
-                <div>
-                  <label className={label}>WhatsApp (DDI + DDD + número)</label>
-                  <input className={`${input} mt-1`} value={form.whatsapp_number} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} />
-                </div>
-                <div>
-                  <label className={label}>Cotação reserva (R$ por US$)</label>
-                  <input className={`${input} mt-1`} defaultValue={form.usd_brl} onBlur={(e) => setForm({ ...form, usd_brl: Number(e.target.value.replace(',', '.')) || 5.5 })} />
-                </div>
-              </div>
-              <div>
-                <label className={label}>Mensagem do WhatsApp (use {'{loja}'} e {'{id}'})</label>
-                <textarea className={`${input} mt-1 min-h-[70px]`} maxLength={300} value={form.whatsapp_message} onChange={(e) => setForm({ ...form, whatsapp_message: e.target.value })} />
-              </div>
-              <button type="button" disabled={savingCfg} onClick={saveCfg} className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#007fcc] disabled:opacity-50">
-                {savingCfg && <Loader2 className="h-4 w-4 animate-spin" />} Salvar configurações
-              </button>
-            </div>
-          )}
 
           <div className={`${card} space-y-3`}>
             <p className="text-xs text-slate-400">Preços por 1M de tokens (US$). Confira na tabela de preços do Google. Ao editar, a data de conferência é atualizada.</p>

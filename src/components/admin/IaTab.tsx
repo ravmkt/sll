@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { useFxRate } from '../../hooks/admin/useFxRate';
 
 const sb: any = supabase;
 
@@ -46,7 +47,12 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
   const [models, setModels] = useState<ModelRow[]>([]);
   const [usage, setUsage] = useState<Usage[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
-  const [fx, setFx] = useState<number>(0);
+  const [reserve, setReserve] = useState('5.5');
+  const [savedReserve, setSavedReserve] = useState(5.5);
+  const [wa, setWa] = useState({ number: '', message: '' });
+  const [savedWa, setSavedWa] = useState({ number: '', message: '' });
+  const [savingFx, setSavingFx] = useState(false);
+  const { rate: dayRate } = useFxRate();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [usageErr, setUsageErr] = useState('');
@@ -60,7 +66,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
     const [a, m, s, u] = await Promise.all([
       sb.from('admin_ai_settings').select('*'),
       sb.from('noah_models').select('model,label,input_usd,output_usd').order('model'),
-      sb.from('noah_settings').select('usd_brl, ai_enabled, model').eq('id', 1).maybeSingle(),
+      sb.from('noah_settings').select('usd_brl, ai_enabled, model, whatsapp_number, whatsapp_message').eq('id', 1).maybeSingle(),
       sb.schema('noah').rpc('admin_usage_summary', { p_from: from, p_to: to }),
     ]);
 
@@ -88,7 +94,12 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
 
     if (m.error) toast.error(m.error.message);
     setModels((m.data || []) as ModelRow[]);
-    setFx(Number(s.data?.usd_brl) || 0);
+    const rv = Number(s.data?.usd_brl) || 5.5;
+    setSavedReserve(rv);
+    setReserve(String(rv));
+    const w = { number: String(s.data?.whatsapp_number || ''), message: String(s.data?.whatsapp_message || '') };
+    setSavedWa(w);
+    setWa(w);
 
     if (u.error) {
       setUsage([]);
@@ -134,13 +145,16 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
     const a = draft[p], b = saved[p];
     if (!a) return false;
     if (!b) return true;
-    return a.enabled !== b.enabled || a.model !== b.model || a.fallback_model !== b.fallback_model || a.use_web_search !== b.use_web_search;
+    const waChanged = p === 'support' && (wa.number !== savedWa.number || wa.message !== savedWa.message);
+    return waChanged || a.enabled !== b.enabled || a.model !== b.model || a.fallback_model !== b.fallback_model || a.use_web_search !== b.use_web_search;
   };
 
   const save = async (p: string) => {
     const d = draft[p];
     if (!d) return;
     if (!d.model) { toast.error('Escolha o modelo principal.'); return; }
+    const waDigits = wa.number.replace(/\D/g, '');
+    if (p === 'support' && waDigits.length < 10) { toast.error('Informe o WhatsApp de suporte com DDI e DDD.'); return; }
     setBusy(p);
     try {
       const fields = {
@@ -155,8 +169,11 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
         : await sb.from('admin_ai_settings').insert({ purpose: p, provider: 'gemini', ...fields });
       if (r.error) throw new Error(r.error.message);
       if (p === 'support') {
-        const n = await sb.from('noah_settings').update({ ai_enabled: d.enabled, model: d.model }).eq('id', 1);
+        const wm = wa.message.trim();
+        const n = await sb.from('noah_settings').update({ ai_enabled: d.enabled, model: d.model, whatsapp_number: waDigits, whatsapp_message: wm }).eq('id', 1);
         if (n.error) throw new Error(n.error.message);
+        setWa({ number: waDigits, message: wm });
+        setSavedWa({ number: waDigits, message: wm });
       }
       toast.success('Configuração salva.');
       setSaved((s) => ({ ...s, [p]: { ...d } }));
@@ -165,6 +182,17 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
     } finally {
       setBusy(null);
     }
+  };
+
+  const saveFx = async () => {
+    const v = Number(reserve.replace(',', '.'));
+    if (!isFinite(v) || v <= 0) { toast.error('Informe uma cotação válida.'); return; }
+    setSavingFx(true);
+    const r = await sb.from('noah_settings').update({ usd_brl: v }).eq('id', 1);
+    setSavingFx(false);
+    if (r.error) { toast.error(r.error.message); return; }
+    setSavedReserve(v);
+    toast.success('Cotação reserva salva.');
   };
 
   const byPurpose = useMemo(() => {
@@ -202,7 +230,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
         </div>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300">
-            {"US$ 1 = " + (fx ? brl(fx) : "\u2014")}
+            {"US$ 1 = " + brl(dayRate ?? savedReserve)}
           </span>
           <button type="button" onClick={() => void load()} className={BTN + ' bg-white/10 hover:bg-white/15'}>Atualizar</button>
         </div>
@@ -221,6 +249,24 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
           </div>
         ))}
       </div>
+
+      <section className={CARD + ' flex flex-wrap items-end gap-4'}>
+        <div className="min-w-[240px] flex-1">
+          <h3 className="text-base font-extrabold">Cotação do dólar</h3>
+          <p className="mt-0.5 text-xs text-slate-400">Vale para todo o sistema (custos de IA e rodapé do Master). A reserva só é usada quando a cotação do dia não está disponível.</p>
+        </div>
+        <div className="text-xs text-slate-400">
+          Cotação do dia
+          <b className="block text-lg text-slate-100">{dayRate ? brl(dayRate) : '—'}</b>
+        </div>
+        <label className="space-y-1 text-xs text-slate-400">
+          Cotação reserva (R$ por US$)
+          <input className={INPUT + ' !w-40'} value={reserve} onChange={(e) => setReserve(e.target.value)} />
+        </label>
+        <button type="button" disabled={savingFx || Number(reserve.replace(',', '.')) === savedReserve} onClick={() => void saveFx()} className={BTN + ' bg-emerald-500 text-white hover:bg-emerald-600'}>
+          {savingFx ? 'Salvando...' : 'Salvar'}
+        </button>
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {PURPOSES.map((p) => {
@@ -260,6 +306,17 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
                   ? 'Pre\u00e7o por 1 milh\u00e3o de tokens: entrada ' + usd(price.input_usd) + ' \u00b7 sa\u00edda ' + usd(price.output_usd)
                   : 'Modelo sem pre\u00e7o cadastrado. Cadastre em Suporte Noah > Modelos.'}
               </p>
+
+              {p.key === 'support' && (
+                <div className="space-y-3 border-t border-white/10 pt-3">
+                  <label className="block space-y-1 text-xs text-slate-400">WhatsApp de suporte (DDI + DDD + número)
+                    <input className={INPUT} value={wa.number} onChange={(e) => setWa({ ...wa, number: e.target.value })} />
+                  </label>
+                  <label className="block space-y-1 text-xs text-slate-400">Mensagem do WhatsApp (use {'{loja}'} e {'{id}'})
+                    <textarea className={INPUT + ' min-h-[70px]'} maxLength={300} value={wa.message} onChange={(e) => setWa({ ...wa, message: e.target.value })} />
+                  </label>
+                </div>
+              )}
 
               {p.web && (
                 <label className="flex items-center gap-2 text-sm">
