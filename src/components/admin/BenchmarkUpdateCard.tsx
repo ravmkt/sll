@@ -86,13 +86,14 @@ export default function BenchmarkUpdateCard() {
     }
   };
 
-  const run = async () => {
+  const run = async (dry = false) => { /* SLL-DRYRUN */
     setBusy(true);
     try {
-      const { data, error } = await sb.functions.invoke('update-sector-benchmarks', { body: {} });
+      const { data, error } = await sb.functions.invoke('update-sector-benchmarks', { body: dry ? { dry_run: true } : {} });
       if (error || data?.error) throw new Error(data?.error || error?.message || 'Falha ao atualizar.');
       setResult(data as Result);
-      if (data.updated > 0) toast.success(`Benchmarks atualizados: ${data.updated} setores.`);
+      if (data.dry_run) toast.success(`Simulacao:  setores teriam sido atualizados. Nada foi gravado.`);
+      else if (data.updated > 0) toast.success(`Benchmarks atualizados: ${data.updated} setores.`);
       else if (data.quota_exceeded) toast.error('Cota do Gemini excedida (429).');
       else toast.warning('Nenhum setor foi atualizado.');
       await load();
@@ -118,12 +119,13 @@ export default function BenchmarkUpdateCard() {
         <button
           type="button"
           disabled={busy || !cfg.enabled}
-          onClick={run}
+          onClick={() => run(false)}
           className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
         >
           {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
           {busy ? 'Pesquisando na web...' : 'Atualizar Benchmarks via IA'}
         </button>
+          <button type="button" disabled={busy} onClick={() => run(true)} className="cursor-pointer rounded-lg border border-slate-600 px-4 py-2 text-[13px] font-bold text-slate-200 hover:bg-white/10 disabled:opacity-40">Simular (sem gravar)</button>
       </div>
 
       <div className="space-y-3 rounded-xl border border-slate-800 bg-[#0d1120] p-3">
