@@ -106,6 +106,7 @@ export default function NoahChatWidget() {
   const [tab, setTab] = useState<string | undefined>((window as any).__sllActiveTab);
   const [appStatus, setAppStatus] = useState<boolean | undefined>(undefined);
   const [cfg, setCfg] = useState<any>(null);
+  const [limitHit, setLimitHit] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -136,6 +137,7 @@ export default function NoahChatWidget() {
 
   const inVidlytics = pathname.startsWith('/dashboard/modules/vidlytics');
   const aiOff = !!cfg && cfg.ai_enabled === false;
+  const waMode = aiOff || limitHit;
   const whatsapp = cfg?.whatsapp_number ? waUrl(cfg, store?.name, storeId ?? store?.id) : buildSupportUrl(store?.name, storeId ?? store?.id);
 
   const vote = async (idx: number, v: 'up' | 'down') => {
@@ -178,6 +180,7 @@ export default function NoahChatWidget() {
     } catch { /* usa o texto padrao */ }
 
     setMessages((m) => [...m, { role: 'assistant', content: reply, animate: true, cta: limit ? 'limit' : undefined, actions, id: reply === FALLBACK || limit || free ? undefined : crypto.randomUUID(), question: text }]);
+    if (limit) setLimitHit(true);
     setLoading(false);
   };
 
@@ -212,9 +215,9 @@ export default function NoahChatWidget() {
                 {m.animate ? <Typewriter text={m.content} onTick={scrollDown} /> : m.role === 'assistant' ? <Md text={m.content} /> : m.content}
                 {m.cta === 'limit' && (
                   <div className="mt-2 flex flex-col gap-1.5">
-                    {(m.actions?.length ? m.actions : DEFAULT_ACTIONS).map((a, k) => (
-                      <button key={a.type} type="button" onClick={() => { setOpen(false); navigate(a.href); }}
-                        className={k === 0
+                    {[...(m.actions?.length ? m.actions : DEFAULT_ACTIONS), { type: 'whatsapp', label: 'Continuar no WhatsApp (atendimento humano)', href: whatsapp }].map((a, k) => (
+                      <button key={a.type} type="button" onClick={() => { if (a.type === 'whatsapp') { window.open(a.href, '_blank', 'noopener,noreferrer'); return; } setOpen(false); navigate(a.href); }}
+                        className={a.type === 'whatsapp' ? 'cursor-pointer rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600' : k === 0
                           ? 'cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#007fcc]'
                           : 'cursor-pointer rounded-lg border border-[#0094eb] px-3 py-1.5 text-xs font-semibold text-[#0094eb] hover:bg-sky-50'}>
                         {a.label}
@@ -251,7 +254,7 @@ export default function NoahChatWidget() {
         </div>
 
         <div className="space-y-2 border-t border-slate-100 bg-white px-3 pb-3 pt-2">
-          <form
+          {!limitHit && <form
             onSubmit={(e) => { e.preventDefault(); void send(); }}
             className="flex items-center gap-2"
           >
@@ -271,8 +274,13 @@ export default function NoahChatWidget() {
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>
-          </form>
-          <p className="text-center text-xs text-slate-400">
+          </form>}
+          {limitHit && (
+            <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-600">
+              <WaIcon /> Continuar no WhatsApp
+            </a>
+          )}
+          <p className={`text-center text-xs text-slate-400 ${limitHit ? 'hidden' : ''}`}>
             Ainda com dúvidas?{' '}
             <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 hover:underline">
               Chamar no WhatsApp
@@ -294,8 +302,8 @@ export default function NoahChatWidget() {
           </span>
         )}
         <Avatar size={90} className="drop-shadow-lg" />
-        <span className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white text-white ${aiOff ? 'bg-[#25D366]' : 'bg-[#0094eb]'}`}>
-          {aiOff ? <WaIcon /> : open ? <X className="h-3 w-3" /> : <MessageCircle className="h-3 w-3" />}
+        <span className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white text-white ${waMode ? 'bg-[#25D366]' : 'bg-[#0094eb]'}`}>
+          {waMode ? <WaIcon /> : open ? <X className="h-3 w-3" /> : <MessageCircle className="h-3 w-3" />}
         </span>
       </button>
     </div>

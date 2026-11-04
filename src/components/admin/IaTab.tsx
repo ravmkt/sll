@@ -11,7 +11,7 @@ type Usage = { purpose: string; store_id: string | null; calls: number; tokens: 
 const DEFAULT_MODEL = 'gemini-3.1-flash-lite';
 
 const PURPOSES: { key: string; label: string; desc: string; web: boolean }[] = [
-  { key: 'support', label: 'Suporte Noah', desc: 'Chat de ajuda dentro do Hub. Respeita a franquia mensal do plano.', web: false },
+  { key: 'support', label: 'Suporte Noah', desc: 'Chat de ajuda dentro do Hub. Desligada, o bal\u00e3o abre direto o WhatsApp de suporte. Ao esgotar a franquia do plano, o lojista segue para upgrade ou WhatsApp.', web: false },
   { key: 'insights', label: 'Insights personalizados', desc: 'Recomendações por loja a partir das métricas reais (em breve).', web: false },
   { key: 'feedback', label: 'Feedback pós-live', desc: 'Análise de cada live ao encerrar, comparada às anteriores (em breve).', web: false },
   { key: 'benchmarks', label: 'Benchmarks de mercado', desc: 'Atualização dos benchmarks por setor, com busca na web.', web: true },
@@ -60,7 +60,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
     const [a, m, s, u] = await Promise.all([
       sb.from('admin_ai_settings').select('*'),
       sb.from('noah_models').select('model,label,input_usd,output_usd').order('model'),
-      sb.from('noah_settings').select('usd_brl').eq('id', 1).maybeSingle(),
+      sb.from('noah_settings').select('usd_brl, ai_enabled, model').eq('id', 1).maybeSingle(),
       sb.schema('noah').rpc('admin_usage_summary', { p_from: from, p_to: to }),
     ]);
 
@@ -76,8 +76,13 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
         use_web_search: r ? !!r.use_web_search : p.web,
       };
     }
+    if (s.data && cfgs.support) {
+      cfgs.support.enabled = !!s.data.ai_enabled;
+      if (s.data.model) cfgs.support.model = s.data.model;
+    }
     const present: Record<string, Cfg> = {};
     for (const x of (a.data || []) as any[]) present[x.purpose] = cfgs[x.purpose] ?? x;
+    if (cfgs.support) present.support = { ...cfgs.support };
     setSaved(present);
     setDraft((d) => (Object.keys(d).length ? d : cfgs));
 
@@ -144,7 +149,8 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
         use_web_search: d.use_web_search,
         enabled: d.enabled,
       };
-      const r = saved[p]
+      const ex = await sb.from('admin_ai_settings').select('purpose').eq('purpose', p).maybeSingle();
+      const r = ex.data
         ? await sb.from('admin_ai_settings').update(fields).eq('purpose', p)
         : await sb.from('admin_ai_settings').insert({ purpose: p, provider: 'gemini', ...fields });
       if (r.error) throw new Error(r.error.message);

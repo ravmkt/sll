@@ -183,24 +183,12 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
   }, [rows, cost]);
   const unpriced = rows.filter((r) => !priceMap.has(r.model)).map((r) => r.model);
 
-  const toggleAi = async () => {
-    if (!cfg) return;
-    const next = !cfg.ai_enabled;
-    setCfg({ ...cfg, ai_enabled: next });
-    setForm((f) => (f ? { ...f, ai_enabled: next } : f));
-    const { error } = await sb.from('noah_settings').update({ ai_enabled: next }).eq('id', 1);
-    if (error) { showError(error.message); void load(); return; }
-    showSuccess(next ? 'Suporte por IA ativado.' : 'Suporte por IA desativado: o chat abrirá o WhatsApp.');
-  };
-
   const saveCfg = async () => {
     if (!form) return;
     const num = form.whatsapp_number.replace(/\D/g, '');
     if (num.length < 10) return showError('Informe o WhatsApp com DDI e DDD.');
-    if (!form.model) return showError('Escolha um modelo.');
     setSavingCfg(true);
     const { error } = await sb.from('noah_settings').update({
-      model: form.model,
       whatsapp_number: num,
       whatsapp_message: form.whatsapp_message.trim(),
       usd_brl: Number(form.usd_brl) > 0 ? Number(form.usd_brl) : 5.5,
@@ -334,7 +322,6 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
     showSuccess('Tópico excluído.');
     void load();
   };
-  const modelOptions = form && !models.some((m) => m.model === form.model) ? [...models, { model: form.model, label: form.model } as ModelRow] : models;
 
   return (
     <div className="space-y-6">
@@ -372,20 +359,9 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
 
           {form && (
             <div className={`${card} space-y-4`}>
-              <div className="flex items-start gap-3">
-                <Switch on={form.ai_enabled} onClick={toggleAi} text="Suporte por IA" />
-                <div>
-                  <p className="text-sm font-bold text-white">Suporte por IA {form.ai_enabled ? 'ativado' : 'desativado'}</p>
-                  <p className="text-xs text-slate-400">Desativado, o balão do Noah abre direto o WhatsApp abaixo, com a mensagem pronta. A troca vale na hora.</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div>
-                  <label className={label}>Modelo de IA</label>
-                  <select className={`${input} mt-1 cursor-pointer`} value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })}>
-                    {modelOptions.map((m) => <option key={m.model} value={m.model}>{m.label || m.model}</option>)}
-                  </select>
-                </div>
+              
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                
                 <div>
                   <label className={label}>WhatsApp (DDI + DDD + número)</label>
                   <input className={`${input} mt-1`} value={form.whatsapp_number} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} />

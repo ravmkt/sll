@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
     const renov = fmtDate(credit.renewal_date);
     const reply = noPlan
       ? "Sua loja ainda não tem um plano ativo, então o atendimento com IA do Noah não está disponível. Escolha um plano para liberar. Enquanto isso, nosso time atende pelo **Chamar no WhatsApp**, logo abaixo do chat."
-      : `Você atingiu o limite de mensagens do Noah neste mês${renov ? ` (renova em ${renov})` : ""}. Para continuar conversando agora, faça upgrade do seu plano ou compre um pacote extra de mensagens. Se preferir, fale com nosso time pelo **Chamar no WhatsApp**, logo abaixo do chat.`;
+      : `Voc\u00ea atingiu o limite de mensagens do Noah neste m\u00eas${renov ? ` (renova em ${renov})` : ""}. Para continuar agora, fa\u00e7a upgrade do plano ou compre um pacote extra. Se preferir, continue a conversa com nosso atendimento humano pelo **WhatsApp**, no bot\u00e3o abaixo do chat.`;
     return json({
       reply,
       limit_reached: true, actions: noPlan ? [ACTION_UPGRADE] : [ACTION_UPGRADE, ACTION_RECHARGE],
