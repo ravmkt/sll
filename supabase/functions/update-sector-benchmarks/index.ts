@@ -174,6 +174,8 @@ Deno.serve(async (req) => {
   }
 
   const dryRun = body?.dry_run === true;
+  const offset = Math.max(0, Math.floor(Number(body?.offset)) || 0);
+  const limit = Math.max(0, Math.floor(Number(body?.limit)) || 0);
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
   const { data: cfg } = await admin
@@ -199,7 +201,9 @@ Deno.serve(async (req) => {
   const curBySector = new Map<string, Row>((current ?? []).map((r: Row) => [r.sector_id, r]));
   const year = new Date().getFullYear();
   const nowIso = new Date().toISOString();
-  const list = sectors ?? [];
+  const all = sectors ?? [];
+  const list = limit > 0 ? all.slice(offset, offset + limit) : all.slice(offset);
+  const nextOffset = offset + list.length < all.length ? offset + list.length : null;
 
   const ok: any[] = [];
   const failed: { sector: string; reason: string }[] = [];
@@ -246,5 +250,5 @@ Deno.serve(async (req) => {
         (moda && typeof moda.deltaConv === "number" ? `; Moda e Acessórios: ${fmt(moda.deltaConv)}.` : ".");
 
   console.log("update-sector-benchmarks", JSON.stringify({ dryRun, models: ctx.models, search: ctx.search, quota: ctx.quota, updated: ok.length, failed: failed.length, rejected: rejected.length }));
-  return json({ dry_run: dryRun, year, updated: ok.length, unchanged, failed, rejected, summary, quota_exceeded: ctx.quota, models: ctx.models, web_search: ctx.search, updated_at: nowIso });
+  return json({ dry_run: dryRun, offset, next_offset: ctx.quota ? null : nextOffset, total: all.length, year, updated: ok.length, unchanged, failed, rejected, summary, quota_exceeded: ctx.quota, models: ctx.models, web_search: ctx.search, updated_at: nowIso });
 });
