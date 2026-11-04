@@ -12,7 +12,7 @@ const ITEMS: { id: MasterTab; label: string; icon: ElementType }[] = [
   { id: 'precos', label: 'Preços', icon: Tag },
   { id: 'marketing', label: 'Marketing', icon: Megaphone },
   { id: 'insights', label: 'Insights', icon: Lightbulb },
-  { id: 'noah', label: 'Suporte Noah', icon: Bot }, { id: 'saques', label: 'Saques', icon: Wallet },
+  { id: 'noah', label: 'IA & Suporte Noah', icon: Bot }, { id: 'saques', label: 'Saques', icon: Wallet },
 ];
 
 export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: (t: MasterTab) => void; children: ReactNode }) {

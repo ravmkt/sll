@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { LifeBuoy } from 'lucide-react';
 import NoahSupportTab from '@/components/master/NoahSupportTab';
 import NoahUsageTab from '@/components/admin/NoahUsageTab';
+import IaTab from '@/components/admin/IaTab';
 
 type Preset = 'today' | '7' | '15' | '30' | '90' | 'month' | 'custom';
 
@@ -54,7 +55,7 @@ export default function NoahPage() {
   return (
     <div className="space-y-6">
       <div className="sticky top-0 z-30 -mx-6 -mt-6 space-y-3 bg-[#0b0e1a] px-6 pt-6">
-        <h1 className="flex items-center gap-2 text-xl font-black text-white"><LifeBuoy className="h-5 w-5 text-amber-500" /> Suporte Noah</h1>
+        <h1 className="flex items-center gap-2 text-xl font-black text-white"><LifeBuoy className="h-5 w-5 text-amber-500" /> IA &amp; Suporte Noah</h1>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <p className="text-[13px] text-slate-500">Configuração, consumo da IA e base de conhecimento do assistente.</p>
           <div className="flex flex-wrap items-center gap-2">
@@ -74,6 +75,7 @@ export default function NoahPage() {
 
       <NoahSupportTab range={range} />
       <div className="mt-8"><NoahUsageTab range={range} /></div>
+      <div className="mt-8"><IaTab range={range} /></div>
     </div>
   );
 }
