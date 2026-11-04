@@ -5,6 +5,7 @@ import PrecosTab from '@/components/admin/PrecosTab';
 import TrialSettingsCard from '@/components/admin/TrialSettingsCard';
 import { MasterLayout, type MasterTab } from '@/components/admin/MasterLayout';
 import DashboardTab from '@/components/admin/DashboardTab';
+import FxRateCard from '@/components/admin/FxRateCard';
 import LojasTab from '@/components/admin/LojasTab';
 import MarketingTab from '@/components/admin/MarketingTab';
 import NoahPage from '@/components/admin/NoahPage'; import SaquesTab from '@/components/admin/SaquesTab';
@@ -26,7 +27,7 @@ export default function AdminMasterPage() {
   return (
     <MasterLayout tab={tab} onTab={goTab}>
       {tab === 'dashboard' ? (
-        <DashboardTab />
+        <div className="space-y-6"><FxRateCard /><DashboardTab /></div>
       ) : tab === 'lojas' ? (
         <LojasTab />
       ) : tab === 'noah' ? (

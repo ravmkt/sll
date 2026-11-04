@@ -47,11 +47,8 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
   const [models, setModels] = useState<ModelRow[]>([]);
   const [usage, setUsage] = useState<Usage[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
-  const [reserve, setReserve] = useState('5.5');
-  const [savedReserve, setSavedReserve] = useState(5.5);
   const [wa, setWa] = useState({ number: '', message: '' });
   const [savedWa, setSavedWa] = useState({ number: '', message: '' });
-  const [savingFx, setSavingFx] = useState(false);
   const { rate: dayRate } = useFxRate();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -66,7 +63,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
     const [a, m, s, u] = await Promise.all([
       sb.from('admin_ai_settings').select('*'),
       sb.from('noah_models').select('model,label,input_usd,output_usd').order('model'),
-      sb.from('noah_settings').select('usd_brl, ai_enabled, model, whatsapp_number, whatsapp_message').eq('id', 1).maybeSingle(),
+      sb.from('noah_settings').select('ai_enabled, model, whatsapp_number, whatsapp_message').eq('id', 1).maybeSingle(),
       sb.schema('noah').rpc('admin_usage_summary', { p_from: from, p_to: to }),
     ]);
 
@@ -94,9 +91,6 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
 
     if (m.error) toast.error(m.error.message);
     setModels((m.data || []) as ModelRow[]);
-    const rv = Number(s.data?.usd_brl) || 5.5;
-    setSavedReserve(rv);
-    setReserve(String(rv));
     const w = { number: String(s.data?.whatsapp_number || ''), message: String(s.data?.whatsapp_message || '') };
     setSavedWa(w);
     setWa(w);
@@ -184,17 +178,6 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
     }
   };
 
-  const saveFx = async () => {
-    const v = Number(reserve.replace(',', '.'));
-    if (!isFinite(v) || v <= 0) { toast.error('Informe uma cotação válida.'); return; }
-    setSavingFx(true);
-    const r = await sb.from('noah_settings').update({ usd_brl: v }).eq('id', 1);
-    setSavingFx(false);
-    if (r.error) { toast.error(r.error.message); return; }
-    setSavedReserve(v);
-    toast.success('Cotação reserva salva.');
-  };
-
   const byPurpose = useMemo(() => {
     const map: Record<string, { calls: number; tokens: number; brl: number; usd: number }> = {};
     usage.forEach((r) => {
@@ -230,7 +213,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
         </div>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300">
-            {"US$ 1 = " + brl(dayRate ?? savedReserve)}
+            {"US$ 1 = " + (dayRate ? brl(dayRate) : "\u2014")}
           </span>
           <button type="button" onClick={() => void load()} className={BTN + ' bg-white/10 hover:bg-white/15'}>Atualizar</button>
         </div>
@@ -249,24 +232,6 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
           </div>
         ))}
       </div>
-
-      <section className={CARD + ' flex flex-wrap items-end gap-4'}>
-        <div className="min-w-[240px] flex-1">
-          <h3 className="text-base font-extrabold">Cotação do dólar</h3>
-          <p className="mt-0.5 text-xs text-slate-400">Vale para todo o sistema (custos de IA e rodapé do Master). A reserva só é usada quando a cotação do dia não está disponível.</p>
-        </div>
-        <div className="text-xs text-slate-400">
-          Cotação do dia
-          <b className="block text-lg text-slate-100">{dayRate ? brl(dayRate) : '—'}</b>
-        </div>
-        <label className="space-y-1 text-xs text-slate-400">
-          Cotação reserva (R$ por US$)
-          <input className={INPUT + ' !w-40'} value={reserve} onChange={(e) => setReserve(e.target.value)} />
-        </label>
-        <button type="button" disabled={savingFx || Number(reserve.replace(',', '.')) === savedReserve} onClick={() => void saveFx()} className={BTN + ' bg-emerald-500 text-white hover:bg-emerald-600'}>
-          {savingFx ? 'Salvando...' : 'Salvar'}
-        </button>
-      </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {PURPOSES.map((p) => {
