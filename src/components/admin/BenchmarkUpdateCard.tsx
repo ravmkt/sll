@@ -34,6 +34,7 @@ export default function BenchmarkUpdateCard() {
   const [cfg, setCfg] = useState<Cfg>(DEFAULT_CFG);
   const [models, setModels] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [progress, setProgress] = useState('');
 
   const load = useCallback(async () => {
     const { data } = await sb.from('sector_benchmarks').select('updated_at').order('updated_at', { ascending: false });
@@ -86,21 +87,48 @@ export default function BenchmarkUpdateCard() {
     }
   };
 
-  const run = async (dry = false) => { /* SLL-DRYRUN */
+  const run = async (dry = false) => { /* SLL-RODADAS */
     setBusy(true);
+    const LIMIT = 2;
+    const acc: any = { updated: 0, unchanged: [], failed: [], rejected: [], quota_exceeded: false, dry_run: dry, year: new Date().getFullYear(), models: [], web_search: false, updated_at: new Date().toISOString() };
     try {
-      const { data, error } = await sb.functions.invoke('update-sector-benchmarks', { body: dry ? { dry_run: true } : {} });
-      if (error || data?.error) throw new Error(data?.error || error?.message || 'Falha ao atualizar.');
-      setResult(data as Result);
-      if (data.dry_run) toast.success(`Simulacao:  setores teriam sido atualizados. Nada foi gravado.`);
-      else if (data.updated > 0) toast.success(`Benchmarks atualizados: ${data.updated} setores.`);
-      else if (data.quota_exceeded) toast.error('Cota do Gemini excedida (429).');
+      let offset = 0;
+      let total = 0;
+      for (let round = 1; round <= 20; round++) {
+        setProgress(`Rodada ${round}${total ? ` de ${Math.ceil(total / LIMIT)}` : ''}...`);
+        const { data, error } = await sb.functions.invoke('update-sector-benchmarks', { body: { offset, limit: LIMIT, ...(dry ? { dry_run: true } : {}) } });
+        if (error || data?.error) {
+          acc.failed.push({ sector: `Rodada ${round}`, reason: data?.error || error?.message || 'Falha na chamada.' });
+          break;
+        }
+        acc.updated += data.updated ?? 0;
+        acc.unchanged.push(...(data.unchanged ?? []));
+        acc.failed.push(...(data.failed ?? []));
+        acc.rejected.push(...(data.rejected ?? []));
+        acc.models = data.models ?? acc.models;
+        acc.web_search = data.web_search ?? acc.web_search;
+        acc.year = data.year ?? acc.year;
+        total = data.total ?? total;
+        if (data.quota_exceeded) { acc.quota_exceeded = true; break; }
+        const next = data.next_offset ?? (total && offset + LIMIT < total ? offset + LIMIT : null);
+        if (next == null || next <= offset) break;
+        offset = next;
+      }
+      const label = dry ? 'simulados' : 'atualizados';
+      acc.summary = acc.quota_exceeded && acc.updated === 0
+        ? 'A cota do Gemini foi excedida (429).'
+        : `Benchmarks ${acc.year} ${label}: ${acc.updated} de ${total || '?'} setores.`;
+      setResult(acc as Result);
+      if (acc.quota_exceeded) toast.error('Cota do Gemini excedida (429).');
+      else if (dry) toast.success(`Simula\u00e7\u00e3o: ${acc.updated} setores teriam sido atualizados. Nada foi gravado.`);
+      else if (acc.updated > 0) toast.success(`Benchmarks atualizados: ${acc.updated} setores.`);
       else toast.warning('Nenhum setor foi atualizado.');
       await load();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setBusy(false);
+      setProgress('');
     }
   };
 
@@ -123,7 +151,7 @@ export default function BenchmarkUpdateCard() {
           className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
         >
           {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-          {busy ? 'Pesquisando na web...' : 'Atualizar Benchmarks via IA'}
+          {busy ? (progress || 'Pesquisando na web...') : 'Atualizar Benchmarks via IA'}
         </button>
           <button type="button" disabled={busy} onClick={() => run(true)} className="cursor-pointer rounded-lg border border-slate-600 px-4 py-2 text-[13px] font-bold text-slate-200 hover:bg-white/10 disabled:opacity-40">Simular (sem gravar)</button>
       </div>
