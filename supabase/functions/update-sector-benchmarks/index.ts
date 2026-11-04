@@ -30,7 +30,7 @@ const METRICS = [
   { key: "cart_abandonment", label: "abandono de carrinho", min: "cart_abandonment_min", max: "cart_abandonment_max", lo: 40, hi: 95 },
 ] as const;
 const MAX_SWING = 0.4;
-const BATCH = 6;
+const BATCH = 1;
 
 const norm = (s: string) => (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const num = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
