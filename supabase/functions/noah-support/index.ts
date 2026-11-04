@@ -248,6 +248,15 @@ Deno.serve(async (req) => {
       finish_reason: finish || null,
     });
     if (logErr) console.error("noah_logs", logErr.message);
+    const { error: usageErr } = await admin.schema("noah").rpc("log_usage", {
+      p_store_id: storeId,
+      p_purpose: "support",
+      p_model: usedModel,
+      p_prompt: pt,
+      p_completion: ct,
+      p_source: "noah-support",
+    });
+    if (usageErr) console.error("noah.log_usage", usageErr.message);
 
     return json({
       reply: replyOut,
