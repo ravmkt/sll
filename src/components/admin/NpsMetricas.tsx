@@ -51,7 +51,7 @@ function Ranking({ title, items }: { title: string; items: Count[] }) {
     <div className={card}>
       <p className="mb-3 text-[15px] font-bold text-white">{title}</p>
       {items.length === 0 ? (
-        <p className="text-[13px] text-slate-500">Sem respostas no per\u00edodo.</p>
+        <p className="text-[13px] text-slate-500">Sem respostas no período.</p>
       ) : (
         <ul className="space-y-2">
           {items.map((i) => (
@@ -134,10 +134,10 @@ export default function NpsMetricas() {
       </div>
 
       <div className={card}>
-        <p className="mb-3 text-[15px] font-bold text-white">Distribui\u00e7\u00e3o das notas</p>
+        <p className="mb-3 text-[15px] font-bold text-white">Distribuição das notas</p>
         <div className="h-56">
           {total === 0 ? (
-            <p className="pt-20 text-center text-[13px] text-slate-500">{loading ? 'Carregando...' : 'Nenhuma resposta no per\u00edodo.'}</p>
+            <p className="pt-20 text-center text-[13px] text-slate-500">{loading ? 'Carregando...' : 'Nenhuma resposta no período.'}</p>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.distribution ?? []} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -160,9 +160,9 @@ export default function NpsMetricas() {
       </div>
 
       <div className={card}>
-        <p className="mb-3 flex items-center gap-2 text-[15px] font-bold text-white"><MessageSquare className="h-4 w-4 text-sky-300" /> Coment\u00e1rios recentes</p>
+        <p className="mb-3 flex items-center gap-2 text-[15px] font-bold text-white"><MessageSquare className="h-4 w-4 text-sky-300" /> Comentários recentes</p>
         {(data?.comments ?? []).length === 0 ? (
-          <p className="text-[13px] text-slate-500">Nenhum coment\u00e1rio no per\u00edodo.</p>
+          <p className="text-[13px] text-slate-500">Nenhum comentário no período.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-[13px]">
@@ -171,7 +171,7 @@ export default function NpsMetricas() {
                   <th className="px-3 py-2">Data</th>
                   <th className="px-3 py-2">Loja</th>
                   <th className="px-3 py-2">Nota</th>
-                  <th className="px-3 py-2">Coment\u00e1rio</th>
+                  <th className="px-3 py-2">Comentário</th>
                 </tr>
               </thead>
               <tbody>

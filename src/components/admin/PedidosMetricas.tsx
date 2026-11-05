@@ -65,9 +65,9 @@ export default function PedidosMetricas() {
   const kpis = [
     { l: 'Pedidos', v: data.total },
     { l: 'Novos (7 dias)', v: data.novos },
-    { l: 'Aguardando an\u00e1lise', v: data.abertos },
+    { l: 'Aguardando análise', v: data.abertos },
     { l: 'Planejado / em dev', v: data.andamento },
-    { l: 'Conclu\u00eddos', v: data.feitos },
+    { l: 'Concluídos', v: data.feitos },
     { l: 'Votos', v: data.votos },
   ];
 
@@ -78,7 +78,7 @@ export default function PedidosMetricas() {
           <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
             <Lightbulb className="h-4 w-4 text-[#fd8539]" /> {'Pedidos dos lojistas'}
           </h2>
-          <p className="text-xs text-slate-500">{'O que as lojas pedem. Altere o status na tabela abaixo; os gr\u00e1ficos atualizam em seguida.'}</p>
+          <p className="text-xs text-slate-500">{'O que as lojas pedem. Altere o status na tabela abaixo; os gráficos atualizam em seguida.'}</p>
         </div>
         <button type="button" onClick={() => void load()} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/15">
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Atualizar
@@ -119,7 +119,7 @@ export default function PedidosMetricas() {
         </div>
 
         <div className={CARD}>
-          <p className="mb-2 text-sm font-bold text-white">{'Pedidos por m\u00eas'}</p>
+          <p className="mb-2 text-sm font-bold text-white">{'Pedidos por mês'}</p>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.months}>
@@ -134,7 +134,7 @@ export default function PedidosMetricas() {
         </div>
 
         <div className={CARD}>
-          <p className="mb-2 text-sm font-bold text-white">{'Por m\u00f3dulo'}</p>
+          <p className="mb-2 text-sm font-bold text-white">{'Por módulo'}</p>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.byModule} layout="vertical" margin={{ left: 8 }}>
@@ -150,7 +150,7 @@ export default function PedidosMetricas() {
       </div>
 
       <div className={CARD}>
-        <p className="mb-3 text-sm font-bold text-white">{'Mais votados (ainda n\u00e3o conclu\u00eddos)'}</p>
+        <p className="mb-3 text-sm font-bold text-white">{'Mais votados (ainda não concluídos)'}</p>
         {data.top.length === 0 ? (
           <p className="text-sm text-slate-500">Nenhum pedido em aberto.</p>
         ) : (

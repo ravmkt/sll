@@ -8,7 +8,7 @@ const sb: any = supabase;
 
 const PERIODS = [7, 30, 90];
 const MODULES = [
-  { v: '', l: 'Todos os m\u00f3dulos' },
+  { v: '', l: 'Todos os módulos' },
   { v: 'vidlytics', l: 'Vidlytics' },
   { v: 'live_commerce', l: 'Stream Sell' },
 ];
@@ -145,16 +145,16 @@ export default function NegocioMetricas() {
         <Metric label="MRR" value={dash ?? brl(health?.mrr_cents ?? 0)} hint={`Add-ons: ${brl(health?.addon_mrr_cents ?? 0)}`} icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />
         <Metric label="Lojas ativas" value={dash ?? String(health?.active_stores ?? 0)} icon={Store} tone="bg-sky-500/15 text-sky-300" />
         <Metric label="ARPU" value={dash ?? brl(health?.arpu_cents ?? 0)} hint="Receita mensal por loja" icon={Users} tone="bg-violet-500/15 text-violet-300" />
-        <Metric label="Cancelamentos" value={dash ?? String(health?.churn_30d ?? 0)} hint="Lojas que cancelaram no per\u00edodo" icon={TrendingDown} tone="bg-rose-500/15 text-rose-300" />
-        <Metric label="Convers\u00e3o do trial" value={dash ?? conv} hint={`${tc} de ${te} trials encerrados`} icon={Percent} tone="bg-amber-500/15 text-amber-300" />
-        <Metric label="Receita paga" value={dash ?? brl(total)} hint="Faturas pagas no per\u00edodo" icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />
+        <Metric label="Cancelamentos" value={dash ?? String(health?.churn_30d ?? 0)} hint="Lojas que cancelaram no período" icon={TrendingDown} tone="bg-rose-500/15 text-rose-300" />
+        <Metric label="Conversão do trial" value={dash ?? conv} hint={`${tc} de ${te} trials encerrados`} icon={Percent} tone="bg-amber-500/15 text-amber-300" />
+        <Metric label="Receita paga" value={dash ?? brl(total)} hint="Faturas pagas no período" icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />
       </div>
 
       <div className={card}>
         <p className="mb-3 text-[15px] font-bold text-white">Origem da receita</p>
         <div className="h-64">
           {rows.length === 0 ? (
-            <p className="pt-24 text-center text-[13px] text-slate-500">{loading ? 'Carregando...' : 'Sem faturas pagas no per\u00edodo.'}</p>
+            <p className="pt-24 text-center text-[13px] text-slate-500">{loading ? 'Carregando...' : 'Sem faturas pagas no período.'}</p>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -163,7 +163,7 @@ export default function NegocioMetricas() {
                 <YAxis tickLine={false} axisLine={false} width={48} tick={{ fill: '#64748b', fontSize: 10 }} />
                 <Tooltip cursor={{ fill: 'rgba(148,163,184,0.08)' }} contentStyle={TOOLTIP} itemStyle={ITEM} labelStyle={ITEM} formatter={(v: any) => brl(Number(v) * 100)} />
                 <Bar dataKey="new" name="Novas" stackId="r" fill="#0094eb" />
-                <Bar dataKey="renewal" name="Renova\u00e7\u00f5es" stackId="r" fill="#10b981" />
+                <Bar dataKey="renewal" name="Renovações" stackId="r" fill="#10b981" />
                 <Bar dataKey="upfront" name="Planos antecipados" stackId="r" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -171,7 +171,7 @@ export default function NegocioMetricas() {
         </div>
         <div className="mt-2 flex flex-wrap justify-center gap-4 text-[13px] text-slate-400">
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#0094eb]" /> Novas</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Renova\u00e7\u00f5es</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Renovações</span>
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-violet-500" /> Planos antecipados</span>
         </div>
       </div>
@@ -179,7 +179,7 @@ export default function NegocioMetricas() {
       <div className="grid gap-4 lg:grid-cols-3">
         <AlertList title="Perto do limite" items={health?.alerts.near_limit ?? []} suffix={(a) => `${a.what} ${a.pct ?? 0}%`} />
         <AlertList title="Pagamento em atraso" items={health?.alerts.past_due ?? []} suffix={(a) => `${a.days ?? 0} dia(s)`} />
-        <AlertList title="Script n\u00e3o instalado" items={health?.alerts.no_script ?? []} suffix={(a) => `${a.days ?? 0} dia(s) de conta`} />
+        <AlertList title="Script não instalado" items={health?.alerts.no_script ?? []} suffix={(a) => `${a.days ?? 0} dia(s) de conta`} />
       </div>
     </div>
   );

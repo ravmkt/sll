@@ -10,13 +10,13 @@ import { BarChart3, Percent, ThumbsDown, ThumbsUp, Users } from 'lucide-react';
 import { getNoahFeedbackMetrics, type NoahFeedbackMetrics } from '@/services/admin/noahMetrics';
 
 const PERIODS = [7, 30, 90];
-const T_METRICAS = 'M\u00e9tricas';
-const T_SUB = 'Vis\u00e3o geral da qualidade do suporte e do uso da plataforma.';
-const T_SECAO = 'Suporte Noah \u00b7 Isso ajudou?';
-const T_APROV = 'Aprova\u00e7\u00e3o';
-const T_NAO = 'N\u00e3o curtidas';
-const T_DOWNS = 'Perguntas que receberam "n\u00e3o curtiu"';
-const T_VAZIO = 'Nenhuma no per\u00edodo.';
+const T_METRICAS = 'Métricas';
+const T_SUB = 'Visão geral da qualidade do suporte e do uso da plataforma.';
+const T_SECAO = 'Suporte Noah · Isso ajudou?';
+const T_APROV = 'Aprovação';
+const T_NAO = 'Não curtidas';
+const T_DOWNS = 'Perguntas que receberam "não curtiu"';
+const T_VAZIO = 'Nenhuma no período.';
 
 const card = (bd: string) => `rounded-2xl border ${bd} bg-[#111524] p-4`;
 const BD = 'border-violet-500/50';
@@ -107,7 +107,7 @@ function SuporteMetricas() {
       {error && <div className="rounded-xl border border-rose-500/50 bg-rose-500/10 p-3 text-[13px] text-rose-300">{error}</div>}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Votos" value={dash ?? String(total)} hint="No per\u00edodo" icon={Users} tone="bg-violet-500/15 text-violet-300" />
+        <Metric label="Votos" value={dash ?? String(total)} hint="No período" icon={Users} tone="bg-violet-500/15 text-violet-300" />
         <Metric label="Curtidas" value={dash ?? String(up)} icon={ThumbsUp} tone="bg-emerald-500/15 text-emerald-300" />
         <Metric label={T_NAO} value={dash ?? String(down)} icon={ThumbsDown} tone="bg-rose-500/15 text-rose-300" />
         <Metric label={T_APROV} value={dash ?? (approval === null ? '-' : `${approval}%`)} icon={Percent} tone="bg-sky-500/15 text-sky-300" />
@@ -138,7 +138,7 @@ function SuporteMetricas() {
           <p className="mb-3 text-[15px] font-bold text-white">{T_APROV}</p>
           <div className="h-56">
             {pie.length === 0 ? (
-              <p className="pt-20 text-center text-[13px] text-slate-500">Nenhum voto no per\u00edodo.</p>
+              <p className="pt-20 text-center text-[13px] text-slate-500">Nenhum voto no período.</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -196,7 +196,7 @@ type MetricasTab = 'suporte' | 'pedidos' | 'negocio' | 'nps' | 'streamsell' | 'v
 const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
   { id: 'suporte', label: 'Suporte Noah' },
   { id: 'pedidos', label: 'Pedidos dos lojistas' },
-  { id: 'negocio', label: 'Neg\u00f3cio' },
+  { id: 'negocio', label: 'Negócio' },
   { id: 'nps', label: 'NPS' },
   { id: 'streamsell', label: 'Stream Sell' },
   { id: 'vidlytics', label: 'Vidlytics' },
