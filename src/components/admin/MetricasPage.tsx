@@ -1,3 +1,4 @@
+import PedidosMetricas from '@/components/admin/PedidosMetricas';
 import { useEffect, useMemo, useState } from 'react';
 import type { ElementType } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -182,6 +183,7 @@ export default function MetricasPage() {
           </div>
         )}
       </div>
+      <PedidosMetricas />
     </div>
   );
 }
