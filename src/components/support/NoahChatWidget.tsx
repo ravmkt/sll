@@ -134,6 +134,11 @@ export default function NoahChatWidget() {
   const waMode = aiOff || limitHit;
   const whatsapp = cfg?.whatsapp_number ? waUrl(cfg, store?.name, storeId ?? store?.id) : buildSupportUrl(store?.name, storeId ?? store?.id);
 
+  const logWaClick = () => {
+    if (!storeId) return;
+    void (supabase as any).rpc('noah_log_support_event', { p_store: storeId, p_kind: 'whatsapp_click' }).then(() => undefined, () => undefined);
+  };
+
   const vote = async (idx: number, v: 'up' | 'down') => {
     const m = messages[idx];
     if (!m?.id || !storeId || m.vote === v) return;
@@ -208,7 +213,7 @@ export default function NoahChatWidget() {
               >
                 {m.animate ? <Typewriter text={m.content} onTick={scrollDown} /> : m.role === 'assistant' ? <Md text={m.content} /> : m.content}
                 {m.wa && (
-                  <a href={whatsapp} target="_blank" rel="noopener noreferrer"
+                  <a onClick={logWaClick} href={whatsapp} target="_blank" rel="noopener noreferrer"
                     className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-600">
                     <WaIcon /> Falar com o time no WhatsApp
                   </a>
@@ -265,7 +270,7 @@ export default function NoahChatWidget() {
           </form>
           <p className="text-center text-xs text-slate-400">
             Ainda com dúvidas?{' '}
-            <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 hover:underline">
+            <a onClick={logWaClick} href={whatsapp} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 hover:underline">
               Chamar no WhatsApp
             </a>
           </p>
