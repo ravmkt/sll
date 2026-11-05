@@ -3,6 +3,7 @@ import { PeriodoBar, PeriodoProvider, useMetricasPeriodo } from '@/components/ad
 import VisaoGeralMetricas from '@/components/admin/VisaoGeralMetricas';
 import { ReceitaMetricas, ComunicacaoMetricas, SaudeMetricas } from '@/components/admin/MetricasEtapa3';
 import MetricasEtapa4 from '@/components/admin/MetricasEtapa4';
+import IaCustoMetricas from '@/components/admin/IaCustoMetricas';
 import VidlyticsMetricas from '@/components/admin/VidlyticsMetricas';
 import PedidosMetricas from '@/components/admin/PedidosMetricas';
 import NegocioMetricas from '@/components/admin/NegocioMetricas';
@@ -183,7 +184,7 @@ function SuporteMetricas() {
   );
 }
 
-type MetricasTab = 'visao' | 'suporte' | 'pedidos' | 'negocio' | 'nps' | 'streamsell' | 'vidlytics' | 'receita' | 'comunicacao' | 'saude' | 'benchmarks';
+type MetricasTab = 'visao' | 'suporte' | 'pedidos' | 'negocio' | 'nps' | 'streamsell' | 'vidlytics' | 'receita' | 'comunicacao' | 'saude' | 'benchmarks' | 'ia';
 
 const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
   { id: 'visao', label: 'Vis\u00e3o geral' },
@@ -197,6 +198,7 @@ const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
   { id: 'comunicacao', label: 'Comunicação' },
   { id: 'saude', label: 'Saúde técnica' },
   { id: 'benchmarks', label: 'Benchmarks' },
+  { id: 'ia', label: 'Custo de IA' },
 ];
 
 function MetricasPageInner() {
@@ -218,7 +220,7 @@ function MetricasPageInner() {
         ))}
       </div>
       {tab !== 'benchmarks' && <PeriodoBar />}
-      {tab === 'visao' ? <VisaoGeralMetricas /> : tab === 'receita' ? <ReceitaMetricas /> : tab === 'comunicacao' ? <ComunicacaoMetricas /> : tab === 'saude' ? <SaudeMetricas /> : tab === 'benchmarks' ? <MetricasEtapa4 /> : (tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />))}
+      {tab === 'visao' ? <VisaoGeralMetricas /> : tab === 'receita' ? <ReceitaMetricas /> : tab === 'comunicacao' ? <ComunicacaoMetricas /> : tab === 'saude' ? <SaudeMetricas /> : tab === 'ia' ? <IaCustoMetricas /> : tab === 'benchmarks' ? <MetricasEtapa4 /> : (tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />))}
     </div>
   );
 }
