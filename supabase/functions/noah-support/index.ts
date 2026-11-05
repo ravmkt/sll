@@ -29,6 +29,12 @@ const limited = (uid: string) => {
   return arr.length > 15;
 };
 
+async function logEvent(storeId: string, kind: string) {
+  try {
+    await createClient(SUPABASE_URL, SERVICE_KEY).from("noah_support_events").insert({ store_id: storeId, kind });
+  } catch (_) { /* nao bloqueia o chat */ }
+}
+
 const clean = (v: unknown, max: number) => String(v ?? "").replace(/[\r\n\t]+/g, " ").trim().slice(0, max);
 const norm = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
@@ -133,7 +139,10 @@ Deno.serve(async (req) => {
 
   // Respostas gratuitas: sem IA e sem debitar
   const free = freeReply(lastText);
-  if (free) return json({ reply: free, free: true });
+  if (free) {
+    if (free === FREE_HUMAN) await logEvent(storeId, "human_request");
+    return json({ reply: free, free: true });
+  }
 
   // Respiro por loja: rajada de mensagens (configuravel no Master, card Suporte Noah)
   {
@@ -156,6 +165,7 @@ Deno.serve(async (req) => {
         .eq("store_id", storeId).eq("purpose", "support").gte("created_at", fromIso);
       if ((burstCount ?? 0) >= burst) {
         await admin.schema("noah").from("support_cooldowns").upsert({ store_id: storeId, until: new Date(nowMs + coolMin * 60000).toISOString() });
+        await logEvent(storeId, "cooldown");
         return json({ reply: sayWait(coolMin), cooldown: true, retry_after: coolMin * 60, actions: [] });
       }
     }
@@ -169,6 +179,7 @@ Deno.serve(async (req) => {
       .select("*", { count: "exact", head: true })
       .eq("store_id", storeId).eq("purpose", "support").gte("created_at", dayStart);
     if ((count ?? 0) >= dailyLimit) {
+      await logEvent(storeId, "daily_limit");
       return json({
         reply: "Por hoje j\u00e1 conversamos bastante por aqui. Para continuar agora, fale com nosso time pelo **WhatsApp**, ou me chame de novo amanh\u00e3.",
         limit_reached: true, reason: "daily_limit", actions: [],
