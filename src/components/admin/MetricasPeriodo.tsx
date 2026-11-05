@@ -3,7 +3,16 @@ import type { ReactNode } from 'react';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 export const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-export const PRESETS = [7, 30, 90];
+export const PRESETS = [1, 7, 30, 90];
+
+/** Hoje (YYYY-MM-DD) no fuso de Sao Paulo. */
+export const todaySP = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+
+/** Soma dias a uma data YYYY-MM-DD. */
+export const addDaysYmd = (s: string, n: number) => {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+};
 
 export type Periodo = {
   mode: 'preset' | 'custom';
@@ -31,9 +40,9 @@ export function PeriodoProvider({ children }: { children: ReactNode }) {
     if (mode === 'custom' && cs && ce) {
       return { mode: 'custom', days: diffDays(cs, ce), start: cs, end: ce, setPreset, setCustom };
     }
-    const s = new Date();
-    s.setDate(s.getDate() - (days - 1));
-    return { mode: 'preset', days, start: ymd(s), end: ymd(new Date()), setPreset, setCustom };
+    const t = todaySP();
+    
+    return { mode: 'preset', days, start: addDaysYmd(t, -(days - 1)), end: t, setPreset, setCustom };
   }, [mode, days, cs, ce]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -47,7 +56,7 @@ export function useMetricasPeriodo(): Periodo {
 
 /** Para RPCs com p_days (e p_start/p_end opcionais). */
 export const periodArgs = (p: Periodo) =>
-  p.mode === 'custom' ? { p_days: p.days, p_start: p.start, p_end: p.end } : { p_days: p.days };
+  ({ p_days: p.days, p_start: p.start, p_end: p.end });
 
 /** Para RPCs que usam apenas p_start/p_end. */
 export const rangeArgs = (p: Periodo) => ({ p_start: p.start, p_end: p.end });
@@ -59,7 +68,7 @@ export function PeriodoBar() {
   const [open, setOpen] = useState(p.mode === 'custom');
   const [s, setS] = useState(p.start);
   const [e, setE] = useState(p.end);
-  const today = ymd(new Date());
+  const today = todaySP();
   const valid = !!s && !!e && s <= e && e <= today;
   const btn = (on: boolean) =>
     `cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${on ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`;
@@ -74,7 +83,7 @@ export function PeriodoBar() {
         <div className="flex gap-1 rounded-lg border border-slate-700 bg-[#0b0e1a] p-1">
           {PRESETS.map((d) => (
             <button key={d} type="button" onClick={() => { setOpen(false); p.setPreset(d); }} className={btn(p.mode === 'preset' && p.days === d)}>
-              {d} dias
+              {d === 1 ? 'Hoje' : `${d} dias`}
             </button>
           ))}
           <button type="button" onClick={() => { setS(p.start); setE(p.end); setOpen(true); }} className={btn(p.mode === 'custom' || open)}>

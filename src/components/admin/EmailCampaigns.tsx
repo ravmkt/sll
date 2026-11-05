@@ -480,6 +480,7 @@ export default function EmailCampaigns() {
         <h2 className="flex items-center gap-2 text-base font-bold text-slate-100"><Mail className="w-4 h-4" /> E-mails enviados</h2>
         <div className="flex items-center gap-2">
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={inputCls + ' !w-auto'}>
+            <option value={1}>Hoje</option>
             <option value={7}>Últimos 7 dias</option>
             <option value={30}>Últimos 30 dias</option>
             <option value={90}>Últimos 90 dias</option>

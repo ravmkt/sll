@@ -5,7 +5,7 @@ import { ErrorBox, ITEM, Metric, PeriodBar, TOOLTIP, brl, card, dayLabel, nf, pc
 
 type Top = { id: string; title: string; store: string | null; status: string | null; peak: number; views: number; clicks: number };
 type Data = {
-  subscribers: number; subs_without_live: number; stores_with_live: number;
+  subscribers: number; subs_without_live: number; stores_with_live: number; stores_live_now: number;
   lives_total: number; lives_held: number; by_status: Record<string, number>; peak: number;
   views_total: number; views_unique: number; product_clicks: number; promo_clicks: number;
   group_clicks: number; signup_clicks: number; share_clicks: number; chat_messages: number;
@@ -42,8 +42,8 @@ export default function StreamSellMetricas() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric label="Lojas assinantes" value={d ?? nf(x?.subscribers ?? 0)} hint={`${nf(x?.subs_without_live ?? 0)} nunca fizeram live`} icon={Store} tone="bg-sky-500/15 text-sky-300" />
-        <Metric label="Lojas com live" value={d ?? nf(x?.stores_with_live ?? 0)} hint="No período" icon={Radio} tone="bg-rose-500/15 text-rose-300" />
-        <Metric label="Lives" value={d ?? nf(x?.lives_total ?? 0)} hint={`${nf(x?.lives_held ?? 0)} realizadas`} icon={Radio} tone="bg-violet-500/15 text-violet-300" />
+        <Metric label="Lojas com live" value={d ?? nf(x?.stores_live_now ?? 0)} hint="Ao vivo agora" icon={Radio} tone="bg-rose-500/15 text-rose-300" />
+        <Metric label="Lives" value={d ?? nf(x?.lives_held ?? 0)} hint={`${nf(x?.lives_total ?? 0)} no total (com agendadas)`} icon={Radio} tone="bg-violet-500/15 text-violet-300" />
         <Metric label="Pico de espectadores" value={d ?? nf(x?.peak ?? 0)} hint="Maior audiência simultânea" icon={TrendingUp} tone="bg-amber-500/15 text-amber-300" />
         <Metric label="Visualizações" value={d ?? nf(x?.views_unique ?? 0)} hint={`${nf(x?.views_total ?? 0)} eventos de view`} icon={Eye} tone="bg-emerald-500/15 text-emerald-300" />
         <Metric label="Cliques em produtos" value={d ?? nf(x?.product_clicks ?? 0)} hint={`Taxa de clique ${pct(x?.product_clicks ?? 0, x?.views_unique ?? 0)}`} icon={MousePointerClick} tone="bg-sky-500/15 text-sky-300" />
