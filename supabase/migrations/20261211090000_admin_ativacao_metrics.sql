@@ -7,7 +7,7 @@ as $$
 declare
   v_res jsonb;
 begin
-  if not public.is_superadmin() then raise exception 'forbidden';
+  if not public.is_superadmin() then raise exception 'forbidden'; end if;
 
   with b as (
     select s.id, s.name, s.created_at,
