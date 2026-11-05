@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, DollarSign, Eye, HardDrive, Heart, MessageSquare, MousePointerClick, Play, Store, Video } from 'lucide-react';
+import { AlertTriangle, DollarSign, Eye, HardDrive, Heart, MousePointerClick, Play, Store, Video } from 'lucide-react';
 import { ErrorBox, ITEM, Metric, PeriodBar, TOOLTIP, brl, card, dayLabel, fmtBytes, nf, pct, useAdminRpc } from '@/components/admin/MetricasUi';
 
 type Top = { id: string; title: string | null; store: string | null; views: number; clicks: number };
@@ -42,11 +42,11 @@ export default function VidlyticsMetricas() {
         <Metric label="Faturamento atribuído" value={d ?? brl(x?.revenue ?? 0)} hint={`${nf(x?.orders ?? 0)} pedido(s) pago(s)`} icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />
         <Metric label="Visualizações" value={d ?? nf(x?.views ?? 0)} icon={Eye} tone="bg-sky-500/15 text-sky-300" />
         <Metric label="Plays" value={d ?? nf(x?.plays ?? 0)} hint={`Taxa de play ${pct(x?.plays ?? 0, x?.views ?? 0)}`} icon={Play} tone="bg-violet-500/15 text-violet-300" />
-        <Metric label="Cliques" value={d ?? nf(x?.clicks ?? 0)} hint={`CTR ${pct(x?.clicks ?? 0, x?.views ?? 0)}`} icon={MousePointerClick} tone="bg-emerald-500/15 text-emerald-300" />
+        <Metric label="Cliques" value={d ?? nf(x?.clicks ?? 0)} hint={`Taxa de clique ${pct(x?.clicks ?? 0, x?.views ?? 0)}`} icon={MousePointerClick} tone="bg-emerald-500/15 text-emerald-300" />
         <Metric label="Curtidas e comentários" value={d ?? nf((x?.likes ?? 0) + (x?.comments ?? 0))} hint={`${nf(x?.likes ?? 0)} curtidas · ${nf(x?.comments ?? 0)} comentários`} icon={Heart} tone="bg-rose-500/15 text-rose-300" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4">
         <div className={card}>
           <p className="mb-3 text-[15px] font-bold text-white">Evolução diária</p>
           <div className="h-56">
@@ -66,23 +66,6 @@ export default function VidlyticsMetricas() {
             )}
           </div>
         </div>
-
-        <div className={card}>
-          <p className="mb-3 flex items-center gap-2 text-[15px] font-bold text-white"><MessageSquare className="h-4 w-4 text-sky-300" /> Eventos por tipo</p>
-          {types.length === 0 ? (
-            <p className="text-[13px] text-slate-500">{loading ? 'Carregando...' : 'Nenhum evento no período.'}</p>
-          ) : (
-            <ul className="max-h-56 space-y-2 overflow-y-auto pr-1">
-              {types.map(([k, n]) => (
-                <li key={k} className="flex items-center justify-between border-b border-slate-800/60 pb-2 text-[13px] last:border-0">
-                  <span className="text-slate-300">{k}</span>
-                  <b className="tabular-nums text-white">{nf(n)}</b>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-3 text-[11px] text-slate-500">Retenção média entra quando o widget gravar eventos de progresso.</p>
-        </div>
       </div>
 
       <div className={card}>
@@ -95,7 +78,7 @@ export default function VidlyticsMetricas() {
               <thead>
                 <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-500">
                   <th className="px-3 py-2">Vídeo</th><th className="px-3 py-2">Loja</th>
-                  <th className="px-3 py-2 text-right">Views</th><th className="px-3 py-2 text-right">Cliques</th><th className="px-3 py-2 text-right">CTR</th>
+                  <th className="px-3 py-2 text-right">Views</th><th className="px-3 py-2 text-right">Cliques</th><th className="px-3 py-2 text-right">Taxa de clique</th>
                 </tr>
               </thead>
               <tbody>

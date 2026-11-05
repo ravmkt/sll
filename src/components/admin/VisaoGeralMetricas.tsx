@@ -82,15 +82,15 @@ export default function VisaoGeralMetricas() {
       <ErrorBox text={error} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <Metric label="MRR" value={dash ?? brl(Number(h.mrr_cents ?? 0) / 100)} hint={`Add-ons: ${brl(Number(h.addon_mrr_cents ?? 0) / 100)}`} icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />
+        <Metric label={'Receita mensal'} value={dash ?? brl(Number(h.mrr_cents ?? 0) / 100)} hint={`Add-ons: ${brl(Number(h.addon_mrr_cents ?? 0) / 100)}`} icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />
         <Metric label="Lojas ativas" value={dash ?? nf(h.active_stores ?? 0)} icon={Store} tone="bg-sky-500/15 text-sky-300" />
         <Metric label="Cancelamentos" value={dash ?? nf(h.churn_30d ?? 0)} hint={'No per\u00edodo'} icon={TrendingDown} tone="bg-rose-500/15 text-rose-300" />
         <Metric label={'Convers\u00e3o do trial'} value={dash ?? (te > 0 ? `${Math.round((tc / te) * 100)}%` : '-')} hint={`${tc} de ${te} trials encerrados`} icon={Percent} tone="bg-amber-500/15 text-amber-300" />
         <Metric label="Lives realizadas" value={dash ?? nf(ss.lives_held ?? 0)} hint={`${nf(ss.views_total ?? 0)} visualiza\u00e7\u00f5es`} icon={Radio} tone="bg-violet-500/15 text-violet-300" />
         <Metric label="Vendas das lives" value={dash ?? brl(Number(ss.revenue ?? 0))} hint={`${nf(ss.orders ?? 0)} pedido(s)`} icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />
-        <Metric label={'Views Vidlytics'} value={dash ?? nf(vid.views ?? 0)} hint={`${nf(vid.clicks ?? 0)} cliques`} icon={Eye} tone="bg-sky-500/15 text-sky-300" />
+        <Metric label={'Visualiza\u00e7\u00f5es Vidlytics'} value={dash ?? nf(vid.views ?? 0)} hint={`${nf(vid.clicks ?? 0)} cliques`} icon={Eye} tone="bg-sky-500/15 text-sky-300" />
         <Metric label="Receita Vidlytics" value={dash ?? brl(Number(vid.revenue ?? 0))} hint={`${nf(vid.orders ?? 0)} pedido(s)`} icon={Video} tone="bg-emerald-500/15 text-emerald-300" />
-        <Metric label="NPS" value={dash ?? (nps.nps == null ? '-' : String(nps.nps))} hint={`${nf(nps.total ?? 0)} resposta(s)`} icon={Gauge} tone="bg-sky-500/15 text-sky-300" />
+        <Metric label={'Satisfa\u00e7\u00e3o (NPS)'} value={dash ?? (nps.nps == null ? '-' : String(nps.nps))} hint={`${nf(nps.total ?? 0)} resposta(s)`} icon={Gauge} tone="bg-sky-500/15 text-sky-300" />
         <Metric label={'Aprova\u00e7\u00e3o do Noah'} value={dash ?? (noahTotal > 0 ? `${Math.round((Number(noah.up ?? 0) / noahTotal) * 100)}%` : '-')} hint={`${nf(noahTotal)} voto(s)`} icon={ThumbsUp} tone="bg-violet-500/15 text-violet-300" />
       </div>
 

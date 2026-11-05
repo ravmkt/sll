@@ -126,9 +126,9 @@ export default function NegocioMetricas() {
       {error && <div className="rounded-xl border border-rose-500/50 bg-rose-500/10 p-3 text-[13px] text-rose-300">{error}</div>}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <Metric label="MRR" value={dash ?? brl(health?.mrr_cents ?? 0)} hint={`Add-ons: ${brl(health?.addon_mrr_cents ?? 0)}`} icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />
+        <Metric label={'Receita mensal'} value={dash ?? brl(health?.mrr_cents ?? 0)} hint={`Add-ons: ${brl(health?.addon_mrr_cents ?? 0)}`} icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />
         <Metric label="Lojas ativas" value={dash ?? String(health?.active_stores ?? 0)} icon={Store} tone="bg-sky-500/15 text-sky-300" />
-        <Metric label="ARPU" value={dash ?? brl(health?.arpu_cents ?? 0)} hint="Receita mensal por loja" icon={Users} tone="bg-violet-500/15 text-violet-300" />
+        <Metric label={'Receita por loja'} value={dash ?? brl(health?.arpu_cents ?? 0)} hint="Receita mensal por loja" icon={Users} tone="bg-violet-500/15 text-violet-300" />
         <Metric label="Cancelamentos" value={dash ?? String(health?.churn_30d ?? 0)} hint="Lojas que cancelaram no período" icon={TrendingDown} tone="bg-rose-500/15 text-rose-300" />
         <Metric label="Conversão do trial" value={dash ?? conv} hint={`${tc} de ${te} trials encerrados`} icon={Percent} tone="bg-amber-500/15 text-amber-300" />
         <Metric label="Receita paga" value={dash ?? brl(total)} hint="Faturas pagas no período" icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />

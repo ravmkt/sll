@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 const sb: any = supabase;
 
 /** RPCs que ja aceitam p_store_id. Sera preenchido na migration da etapa 2. */
-export const LOJA_RPCS = new Set<string>([]);
+export const LOJA_RPCS = new Set<string>(['admin_streamsell_metrics', 'admin_vidlytics_metrics']);
 
 export type LojaOpt = { id: string; label: string };
 type LojaCtx = { storeId: string | null; setStoreId: (id: string | null) => void; stores: LojaOpt[] };

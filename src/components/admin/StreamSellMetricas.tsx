@@ -46,7 +46,7 @@ export default function StreamSellMetricas() {
         <Metric label="Lives" value={d ?? nf(x?.lives_total ?? 0)} hint={`${nf(x?.lives_held ?? 0)} realizadas`} icon={Radio} tone="bg-violet-500/15 text-violet-300" />
         <Metric label="Pico de espectadores" value={d ?? nf(x?.peak ?? 0)} hint="Maior audiência simultânea" icon={TrendingUp} tone="bg-amber-500/15 text-amber-300" />
         <Metric label="Visualizações" value={d ?? nf(x?.views_unique ?? 0)} hint={`${nf(x?.views_total ?? 0)} eventos de view`} icon={Eye} tone="bg-emerald-500/15 text-emerald-300" />
-        <Metric label="Cliques em produtos" value={d ?? nf(x?.product_clicks ?? 0)} hint={`CTR ${pct(x?.product_clicks ?? 0, x?.views_unique ?? 0)}`} icon={MousePointerClick} tone="bg-sky-500/15 text-sky-300" />
+        <Metric label="Cliques em produtos" value={d ?? nf(x?.product_clicks ?? 0)} hint={`Taxa de clique ${pct(x?.product_clicks ?? 0, x?.views_unique ?? 0)}`} icon={MousePointerClick} tone="bg-sky-500/15 text-sky-300" />
         <Metric label="Leads captados" value={d ?? nf(x?.leads ?? 0)} hint={`${nf(x?.chat_messages ?? 0)} mensagens no chat`} icon={UserPlus} tone="bg-violet-500/15 text-violet-300" />
         <Metric label="Faturamento" value={d ?? brl(x?.revenue ?? 0)} hint={`${nf(x?.orders ?? 0)} pedido(s) pago(s)`} icon={DollarSign} tone="bg-emerald-500/15 text-emerald-300" />
       </div>
@@ -66,12 +66,6 @@ export default function StreamSellMetricas() {
                 </div>
               </div>
             ))}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-800 pt-3 text-[13px] text-slate-400">
-            <span>Cliques na divulgação: <b className="text-slate-200">{nf(x?.promo_clicks ?? 0)}</b></span>
-            <span>Cliques no grupo: <b className="text-slate-200">{nf(x?.group_clicks ?? 0)}</b></span>
-            <span>Cliques em cadastro: <b className="text-slate-200">{nf(x?.signup_clicks ?? 0)}</b></span>
-            <span>Compartilhamentos: <b className="text-slate-200">{nf(x?.share_clicks ?? 0)}</b></span>
           </div>
         </div>
 
