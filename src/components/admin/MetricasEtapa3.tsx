@@ -2,20 +2,19 @@ import { useEffect, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { Activity, AlertTriangle, Clock, Database, DollarSign, HardDrive, MessageSquare, Percent, Send, ShieldCheck, UserX } from 'lucide-react';
 import { supabase } from "@/lib/supabase";
+import { rangeArgs, useMetricasPeriodo } from '@/components/admin/MetricasPeriodo';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type D = any;
 
-const PERIODS = [7, 30, 90];
 const card = 'rounded-2xl border border-violet-500/50 bg-[#111524] p-4';
-const pad = (x: number) => String(x).padStart(2, '0');
-const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const n = (v: unknown) => Number(v ?? 0);
 const brl = (c: number) => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)}%` : '-');
 const fmtBytes = (b: number) => (b >= 1073741824 ? `${(b / 1073741824).toFixed(1)} GB` : b >= 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.round(b / 1024)} KB`);
 
-function useMetric(fn: string, days: number) {
+function useMetric(fn: string, _days?: number) {
+  const per = useMetricasPeriodo();
   const [data, setData] = useState<D>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,35 +23,24 @@ function useMetric(fn: string, days: number) {
     setLoading(true);
     setError(null);
     (async () => {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - (days - 1));
-      const res = await supabase.rpc(fn, { p_start: ymd(start), p_end: ymd(end) });
+      const res = await supabase.rpc(fn, rangeArgs(per));
       if (!alive) return;
       if (res.error) setError(res.error.message);
       else setData(res.data);
       setLoading(false);
     })();
     return () => { alive = false; };
-  }, [fn, days]);
+  }, [fn, per.start, per.end]);
   return { data, loading, error };
 }
 
-function Shell({ title, sub, icon: Icon, days, setDays, error, children }: { title: string; sub: string; icon: ElementType; days: number; setDays: (d: number) => void; error: string | null; children: ReactNode }) {
+function Shell({ title, sub, icon: Icon, error, children }: { title: string; sub: string; icon: ElementType; days?: number; setDays?: (d: number) => void; error: string | null; children: ReactNode }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-black text-white"><Icon className="h-6 w-6 text-[#fd8539]" /> {title}</h1>
           <p className="mt-0.5 text-[13px] text-slate-500">{sub}</p>
-        </div>
-        <div className="flex gap-1 rounded-lg border border-slate-700 bg-[#0b0e1a] p-1">
-          {PERIODS.map((p) => (
-            <button key={p} type="button" onClick={() => setDays(p)}
-              className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${days === p ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}>
-              {p} dias
-            </button>
-          ))}
         </div>
       </div>
       {error && <div className="rounded-xl border border-rose-500/50 bg-rose-500/10 p-3 text-[13px] text-rose-300">{error}</div>}

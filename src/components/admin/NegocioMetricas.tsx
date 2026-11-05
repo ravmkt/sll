@@ -3,10 +3,10 @@ import type { ElementType } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { AlertTriangle, DollarSign, Percent, Store, TrendingDown, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { rangeArgs, useMetricasPeriodo } from '@/components/admin/MetricasPeriodo';
 
 const sb: any = supabase;
 
-const PERIODS = [7, 30, 90];
 const MODULES = [
   { v: '', l: 'Todos os módulos' },
   { v: 'vidlytics', l: 'Vidlytics' },
@@ -17,8 +17,6 @@ const card = 'rounded-2xl border border-violet-500/50 bg-[#111524] p-4';
 const TOOLTIP = { background: '#0b0e1a', border: '1px solid #1e293b', borderRadius: 12, color: '#e2e8f0', fontSize: 12 };
 const ITEM = { color: '#e2e8f0', fontSize: 12 };
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const brl = (cents: number) => (Number(cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 type Alert = { id: string; name: string; what: string; pct?: number; days?: number };
@@ -68,7 +66,8 @@ function AlertList({ title, items, suffix }: { title: string; items: Alert[]; su
 }
 
 export default function NegocioMetricas() {
-  const [days, setDays] = useState(30);
+  const per = useMetricasPeriodo();
+  const days = per.days;
   const [mod, setMod] = useState('');
   const [health, setHealth] = useState<Health | null>(null);
   const [origin, setOrigin] = useState<Origin[]>([]);
@@ -79,10 +78,7 @@ export default function NegocioMetricas() {
     let alive = true;
     setLoading(true);
     setError(null);
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - (days - 1));
-    const args = { p_start: ymd(start), p_end: ymd(end), p_module: mod || null };
+    const args = { ...rangeArgs(per), p_module: mod || null };
     Promise.all([sb.rpc('admin_saas_health', args), sb.rpc('admin_revenue_origin', args)])
       .then(([h, o]: any[]) => {
         if (!alive) return;
@@ -94,7 +90,7 @@ export default function NegocioMetricas() {
       .catch((e: any) => { if (alive) setError(e?.message ?? 'Erro ao carregar'); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [days, mod]);
+  }, [per.start, per.end, mod]);
 
   const rows = useMemo(() => {
     const monthly = days > 62;
@@ -125,18 +121,6 @@ export default function NegocioMetricas() {
         >
           {MODULES.map((m) => <option key={m.v} value={m.v}>{m.l}</option>)}
         </select>
-        <div className="flex gap-1 rounded-lg border border-slate-700 bg-[#0b0e1a] p-1">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setDays(p)}
-              className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${days === p ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}
-            >
-              {p} dias
-            </button>
-          ))}
-        </div>
       </div>
 
       {error && <div className="rounded-xl border border-rose-500/50 bg-rose-500/10 p-3 text-[13px] text-rose-300">{error}</div>}

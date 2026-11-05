@@ -2,7 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Lightbulb, Loader2, RefreshCw, ThumbsUp } from 'lucide-react';
 import IdeasAdmin from '@/components/admin/IdeasAdmin';
-import { STATUS_LABEL, STATUS_ORDER, adminList } from '@/services/requests';
+import { STATUS_LABEL, STATUS_ORDER, adminList as adminListAll } from '@/services/requests';
+import { useMetricasPeriodo, ymd as ymdLocal } from '@/components/admin/MetricasPeriodo';
+
+let periodoPedidos = { start: '', end: '' };
+const adminList = async (...a: Parameters<typeof adminListAll>) => {
+  const res: any = await (adminListAll as any)(...a);
+  if (!Array.isArray(res) || !periodoPedidos.start) return res;
+  return res.filter((r: any) => {
+    const d = ymdLocal(new Date(r.created_at));
+    return d >= periodoPedidos.start && d <= periodoPedidos.end;
+  });
+};
 
 const COLORS: Record<string, string> = {
   received: '#94a3b8', review: '#f59e0b', planned: '#0ea5e9', dev: '#8b5cf6', done: '#10b981',
@@ -11,7 +22,7 @@ const CARD = 'rounded-2xl border border-white/10 bg-[#111524] p-5';
 const TIP = { background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#e2e8f0', fontSize: 12 };
 const nf = (n: number) => new Intl.NumberFormat('pt-BR').format(n);
 
-export default function PedidosMetricas() {
+function PedidosMetricasBase() {
   const [rows, setRows] = useState<any[] | null>(null);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
@@ -176,4 +187,10 @@ export default function PedidosMetricas() {
       </div>
     </section>
   );
+}
+
+export default function PedidosMetricas() {
+  const per = useMetricasPeriodo();
+  periodoPedidos = { start: per.start, end: per.end };
+  return <PedidosMetricasBase key={per.start + per.end} />;
 }

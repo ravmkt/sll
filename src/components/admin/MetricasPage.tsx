@@ -1,4 +1,6 @@
 import StreamSellMetricas from '@/components/admin/StreamSellMetricas';
+import { PeriodoBar, PeriodoProvider, useMetricasPeriodo } from '@/components/admin/MetricasPeriodo';
+import VisaoGeralMetricas from '@/components/admin/VisaoGeralMetricas';
 import { ReceitaMetricas, ComunicacaoMetricas, SaudeMetricas } from '@/components/admin/MetricasEtapa3';
 import MetricasEtapa4 from '@/components/admin/MetricasEtapa4';
 import VidlyticsMetricas from '@/components/admin/VidlyticsMetricas';
@@ -11,7 +13,6 @@ import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer,
 import { BarChart3, Percent, ThumbsDown, ThumbsUp, Users } from 'lucide-react';
 import { getNoahFeedbackMetrics, type NoahFeedbackMetrics } from '@/services/admin/noahMetrics';
 
-const PERIODS = [7, 30, 90];
 const T_METRICAS = 'Métricas';
 const T_SUB = 'Visão geral da qualidade do suporte e do uso da plataforma.';
 const T_SECAO = 'Suporte Noah · Isso ajudou?';
@@ -42,7 +43,8 @@ function Metric({ label, value, hint, icon: Icon, tone }: { label: string; value
 }
 
 function SuporteMetricas() {
-  const [days, setDays] = useState(30);
+  const periodo = useMetricasPeriodo();
+  const days = periodo.days;
   const [data, setData] = useState<NoahFeedbackMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,12 +53,12 @@ function SuporteMetricas() {
     let alive = true;
     setLoading(true);
     setError(null);
-    getNoahFeedbackMetrics(days)
+    getNoahFeedbackMetrics(days, periodo.mode === 'custom' ? { start: periodo.start, end: periodo.end } : undefined)
       .then((d) => { if (alive) setData(d); })
       .catch((e) => { if (alive) setError(e?.message ?? 'Erro ao carregar'); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [days]);
+  }, [days, periodo.mode, periodo.start, periodo.end]);
 
   const up = data?.up ?? 0;
   const down = data?.down ?? 0;
@@ -69,14 +71,14 @@ function SuporteMetricas() {
     (data?.daily ?? []).forEach((d) => map.set(String(d.day).slice(0, 10), { up: d.up, down: d.down }));
     const out: { label: string; up: number; down: number }[] = [];
     for (let i = days - 1; i >= 0; i--) {
-      const dt = new Date();
+      const dt = periodo.mode === 'custom' ? new Date(periodo.end + 'T12:00:00') : new Date();
       dt.setDate(dt.getDate() - i);
       const key = ymd(dt);
       const v = map.get(key) ?? { up: 0, down: 0 };
       out.push({ label: `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}`, up: v.up, down: v.down });
     }
     return out;
-  }, [data, days]);
+  }, [data, days, periodo.mode, periodo.end]);
 
   const pie = [
     { name: 'Curtidas', value: up, color: '#10b981' },
@@ -89,18 +91,6 @@ function SuporteMetricas() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-black text-white"><BarChart3 className="h-6 w-6 text-[#fd8539]" /> {T_METRICAS}</h1>
           <p className="mt-0.5 text-[13px] text-slate-500">{T_SUB}</p>
-        </div>
-        <div className="flex gap-1 rounded-lg border border-slate-700 bg-[#0b0e1a] p-1">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setDays(p)}
-              className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${days === p ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}
-            >
-              {p} dias
-            </button>
-          ))}
         </div>
       </div>
 
@@ -193,9 +183,10 @@ function SuporteMetricas() {
   );
 }
 
-type MetricasTab = 'suporte' | 'pedidos' | 'negocio' | 'nps' | 'streamsell' | 'vidlytics' | 'receita' | 'comunicacao' | 'saude' | 'benchmarks';
+type MetricasTab = 'visao' | 'suporte' | 'pedidos' | 'negocio' | 'nps' | 'streamsell' | 'vidlytics' | 'receita' | 'comunicacao' | 'saude' | 'benchmarks';
 
 const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
+  { id: 'visao', label: 'Vis\u00e3o geral' },
   { id: 'suporte', label: 'Suporte Noah' },
   { id: 'pedidos', label: 'Pedidos dos lojistas' },
   { id: 'negocio', label: 'Negócio' },
@@ -208,11 +199,11 @@ const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
   { id: 'benchmarks', label: 'Benchmarks' },
 ];
 
-export default function MetricasPage() {
-  const [tab, setTab] = useState<MetricasTab>('suporte');
+function MetricasPageInner() {
+  const [tab, setTab] = useState<MetricasTab>('visao');
   return (
     <div className="space-y-6">
-      <div className="flex gap-1 border-b border-slate-800">
+      <div className="flex gap-1 overflow-x-auto border-b border-slate-800">
         {METRICAS_TABS.map((t) => (
           <button
             key={t.id}
@@ -226,7 +217,16 @@ export default function MetricasPage() {
           </button>
         ))}
       </div>
-      {tab === 'receita' ? <ReceitaMetricas /> : tab === 'comunicacao' ? <ComunicacaoMetricas /> : tab === 'saude' ? <SaudeMetricas /> : tab === 'benchmarks' ? <MetricasEtapa4 /> : (tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />))}
+      {tab !== 'benchmarks' && <PeriodoBar />}
+      {tab === 'visao' ? <VisaoGeralMetricas /> : tab === 'receita' ? <ReceitaMetricas /> : tab === 'comunicacao' ? <ComunicacaoMetricas /> : tab === 'saude' ? <SaudeMetricas /> : tab === 'benchmarks' ? <MetricasEtapa4 /> : (tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />))}
     </div>
+  );
+}
+
+export default function MetricasPage() {
+  return (
+    <PeriodoProvider>
+      <MetricasPageInner />
+    </PeriodoProvider>
   );
 }

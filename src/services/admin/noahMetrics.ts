@@ -16,8 +16,8 @@ export type NoahFeedbackMetrics = {
   downs: NoahDown[];
 };
 
-export async function getNoahFeedbackMetrics(days: number): Promise<NoahFeedbackMetrics> {
-  const { data, error } = await (supabase as any).rpc("admin_noah_feedback_metrics", { p_days: days });
+export async function getNoahFeedbackMetrics(days: number, range?: { start: string; end: string }): Promise<NoahFeedbackMetrics> {
+  const { data, error } = await (supabase as any).rpc("admin_noah_feedback_metrics", range ? { p_days: days, p_start: range.start, p_end: range.end } : { p_days: days });
   if (error) throw error;
   return data as NoahFeedbackMetrics;
 }

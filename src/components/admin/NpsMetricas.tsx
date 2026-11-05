@@ -3,10 +3,10 @@ import type { ElementType } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Gauge, MessageSquare, ThumbsDown, ThumbsUp, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { periodArgs, useMetricasPeriodo } from '@/components/admin/MetricasPeriodo';
 
 const sb: any = supabase;
 
-const PERIODS = [30, 90, 365];
 const card = 'rounded-2xl border border-violet-500/50 bg-[#111524] p-4';
 const TOOLTIP = { background: '#0b0e1a', border: '1px solid #1e293b', borderRadius: 12, color: '#e2e8f0', fontSize: 12 };
 const ITEM = { color: '#e2e8f0', fontSize: 12 };
@@ -29,7 +29,6 @@ const pretty = (k: string) => {
   const s = String(k || '').replace(/_/g, ' ');
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
-const periodLabel = (p: number) => (p === 365 ? '12 meses' : `${p} dias`);
 const barColor = (s: number) => (s >= 9 ? '#10b981' : s >= 7 ? '#f59e0b' : '#f43f5e');
 
 function Metric({ label, value, hint, icon: Icon, tone }: { label: string; value: string; hint?: string; icon: ElementType; tone: string }) {
@@ -67,7 +66,7 @@ function Ranking({ title, items }: { title: string; items: Count[] }) {
 }
 
 export default function NpsMetricas() {
-  const [days, setDays] = useState(90);
+  const per = useMetricasPeriodo();
   const [survey, setSurvey] = useState('');
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [data, setData] = useState<Results | null>(null);
@@ -84,7 +83,7 @@ export default function NpsMetricas() {
     let alive = true;
     setLoading(true);
     setError(null);
-    sb.rpc('admin_nps_results', { p_days: days, p_survey_id: survey || null })
+    sb.rpc('admin_nps_results', { ...periodArgs(per), p_survey_id: survey || null })
       .then(({ data: d, error: e }: any) => {
         if (!alive) return;
         if (e) throw new Error(e.message);
@@ -93,7 +92,7 @@ export default function NpsMetricas() {
       .catch((e: any) => { if (alive) setError(e?.message ?? 'Erro ao carregar'); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [days, survey]);
+  }, [per.mode, per.days, per.start, per.end, survey]);
 
   const dash = loading ? '...' : null;
   const total = data?.total ?? 0;
@@ -110,18 +109,6 @@ export default function NpsMetricas() {
           <option value="">Todas as pesquisas</option>
           {surveys.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.responses_count})</option>)}
         </select>
-        <div className="flex gap-1 rounded-lg border border-slate-700 bg-[#0b0e1a] p-1">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setDays(p)}
-              className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${days === p ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}
-            >
-              {periodLabel(p)}
-            </button>
-          ))}
-        </div>
       </div>
 
       {error && <div className="rounded-xl border border-rose-500/50 bg-rose-500/10 p-3 text-[13px] text-rose-300">{error}</div>}

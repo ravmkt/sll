@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
+import { periodArgs, useMetricasPeriodo } from '@/components/admin/MetricasPeriodo';
 
 const sb: any = supabase;
 
@@ -23,7 +24,8 @@ export const fmtBytes = (b: number) => {
   return n + ' B';
 };
 
-export function useAdminRpc<T>(fn: string, days: number) {
+export function useAdminRpc<T>(fn: string, _days?: number) {
+  const per = useMetricasPeriodo();
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,14 +34,14 @@ export function useAdminRpc<T>(fn: string, days: number) {
     let alive = true;
     setLoading(true);
     setError(null);
-    sb.rpc(fn, { p_days: days }).then(({ data: d, error: e }: any) => {
+    sb.rpc(fn, periodArgs(per)).then(({ data: d, error: e }: any) => {
       if (!alive) return;
       if (e) setError(e.message || 'Erro ao carregar');
       else setData(d as T);
       setLoading(false);
     });
     return () => { alive = false; };
-  }, [fn, days]);
+  }, [fn, per.mode, per.days, per.start, per.end]);
 
   return { data, loading, error };
 }
@@ -57,26 +59,9 @@ export function Metric({ label, value, hint, icon: Icon, tone }: { label: string
   );
 }
 
-const PERIODS = [7, 30, 90];
 
-export function PeriodBar({ days, setDays, children }: { days: number; setDays: (n: number) => void; children?: ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="text-[13px] text-slate-400">{children}</div>
-      <div className="flex gap-1 rounded-lg border border-slate-700 bg-[#0b0e1a] p-1">
-        {PERIODS.map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => setDays(p)}
-            className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${days === p ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}
-          >
-            {p} dias
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+export function PeriodBar({ children }: { days?: number; setDays?: (n: number) => void; children?: ReactNode }) {
+  return <div className="text-[13px] text-slate-400">{children}</div>;
 }
 
 export function ErrorBox({ text }: { text: string | null }) {
