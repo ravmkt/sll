@@ -143,8 +143,7 @@ Deno.serve(async (req) => {
     if (burst > 0) {
       const nowMs = Date.now();
       const sayWait = (min: number) =>
-        "O Noah est\u00e1 organizando suas respostas. Respire fundo por " + min + (min === 1 ? " minuto" : " minutos") +
-        " enquanto voc\u00ea aplica o passo a passo na sua loja e j\u00e1 voltamos!";
+        "Estou preparando o material certo para voc\u00ea. Me chame de novo em " + min + (min === 1 ? " minuto" : " minutos") + ", combinado?";
       const { data: cd } = await admin.schema("noah").from("support_cooldowns").select("until").eq("store_id", storeId).maybeSingle();
       const untilMs = cd?.until ? new Date(cd.until).getTime() : 0;
       if (untilMs > nowMs) {
@@ -171,7 +170,7 @@ Deno.serve(async (req) => {
       .eq("store_id", storeId).eq("purpose", "support").gte("created_at", dayStart);
     if ((count ?? 0) >= dailyLimit) {
       return json({
-        reply: "Voc\u00ea atingiu o limite de perguntas do Noah por hoje. Volte amanh\u00e3 ou fale agora com nosso time pelo **Chamar no WhatsApp**, no bot\u00e3o abaixo do chat.",
+        reply: "Por hoje j\u00e1 conversamos bastante por aqui. Para continuar agora, fale com nosso time pelo **WhatsApp**, ou me chame de novo amanh\u00e3.",
         limit_reached: true, reason: "daily_limit", actions: [],
       });
     }
