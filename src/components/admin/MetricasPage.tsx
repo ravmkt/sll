@@ -1,4 +1,5 @@
 import StreamSellMetricas from '@/components/admin/StreamSellMetricas';
+import { ReceitaMetricas, ComunicacaoMetricas, SaudeMetricas } from '@/components/admin/MetricasEtapa3';
 import VidlyticsMetricas from '@/components/admin/VidlyticsMetricas';
 import PedidosMetricas from '@/components/admin/PedidosMetricas';
 import NegocioMetricas from '@/components/admin/NegocioMetricas';
@@ -191,7 +192,7 @@ function SuporteMetricas() {
   );
 }
 
-type MetricasTab = 'suporte' | 'pedidos' | 'negocio' | 'nps' | 'streamsell' | 'vidlytics';
+type MetricasTab = 'suporte' | 'pedidos' | 'negocio' | 'nps' | 'streamsell' | 'vidlytics' | 'receita' | 'comunicacao' | 'saude';
 
 const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
   { id: 'suporte', label: 'Suporte Noah' },
@@ -200,6 +201,9 @@ const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
   { id: 'nps', label: 'NPS' },
   { id: 'streamsell', label: 'Stream Sell' },
   { id: 'vidlytics', label: 'Vidlytics' },
+  { id: 'receita', label: 'Receita' },
+  { id: 'comunicacao', label: 'Comunicação' },
+  { id: 'saude', label: 'Saúde técnica' },
 ];
 
 export default function MetricasPage() {
@@ -220,7 +224,7 @@ export default function MetricasPage() {
           </button>
         ))}
       </div>
-      {tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />)}
+      {tab === 'receita' ? <ReceitaMetricas /> : tab === 'comunicacao' ? <ComunicacaoMetricas /> : tab === 'saude' ? <SaudeMetricas /> : (tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />))}
     </div>
   );
 }
