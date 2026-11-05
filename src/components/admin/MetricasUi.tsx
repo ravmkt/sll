@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { periodArgs, useMetricasPeriodo } from '@/components/admin/MetricasPeriodo';
+import { useMetricasLoja, withStore } from '@/components/admin/MetricasLoja';
 
 const sb: any = supabase;
 
@@ -26,6 +27,7 @@ export const fmtBytes = (b: number) => {
 
 export function useAdminRpc<T>(fn: string, _days?: number) {
   const per = useMetricasPeriodo();
+  const loja = useMetricasLoja();
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,14 +36,14 @@ export function useAdminRpc<T>(fn: string, _days?: number) {
     let alive = true;
     setLoading(true);
     setError(null);
-    sb.rpc(fn, periodArgs(per)).then(({ data: d, error: e }: any) => {
+    sb.rpc(fn, withStore(fn, periodArgs(per), loja.storeId)).then(({ data: d, error: e }: any) => {
       if (!alive) return;
       if (e) setError(e.message || 'Erro ao carregar');
       else setData(d as T);
       setLoading(false);
     });
     return () => { alive = false; };
-  }, [fn, per.mode, per.days, per.start, per.end]);
+  }, [fn, per.mode, per.days, per.start, per.end, loja.storeId]);
 
   return { data, loading, error };
 }

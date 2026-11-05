@@ -1,7 +1,8 @@
 import StreamSellMetricas from '@/components/admin/StreamSellMetricas';
+import { LojaBar, LojaProvider } from '@/components/admin/MetricasLoja';
 import { PeriodoBar, PeriodoProvider, useMetricasPeriodo } from '@/components/admin/MetricasPeriodo';
 import VisaoGeralMetricas from '@/components/admin/VisaoGeralMetricas';
-import { ReceitaMetricas, ComunicacaoMetricas, SaudeMetricas } from '@/components/admin/MetricasEtapa3';
+import { ReceitaMetricas, SaudeMetricas } from '@/components/admin/MetricasEtapa3';
 import MetricasEtapa4 from '@/components/admin/MetricasEtapa4';
 import IaCustoMetricas from '@/components/admin/IaCustoMetricas';
 import NoahTemasMetricas from '@/components/admin/NoahTemasMetricas';
@@ -11,7 +12,7 @@ import PedidosMetricas from '@/components/admin/PedidosMetricas';
 import NegocioMetricas from '@/components/admin/NegocioMetricas';
 import NpsMetricas from '@/components/admin/NpsMetricas';
 import { useEffect, useMemo, useState } from 'react';
-import type { ElementType } from 'react';
+import type { ElementType, ReactNode } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { BarChart3, Percent, ThumbsDown, ThumbsUp, Users } from 'lucide-react';
 import { getNoahFeedbackMetrics, type NoahFeedbackMetrics } from '@/services/admin/noahMetrics';
@@ -186,45 +187,101 @@ function SuporteMetricas() {
   );
 }
 
-type MetricasTab = 'visao' | 'suporte' | 'pedidos' | 'negocio' | 'nps' | 'streamsell' | 'vidlytics' | 'receita' | 'comunicacao' | 'saude' | 'benchmarks' | 'ia' | 'temas' | 'ativacao';
+type Sub = { id: string; label: string; rpcs: string[]; global?: boolean; render: () => ReactNode };
+type Aba = { id: string; label: string; subs: Sub[] };
 
-const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
-  { id: 'visao', label: 'Vis\u00e3o geral' },
-  { id: 'suporte', label: 'Suporte Noah' },
-  { id: 'pedidos', label: 'Pedidos dos lojistas' },
-  { id: 'negocio', label: 'Negócio' },
-  { id: 'nps', label: 'NPS' },
-  { id: 'streamsell', label: 'Stream Sell' },
-  { id: 'vidlytics', label: 'Vidlytics' },
-  { id: 'receita', label: 'Receita' },
-  { id: 'comunicacao', label: 'Comunicação' },
-  { id: 'saude', label: 'Saúde técnica' },
-  { id: 'benchmarks', label: 'Benchmarks' },
-  { id: 'ia', label: 'Custo de IA' },
-  { id: 'temas', label: 'Temas do Noah' },
-  { id: 'ativacao', label: 'Ativa\u00e7\u00e3o' },
+const ABAS: Aba[] = [
+  {
+    id: 'visao', label: 'Vis\u00e3o geral',
+    subs: [{ id: 'geral', label: 'Vis\u00e3o geral', rpcs: ['admin_saas_health', 'admin_streamsell_metrics', 'admin_vidlytics_metrics', 'admin_nps_results', 'admin_noah_feedback_metrics'], render: () => <VisaoGeralMetricas /> }],
+  },
+  {
+    id: 'receita', label: 'Receita',
+    subs: [
+      { id: 'negocio', label: 'Receita e cancelamentos', rpcs: ['admin_saas_health', 'admin_revenue_origin'], render: () => <NegocioMetricas /> },
+      { id: 'faturas', label: 'Faturas e inadimpl\u00eancia', rpcs: ['admin_receita_metrics'], render: () => <ReceitaMetricas /> },
+    ],
+  },
+  {
+    id: 'modulos', label: 'M\u00f3dulos',
+    subs: [
+      { id: 'streamsell', label: 'Stream Sell', rpcs: ['admin_streamsell_metrics'], render: () => <StreamSellMetricas /> },
+      { id: 'vidlytics', label: 'Vidlytics', rpcs: ['admin_vidlytics_metrics'], render: () => <VidlyticsMetricas /> },
+    ],
+  },
+  {
+    id: 'ativacao', label: 'Ativa\u00e7\u00e3o',
+    subs: [{ id: 'funil', label: 'Ativa\u00e7\u00e3o', rpcs: ['admin_ativacao_metrics'], render: () => <AtivacaoMetricas /> }],
+  },
+  {
+    id: 'ia', label: 'IA e Noah',
+    subs: [
+      { id: 'custo', label: 'Custo de IA', rpcs: ['admin_usage_summary', 'admin_saas_health'], render: () => <IaCustoMetricas /> },
+      { id: 'suporte', label: 'Qualidade do suporte', rpcs: ['admin_noah_feedback_metrics'], render: () => <SuporteMetricas /> },
+      { id: 'temas', label: 'Temas das perguntas', rpcs: ['admin_noah_themes'], render: () => <NoahTemasMetricas /> },
+    ],
+  },
+  {
+    id: 'voz', label: 'Voz do lojista',
+    subs: [
+      { id: 'nps', label: 'Satisfa\u00e7\u00e3o (NPS)', rpcs: ['admin_nps_results'], render: () => <NpsMetricas /> },
+      { id: 'pedidos', label: 'Pedidos dos lojistas', rpcs: ['pedidos'], render: () => <PedidosMetricas /> },
+    ],
+  },
+  {
+    id: 'saude', label: 'Sa\u00fade e mercado',
+    subs: [
+      { id: 'tecnica', label: 'Sa\u00fade t\u00e9cnica', rpcs: ['admin_saude_metrics'], render: () => <SaudeMetricas /> },
+      { id: 'benchmarks', label: 'Benchmarks', rpcs: [], global: true, render: () => <MetricasEtapa4 /> },
+    ],
+  },
 ];
 
 function MetricasPageInner() {
-  const [tab, setTab] = useState<MetricasTab>('visao');
+  const [abaId, setAbaId] = useState('visao');
+  const [subSel, setSubSel] = useState<Record<string, string>>({});
+  const aba = ABAS.find((a) => a.id === abaId) ?? ABAS[0];
+  const sub = aba.subs.find((s) => s.id === subSel[aba.id]) ?? aba.subs[0];
+
   return (
     <div className="space-y-6">
       <div className="flex gap-1 overflow-x-auto border-b border-slate-800">
-        {METRICAS_TABS.map((t) => (
+        {ABAS.map((t) => (
           <button
             key={t.id}
             type="button"
-            onClick={() => setTab(t.id)}
-            className={`-mb-px cursor-pointer border-b-2 px-4 py-2.5 text-[15px] font-semibold transition-colors ${
-              tab === t.id ? 'border-[#0094eb] text-white' : 'border-transparent text-slate-400 hover:text-white'
+            onClick={() => setAbaId(t.id)}
+            className={`-mb-px cursor-pointer whitespace-nowrap border-b-2 px-4 py-2.5 text-[15px] font-semibold transition-colors ${
+              aba.id === t.id ? 'border-[#0094eb] text-white' : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
             {t.label}
           </button>
         ))}
       </div>
-      {tab !== 'benchmarks' && <PeriodoBar />}
-      {tab === 'visao' ? <VisaoGeralMetricas /> : tab === 'receita' ? <ReceitaMetricas /> : tab === 'comunicacao' ? <ComunicacaoMetricas /> : tab === 'saude' ? <SaudeMetricas /> : tab === 'ativacao' ? <AtivacaoMetricas /> : tab === 'temas' ? <NoahTemasMetricas /> : tab === 'ia' ? <IaCustoMetricas /> : tab === 'benchmarks' ? <MetricasEtapa4 /> : (tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />))}
+      {aba.subs.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {aba.subs.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setSubSel((prev) => ({ ...prev, [aba.id]: s.id }))}
+              className={`cursor-pointer rounded-full border px-4 py-1.5 text-[13px] font-semibold transition-colors ${
+                sub.id === s.id ? 'border-[#0094eb] bg-[#0094eb] text-white' : 'border-slate-700 text-slate-400 hover:text-white'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {!sub.global && (
+        <div className="space-y-3">
+          <PeriodoBar />
+          <LojaBar rpcs={sub.rpcs} />
+        </div>
+      )}
+      <div key={aba.id + sub.id}>{sub.render()}</div>
     </div>
   );
 }
@@ -232,7 +289,9 @@ function MetricasPageInner() {
 export default function MetricasPage() {
   return (
     <PeriodoProvider>
-      <MetricasPageInner />
+      <LojaProvider>
+        <MetricasPageInner />
+      </LojaProvider>
     </PeriodoProvider>
   );
 }
