@@ -96,7 +96,7 @@ export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 
       <div className="flex flex-col items-start gap-2">
         <img src="/assets/sll-academy-logo-wide.png" alt="SLL Academy" className="h-auto w-[165px] shrink-0 object-contain object-left" />
         <p className="text-sm font-medium text-slate-700">
-          {streamsell ? 'Aprenda a configurar sua live, apresentar seus produtos e vender mais com Live Commerce.' : hub ? 'Aulas e dicas do nosso canal para impulsionar o seu e-commerce: operação, tráfego, margem e vendas.' : 'Veja como configurar o Vidlytics, tire dúvidas e aprenda dicas para vender mais com vídeos interativos.'}
+          {streamsell ? 'Aprenda a configurar sua live, apresentar seus produtos e vender mais com Stream Sell.' : hub ? 'Aulas e dicas do nosso canal para impulsionar o seu e-commerce: operação, tráfego, margem e vendas.' : 'Veja como configurar o Vidlytics, tire dúvidas e aprenda dicas para vender mais com vídeos interativos.'}
         </p>
       </div>
 

@@ -78,7 +78,7 @@ export default function OnboardingPage() {
     const { data: res, error: e } = await sb.rpc('save_onboarding_progress', { p_store_id: storeId, p_step: to, p_completed: completed, p_data });
     const denied: string[] = Array.isArray(res?.trial_denied) ? res.trial_denied : [];
     if (denied.length) {
-      const names = denied.map((m) => (m === 'live_commerce' ? 'Live Commerce' : m === 'vidlytics' ? 'Vidlytics' : m)).join(', ');
+      const names = denied.map((m) => (m === 'live_commerce' ? 'Stream Sell' : m === 'vidlytics' ? 'Vidlytics' : m)).join(', ');
       setNotice(`Este domínio já usou o período de teste de: ${names}. Para usar o módulo, escolha um plano em Planos.`);
     }
     if (!silent) setBusy(false);

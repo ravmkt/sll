@@ -592,7 +592,7 @@ const VISAO_STREAM_TOUR: TourStep[] = [
   { element: '[data-tour="sg-engaj"]', title: 'Engajamento das lives', description: 'Visualiza\u00e7\u00f5es, mensagens no chat, cliques em produtos, cadastros e compartilhamentos, al\u00e9m do ranking dos produtos mais clicados.', side: 'top' },
   { element: '[data-tour="sg-noah"]', title: 'Dica do Noah', description: 'Dicas pr\u00e1ticas para a \u00e9poca do ano de acordo com o nicho da sua loja. Use Ver mais dicas para ver todas.', side: 'top' },
   { element: '[data-tour="sg-clube"]', title: 'Clube SLL', description: 'Copie seu link de indica\u00e7\u00e3o e ganhe comiss\u00f5es e benef\u00edcios por cada lojista que assinar.', side: 'top' },
-  { element: '[data-tour="sg-academy-card"]', title: 'SLL Academy', description: 'Aulas r\u00e1pidas para configurar sua live, apresentar seus produtos e vender mais com Live Commerce. Assista aos v\u00eddeos aqui e use "Assistir e se inscrever" para seguir o canal no YouTube.', side: 'top' },
+  { element: '[data-tour="sg-academy-card"]', title: 'SLL Academy', description: 'Aulas r\u00e1pidas para configurar sua live, apresentar seus produtos e vender mais com Stream Sell. Assista aos v\u00eddeos aqui e use "Assistir e se inscrever" para seguir o canal no YouTube.', side: 'top' },
 ];
 
 type VisaoTagKind = 'card' | 'grid' | 'parent' | 'menu' | 'wide';

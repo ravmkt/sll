@@ -54,7 +54,7 @@ export default function VidlyticsLanding() {
     return () => window.removeEventListener('keydown', onKey);
   }, [trialOpen]);
   useEffect(() => {
-    document.title = 'SLL Hub | Vídeos interativos e live commerce para e-commerce';
+    document.title = 'SLL Hub | Vídeos interativos e Stream Sell para e-commerce';
     const prev = document.documentElement.style.scrollBehavior;
     document.documentElement.style.scrollBehavior = 'smooth';
     return () => { document.documentElement.style.scrollBehavior = prev; };

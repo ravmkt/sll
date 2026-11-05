@@ -23,7 +23,7 @@ export default function PrivacyPage() {
       <h2 className={h2}>2. Como usamos os dados</h2>
       <ul className="list-disc space-y-1 pl-6">
         <li>Autenticar você e manter sua conta.</li>
-        <li>Fornecer os módulos contratados (vídeos interativos, live commerce e analytics).</li>
+        <li>Fornecer os módulos contratados (vídeos interativos, Stream Sell e analytics).</li>
         <li>Cobrar a assinatura e dar suporte.</li>
         <li>Melhorar o desempenho e a segurança da plataforma.</li>
       </ul>

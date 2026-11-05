@@ -711,7 +711,7 @@ function renderLiveWidget(live) {
   var mediaUrl = live.promo_media_url || live.youtube_thumbnail_url || '';
   var mediaType = live.promo_media_type || 'image';
   var ctaText = live.promo_cta_text || (isLive ? 'Assistir Agora' : 'Quero Participar');
-  var title = live.title || 'Live Commerce';
+  var title = live.title || 'Stream Sell';
   var scheduledAt = live.scheduled_at ? new Date(live.scheduled_at) : null;
 
   var aspectCss = (shape === 'square' || shape === 'circle') ? 'aspect-ratio: 1/1;' : 'aspect-ratio: 9/16;';
@@ -983,7 +983,7 @@ playerWrap.appendChild(liveSpotlightOverlayEl);
 
   var titleEl = document.createElement('p');
   titleEl.className = 'vl-live-modal-title';
-  titleEl.textContent = live.title || 'Live Commerce';
+  titleEl.textContent = live.title || 'Stream Sell';
   body.appendChild(titleEl);
 
   var products = live.featured_products || [];

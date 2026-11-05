@@ -316,7 +316,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
       {/* ACADEMY */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-2xl font-bold"><span className="text-blue-600">SLL</span> <span className="font-semibold text-red-600">Academy</span></h3>
-        <p className="mb-5 mt-1 text-sm text-slate-600">Aprenda a configurar sua live, apresentar seus produtos e vender mais com Live Commerce.</p>
+        <p className="mb-5 mt-1 text-sm text-slate-600">Aprenda a configurar sua live, apresentar seus produtos e vender mais com Stream Sell.</p>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {videos.slice(0, 2).map((v) => (
             <div key={v.title}>
@@ -332,7 +332,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
           ))}
           <div className="flex h-[135px] flex-col items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-red-800 to-red-950 px-6 text-center text-white md:h-auto">
             <b className="text-sm">Quer ver mais?</b>
-            <span className="text-xs leading-snug text-red-100">Confira as aulas de Live Commerce no nosso canal do YouTube.</span>
+            <span className="text-xs leading-snug text-red-100">Confira as aulas de Stream Sell no nosso canal do YouTube.</span>
           </div>
         </div>
         <div className="mt-4 text-right">

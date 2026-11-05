@@ -279,7 +279,7 @@ export default function Overview() {
       <section className={card}>
         <h3 className="text-lg font-semibold text-slate-900">SLL Academy</h3>
         <p className="mt-1 text-sm text-slate-500">
-          Aprenda a configurar sua live, apresentar seus produtos e vender mais com Live Commerce.
+          Aprenda a configurar sua live, apresentar seus produtos e vender mais com Stream Sell.
         </p>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           {[
@@ -305,7 +305,7 @@ export default function Overview() {
           <div className="flex flex-col justify-center rounded-lg bg-red-900 p-6 text-white">
             <Zap className="h-6 w-6 text-red-300" />
             <p className="mt-3 font-medium leading-snug">
-              Quer ver mais? Confira as aulas de Live Commerce no nosso canal do YouTube.
+              Quer ver mais? Confira as aulas de Stream Sell no nosso canal do YouTube.
             </p>
           </div>
         </div>

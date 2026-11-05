@@ -22,7 +22,7 @@ const LABELS: Record<string, string> = {
   suporte: 'Suporte',
   outro: 'Outro',
   vidlytics: 'Vidlytics (vídeos)',
-  live_commerce: 'Live Commerce',
+  live_commerce: 'Stream Sell',
   analytics: 'Analytics',
   noah: 'Noah (assistente)',
   widgets: 'Widgets',

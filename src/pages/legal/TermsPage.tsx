@@ -13,7 +13,7 @@ export default function TermsPage() {
       <h2 className={h2}>1. O serviço</h2>
       <p>
         O SLL Hub oferece módulos para lojistas de e-commerce, como vídeos interativos (Vidlytics) e
-        live commerce, com widgets instalados na loja via script ou Google Tag Manager, além de
+        Stream Sell, com widgets instalados na loja via script ou Google Tag Manager, além de
         painéis de métricas.
       </p>
 
