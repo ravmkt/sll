@@ -1,3 +1,5 @@
+import StreamSellMetricas from '@/components/admin/StreamSellMetricas';
+import VidlyticsMetricas from '@/components/admin/VidlyticsMetricas';
 import PedidosMetricas from '@/components/admin/PedidosMetricas';
 import NegocioMetricas from '@/components/admin/NegocioMetricas';
 import NpsMetricas from '@/components/admin/NpsMetricas';
@@ -189,13 +191,15 @@ function SuporteMetricas() {
   );
 }
 
-type MetricasTab = 'suporte' | 'pedidos' | 'negocio' | 'nps';
+type MetricasTab = 'suporte' | 'pedidos' | 'negocio' | 'nps' | 'streamsell' | 'vidlytics';
 
 const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
   { id: 'suporte', label: 'Suporte Noah' },
   { id: 'pedidos', label: 'Pedidos dos lojistas' },
   { id: 'negocio', label: 'Neg\u00f3cio' },
   { id: 'nps', label: 'NPS' },
+  { id: 'streamsell', label: 'Stream Sell' },
+  { id: 'vidlytics', label: 'Vidlytics' },
 ];
 
 export default function MetricasPage() {
@@ -216,7 +220,7 @@ export default function MetricasPage() {
           </button>
         ))}
       </div>
-      {tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />}
+      {tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />)}
     </div>
   );
 }
