@@ -1,14 +1,12 @@
 import { getModuleAppEnabled } from '@/services/moduleAppService';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { createPortal } from 'react-dom';
 import { Loader2, MessageCircle, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { buildSupportUrl } from '@/config/support';
 import { submitVote } from '@/services/feedback';
-import NoahPackModal from '@/components/billing/NoahPackModal';
 
 const sb: any = supabase;
 
@@ -20,7 +18,7 @@ export interface SupportContext {
   appStatus?: boolean; // Aplicativo de videos ativo na loja
 }
 
-type Msg = { role: 'user' | 'assistant'; content: string; cta?: 'limit'; actions?: { type: string; label: string; href: string }[]; animate?: boolean; id?: string; question?: string; vote?: 'up' | 'down' };
+type Msg = { role: 'user' | 'assistant'; content: string; wa?: boolean; actions?: { type: string; label: string; href: string }[]; animate?: boolean; id?: string; question?: string; vote?: 'up' | 'down' };
 
 const HIDDEN_ON = ['/admin-master', '/dashboard/onboarding', '/auth'];
 const GREETING = 'Olá! Sou o Noah, assistente do SLL Hub. Como posso te ajudar agora?';
@@ -103,7 +101,6 @@ export default function NoahChatWidget() {
   const [appStatus, setAppStatus] = useState<boolean | undefined>(undefined);
   const [cfg, setCfg] = useState<any>(null);
   const [limitHit, setLimitHit] = useState(false);
-  const [packOpen, setPackOpen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -176,7 +173,7 @@ export default function NoahChatWidget() {
       else if (error) console.error('noah-support', error, await (error as any).context?.text?.().catch(() => ''));
     } catch { /* usa o texto padrao */ }
 
-    setMessages((m) => [...m, { role: 'assistant', content: reply, animate: true, cta: limit ? 'limit' : undefined, actions, id: reply === FALLBACK || limit || free ? undefined : crypto.randomUUID(), question: text }]);
+    setMessages((m) => [...m, { role: 'assistant', content: reply, animate: true, wa: limit || /whatsapp/i.test(reply), actions, id: reply === FALLBACK || limit || free ? undefined : crypto.randomUUID(), question: text }]);
     if (limit) setLimitHit(true);
     setLoading(false);
   };
@@ -210,13 +207,11 @@ export default function NoahChatWidget() {
                 }`}
               >
                 {m.animate ? <Typewriter text={m.content} onTick={scrollDown} /> : m.role === 'assistant' ? <Md text={m.content} /> : m.content}
-                {m.cta === 'limit' && (
-                  <div className="mt-2">
-                    <button type="button" onClick={() => setPackOpen(true)}
-                      className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-3 py-2 text-xs font-semibold text-white hover:bg-[#007fcc]">
-                      Fazer upgrade de plano
-                    </button>
-                  </div>
+                {m.wa && (
+                  <a href={whatsapp} target="_blank" rel="noopener noreferrer"
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-600">
+                    <WaIcon /> Falar com o time no WhatsApp
+                  </a>
                 )}
                 {m.id && (
                   <div className="mt-1.5 flex items-center gap-1.5 border-t border-slate-200 pt-1.5">
@@ -247,7 +242,7 @@ export default function NoahChatWidget() {
         </div>
 
         <div className="space-y-2 border-t border-slate-100 bg-white px-3 pb-3 pt-2">
-          {!limitHit && <form
+          <form
             onSubmit={(e) => { e.preventDefault(); void send(); }}
             className="flex items-center gap-2"
           >
@@ -267,13 +262,8 @@ export default function NoahChatWidget() {
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>
-          </form>}
-          {limitHit && (
-            <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-600">
-              <WaIcon /> Continuar no WhatsApp
-            </a>
-          )}
-          <p className={`text-center text-xs text-slate-400 ${limitHit ? 'hidden' : ''}`}>
+          </form>
+          <p className="text-center text-xs text-slate-400">
             Ainda com dúvidas?{' '}
             <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 hover:underline">
               Chamar no WhatsApp
@@ -299,12 +289,6 @@ export default function NoahChatWidget() {
           {waMode ? <WaIcon /> : open ? <X className="h-3 w-3" /> : <MessageCircle className="h-3 w-3" />}
         </span>
       </button>
-    {packOpen && storeId && createPortal(
-        <div className="relative z-[100]">
-          <NoahPackModal storeId={storeId} onClose={() => setPackOpen(false)} />
-        </div>,
-        document.body
-      )}
     </div>
   );
 }
