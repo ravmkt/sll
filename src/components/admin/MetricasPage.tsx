@@ -224,8 +224,7 @@ function MetricasPageInner() {
         ))}
       </div>
       {tab !== 'benchmarks' && <PeriodoBar />}
-      {tab === 'visao' ? <VisaoGeralMetricas /> : tab === 'receita' ? <ReceitaMetricas /> : tab === 'comunicacao' ? <ComunicacaoMetricas /> : tab === 'saude' ? <SaudeMetricas /> : tab === 'temas' ? <NoahTemasMetricas /> : tab === 'ia' ? <IaCustoMetricas /> : tab === 'benchmarks' ? <MetricasEtapa4 /> : (tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />))}
-      {tab === 'visao' ? <VisaoGeralMetricas /> : tab === 'receita' ? <ReceitaMetricas /> : tab === 'comunicacao' ? <ComunicacaoMetricas /> : tab === 'saude' ? <SaudeMetricas /> : tab === 'ativacao' ? <AtivacaoMetricas /> : tab === 'ia' ? <IaCustoMetricas /> : tab === 'benchmarks' ? <MetricasEtapa4 /> : (tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />))}
+      {tab === 'visao' ? <VisaoGeralMetricas /> : tab === 'receita' ? <ReceitaMetricas /> : tab === 'comunicacao' ? <ComunicacaoMetricas /> : tab === 'saude' ? <SaudeMetricas /> : tab === 'ativacao' ? <AtivacaoMetricas /> : tab === 'temas' ? <NoahTemasMetricas /> : tab === 'ia' ? <IaCustoMetricas /> : tab === 'benchmarks' ? <MetricasEtapa4 /> : (tab === 'streamsell' ? <StreamSellMetricas /> : tab === 'vidlytics' ? <VidlyticsMetricas /> : (tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />))}
     </div>
   );
 }
