@@ -9,13 +9,13 @@ import { RadarStoreProvider, useRadarCtx } from '@/hooks/radar/useRadarStore';
 import { ErrorBox, Skeleton } from './RadarUI';
 
 const menu = [
-  { to: '/radar', label: 'Visão Geral', icon: LayoutGrid, end: true },
-  { to: '/radar/conexoes', label: 'Conexões', icon: Plug, end: false },
-  { to: '/radar/rankings', label: 'Rankings', icon: TrendingUp, end: false },
-  { to: '/radar/tarefas', label: 'Tarefas', icon: ListChecks, end: false },
-  { to: '/radar/produtos', label: 'Produtos (IA)', icon: Sparkles, end: false },
-  { to: '/radar/oportunidades', label: 'Oportunidades', icon: Lightbulb, end: false },
-  { to: '/radar/configuracoes', label: 'Configurações', icon: Settings, end: false },
+  { to: '/dashboard/modules/radar', label: 'Visão Geral', icon: LayoutGrid, end: true },
+  { to: '/dashboard/modules/radar/conexoes', label: 'Conexões', icon: Plug, end: false },
+  { to: '/dashboard/modules/radar/rankings', label: 'Rankings', icon: TrendingUp, end: false },
+  { to: '/dashboard/modules/radar/tarefas', label: 'Tarefas', icon: ListChecks, end: false },
+  { to: '/dashboard/modules/radar/produtos', label: 'Produtos (IA)', icon: Sparkles, end: false },
+  { to: '/dashboard/modules/radar/oportunidades', label: 'Oportunidades', icon: Lightbulb, end: false },
+  { to: '/dashboard/modules/radar/configuracoes', label: 'Configurações', icon: Settings, end: false },
 ];
 
 function Shell() {
@@ -26,7 +26,7 @@ function Shell() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    navigate('/login');
+    navigate('/auth');
   };
 
   return (
@@ -92,7 +92,7 @@ function Shell() {
             </div>
           )}
           <div className="space-y-1 border-t border-slate-100 p-3 text-sm text-slate-600">
-            <button type="button" onClick={() => navigate('/')} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-50 ${collapsed ? 'justify-center' : ''}`}>
+            <button type="button" onClick={() => navigate('/dashboard/modules')} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-50 ${collapsed ? 'justify-center' : ''}`}>
               <ArrowLeft className="h-4 w-4" /> {!collapsed && 'Voltar ao SLL'}
             </button>
             <button type="button" onClick={signOut} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-50 ${collapsed ? 'justify-center' : ''}`}>

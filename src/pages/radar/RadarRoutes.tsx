@@ -8,7 +8,6 @@ import ProductsPage from './ProductsPage';
 import OpportunitiesPage from './OpportunitiesPage';
 import SettingsPage from './SettingsPage';
 
-// Montar no router principal: <Route path="/radar/*" element={<RadarRoutes />} />
 export default function RadarRoutes() {
   return (
     <Routes>
@@ -20,7 +19,7 @@ export default function RadarRoutes() {
         <Route path="produtos" element={<ProductsPage />} />
         <Route path="oportunidades" element={<OpportunitiesPage />} />
         <Route path="configuracoes" element={<SettingsPage />} />
-        <Route path="*" element={<Navigate to="/radar" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard/modules/radar" replace />} />
       </Route>
     </Routes>
   );
