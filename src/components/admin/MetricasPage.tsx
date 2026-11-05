@@ -1,4 +1,6 @@
 import PedidosMetricas from '@/components/admin/PedidosMetricas';
+import NegocioMetricas from '@/components/admin/NegocioMetricas';
+import NpsMetricas from '@/components/admin/NpsMetricas';
 import { useEffect, useMemo, useState } from 'react';
 import type { ElementType } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -187,11 +189,13 @@ function SuporteMetricas() {
   );
 }
 
-type MetricasTab = 'suporte' | 'pedidos';
+type MetricasTab = 'suporte' | 'pedidos' | 'negocio' | 'nps';
 
 const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
   { id: 'suporte', label: 'Suporte Noah' },
   { id: 'pedidos', label: 'Pedidos dos lojistas' },
+  { id: 'negocio', label: 'Neg\u00f3cio' },
+  { id: 'nps', label: 'NPS' },
 ];
 
 export default function MetricasPage() {
@@ -212,7 +216,7 @@ export default function MetricasPage() {
           </button>
         ))}
       </div>
-      {tab === 'suporte' ? <SuporteMetricas /> : <PedidosMetricas />}
+      {tab === 'suporte' ? <SuporteMetricas /> : tab === 'pedidos' ? <PedidosMetricas /> : tab === 'negocio' ? <NegocioMetricas /> : <NpsMetricas />}
     </div>
   );
 }
