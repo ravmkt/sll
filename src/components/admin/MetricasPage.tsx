@@ -35,7 +35,7 @@ function Metric({ label, value, hint, icon: Icon, tone }: { label: string; value
   );
 }
 
-export default function MetricasPage() {
+function SuporteMetricas() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<NoahFeedbackMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -183,7 +183,36 @@ export default function MetricasPage() {
           </div>
         )}
       </div>
-      <PedidosMetricas />
+    </div>
+  );
+}
+
+type MetricasTab = 'suporte' | 'pedidos';
+
+const METRICAS_TABS: { id: MetricasTab; label: string }[] = [
+  { id: 'suporte', label: 'Suporte Noah' },
+  { id: 'pedidos', label: 'Pedidos dos lojistas' },
+];
+
+export default function MetricasPage() {
+  const [tab, setTab] = useState<MetricasTab>('suporte');
+  return (
+    <div className="space-y-6">
+      <div className="flex gap-1 border-b border-slate-800">
+        {METRICAS_TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            className={`-mb-px cursor-pointer border-b-2 px-4 py-2.5 text-[15px] font-semibold transition-colors ${
+              tab === t.id ? 'border-[#0094eb] text-white' : 'border-transparent text-slate-400 hover:text-white'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {tab === 'suporte' ? <SuporteMetricas /> : <PedidosMetricas />}
     </div>
   );
 }
