@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
     if (burst > 0) {
       const nowMs = Date.now();
       const sayWait = (min: number) =>
-        "Estou preparando o material certo para voc\u00ea. Me chame de novo em " + min + (min === 1 ? " minuto" : " minutos") + ", combinado?";
+        "Voc\u00ea enviou v\u00e1rias perguntas em pouco tempo. Aguarde " + min + (min === 1 ? " minuto" : " minutos") + " e envie sua d\u00favida de novo. Se preferir, fale agora com nosso time pelo **WhatsApp**.";
       const { data: cd } = await admin.schema("noah").from("support_cooldowns").select("until").eq("store_id", storeId).maybeSingle();
       const untilMs = cd?.until ? new Date(cd.until).getTime() : 0;
       if (untilMs > nowMs) {
