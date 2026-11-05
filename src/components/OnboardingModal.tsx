@@ -64,7 +64,7 @@ export const OnboardingModal: React.FC = () => {
   const [formData, setFormData] = useState<StorePayload>({
     name: '',
     url: '',
-    platform: 'Bagy',
+    platform: '',
     contact_email: '',
     contact_name: '',
     owner_contact_email: '',
@@ -110,7 +110,7 @@ export const OnboardingModal: React.FC = () => {
 
   const validateStep2 = () => {
     if (!formData.name.trim()) return 'O nome da loja é obrigatório.';
-    if (!formData.url.trim()) return 'Informe o domínio ou URL da sua loja.';
+    if (!formData.url.trim() || !formData.platform) return 'Informe o domínio ou URL da sua loja.';
     if (!formData.contact_name.trim()) return 'Informe o nome do responsável pela loja.';
     if (!formData.contact_email.trim() || !formData.contact_email.includes('@'))
       return 'Informe um e-mail de atendimento válido.';
@@ -321,7 +321,8 @@ export const OnboardingModal: React.FC = () => {
                         onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
                         className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white cursor-pointer"
                       >
-                        {PLATAFORMAS.map((plat) => (
+                        <option value="">Selecione sua plataforma</option>
+{PLATAFORMAS.map((plat) => (
                           <option key={plat} value={plat}>{plat}</option>
                         ))}
                       </select>

@@ -1,3 +1,5 @@
+import { supabase as __sbRef } from '@/lib/supabase';
+import { useEffect as __useEffectRef, useState as __useStateRef } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import PageTour from '@/components/tour/PageTour';
 import type { TourStep } from '@/hooks/usePageTour';
@@ -409,7 +411,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
           <div className="grid gap-4 md:grid-cols-3">
             <Stat label="Aguardando pagamento" badge={`${pendingOrders} pedidos`} value={brl(pendingRevenue)} sub="Pix / Boleto em live" icon={Hourglass} tone="bg-red-50 text-[#DC2626]" tip={"Pedidos gerados nas lives (Pix ou boleto) que ainda aguardam a confirma\u00e7\u00e3o do pagamento."} />
             <Stat label="Vendas pagas" badge={`${paidOrders} pedidos`} value={brl(paidRevenue)} sub="Faturamento aprovado" icon={CheckCircle2} tone="bg-red-50 text-[#DC2626]" tip={"Pedidos das lives com pagamento aprovado no per\u00edodo selecionado."} />
-            <Stat label="Faturamento indicações" badge="Comissões" value={brl(0)} sub="" icon={DollarSign} tone="bg-red-50 text-[#DC2626]" tip={"Comiss\u00f5es recebidas de lojistas que voc\u00ea indicou pelo Clube SLL."} footer={<button type="button" onClick={() => navigate(CLUBE_PATH)} className="cursor-pointer text-xs font-bold text-[#DC2626] hover:underline">Acessar o Clube SLL &rarr;</button>} />
+            <ReferralStat storeId={storeId} start={startIso} end={endIso} endOp="lte" render={(v) => (<Stat label="Faturamento indicações" badge="Comissões" value={brl(v.paid)} sub={v.pending > 0 ? "A liberar " + brl(v.pending) : ""} icon={DollarSign} tone="bg-red-50 text-[#DC2626]" tip={"Comiss\u00f5es recebidas de lojistas que voc\u00ea indicou pelo Clube SLL."} footer={<button type="button" onClick={() => navigate(CLUBE_PATH)} className="cursor-pointer text-xs font-bold text-[#DC2626] hover:underline">Acessar o Clube SLL &rarr;</button>} />)} />
           </div>
         </div>
 
@@ -662,4 +664,27 @@ function VisaoGeralTourTags() {
     return () => window.clearInterval(t);
   }, []);
   return null;
+}
+
+
+function ReferralStat({ storeId, start, end, endOp, render }: { storeId: any; start: any; end: any; endOp: 'lte' | 'lt'; render: (v: { paid: number; pending: number }) => any }) {
+  const [v, setV] = __useStateRef({ paid: 0, pending: 0 });
+  __useEffectRef(() => {
+    if (!storeId) { setV({ paid: 0, pending: 0 }); return; }
+    let alive = true;
+    (async () => {
+      const q: any = (__sbRef as any).from('referral_rewards').select('amount, status').eq('referrer_store_id', storeId).neq('status', 'canceled').gte('created_at', start);
+      const { data } = await q[endOp]('created_at', end).limit(5000);
+      if (!alive) return;
+      let paid = 0;
+      let pending = 0;
+      for (const r of ((data || []) as any[])) {
+        if (r.status === 'paid') paid += Number(r.amount) || 0;
+        else if (r.status === 'pending') pending += Number(r.amount) || 0;
+      }
+      setV({ paid, pending });
+    })();
+    return () => { alive = false; };
+  }, [storeId, String(start), String(end), endOp]);
+  return <>{render(v)}</>;
 }
