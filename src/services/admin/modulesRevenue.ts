@@ -19,13 +19,18 @@ export type StoreOpt = { id: string; name: string };
 
 export const brlCents = (c: number) => ((Number(c) || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+/** Hoje (YYYY-MM-DD) no fuso de Sao Paulo. */
+const todaySP = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+
+const addDaysYmd = (s: string, n: number) => {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+};
 
 export async function getModulesRevenue(days: number, store: string | null): Promise<ModulesRevenue> {
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - (days - 1));
-  const { data, error } = await sb.rpc('admin_modules_revenue', { p_from: ymd(from), p_to: ymd(to), p_store: store });
+  const to = todaySP();
+  const from = addDaysYmd(to, -(days - 1));
+  const { data, error } = await sb.rpc('admin_modules_revenue', { p_from: from, p_to: to, p_store: store });
   if (error) throw new Error(error.message);
   return data as ModulesRevenue;
 }
