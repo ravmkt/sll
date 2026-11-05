@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { DollarSign, Eye, MessageSquare, MousePointerClick, Radio, Store, TrendingUp, UserPlus } from 'lucide-react';
+import { DollarSign, Eye, MousePointerClick, Radio, Store, TrendingUp, UserPlus } from 'lucide-react';
 import { ErrorBox, ITEM, Metric, PeriodBar, TOOLTIP, brl, card, dayLabel, nf, pct, useAdminRpc } from '@/components/admin/MetricasUi';
 
 type Top = { id: string; title: string; store: string | null; status: string | null; peak: number; views: number; clicks: number };
@@ -33,7 +33,6 @@ export default function StreamSellMetricas() {
     : [];
   const base = Math.max(1, funnel[0]?.v || 0, funnel[1]?.v || 0);
   const rows = (x?.daily ?? []).map((r) => ({ label: dayLabel(r.day), views: Number(r.views), clicks: Number(r.clicks) }));
-  const status = Object.entries(x?.by_status ?? {});
 
   return (
     <div className="space-y-6">
@@ -71,6 +70,10 @@ export default function StreamSellMetricas() {
 
         <div className={card}>
           <p className="mb-3 text-[15px] font-bold text-white">Evolução diária</p>
+          <div data-legend="evolucao" className="mb-2 flex flex-wrap items-center gap-4 text-[13px] text-slate-400">
+            <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#0094eb]" />{'Visualiza\u00e7\u00f5es'}</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#10b981]" />{'Cliques em produtos'}</span>
+          </div>
           <div className="h-56">
             {rows.length === 0 ? (
               <p className="pt-20 text-center text-[13px] text-slate-500">{loading ? 'Carregando...' : 'Sem eventos no período.'}</p>
@@ -90,18 +93,6 @@ export default function StreamSellMetricas() {
         </div>
       </div>
 
-      <div className={card}>
-        <p className="mb-3 flex items-center gap-2 text-[15px] font-bold text-white"><MessageSquare className="h-4 w-4 text-sky-300" /> Lives por status</p>
-        {status.length === 0 ? (
-          <p className="text-[13px] text-slate-500">Nenhuma live no período.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {status.map(([k, n]) => (
-              <span key={k} className="rounded-full border border-slate-700 px-3 py-1 text-[13px] text-slate-200">{STATUS[k] ?? k}: <b>{nf(n)}</b></span>
-            ))}
-          </div>
-        )}
-      </div>
 
       <div className={card}>
         <p className="mb-3 text-[15px] font-bold text-white">Top 10 lives por visualizações</p>
