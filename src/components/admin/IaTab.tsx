@@ -14,7 +14,7 @@ type Usage = { purpose: string; store_id: string | null; calls: number; tokens: 
 const DEFAULT_MODEL = 'gemini-3.1-flash-lite';
 
 const PURPOSES: { key: string; label: string; desc: string; web: boolean }[] = [
-  { key: 'support', label: 'Suporte Noah', desc: 'Chat de ajuda dentro do Hub. Desligada, o bal\u00e3o abre direto o WhatsApp de suporte. Ao esgotar a franquia do plano, o lojista segue para upgrade ou WhatsApp.', web: false },
+  { key: 'support', label: 'Suporte Noah', desc: 'Chat de ajuda dentro do Hub. Desligada, o bal\u00e3o abre direto o WhatsApp de suporte. Os limites abaixo protegem o custo: passando deles, o lojista segue para o WhatsApp.', web: false },
   { key: 'insights', label: 'Insights personalizados', desc: 'Recomendações por loja a partir das métricas reais (em breve).', web: false },
   { key: 'feedback', label: 'Feedback pós-live', desc: 'Análise de cada live ao encerrar, comparada às anteriores (em breve).', web: false },
   { key: 'benchmarks', label: 'Benchmarks de mercado', desc: 'Atualização dos benchmarks por setor, com busca na web.', web: true },
@@ -51,6 +51,8 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
   const [names, setNames] = useState<Record<string, string>>({});
   const [wa, setWa] = useState({ number: '', message: '' });
   const [savedWa, setSavedWa] = useState({ number: '', message: '' });
+  const [lim, setLim] = useState({ daily: '150', burst: '15', cool: '2' });
+  const [savedLim, setSavedLim] = useState({ daily: '150', burst: '15', cool: '2' });
   const { rate: dayRate } = useFxRate();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -85,6 +87,10 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
       cfgs.support.enabled = !!s.data.ai_enabled;
       if (s.data.model) cfgs.support.model = s.data.model;
     }
+    const supRow = ((a.data || []) as any[]).find((x) => x.purpose === 'support');
+    const lv = { daily: String(supRow?.daily_limit_per_store ?? 150), burst: String(supRow?.burst_limit ?? 15), cool: String(supRow?.cooldown_minutes ?? 2) };
+    setLim(lv);
+    setSavedLim(lv);
     const present: Record<string, Cfg> = {};
     for (const x of (a.data || []) as any[]) present[x.purpose] = cfgs[x.purpose] ?? x;
     if (cfgs.support) present.support = { ...cfgs.support };
@@ -141,7 +147,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
     const a = draft[p], b = saved[p];
     if (!a) return false;
     if (!b) return true;
-    const waChanged = p === 'support' && (wa.number !== savedWa.number || wa.message !== savedWa.message);
+    const waChanged = p === 'support' && (wa.number !== savedWa.number || wa.message !== savedWa.message || lim.daily !== savedLim.daily || lim.burst !== savedLim.burst || lim.cool !== savedLim.cool);
     return waChanged || a.enabled !== b.enabled || a.model !== b.model || a.fallback_model !== b.fallback_model || a.use_web_search !== b.use_web_search;
   };
 
@@ -151,6 +157,10 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
     if (!d.model) { toast.error('Escolha o modelo principal.'); return; }
     const waDigits = wa.number.replace(/\D/g, '');
     if (p === 'support' && waDigits.length < 10) { toast.error('Informe o WhatsApp de suporte com DDI e DDD.'); return; }
+    const dN = Number(lim.daily), bN = Number(lim.burst), cN = Number(lim.cool);
+    if (p === 'support' && (!Number.isInteger(dN) || dN < 0 || dN > 100000)) { toast.error('Mensagens por dia: informe um n\u00famero inteiro (0 = sem limite).'); return; }
+    if (p === 'support' && (!Number.isInteger(bN) || bN < 0 || bN > 1000)) { toast.error('Mensagens a cada 10 min: informe um n\u00famero inteiro (0 = sem limite).'); return; }
+    if (p === 'support' && (!Number.isInteger(cN) || cN < 1 || cN > 60)) { toast.error('Respiro: informe de 1 a 60 minutos.'); return; }
     setBusy(p);
     try {
       const fields = {
@@ -159,6 +169,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
         use_web_search: d.use_web_search,
         enabled: d.enabled,
       };
+      if (p === 'support') Object.assign(fields, { daily_limit_per_store: dN, burst_limit: bN, cooldown_minutes: cN });
       const ex = await sb.from('admin_ai_settings').select('purpose').eq('purpose', p).maybeSingle();
       const r = ex.data
         ? await sb.from('admin_ai_settings').update(fields).eq('purpose', p)
@@ -170,6 +181,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
         if (n.error) throw new Error(n.error.message);
         setWa({ number: waDigits, message: wm });
         setSavedWa({ number: waDigits, message: wm });
+        setSavedLim({ ...lim });
       }
       toast.success('Configuração salva.');
       setSaved((s) => ({ ...s, [p]: { ...d } }));
@@ -284,6 +296,24 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
                   <label className="block space-y-1 text-xs text-slate-400">Mensagem do WhatsApp (use {'{loja}'} e {'{id}'})
                     <textarea className={INPUT + ' min-h-[70px]'} maxLength={300} value={wa.message} onChange={(e) => setWa({ ...wa, message: e.target.value })} />
                   </label>
+                </div>
+              )}
+
+              {p.key === 'support' && (
+                <div className="space-y-2 border-t border-white/10 pt-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{'Limites de uso do chat'}</p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <label className="space-y-1 text-xs text-slate-400">{'Mensagens por dia (por loja)'}
+                      <input className={INPUT} inputMode="numeric" value={lim.daily} onChange={(e) => setLim({ ...lim, daily: e.target.value.replace(/\D/g, '') })} />
+                    </label>
+                    <label className="space-y-1 text-xs text-slate-400">{'Mensagens a cada 10 min'}
+                      <input className={INPUT} inputMode="numeric" value={lim.burst} onChange={(e) => setLim({ ...lim, burst: e.target.value.replace(/\D/g, '') })} />
+                    </label>
+                    <label className="space-y-1 text-xs text-slate-400">{'Respiro (minutos)'}
+                      <input className={INPUT} inputMode="numeric" value={lim.cool} onChange={(e) => setLim({ ...lim, cool: e.target.value.replace(/\D/g, '') })} />
+                    </label>
+                  </div>
+                  <p className="text-[11px] text-slate-500">{'0 desliga o limite. Ao passar das mensagens a cada 10 min, o lojista recebe o aviso de respiro e o chat volta sozinho ao fim dos minutos. O teto por dia \u00e9 uma prote\u00e7\u00e3o de custo e vale a partir da pr\u00f3xima pergunta.'}</p>
                 </div>
               )}
 
