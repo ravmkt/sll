@@ -1,9 +1,9 @@
 import type { ElementType, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFxRate } from '../../hooks/admin/useFxRate';
-import { Bot, ArrowLeft, Layers, LayoutDashboard, Megaphone, ShieldCheck, Store, Tag, Wallet } from 'lucide-react';
+import { Bot, ArrowLeft, Layers, LayoutDashboard, Megaphone, ShieldCheck, Store, Tag, Wallet, BarChart3 } from 'lucide-react';
 
-export type MasterTab = 'dashboard' | 'lojas' | 'modulos' | 'precos' | 'marketing' | 'insights' | 'noah' | 'saques';
+export type MasterTab = 'dashboard' | 'lojas' | 'modulos' | 'precos' | 'marketing' | 'insights' | 'noah' | 'saques' | 'metricas';
 
 const ITEMS: { id: MasterTab; label: string; icon: ElementType }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -11,7 +11,7 @@ const ITEMS: { id: MasterTab; label: string; icon: ElementType }[] = [
   { id: 'modulos', label: 'Módulos', icon: Layers },
   { id: 'precos', label: 'Preços', icon: Tag },
   { id: 'marketing', label: 'Marketing', icon: Megaphone },
-  { id: 'noah', label: 'IA & Suporte Noah', icon: Bot }, { id: 'saques', label: 'Saques', icon: Wallet },
+  { id: 'noah', label: 'IA & Suporte Noah', icon: Bot }, { id: 'metricas', label: 'M\u00e9tricas', icon: BarChart3 }, { id: 'saques', label: 'Saques', icon: Wallet },
 ];
 
 export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: (t: MasterTab) => void; children: ReactNode }) {

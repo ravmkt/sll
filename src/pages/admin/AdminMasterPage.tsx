@@ -6,6 +6,7 @@ import TrialSettingsCard from '@/components/admin/TrialSettingsCard';
 import { MasterLayout, type MasterTab } from '@/components/admin/MasterLayout';
 import DashboardTab from '@/components/admin/DashboardTab';
 import FxRateCard from '@/components/admin/FxRateCard';
+import MetricasPage from '@/components/admin/MetricasPage';
 import LojasTab from '@/components/admin/LojasTab';
 import MarketingTab from '@/components/admin/MarketingTab';
 import NoahPage from '@/components/admin/NoahPage'; import SaquesTab from '@/components/admin/SaquesTab';
@@ -13,7 +14,7 @@ import NoahPage from '@/components/admin/NoahPage'; import SaquesTab from '@/com
 export default function AdminMasterPage() {
   const [, setParams] = useSearchParams();
   const [planModule, setPlanModule] = useState<string | null>(null);
-  const [tab, setTab] = useState<MasterTab>(() => { const t = new URLSearchParams(window.location.search).get('tab') as MasterTab | null; return t && ['dashboard','lojas','modulos','precos','marketing','noah','insights','saques'].includes(t) ? t : 'dashboard'; });
+  const [tab, setTab] = useState<MasterTab>(() => { const t = new URLSearchParams(window.location.search).get('tab') as MasterTab | null; return t && ['dashboard','metricas','lojas','modulos','precos','marketing','noah','insights','saques'].includes(t) ? t : 'dashboard'; });
   // Sempre abre a aba no topo da pagina
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -31,7 +32,7 @@ export default function AdminMasterPage() {
         <LojasTab />
       ) : tab === 'noah' ? (
 <NoahPage />
-) : tab === 'saques' ? (<SaquesTab />) : tab === 'marketing' ? (
+) : tab === 'metricas' ? (<MetricasPage />) : tab === 'saques' ? (<SaquesTab />) : tab === 'marketing' ? (
         <MarketingTab />
       ) : tab === 'precos' ? (
         <><TrialSettingsCard /><PrecosTab initialModule={planModule} /></>
