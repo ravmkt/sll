@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
+import { isSuperAdmin } from '@/services/admin/adminMaster';
 
 export interface RadarStore {
   id: string;
@@ -31,9 +32,10 @@ export function RadarStoreProvider({ children }: { children: ReactNode }) {
     void supabase.auth.getUser().then(({ data }) => {
       const u = data.user;
       const meta = (u?.user_metadata ?? {}) as Record<string, unknown>;
-      const app = (u?.app_metadata ?? {}) as Record<string, unknown>;
+      
       const name = s(meta.full_name) ?? s(meta.name) ?? u?.email?.split('@')[0] ?? 'lojista';
-      if (alive) setUser({ name, isMaster: app.is_superadmin === true });
+      if (alive) setUser((p) => ({ ...p, name }));
+      void isSuperAdmin().then((ok) => { if (alive) setUser((p) => ({ ...p, isMaster: ok === true })); }).catch(() => undefined);
     });
     return () => { alive = false; };
   }, []);

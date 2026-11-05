@@ -334,7 +334,7 @@ function AppRoutes() {
         <Route path="/billing/success" element={user ? <BillingSuccess /> : <Navigate to="/auth" replace />} />
         <Route path="/checkout/:id" element={user ? <CheckoutIdRedirect /> : <Navigate to="/auth" replace />} />
         <Route path="/redefinir-senha" element={<ResetPassword />} />
-        <Route path="/dashboard/modules/radar/*" element={user ? <RadarRoutes /> : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/radar/*" element={user ? (<SubscriptionGate><ModuleGate moduleKey="radar"><RadarRoutes /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes></DashboardShell></>
     </Suspense>
