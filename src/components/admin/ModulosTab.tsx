@@ -39,7 +39,7 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
-    try { setData(await getModulesOverview(30)); }
+    try { setData(await getModulesOverview(days)); }
     catch (e: any) { setError(e?.message || 'Erro ao carregar os módulos.'); }
     finally { setLoading(false); }
   }, []);
@@ -53,6 +53,12 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
       .catch((e) => { setRev(null); toast.error(e?.message || 'Erro ao carregar a receita.'); })
       .finally(() => setRevLoading(false));
   }, [days, store]);
+
+  useEffect(() => {
+    let alive = true;
+    getModulesOverview(days).then((d) => { if (alive) setData(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, [days]);
 
   if (selected) {
     return (
@@ -150,6 +156,7 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
           <ComboDiscountCard compact />
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
+            <option value={1}>Hoje</option>
             <option value={7}>Últimos 7 dias</option>
             <option value={30}>Últimos 30 dias</option>
             <option value={90}>Últimos 90 dias</option>

@@ -184,6 +184,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
         <div className="flex items-center gap-2">
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
+            <option value={1}>Hoje</option>
             <option value={7}>Últimos 7 dias</option>
             <option value={30}>Últimos 30 dias</option>
             <option value={90}>Últimos 90 dias</option>
@@ -260,7 +261,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
             </div>
 
             <div className={`${CARD} space-y-3`}>
-              <p className="text-[15px] font-bold text-white">Consumo e desempenho ({days} dias)</p>
+              <p className="text-[15px] font-bold text-white">Consumo e desempenho ({days === 1 ? 'hoje' : `${days} dias`})</p>
               {measured ? (
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                   <Kpi label="Views" value={int(m.views)} />
