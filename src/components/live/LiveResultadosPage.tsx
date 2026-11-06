@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
-import { DollarSign, Eye, MousePointerClick, RefreshCw, ShoppingCart, TrendingUp } from 'lucide-react';
+import { DollarSign, Eye, MessageCircle, MousePointerClick, RefreshCw, ShoppingBag, ShoppingCart, TrendingUp, UserPlus } from 'lucide-react';
 import { Area, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { supabaseLiveCommerce, supabasePublic } from '@/services/supabaseClients';
 import { liveStore } from '@/components/live/LiveTemplatesPage';
@@ -18,17 +18,23 @@ type LiveRow = {
 };
 type Ev = { live_id: string; event_type: string; metadata: any; created_at: string };
 type Ord = { live_id: string; total_amount: number | string | null; status?: string | null; created_at: string };
+type Stat = { views: number; clicks: number; buy: number; wa: number; signups: number; orders: number; revenue: number };
+type SerKey = 'rev' | 'views' | 'peak' | 'clicks' | 'buy' | 'wa' | 'signups';
+type LiveKey = Exclude<SerKey, 'peak'>;
 
 const T = {
   title: 'Resultados & M\u00e9tricas',
-  sub: 'Desempenho consolidado das suas lives: vendas, audi\u00eancia e cliques em produtos.',
+  sub: 'Desempenho consolidado das suas lives: vendas, audi\u00eancia e cliques.',
   reload: 'Atualizar',
   err: 'N\u00e3o foi poss\u00edvel carregar os resultados. Tente novamente.',
   kRev: 'Faturamento Total de Lives',
   kOrd: 'Pedidos Aprovados',
   kPeak: 'Pico de Audi\u00eancia',
   kClk: 'Cliques em Produtos',
-  chart: 'Evolu\u00e7\u00e3o de vendas e audi\u00eancia',
+  kBuy: 'Cliques em Comprar',
+  kWa: 'Cliques no WhatsApp',
+  kSign: 'Cliques em Cadastro',
+  chart: 'Desempenho das lives',
   chartEmpty: 'Sem dados no per\u00edodo selecionado.',
   sRev: 'Faturamento (R$)',
   sViews: 'Visualiza\u00e7\u00f5es',
@@ -36,6 +42,17 @@ const T = {
   tableEmpty: 'Nenhuma live realizada no per\u00edodo.',
   loading: 'Carregando...',
 };
+
+const SERIES: { k: SerKey; label: string; color: string }[] = [
+  { k: 'rev', label: T.sRev, color: '#10b981' },
+  { k: 'views', label: T.sViews, color: '#dc2626' },
+  { k: 'peak', label: 'Audi\u00eancia (pico)', color: '#7c3aed' },
+  { k: 'clicks', label: 'Cliques em produtos', color: '#f59e0b' },
+  { k: 'buy', label: 'Comprar', color: '#2563eb' },
+  { k: 'wa', label: 'WhatsApp', color: '#84cc16' },
+  { k: 'signups', label: 'Cadastros', color: '#ec4899' },
+];
+const LIVE_METRICS = SERIES.filter((s) => s.k !== 'peak') as { k: LiveKey; label: string; color: string }[];
 
 type Periodo = 'today' | '7' | '30' | 'custom';
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -52,6 +69,14 @@ const dayKey = (iso: string) => new Date(iso).toLocaleDateString('sv-SE');
 const liveDate = (l: LiveRow) => l.started_at || l.scheduled_at || l.created_at;
 const fmtDay = (k: string) => k.slice(8, 10) + '/' + k.slice(5, 7);
 const fmtDateTime = (iso: string) => new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+const emptyStat = (): Stat => ({ views: 0, clicks: 0, buy: 0, wa: 0, signups: 0, orders: 0, revenue: 0 });
+const emptyDay = (): Record<SerKey, number> => ({ rev: 0, views: 0, peak: 0, clicks: 0, buy: 0, wa: 0, signups: 0 });
+
+const isBuy = (t: string) => t === 'product_click';
+const isWa = (t: string) => t === 'whatsapp_click';
+const isSign = (t: string) => t === 'signup_click' || t === 'group_click';
+const matchesLive = (t: string, m: LiveKey) =>
+  m === 'views' ? t === 'view' : m === 'buy' ? isBuy(t) : m === 'wa' ? isWa(t) : m === 'clicks' ? isBuy(t) || isWa(t) : m === 'signups' ? isSign(t) : false;
 
 function chunks<A>(arr: A[], n: number): A[][] {
   const out: A[][] = [];
@@ -68,7 +93,7 @@ async function loadEvents(ids: string[]): Promise<Ev[]> {
         .from('live_events')
         .select('live_id,event_type,metadata,created_at')
         .in('live_id', part)
-        .in('event_type', ['view', 'product_click', 'whatsapp_click', 'peak_viewers'])
+        .in('event_type', ['view', 'product_click', 'whatsapp_click', 'signup_click', 'group_click', 'peak_viewers'])
         .order('created_at', { ascending: true })
         .range(page * 1000, page * 1000 + 999);
       if (error) throw error;
@@ -98,24 +123,25 @@ async function loadOrders(ids: string[]): Promise<Ord[]> {
   return out;
 }
 
-function Kpi({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone: string }) {
+function Kpi({ icon, label, value, tone, hint }: { icon: React.ReactNode; label: string; value: string; tone: string; hint?: string }) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className={'flex h-11 w-11 shrink-0 items-center justify-center rounded-full ' + tone}>{icon}</div>
       <div className="min-w-0">
         <div className="truncate text-2xl font-bold tabular-nums text-slate-900">{value}</div>
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+        {hint && <div className="text-[11px] text-slate-400">{hint}</div>}
       </div>
     </div>
   );
 }
 
-type SortKey = 'title' | 'date' | 'peak' | 'views' | 'clicks' | 'buy' | 'wa' | 'orders' | 'revenue' | 'ticket';
+type SortKey = 'title' | 'date' | 'peak' | 'views' | 'clicks' | 'buy' | 'wa' | 'signups' | 'orders' | 'revenue' | 'ticket';
 
 const RESULTADOS_TOUR: TourStep[] = [
   { element: '[data-tour="resultados-periodo"]', title: 'Per\u00edodo', description: 'Escolha o per\u00edodo desejado. Todos os n\u00fameros da p\u00e1gina seguem esse filtro.', side: 'bottom' },
-  { element: '[data-tour="resultados-kpis"]', title: 'Indicadores', description: 'Faturamento das lives, pedidos aprovados, pico de audi\u00eancia e cliques em produtos.', side: 'bottom' },
-  { element: '[data-tour="resultados-grafico"]', title: 'Evolu\u00e7\u00e3o', description: 'Compare vendas e visualiza\u00e7\u00f5es dia a dia. Clique nas etiquetas para mostrar ou ocultar cada s\u00e9rie.', side: 'top' },
+  { element: '[data-tour="resultados-kpis"]', title: 'Indicadores', description: 'Faturamento, pedidos, pico de audi\u00eancia e cliques em produtos, separados em Comprar, WhatsApp e Cadastro.', side: 'bottom' },
+  { element: '[data-tour="resultados-grafico"]', title: 'Desempenho das lives', description: 'Combine faturamento, visualiza\u00e7\u00f5es, audi\u00eancia e cliques no mesmo gr\u00e1fico. Clique nas etiquetas para mostrar ou ocultar cada s\u00e9rie.', side: 'top' },
   { element: '[data-tour="resultados-tabela"]', title: 'Desempenho por live', description: 'Clique nos t\u00edtulos das colunas para ordenar e descobrir suas melhores lives.', side: 'top' },
 ];
 
@@ -141,12 +167,15 @@ export default function LiveResultadosPage() {
   }, [periodo, cs, ce]);
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [asc, setAsc] = useState(false);
-  const [show, setShow] = useState({ rev: true, views: true });
+  const [show, setShow] = useState<Record<SerKey, boolean>>({ rev: true, views: true, peak: false, clicks: true, buy: false, wa: false, signups: false });
   const [mode, setMode] = useState<'sum' | 'live'>('sum');
-  const [liveMetric, setLiveMetric] = useState<'views' | 'rev'>('views');
+  const [liveMetric, setLiveMetric] = useState<LiveKey>('views');
   const [selLives, setSelLives] = useState<string[] | null>(null);
-  const toggleSeries = (k: 'rev' | 'views') =>
-    setShow((s) => (s[k] && !(k === 'rev' ? s.views : s.rev) ? s : { ...s, [k]: !s[k] }));
+  const toggleSeries = (k: SerKey) =>
+    setShow((s) => {
+      const next = { ...s, [k]: !s[k] };
+      return Object.values(next).some(Boolean) ? next : s;
+    });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -194,19 +223,22 @@ export default function LiveResultadosPage() {
       }
     });
     const peakOf = (l: LiveRow) => Math.max(Number(l.peak_viewers) || 0, eventPeak[l.id] || 0);
-    const historicPeak = lives.filter((l) => inPeriod(liveDate(l))).reduce((m, l) => Math.max(m, peakOf(l)), 0); /* SLL-PICO-PERIODO */
+    const periodLives = lives.filter((l) => inPeriod(liveDate(l)));
+    const historicPeak = periodLives.reduce((m, l) => Math.max(m, peakOf(l)), 0);
 
-    const stat: Record<string, { views: number; clicks: number; orders: number; revenue: number }> = {};
-    const get = (id: string) => (stat[id] = stat[id] || { views: 0, clicks: 0, orders: 0, revenue: 0 });
-    const days: Record<string, { rev: number; views: number }> = {};
-    const day = (iso: string) => { const k = dayKey(iso); return (days[k] = days[k] || { rev: 0, views: 0 }); };
+    const stat: Record<string, Stat> = {};
+    const get = (id: string) => (stat[id] = stat[id] || emptyStat());
+    const days: Record<string, Record<SerKey, number>> = {};
+    const day = (iso: string) => { const k = dayKey(iso); return (days[k] = days[k] || emptyDay()); };
 
-    const waMap: Record<string, number> = {};
     events.forEach((e) => {
       if (!inPeriod(e.created_at)) return;
-      if (e.event_type === 'whatsapp_click') { get(e.live_id).clicks++; waMap[e.live_id] = (waMap[e.live_id] || 0) + 1; }
-      if (e.event_type === 'view') { get(e.live_id).views++; day(e.created_at).views++; }
-      if (e.event_type === 'product_click') get(e.live_id).clicks++;
+      const t = e.event_type;
+      const s = get(e.live_id);
+      if (t === 'view') { s.views++; day(e.created_at).views++; }
+      else if (isBuy(t)) { s.buy++; s.clicks++; const d = day(e.created_at); d.buy++; d.clicks++; }
+      else if (isWa(t)) { s.wa++; s.clicks++; const d = day(e.created_at); d.wa++; d.clicks++; }
+      else if (isSign(t)) { s.signups++; day(e.created_at).signups++; }
     });
     orders.forEach((o) => {
       if (!inPeriod(o.created_at)) return;
@@ -217,27 +249,32 @@ export default function LiveResultadosPage() {
       s.revenue += v;
       day(o.created_at).rev += v;
     });
+    periodLives.forEach((l) => {
+      const d = day(liveDate(l));
+      d.peak = Math.max(d.peak, peakOf(l));
+    });
 
-    const totals = Object.values(stat).reduce(
-      (a, s) => ({ views: a.views + s.views, clicks: a.clicks + s.clicks, orders: a.orders + s.orders, revenue: a.revenue + s.revenue }),
-      { views: 0, clicks: 0, orders: 0, revenue: 0 },
-    );
+    const totals = Object.values(stat).reduce((a, s) => {
+      a.views += s.views; a.clicks += s.clicks; a.buy += s.buy; a.wa += s.wa;
+      a.signups += s.signups; a.orders += s.orders; a.revenue += s.revenue;
+      return a;
+    }, emptyStat());
 
-    const series: { d: string; label: string; rev: number; views: number }[] = [];
+    const series: ({ d: string; label: string } & Record<SerKey, number>)[] = [];
     const keys = Object.keys(days).sort();
     if (keys.length > 0) {
       const start = new Date(cutoff);
       const end = new Date(toMs);
       for (let t = new Date(start.getFullYear(), start.getMonth(), start.getDate()), i = 0; t <= end && i < 400; t.setDate(t.getDate() + 1), i++) {
         const k = t.toLocaleDateString('sv-SE');
-        series.push({ d: k, label: fmtDay(k), rev: days[k]?.rev || 0, views: days[k]?.views || 0 });
+        series.push({ d: k, label: fmtDay(k), ...(days[k] || emptyDay()) });
       }
     }
 
     const rows = lives
       .filter((l) => /^(finished|ended|live)$/i.test(String(l.status)) && inPeriod(liveDate(l)))
       .map((l) => {
-        const s = stat[l.id] || { views: 0, clicks: 0, orders: 0, revenue: 0 };
+        const s = stat[l.id] || emptyStat();
         return {
           id: l.id,
           title: l.title,
@@ -245,14 +282,17 @@ export default function LiveResultadosPage() {
           live: String(l.status) === 'live',
           peak: peakOf(l),
           views: s.views,
-          clicks: s.clicks, buy: s.clicks - (waMap[l.id] || 0), wa: waMap[l.id] || 0,
+          clicks: s.clicks,
+          buy: s.buy,
+          wa: s.wa,
+          signups: s.signups,
           orders: s.orders,
           revenue: s.revenue,
           ticket: s.orders > 0 ? s.revenue / s.orders : 0,
         };
       });
 
-    return { totals, historicPeak, series, rows, waTotal: Object.values(waMap).reduce((a, b) => a + b, 0) };
+    return { totals, historicPeak, series, rows };
   }, [lives, events, orders, fromMs, toMs]);
 
   const candidates = useMemo(() => {
@@ -291,12 +331,12 @@ export default function LiveResultadosPage() {
         grand += v;
         if (m > last) last = m;
       };
-      if (liveMetric === 'views') {
-        events.forEach((e) => { if (e.live_id === l.id && e.event_type === 'view') add(e.created_at, 1); });
-      } else {
+      if (liveMetric === 'rev') {
         orders.forEach((o) => {
           if (o.live_id === l.id && (o.status == null || APPROVED.test(String(o.status)))) add(o.created_at, Number(o.total_amount) || 0);
         });
+      } else {
+        events.forEach((e) => { if (e.live_id === l.id && matchesLive(e.event_type, liveMetric)) add(e.created_at, 1); });
       }
       const endAt = l.ended_at ? Math.floor((new Date(l.ended_at).getTime() - start) / 60000) : 0;
       const end = Math.min(720, Math.max(last, endAt, 0));
@@ -344,10 +384,18 @@ export default function LiveResultadosPage() {
     { k: 'clicks', label: 'Cliques em produtos', right: true },
     { k: 'buy', label: 'Comprar', right: true },
     { k: 'wa', label: 'WhatsApp', right: true },
+    { k: 'signups', label: 'Cadastros', right: true },
     { k: 'orders', label: 'Pedidos', right: true },
     { k: 'revenue', label: 'Faturamento', right: true },
     { k: 'ticket', label: 'Ticket m\u00e9dio', right: true },
   ];
+
+  const anyCount = SERIES.some((s) => s.k !== 'rev' && show[s.k]);
+  const fmtLive = (v: number) => (liveMetric === 'rev' ? brl(v) : num(v));
+  const chip = (on: boolean, color: string) =>
+    on
+      ? { borderColor: color, color, background: color + '1a' }
+      : undefined;
 
   return (
     <div className="w-full space-y-6 p-6">
@@ -400,96 +448,99 @@ export default function LiveResultadosPage() {
         <Kpi icon={<DollarSign className="h-5 w-5 text-emerald-600" />} tone="bg-emerald-50" label={T.kRev} value={brl(model.totals.revenue)} />
         <Kpi icon={<ShoppingCart className="h-5 w-5 text-sky-600" />} tone="bg-sky-50" label={T.kOrd} value={num(model.totals.orders)} />
         <Kpi icon={<Eye className="h-5 w-5 text-rose-600" />} tone="bg-rose-50" label={T.kPeak} value={num(model.historicPeak)} />
-        <Kpi icon={<MousePointerClick className="h-5 w-5 text-amber-600" />} tone="bg-amber-50" label={T.kClk} value={num(model.totals.clicks)} />
+        <Kpi icon={<MousePointerClick className="h-5 w-5 text-amber-600" />} tone="bg-amber-50" label={T.kClk} value={num(model.totals.clicks)} hint="Comprar + WhatsApp" />
+        <Kpi icon={<ShoppingBag className="h-5 w-5 text-blue-600" />} tone="bg-blue-50" label={T.kBuy} value={num(model.totals.buy)} />
+        <Kpi icon={<MessageCircle className="h-5 w-5 text-lime-600" />} tone="bg-lime-50" label={T.kWa} value={num(model.totals.wa)} />
+        <Kpi icon={<UserPlus className="h-5 w-5 text-pink-600" />} tone="bg-pink-50" label={T.kSign} value={num(model.totals.signups)} hint="Cadastro e grupo" />
       </div>
 
       <section data-tour="resultados-grafico" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-bold text-slate-800">{T.chart}</h3>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-pressed={show.rev}
-              onClick={() => toggleSeries('rev')}
-              className={'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (show.rev ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-400 line-through')}
-            >
-              <span className={'h-2.5 w-2.5 rounded-full ' + (show.rev ? 'bg-emerald-500' : 'bg-slate-300')} /> {T.sRev}
-            </button>
-            <button
-              type="button"
-              aria-pressed={show.views}
-              onClick={() => toggleSeries('views')}
-              className={'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (show.views ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-200 bg-white text-slate-400 line-through')}
-            >
-              <span className={'h-2.5 w-2.5 rounded-full ' + (show.views ? 'bg-red-600' : 'bg-slate-300')} /> {T.sViews}
-            </button>
-          </div>
-        </div>
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-              {(['sum', 'live'] as const).map((m) => (
+          {mode === 'sum' && (
+            <div className="flex flex-wrap items-center gap-2">
+              {SERIES.map((s) => (
                 <button
-                  key={m}
+                  key={s.k}
                   type="button"
-                  aria-pressed={mode === m}
-                  onClick={() => setMode(m)}
-                  className={'rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (mode === m ? 'border-[#DC2626] bg-[#DC2626] text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')}
+                  aria-pressed={show[s.k]}
+                  onClick={() => toggleSeries(s.k)}
+                  style={chip(show[s.k], s.color)}
+                  className={'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (show[s.k] ? '' : 'border-slate-200 bg-white text-slate-400 line-through')}
                 >
-                  {m === 'sum' ? 'Soma' : 'Por live'}
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: show[s.k] ? s.color : '#cbd5e1' }} /> {s.label}
                 </button>
               ))}
-              {mode === 'live' && (
-                <>
-                  <span className="mx-1 h-4 w-px bg-slate-200" />
-                  {(['views', 'rev'] as const).map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      aria-pressed={liveMetric === k}
-                      onClick={() => setLiveMetric(k)}
-                      className={'rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (liveMetric === k ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')}
-                    >
-                      {k === 'views' ? T.sViews : T.sRev}
-                    </button>
-                  ))}
-                  <span className="mx-1 h-4 w-px bg-slate-200" />
-                  {candidates.map((l) => {
-                    const on = chosen.some((c) => c.id === l.id);
-                    return (
-                      <button
-                        key={l.id}
-                        type="button"
-                        aria-pressed={on}
-                        onClick={() => toggleLive(l.id)}
-                        title={on ? 'Ocultar live' : chosen.length >= 5 ? 'Limite de 5 lives' : 'Mostrar live'}
-                        className={'rounded-full border px-3 py-1 text-xs font-semibold transition-colors ' + (on ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50')}
-                      >
-                        {(l.title || 'Live').slice(0, 18) + ' ' + fmtDay(dayKey(liveDate(l)))}
-                      </button>
-                    );
-                  })}
-                </>
-              )}
             </div>
-            {mode === 'live' ? (
-              curves.data.length === 0 ? (
-                <p className="py-16 text-center text-sm text-slate-400">{loading ? T.loading : T.chartEmpty}</p>
-              ) : (
-                <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={curves.data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="min" type="number" domain={[0, 'dataMax']} tick={{ fontSize: 11 }} tickFormatter={(v: number) => v + ' min'} />
-                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={80} tickFormatter={(v: number) => (liveMetric === 'rev' ? 'R$ ' + num(v) : num(v))} />
-                      <Tooltip labelFormatter={(v: any) => 'Minuto ' + v} formatter={(v: any, n: any) => [liveMetric === 'rev' ? brl(Number(v)) : num(Number(v)), n]} />
-                      <Legend />
-                      {curves.lines.map((ln) => (
-                        <Line key={ln.key} type="monotone" dataKey={ln.key} name={ln.name} stroke={ln.color} strokeWidth={2} dot={false} connectNulls={false} />
-                      ))}
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              )
-            ) : model.series.length === 0 ? (
+          )}
+        </div>
+
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {(['sum', 'live'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              aria-pressed={mode === m}
+              onClick={() => setMode(m)}
+              className={'rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (mode === m ? 'border-[#DC2626] bg-[#DC2626] text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')}
+            >
+              {m === 'sum' ? 'Soma por dia' : 'Por live'}
+            </button>
+          ))}
+          {mode === 'live' && (
+            <>
+              <span className="mx-1 h-4 w-px bg-slate-200" />
+              {LIVE_METRICS.map((s) => (
+                <button
+                  key={s.k}
+                  type="button"
+                  aria-pressed={liveMetric === s.k}
+                  onClick={() => setLiveMetric(s.k)}
+                  className={'rounded-full border px-3 py-1 text-xs font-bold transition-colors ' + (liveMetric === s.k ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')}
+                >
+                  {s.label}
+                </button>
+              ))}
+              <span className="mx-1 h-4 w-px bg-slate-200" />
+              {candidates.map((l) => {
+                const on = chosen.some((c) => c.id === l.id);
+                return (
+                  <button
+                    key={l.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleLive(l.id)}
+                    title={on ? 'Ocultar live' : chosen.length >= 5 ? 'Limite de 5 lives' : 'Mostrar live'}
+                    className={'rounded-full border px-3 py-1 text-xs font-semibold transition-colors ' + (on ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50')}
+                  >
+                    {(l.title || 'Live').slice(0, 18) + ' ' + fmtDay(dayKey(liveDate(l)))}
+                  </button>
+                );
+              })}
+            </>
+          )}
+        </div>
+
+        {mode === 'live' ? (
+          curves.data.length === 0 ? (
+            <p className="py-16 text-center text-sm text-slate-400">{loading ? T.loading : T.chartEmpty}</p>
+          ) : (
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={curves.data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="min" type="number" domain={[0, 'dataMax']} tick={{ fontSize: 11 }} tickFormatter={(v: number) => v + ' min'} />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={80} tickFormatter={(v: number) => (liveMetric === 'rev' ? 'R$ ' + num(v) : num(v))} />
+                  <Tooltip labelFormatter={(v: any) => 'Minuto ' + v} formatter={(v: any, n: any) => [fmtLive(Number(v)), n]} />
+                  <Legend />
+                  {curves.lines.map((ln) => (
+                    <Line key={ln.key} type="monotone" dataKey={ln.key} name={ln.name} stroke={ln.color} strokeWidth={2} dot={false} connectNulls={false} />
+                  ))}
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          )
+        ) : model.series.length === 0 ? (
           <p className="py-16 text-center text-sm text-slate-400">{loading ? T.loading : T.chartEmpty}</p>
         ) : (
           <div className="h-80 w-full">
@@ -504,10 +555,12 @@ export default function LiveResultadosPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={24} />
                 <YAxis yAxisId="rev" tick={{ fontSize: 11 }} tickFormatter={(v: number) => 'R$ ' + num(v)} width={80} hide={!show.rev} />
-                <YAxis yAxisId="views" orientation="right" tick={{ fontSize: 11 }} allowDecimals={false} width={44} hide={!show.views} />
+                <YAxis yAxisId="cnt" orientation="right" tick={{ fontSize: 11 }} allowDecimals={false} width={44} hide={!anyCount} />
                 <Tooltip formatter={(v: any, n: any) => (n === T.sRev ? brl(Number(v)) : num(Number(v)))} />
                 <Area yAxisId="rev" type="monotone" dataKey="rev" name={T.sRev} stroke="#10b981" strokeWidth={2} fill="url(#resRev)" hide={!show.rev} />
-                <Line yAxisId="views" type="monotone" dataKey="views" name={T.sViews} stroke="#dc2626" strokeWidth={2} dot={false} hide={!show.views} />
+                {SERIES.filter((s) => s.k !== 'rev').map((s) => (
+                  <Line key={s.k} yAxisId="cnt" type="monotone" dataKey={s.k} name={s.label} stroke={s.color} strokeWidth={2} dot={false} hide={!show[s.k]} />
+                ))}
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -517,7 +570,7 @@ export default function LiveResultadosPage() {
       <section data-tour="resultados-tabela" className="space-y-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{T.table}</h3>
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[1000px] text-left text-sm">
             <thead className="bg-slate-50 text-[11px] font-bold uppercase text-slate-500">
               <tr>
                 {cols.map((c) => (
@@ -537,14 +590,17 @@ export default function LiveResultadosPage() {
                   <td className="whitespace-nowrap p-3 text-slate-500">{fmtDateTime(r.date)}</td>
                   <td className="p-3 text-right tabular-nums">{num(r.peak)}</td>
                   <td className="p-3 text-right tabular-nums">{num(r.views)}</td>
-                  <td className="p-3 text-right tabular-nums">{num(r.clicks)}</td><td className="p-3 text-right tabular-nums">{num((r as any).buy)}</td><td className="p-3 text-right tabular-nums">{num((r as any).wa)}</td>
+                  <td className="p-3 text-right tabular-nums">{num(r.clicks)}</td>
+                  <td className="p-3 text-right tabular-nums">{num(r.buy)}</td>
+                  <td className="p-3 text-right tabular-nums">{num(r.wa)}</td>
+                  <td className="p-3 text-right tabular-nums">{num(r.signups)}</td>
                   <td className="p-3 text-right tabular-nums">{num(r.orders)}</td>
                   <td className="p-3 text-right font-semibold tabular-nums text-emerald-700">{brl(r.revenue)}</td>
                   <td className="p-3 text-right tabular-nums">{r.orders > 0 ? brl(r.ticket) : '\u2014'}</td>
                 </tr>
               ))}
               {sorted.length === 0 && (
-                <tr><td colSpan={10} className="p-10 text-center text-slate-400">{loading ? T.loading : T.tableEmpty}</td></tr>
+                <tr><td colSpan={11} className="p-10 text-center text-slate-400">{loading ? T.loading : T.tableEmpty}</td></tr>
               )}
             </tbody>
           </table>

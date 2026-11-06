@@ -8,7 +8,7 @@ import { Link as NoahRouterLink } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Hourglass, CheckCircle2, DollarSign, Clock, Users, Globe, CalendarClock, ArrowRight,
-  Eye, MessageSquare, MousePointerClick, Link2, Check, Share2, Radio, Trophy, Plus, UserPlus } from 'lucide-react';
+  Eye, MessageSquare, MousePointerClick, Link2, Check, Share2, Radio, Trophy, Plus, } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
 import { useLoja } from '@/contexts/LojaContext';
@@ -286,7 +286,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   const pendingOrders = pendingSales.length || count(EV.pending);
   const viewsEv = metrics.views;
   const clicksEv = metrics.clicks;
-  const signupEv = metrics.signups; const shareEv = Number((metrics as any).shares) || 0;
+  const shareEv = Number((metrics as any).shares) || 0;
 
   const topProducts = useMemo(() => metrics.top, [metrics]);
 
@@ -509,7 +509,6 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
                 { l: 'Visualizações', v: viewsEv, i: Eye },
                 { l: 'Mensagens no chat', v: chatCount, i: MessageSquare },
                 { l: 'Cliques em produtos', v: clicksEv, i: MousePointerClick },
-                { l: 'Cliques em cadastro/grupo', v: signupEv, i: UserPlus },
               { l: 'Compartilhamentos', v: shareEv, i: Share2 },
               ].map((m) => (
                 <div key={m.l} className="rounded-xl border border-slate-100 p-3">
