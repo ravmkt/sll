@@ -20,7 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLoja } from '@/contexts/LojaContext';
 import { useAuth } from '@/contexts/AuthContext';
 
-const LOGO_SRC = '/assets/sll-logotipo-b.png';
+const LOGO_SRC = '/assets/sll-hub-logo-quadrado.png';
 const LOGO_BUCKET = 'store-assets';
 
 const PLATAFORMAS = [
@@ -240,7 +240,7 @@ export const OnboardingModal: React.FC = () => {
                   alt="SLL Hub"
                   className="w-64 sm:w-72 h-auto max-h-40 object-contain drop-shadow-sm"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/sll-logotipo-b.png';
+                    (e.target as HTMLImageElement).src = '/assets/sll-hub-logo-quadrado.png';
                   }}
                 />
               </div>

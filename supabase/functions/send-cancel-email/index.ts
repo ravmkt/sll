@@ -25,7 +25,7 @@ const MODULE_LABEL: Record<string, string> = {
 
 function html(name: string, item: string) {
   const first = esc((name || "").trim().split(" ")[0] || "tudo bem");
-  const logo = `${APP_URL}/assets/sll-logotipo-b.png`;
+  const logo = `${APP_URL}/assets/sll-hub-logo-quadrado.png`;
   const link = `${APP_URL}/dashboard`;
   const until = new Date(Date.now() + 7 * 86400000).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric" });
   return `<!doctype html>

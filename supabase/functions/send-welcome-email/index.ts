@@ -22,7 +22,7 @@ const esc = (v: string) =>
 
 function html(name: string, days: number) {
   const first = esc((name || "").trim().split(" ")[0] || "tudo bem");
-  const logo = `${APP_URL}/assets/sll-logotipo-b.png`;
+  const logo = `${APP_URL}/assets/sll-hub-logo-quadrado.png`;
   const link = `${APP_URL}/dashboard`;
   return `<!doctype html>
 <html lang="pt-BR"><body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">

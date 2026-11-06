@@ -104,7 +104,7 @@ function content(kind: Kind, c: Ctx): Content {
 }
 
 function layout(c: Ctx, ct: Content) {
-  const logo = `${APP_URL}/assets/sll-logotipo-b.png`;
+  const logo = `${APP_URL}/assets/sll-hub-logo-quadrado.png`;
   const list = [
     ["Módulo", c.item],
     c.amount ? ["Valor", c.amount] : null,

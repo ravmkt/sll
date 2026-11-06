@@ -42,7 +42,7 @@ export default function ResetPassword() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
       <div className="w-full max-w-sm space-y-5 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <img src="/assets/sll-logotipo.png" alt="SLL Hub" className="mx-auto h-9 w-auto object-contain" />
+        <img src="/assets/sll-hub-logo-quadrado.png" alt="SLL Hub" className="mx-auto h-9 w-auto object-contain" />
         {done ? (
           <p className="text-center text-sm font-semibold text-emerald-600">Senha atualizada! Entrando no painel...</p>
         ) : ready ? (

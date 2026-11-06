@@ -35,7 +35,7 @@ const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curren
 
 function html(name: string, item: string, plan: string, cycle: string, value: number | null) {
   const first = esc((name || "").trim().split(" ")[0] || "tudo bem");
-  const logo = `${APP_URL}/assets/sll-logotipo-b.png`;
+  const logo = `${APP_URL}/assets/sll-hub-logo-quadrado.png`;
   const link = `${APP_URL}/dashboard`;
   const rows = [
     ["Módulo", esc(item)],

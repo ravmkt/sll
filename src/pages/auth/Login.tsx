@@ -80,7 +80,7 @@ export default function Auth() {
         
         <div className="flex flex-col items-center justify-center mb-2">
           <img loading="eager" decoding="async" 
-            src="/assets/sll-logotipo-b.png" 
+            src="/assets/sll-hub-logo-quadrado.png" 
             alt="SLL Hub" 
             className="w-56 h-auto object-contain drop-shadow-sm" 
           />

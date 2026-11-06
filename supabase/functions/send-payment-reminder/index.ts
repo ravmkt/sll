@@ -36,7 +36,7 @@ const sp = (d: Date) => d.toLocaleDateString("sv-SE", { timeZone: "America/Sao_P
 
 function html(name: string, item: string, amount: string, due: string, link: string, last: boolean) {
   const first = esc((name || "").trim().split(" ")[0] || "tudo bem");
-  const logo = `${APP_URL}/assets/sll-logotipo-b.png`;
+  const logo = `${APP_URL}/assets/sll-hub-logo-quadrado.png`;
   const title = last ? `${first}, último aviso sobre o seu pagamento` : `Olá, ${first}. Falta só o pagamento`;
   const intro = last
     ? `A cobrança de <strong>${esc(item)}</strong> (${esc(amount)}, vencida em ${esc(due)}) continua em aberto. Para não perder o acesso ao módulo, conclua o pagamento o quanto antes.`
