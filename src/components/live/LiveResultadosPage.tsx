@@ -26,7 +26,7 @@ const T = {
   err: 'N\u00e3o foi poss\u00edvel carregar os resultados. Tente novamente.',
   kRev: 'Faturamento Total de Lives',
   kOrd: 'Pedidos Aprovados',
-  kPeak: 'Pico Hist\u00f3rico de Audi\u00eancia',
+  kPeak: 'Pico de Audi\u00eancia',
   kClk: 'Cliques em Produtos',
   chart: 'Evolu\u00e7\u00e3o de vendas e audi\u00eancia',
   chartEmpty: 'Sem dados no per\u00edodo selecionado.',
@@ -194,7 +194,7 @@ export default function LiveResultadosPage() {
       }
     });
     const peakOf = (l: LiveRow) => Math.max(Number(l.peak_viewers) || 0, eventPeak[l.id] || 0);
-    const historicPeak = lives.reduce((m, l) => Math.max(m, peakOf(l)), 0);
+    const historicPeak = lives.filter((l) => inPeriod(liveDate(l))).reduce((m, l) => Math.max(m, peakOf(l)), 0); /* SLL-PICO-PERIODO */
 
     const stat: Record<string, { views: number; clicks: number; orders: number; revenue: number }> = {};
     const get = (id: string) => (stat[id] = stat[id] || { views: 0, clicks: 0, orders: 0, revenue: 0 });
