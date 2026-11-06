@@ -1,3 +1,5 @@
+import BuilderListPage from '@/modules/builder/pages/BuilderListPage';
+import BuilderEditorPage from '@/modules/builder/pages/BuilderEditorPage';
 import RadarRoutes from '@/pages/radar/RadarRoutes';
 import LiveCockpitRedirect from '@/pages/streamsell/LiveCockpitRedirect';
 import VidlyticsLanding from '@/pages/landing/VidlyticsLanding';
@@ -337,7 +339,9 @@ function AppRoutes() {
         <Route path="/redefinir-senha" element={<ResetPassword />} />
         <Route path="/dashboard/modules/radar/*" element={user ? (<SubscriptionGate><ModuleGate moduleKey="radar"><RadarRoutes /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
-      </Routes></DashboardShell></>
+            <Route path="/builder" element={<BuilderListPage />} />
+      <Route path="/builder/:id" element={<BuilderEditorPage />} />
+    </Routes></DashboardShell></>
     </Suspense>
   );
 }
