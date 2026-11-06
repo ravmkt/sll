@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ElementType } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, Radio } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { supabase } from '@/lib/supabase';
@@ -28,7 +28,6 @@ function Logo({ src, Icon, size }: { src?: string; Icon: ElementType; size: numb
 
 export function ModuleSwitcher() {
   const { storeId } = useLoja() as { storeId: string | null };
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const [owned, setOwned] = useState<string[]>(() => (storeId ? cache.get(storeId) ?? [] : []));
@@ -100,12 +99,9 @@ export function ModuleSwitcher() {
           <div className="space-y-1 p-1.5">
             {items.map((m) => {
               const isCurrent = m.key === current.key;
+                  const Row: any = isCurrent || m.soon ? 'button' : Link;
               return (
-                <button
-                  key={m.key}
-                  type="button"
-                  onClick={() => { setOpen(false); if (!isCurrent && !m.soon) navigate(m.path); }}
-                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${m.soon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'} ${isCurrent ? 'bg-blue-50/80 text-[#0094eb]' : 'text-slate-700 hover:bg-slate-50'}`}
+                <Row key={m.key} {...(isCurrent || m.soon ? { type: 'button' } : { to: m.path })} onClick={() => setOpen(false)} className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${m.soon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'} ${isCurrent ? 'bg-blue-50/80 text-[#0094eb]' : 'text-slate-700 hover:bg-slate-50'}`}
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-white ${isCurrent ? 'border-[#0094eb]/40' : 'border-slate-200'}`}>
@@ -118,7 +114,7 @@ export function ModuleSwitcher() {
                   </div>
                   {isCurrent && <Check className="ml-2 h-4 w-4 shrink-0 text-[#0094eb]" />}
                   {m.soon && <span className="ml-2 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Em breve</span>}
-                </button>
+                </Row>
               );
             })}
           </div>

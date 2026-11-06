@@ -1,7 +1,7 @@
 import ClearCacheButton from '@/components/layout/ClearCacheButton';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { CreditCard, LogOut, Plug, Settings, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,7 +16,6 @@ const initials = (name: string) =>
 
 // Header global: continuo, fica por cima da Sidebar. "actions" recebe controles do modulo (ex.: switch do app).
 export function TopBar({ actions }: { actions?: ReactNode; [k: string]: unknown }) {
-  const navigate = useNavigate();
   const { signOut } = useAuth() as { signOut: () => Promise<unknown> | void };
   const { store, storeId } = useLoja() as { store: any; storeId: string | null };
   const [open, setOpen] = useState(false);
@@ -46,7 +45,7 @@ export function TopBar({ actions }: { actions?: ReactNode; [k: string]: unknown 
     return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
   }, []);
 
-  const go = (path: string) => { setOpen(false); navigate(path); };
+  /* SLL-LINKS-REAIS */
   const storeName = name || store?.name || 'Minha loja';
   const item = 'flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100';
 
@@ -84,9 +83,9 @@ export function TopBar({ actions }: { actions?: ReactNode; [k: string]: unknown 
           {open && (
             <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl">
               <p className="truncate px-3 py-2 text-xs font-bold text-slate-500">{storeName}</p>
-              <button type="button" className={item} onClick={() => go('/dashboard/settings')}><Settings className="h-4 w-4" /> Configurações</button>
-              <button type="button" className={item} onClick={() => go('/dashboard/integracao')}><Plug className="h-4 w-4" /> Instalação & Script</button>
-              <button type="button" className={item} onClick={() => go('/dashboard/assinaturas')}><CreditCard className="h-4 w-4" /> Assinatura e planos</button>
+              <Link to="/dashboard/settings" className={item} onClick={() => setOpen(false)}><Settings className="h-4 w-4" /> Configurações</Link>
+              <Link to="/dashboard/integracao" className={item} onClick={() => setOpen(false)}><Plug className="h-4 w-4" /> Instalação & Script</Link>
+              <Link to="/dashboard/assinaturas" className={item} onClick={() => setOpen(false)}><CreditCard className="h-4 w-4" /> Assinatura e planos</Link>
               <button type="button" className={`${item} text-rose-600 hover:bg-rose-50`} onClick={() => { setOpen(false); void signOut(); }}>
                 <LogOut className="h-4 w-4" /> Sair
               </button>
