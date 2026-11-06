@@ -171,7 +171,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   const [dests, setDests] = useState<{ platform: string; status: string }[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [chatCount, setChatCount] = useState(0);
-  const [metrics, setMetrics] = useState<{ views: number; clicks: number; signups: number; top: [string, number][] }>({ views: 0, clicks: 0, signups: 0, top: [] });
+  const [metrics, setMetrics] = useState<{ views: number; clicks: number; top: [string, number][] }>({ views: 0, clicks: 0, top: [] });
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [cycle, setCycle] = useState<{ status: string; label: string; date: string } | null>(null);
@@ -590,7 +590,7 @@ const VISAO_STREAM_TOUR: TourStep[] = [
   { element: '[data-tour="sg-indic"]', title: 'Faturamento de indica\u00e7\u00f5es', description: 'Comiss\u00f5es que voc\u00ea recebe ao indicar o Stream Sell para outros lojistas. O link no rodap\u00e9 abre o Clube SLL.', side: 'bottom' },
   { element: '[data-tour="sg-consumo"]', title: 'Consumo', description: 'Tempo transmitido, pico de espectadores, destinos conectados e o ciclo da assinatura.', side: 'bottom' },
   { element: '[data-tour="sg-proxima"]', title: 'Pr\u00f3ximas lives', description: 'Todas as lives ao vivo e agendadas. Use Abrir Est\u00fadio da Live para preparar e iniciar cada uma.', side: 'top' },
-  { element: '[data-tour="sg-engaj"]', title: 'Engajamento das lives', description: 'Visualiza\u00e7\u00f5es, mensagens no chat, cliques em produtos, cadastros e compartilhamentos, al\u00e9m do ranking dos produtos mais clicados.', side: 'top' },
+  { element: '[data-tour="sg-engaj"]', title: 'Engajamento das lives', description: 'Visualiza\u00e7\u00f5es, mensagens no chat, cliques em produtos e compartilhamentos, al\u00e9m do ranking dos produtos mais clicados.', side: 'top' },
   { element: '[data-tour="sg-noah"]', title: 'Dica do Noah', description: 'Dicas pr\u00e1ticas para a \u00e9poca do ano de acordo com o nicho da sua loja. Use Ver mais dicas para ver todas.', side: 'top' },
   { element: '[data-tour="sg-clube"]', title: 'Clube SLL', description: 'Copie seu link de indica\u00e7\u00e3o e ganhe comiss\u00f5es e benef\u00edcios por cada lojista que assinar.', side: 'top' },
   { element: '[data-tour="sg-academy-card"]', title: 'SLL Academy', description: 'Aulas r\u00e1pidas para configurar sua live, apresentar seus produtos e vender mais com Stream Sell. Assista aos v\u00eddeos aqui e use "Assistir e se inscrever" para seguir o canal no YouTube.', side: 'top' },

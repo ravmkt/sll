@@ -16,6 +16,7 @@ type LiveRow = {
   created_at: string;
   peak_viewers: number | null;
 };
+import { Percent } from 'lucide-react';
 type Ev = { live_id: string; event_type: string; metadata: any; created_at: string };
 type Ord = { live_id: string; total_amount: number | string | null; status?: string | null; created_at: string };
 type Stat = { views: number; clicks: number; buy: number; wa: number; signups: number; orders: number; revenue: number };
@@ -34,6 +35,7 @@ const T = {
   kBuy: 'Cliques em Comprar',
   kWa: 'Cliques no WhatsApp',
   kSign: 'Cliques em Cadastro',
+  kRate: 'Taxa de Cliques',
   chart: 'Desempenho das lives',
   chartEmpty: 'Sem dados no per\u00edodo selecionado.',
   sRev: 'Faturamento (R$)',
@@ -448,6 +450,7 @@ export default function LiveResultadosPage() {
         <Kpi icon={<DollarSign className="h-5 w-5 text-emerald-600" />} tone="bg-emerald-50" label={T.kRev} value={brl(model.totals.revenue)} />
         <Kpi icon={<ShoppingCart className="h-5 w-5 text-sky-600" />} tone="bg-sky-50" label={T.kOrd} value={num(model.totals.orders)} />
         <Kpi icon={<Eye className="h-5 w-5 text-rose-600" />} tone="bg-rose-50" label={T.kPeak} value={num(model.historicPeak)} />
+        <Kpi icon={<Percent className="h-5 w-5 text-violet-600" />} tone="bg-violet-50" label={T.kRate} value={model.totals.views > 0 ? (((model.totals.clicks / model.totals.views) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%') : '\u2014'} hint={'Cliques \u00f7 visualiza\u00e7\u00f5es'} />
         <Kpi icon={<MousePointerClick className="h-5 w-5 text-amber-600" />} tone="bg-amber-50" label={T.kClk} value={num(model.totals.clicks)} hint="Comprar + WhatsApp" />
         <Kpi icon={<ShoppingBag className="h-5 w-5 text-blue-600" />} tone="bg-blue-50" label={T.kBuy} value={num(model.totals.buy)} />
         <Kpi icon={<MessageCircle className="h-5 w-5 text-lime-600" />} tone="bg-lime-50" label={T.kWa} value={num(model.totals.wa)} />
