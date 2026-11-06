@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import PlatformConnectCard from '@/components/configuracoes/PlatformConnectCard';
+import DomainSettings from '@/components/domains/DomainSettings';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 const LOGO_BUCKET = 'store-assets';
@@ -454,6 +455,13 @@ const SettingsPage: React.FC = () => {
                 onChangePlatform={(p) => setForm((prev) => ({ ...prev, platform: p }))}
               />
             </div>
+
+            {/* MEU DOMÍNIO */}
+            {storeId && (
+              <div className={cardCls}>
+                <DomainSettings storeId={storeId} />
+              </div>
+            )}
 
             {/* WHATSAPP & ATENDIMENTO */}
             <div className={cardCls}>
