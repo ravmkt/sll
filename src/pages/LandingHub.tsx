@@ -1,6 +1,6 @@
-﻿import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { buildTabs, featuredId, fetchLandingData, planFeatures, EMPTY_LANDING, type LandingData } from "@/lib/landingConfig";
 import {
   ArrowRight, BarChart3, Check, ChevronDown, Clock, Code2, Eye, Heart, Lock, Menu,
   MessageCircle, MousePointerClick, Play, Radio, ShieldCheck, ShoppingBag, Sparkles,
@@ -100,8 +100,8 @@ function Header() {
           ))}
         </nav>
         <div className="hidden items-center gap-4 md:flex">
-          <Link to="/login" className="text-sm font-semibold text-slate-700 hover:text-sky-600">Entrar</Link>
-          <Cta to="/register" event="header_register" className="!px-5 !py-2.5">Começar Grátis</Cta>
+          <Link to="/auth" className="text-sm font-semibold text-slate-700 hover:text-sky-600">Entrar</Link>
+          <Cta to="/auth?mode=signup" event="header_register" className="!px-5 !py-2.5">Começar Grátis</Cta>
         </div>
         <button className="md:hidden" onClick={() => setOpen((v) => !v)} aria-label="Menu" aria-expanded={open}>
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -113,8 +113,8 @@ function Header() {
             {NAV.map((n) => (
               <button key={n.id} onClick={() => go(n.id)} className="rounded-lg px-3 py-3 text-left text-base font-medium text-slate-700 hover:bg-slate-50">{n.label}</button>
             ))}
-            <Link to="/login" className="rounded-lg px-3 py-3 text-base font-semibold text-slate-700">Entrar</Link>
-            <Cta to="/register" event="header_mobile_register" className="mt-2">Começar Grátis</Cta>
+            <Link to="/auth" className="rounded-lg px-3 py-3 text-base font-semibold text-slate-700">Entrar</Link>
+            <Cta to="/auth?mode=signup" event="header_mobile_register" className="mt-2">Começar Grátis</Cta>
           </div>
         </div>
       )}
@@ -191,7 +191,7 @@ function Hero() {
             Compatível com qualquer plataforma via script leve ou Google Tag Manager.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Cta to="/register" event="hero_trial" className="text-base">Testar 7 dias grátis <ArrowRight className="h-4 w-4" /></Cta>
+            <Cta to="/auth?mode=signup" event="hero_trial" className="text-base">Testar 7 dias grátis <ArrowRight className="h-4 w-4" /></Cta>
             <button
               onClick={() => { track("click_cta", { cta: "hero_formats" }); scrollToId("formatos"); }}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-base font-bold text-slate-700 transition hover:bg-slate-100"
@@ -232,23 +232,39 @@ function Stats() {
 }
 
 /* ---------- módulos ---------- */
+function useLanding() {
+  const [data, setData] = useState<LandingData>(EMPTY_LANDING);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  useEffect(() => {
+    let alive = true;
+    fetchLandingData()
+      .then((d) => { if (alive) { setData(d); setStatus("ready"); } })
+      .catch(() => { if (alive) setStatus("error"); });
+    return () => { alive = false; };
+  }, []);
+  return { data, status };
+}
+
 function Modules() {
-  const mods = [
+  const { data } = useLanding();
+  const cards = data.config.cards ?? {};
+  const all = [
     {
-      logo: "/assets/vidlytics-logo-wide.png", name: "Vidlytics", to: "/vidlytics", icon: Play,
+      key: "vidlytics" as const, logo: "/assets/vidlytics-logo-wide.png", name: "Vidlytics", to: "/vidlytics", icon: Play,
       text: "Stories shoppable na home, vídeos flutuantes em páginas de produto e métricas de retenção segundo a segundo.",
       bullets: ["Stories, carrossel, grade e widget flutuante", "Analytics: plays, retenção, CTR e conversão"],
     },
     {
-      logo: "/assets/stream-sell-logo-wide.png", name: "Stream Sell", to: "/stream-sell", icon: Radio,
+      key: "stream_sell" as const, logo: "/assets/stream-sell-logo-wide.png", name: "Stream Sell", to: "/stream-sell", icon: Radio,
       text: "Transmissões ao vivo com catálogo integrado, chat moderado e compra em 1 clique durante a live.",
       bullets: ["Produtos vinculados e sincronizados na live", "Chat em tempo real e checkout na transmissão"],
     },
   ];
+  const mods = all.filter((m) => cards[m.key] !== false);
   return (
     <Section id="modulos">
       <SectionTitle eyebrow="O ecossistema" title="Dois módulos que se completam" sub="Use separado ou em combo: o vídeo atrai e a live converte, no mesmo painel." />
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className={`grid gap-6 ${mods.length > 1 ? "md:grid-cols-2" : "mx-auto max-w-xl"}`}>
         {mods.map((m) => (
           <article key={m.name} className="group rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
             <div className="flex items-center justify-between">
@@ -270,7 +286,6 @@ function Modules() {
     </Section>
   );
 }
-
 /* ---------- formatos ---------- */
 function Browser({ children }: { children: ReactNode }) {
   return (
@@ -445,7 +460,7 @@ function Calculator() {
           <p className="mt-1 text-3xl font-extrabold text-emerald-600 md:text-4xl">{BRL.format(low)} a {BRL.format(high)}</p>
           <p className="mt-1 text-xs text-slate-500">Em 12 meses: {BRL.format(low * 12)} a {BRL.format(high * 12)}</p>
         </div>
-        <Cta to={`/register?source=calculadora&revenue=${revenue}`} event="calculator" className="mt-6 w-full text-base">
+        <Cta to={`/auth?mode=signup&source=calculadora&revenue=${revenue}`} event="calculator" className="mt-6 w-full text-base">
           Destravar esse faturamento na minha loja <ArrowRight className="h-4 w-4" />
         </Cta>
         <p className="mt-3 text-center text-[11px] text-slate-400">Simulação ilustrativa, não é garantia de resultado.</p>
@@ -499,106 +514,82 @@ function Integration() {
 }
 
 /* ---------- preços ---------- */
-type ModuleKey = "combo" | "vidlytics" | "stream_sell";
-interface Plan {
-  id: string; slug: string; name: string; module: ModuleKey; description: string | null;
-  price_monthly: number; features: unknown; is_featured: boolean; sort_order: number;
-}
-
-const TABS: { key: ModuleKey; label: string }[] = [
-  { key: "combo", label: "🔥 Combo SLL Hub (Vidlytics + Stream Sell)" },
-  { key: "vidlytics", label: "Módulo Vidlytics" },
-  { key: "stream_sell", label: "Módulo Stream Sell" },
-];
-
-function usePlans() {
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  useEffect(() => {
-    let alive = true;
-    supabase
-      .from("plans")
-      .select("id,slug,name,module,description,price_monthly,features,is_featured,sort_order")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-      .then(({ data, error }) => {
-        if (!alive) return;
-        if (error) { setStatus("error"); return; }
-        setPlans((data ?? []) as Plan[]);
-        setStatus("ready");
-      });
-    return () => { alive = false; };
-  }, []);
-  return { plans, status };
-}
-
 function Pricing() {
-  const { plans, status } = usePlans();
-  const [tab, setTab] = useState<ModuleKey>("combo");
-  const list = useMemo(() => plans.filter((p) => p.module === tab), [plans, tab]);
-  const hasFeatured = list.some((p) => p.is_featured);
+  const { data, status } = useLanding();
+  const tabs = useMemo(() => buildTabs(data), [data]);
+  const [tab, setTab] = useState<string | null>(null);
+  const active = tabs.find((t) => t.key === tab) ?? tabs[0];
+  const featId = active ? featuredId(active.plans, data.config) : null;
+  const includesOf = (id: string) =>
+    data.combo_modules.filter((c) => c.plan_id === id).map((c) => data.modules.find((m) => m.slug === c.module_slug)?.name ?? c.module_slug);
 
   return (
     <Section id="precos">
       <SectionTitle eyebrow="Preços" title="Planos simples, sem surpresa" sub="Teste 7 dias grátis e cancele quando quiser." />
-      <div className="mb-10 flex flex-wrap justify-center gap-2">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => { setTab(t.key); track("select_pricing_tab", { tab: t.key }); }}
-            className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${tab === t.key ? "bg-sky-600 text-white shadow-md" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"}`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
       {status === "loading" && (
         <div className="grid gap-6 md:grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="h-96 animate-pulse rounded-3xl bg-slate-200" />)}</div>
       )}
       {status === "error" && (
         <p className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-700">Não foi possível carregar os planos agora. Atualize a página ou fale com o suporte.</p>
       )}
-      {status === "ready" && list.length === 0 && (
-        <p className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">Nenhum plano disponível nesta categoria.</p>
+      {status === "ready" && tabs.length === 0 && (
+        <p className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">Nenhum plano disponível no momento.</p>
       )}
-      {status === "ready" && list.length > 0 && (
-        <div className="grid items-center gap-6 md:grid-cols-3">
-          {list.map((p, i) => {
-            const featured = p.is_featured || (!hasFeatured && list.length === 3 && i === 1);
-            const features = Array.isArray(p.features) ? (p.features as string[]) : [];
-            return (
-              <article key={p.id} className={`relative rounded-3xl bg-white p-7 transition ${featured ? "z-10 border-2 border-sky-500 shadow-2xl shadow-sky-500/15 md:scale-105" : "border border-slate-200 shadow-sm"}`}>
-                {featured && (
-                  <span className="absolute -top-3.5 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-1 text-xs font-bold text-white shadow">
-                    <Sparkles className="h-3 w-3" /> Mais Escolhido
-                  </span>
-                )}
-                <h3 className="text-lg font-extrabold text-slate-900">{p.name}</h3>
-                {p.description && <p className="mt-1 min-h-[40px] text-sm text-slate-500">{p.description}</p>}
-                <p className="mt-5"><span className="text-4xl font-extrabold text-slate-900">{BRL2.format(Number(p.price_monthly)).replace(",00", "")}</span><span className="text-sm text-slate-500">/mês</span></p>
-                <ul className="mt-6 space-y-2.5">
-                  {features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-slate-700"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />{f}</li>
-                  ))}
-                </ul>
-                <Link
-                  to={`/register?plan_id=${p.id}`}
-                  onClick={() => track("select_plan", { plan_id: p.id, plan: p.slug, price: p.price_monthly })}
-                  className={`mt-7 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold transition ${featured ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600" : "border border-slate-300 text-slate-700 hover:bg-slate-100"}`}
-                >
-                  Começar com {p.name} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </article>
-            );
-          })}
-        </div>
+      {status === "ready" && active && (
+        <>
+          <div className="mb-10 flex flex-wrap justify-center gap-2">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => { setTab(t.key); track("select_pricing_tab", { tab: t.key }); }}
+                className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${active.key === t.key ? "bg-sky-600 text-white shadow-md" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className={`grid items-center gap-6 ${active.plans.length === 1 ? "mx-auto max-w-sm" : active.plans.length === 2 ? "mx-auto max-w-3xl md:grid-cols-2" : "md:grid-cols-3"}`}>
+            {active.plans.map((p) => {
+              const featured = p.id === featId;
+              const ov = data.config.plans?.[p.id];
+              const features = planFeatures(p, includesOf(p.id), ov);
+              const price = p.price_monthly_cents / 100;
+              return (
+                <article key={p.id} className={`relative rounded-3xl bg-white p-7 transition ${featured ? "z-10 border-2 border-sky-500 shadow-2xl shadow-sky-500/15 md:scale-105" : "border border-slate-200 shadow-sm"}`}>
+                  {featured && (
+                    <span className="absolute -top-3.5 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-1 text-xs font-bold text-white shadow">
+                      <Sparkles className="h-3 w-3" /> Mais Escolhido
+                    </span>
+                  )}
+                  <h3 className="text-lg font-extrabold text-slate-900">{p.plan_name}</h3>
+                  {ov?.description && <p className="mt-1 min-h-[40px] text-sm text-slate-500">{ov.description}</p>}
+                  <p className="mt-5">
+                    {price > 0
+                      ? <><span className="text-4xl font-extrabold text-slate-900">{BRL2.format(price).replace(",00", "")}</span><span className="text-sm text-slate-500">/mês</span></>
+                      : <span className="text-4xl font-extrabold text-slate-900">Grátis</span>}
+                  </p>
+                  <ul className="mt-6 space-y-2.5">
+                    {features.map((x) => (
+                      <li key={x} className="flex items-start gap-2 text-sm text-slate-700"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />{x}</li>
+                    ))}
+                  </ul>
+                  <Link
+                    to={`/auth?mode=signup&plan_id=${p.id}`}
+                    onClick={() => track("select_plan", { plan_id: p.id, plan: p.plan_name, price })}
+                    className={`mt-7 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold transition ${featured ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600" : "border border-slate-300 text-slate-700 hover:bg-slate-100"}`}
+                  >
+                    Começar com {p.plan_name} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </article>
+              );
+            })}
+          </div>
+        </>
       )}
       <p className="mt-8 text-center text-xs text-slate-500">7 dias grátis · Sem fidelidade · Cancele quando quiser</p>
     </Section>
   );
 }
-
 /* ---------- faq ---------- */
 const FAQS = [
   { q: "É compatível com o meu tema e plataforma?", a: "Sim. Funciona em Yampi, Shopify, Nuvemshop, Tray, WooCommerce, Cartpanda, VTEX e lojas próprias, via Google Tag Manager ou um único script." },
@@ -640,7 +631,7 @@ function FinalCta() {
       <div className="mx-auto max-w-4xl rounded-3xl bg-gradient-to-br from-sky-600 to-blue-800 p-10 text-center text-white shadow-2xl">
         <h2 className="text-3xl font-extrabold md:text-4xl">Pronto para vender mais com vídeo?</h2>
         <p className="mx-auto mt-3 max-w-xl text-sky-100">Instale em 5 minutos e teste 7 dias grátis, sem cartão de crédito.</p>
-        <Cta to="/register" event="final_cta" className="mt-7 !px-8 text-base">Testar 7 dias grátis <ArrowRight className="h-4 w-4" /></Cta>
+        <Cta to="/auth?mode=signup" event="final_cta" className="mt-7 !px-8 text-base">Testar 7 dias grátis <ArrowRight className="h-4 w-4" /></Cta>
       </div>
     </section>
   );
@@ -649,7 +640,7 @@ function FinalCta() {
 function Footer() {
   const cols = [
     { t: "Produto", l: [["Vidlytics", "/vidlytics"], ["Stream Sell", "/stream-sell"], ["Preços", "#precos"]] },
-    { t: "Conta", l: [["Entrar", "/login"], ["Criar conta", "/register"]] },
+    { t: "Conta", l: [["Entrar", "/auth"], ["Criar conta", "/auth?mode=signup"]] },
     { t: "Legal", l: [["Termos de uso", "/termos"], ["Política de privacidade", "/privacidade"]] },
   ];
   return (
@@ -693,7 +684,7 @@ function StickyMobileCta() {
   if (!show) return null;
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/90 p-3 backdrop-blur md:hidden">
-      <Cta to="/register" event="sticky_mobile" className="w-full">Testar 7 dias grátis</Cta>
+      <Cta to="/auth?mode=signup" event="sticky_mobile" className="w-full">Testar 7 dias grátis</Cta>
     </div>
   );
 }
