@@ -677,7 +677,7 @@ window.SLL.liveAttr = window.SLL.liveAttr || (function () {
     if (waDone) { cb(waCfg); return; }
     waCbs.push(cb);
     if (waCbs.length > 1) return;
-    supabaseFetch('store_settings_public?select=whatsapp_number,whatsapp_message_template&store_id=eq.' + encodeURIComponent(storeId) + '&limit=1', { method: 'GET' })
+    supabaseFetch('store_settings_public?select=whatsapp_number,whatsapp_message_template&store_id=eq.' + encodeURIComponent(storeId) + '&limit=1', { method: 'GET', headers: { 'Accept-Profile': 'public' } })
       .then(function (r) { return r.ok ? r.json() : []; })
       .then(function (rows) {
         var r0 = rows && rows[0];
