@@ -1,15 +1,15 @@
 import type { ElementType, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFxRate } from '../../hooks/admin/useFxRate';
-import { Bot, ArrowLeft, Layers, LayoutDashboard, Megaphone, ShieldCheck, Store, Tag, Wallet, BarChart3 } from 'lucide-react';
+import { Bot, ArrowLeft, Layers, LayoutDashboard, Megaphone, ShieldCheck, Store, Tag, Wallet, BarChart3, LayoutTemplate } from 'lucide-react';
 
-export type MasterTab = 'dashboard' | 'lojas' | 'modulos' | 'precos' | 'marketing' | 'insights' | 'noah' | 'saques' | 'metricas';
+export type MasterTab = 'dashboard' | 'lojas' | 'modulos' | 'precos' | 'landpage' | 'marketing' | 'insights' | 'noah' | 'saques' | 'metricas';
 
 const ITEMS: { id: MasterTab; label: string; icon: ElementType }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'lojas', label: 'Lojas', icon: Store },
   { id: 'modulos', label: 'Módulos', icon: Layers },
-  { id: 'precos', label: 'Preços', icon: Tag },
+  { id: 'precos', label: 'Preços', icon: Tag }, { id: 'landpage', label: 'Landpage', icon: LayoutTemplate },
   { id: 'marketing', label: 'Marketing', icon: Megaphone },
   { id: 'noah', label: 'IA & Suporte Noah', icon: Bot }, { id: 'metricas', label: 'M\u00e9tricas', icon: BarChart3 }, { id: 'saques', label: 'Saques', icon: Wallet },
 ];
