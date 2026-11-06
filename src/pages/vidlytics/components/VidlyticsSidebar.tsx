@@ -14,6 +14,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useLoja } from '@/contexts/LojaContext';
+import PushCard from '@/components/layout/PushCard';
 
 export type VidlyticsTab = 'visao-geral' | 'resultados' | 'stories' | 'biblioteca' | 'comentarios' | 'aparencia';
 
@@ -33,6 +35,8 @@ export function VidlyticsSidebar({
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const isExpanded = !isCollapsed;
+  const ctxLoja: any = useLoja();
+  const storeId: string | null = ctxLoja?.loja?.id ?? ctxLoja?.store?.id ?? ctxLoja?.storeId ?? ctxLoja?.lojaId ?? null;
 
   const menuItems: { id: VidlyticsTab; label: string; icon: React.ElementType }[] = [
     { id: 'visao-geral', label: 'Visão Geral', icon: LayoutDashboard },
@@ -124,6 +128,7 @@ export function VidlyticsSidebar({
 
       {/* Footer */}
       <div className="px-4 pt-3 pb-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+        {storeId && <PushCard app="vidlytics" storeId={storeId} isExpanded={isExpanded} />}
         <button
           type="button"
           onClick={() => navigate('/dashboard')}

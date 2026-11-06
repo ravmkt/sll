@@ -14,6 +14,8 @@ import { useNavigate } from 'react-router-dom';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 import { Ticket as PresetsMenuIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLoja } from '@/contexts/LojaContext';
+import PushCard from '@/components/layout/PushCard';
 
 export type LiveTab =
   | 'visao-geral'
@@ -45,6 +47,8 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const isExpanded = !isCollapsed;
+  const ctxLoja: any = useLoja();
+  const storeId: string | null = ctxLoja?.loja?.id ?? ctxLoja?.store?.id ?? ctxLoja?.storeId ?? ctxLoja?.lojaId ?? null;
 
   return (
     <aside
@@ -113,6 +117,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
       <div className="mt-auto pb-4"><SidebarTourSlot isExpanded={isExpanded} /></div>
 
       <div className="px-4 pt-3 pb-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+        {storeId && <PushCard app="live" storeId={storeId} isExpanded={isExpanded} />}
         <button
           type="button"
           onClick={() => navigate('/dashboard')}

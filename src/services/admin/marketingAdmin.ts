@@ -1,7 +1,8 @@
 import type { DateRange } from '@/services/admin/marketingPeriod';
 import { supabase } from '@/lib/supabase';
 
-export type MktKind = 'banner' | 'popup' | 'notice';
+export type MktKind = 'banner' | 'popup' | 'notice' | 'push';
+export type MktApp = 'hub' | 'vidlytics' | 'live';
 export type NoticeStyle = 'info' | 'warning' | 'urgent';
 export type MktLocation = 'all' | 'home' | 'vidlytics' | 'live';
 export type MktAudience = 'all' | 'past_due' | 'trial' | 'store';
@@ -26,6 +27,7 @@ export interface MktDraft {
   location: MktLocation;
   audience: MktAudience;
   store_id?: string | null;
+  apps?: MktApp[];
   notice_style?: NoticeStyle;
   banner_format?: 'horizontal' | 'vertical' | null;
   frequency: MktFrequency;
@@ -72,7 +74,7 @@ export const FREQUENCY_LABEL: Record<MktFrequency, string> = {
 export const emptyDraft = (kind: MktKind): MktDraft => ({
   kind, title: '', body: '', image_url: '', cta_label: '', cta_url: '', coupon_code: '',
   location: 'all', audience: 'all', frequency: 'always', starts_at: null, ends_at: null, is_active: true,
-  banner_format: 'horizontal',
+  banner_format: 'horizontal', apps: kind === 'push' ? ['hub', 'vidlytics', 'live'] : undefined,
 });
 
 export async function listItems(kind?: MktKind): Promise<MktItem[]> {
@@ -110,5 +112,11 @@ export async function getMetrics(arg: number | DateRange): Promise<MktMetrics> {
   if (error) throw error;
   const zero = { impressions: 0, clicks: 0, closes: 0 };
   const raw = (data || {}) as Partial<MktMetrics>;
-  return { banner: { ...zero, ...raw.banner }, popup: { ...zero, ...raw.popup }, notice: { ...zero, ...raw.notice } };
+  return { banner: { ...zero, ...raw.banner }, popup: { ...zero, ...raw.popup }, notice: { ...zero, ...raw.notice }, push: { ...zero, ...raw.push } };
 }
+export const APP_LABEL: Record<MktApp, string> = {
+  hub: 'SLL Hub',
+  vidlytics: 'Vidlytics',
+  live: 'Stream Sell',
+};
+

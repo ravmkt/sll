@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Package, Lightbulb, Crown, LogOut, PanelLeftClose, PanelLeftOpen, Gift, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
+import PushCard from '@/components/layout/PushCard';
 
 
 interface SidebarProps {
@@ -155,6 +156,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       </div>
 
       <div className="px-4 pt-3 pb-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+        {storeId && <PushCard app="hub" storeId={storeId} isExpanded={isExpanded} />}
         {storeId && (
           isExpanded ? (
             <>

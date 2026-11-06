@@ -43,7 +43,7 @@ export function itemKpis(kind: MktKind, items: MktItem[]): Kpi[] {
     ];
   }
   return [
-    { label: kind === 'banner' ? 'Banners no ar' : 'Popups no ar', value: live },
+    { label: kind === 'banner' ? 'Banners no ar' : kind === 'push' ? 'Push no ar' : 'Popups no ar', value: live },
     { label: 'Impressões', value: imp },
     { label: 'Cliques', value: clk },
     { label: 'CTR médio', value: pct(clk, imp), hint: 'Abaixo de 1% o criativo está fraco' },
