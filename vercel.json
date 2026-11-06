@@ -1,12 +1,11 @@
 {
-    "rewrites":  [
-                     {
-                         "source":  "/p/:store/:slug",
-                         "destination":  "/api/page?store=:store\u0026slug=:slug"
-                     },
-                     {
-                         "source":  "/(.*)",
-                         "destination":  "/index.html"
-                     }
-                 ]
+  "rewrites": [
+    { "source": "/p/:store/:slug", "destination": "/api/page?store=:store&slug=:slug" },
+    {
+      "source": "/:slug",
+      "has": [{ "type": "host", "value": "(?!app\\.sllhub\\.com\\.br$|.*\\.vercel\\.app$).*" }],
+      "destination": "/api/page?slug=:slug"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

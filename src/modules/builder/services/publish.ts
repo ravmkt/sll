@@ -1,4 +1,4 @@
-﻿import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { getPage, savePage } from './pages';
 import { renderPageHtml } from '../publish/renderHtml';
@@ -14,6 +14,26 @@ const cfg = () => ({
 export async function buildPreviewHtml(id: string, title: string, content: PageContent): Promise<string> {
   const page = await getPage(id);
   return renderPageHtml({ id: page.id, title, content }, cfg());
+}
+
+async function resolvePublicUrls(storeId: string, pageSlug: string) {
+  let storeRef = storeId;
+  let customUrl: string | null = null;
+  try {
+    const s = await supabase.from('stores').select('slug').eq('id', storeId).maybeSingle();
+    if (s.data?.slug) storeRef = s.data.slug as string;
+    const d = await supabase
+      .from('store_domains')
+      .select('domain')
+      .eq('store_id', storeId)
+      .eq('status', 'verified')
+      .limit(1)
+      .maybeSingle();
+    if (d.data?.domain) customUrl = `https://${d.data.domain}/${pageSlug}`;
+  } catch {
+    /* mantém o fallback por UUID */
+  }
+  return { url: `${window.location.origin}/p/${storeRef}/${pageSlug}`, customUrl };
 }
 
 export async function publishPage(id: string, title: string, content: PageContent) {
@@ -39,7 +59,6 @@ export async function publishPage(id: string, title: string, content: PageConten
     .eq('id', id);
   if (upd.error) throw upd.error;
 
-  const url = `${window.location.origin}/p/${page.store_id}/${page.slug}`;
-  return { url, version };
+  const { url, customUrl } = await resolvePublicUrls(page.store_id, page.slug);
+  return { url, customUrl, version };
 }
-
