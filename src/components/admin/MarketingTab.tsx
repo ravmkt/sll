@@ -10,7 +10,7 @@ import EmailCampaigns from '@/components/admin/EmailCampaigns';
 import { getEmailMetrics, EMPTY_EMAIL_METRICS, type EmailMetrics } from '@/services/admin/emailCampaigns';
 import { LinkPicker, StorePicker } from '@/components/admin/MarketingPickers';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Megaphone, Plus, Trash2, Pencil, Pause, Play, Mail, MessageCircle, Tag, X, BarChart3, Image as ImageIcon, LayoutTemplate } from 'lucide-react';
+import { Megaphone, Plus, Trash2, Pencil, Pause, Play, Mail, MessageCircle, Tag, X, BarChart3, Image as ImageIcon, LayoutTemplate, Bell } from 'lucide-react';
 import {
   AUDIENCE_LABEL, FREQUENCY_LABEL, LOCATION_LABEL, NOTICE_STYLE_LABEL, deleteItem, emptyDraft, getMetrics, listItems, saveItem,
   type MktAudience, type NoticeStyle, type MktCounts, type MktSlide, type MktDraft, type MktFrequency, type MktItem, type MktKind, type MktLocation, type MktMetrics,
@@ -21,10 +21,13 @@ import {
   type CouponDraft, type CouponDuration, type CouponPlanOption, type CouponType, type MktCoupon,
 } from '@/services/admin/couponsMarketing';
 
-type TabKey = 'visao' | 'banner' | 'popup' | 'aviso' | 'email' | 'whatsapp' | 'promocao' | 'nps';
+type TabKey = 'visao' | 'banner' | 'popup' | 'aviso' | 'push' | 'email' | 'whatsapp' | 'promocao' | 'nps';
 
-const KIND_TITLE: Record<MktKind, string> = { banner: 'Banners', popup: 'Popups', notice: 'Avisos do sistema' };
-const KIND_NOUN: Record<MktKind, string> = { banner: 'banner', popup: 'popup', notice: 'aviso' };
+const KIND_TITLE: Record<MktKind, string> = { banner: 'Banners', popup: 'Popups', notice: 'Avisos do sistema', push: 'Push' };
+const KIND_NOUN: Record<MktKind, string> = { banner: 'banner', popup: 'popup', notice: 'aviso', push: 'push' };
+
+const APP_KEYS = ['hub', 'vidlytics', 'live'] as const;
+const APP_LABEL: Record<string, string> = { hub: 'Hub', vidlytics: 'Vidlytics', live: 'Stream Sell' };
 
 const inputCls =
   'w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-[15px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500';
@@ -170,6 +173,7 @@ function Visao() {
       ],
     },
     { title: 'Avisos', tab: 'Avisos', items: countsItems(m?.notice) },
+    { title: 'Push', tab: 'Push', items: countsItems((m as any)?.push) },
     {
       title: 'WhatsApp',
       tab: 'WhatsApp',
@@ -234,7 +238,11 @@ function DateTimeField({ label, value, onChange }: { label: string; value: strin
 
 const blankSlide = (): MktSlide => ({ image_url: '', starts_at: null, ends_at: null });
 
-const newDraft = (kind: MktKind): MktDraft => ({ ...emptyDraft(kind), slides: kind === 'banner' ? [blankSlide()] : [] });
+const newDraft = (kind: MktKind): MktDraft => ({
+  ...emptyDraft(kind),
+  slides: kind === 'banner' ? [blankSlide()] : [],
+  ...(kind === 'push' ? { apps: ['hub', 'vidlytics', 'live'] } : {}),
+} as MktDraft);
 
 const editDraft = (i: MktItem): MktDraft => {
   const slides = i.slides ?? [];
@@ -313,7 +321,7 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
               </div>
               <SlidesEditor key={(draft.id ?? 'novo') + ':' + (draft.banner_format ?? 'horizontal')} slides={draft.slides ?? []} format={draft.banner_format} onChange={(s) => set('slides', s)} /></div>
             ) : (
-              draft.kind === 'notice' ? (
+              (draft.kind === 'notice' || draft.kind === 'push') ? (
                   <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
                     <div><label className={labelCls}>Tipo do aviso</label>
                       <select className={inputCls} value={draft.notice_style ?? 'info'} onChange={(e) => set('notice_style', e.target.value as NoticeStyle)}>
@@ -329,9 +337,27 @@ function ItemForm({ draft, onChange, onCancel, onSave, saving }: {
                 )
             )}
         
-            <div><label className={labelCls}>{draft.kind === 'notice' ? 'Link do botão (opcional)' : 'Link ao clicar na imagem'}</label>
+            <div><label className={labelCls}>{(draft.kind === 'notice' || draft.kind === 'push') ? 'Link do botão (opcional)' : 'Link ao clicar na imagem'}</label>
           <LinkPicker value={draft.cta_url} onChange={(v) => set('cta_url', v)} /></div>
-        <div><label className={labelCls}>Local de exibição</label>
+        {draft.kind === 'push' && (
+          <div className="md:col-span-2">
+            <label className={labelCls}>Aparece em</label>
+            <div className="flex flex-wrap gap-4">
+              {APP_KEYS.map((a) => {
+                const cur: string[] = (draft as any).apps || [];
+                return (
+                  <label key={a} className="flex items-center gap-2 text-[15px] text-slate-200">
+                    <input type="checkbox" checked={cur.includes(a)}
+                      onChange={(e) => onChange({ ...draft, apps: e.target.checked ? [...cur, a] : cur.filter((x) => x !== a) } as any)} />
+                    {APP_LABEL[a]}
+                  </label>
+                );
+              })}
+            </div>
+            <p className="mt-1 text-[13px] text-slate-500">Cada app mostra apenas o push ativo mais recente destinado a ele.</p>
+          </div>
+        )}
+        <div className={draft.kind === 'push' ? 'hidden' : ''}><label className={labelCls}>Local de exibição</label>
           <select className={inputCls} value={draft.location} onChange={(e) => set('location', e.target.value as MktLocation)}>
             {Object.entries(LOCATION_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
@@ -429,7 +455,7 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
                   <tr key={i.id} className="align-middle hover:bg-white/5">
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-3">
-                        {i.kind !== 'notice' && <Thumb url={i.slides?.[0]?.image_url || i.image_url} />}
+                        {(i.kind === 'banner' || i.kind === 'popup') && <Thumb url={i.slides?.[0]?.image_url || i.image_url} />}
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="max-w-[260px] truncate text-[15px] font-semibold text-slate-100">{i.title}</p>
@@ -441,7 +467,7 @@ function ItemsPanel({ kind }: { kind: MktKind }) {
                         </div>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-slate-300">{LOCATION_LABEL[i.location]}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5 text-slate-300">{i.kind === 'push' ? (((i as any).apps || []).map((a: string) => APP_LABEL[a] || a).join(', ') || 'Todos') : LOCATION_LABEL[i.location]}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-[12px] text-slate-400">
                       {i.starts_at || i.ends_at ? fmtDate(i.starts_at) + ' → ' + (i.ends_at ? fmtDate(i.ends_at) : 'sem fim') : 'Sem prazo'}
                     </td>
@@ -734,6 +760,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'banner', label: 'Banners', icon: <ImageIcon className="w-4 h-4" /> },
   { key: 'popup', label: 'Popups', icon: <LayoutTemplate className="w-4 h-4" /> },
   { key: 'aviso', label: 'Avisos', icon: <Megaphone className="w-4 h-4" /> },
+  { key: 'push', label: 'Push', icon: <Bell className="w-4 h-4" /> },
   { key: 'email', label: 'E-mail', icon: <Mail className="w-4 h-4" /> },
   { key: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="w-4 h-4" /> },
   { key: 'promocao', label: 'Cupom', icon: <Tag className="w-4 h-4" /> },
@@ -764,6 +791,7 @@ function MarketingInner({ ps }: { ps: PeriodState }) {
       {tab === 'banner' && <ItemsPanel kind="banner" />}
       {tab === 'popup' && <ItemsPanel kind="popup" />}
           {tab === 'aviso' && <ItemsPanel kind="notice" />}
+      {tab === 'push' && <ItemsPanel kind="push" />}
       {tab === 'email' && (<><EmailFunnel /><EmailCampaigns /></>)}
           {false && (
         <ChannelBlock title="E-mail marketing" icon={<Mail className="w-4 h-4" />} labels={['Enviados', 'Abertos', 'Clicados', 'Respondidos']}
