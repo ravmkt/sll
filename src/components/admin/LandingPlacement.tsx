@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { fetchLandingData } from "@/lib/landingConfig";
@@ -47,9 +47,9 @@ export default function LandingPlacement({ kind, id }: Props) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold text-slate-500">Aparece nas páginas de venda</p>
+      <p className="text-xs font-semibold text-slate-400">Aparece nas páginas de venda</p>
       {pages.map((p) => (
-        <label key={p.id} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+        <label key={p.id} className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
           <input type="checkbox" className="h-4 w-4 accent-emerald-500" checked={on.has(p.id)} disabled={busy === p.id}
             onChange={(e) => toggle(p.id, e.target.checked)} />
           {p.name} <span className="text-xs text-slate-400">/{p.slug}</span>

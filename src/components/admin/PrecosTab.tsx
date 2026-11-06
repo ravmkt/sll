@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import AddonsAdminTab from '@/components/admin/AddonsAdminTab';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import MarginBadge from '@/components/admin/MarginBadge';
+import LandingPlacement from '@/components/admin/LandingPlacement';
 import { cycleInfo } from '@/components/admin/cycleInfo';
 import InfraCostsCard from '@/components/admin/InfraCostsCard';
 import InfraStatusCard from '@/components/admin/InfraStatusCard';
@@ -199,6 +200,8 @@ export function PlanDrawer({ plan, modules, defaultModule, onClose, onSaved }: {
             placeholder="Ex.: Vídeos interativos e lives no mesmo plano, com preço menor que a soma dos avulsos." />
           <span className="block text-xs text-slate-600">Usado nos planos do tipo combo. Vazio = não mostra resumo.</span>
         </label>
+
+        <div className="rounded-lg border border-slate-800 p-3">{plan ? <LandingPlacement kind="plan" id={plan.id} /> : <p className="text-xs text-slate-500">Salve o plano para escolher em quais páginas de venda ele aparece.</p>}</div>
 
         <div className="flex gap-5">
           <label className="flex items-center gap-2 text-[13px] text-slate-300"><input type="checkbox" checked={rec} onChange={(e) => setRec(e.target.checked)} /> Recomendado</label>

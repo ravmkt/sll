@@ -9,7 +9,7 @@ const ITEMS: { id: MasterTab; label: string; icon: ElementType }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'lojas', label: 'Lojas', icon: Store },
   { id: 'modulos', label: 'Módulos', icon: Layers },
-  { id: 'precos', label: 'Preços', icon: Tag }, { id: 'landpage', label: 'Landpage', icon: LayoutTemplate },
+  { id: 'landpage', label: 'Landpage', icon: LayoutTemplate },
   { id: 'marketing', label: 'Marketing', icon: Megaphone },
   { id: 'noah', label: 'IA & Suporte Noah', icon: Bot }, { id: 'metricas', label: 'M\u00e9tricas', icon: BarChart3 }, { id: 'saques', label: 'Saques', icon: Wallet },
 ];

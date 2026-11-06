@@ -7,6 +7,8 @@ import { getModulesRevenue, listStoreOptions, type ModulesRevenue, type StoreOpt
 import ModuloDetalhe from '@/components/admin/ModuloDetalhe';
 import NovoModuloModal from '@/components/admin/NovoModuloModal';
 import ComboSection from '@/components/admin/ComboSection';
+import PrecosTab from '@/components/admin/PrecosTab';
+import TrialSettingsCard from '@/components/admin/TrialSettingsCard';
 import ComboDiscountCard from '@/components/admin/ComboDiscountCard';
 import RevenueSection from '@/components/admin/RevenueSection';
 import ItemCard, { BTN } from '@/components/admin/ItemCard';
@@ -20,7 +22,7 @@ const STATUS_TIP: Record<string, string> = {
 };
 const STATUS_DOT: Record<string, 'green' | 'yellow' | 'gray'> = { active: 'green', coming_soon: 'yellow', hidden: 'gray' };
 
-export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: (id: string) => void; onOpenPlans: (slug: string) => void }) {
+export default function ModulosTab({ onOpenStore }: { onOpenStore: (id: string) => void; onOpenPlans?: (slug: string) => void }) {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<ModulesData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +37,8 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
   const [store, setStore] = useState('');
   const [stores, setStores] = useState<StoreOpt[]>([]);
   const { confirm, dialog } = useConfirm();
+  const [view, setView] = useState<'geral' | 'precos'>('geral');
+  const [planModule, setPlanModule] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -60,13 +64,25 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
     return () => { alive = false; };
   }, [days]);
 
+  if (view === 'precos') {
+    return (
+      <div>
+        <button type="button" onClick={() => { setPlanModule(null); setView('geral'); }} className="mb-2 cursor-pointer text-[13px] font-semibold text-slate-400 hover:text-white">← Módulos</button>
+        <div className="space-y-6 pt-6">
+          <TrialSettingsCard />
+          <PrecosTab initialModule={planModule} />
+        </div>
+      </div>
+    );
+  }
+
   if (selected) {
     return (
       <ModuloDetalhe
         slug={selected}
         onBack={() => { setSelected(null); load(); }}
         onOpenStore={onOpenStore}
-        onOpenPlans={onOpenPlans}
+        onOpenPlans={(slug) => { setPlanModule(slug); setSelected(null); setView('precos'); }}
       />
     );
   }
@@ -154,6 +170,7 @@ export default function ModulosTab({ onOpenStore, onOpenPlans }: { onOpenStore: 
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ComboDiscountCard compact />
+              <button type="button" onClick={() => { setPlanModule(null); setView('precos'); }} className="cursor-pointer rounded-lg bg-[#0094eb] px-3 py-2 text-[13px] font-bold text-white hover:opacity-90">Preços e planos</button>
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
             <option value={1}>Hoje</option>
