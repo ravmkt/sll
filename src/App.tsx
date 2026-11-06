@@ -339,8 +339,8 @@ function AppRoutes() {
         <Route path="/redefinir-senha" element={<ResetPassword />} />
         <Route path="/dashboard/modules/radar/*" element={user ? (<SubscriptionGate><ModuleGate moduleKey="radar"><RadarRoutes /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
-            <Route path="/builder" element={<BuilderListPage />} />
-      <Route path="/builder/:id" element={<BuilderEditorPage />} />
+            <Route path="/dashboard/modules/builder" element={<BuilderListPage />} />
+      <Route path="/dashboard/modules/builder/:id" element={<BuilderEditorPage />} />
     </Routes></DashboardShell></>
     </Suspense>
   );

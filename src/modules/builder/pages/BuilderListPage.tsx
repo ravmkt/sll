@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPage, listPages } from '../services/pages';
 import type { BuilderPage } from '../types';
@@ -17,7 +17,7 @@ export default function BuilderListPage() {
     if (!title) return;
     try {
       const page = await createPage(title, type);
-      navigate(`/builder/${page.id}`);
+      navigate(`/dashboard/modules/builder/${page.id}`);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -44,7 +44,7 @@ export default function BuilderListPage() {
               <p className="font-medium">{p.title}</p>
               <p className="text-sm text-gray-500">{p.type} · {p.status} · /{p.slug}</p>
             </div>
-            <Link to={`/builder/${p.id}`} className="text-emerald-600 hover:underline">Editar</Link>
+            <Link to={`/dashboard/modules/builder/${p.id}`} className="text-emerald-600 hover:underline">Editar</Link>
           </li>
         ))}
         {pages.length === 0 && <li className="p-4 text-gray-500">Nenhuma página criada.</li>}
