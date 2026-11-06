@@ -68,7 +68,7 @@ async function loadEvents(ids: string[]): Promise<Ev[]> {
         .from('live_events')
         .select('live_id,event_type,metadata,created_at')
         .in('live_id', part)
-        .in('event_type', ['view', 'product_click', 'peak_viewers'])
+        .in('event_type', ['view', 'product_click', 'whatsapp_click', 'peak_viewers'])
         .order('created_at', { ascending: true })
         .range(page * 1000, page * 1000 + 999);
       if (error) throw error;
@@ -110,7 +110,7 @@ function Kpi({ icon, label, value, tone }: { icon: React.ReactNode; label: strin
   );
 }
 
-type SortKey = 'title' | 'date' | 'peak' | 'views' | 'clicks' | 'orders' | 'revenue' | 'ticket';
+type SortKey = 'title' | 'date' | 'peak' | 'views' | 'clicks' | 'buy' | 'wa' | 'orders' | 'revenue' | 'ticket';
 
 const RESULTADOS_TOUR: TourStep[] = [
   { element: '[data-tour="resultados-periodo"]', title: 'Per\u00edodo', description: 'Escolha o per\u00edodo desejado. Todos os n\u00fameros da p\u00e1gina seguem esse filtro.', side: 'bottom' },
@@ -201,8 +201,10 @@ export default function LiveResultadosPage() {
     const days: Record<string, { rev: number; views: number }> = {};
     const day = (iso: string) => { const k = dayKey(iso); return (days[k] = days[k] || { rev: 0, views: 0 }); };
 
+    const waMap: Record<string, number> = {};
     events.forEach((e) => {
       if (!inPeriod(e.created_at)) return;
+      if (e.event_type === 'whatsapp_click') { get(e.live_id).clicks++; waMap[e.live_id] = (waMap[e.live_id] || 0) + 1; }
       if (e.event_type === 'view') { get(e.live_id).views++; day(e.created_at).views++; }
       if (e.event_type === 'product_click') get(e.live_id).clicks++;
     });
@@ -243,14 +245,14 @@ export default function LiveResultadosPage() {
           live: String(l.status) === 'live',
           peak: peakOf(l),
           views: s.views,
-          clicks: s.clicks,
+          clicks: s.clicks, buy: s.clicks - (waMap[l.id] || 0), wa: waMap[l.id] || 0,
           orders: s.orders,
           revenue: s.revenue,
           ticket: s.orders > 0 ? s.revenue / s.orders : 0,
         };
       });
 
-    return { totals, historicPeak, series, rows };
+    return { totals, historicPeak, series, rows, waTotal: Object.values(waMap).reduce((a, b) => a + b, 0) };
   }, [lives, events, orders, fromMs, toMs]);
 
   const candidates = useMemo(() => {
@@ -339,7 +341,9 @@ export default function LiveResultadosPage() {
     { k: 'date', label: 'Data', right: false },
     { k: 'peak', label: 'Pico', right: true },
     { k: 'views', label: T.sViews, right: true },
-    { k: 'clicks', label: 'Cliques', right: true },
+    { k: 'clicks', label: 'Cliques em produtos', right: true },
+    { k: 'buy', label: 'Comprar', right: true },
+    { k: 'wa', label: 'WhatsApp', right: true },
     { k: 'orders', label: 'Pedidos', right: true },
     { k: 'revenue', label: 'Faturamento', right: true },
     { k: 'ticket', label: 'Ticket m\u00e9dio', right: true },
@@ -533,14 +537,14 @@ export default function LiveResultadosPage() {
                   <td className="whitespace-nowrap p-3 text-slate-500">{fmtDateTime(r.date)}</td>
                   <td className="p-3 text-right tabular-nums">{num(r.peak)}</td>
                   <td className="p-3 text-right tabular-nums">{num(r.views)}</td>
-                  <td className="p-3 text-right tabular-nums">{num(r.clicks)}</td>
+                  <td className="p-3 text-right tabular-nums">{num(r.clicks)}</td><td className="p-3 text-right tabular-nums">{num((r as any).buy)}</td><td className="p-3 text-right tabular-nums">{num((r as any).wa)}</td>
                   <td className="p-3 text-right tabular-nums">{num(r.orders)}</td>
                   <td className="p-3 text-right font-semibold tabular-nums text-emerald-700">{brl(r.revenue)}</td>
                   <td className="p-3 text-right tabular-nums">{r.orders > 0 ? brl(r.ticket) : '\u2014'}</td>
                 </tr>
               ))}
               {sorted.length === 0 && (
-                <tr><td colSpan={8} className="p-10 text-center text-slate-400">{loading ? T.loading : T.tableEmpty}</td></tr>
+                <tr><td colSpan={10} className="p-10 text-center text-slate-400">{loading ? T.loading : T.tableEmpty}</td></tr>
               )}
             </tbody>
           </table>
