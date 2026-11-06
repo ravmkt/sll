@@ -14,6 +14,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { BLOCKS, BLOCK_TYPES } from '../registry';
 import { useBuilder } from '../store';
 import { getPage, savePage } from '../services/pages';
+import PublishBar from '../components/PublishBar';
 import type { Block, BlockType } from '../types';
 
 function PaletteItem({ type }: { type: BlockType }) {
@@ -168,6 +169,7 @@ export default function BuilderEditorPage() {
         <Link to="/builder" className="text-sm text-gray-500 hover:underline">← Voltar</Link>
         <input value={title} onChange={(e) => setTitle(e.target.value)} className="flex-1 rounded border px-3 py-1 font-medium" />
         <span className="text-sm text-gray-500">{status}</span>
+        <PublishBar id={id!} title={title} />
         <button onClick={handleSave} className="rounded-md bg-emerald-600 px-4 py-2 text-white">Salvar</button>
       </header>
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
@@ -191,3 +193,4 @@ export default function BuilderEditorPage() {
     </div>
   );
 }
+

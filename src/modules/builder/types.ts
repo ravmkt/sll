@@ -19,5 +19,8 @@ export interface BuilderPage {
   status: 'draft' | 'published';
   content: PageContent;
   updated_at: string;
+  published_version?: number | null;
+  published_html_path?: string | null;
 }
+
 
