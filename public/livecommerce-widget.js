@@ -1281,6 +1281,38 @@ function fetchLiveSpotlight(live) {
     var byId = {};
     prods.forEach(function (p) { byId[p.id] = p; });
     var onAirId = live.spotlight_product_id;
+        /* SLL-WA-3C */
+        function waBuy(p) {
+          if (!document.getElementById('sll-wa3c-css')) {
+            var s = document.createElement('style');
+            s.id = 'sll-wa3c-css';
+            s.textContent = '.sll-ao-wa{width:100%;margin-top:6px;padding:7px 10px;border:0;border-radius:10px;background:#25d366;color:#fff;font:700 11px system-ui,sans-serif;cursor:pointer;align-items:center;justify-content:center;white-space:nowrap;box-sizing:border-box}.sll-ao-btns{display:flex;flex-direction:column;align-items:stretch;flex-shrink:0}';
+            document.head.appendChild(s);
+          }
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'sll-ao-wa';
+          b.textContent = 'Comprar pelo WhatsApp';
+          b.style.display = 'none';
+          try {
+            if (window.SLL && window.SLL.liveAttr) {
+              window.SLL.liveAttr.loadWa(function (cfg) { if (cfg) b.style.display = 'flex'; });
+            }
+          } catch (e0) {}
+          b.onclick = function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (!(window.SLL && window.SLL.liveAttr)) return;
+            window.SLL.liveAttr.loadWa(function (cfg) {
+              if (!cfg) return;
+              var lv = { id: live.id, title: (window.__sllLastLive && window.__sllLastLive.title) || live.title || '' };
+              try { window.SLL.liveAttr.mark(lv, p); } catch (e1) {}
+              try { if (window.__sllTrack) window.__sllTrack(lv.id, 'whatsapp_click', { source: 'buy_wa', product_id: (p && p.id) || null }); } catch (e2) {}
+              window.open(window.SLL.liveAttr.waUrl(cfg, lv, p), '_blank', 'noopener');
+            });
+          };
+          return b;
+        }
         /* SLL-BUY-LINK */
         function buy(p, fallback) {
           /* SLL-BUY-V2 */
@@ -1365,7 +1397,7 @@ function fetchLiveSpotlight(live) {
       var btn = link(buy(p, r.checkout_url), 'Comprar', 'sll-ao-btn'); if (btn && r.product_id) btn.setAttribute('data-pid', r.product_id);
       var rt = el('div', 'sll-ao-rt');
       if (isOn) rt.appendChild(el('small', 'sll-ao-live', 'Ao vivo'));
-      if (btn) rt.appendChild(btn);
+      if (btn) rt.appendChild(btn); rt.appendChild(waBuy(p));
       row.appendChild(rt);
       drawerList.appendChild(row);
       if (isOn) onAir = { p: p, price: price, url: buy(p, r.checkout_url) };
@@ -1385,7 +1417,7 @@ function fetchLiveSpotlight(live) {
         if (osk) { osk.className = (C().stockAnimate === true ? 'sll-blink' : ''); osk.style.fontSize = '13px'; osk.style.position = 'absolute'; osk.style.left = '0'; osk.style.bottom = 'calc(100% + 4px)'; osk.style.margin = '0'; osk.style.width = 'fit-content'; ov.appendChild(osk); }
         ov.appendChild(t);
         var ob = link(onAir.url, 'Comprar', 'sll-ao-btn'); if (ob && onAir.p && onAir.p.id) ob.setAttribute('data-pid', onAir.p.id);
-        if (ob) ov.appendChild(ob);
+        var obw = el('div', 'sll-ao-btns'); if (ob) obw.appendChild(ob); obw.appendChild(waBuy(onAir.p)); ov.appendChild(obw);
         wrap.appendChild(ov);
         ov.classList.add('sll-ov-new');
         setTimeout(function () { ov.classList.remove('sll-ov-new'); }, 600);
