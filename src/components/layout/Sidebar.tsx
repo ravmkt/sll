@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Package, Lightbulb, Crown, LogOut, PanelLeftClose, PanelLeftOpen, Gift, MessageSquarePlus } from 'lucide-react';
+  LayoutDashboard, Package, Lightbulb, Crown, LogOut, PanelLeftClose, PanelLeftOpen, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
 import PushCard from '@/components/layout/PushCard';
@@ -157,34 +157,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
       <div className="px-4 pt-3 pb-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
         {storeId && <PushCard app="hub" storeId={storeId} isExpanded={isExpanded} />}
-        {storeId && (
-          isExpanded ? (
-            <>
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-                <div className="flex items-center gap-2 text-emerald-700">
-                  <Gift size={16} className="shrink-0" />
-                  <p className="text-xs font-bold">Próximo módulo: Stream Sell</p>
-                </div>
-                <Link
-                  to="/dashboard/planos"
-                  className="mt-2 block rounded-lg bg-emerald-600 py-1.5 text-center text-xs font-bold text-white hover:bg-emerald-700"
-                >
-                  Conhecer
-                </Link>
-              </div>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/dashboard/planos"
-                title="Próximo módulo: Stream Sell"
-                className="flex items-center justify-center rounded-lg bg-emerald-50 p-2 text-emerald-700 hover:bg-emerald-100"
-              >
-                <Gift size={18} />
-              </Link>
-            </>
-          )
-        )}
 
         <button
           type="button"

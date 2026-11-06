@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 export type MktKind = 'banner' | 'popup' | 'notice' | 'push';
 export type MktApp = 'hub' | 'vidlytics' | 'live';
-export type NoticeStyle = 'info' | 'warning' | 'urgent';
+export type NoticeStyle = 'info' | 'warning' | 'urgent' | 'success';
 export type MktLocation = 'all' | 'home' | 'vidlytics' | 'live';
 export type MktAudience = 'all' | 'past_due' | 'trial' | 'store';
 export type MktFrequency = 'once' | 'session' | 'daily' | 'always';
@@ -63,6 +63,7 @@ export const NOTICE_STYLE_LABEL: Record<NoticeStyle, string> = {
   info: 'Informativo (azul)',
   warning: 'Manutenção / atenção (amarelo)',
   urgent: 'Urgente (vermelho)',
+  success: 'Positivo / novidade (verde)',
 };
 export const FREQUENCY_LABEL: Record<MktFrequency, string> = {
   session: 'Uma vez por sessão',

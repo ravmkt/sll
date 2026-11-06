@@ -8,6 +8,7 @@ const NOTICE_CLS: Record<string, string> = {
   info: 'bg-blue-600 text-white',
   warning: 'bg-amber-400 text-slate-900',
   urgent: 'bg-red-600 text-white',
+  success: 'bg-emerald-600 text-white',
 };
 
 const today = () => new Date().toISOString().slice(0, 10);

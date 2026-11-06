@@ -11,7 +11,7 @@ export interface ActiveItem {
   cta_url: string | null;
   coupon_code: string | null;
   frequency: 'once' | 'session' | 'daily' | 'always';
-  notice_style?: 'info' | 'warning' | 'urgent' | null;
+  notice_style?: 'info' | 'warning' | 'urgent' | 'success' | null;
   banner_format?: 'horizontal' | 'vertical' | null;
 }
 
