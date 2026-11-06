@@ -82,7 +82,7 @@ export default function Auth() {
           <img loading="eager" decoding="async" 
             src="/assets/sll-hub-logo-quadrado.png" 
             alt="SLL Hub" 
-            className="w-56 h-auto object-contain drop-shadow-sm" 
+            className="mx-auto block h-32 w-32 object-contain" 
           />
         </div>
 
