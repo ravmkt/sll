@@ -37,7 +37,7 @@ export function ModuleSelectorDropdown() {
       isCurrent: true,
     },
     {
-      id: 'live-commerce',
+      id: 'stream-sell',
       name: 'Stream Sell',
       category: 'Transmissões Ao Vivo',
       path: '/dashboard/modules/stream-sell',

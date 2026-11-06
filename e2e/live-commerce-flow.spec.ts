@@ -31,7 +31,7 @@ test.describe('E2E: Módulo Stream Sell no SLL Hub', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Valida se está na rota correta
-    await expect(page).toHaveURL(/.*\/dashboard\/modules\/live-commerce/);
+    await expect(page).toHaveURL(/.*\/dashboard\/modules\/stream-sell/);
 
     // Salva screenshot para validação visual
     await page.screenshot({ path: 'e2e/screenshots/live-commerce-module.png', fullPage: true });
@@ -47,7 +47,7 @@ test.describe('E2E: Módulo Stream Sell no SLL Hub', () => {
 
     // Valida que a rota carregou sem redirecionar para auth
     await expect(page).not.toHaveURL(/.*\/auth/);
-    await expect(page).toHaveURL(new RegExp('/dashboard/modules/live-commerce/admin/' + mockLiveId));
+    await expect(page).toHaveURL(new RegExp('/dashboard/modules/stream-sell/live/' + mockLiveId + '/admin'));
     console.log('✅ Painel administrativo da Live carregado com sucesso!');
   });
 });
