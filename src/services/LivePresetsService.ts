@@ -1,4 +1,4 @@
-import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
+import { supabaseStreamSell as lc } from '@/services/supabaseClients';
 
 export interface PresetMetrics {
   preset_id: string;
@@ -18,7 +18,7 @@ export interface LivePreset {
 }
 
 const COLS = "id,store_id,kind,title,description, active";
-const table = () => (lc as any).schema("live_commerce").from("live_presets");
+const table = () => (lc as any).schema("streamsell").from("live_presets");
 
 export const LivePresetsService = {
   async update(id: string, p: { title: string; description: string }): Promise<LivePreset> {
@@ -41,7 +41,7 @@ export const LivePresetsService = {
 
   async metrics(storeId: string): Promise<Record<string, PresetMetrics>> {
     const { data, error } = await (lc as any)
-      .schema("live_commerce")
+      .schema("streamsell")
       .rpc("live_preset_metrics", { p_store: storeId });
     if (error) throw error;
     const out: Record<string, PresetMetrics> = {};

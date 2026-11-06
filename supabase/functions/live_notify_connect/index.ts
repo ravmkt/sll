@@ -14,7 +14,7 @@ const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const EVO = (Deno.env.get("EVOLUTION_API_URL") ?? "").replace(/\/+$/, "");
 const EVO_KEY = Deno.env.get("EVOLUTION_API_KEY") ?? "";
 const WH_SECRET = Deno.env.get("NOTIFY_WEBHOOK_SECRET") ?? "";
-const SCHEMA = Deno.env.get("NOTIFY_SCHEMA") ?? "live_commerce";
+const SCHEMA = Deno.env.get("NOTIFY_SCHEMA") ?? "streamsell";
 
 async function evo(path: string, method: string, key: string, body?: unknown) {
   const r = await fetch(`${EVO}${path}`, {

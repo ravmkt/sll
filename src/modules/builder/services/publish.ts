@@ -39,6 +39,7 @@ export async function publishPage(id: string, title: string, content: PageConten
     .eq('id', id);
   if (upd.error) throw upd.error;
 
-  const url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  const url = `${window.location.origin}/p/${page.store_id}/${page.slug}`;
   return { url, version };
 }
+

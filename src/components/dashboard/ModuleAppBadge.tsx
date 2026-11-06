@@ -5,7 +5,7 @@ import type { AppModuleKey } from '@/services/moduleAppService';
 export function moduleKeyFromSlug(slug: string): AppModuleKey | null {
   const s = (slug || '').toLowerCase();
   if (s === 'vidlytics') return 'vidlytics';
-  if (s.includes('live')) return 'live_commerce';
+  if (s.includes('live')) return 'stream_sell';
   return null;
 }
 

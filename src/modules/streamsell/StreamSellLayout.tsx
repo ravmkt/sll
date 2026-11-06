@@ -1,4 +1,4 @@
-﻿import { NavLink, Link, Outlet } from "react-router-dom";
+import { NavLink, Link, Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Radio, Tag, Share2, MessageSquare, Palette, Settings,
   ArrowLeft, LogOut, type LucideIcon,
@@ -23,7 +23,7 @@ export default function StreamSellLayout() {
         <div className="px-5 py-6">
           <h1 className="text-xl font-bold tracking-tight text-slate-900">StreamSell</h1>
           <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-            LIVE COMMERCE • SLL HUB
+            STREAM SELL • SLL HUB
           </p>
         </div>
 

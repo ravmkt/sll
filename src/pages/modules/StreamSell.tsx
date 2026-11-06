@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { LiveCommerceDatabaseService } from "@/services/LiveCommerceDatabaseService";
+import { StreamSellDatabaseService } from "@/services/StreamSellDatabaseService";
 import { MODULES } from "@/lib/modules";
 import { useLoja } from "@/contexts/LojaContext";
 import { Button } from "@/components/ui/button";
@@ -67,7 +67,7 @@ interface LiveRow {
   created_at: string;
 }
 
-function LiveCommerceContent() {
+function StreamSellContent() {
   const { store: currentStore, storeId: tenantStoreId } = useLoja();
   const activeStoreId = currentStore?.id || tenantStoreId;
   const navigate = useNavigate();
@@ -102,7 +102,7 @@ function LiveCommerceContent() {
 
   const loadLives = useCallback(async (currentStoreId: string) => {
     try {
-      const data = await LiveCommerceDatabaseService.getLives(currentStoreId);
+      const data = await StreamSellDatabaseService.getLives(currentStoreId);
       const rows = (data || []) as unknown as LiveRow[];
       rows.sort((a, b) => {
         if (!a.scheduled_at && !b.scheduled_at) return 0;
@@ -118,7 +118,7 @@ function LiveCommerceContent() {
 
   const loadAppearance = useCallback(async (currentStoreId: string) => {
     try {
-      const data: any = await LiveCommerceDatabaseService.getLiveSettings(currentStoreId);
+      const data: any = await StreamSellDatabaseService.getLiveSettings(currentStoreId);
       if (data) {
         setAppearanceData({
           divulgacao: data.widget_divulgacao || null,
@@ -137,7 +137,7 @@ function LiveCommerceContent() {
     setPlanName(plan.name || "");
     setAllowsLive(
       Array.isArray(plan.modules)
-        ? plan.modules.includes(MODULES.LIVE_COMMERCE)
+        ? plan.modules.includes(MODULES.STREAM_SELL)
         : (plan.allows_live_commerce ?? plan.allows_live ?? true) !== false
     );
   }, [currentStore]);
@@ -152,7 +152,7 @@ function LiveCommerceContent() {
       setStoreId(activeStoreId);
       try {
         if (!livesLoadedOnce.current) setLoading(true);
-        const prods = await LiveCommerceDatabaseService.getProducts(activeStoreId);
+        const prods = await StreamSellDatabaseService.getProducts(activeStoreId);
         setProducts((prods || []) as any);
         await Promise.all([loadLives(activeStoreId), loadAppearance(activeStoreId)]);
       } catch (err: any) {
@@ -186,7 +186,7 @@ function LiveCommerceContent() {
     if (!storeId) return;
     try {
       setSavingAppearance(true);
-      await LiveCommerceDatabaseService.upsertLiveSettings(storeId, {
+      await StreamSellDatabaseService.upsertLiveSettings(storeId, {
         widget_divulgacao: divulgacao,
         widget_aovivo: aoVivo,
         player_settings: player,
@@ -265,7 +265,7 @@ function LiveCommerceContent() {
 
   const runDelete = async (liveId: string) => {
     try {
-      await LiveCommerceDatabaseService.deleteLive(liveId);
+      await StreamSellDatabaseService.deleteLive(liveId);
       toast.success("Live excluída.");
       if (storeId) await loadLives(storeId);
     } catch (err: any) {
@@ -518,7 +518,7 @@ const TAB_TITLES: Record<LiveTab, string> = {
   treinamento: "Treinamento",
 };
 
-export function LiveCommerce() {
+export function StreamSell() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<LiveTab>((((location.state as { tab?: LiveTab } | null)?.tab) as LiveTab) || "visao-geral");
@@ -559,7 +559,7 @@ export function LiveCommerce() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={{ paddingTop: 'var(--trial-h, 0px)' }}>
-      <TopBar actions={<AppToggle moduleKey="live_commerce" />} />
+      <TopBar actions={<AppToggle moduleKey="stream_sell" />} />
       <div className="flex flex-1">
       {/* SLL-BANNER-ONLY-HOME */}{activeTab === "visao-geral" && <MarketingSideBanner location="live" />}
       <LiveSidebar
@@ -574,7 +574,7 @@ export function LiveCommerce() {
         <div className="flex-1">
           {activeTab === "visao-geral" ? (<LiveVisaoGeral onCreateLive={handleCreateLive} />) : activeTab === "lives" || activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" || activeTab === "resultados" ? (
             <>
-              <div className={activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" || activeTab === "resultados" ? "hidden" : ""}><LiveCommerceContent /></div>
+              <div className={activeTab === "aparencia" || activeTab === "cupons" || activeTab === "audiencia" || activeTab === "resultados" ? "hidden" : ""}><StreamSellContent /></div>
               {activeTab === "aparencia" && <LiveTemplatesPage />}
               <LiveDeleteHost />
               <LiveReactivateHost />
@@ -600,4 +600,4 @@ export function LiveCommerce() {
   );
 }
 
-export default LiveCommerce;
+export default StreamSell;

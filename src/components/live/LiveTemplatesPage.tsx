@@ -8,7 +8,7 @@ import type { LiveAppearanceTemplate } from "@/components/live/LiveAppearanceMod
 import { LiveTemplatesService } from "@/services/LiveTemplatesService";
 import { ConfirmDangerModal } from "@/components/common/AppModal";
 
-// Preenchido pelo LiveCommerce com o id da loja ativa
+// Preenchido pelo StreamSell com o id da loja ativa
 export const liveStore: { id: string | null } = { id: null };
 
 function openEditor(templateId: string) {

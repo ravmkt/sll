@@ -9,7 +9,7 @@ const MAIL_FROM = Deno.env.get("MAIL_FROM") ?? "";
 const APP_URL = (Deno.env.get("APP_URL") ?? "").replace(/\/+$/, "");
 const SECRET = Deno.env.get("INTERNAL_TEST_SECRET") ?? "";
 
-const db = createClient(SB_URL, SB_KEY, { db: { schema: "live_commerce" } });
+const db = createClient(SB_URL, SB_KEY, { db: { schema: "streamsell" } });
 const pub = createClient(SB_URL, SB_KEY);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const rnd = (a: number, b: number) => Math.floor(a + Math.random() * (b - a + 1));

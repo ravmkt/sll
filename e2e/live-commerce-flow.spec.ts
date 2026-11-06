@@ -23,8 +23,8 @@ async function injectAuthenticatedSession(page: any) {
   }, fakeSession);
 }
 
-test.describe('E2E: Módulo Live Commerce no SLL Hub', () => {
-  test('deve acessar o módulo Live Commerce com sessão autenticada', async ({ page }) => {
+test.describe('E2E: Módulo Stream Sell no SLL Hub', () => {
+  test('deve acessar o módulo Stream Sell com sessão autenticada', async ({ page }) => {
     await injectAuthenticatedSession(page);
     await page.goto('/dashboard/modules/live-commerce');
 
@@ -35,7 +35,7 @@ test.describe('E2E: Módulo Live Commerce no SLL Hub', () => {
 
     // Salva screenshot para validação visual
     await page.screenshot({ path: 'e2e/screenshots/live-commerce-module.png', fullPage: true });
-    console.log('✅ Tela do módulo Live Commerce carregada com sucesso!');
+    console.log('✅ Tela do módulo Stream Sell carregada com sucesso!');
   });
 
   test('deve acessar a tela de administração de uma live via ID de rota', async ({ page }) => {

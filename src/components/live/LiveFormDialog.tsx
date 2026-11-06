@@ -4,7 +4,7 @@ import type { LivePreset } from "@/services/LivePresetsService";
 import { ConfirmDangerModal } from "@/components/common/AppModal";
 import { Bookmark, X } from "lucide-react";
 import React, { useState, useEffect, useMemo } from "react";
-import { LiveCommerceDatabaseService } from '@/services/LiveCommerceDatabaseService';
+import { StreamSellDatabaseService } from '@/services/StreamSellDatabaseService';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -141,7 +141,7 @@ export function LiveFormDialog({
   useEffect(() => {
     if (!open || !liveId) { setPriceOverrides({}); setPriceModes({}); return; }
     let cancelled = false;
-    LiveCommerceDatabaseService.getLiveProductPrices(liveId)
+    StreamSellDatabaseService.getLiveProductPrices(liveId)
       .then((m) => { if (!cancelled) { setPriceOverrides(m); setPriceModes({}); } })
       .catch(() => {
         if (!cancelled) {
@@ -227,7 +227,7 @@ export function LiveFormDialog({
     async function loadLive() {
       try {
         setLoadingLive(true);
-        const data = await LiveCommerceDatabaseService.getLiveById(liveId);
+        const data = await StreamSellDatabaseService.getLiveById(liveId);
 
         if (!data) {
           toast.error("Erro ao carregar dados da live.");
@@ -522,7 +522,7 @@ export function LiveFormDialog({
       setUploadingThumb(true);
       const fileExt = file.name.split(".").pop();
       const filePath = `store_${storeId}/live_thumbs/${Date.now()}.${fileExt}`;
-      const publicUrl = await LiveCommerceDatabaseService.uploadFile("videos", filePath, file);
+      const publicUrl = await StreamSellDatabaseService.uploadFile("videos", filePath, file);
       setYoutubeThumbnailUrl(publicUrl);
       toast.success("Thumbnail atualizada!");
     } catch (err: any) {
@@ -545,7 +545,7 @@ export function LiveFormDialog({
       setUploadingPromo(true);
       const fileExt = file.name.split(".").pop();
       const filePath = `store_${storeId}/live_promo/${Date.now()}.${fileExt}`;
-      const publicUrl = await LiveCommerceDatabaseService.uploadFile("videos", filePath, file);
+      const publicUrl = await StreamSellDatabaseService.uploadFile("videos", filePath, file);
       setPromoMediaUrl(publicUrl);
       setPromoMediaType(isVideo ? "video" : "image");
       toast.success("Mídia de divulgação enviada com sucesso!");
@@ -623,22 +623,22 @@ export function LiveFormDialog({
       let savedId: string | null = liveId;
       let previousCouponCodes: string[] = [];
       if (liveId) {
-        const prev: any = await LiveCommerceDatabaseService.getLiveById(liveId);
+        const prev: any = await StreamSellDatabaseService.getLiveById(liveId);
         previousCouponCodes = Array.isArray(prev?.coupons)
           ? prev.coupons.map((c: any) => String(c?.code || ""))
           : [];
-        await LiveCommerceDatabaseService.updateLive(liveId, payload);
+        await StreamSellDatabaseService.updateLive(liveId, payload);
         toast.success("Live atualizada com sucesso!");
       } else {
         payload.is_active = true;
-        const created: any = await LiveCommerceDatabaseService.createLive(payload);
+        const created: any = await StreamSellDatabaseService.createLive(payload);
         savedId = created?.id ?? null;
         toast.success("Live criada com sucesso!");
       }
 
       if (savedId) {
         try {
-          await LiveCommerceDatabaseService.syncLiveItems(
+          await StreamSellDatabaseService.syncLiveItems(
             savedId, storeId, liveProducts, cleanedCoupons, previousCouponCodes, priceMap,
           );
         } catch (syncErr: any) {

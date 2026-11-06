@@ -11,7 +11,7 @@ create or replace function public.admin_benchmarks_metrics(p_days int default 30
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, live_commerce, pg_temp
+set search_path = public, streamsell, pg_temp
 as $$
 declare
   v_from timestamptz := now() - make_interval(days => greatest(coalesce(p_days, 30), 1));
@@ -43,7 +43,7 @@ begin
     select e.store_id,
            count(*) filter (where e.event_type = 'view') as views,
            count(*) filter (where e.event_type = 'product_click') as cliques
-    from live_commerce.live_events e
+    from streamsell.live_events e
     where e.created_at >= v_from and e.store_id is not null
     group by e.store_id
   ), cv as (

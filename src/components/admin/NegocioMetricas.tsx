@@ -10,7 +10,7 @@ const sb: any = supabase;
 const MODULES = [
   { v: '', l: 'Todos os módulos' },
   { v: 'vidlytics', l: 'Vidlytics' },
-  { v: 'live_commerce', l: 'Stream Sell' },
+  { v: 'stream_sell', l: 'Stream Sell' },
 ];
 
 const card = 'rounded-2xl border border-violet-500/50 bg-[#111524] p-4';

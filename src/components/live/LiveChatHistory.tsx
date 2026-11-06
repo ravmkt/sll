@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { MessageSquare, Users } from "lucide-react";
-import { supabaseLiveCommerce } from "@/services/supabaseClients";
+import { supabaseStreamSell } from "@/services/supabaseClients";
 
 type Msg = { id: string; author_name: string | null; message: string; created_at: string; is_from_store: boolean | null; archived: boolean | null };
 type Lead = { id: string; name: string; email: string; whatsapp: string; created_at: string };
@@ -22,7 +22,7 @@ export default function LiveChatHistory({ liveId }: { liveId?: string }) {
     if (!liveId) return;
     let alive = true;
     setLoading(true);
-    const db: any = supabaseLiveCommerce;
+    const db: any = supabaseStreamSell;
     Promise.all([
       db.from("live_chat_messages").select("id,author_name,message,created_at,is_from_store,archived").eq("live_id", liveId).order("created_at", { ascending: true }).limit(2000),
       db.from("live_leads").select("id,name,email,whatsapp,created_at").eq("live_id", liveId).order("created_at", { ascending: false }),

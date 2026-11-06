@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabaseLiveCommerce, supabasePublic } from '@/services/supabaseClients';
+import { supabaseStreamSell, supabasePublic } from '@/services/supabaseClients';
 import { useLiveChat } from '@/hooks/useLiveChat';
 import { useLiveSpotlight } from '@/hooks/useLiveSpotlight';
 import { MODULES } from '@/lib/modules';
@@ -76,7 +76,7 @@ export default function LiveAdmin() {
     const loadLiveData = async () => {
       setLoading(true);
 
-      const { data: live, error } = await supabaseLiveCommerce.from('lives')
+      const { data: live, error } = await supabaseStreamSell.from('lives')
         .select('title, store_id, featured_product_ids, coupons, advantages, live_widget_config, spotlight_product_id, spotlight_coupon_code, spotlight_advantage_idx')
         .eq('id', liveId)
         .maybeSingle();
@@ -98,7 +98,7 @@ export default function LiveAdmin() {
 
             const plan = (storeData as any)?.plan;
             const hasLiveModule = Array.isArray(plan?.modules)
-              ? plan.modules.includes(MODULES.LIVE_COMMERCE)
+              ? plan.modules.includes(MODULES.STREAM_SELL)
               : plan?.allows_live !== false;
 
             if (!hasLiveModule) {
@@ -199,7 +199,7 @@ export default function LiveAdmin() {
         <AlertTriangle className="w-8 h-8 text-rose-500" />
         <p className="text-sm">Live não encontrada ou você não tem acesso a ela.</p>
         <button
-          onClick={() => navigate('/live-commerce')}
+          onClick={() => navigate('/dashboard/modules/stream-sell')}
           className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700"
         >
           Voltar para Stream Sell
@@ -246,7 +246,7 @@ export default function LiveAdmin() {
         </div>
 
         <button
-          onClick={() => navigate('/live-commerce')}
+          onClick={() => navigate('/dashboard/modules/stream-sell')}
           className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition"
         >
           <X className="w-4 h-4" /> Fechar Painel

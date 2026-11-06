@@ -39,8 +39,8 @@ const PERIODOS: { key: Periodo; label: string }[] = [
   { key: 'custom', label: 'Personalizado' },
 ];
 
-const ICONS: Record<string, ElementType> = { vidlytics: Play, live_commerce: Radio, provador: Shirt };
-const ROUTES: Record<string, string> = { vidlytics: '/dashboard/modules/vidlytics', live_commerce: '/dashboard/modules/stream-sell' };
+const ICONS: Record<string, ElementType> = { vidlytics: Play, stream_sell: Radio, provador: Shirt };
+const ROUTES: Record<string, string> = { vidlytics: '/dashboard/modules/vidlytics', stream_sell: '/dashboard/modules/stream-sell' };
 
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -194,7 +194,7 @@ function ModulePreview({ slug }: { slug: string }) {
       </div>
     );
   }
-  if (slug === 'live_commerce') {
+  if (slug === 'stream_sell') {
     return (
       <div className={wrap} aria-hidden="true">
         <div className="relative h-full w-40 rounded-lg bg-white p-1.5 shadow-sm ring-1 ring-slate-200">
@@ -571,7 +571,7 @@ export default function Dashboard() {
             <p className="text-sm text-slate-500">Veja o mês, as datas comemorativas e as lives agendadas da sua loja.</p>
           </div>
           <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-2">
-            <CalendarioMensalHub storeId={storeId} showLives={data.owned.includes('live_commerce')} />
+            <CalendarioMensalHub storeId={storeId} showLives={data.owned.includes('stream_sell')} />
             <CalendarioComercialHub />
           </div>
         </div>

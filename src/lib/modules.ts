@@ -14,8 +14,8 @@ export const MODULES: Record<string, ModuleDefinition> = {
     description: "Vídeos e Stories interativos para e-commerce",
     route: "/dashboard/modules/vidlytics"
   },
-  LIVE_COMMERCE: {
-    id: "live_commerce",
+  STREAM_SELL: {
+    id: "stream_sell",
     name: "Stream Sell",
     description: "Transmissões ao vivo integradas ao seu catálogo",
     route: "/dashboard/modules/stream-sell"

@@ -7252,7 +7252,7 @@ console.log('[VIDLYTICS DEBUG INIT]', { storeId, supabaseUrl, supabaseAnonKey: s
       initInlineWidget(options);
     }
 
-    // 🆕 LIVE COMMERCE — divulgação flutuante independente do modo
+    // 🆕 STREAM SELL — divulgação flutuante independente do modo
     Promise.resolve(null).then(function (live) {
       if (live) renderLiveWidget(live);
     });

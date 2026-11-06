@@ -53,7 +53,7 @@
       var liveId = getCookie("vly_live_id");
       var liveTs = Number(getCookie("vly_live_ts")) || 0;
       var vidTs = Number(getCookie("vly_video_ts")) || 0;
-      if (liveId && (!vid || liveTs > vidTs)) return { module: "live_commerce", source_id: liveId };
+      if (liveId && (!vid || liveTs > vidTs)) return { module: "stream_sell", source_id: liveId };
       if (vid) return { module: "vidlytics", source_id: vid };
       var raw = localStorage.getItem("sll_last_interaction") || localStorage.getItem("vidlytics_last_interaction");
       if (!raw) return { module: "direct", source_id: null };

@@ -1,4 +1,4 @@
-import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
+import { supabaseStreamSell as lc } from '@/services/supabaseClients';
 import type { PlatformAdapter } from './types';
 
 // O site e a fonte de verdade: o evento gravado aqui e entregue ao widget via Realtime.

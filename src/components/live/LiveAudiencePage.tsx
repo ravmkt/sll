@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
 import { BellRing, Download, Mail, MessageCircle, Phone, RefreshCw, Search, UserPlus, Users } from 'lucide-react';
-import { supabaseLiveCommerce as supabase } from '@/services/supabaseClients';
+import { supabaseStreamSell as supabase } from '@/services/supabaseClients';
 import { liveStore } from '@/components/live/LiveTemplatesPage';
 import NotifyTemplatesModal from '@/components/live/NotifyTemplatesModal';
 
@@ -131,7 +131,7 @@ function LiveAudiencePageInner() {
     setLoading(true);
     setError('');
     try {
-      const db = (supabase as any).schema('live_commerce');
+      const db = (supabase as any).schema('streamsell');
       const [l, v] = await Promise.all([
         db.from('live_leads').select('id,live_id,name,email,whatsapp,source,created_at').order('created_at', { ascending: false }).limit(5000),
         db.from('lives').select('id,title'),
@@ -153,7 +153,7 @@ function LiveAudiencePageInner() {
     const storeId = liveStore.id;
     if (!storeId) return;
     try {
-      const db = (supabase as any).schema('live_commerce');
+      const db = (supabase as any).schema('streamsell');
       const { data, error: err } = await db
         .from('live_notify_settings')
         .select('enabled,before_24h,before_1h,on_start,whatsapp_enabled,email_enabled')
@@ -179,7 +179,7 @@ function LiveAudiencePageInner() {
       return;
     }
     try {
-      const db = (supabase as any).schema('live_commerce');
+      const db = (supabase as any).schema('streamsell');
       const { error: err } = await db.from('live_notify_settings').upsert(
         { store_id: storeId, enabled: next.enabled, whatsapp_enabled: next.whatsappEnabled, email_enabled: next.emailEnabled, before_24h: next.before24h, before_1h: next.before1h, on_start: next.onStart, updated_at: new Date().toISOString() },
         { onConflict: 'store_id' }

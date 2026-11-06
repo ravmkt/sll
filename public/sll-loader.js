@@ -44,7 +44,8 @@
 
   var MODULE_TO_SCRIPT = {
     vidlytics: "vidlytics-widget.js",
-    live_commerce: "livecommerce-widget.js",
+    stream_sell: "streamsell-widgets.js",
+  live_commerce: "streamsell-widgets.js",
     gamification: "gamification-widget.js",
     reviews: "reviews-widget.js"
   };

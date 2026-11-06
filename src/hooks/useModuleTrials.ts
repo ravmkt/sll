@@ -12,7 +12,7 @@ export interface ModuleTrial {
 
 const LABELS: Record<string, string> = {
   vidlytics: 'Vidlytics',
-  live_commerce: 'Stream Sell',
+  stream_sell: 'Stream Sell',
   pdv: 'PDV',
 };
 const PAID = ['active', 'lifetime', 'past_due'];

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabaseLiveCommerce } from "@/services/supabaseClients";
+import { supabaseStreamSell } from "@/services/supabaseClients";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface LiveChatMessage {
@@ -22,7 +22,7 @@ export function useLiveChat(liveId: string | null, storeId: string | null) {
     if (!liveId) return;
     setLoading(true);
     try {
-      const { data, error: err } = await supabaseLiveCommerce
+      const { data, error: err } = await supabaseStreamSell
         .from("live_chat_messages")
         .select("*")
         .eq("live_id", liveId)
@@ -42,13 +42,13 @@ export function useLiveChat(liveId: string | null, storeId: string | null) {
 
     if (!liveId) return;
 
-    const channel = supabaseLiveCommerce
+    const channel = supabaseStreamSell
       .channel(`live-chat-${liveId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
-          schema: "live_commerce",
+          schema: "streamsell",
           table: "live_chat_messages",
           filter: `live_id=eq.${liveId}`,
         },
@@ -61,14 +61,14 @@ export function useLiveChat(liveId: string | null, storeId: string | null) {
     channelRef.current = channel;
 
     return () => {
-      supabaseLiveCommerce.removeChannel(channel);
+      supabaseStreamSell.removeChannel(channel);
     };
   }, [liveId, fetchMessages]);
 
   const sendMessage = async (authorName: string, message: string, isFromStore = false) => {
     if (!liveId || !storeId || !message.trim()) return false;
     try {
-      const { error: err } = await supabaseLiveCommerce
+      const { error: err } = await supabaseStreamSell
         .from("live_chat_messages")
         .insert({
           live_id: liveId,

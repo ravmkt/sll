@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mail, MessageCircle } from 'lucide-react';
 import { AppModal } from '@/components/common/AppModal';
-import { supabaseLiveCommerce as supabase } from '@/services/supabaseClients';
+import { supabaseStreamSell as supabase } from '@/services/supabaseClients';
 import { liveStore } from '@/components/live/LiveTemplatesPage';
 
 type Channel = 'whatsapp' | 'email';
@@ -38,7 +38,7 @@ export default function NotifyTemplatesModal({ open, onClose }: { open: boolean;
     const storeId = liveStore.id;
     setMsg('');
     if (!storeId) return;
-    (supabase as any).schema('live_commerce').from('live_notify_templates')
+    (supabase as any).schema('streamsell').from('live_notify_templates')
       .select('channel,kind,subject,body').eq('store_id', storeId)
       .then(({ data }: any) => {
         const m: Record<string, Tpl> = {};
@@ -67,7 +67,7 @@ export default function NotifyTemplatesModal({ open, onClose }: { open: boolean;
     if (!storeId) { setMsg('Loja n\u00e3o identificada. Recarregue a p\u00e1gina.'); return; }
     if (!cur.body.trim()) { setMsg('A mensagem n\u00e3o pode ficar vazia.'); return; }
     setBusy(true);
-    const { error } = await (supabase as any).schema('live_commerce').from('live_notify_templates').upsert(
+    const { error } = await (supabase as any).schema('streamsell').from('live_notify_templates').upsert(
       { store_id: storeId, channel, kind, subject: channel === 'email' ? cur.subject : '', body: cur.body, updated_at: new Date().toISOString() },
       { onConflict: 'store_id,channel,kind' },
     );

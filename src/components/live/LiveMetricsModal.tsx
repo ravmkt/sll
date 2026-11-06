@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { supabaseLiveCommerce, supabasePublic } from "@/services/supabaseClients";
+import { supabaseStreamSell, supabasePublic } from "@/services/supabaseClients";
 import {
   Dialog, DialogContent, DialogTitle
 } from "@/components/ui/dialog";
@@ -70,13 +70,13 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
         setLoading(true);
 
         // 1. Busca eventos reais da live
-        const { data: events } = await supabaseLiveCommerce.from("live_events")
+        const { data: events } = await supabaseStreamSell.from("live_events")
           .select("event_type, metadata, created_at")
           .eq("live_id", live.id)
           .order("created_at", { ascending: true });
 
         // 2. Busca produtos vinculados à live
-        const { data: liveData } = await supabaseLiveCommerce.from("lives")
+        const { data: liveData } = await supabaseStreamSell.from("lives")
           .select("featured_product_ids")
           .eq("id", live.id)
           .maybeSingle();
@@ -178,7 +178,7 @@ export function LiveMetricsModal({ open, onOpenChange, live }: LiveMetricsModalP
   useEffect(() => {
     if (!open || !live) return;
     let alive = true;
-    (supabaseLiveCommerce as any)
+    (supabaseStreamSell as any)
       .from("live_chat_messages")
       .select("id", { count: "exact", head: true })
       .eq("live_id", live.id)

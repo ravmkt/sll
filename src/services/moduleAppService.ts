@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 
 const sb: any = supabase;
 
-export type AppModuleKey = 'vidlytics' | 'live_commerce';
+export type AppModuleKey = 'vidlytics' | 'stream_sell';
 
 export async function getModuleAppEnabled(storeId: string, moduleKey: AppModuleKey): Promise<boolean> {
   const { data, error } = await sb.rpc('get_module_app_enabled', { p_store_id: storeId, p_module: moduleKey });
@@ -12,7 +12,7 @@ export async function getModuleAppEnabled(storeId: string, moduleKey: AppModuleK
 
 export async function setModuleAppEnabled(storeId: string, moduleKey: AppModuleKey, enabled: boolean): Promise<boolean> {
   const patch =
-    moduleKey === 'live_commerce'
+    moduleKey === 'stream_sell'
       ? { live_app_enabled: enabled }
       : enabled
         ? { app_enabled: true, widget_enabled: true }

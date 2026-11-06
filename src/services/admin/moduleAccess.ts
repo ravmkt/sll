@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 
-export type ModuleKey = 'vidlytics' | 'live_commerce';
+export type ModuleKey = 'vidlytics' | 'stream_sell';
 export type ModuleState = 'off' | 'manual' | 'paid' | 'plan';
 
 export interface StoreModule {

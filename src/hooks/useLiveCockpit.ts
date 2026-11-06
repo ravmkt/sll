@@ -36,12 +36,12 @@ export function useLiveCockpit(liveId: string | undefined) {
     };
     const ch = supabase
       .channel(`cockpit-${liveId}`)
-      .on('postgres_changes', { event: '*', schema: 'live_commerce', table: 'live_products', filter: `live_id=eq.${liveId}` }, schedule)
-      .on('postgres_changes', { event: '*', schema: 'live_commerce', table: 'live_coupons', filter: `live_id=eq.${liveId}` }, schedule)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'live_commerce', table: 'lives', filter: `id=eq.${liveId}` }, schedule)
+      .on('postgres_changes', { event: '*', schema: 'streamsell', table: 'live_products', filter: `live_id=eq.${liveId}` }, schedule)
+      .on('postgres_changes', { event: '*', schema: 'streamsell', table: 'live_coupons', filter: `live_id=eq.${liveId}` }, schedule)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'streamsell', table: 'lives', filter: `id=eq.${liveId}` }, schedule)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'live_commerce', table: 'live_events', filter: `live_id=eq.${liveId}` },
+        { event: 'INSERT', schema: 'streamsell', table: 'live_events', filter: `live_id=eq.${liveId}` },
         (p: any) => setEvents((prev) => [p.new as CockpitEvent, ...prev].slice(0, 30)),
       )
       .subscribe();

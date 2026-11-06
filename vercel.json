@@ -1,8 +1,12 @@
 {
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+    "rewrites":  [
+                     {
+                         "source":  "/p/:store/:slug",
+                         "destination":  "/api/page?store=:store\u0026slug=:slug"
+                     },
+                     {
+                         "source":  "/(.*)",
+                         "destination":  "/index.html"
+                     }
+                 ]
 }

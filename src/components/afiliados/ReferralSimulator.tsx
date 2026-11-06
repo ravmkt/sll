@@ -19,7 +19,7 @@ const MODULE_LABELS: Record<string, string> = {
   vidlytics: "Vidlytics",
   live: "Stream Sell",
   livecommerce: "Stream Sell",
-  live_commerce: "Stream Sell",
+  stream_sell: "Stream Sell",
   pdv: "Pdv",
   bundle: "Pacote completo",
 };

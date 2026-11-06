@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Copy, Store } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLoja } from "@/contexts/LojaContext";
@@ -10,7 +10,7 @@ declare const __APP_BUILD_ID__: string;
 
 // Mapa de módulos conhecidos do ecossistema SLL.
 // Ao criar um novo módulo no futuro, basta adicionar a chave aqui.
-const KNOWN_MODULES = ["vidlytics", "live_commerce", "gamification", "reviews"] as const;
+const KNOWN_MODULES = ["vidlytics", "stream_sell", "gamification", "reviews"] as const;
 type ModuleKey = (typeof KNOWN_MODULES)[number];
 
 export const IntegrationPage = () => {

@@ -1,4 +1,4 @@
-import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
+import { supabaseStreamSell as lc } from '@/services/supabaseClients';
 import type { LiveAppearanceTemplate } from '@/components/live/LiveAppearanceModal';
 
 const LEGACY_KEY = 'vidlytics_live_appearance_templates_v2';

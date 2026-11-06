@@ -3,7 +3,7 @@ import PageTour from "@/components/tour/PageTour";
 import type { TourStep } from "@/hooks/usePageTour";
 import { DollarSign, Eye, MessageCircle, MousePointerClick, RefreshCw, ShoppingBag, ShoppingCart, TrendingUp, UserPlus } from 'lucide-react';
 import { Area, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { supabaseLiveCommerce, supabasePublic } from '@/services/supabaseClients';
+import { supabaseStreamSell, supabasePublic } from '@/services/supabaseClients';
 import { liveStore } from '@/components/live/LiveTemplatesPage';
 
 type LiveRow = {
@@ -87,7 +87,7 @@ function chunks<A>(arr: A[], n: number): A[][] {
 }
 
 async function loadEvents(ids: string[]): Promise<Ev[]> {
-  const db: any = supabaseLiveCommerce;
+  const db: any = supabaseStreamSell;
   const out: Ev[] = [];
   for (const part of chunks(ids, 40)) {
     for (let page = 0; page < 10; page++) {
@@ -183,7 +183,7 @@ export default function LiveResultadosPage() {
     setLoading(true);
     setError('');
     try {
-      const db: any = supabaseLiveCommerce;
+      const db: any = supabaseStreamSell;
       let q = db
         .from('lives')
         .select('id,title,status,scheduled_at,started_at,ended_at,created_at,peak_viewers')

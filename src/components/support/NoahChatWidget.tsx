@@ -120,7 +120,7 @@ export default function NoahChatWidget() {
   useEffect(() => {
     if (!open || !storeId) return;
     let alive = true;
-    getModuleAppEnabled(storeId, window.location.pathname.includes('live') ? 'live_commerce' : 'vidlytics')
+    getModuleAppEnabled(storeId, window.location.pathname.includes('live') ? 'stream_sell' : 'vidlytics')
       .then((v) => { if (alive) setAppStatus(v); });
     return () => { alive = false; };
   }, [open, storeId]);

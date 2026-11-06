@@ -10,7 +10,7 @@ import {
   Hourglass, CheckCircle2, DollarSign, Clock, Users, Globe, CalendarClock, ArrowRight,
   Eye, MessageSquare, MousePointerClick, Link2, Check, Share2, Radio, Trophy, Plus, } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
+import { supabaseStreamSell as lc } from '@/services/supabaseClients';
 import { useLoja } from '@/contexts/LojaContext';
 import { getActiveSubscriptions } from '@/services/subscriptions/getStoreSubscriptions';
 import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
@@ -22,7 +22,7 @@ import type { CommercialDateOccurrence } from '@/lib/commercialDates';
 
 const CLUBE_PATH = '/dashboard/afiliados';
 
-// Nomes dos eventos gravados em live_commerce.live_events (ajuste aqui se forem outros)
+// Nomes dos eventos gravados em streamsell.live_events (ajuste aqui se forem outros)
 const EV = {
   view: ['view', 'live_view'],
   click: ['product_click', 'click'],
@@ -255,7 +255,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
     getActiveSubscriptions(storeId)
       .then((subs: any[]) => {
         if (!alive) return;
-        const sub = (subs || []).find((s) => s.module_key === 'live_commerce' || (s.plan?.modules ?? []).includes('live_commerce'));
+        const sub = (subs || []).find((s) => s.module_key === 'stream_sell' || (s.plan?.modules ?? []).includes('stream_sell'));
         if (sub) {
           const map: Record<string, string> = { active: 'Ativo', trialing: 'Período de teste', past_due: 'Em atraso', canceled: 'Cancelado' };
           setCycle({
@@ -276,7 +276,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   const count = (types: string[]) => events.filter((e) => types.includes(e.event_type)).length;
   const sum = (types: string[]) => events.filter((e) => types.includes(e.event_type)).reduce((s, e) => s + money(e), 0);
   const liveIds = new Set(lives.map((l) => l.id));
-  const liveSales = sales.filter((s) => liveIds.has(String(s.source_id || '').replace(/^live_/, '')) || ['live_commerce', 'stream_sell'].includes(String(s.module || '')));
+  const liveSales = sales.filter((s) => liveIds.has(String(s.source_id || '').replace(/^live_/, '')) || ['stream_sell', 'stream_sell'].includes(String(s.module || '')));
   const paidSales = liveSales.filter((s) => s.status === 'paid');
   const pendingSales = liveSales.filter((s) => s.status === 'pending');
   const salesSum = (rows: SaleRow[]) => rows.reduce((t, s) => t + Number(s.total || 0), 0);
@@ -340,7 +340,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
 
   useEffect(() => {
     let alive = true;
-    listScopedTips('live_commerce').then((l) => { if (alive) setLiveTips(l); });
+    listScopedTips('stream_sell').then((l) => { if (alive) setLiveTips(l); });
     return () => { alive = false; };
   }, []);
 
@@ -357,7 +357,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
   useEffect(() => {
     if (!storeId || sectorId === undefined) return;
     let alive = true;
-    getSeasonalTip(sectorId, 'live_commerce').then((s) => { if (alive) setSeasonal(s); });
+    getSeasonalTip(sectorId, 'stream_sell').then((s) => { if (alive) setSeasonal(s); });
     return () => { alive = false; };
   }, [storeId, sectorId]);
 

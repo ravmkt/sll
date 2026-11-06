@@ -17,7 +17,7 @@ const COPY: Record<string, Copy> = {
     cta: 'Ver Planos e Reativar Vídeos',
     skip: 'Não, obrigado. Quero continuar sem vídeos.',
   },
-  live_commerce: {
+  stream_sell: {
     text: 'Esperamos que você tenha gostado da experiência. Para continuar fazendo lives que vendem direto no seu e-commerce, escolha o plano ideal para sua loja.',
     cta: 'Ver Planos e Reativar Lives',
     skip: 'Não, obrigado. Quero continuar sem lives.',

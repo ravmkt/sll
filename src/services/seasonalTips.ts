@@ -7,7 +7,7 @@ const DAY_MS = 86400000;
 const MIN_LEAD_DAYS = 45;
 
 export type SeasonalStage = 'plan' | 'produce' | 'urgent';
-export type SeasonalScope = 'hub' | 'vidlytics' | 'live_commerce';
+export type SeasonalScope = 'hub' | 'vidlytics' | 'stream_sell';
 
 export interface SeasonalTip {
   title: string;

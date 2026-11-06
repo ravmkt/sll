@@ -9,7 +9,7 @@ describe('Validação de Conexão e Schemas Supabase (flivmllysdhaydhogmhg)', ()
     expect(supabaseUrl).toContain('flivmllysdhaydhogmhg');
   });
 
-  it('deve conseguir instanciar consultas nos schemas vidlytics e live_commerce sem erros de tipagem', () => {
+  it('deve conseguir instanciar consultas nos schemas vidlytics e stream_sell sem erros de tipagem', () => {
     // Testa consulta no schema padrão (public)
     const publicQuery = supabase.from('stores').select('id').limit(1);
     expect(publicQuery).toBeDefined();
@@ -18,8 +18,8 @@ describe('Validação de Conexão e Schemas Supabase (flivmllysdhaydhogmhg)', ()
     const vidlyticsQuery = supabase.schema('vidlytics' as any).from('videos').select('id').limit(1);
     expect(vidlyticsQuery).toBeDefined();
 
-    // Testa consulta no schema live_commerce
-    const liveCommerceQuery = supabase.schema('live_commerce' as any).from('lives').select('id').limit(1);
+    // Testa consulta no schema stream_sell
+    const liveCommerceQuery = supabase.schema('streamsell' as any).from('lives').select('id').limit(1);
     expect(liveCommerceQuery).toBeDefined();
   });
 });

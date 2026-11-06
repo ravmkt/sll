@@ -33,7 +33,7 @@ async function recordLiveSale(storeId: string, raw: string) {
     console.log('yampi-order', JSON.stringify({ store: storeId, order: orderId, total, live: liveId || null, fromLive, keys: Object.keys(o).slice(0, 40).join(',') }));
     if (!orderId || !liveId || !fromLive) return;
 
-    const { data: live } = await admin.schema('live_commerce').from('lives').select('id').eq('id', liveId).eq('store_id', storeId).maybeSingle();
+    const { data: live } = await admin.schema('streamsell').from('lives').select('id').eq('id', liveId).eq('store_id', storeId).maybeSingle();
     if (!live) { console.warn('yampi-order: live nao pertence a loja', liveId); return; }
 
     const row = { total, module: 'stream_sell', source_id: liveId, status: 'paid' };

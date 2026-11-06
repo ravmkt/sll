@@ -1,4 +1,4 @@
-import { supabaseLiveCommerce, supabasePublic } from './supabaseClients';
+import { supabaseStreamSell, supabasePublic } from './supabaseClients';
 
 export interface NewLiveInput {
   store_id: string;
@@ -25,12 +25,12 @@ export interface LiveItem {
   [key: string]: any;
 }
 
-export const LiveCommerceDatabaseService = {
+export const StreamSellDatabaseService = {
   // ==========================================
-  // --- LIVES (live_commerce.lives) ---
+  // --- LIVES (streamsell.lives) ---
   // ==========================================
   async getLives(storeId: string) {
-    const { data, error } = await supabaseLiveCommerce
+    const { data, error } = await supabaseStreamSell
       .from('lives')
       .select('*')
       .eq('store_id', storeId)
@@ -40,7 +40,7 @@ export const LiveCommerceDatabaseService = {
   },
 
   async getLiveById(liveId: string) {
-    const { data, error } = await supabaseLiveCommerce
+    const { data, error } = await supabaseStreamSell
       .from('lives')
       .select('*')
       .eq('id', liveId)
@@ -66,7 +66,7 @@ export const LiveCommerceDatabaseService = {
       is_active: payload.is_active !== undefined ? payload.is_active : true,
     };
 
-    const { data, error } = await supabaseLiveCommerce
+    const { data, error } = await supabaseStreamSell
       .from('lives')
       .insert(insertData)
       .select()
@@ -76,7 +76,7 @@ export const LiveCommerceDatabaseService = {
   },
 
   async updateLive(liveId: string, updates: Record<string, any>) {
-    const { data, error } = await supabaseLiveCommerce
+    const { data, error } = await supabaseStreamSell
       .from('lives')
       .update(updates)
       .eq('id', liveId)
@@ -87,7 +87,7 @@ export const LiveCommerceDatabaseService = {
   },
 
   async getLiveProductPrices(liveId: string): Promise<Record<string, string>> {
-    const { data, error } = await supabaseLiveCommerce
+    const { data, error } = await supabaseStreamSell
       .from('live_products')
       .select('product_id, price_override')
       .eq('live_id', liveId);
@@ -108,7 +108,7 @@ export const LiveCommerceDatabaseService = {
     priceOverrides: Record<string, number | null> = {},
   ) {
     // ---- Produtos ----
-    const { data: lp, error: lpErr } = await supabaseLiveCommerce
+    const { data: lp, error: lpErr } = await supabaseStreamSell
       .from('live_products')
       .select('id, product_id, code')
       .eq('live_id', liveId);
@@ -118,7 +118,7 @@ export const LiveCommerceDatabaseService = {
 
     const toDelete = existing.filter((r) => !wanted.includes(r.product_id)).map((r) => r.id);
     if (toDelete.length) {
-      const { error } = await supabaseLiveCommerce.from('live_products').delete().in('id', toDelete);
+      const { error } = await supabaseStreamSell.from('live_products').delete().in('id', toDelete);
       if (error) throw error;
     }
 
@@ -139,7 +139,7 @@ export const LiveCommerceDatabaseService = {
         const patch: Record<string, any> = { display_order: i };
         if (wanted[i] in priceOverrides) patch.price_override = priceOverrides[wanted[i]];
         if (!row.code) patch.code = nextCode();
-        const { error } = await supabaseLiveCommerce.from('live_products').update(patch).eq('id', row.id);
+        const { error } = await supabaseStreamSell.from('live_products').update(patch).eq('id', row.id);
         if (error) throw error;
       } else {
         inserts.push({
@@ -153,7 +153,7 @@ export const LiveCommerceDatabaseService = {
       }
     }
     if (inserts.length) {
-      const { error } = await supabaseLiveCommerce.from('live_products').insert(inserts);
+      const { error } = await supabaseStreamSell.from('live_products').insert(inserts);
       if (error) throw error;
     }
 
@@ -174,12 +174,12 @@ export const LiveCommerceDatabaseService = {
       .map((c) => c.trim().toUpperCase())
       .filter((c) => c && !clean.has(c));
     if (removed.length) {
-      const { error } = await supabaseLiveCommerce
+      const { error } = await supabaseStreamSell
         .from('live_coupons').delete().eq('live_id', liveId).in('code', removed);
       if (error) throw error;
     }
 
-    const { data: lcRows, error: lcErr } = await supabaseLiveCommerce
+    const { data: lcRows, error: lcErr } = await supabaseStreamSell
       .from('live_coupons')
       .select('id, code')
       .eq('live_id', liveId);
@@ -191,7 +191,7 @@ export const LiveCommerceDatabaseService = {
       const row = byCode.get(c.code);
       if (row) {
         if (c.percent !== null) {
-          const { error } = await supabaseLiveCommerce
+          const { error } = await supabaseStreamSell
             .from('live_coupons').update({ discount_percent: c.percent }).eq('id', row.id);
           if (error) throw error;
         }
@@ -206,13 +206,13 @@ export const LiveCommerceDatabaseService = {
       }
     }
     if (couponInserts.length) {
-      const { error } = await supabaseLiveCommerce.from('live_coupons').insert(couponInserts);
+      const { error } = await supabaseStreamSell.from('live_coupons').insert(couponInserts);
       if (error) throw error;
     }
     return true;
   },
   async deleteLive(liveId: string) {
-    const { error } = await supabaseLiveCommerce
+    const { error } = await supabaseStreamSell
       .from('lives')
       .delete()
       .eq('id', liveId);
@@ -221,10 +221,10 @@ export const LiveCommerceDatabaseService = {
   },
 
   // ==========================================
-  // --- EVENTOS E MÉTRICAS (live_commerce.live_events) ---
+  // --- EVENTOS E MÉTRICAS (streamsell.live_events) ---
   // ==========================================
   async getLiveEvents(liveId: string) {
-    const { data, error } = await supabaseLiveCommerce
+    const { data, error } = await supabaseStreamSell
       .from('live_events')
       .select('*')
       .eq('live_id', liveId);
@@ -247,10 +247,10 @@ export const LiveCommerceDatabaseService = {
   },
 
   // ==========================================
-  // --- CONFIGURAÇÕES DE APARÊNCIA (live_commerce.appearance_settings) ---
+  // --- CONFIGURAÇÕES DE APARÊNCIA (streamsell.appearance_settings) ---
   // ==========================================
   async getLiveSettings(storeId: string) {
-    const { data, error } = await supabaseLiveCommerce
+    const { data, error } = await supabaseStreamSell
       .from('appearance_settings')
       .select('widget_divulgacao, widget_aovivo, player_settings')
       .eq('store_id', storeId)
@@ -268,7 +268,7 @@ export const LiveCommerceDatabaseService = {
     widget_aovivo?: any;
     player_settings?: any;
   }) {
-    const { data, error } = await supabaseLiveCommerce
+    const { data, error } = await supabaseStreamSell
       .from('appearance_settings')
       .upsert(
         {

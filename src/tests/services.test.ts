@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
-import { LiveCommerceDatabaseService } from '@/services/LiveCommerceDatabaseService';
+import { StreamSellDatabaseService } from '@/services/StreamSellDatabaseService';
 import { SLLDatabaseService } from '@/services/SLLDatabaseService';
 import * as clients from '@/services/supabaseClients';
 
@@ -38,11 +38,11 @@ describe('Suíte de Testes: Camada de Serviços SLL (Multi-tenant & Schemas)', (
     });
   });
 
-  describe('LiveCommerceDatabaseService (Schema: live_commerce)', () => {
-    it('deve extrair o YouTube Video ID e salvar no schema live_commerce', async () => {
+  describe('StreamSellDatabaseService (Schema: stream_sell)', () => {
+    it('deve extrair o YouTube Video ID e salvar no schema stream_sell', async () => {
       let insertedPayload: any = null;
 
-      vi.spyOn(clients.supabaseLiveCommerce, 'from').mockReturnValue({
+      vi.spyOn(clients.supabaseStreamSell, 'from').mockReturnValue({
         insert: vi.fn().mockImplementation((payload) => {
           insertedPayload = payload;
           return {
@@ -56,7 +56,7 @@ describe('Suíte de Testes: Camada de Serviços SLL (Multi-tenant & Schemas)', (
         })
       } as any);
 
-      const result = await LiveCommerceDatabaseService.createLive({
+      const result = await StreamSellDatabaseService.createLive({
         store_id: mockStoreId,
         title: 'Super Live',
         youtube_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
@@ -71,7 +71,7 @@ describe('Suíte de Testes: Camada de Serviços SLL (Multi-tenant & Schemas)', (
     it('deve extrair corretamente o ID de URLs curtas do YouTube (youtu.be de 11 caracteres)', async () => {
       let insertedPayload: any = null;
 
-      vi.spyOn(clients.supabaseLiveCommerce, 'from').mockReturnValue({
+      vi.spyOn(clients.supabaseStreamSell, 'from').mockReturnValue({
         insert: vi.fn().mockImplementation((payload) => {
           insertedPayload = payload;
           return {
@@ -82,7 +82,7 @@ describe('Suíte de Testes: Camada de Serviços SLL (Multi-tenant & Schemas)', (
         })
       } as any);
 
-      await LiveCommerceDatabaseService.createLive({
+      await StreamSellDatabaseService.createLive({
         store_id: mockStoreId,
         title: 'Live Curta',
         youtube_url: 'https://youtu.be/abcdef12345'

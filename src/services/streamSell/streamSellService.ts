@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
+import { supabaseStreamSell as lc } from '@/services/supabaseClients';
 import { dispatchLiveEvent } from './adapters';
 
 export interface CockpitAdvantage {

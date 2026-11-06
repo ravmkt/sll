@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Copy, ExternalLink, MessageCircle, Radio, Share2, Sparkles, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { AppModal } from "@/components/common/AppModal";
-import { supabaseLiveCommerce as supabase } from '@/services/supabaseClients';
+import { supabaseStreamSell as supabase } from '@/services/supabaseClients';
 
 interface ShareLiveModalProps {
   open: boolean;
@@ -85,7 +85,7 @@ export function ShareLiveModal({ open, onOpenChange, liveTitle, youtubeVideoId, 
     (async () => {
       try {
         const { data } = await (supabase as any)
-          .schema("live_commerce")
+          .schema("streamsell")
           .from("lives")
           .select("id,store_id,scheduled_at,status")
           .eq("youtube_video_id", youtubeVideoId)

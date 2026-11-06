@@ -7,7 +7,7 @@ import { ConfirmDangerModal } from "@/components/common/AppModal";
 
 const MODULE_LABELS: Record<string, string> = {
   vidlytics: "Vidlytics",
-  live_commerce: "Stream Sell",
+  stream_sell: "Stream Sell",
   pdv: "PDV",
   gamification: "Gamifica\u00e7\u00e3o",
   bundle: "Combo Master",

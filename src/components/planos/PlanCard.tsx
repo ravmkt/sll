@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const MODULE_LABELS: Record<string, string> = {
   vidlytics: "Vidlytics",
-  live_commerce: "Stream Sell",
+  stream_sell: "Stream Sell",
   pdv: "PDV",
 };
 
@@ -90,7 +90,7 @@ export function PlanCard({
               <span>{MODULE_LABELS[m] ?? m}</span>
             </div>
           ))}
-          {modules.includes("live_commerce") && (
+          {modules.includes("stream_sell") && (
             <div className="flex items-center gap-2 text-xs font-black text-rose-600 bg-rose-50 border border-rose-200/50 rounded-xl p-2">
               <Radio size={13} className="animate-pulse" />
               Transmissões ao vivo inclusas

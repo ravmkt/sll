@@ -36,7 +36,7 @@ const CheckoutIdRedirect = lazy(() => import('./pages/checkout/CheckoutIdRedirec
 const Metricas = lazy(() => import('./pages/Metricas'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Vidlytics = lazy(() => import('./pages/modules/Vidlytics'));
-const LiveCommerce = lazy(() => import('./pages/modules/LiveCommerce'));
+const StreamSell = lazy(() => import('./pages/modules/StreamSell'));
 const LiveAdminPage = lazy(() => import('./pages/modules/LiveAdminPage'));
 const LiveCockpit = lazy(() => import('./pages/streamsell/LiveCockpit'));
 const StreamDestinos = lazy(() => import('./pages/streamsell/Destinos'));
@@ -157,7 +157,7 @@ function AppRoutes() {
               element={
                 user ? (
                   <SubscriptionGate>
-                    <ModuleGate moduleKey="live_commerce"><StreamSellLayout><LiveCockpit /></StreamSellLayout></ModuleGate>
+                    <ModuleGate moduleKey="stream_sell"><StreamSellLayout><LiveCockpit /></StreamSellLayout></ModuleGate>
                   </SubscriptionGate>
                 ) : (
                   <Navigate to="/auth" replace />
@@ -169,7 +169,7 @@ function AppRoutes() {
               element={
                 user ? (
                   <SubscriptionGate>
-                    <ModuleGate moduleKey="live_commerce"><StreamSellLayout><StreamDestinos /></StreamSellLayout></ModuleGate>
+                    <ModuleGate moduleKey="stream_sell"><StreamSellLayout><StreamDestinos /></StreamSellLayout></ModuleGate>
                   </SubscriptionGate>
                 ) : (
                   <Navigate to="/auth" replace />
@@ -181,7 +181,7 @@ function AppRoutes() {
           element={
             user ? (
               <SubscriptionGate>
-                <ModuleGate moduleKey="live_commerce"><LiveCommerce /></ModuleGate>
+                <ModuleGate moduleKey="stream_sell"><StreamSell /></ModuleGate>
               </SubscriptionGate>
             ) : (
               <Navigate to="/auth" replace />
@@ -193,7 +193,7 @@ function AppRoutes() {
           element={
             user ? (
               <SubscriptionGate>
-                <ModuleGate moduleKey="live_commerce"><LiveAdminPage /></ModuleGate>
+                <ModuleGate moduleKey="stream_sell"><LiveAdminPage /></ModuleGate>
               </SubscriptionGate>
             ) : (
               <Navigate to="/auth" replace />

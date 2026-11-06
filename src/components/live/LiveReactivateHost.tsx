@@ -1,4 +1,4 @@
-import { supabaseLiveCommerce as lc } from '@/services/supabaseClients';
+import { supabaseStreamSell as lc } from '@/services/supabaseClients';
 import { useEffect, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { AppModal } from "@/components/common/AppModal";
@@ -39,7 +39,7 @@ export default function LiveReactivateHost() {
     setError("");
     const iso = when.toISOString();
     const { data, error: err } = await (lc as any)
-      .schema("live_commerce")
+      .schema("streamsell")
       .from("lives")
       .update({ status: "scheduled", scheduled_at: iso, started_at: null, ended_at: null, is_active: true })
       .eq("id", ask.id)
@@ -49,7 +49,7 @@ export default function LiveReactivateHost() {
       setError(err?.message || "Nao foi possivel reativar a live.");
       return;
     }
-    await (lc as any).schema("live_commerce").rpc("archive_live_chat", { p_live_id: ask.id });
+    await (lc as any).schema("streamsell").rpc("archive_live_chat", { p_live_id: ask.id });
     window.dispatchEvent(new CustomEvent("live:reactivated", { detail: { id: ask.id, scheduled_at: iso } }));
     setBusy(false);
     setAsk(null);

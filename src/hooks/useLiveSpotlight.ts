@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabaseLiveCommerce } from "@/services/supabaseClients";
+import { supabaseStreamSell } from "@/services/supabaseClients";
 
 interface SpotlightState {
   productId: string | null;
@@ -20,7 +20,7 @@ export function useLiveSpotlight(liveId: string | null, initial: SpotlightState)
       setSpotlight((prev) => ({ ...prev, productId }));
       if (!liveId) return;
       try {
-        const { error: err } = await supabaseLiveCommerce
+        const { error: err } = await supabaseStreamSell
           .from("lives")
           .update({ spotlight_product_id: productId })
           .eq("id", liveId);
@@ -37,7 +37,7 @@ export function useLiveSpotlight(liveId: string | null, initial: SpotlightState)
       setSpotlight((prev) => ({ ...prev, couponCode }));
       if (!liveId) return;
       try {
-        const { error: err } = await supabaseLiveCommerce
+        const { error: err } = await supabaseStreamSell
           .from("lives")
           .update({ spotlight_coupon_code: couponCode })
           .eq("id", liveId);
@@ -54,7 +54,7 @@ export function useLiveSpotlight(liveId: string | null, initial: SpotlightState)
       setSpotlight((prev) => ({ ...prev, advantageIdx }));
       if (!liveId) return;
       try {
-        const { error: err } = await supabaseLiveCommerce
+        const { error: err } = await supabaseStreamSell
           .from("lives")
           .update({ spotlight_advantage_idx: advantageIdx })
           .eq("id", liveId);
@@ -70,7 +70,7 @@ export function useLiveSpotlight(liveId: string | null, initial: SpotlightState)
     setSpotlight({ productId: null, couponCode: null, advantageIdx: null });
     if (!liveId) return;
     try {
-      const { error: err } = await supabaseLiveCommerce
+      const { error: err } = await supabaseStreamSell
         .from("lives")
         .update({
           spotlight_product_id: null,

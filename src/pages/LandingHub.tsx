@@ -402,7 +402,7 @@ const FORMATS = [
   { id: "carrossel", title: "Carrossel de Vídeos", tag: "Home e categorias", desc: "Grid horizontal dinâmico para a página inicial ou páginas de categoria, com preço e botão de compra.", Mock: CarouselMock },
   { id: "bubble", title: "Widget Flutuante", tag: "Mobile e desktop", desc: "Miniatura expansível no canto da tela que acompanha o visitante e leva direto ao produto.", Mock: FloatingMock },
   { id: "grid", title: "Grade de Vídeos", tag: "Página de produto", desc: "Galeria visual que mostra caimento e uso real do produto, reduzindo dúvidas e devoluções.", Mock: GridMock },
-  { id: "live", title: "Player de Live Commerce", tag: "Stream Sell", desc: "Interface completa de transmissão com chat e carrossel de produtos sincronizados.", Mock: LiveMock },
+  { id: "live", title: "Player de Stream Sell", tag: "Stream Sell", desc: "Interface completa de transmissão com chat e carrossel de produtos sincronizados.", Mock: LiveMock },
 ];
 
 function Formats() {

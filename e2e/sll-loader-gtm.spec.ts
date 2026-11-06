@@ -16,7 +16,7 @@ test.describe('E2E: SLL Loader & GTM Module Injection', () => {
     await page.waitForTimeout(600);
 
     const vidlyticsScript = page.locator('#sll-script-vidlytics-widget');
-    const liveCommerceScript = page.locator('#sll-script-livecommerce-widget');
+    const liveCommerceScript = page.locator('#sll-script-streamsell-widgets');
 
     await expect(vidlyticsScript).toHaveCount(0);
     await expect(liveCommerceScript).toHaveCount(0);
@@ -57,12 +57,12 @@ test.describe('E2E: SLL Loader & GTM Module Injection', () => {
     await expect(vidlyticsScript).toHaveCount(1, { timeout: 4000 });
     await expect(vidlyticsScript).toHaveAttribute('data-store-id', storeIdMock);
 
-    // Live Commerce NÃO deve ser injetado
-    const liveCommerceScript = page.locator('#sll-script-livecommerce-widget');
+    // Stream Sell NÃO deve ser injetado
+    const liveCommerceScript = page.locator('#sll-script-streamsell-widgets');
     await expect(liveCommerceScript).toHaveCount(0);
   });
 
-  test('deve injetar apenas livecommerce-widget.js quando a loja tiver assinatura de Live Commerce', async ({ page }) => {
+  test('deve injetar apenas streamsell-widgets.js quando a loja tiver assinatura de Stream Sell', async ({ page }) => {
     await page.route('**/rest/v1/subscriptions*', async (route) => {
       await route.fulfill({
         status: 200,
@@ -74,8 +74,8 @@ test.describe('E2E: SLL Loader & GTM Module Injection', () => {
             status: 'active',
             plans: {
               id: 'plan-2',
-              name: 'Live Commerce Pro',
-              module_slug: 'live_commerce'
+              name: 'Stream Sell Pro',
+              module_slug: 'stream_sell'
             }
           }
         ])
@@ -91,7 +91,7 @@ test.describe('E2E: SLL Loader & GTM Module Injection', () => {
       document.head.appendChild(s);
     }, storeIdMock);
 
-    const liveCommerceScript = page.locator('#sll-script-livecommerce-widget');
+    const liveCommerceScript = page.locator('#sll-script-streamsell-widgets');
     await expect(liveCommerceScript).toHaveCount(1, { timeout: 4000 });
     await expect(liveCommerceScript).toHaveAttribute('data-store-id', storeIdMock);
 
@@ -129,7 +129,7 @@ test.describe('E2E: SLL Loader & GTM Module Injection', () => {
     }, storeIdMock);
 
     const vidlyticsScript = page.locator('#sll-script-vidlytics-widget');
-    const liveCommerceScript = page.locator('#sll-script-livecommerce-widget');
+    const liveCommerceScript = page.locator('#sll-script-streamsell-widgets');
 
     await expect(vidlyticsScript).toHaveCount(1, { timeout: 4000 });
     await expect(liveCommerceScript).toHaveCount(1, { timeout: 4000 });

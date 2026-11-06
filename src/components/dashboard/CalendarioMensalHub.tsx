@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { supabaseLiveCommerce } from '@/services/supabaseClients';
+import { supabaseStreamSell } from '@/services/supabaseClients';
 import { nextOccurrence, type RuleDate } from '@/lib/commercialOccurrence';
 import { useStoreSector } from '@/hooks/useStoreSector';
 
@@ -58,7 +58,7 @@ export default function CalendarioMensalHub({ storeId, showLives }: { storeId: s
       try {
         const start = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
         const end = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
-        const { data, error } = await (supabaseLiveCommerce as any)
+        const { data, error } = await (supabaseStreamSell as any)
           .from('lives')
           .select('id,title,status,scheduled_at')
           .eq('store_id', storeId)

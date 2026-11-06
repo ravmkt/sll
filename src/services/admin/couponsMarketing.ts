@@ -36,7 +36,7 @@ export type CouponDraft = {
 
 export type CouponPlanOption = { id: string; name: string; group: string; groupLabel: string };
 
-const MODULE_LABEL: Record<string, string> = { vidlytics: 'Vidlytics', live_commerce: 'Stream Sell' };
+const MODULE_LABEL: Record<string, string> = { vidlytics: 'Vidlytics', stream_sell: 'Stream Sell' };
 
 export const emptyCouponDraft = (): CouponDraft => ({
   code: '', discount_type: 'percentage', value: '10', max_uses: '', starts_at: null, expires_at: null,
