@@ -4,6 +4,13 @@ import { fetchPush, track, type ActiveItem } from '@/services/marketingPublic';
 
 type App = 'hub' | 'vidlytics' | 'live';
 
+const STYLE_COLORS: Record<string, string> = {
+  info: '#0094eb',
+  warning: '#f59e0b',
+  urgent: '#e11d48',
+  success: '#16a34a',
+};
+
 const safe = {
   get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } },
   set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* ignora */ } },
@@ -11,7 +18,8 @@ const safe = {
 
 export default function PushCard({ app, storeId, isExpanded }: { app: App; storeId: string; isExpanded: boolean }) {
   const [item, setItem] = useState<ActiveItem | null>(null);
-  const color = app === 'live' ? '#e11d48' : '#0094eb';
+  const appColor = app === 'live' ? '#e11d48' : '#0094eb';
+  const color = (item?.notice_style && STYLE_COLORS[item.notice_style]) || appColor;
 
   useEffect(() => {
     let alive = true;
