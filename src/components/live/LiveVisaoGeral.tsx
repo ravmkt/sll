@@ -323,7 +323,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
     const stClip = Math.max(new Date(l.started_at).getTime(), fromMs);
     return s + Math.max(0, Math.min(end, toMs) - stClip) / 3600000;
   }, 0);
-  const peak = lives.reduce((m, l) => Math.max(m, l.peak_viewers || 0), 0);
+  const peak = periodLives.reduce((m, l) => Math.max(m, l.peak_viewers || 0), 0); /* SLL-PICO-PERIODO-VG */
   const connected = dests.filter((d) => d.status === 'connected').map((d) => d.platform);
   const destLabel = ['Site', ...connected.map((p) => p.charAt(0).toUpperCase() + p.slice(1))].join(', ');
 
@@ -419,7 +419,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
           <h3 className={`${sectionTitle} mb-3 px-1`}>Consumo</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Meter label={"Tempo de transmiss\u00e3o"} value={fmtTempo(hours)} of="" pct={null} icon={Clock} tip={"Tempo total transmitido ao vivo no per\u00edodo selecionado."} foot={periodo === 'today' ? 'Hoje' : periodo === '7' ? '\u00daltimos 7 dias' : periodo === '30' ? '\u00daltimos 30 dias' : String(cs).slice(0, 10).split('-').reverse().join('/') + ' a ' + String(ce).slice(0, 10).split('-').reverse().join('/')} />
-            <Meter label="Pico de espectadores" value={fmtInt(peak)} of="de —" pct={null} icon={Users} tip={"Maior n\u00famero de espectadores simult\u00e2neos j\u00e1 registrado em uma live."} foot="Ao vivo" />
+            <Meter label="Pico de espectadores" value={fmtInt(peak)} of="de —" pct={null} icon={Users} tip={"Maior n\u00famero de espectadores simult\u00e2neos em uma live do per\u00edodo selecionado."} foot={"No per\u00edodo"} />
             <Meter label="Destinos ativos" value={String(1 + connected.length)} of="conectado(s)" pct={null} icon={Globe} tip={"Canais onde suas lives s\u00e3o exibidas: seu site e as plataformas conectadas."} foot={destLabel} />
             <Tip text={"Situa\u00e7\u00e3o da assinatura do m\u00f3dulo e a data da pr\u00f3xima renova\u00e7\u00e3o."}><div className={card}>
               <div className="flex items-center justify-between">
