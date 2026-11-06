@@ -1,3 +1,5 @@
+import VidlyticsLanding from '@/pages/landing/VidlyticsLanding';
+import StreamSellLanding from '@/pages/landing/StreamSellLanding';
 import BuilderListPage from '@/modules/builder/pages/BuilderListPage';
 import BuilderEditorPage from '@/modules/builder/pages/BuilderEditorPage';
 import RadarRoutes from '@/pages/radar/RadarRoutes';
@@ -145,7 +147,7 @@ function AppRoutes() {
             )
           }
         />
-        <Route path="/stream-sell" element={<Navigate to="/dashboard/modules/stream-sell" replace />} />
+        <Route path="/stream-sell" element={<StreamSellLanding />} />
         <Route path="/stream-sell/destinos" element={<Navigate to="/dashboard/modules/stream-sell/destinos" replace />} />
         <Route path="/stream-sell/live/:id/admin" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/admin" />} />
         <Route path="/stream-sell/live/:id/estudio" element={<LegacyLiveRedirect to="/dashboard/modules/stream-sell/live/:id/cockpit" />} />
@@ -279,7 +281,7 @@ function AppRoutes() {
           }
         />
 
-        <Route path="/vidlytics" element={<Navigate to="/" replace />} />
+        <Route path="/vidlytics" element={<VidlyticsLanding />} />
               <Route path="/dashboard/dicas/vidlytics" element={<Navigate to="/dashboard/insights-noah" replace />} />
         <Route
           path="/dashboard/insights-noah"
