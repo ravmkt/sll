@@ -1,4 +1,3 @@
-import VidlyticsLanding from '@/pages/landing/VidlyticsLanding';
 import StreamSellLanding from '@/pages/landing/StreamSellLanding';
 import BuilderListPage from '@/modules/builder/pages/BuilderListPage';
 import BuilderEditorPage from '@/modules/builder/pages/BuilderEditorPage';
