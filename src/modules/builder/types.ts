@@ -1,4 +1,4 @@
-﻿export type BlockType = 'hero' | 'text' | 'image' | 'button';
+﻿export type BlockType = 'hero' | 'text' | 'image' | 'button' | 'video' | 'testimonials' | 'faq' | 'timer' | 'form' | 'product';
 
 export interface Block {
   id: string;
@@ -20,3 +20,4 @@ export interface BuilderPage {
   content: PageContent;
   updated_at: string;
 }
+

@@ -1,20 +1,9 @@
-﻿import type { ReactElement } from 'react';
-import type { BlockType } from './types';
+﻿import type { BlockType } from './types';
+import { EXTRA_BLOCKS, type BlockDef } from './registry-extra';
 
-interface Field {
-  key: string;
-  label: string;
-  multiline?: boolean;
-}
 
-interface BlockDef {
-  label: string;
-  defaults: Record<string, string>;
-  fields: Field[];
-  render: (p: Record<string, string>) => ReactElement;
-}
-
-export const BLOCKS: Record<BlockType, BlockDef> = {
+export const BLOCKS = {
+  ...(EXTRA_BLOCKS as Record<Exclude<BlockType, 'hero' | 'text' | 'image' | 'button'>, BlockDef>),
   hero: {
     label: 'Hero',
     defaults: { title: 'Título principal', subtitle: 'Subtítulo da sua oferta', cta: 'Comprar agora', bg: '#111827' },
@@ -63,6 +52,7 @@ export const BLOCKS: Record<BlockType, BlockDef> = {
       </section>
     ),
   },
-};
+} as Record<BlockType, BlockDef>;
 
 export const BLOCK_TYPES = Object.keys(BLOCKS) as BlockType[];
+
