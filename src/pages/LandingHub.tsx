@@ -1,3 +1,4 @@
+import TrialDays from '@/components/TrialDays';
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { buildTabs, featuredId, fetchLandingData, planFeatures, EMPTY_LANDING, type LandingData } from "@/lib/landingConfig";
@@ -191,7 +192,7 @@ function Hero() {
             Compatível com qualquer plataforma via script leve ou Google Tag Manager.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Cta to="/auth?mode=signup" event="hero_trial" className="text-base">Testar 7 dias grátis <ArrowRight className="h-4 w-4" /></Cta>
+            <Cta to="/auth?mode=signup" event="hero_trial" className="text-base">Testar <TrialDays /> dias grátis <ArrowRight className="h-4 w-4" /></Cta>
             <button
               onClick={() => { track("click_cta", { cta: "hero_formats" }); scrollToId("formatos"); }}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-base font-bold text-slate-700 transition hover:bg-slate-100"
@@ -525,7 +526,7 @@ function Pricing() {
 
   return (
     <Section id="precos">
-      <SectionTitle eyebrow="Preços" title="Planos simples, sem surpresa" sub="Teste 7 dias grátis e cancele quando quiser." />
+      <SectionTitle eyebrow="Preços" title="Planos simples, sem surpresa" sub={<>Teste <TrialDays /> dias grátis e cancele quando quiser.</>} />
       {status === "loading" && (
         <div className="grid gap-6 md:grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="h-96 animate-pulse rounded-3xl bg-slate-200" />)}</div>
       )}
@@ -586,7 +587,7 @@ function Pricing() {
           </div>
         </>
       )}
-      <p className="mt-8 text-center text-xs text-slate-500">7 dias grátis · Sem fidelidade · Cancele quando quiser</p>
+      <p className="mt-8 text-center text-xs text-slate-500"><TrialDays /> dias grátis · Sem fidelidade · Cancele quando quiser</p>
     </Section>
   );
 }
@@ -596,7 +597,7 @@ const FAQS = [
   { q: "Deixa a loja lenta?", a: "Não. O script carrega de forma assíncrona e os vídeos são entregues por CDN global, sem bloquear a renderização da página." },
   { q: "Preciso de programador?", a: "Não. A ativação leva menos de 5 minutos: você cola o código no GTM ou no tema e publica os vídeos pelo painel." },
   { q: "Posso contratar só um módulo?", a: "Sim. Você pode assinar o Vidlytics, o Stream Sell ou o Combo SLL Hub, e mudar de plano quando quiser." },
-  { q: "Como funciona o teste grátis?", a: "São 7 dias para testar sem cartão de crédito. Se gostar, escolha o plano; se não, é só não continuar." },
+  { q: "Como funciona o teste grátis?", a: <>São <TrialDays /> dias para testar sem cartão de crédito. Se gostar, escolha o plano; se não, é só não continuar.</> },
   { q: "Posso cancelar quando quiser?", a: "Sim. Não há fidelidade nem multa." },
 ];
 
@@ -630,8 +631,8 @@ function FinalCta() {
     <section className="px-4 py-16">
       <div className="mx-auto max-w-4xl rounded-3xl bg-gradient-to-br from-sky-600 to-blue-800 p-10 text-center text-white shadow-2xl">
         <h2 className="text-3xl font-extrabold md:text-4xl">Pronto para vender mais com vídeo?</h2>
-        <p className="mx-auto mt-3 max-w-xl text-sky-100">Instale em 5 minutos e teste 7 dias grátis, sem cartão de crédito.</p>
-        <Cta to="/auth?mode=signup" event="final_cta" className="mt-7 !px-8 text-base">Testar 7 dias grátis <ArrowRight className="h-4 w-4" /></Cta>
+        <p className="mx-auto mt-3 max-w-xl text-sky-100">Instale em 5 minutos e teste <TrialDays /> dias grátis, sem cartão de crédito.</p>
+        <Cta to="/auth?mode=signup" event="final_cta" className="mt-7 !px-8 text-base">Testar <TrialDays /> dias grátis <ArrowRight className="h-4 w-4" /></Cta>
       </div>
     </section>
   );
@@ -684,7 +685,7 @@ function StickyMobileCta() {
   if (!show) return null;
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/90 p-3 backdrop-blur md:hidden">
-      <Cta to="/auth?mode=signup" event="sticky_mobile" className="w-full">Testar 7 dias grátis</Cta>
+      <Cta to="/auth?mode=signup" event="sticky_mobile" className="w-full">Testar <TrialDays /> dias grátis</Cta>
     </div>
   );
 }

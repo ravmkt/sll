@@ -20,7 +20,7 @@ const json = (b: unknown, s = 200) =>
 const esc = (v: string) =>
   v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-function html(name: string) {
+function html(name: string, days: number) {
   const first = esc((name || "").trim().split(" ")[0] || "tudo bem");
   const logo = `${APP_URL}/assets/sll-logotipo-b.png`;
   const link = `${APP_URL}/dashboard`;
@@ -36,7 +36,7 @@ function html(name: string) {
 <tr><td style="padding:16px 40px 8px;">
 <h1 style="margin:0 0 12px;font-size:24px;line-height:1.3;color:#0f172a;">Bem-vindo(a), ${first}! 🎉</h1>
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#475569;">
-Sua conta foi criada e o seu teste grátis de <strong>7 dias</strong> do <strong>Vidlytics</strong> já está liberado no <strong>SLL Hub</strong>.
+Sua conta foi criada e o seu teste grátis de <strong>${days} ${days === 1 ? "dia" : "dias"}</strong> do <strong>Vidlytics</strong> já está liberado no <strong>SLL Hub</strong>.
 </p>
 <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#475569;">
 Acesse o painel, suba seus primeiros vídeos, vincule os produtos e cole o código na sua loja. Leva cerca de 2 minutos.
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
   }
   if (!to) { await revert(); return json({ error: "SEM_EMAIL" }, 400); }
 
-  const res = await fetch("https://api.resend.com/emails", {
+  const { data: tdRaw } = await admin.rpc("get_trial_days"); const days = Number(tdRaw) > 0 ? Number(tdRaw) : 14; const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       to: [to],
       ...(MAIL_ADMIN_COPY ? { bcc: [MAIL_ADMIN_COPY] } : {}),
       subject: "Bem-vindo(a) ao SLL Hub!",
-      html: html(claimed.contact_name ?? ""),
+      html: html(claimed.contact_name ?? "", days),
     }),
   });
 
