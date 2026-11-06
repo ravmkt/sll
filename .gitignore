@@ -50,3 +50,5 @@ nps-master.ps1
 public/*.bak*
 
 supabase/.local-cron-*.sql
+
+test-results/
