@@ -25,6 +25,7 @@ import { GlobalTrialBanner } from '@/components/layout/GlobalTrialBanner';
 import TrialExpiredModal from '@/components/layout/TrialExpiredModal';
 import AdminMasterPage from '@/pages/admin/AdminMasterPage';
 import DashboardShell from '@/components/layout/DashboardShell';
+const LandingHub = lazy(() => import("@/pages/LandingHub"));
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -90,7 +91,7 @@ function AppRoutes() {
         <Route path="/termos" element={<TermsPage />} />
             <Route path="/exclusao-de-dados" element={<ExclusaoDadosPage />} />
             <Route path="/term" element={<Navigate to="/termos" replace />} />
-        <Route path="/" element={user ? <AuthRedirect /> : <VidlyticsLanding />} />
+        <Route path="/" element={user ? <AuthRedirect /> : <Suspense fallback={null}><LandingHub /></Suspense>} />
         <Route path="/dashboard/products" element={<Navigate to="/dashboard/produtos" replace />} />
         <Route path="/auth" element={user ? <AuthRedirect /> : <Login />} />
         <Route path="/auth/instagram/callback" element={<InstagramCallback />} />
