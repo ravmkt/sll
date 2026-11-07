@@ -58,17 +58,31 @@ export default function DomainSettings({ storeId }: { storeId: string }) {
         <p className="text-sm text-muted-foreground">Publique suas páginas no seu próprio domínio ou subdomínio.</p>
       </div>
 
-      <form
-        className="flex gap-2"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          await run({ action: "add", domain: input });
-          setInput("");
-        }}
-      >
-        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="promo.minhaloja.com.br" />
-        <Button type="submit" disabled={busy || !input.trim()}>Adicionar</Button>
-      </form>
+      <div className="flex gap-2">
+        <Input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={async (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (!input.trim() || busy) return;
+              await run({ action: "add", domain: input });
+              setInput("");
+            }
+          }}
+          placeholder="promo.minhaloja.com.br"
+        />
+        <Button
+          type="button"
+          disabled={busy || !input.trim()}
+          onClick={async () => {
+            await run({ action: "add", domain: input });
+            setInput("");
+          }}
+        >
+          Adicionar
+        </Button>
+      </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -135,3 +149,4 @@ export default function DomainSettings({ storeId }: { storeId: string }) {
     </div>
   );
 }
+
