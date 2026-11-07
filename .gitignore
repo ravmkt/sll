@@ -12,3 +12,8 @@ _bak
 *.bak-*
 diag-*.txt
 diag-*.sql
+*.sql.bak
+vidlytics_legado_backup.sql
+test-results
+playwright-report
+*.webm
