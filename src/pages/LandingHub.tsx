@@ -250,12 +250,12 @@ function Modules() {
   const cards = data.config.cards ?? {};
   const all = [
     {
-      key: "vidlytics" as const, logo: "/assets/vidlytics-logo-wide.png", name: "Vidlytics", to: "/vidlytics", icon: Play,
+      key: "vidlytics" as const, logo: "/assets/vidlytics-logo-wide-transp.png", name: "Vidlytics", to: "/vidlytics", icon: Play,
       text: "Stories shoppable na home, vídeos flutuantes em páginas de produto e métricas de retenção segundo a segundo.",
       bullets: ["Stories, carrossel, grade e widget flutuante", "Analytics: plays, retenção, CTR e conversão"],
     },
     {
-      key: "stream_sell" as const, logo: "/assets/stream-sell-logo-wide.png", name: "Stream Sell", to: "/stream-sell", icon: Radio,
+      key: "stream_sell" as const, logo: "/assets/stream-sell-logo-wide-transp.png", name: "Stream Sell", to: "/stream-sell", icon: Radio,
       text: "Transmissões ao vivo com catálogo integrado, chat moderado e compra em 1 clique durante a live.",
       bullets: ["Produtos vinculados e sincronizados na live", "Chat em tempo real e checkout na transmissão"],
     },
