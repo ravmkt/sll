@@ -268,7 +268,7 @@ function Modules() {
         {mods.map((m) => (
           <article key={m.name} className="group rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
             <div className="flex items-center justify-between">
-              <img src={m.logo} alt={m.name} loading="lazy" className="h-9 w-auto" />
+              <img src={m.logo} alt={m.name} loading="lazy" className="-ml-10 h-14 w-auto" />
               <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sky-50 text-sky-600"><m.icon className="h-5 w-5" /></span>
             </div>
             <p className="mt-6 text-slate-700">{m.text}</p>
