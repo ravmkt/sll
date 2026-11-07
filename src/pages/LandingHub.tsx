@@ -94,7 +94,7 @@ function Header() {
   return (
     <header className={`fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl transition ${scrolled ? "border-slate-200 bg-white/80 shadow-sm" : "border-transparent bg-white/50"}`}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link to="/" aria-label="SLL Hub"><img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="h-8 w-auto" width={140} height={32} /></Link>
+        <Link to="/" aria-label="SLL Hub"><img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="-ml-4 h-11 w-auto" width={196} height={44} /></Link>
         <nav className="hidden items-center gap-7 md:flex">
           {NAV.map((n) => (
             <button key={n.id} onClick={() => go(n.id)} className="text-sm font-medium text-slate-600 transition hover:text-sky-600">{n.label}</button>
@@ -181,14 +181,13 @@ function Hero() {
       <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-bold text-emerald-700">
-            🟢 Plataforma de Vídeo Commerce para E-commerce
+            🟢 Ecossistema de crescimento para e-commerce
           </span>
           <h1 className="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-6xl">
-            Transforme os visitantes da sua loja em compradores usando o poder do{" "}
-            <span className="bg-gradient-to-r from-sky-600 to-blue-700 bg-clip-text text-transparent">vídeo.</span>
+            Tudo para sua loja vender mais com <span className="bg-gradient-to-r from-sky-600 to-blue-700 bg-clip-text text-transparent">vídeo e live</span>
           </h1>
           <p className="mt-5 max-w-xl text-lg text-slate-600">
-            Vídeos shoppable nos produtos, carrossel de stories e lives com compra direta na tela.
+            Stories, vídeos e lives com compra direta na tela, tudo em um único painel.
             Compatível com qualquer plataforma via script leve ou Google Tag Manager.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
