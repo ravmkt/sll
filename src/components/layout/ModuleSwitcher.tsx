@@ -44,7 +44,7 @@ export function ModuleSwitcher() {
     let alive = true;
     (supabase as any).rpc('get_store_active_modules', { p_store_id: storeId }).then(({ data, error }: any) => {
       if (error || !Array.isArray(data)) return;
-      const list = data as string[];
+      const list = (data as string[]).flatMap((k) => (k === 'live_commerce' ? ['live_commerce', 'stream_sell'] : [k]));
       cache.set(storeId, list);
       if (alive) setOwned(list);
     });
