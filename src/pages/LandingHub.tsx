@@ -94,7 +94,7 @@ function Header() {
   return (
     <header className={`fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl transition ${scrolled ? "border-slate-200 bg-white/80 shadow-sm" : "border-transparent bg-white/50"}`}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link to="/" aria-label="SLL Hub"><img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="-ml-4 h-11 w-auto" width={196} height={44} /></Link>
+        <Link to="/" aria-label="SLL Hub"><img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="-ml-5 h-12 w-auto" width={214} height={48} /></Link>
         <nav className="hidden items-center gap-7 md:flex">
           {NAV.map((n) => (
             <button key={n.id} onClick={() => go(n.id)} className="text-sm font-medium text-slate-600 transition hover:text-sky-600">{n.label}</button>
