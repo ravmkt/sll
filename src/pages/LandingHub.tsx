@@ -33,14 +33,6 @@ const NAV = [
   { id: "faq", label: "FAQ" },
 ];
 
-const TILES = [
-  "from-rose-300 to-orange-200",
-  "from-sky-300 to-indigo-300",
-  "from-emerald-300 to-teal-200",
-  "from-fuchsia-300 to-pink-200",
-  "from-amber-300 to-yellow-200",
-  "from-violet-300 to-sky-200",
-];
 
 function Section({ id, className = "", children }: { id?: string; className?: string; children: ReactNode }) {
   return (
@@ -299,7 +291,38 @@ function Browser({ children }: { children: ReactNode }) {
   );
 }
 
-const Skel = ({ className = "" }: { className?: string }) => <div className={`rounded-lg bg-slate-100 ${className}`} />;
+const LOOKS = [
+  { src: "/assets/demo-videos/preview-live-cover.jpg", pos: "50% 15%", z: 1.6 },   { src: "/assets/demo-videos/preview-live-cover.jpg", pos: "50% 55%", z: 1.3 },   { src: "/assets/demo-videos/preview-live-cover.jpg", pos: "50% 100%", z: 1.4 },   { src: "/assets/demo-videos/preview-live-cover.jpg", pos: "85% 40%", z: 1.5 },   { src: "/assets/demo-videos/preview-live-cover.jpg", pos: "50% 30%", z: 1 },   { src: "/assets/demo-videos/preview-live-cover.jpg", pos: "15% 50%", z: 1.5 },
+];
+
+const ITEMS = [
+  { name: "Vestido Midi Linho", price: "189,90" },
+  { name: "Blusa Cropped Off White", price: "89,90" },
+  { name: "Calça Alfaiataria Bege", price: "159,90" },
+  { name: "Conjunto Linho Areia", price: "229,90" },
+  { name: "Camisa Oversized", price: "119,90" },
+  { name: "Saia Midi Plissada", price: "139,90" },
+];
+
+function Look({ i, className = "", children }: { i: number; className?: string; children?: ReactNode }) {
+  const l = LOOKS[i % LOOKS.length];
+  return (
+    <div className={`relative overflow-hidden bg-slate-200 ${className}`}>
+      <img
+        src={l.src} alt="" loading="lazy" draggable={false}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{ objectPosition: l.pos, transformOrigin: l.pos, transform: `scale(${l.z})` }}
+      />
+      {children}
+    </div>
+  );
+}
+
+const PlayDot = ({ size = "h-8 w-8" }: { size?: string }) => (
+  <span className={`absolute left-1/2 top-1/2 grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/85 shadow ${size}`}>
+    <Play className="h-3.5 w-3.5 text-slate-800" />
+  </span>
+);
 
 function StoriesMock() {
   const names = ["Novidades", "Vestidos", "Looks", "Promo", "Verão", "Bastidores"];
@@ -309,14 +332,29 @@ function StoriesMock() {
         {names.map((n, i) => (
           <div key={n} className="flex shrink-0 flex-col items-center gap-1.5">
             <div className="rounded-full bg-gradient-to-tr from-sky-500 to-emerald-400 p-[3px]">
-              <div className="rounded-full bg-white p-[2px]"><div className={`h-14 w-14 rounded-full bg-gradient-to-br ${TILES[i]}`} /></div>
+              <div className="rounded-full bg-white p-[2px]"><Look i={i} className="h-14 w-14 rounded-full" /></div>
             </div>
             <span className="text-[10px] font-medium text-slate-600">{n}</span>
           </div>
         ))}
       </div>
-      <Skel className="mt-6 h-32 w-full" />
-      <div className="mt-4 grid grid-cols-3 gap-3"><Skel className="h-20" /><Skel className="h-20" /><Skel className="h-20" /></div>
+      <Look i={4} className="mt-6 h-32 w-full rounded-xl">
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-white">
+          <p className="text-[10px] font-semibold uppercase tracking-widest opacity-90">Coleção Verão</p>
+          <p className="text-lg font-extrabold leading-tight">Até 30% off</p>
+          <span className="mt-2 inline-block rounded-full bg-white px-3 py-1 text-[10px] font-bold text-slate-900">Ver ofertas</span>
+        </div>
+      </Look>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i}>
+            <Look i={i} className="aspect-[4/5] rounded-lg" />
+            <p className="mt-1.5 truncate text-[11px] font-semibold text-slate-700">{ITEMS[i].name}</p>
+            <p className="text-[11px] font-bold text-emerald-600">R$ {ITEMS[i].price}</p>
+          </div>
+        ))}
+      </div>
     </Browser>
   );
 }
@@ -324,12 +362,14 @@ function StoriesMock() {
 function CarouselMock() {
   return (
     <Browser>
-      <Skel className="mb-4 h-4 w-40" />
+      <p className="mb-4 text-sm font-bold text-slate-800">Looks do momento</p>
       <div className="flex gap-3 overflow-hidden">
-        {TILES.slice(0, 5).map((t, i) => (
-          <div key={i} className={`relative aspect-[9/16] w-28 shrink-0 rounded-2xl bg-gradient-to-br ${t}`}>
-            <span className="absolute left-1/2 top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/80"><Play className="h-3.5 w-3.5 text-slate-800" /></span>
-            <span className="absolute inset-x-2 bottom-2 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-800">R$ {89 + i * 30},90</span>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div key={i} className="w-28 shrink-0">
+            <Look i={i} className="aspect-[9/16] rounded-2xl">
+              <PlayDot />
+              <span className="absolute inset-x-2 bottom-2 rounded-lg bg-white/90 px-2 py-1 text-center text-[10px] font-bold text-slate-800">R$ {ITEMS[i].price}</span>
+            </Look>
           </div>
         ))}
       </div>
@@ -341,14 +381,25 @@ function FloatingMock() {
   return (
     <Browser>
       <div className="grid grid-cols-2 gap-4">
-        <Skel className="h-52" />
-        <div className="space-y-3"><Skel className="h-5 w-3/4" /><Skel className="h-4 w-1/3" /><Skel className="h-3 w-full" /><Skel className="h-3 w-5/6" /><Skel className="h-10 w-full" /></div>
+        <Look i={0} className="h-60 rounded-xl" />
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Vestidos</p>
+          <p className="mt-1 text-base font-extrabold leading-tight text-slate-900">Vestido Midi Linho Bege</p>
+          <p className="mt-2 text-[11px] text-slate-400 line-through">R$ 249,90</p>
+          <p className="text-xl font-extrabold text-emerald-600">R$ 189,90</p>
+          <div className="mt-3 flex gap-1.5">
+            {["P", "M", "G", "GG"].map((s) => (
+              <span key={s} className={`grid h-7 w-7 place-items-center rounded-md border text-[11px] font-bold ${s === "M" ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 text-slate-600"}`}>{s}</span>
+            ))}
+          </div>
+          <span className="mt-4 block rounded-lg bg-emerald-500 py-2.5 text-center text-xs font-bold text-white">Comprar agora</span>
+        </div>
       </div>
       <div className="absolute bottom-4 right-4 w-24">
-        <div className="relative aspect-[9/16] rounded-2xl bg-gradient-to-br from-rose-300 to-fuchsia-300 shadow-xl ring-4 ring-white">
-          <span className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-black/40 text-white"><X className="h-3 w-3" /></span>
-          <span className="absolute left-1/2 top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/85"><Play className="h-3.5 w-3.5" /></span>
-        </div>
+        <Look i={2} className="aspect-[9/16] rounded-2xl shadow-xl ring-4 ring-white">
+          <span className="absolute right-1.5 top-1.5 z-10 grid h-5 w-5 place-items-center rounded-full bg-black/50 text-white"><X className="h-3 w-3" /></span>
+          <PlayDot />
+        </Look>
       </div>
     </Browser>
   );
@@ -357,12 +408,12 @@ function FloatingMock() {
 function GridMock() {
   return (
     <Browser>
-      <Skel className="mb-4 h-4 w-48" />
+      <p className="mb-4 text-sm font-bold text-slate-800">Veja o produto em uso</p>
       <div className="grid grid-cols-3 gap-3">
-        {TILES.map((t, i) => (
-          <div key={i} className={`relative aspect-square rounded-xl bg-gradient-to-br ${t}`}>
-            <span className="absolute bottom-1.5 left-1.5 grid h-6 w-6 place-items-center rounded-full bg-white/85"><Play className="h-3 w-3" /></span>
-          </div>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <Look key={i} i={i} className="aspect-square rounded-xl">
+            <span className="absolute bottom-1.5 left-1.5 grid h-6 w-6 place-items-center rounded-full bg-white/90"><Play className="h-3 w-3" /></span>
+          </Look>
         ))}
       </div>
     </Browser>
@@ -370,21 +421,22 @@ function GridMock() {
 }
 
 function LiveMock() {
-  const chat = [["Ana", "Quero o tamanho M!"], ["Bia", "Lindo demais 😍"], ["Carla", "Qual o frete?"], ["Dani", "Comprei! ✅"]];
+  const chat = [["Ana", "Quero o tamanho M!"], ["Bia", "Lindo demais"], ["Carla", "Qual o frete?"], ["Dani", "Comprei!"]];
   return (
     <Browser>
       <div className="grid grid-cols-[1fr_130px] gap-3">
         <div>
-          <div className="relative aspect-video rounded-xl bg-gradient-to-br from-indigo-300 via-fuchsia-300 to-rose-300">
+          <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-200">
+            <img src="/assets/streamsell-template-01.jpg" alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
             <span className="absolute left-2 top-2 flex items-center gap-1 rounded bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white"><Radio className="h-3 w-3" /> AO VIVO</span>
             <span className="absolute right-2 top-2 flex items-center gap-1 rounded bg-black/45 px-2 py-0.5 text-[10px] text-white"><Eye className="h-3 w-3" /> 842</span>
           </div>
           <div className="mt-3 flex gap-2">
-            {TILES.slice(0, 3).map((t, i) => (
+            {[0, 1, 2].map((i) => (
               <div key={i} className="flex-1 rounded-lg border border-slate-200 p-1.5">
-                <div className={`aspect-square rounded bg-gradient-to-br ${t}`} />
-                <p className="mt-1 text-[10px] font-bold text-emerald-600">R$ {79 + i * 40}</p>
-                <button className="mt-1 w-full rounded bg-emerald-500 py-1 text-[9px] font-bold text-white">Comprar</button>
+                <Look i={i} className="aspect-square rounded" />
+                <p className="mt-1 text-[10px] font-bold text-emerald-600">R$ {ITEMS[i].price}</p>
+                <span className="mt-1 block w-full rounded bg-emerald-500 py-1 text-center text-[9px] font-bold text-white">Comprar</span>
               </div>
             ))}
           </div>
@@ -396,7 +448,6 @@ function LiveMock() {
     </Browser>
   );
 }
-
 const FORMATS = [
   { id: "stories", title: "Stories por Bolhas", tag: "Destaque", desc: "Círculos interativos no topo do site, no estilo Instagram, que abrem vídeos shoppable em tela cheia.", Mock: StoriesMock },
   { id: "carrossel", title: "Carrossel de Vídeos", tag: "Home e categorias", desc: "Grid horizontal dinâmico para a página inicial ou páginas de categoria, com preço e botão de compra.", Mock: CarouselMock },
