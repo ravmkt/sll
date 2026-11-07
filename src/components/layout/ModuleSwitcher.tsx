@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, Radio } from 'lucide-react';
+import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, LayoutTemplate, Radio } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { supabase } from '@/lib/supabase';
 import { getCatalogModules, type CatalogModule } from '@/services/plans/getCatalogShowcase';
 
-type Item = { key: string; name: string; category: string; path: string; icon: ElementType; logo?: string; soon?: boolean };
+type Item = { key: string; name: string; category: string; path: string; icon: ElementType; logo?: string; soon?: boolean; locked?: boolean };
 
 // Modulo novo = uma linha aqui. "key" deve ser igual ao module_key / plans.modules.
 // O logotipo vem do cadastro do modulo (hub_modules.logo_url); "logo" e a alternativa local.
 const SWITCHER_MODULES: Item[] = [
   { key: 'vidlytics', name: 'Vidlytics', category: 'Vídeos Interativos', path: '/dashboard/modules/vidlytics', icon: Layers, logo: '/assets/vidlytics-logo-ico.png' },
   { key: 'stream_sell', name: 'Stream Sell', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/stream-sell', icon: Radio, logo: '/assets/stream-sell-logo-ico.png' },
+  { key: 'builder', name: 'Builder', category: 'Páginas & Domínio Próprio', path: '/dashboard/modules/builder', icon: LayoutTemplate },
   { key: 'gamification', name: 'Gamificação', category: 'Engajamento & Prêmios', path: '/dashboard/modules/gamificacao', icon: Gamepad2, soon: true },
 ];
 
@@ -71,8 +72,8 @@ export function ModuleSwitcher() {
     const st = new Map(catalog.map((c) => [c.slug, c.status] as [string, string]));
     const list = SWITCHER_MODULES
       .filter((m) => st.get(m.key) !== 'hidden')
-      .filter((m) => owned.includes(m.key) || m.key === current.key)
-      .map((m) => ({ ...withLogo(m), soon: false }));
+      .filter((m) => !m.soon || owned.includes(m.key) || m.key === current.key)
+      .map((m) => ({ ...withLogo(m), soon: false, locked: !owned.includes(m.key) && m.key !== current.key }));
     return [withLogo(HOME), ...list];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [owned, current, catalog]);
@@ -101,7 +102,7 @@ export function ModuleSwitcher() {
               const isCurrent = m.key === current.key;
                   const Row: any = isCurrent || m.soon ? 'button' : Link;
               return (
-                <Row key={m.key} {...(isCurrent || m.soon ? { type: 'button' } : { to: m.path })} onClick={() => setOpen(false)} className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${m.soon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'} ${isCurrent ? 'bg-blue-50/80 text-[#0094eb]' : 'text-slate-700 hover:bg-slate-50'}`}
+                <Row key={m.key} {...(isCurrent || m.soon ? { type: 'button' } : { to: m.locked ? `/dashboard/planos?modulo=${m.key}` : m.path })} onClick={() => setOpen(false)} className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${m.soon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'} ${m.locked ? 'opacity-60 grayscale' : ''} ${isCurrent ? 'bg-blue-50/80 text-[#0094eb]' : 'text-slate-700 hover:bg-slate-50'}`}
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-white ${isCurrent ? 'border-[#0094eb]/40' : 'border-slate-200'}`}>
@@ -112,7 +113,8 @@ export function ModuleSwitcher() {
                       <p className="truncate text-[11px] text-slate-400">{m.category}</p>
                     </div>
                   </div>
-                  {isCurrent && <Check className="ml-2 h-4 w-4 shrink-0 text-[#0094eb]" />}
+                  {m.locked && <span className="ml-2 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Assinar</span>}
+                      {isCurrent && <Check className="ml-2 h-4 w-4 shrink-0 text-[#0094eb]" />}
                   {m.soon && <span className="ml-2 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Em breve</span>}
                 </Row>
               );
