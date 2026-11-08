@@ -14,6 +14,13 @@ function toEmbed(url: string): string {
   return yt ? `https://www.youtube.com/embed/${yt[1]}` : url;
 }
 
+const STYLE_OPTIONS = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'bold', label: 'Negrito' },
+  { value: 'italic', label: 'Itálico' },
+  { value: 'bolditalic', label: 'Negrito itálico' },
+];
+
 export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
   columns: {
     label: 'Colunas',
@@ -144,7 +151,14 @@ export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
   },
   product: {
     label: 'Produto',
-    defaults: { layout: 'horizontal', image: 'https://placehold.co/600x600', name: 'Nome do produto', price: 'R$ 199,90', cta: 'Comprar agora', href: '#' },
+    defaults: {
+      layout: 'horizontal', image: 'https://placehold.co/600x600', name: 'Nome do produto', desc: '',
+      price: 'R$ 199,90', cta: 'Comprar agora', href: '#',
+      nameSize: '', nameColor: '#111827', nameStyle: 'bold',
+      descSize: '', descColor: '#4b5563', descStyle: 'normal',
+      priceSize: '', priceColor: '#059669', priceStyle: 'bold',
+      ctaBg: '#059669',
+    },
     fields: [
       { key: 'layout', label: 'Layout', type: 'select', options: [
         { value: 'horizontal', label: 'Imagem ao lado' },
@@ -153,28 +167,55 @@ export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       ] },
       { key: 'image', label: 'URL da imagem' },
       { key: 'name', label: 'Nome' },
+      { key: 'nameSize', label: 'Nome: tamanho (px, vazio = padrão)', type: 'number', min: 8, max: 80 },
+      { key: 'nameColor', label: 'Nome: cor', type: 'color' },
+      { key: 'nameStyle', label: 'Nome: estilo', type: 'select', options: STYLE_OPTIONS },
+      { key: 'desc', label: 'Descrição (opcional)', multiline: true },
+      { key: 'descSize', label: 'Descrição: tamanho (px, vazio = padrão)', type: 'number', min: 8, max: 60 },
+      { key: 'descColor', label: 'Descrição: cor', type: 'color' },
+      { key: 'descStyle', label: 'Descrição: estilo', type: 'select', options: STYLE_OPTIONS },
       { key: 'price', label: 'Preço' },
+      { key: 'priceSize', label: 'Preço: tamanho (px, vazio = padrão)', type: 'number', min: 8, max: 80 },
+      { key: 'priceColor', label: 'Preço: cor', type: 'color' },
+      { key: 'priceStyle', label: 'Preço: estilo', type: 'select', options: STYLE_OPTIONS },
       { key: 'cta', label: 'Texto do botão' },
+      { key: 'ctaBg', label: 'Botão: cor de fundo', type: 'color' },
       { key: 'href', label: 'Link de compra' },
     ],
     render: (p) => {
       const layout = p.layout || 'horizontal';
-      const btn = (
-        <a href={p.href} className="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-center font-semibold text-white">{p.cta}</a>
+      const mini = layout === 'mini';
+      const horizontal = layout === 'horizontal';
+      const size = (v: string | undefined, d: number) => (Number(v) > 0 ? Number(v) : d);
+      const style = (s: string | undefined, d: string) => {
+        const k = s || d;
+        return {
+          fontWeight: k === 'bold' || k === 'bolditalic' ? 700 : 400,
+          fontStyle: k === 'italic' || k === 'bolditalic' ? ('italic' as const) : ('normal' as const),
+        };
+      };
+      const nameEl = (
+        <h2 style={{ margin: 0, fontSize: size(p.nameSize, horizontal ? 30 : mini ? 14 : 20), color: p.nameColor || '#111827', lineHeight: 1.2, ...style(p.nameStyle, 'bold') }}>{p.name}</h2>
       );
-      if (layout === 'horizontal') {
+      const descEl = p.desc ? (
+        <p style={{ margin: 0, whiteSpace: 'pre-line', fontSize: size(p.descSize, mini ? 12 : 14), color: p.descColor || '#4b5563', ...style(p.descStyle, 'normal') }}>{p.desc}</p>
+      ) : null;
+      const priceEl = (
+        <p style={{ margin: 0, fontSize: size(p.priceSize, horizontal ? 24 : mini ? 16 : 22), color: p.priceColor || '#059669', ...style(p.priceStyle, 'bold') }}>{p.price}</p>
+      );
+      const btn = (
+        <a href={p.href} style={{ display: 'inline-block', background: p.ctaBg || '#059669', color: '#fff', padding: '12px 24px', borderRadius: 8, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>{p.cta}</a>
+      );
+      if (horizontal) {
         return (
           <section className="mx-auto grid max-w-4xl gap-8 px-8 py-10 md:grid-cols-2">
             <img src={p.image} alt={p.name} loading="lazy" className="w-full rounded-lg" />
-            <div className="flex flex-col justify-center gap-3">
-              <h2 className="text-3xl font-bold">{p.name}</h2>
-              <p className="text-2xl font-semibold text-emerald-600">{p.price}</p>
-              {btn}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12, alignItems: 'flex-start' }}>
+              {nameEl}{descEl}{priceEl}{btn}
             </div>
           </section>
         );
       }
-      const mini = layout === 'mini';
       return (
         <section style={{ padding: '24px 32px' }}>
           <div
@@ -192,9 +233,7 @@ export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
                 ? { width: 110, height: 110, objectFit: 'cover', borderRadius: 8 }
                 : { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderRadius: 8 }}
             />
-            <h2 style={{ margin: 0, fontSize: mini ? 14 : 20, fontWeight: mini ? 600 : 700 }}>{p.name}</h2>
-            <p style={{ margin: 0, fontSize: mini ? 16 : 22, fontWeight: 600, color: '#059669' }}>{p.price}</p>
-            {btn}
+            {nameEl}{descEl}{priceEl}{btn}
           </div>
         </section>
       );
