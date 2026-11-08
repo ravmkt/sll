@@ -9,7 +9,7 @@ const align = (p: Record<string, string>, d: string) => (p.align || d) as CSSPro
 
 export const BLOCKS = {
   ...(EXTRA_BLOCKS as Record<Exclude<BlockType, 'hero' | 'text' | 'image' | 'button'>, BlockDef>),
-  ...(MEDIA_BLOCKS as Record<'video', BlockDef>),
+  ...(MEDIA_BLOCKS as Record<'video' | 'carousel', BlockDef>),
   ...(STORE_BLOCKS as Record<'announcement' | 'highlights', BlockDef>),
   hero: {
     label: 'Hero',

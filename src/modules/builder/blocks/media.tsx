@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { BlockType } from '../types';
 import type { BlockDef } from '../registry-extra';
-import { ALIGN_OPTIONS, num, safeUrl, textCss, textFields } from '../styleKit';
+import { ALIGN_OPTIONS, num, parseItems, safeUrl, textCss, textFields } from '../styleKit';
 
 const yesNo = (yes: string, no: string) => [
   { value: '0', label: no },
@@ -78,7 +78,124 @@ function coverDoc(cover: string, href: string): string {
   );
 }
 
+const CAROUSEL: BlockDef = {
+  label: 'Carrossel de imagens',
+  defaults: {
+    items: JSON.stringify([
+      { src: 'https://placehold.co/1200x500?text=Imagem+1', alt: '', href: '' },
+      { src: 'https://placehold.co/1200x500?text=Imagem+2', alt: '', href: '' },
+      { src: 'https://placehold.co/1200x500?text=Imagem+3', alt: '', href: '' },
+    ]),
+    mode: 'auto',
+    secs: '4',
+    ratio: '16 / 9',
+    fit: 'cover',
+    maxW: '1200',
+    radius: '8',
+    pad: '16',
+    bg: '',
+  },
+  fields: [
+    {
+      key: 'items',
+      label: 'Imagens',
+      type: 'repeater',
+      itemLabel: 'Imagem',
+      maxItems: 12,
+      itemDefaults: { src: 'https://placehold.co/1200x500', alt: '', href: '' },
+      item: [
+        { key: 'src', label: 'Imagem', type: 'upload', accept: 'image' },
+        { key: 'alt', label: 'Texto alternativo' },
+        { key: 'href', label: 'Link (opcional)' },
+      ],
+    },
+    {
+      key: 'mode', label: 'Troca', type: 'select', group: 'Carrossel', def: 'auto',
+      options: [{ value: 'auto', label: 'Autom\u00e1tica (infinita)' }, { value: 'manual', label: 'Manual (deslizar)' }],
+    },
+    { key: 'secs', label: 'Segundos por imagem', type: 'number', min: 1, max: 30, group: 'Carrossel', def: '4' },
+    { key: 'ratio', label: 'Propor\u00e7\u00e3o', type: 'select', group: 'Carrossel', def: '16 / 9', options: [{ value: 'auto', label: 'Original' }, ...RATIOS] },
+    {
+      key: 'fit', label: 'Ajuste da imagem', type: 'select', group: 'Carrossel', def: 'cover',
+      options: [{ value: 'cover', label: 'Preencher (recorta)' }, { value: 'contain', label: 'Mostrar inteira' }],
+    },
+    { key: 'maxW', label: 'Largura m\u00e1xima (px, 0 = total)', type: 'number', min: 0, max: 2400, group: 'Layout', def: '1200' },
+    { key: 'radius', label: 'Arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Layout', def: '8' },
+    { key: 'bg', label: 'Cor de fundo da se\u00e7\u00e3o', type: 'color', group: 'Layout' },
+    { key: 'pad', label: 'Espa\u00e7o vertical (px)', type: 'number', min: 0, max: 200, group: 'Layout', def: '16' },
+  ],
+  render: (p) => {
+    const list = parseItems(p.items).filter((x) => x.src);
+    const n = list.length;
+    if (n === 0) {
+      return <section style={{ padding: 32, textAlign: 'center', color: '#6b7280' }}>{'Adicione imagens ao carrossel.'}</section>;
+    }
+    const auto = p.mode !== 'manual' && n > 1;
+    const sec = Math.min(30, Math.max(1, num(p.secs, 4)));
+    const cls = `sll-car-${n}-${String(sec).replace('.', '_')}`;
+    const ratio = p.ratio && p.ratio !== 'auto' ? p.ratio : undefined;
+    const fit = p.fit === 'contain' ? 'contain' : 'cover';
+    const mw = num(p.maxW, 1200);
+
+    let css = '';
+    if (auto) {
+      const P = 100 / n;
+      const S = 100 / (n + 1);
+      let k = '';
+      for (let i = 0; i < n; i++) {
+        k += `${(i * P).toFixed(3)}%,${(i * P + P * 0.85).toFixed(3)}%{transform:translateX(-${(i * S).toFixed(4)}%)}`;
+      }
+      k += `100%{transform:translateX(-${(n * S).toFixed(4)}%)}`;
+      css =
+        `@keyframes ${cls}{${k}}` +
+        `.${cls} .sll-car-t{animation:${cls} ${n * sec}s ease-in-out infinite}` +
+        `.${cls}:hover .sll-car-t{animation-play-state:paused}` +
+        '@media(prefers-reduced-motion:reduce){.' + cls + ' .sll-car-t{animation:none}}';
+    }
+
+    const slides = auto ? [...list, list[0]] : list;
+    const track: CSSProperties = auto
+      ? { display: 'flex', width: `${(n + 1) * 100}%` }
+      : { display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory' };
+    const slide: CSSProperties = auto
+      ? { flex: `0 0 ${100 / (n + 1)}%`, minWidth: 0 }
+      : { flex: '0 0 100%', minWidth: 0, scrollSnapAlign: 'start' };
+
+    return (
+      <section style={{ background: p.bg || undefined, padding: `${num(p.pad, 16)}px 32px` }}>
+        {css ? <style dangerouslySetInnerHTML={{ __html: css }} /> : null}
+        <div
+          className={auto ? cls : undefined}
+          style={{ maxWidth: mw > 0 ? mw : undefined, margin: '0 auto', overflow: 'hidden', borderRadius: num(p.radius, 8) }}
+        >
+          <div className="sll-car-t" style={track}>
+            {slides.map((it, i) => {
+              const dup = auto && i === n;
+              const im = (
+                <img
+                  src={safeUrl(it.src)}
+                  alt={dup ? '' : it.alt || ''}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  draggable={false}
+                  style={{ width: '100%', display: 'block', aspectRatio: ratio, objectFit: fit }}
+                />
+              );
+              const href = (it.href || '').trim();
+              return (
+                <div key={i} aria-hidden={dup ? true : undefined} style={slide}>
+                  {href ? <a href={safeUrl(href)} tabIndex={dup ? -1 : undefined} style={{ display: 'block' }}>{im}</a> : im}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  },
+};
+
 export const MEDIA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
+  carousel: CAROUSEL,
   video: {
     label: 'V\u00eddeo',
     defaults: {

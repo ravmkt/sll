@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import {
-  CircleHelp, CirclePlay, Megaphone, ShieldCheck, Image as ImageIcon, LayoutTemplate, MessageSquareQuote,
+  CircleHelp, CirclePlay, Images, Megaphone, ShieldCheck, Image as ImageIcon, LayoutTemplate, MessageSquareQuote,
   MousePointerClick, ShoppingBag, TextCursorInput, Timer, Type,
 } from 'lucide-react';
 import type { BlockType } from './types';
@@ -40,6 +40,7 @@ export const PALETTE: { title: string; items: PaletteItem[] }[] = [
       { key: 'image', type: 'image', label: 'Imagem', icon: ImageIcon },
       { key: 'button', type: 'button', label: 'Botão', icon: MousePointerClick },
       { key: 'video', type: 'video', label: 'Vídeo', icon: CirclePlay },
+          { key: 'carousel', type: 'carousel', label: 'Carrossel de imagens', icon: Images },
     ],
   },
   {
