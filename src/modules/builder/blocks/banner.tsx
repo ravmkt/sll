@@ -70,14 +70,13 @@ function BannerDev({ p, dev }: { p: Record<string, string>; dev: 'd' | 'm' }) {
   const ref = useRef<HTMLDivElement>(null);
   const m = dev === 'm';
   const k = (s: string) => p[dev + s] ?? '';
-  const v = (s: string) => k(s) || (m ? p['d' + s] ?? '' : '');
 
-  const first: Slide = { img: v('Img'), alt: v('Alt'), link: v('Link').trim(), title: v('Title'), sub: v('Sub'), btn: v('Btn') };
-  const extra: Slide[] = parseExtra(p.slides)
-    .slice(0, 4)
+  const legacy: Slide = { img: p.dImg ?? '', alt: p.dAlt ?? '', link: (p.dLink ?? '').trim(), title: p.dTitle ?? '', sub: p.dSub ?? '', btn: p.dBtn ?? '' };
+  const list: Slide[] = parseExtra(p.slides)
+    .slice(0, 5)
     .map((x) => ({ img: (m && x.imgM) || x.img, alt: x.alt, link: x.link.trim(), title: x.title, sub: x.sub, btn: x.btn }))
     .filter((s) => s.img || s.title || s.btn);
-  const slides = [first, ...extra];
+  const slides = list.length ? list : [legacy].filter((s) => s.img || s.title || s.btn);
   const multi = slides.length > 1;
 
   const h = clampN(num(k('H'), m ? 240 : 420), 80, 1000);
@@ -185,16 +184,9 @@ const IMGPOS = [
 
 const banDev = (d: 'd' | 'm'): BanField[] => {
   const g = d === 'd' ? 'Desktop' : 'Celular';
-  const h = d === 'm' ? ' (vazio = igual ao desktop)' : '';
   return [
-    { key: d + 'Img', label: 'Imagem do slide 1' + h, type: 'upload', accept: 'image', group: g },
-    { key: d + 'Alt', label: 'Texto alternativo' + h, group: g },
-    { key: d + 'Link', label: 'Link' + h, group: g },
-    { key: d + 'Title', label: 'T\u00edtulo' + h, group: g },
     { key: d + 'TSize', label: 'Tamanho do t\u00edtulo (px)', type: 'number', min: 12, max: 96, group: g, def: d === 'd' ? '40' : '24' },
-    { key: d + 'Sub', label: 'Subt\u00edtulo' + h, multiline: true, group: g },
     { key: d + 'SSize', label: 'Tamanho do subt\u00edtulo (px)', type: 'number', min: 10, max: 48, group: g, def: d === 'd' ? '18' : '14' },
-    { key: d + 'Btn', label: 'Texto do bot\u00e3o' + h, group: g },
     { key: d + 'BtnBg', label: 'Cor do bot\u00e3o', type: 'color', group: g, def: '#ffffff' },
     { key: d + 'BtnColor', label: 'Cor do texto do bot\u00e3o', type: 'color', group: g, def: '#111111' },
     { key: d + 'Color', label: 'Cor do texto', type: 'color', group: g, def: '#ffffff' },
@@ -230,13 +222,12 @@ const banDev = (d: 'd' | 'm'): BanField[] => {
 export const BANNER: BlockDef = {
   label: 'Banner principal',
   defaults: {
-    slides: '[]',
-    dImg: 'https://placehold.co/1600x600?text=Banner', dAlt: '', dLink: '',
-    dTitle: 'T\u00edtulo do banner', dSub: 'Subt\u00edtulo do banner', dBtn: 'Saiba mais',
+    slides: JSON.stringify([
+      { img: 'https://placehold.co/1600x600?text=Banner', imgM: '', alt: '', link: '', title: 'T\u00edtulo do banner', sub: 'Subt\u00edtulo do banner', btn: 'Saiba mais' },
+    ]),
     dTSize: '40', dSSize: '18', dBtnBg: '#ffffff', dBtnColor: '#111111', dColor: '#ffffff',
     dAlign: 'left', dVAlign: 'center', dShape: 'rect', dH: '420', dMaxW: '0', dFit: 'cover', dPos: 'center', dOverlay: '25', dRadius: '0',
     dMode: 'auto', dSecs: '5', dDots: '1', dPad: '0',
-    mImg: '', mAlt: '', mLink: '', mTitle: '', mSub: '', mBtn: '',
     mTSize: '24', mSSize: '14', mBtnBg: '#ffffff', mBtnColor: '#111111', mColor: '#ffffff',
     mAlign: 'center', mVAlign: 'center', mShape: 'rect', mH: '240', mMaxW: '0', mFit: 'cover', mPos: 'center', mOverlay: '25', mRadius: '0',
     mMode: 'auto', mSecs: '5', mDots: '1', mPad: '0',
@@ -244,10 +235,11 @@ export const BANNER: BlockDef = {
   fields: [
     {
       key: 'slides',
-      label: 'Slides adicionais (at\u00e9 4; o slide 1 \u00e9 configurado abaixo)',
+      label: 'Slides (at\u00e9 5)',
+      group: 'Slides',
       type: 'repeater',
       itemLabel: 'Slide',
-      maxItems: 4,
+      maxItems: 5,
       itemDefaults: { img: 'https://placehold.co/1600x600?text=Slide', imgM: '', alt: '', link: '', title: '', sub: '', btn: '' },
       item: [
         { key: 'img', label: 'Imagem', type: 'upload', accept: 'image' },
