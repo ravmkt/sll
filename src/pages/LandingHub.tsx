@@ -400,30 +400,86 @@ function GridMock() {
   );
 }
 
+const LIVE_ITEMS = [
+  { n: "01", img: "prod-01.jpg", name: "Blusa Life Ros\u00ea em Malha Tecnol\u00f3gica", price: "R$ 149,90", left: 0, live: false },
+  { n: "02", img: "prod-02.jpg", name: "Blusa Scrub Tecnol\u00f3gico Estampa Pet", price: "R$ 149,90", left: 2, live: false },
+  { n: "03", img: "prod-03.jpg", name: "Vestido Midi Canelado Estampa Floral", price: "R$ 199,90", left: 0, live: false },
+  { n: "04", img: "prod-bazer.jpg", name: "Blazer Linho Bege", price: "R$ 249,90", left: 1, live: true },
+];
+
 function LiveMock() {
-  const chat = [["Ana", "Quero o tamanho M!"], ["Bia", "Lindo demais 😍"], ["Carla", "Qual o frete?"], ["Dani", "Comprei! ✅"]];
+  const chat = [["Ana", "Quero o tamanho M!"], ["Bia", "Lindo demais"], ["Carla", "Qual o frete?"], ["Dani", "Comprei!"]];
   return (
     <Browser>
-      <div className="grid grid-cols-[1fr_130px] gap-3">
-        <div>
-          <div className="relative aspect-video overflow-hidden rounded-xl">
-            <MImg src="live-capa.jpg" tile={5} className="absolute inset-0 h-full w-full" />
-            <span className="absolute left-2 top-2 flex items-center gap-1 rounded bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white"><Radio className="h-3 w-3" /> AO VIVO</span>
-            <span className="absolute right-2 top-2 flex items-center gap-1 rounded bg-black/45 px-2 py-0.5 text-[10px] text-white"><Eye className="h-3 w-3" /> 842</span>
-          </div>
-          <div className="mt-3 flex gap-2">
-            {[1, 2, 3].map((n, i) => (
-              <div key={n} className="flex-1 rounded-lg border border-slate-200 p-1.5">
-                <MImg src={`prod-${n2(n)}.jpg`} tile={i} className="aspect-square w-full rounded" />
-                <p className="mt-1 text-[10px] font-bold text-emerald-600">R$ {79 + i * 40}</p>
-                <button className="mt-1 w-full rounded bg-emerald-500 py-1 text-[9px] font-bold text-white">Comprar</button>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MImg src="logo-loja.png" tile={0} className="h-7 w-7 rounded-full" />
+          <span className="text-sm font-bold text-slate-900">Sua Loja</span>
+        </div>
+        <div className="flex gap-1.5">
+          <span className="flex items-center gap-1 rounded-full bg-black px-2 py-0.5 text-[9px] font-bold text-white"><span className="h-1.5 w-1.5 rounded-full bg-red-500" />AO VIVO</span>
+          <span className="flex items-center gap-1 rounded-full bg-black px-2 py-0.5 text-[9px] font-bold text-white"><Eye className="h-3 w-3" /> 842</span>
+        </div>
+      </div>
+
+      <div className="grid gap-2 md:grid-cols-[1fr_170px_1fr]">
+        <div className="order-2 overflow-hidden rounded-xl border-2 border-red-600 md:order-1">
+          <div className="bg-red-600 py-1.5 text-center text-[10px] font-bold text-white">PRODUTOS DA LIVE</div>
+          <div className="space-y-1.5 p-1.5">
+            {LIVE_ITEMS.map((it, i) => (
+              <div key={it.n} className={`flex items-center gap-2 overflow-hidden rounded-lg border-2 border-red-600 pr-2 ${it.live ? "bg-red-600 text-white" : "bg-white text-slate-800"}`}>
+                <span className="w-6 shrink-0 text-center text-xs font-extrabold">{it.n}</span>
+                <MImg src={it.img} tile={i} className="h-12 w-12 shrink-0" />
+                <div className="min-w-0 flex-1 py-1">
+                  <p className="truncate text-[10px] font-semibold leading-tight">{it.name}</p>
+                  <p className={`text-[10px] font-bold ${it.live ? "text-white" : "text-red-600"}`}>{it.price}</p>
+                  {it.left > 0 && <span className={`mt-0.5 inline-block rounded-full px-1.5 py-px text-[8px] font-bold ${it.live ? "bg-white/20 text-white" : "bg-red-600 text-white"}`}>Restam {it.left}</span>}
+                </div>
+                <span className={`shrink-0 rounded-full px-2 py-1 text-[8px] font-bold ${it.live ? "bg-white text-red-600" : "bg-red-600 text-white"}`}>Comprar</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="space-y-2 rounded-xl bg-slate-50 p-2">
-          {chat.map(([n, m]) => (<p key={n} className="text-[10px] leading-tight text-slate-600"><b className="text-slate-800">{n}</b> {m}</p>))}
+
+        <div className="relative order-1 min-h-[400px] overflow-hidden rounded-xl border-2 border-slate-900 bg-black md:order-2">
+          <video className="absolute inset-0 h-full w-full object-cover"
+            src="/assets/landing/hero-demo.mp4" autoPlay muted loop playsInline preload="metadata" />
+          <div className="absolute inset-x-0 top-0 z-10 bg-black py-1.5 text-center text-[10px] font-bold text-white">Especial Anivers&aacute;rio</div>
+          <div className="absolute inset-x-1.5 bottom-1.5 z-10">
+            <span className="mb-1 inline-block rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-bold text-white">Restam 1</span>
+            <div className="flex items-center gap-1.5 rounded-xl border-2 border-red-600 bg-white p-1">
+              <MImg src="prod-bazer.jpg" tile={3} className="h-9 w-9 shrink-0 rounded-md" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[9px] font-medium leading-tight text-slate-900">Blazer Linho Bege</p>
+                <p className="text-[10px] font-bold text-red-600">R$ 249,90</p>
+              </div>
+              <span className="shrink-0 rounded-full bg-red-600 px-2 py-1 text-[8px] font-bold text-white">Comprar</span>
+            </div>
+          </div>
         </div>
+
+        <div className="order-3 flex flex-col overflow-hidden rounded-xl border-2 border-red-600">
+          <div className="bg-red-600 py-1.5 text-center text-[10px] font-bold text-white">CHAT DA LIVE</div>
+          <div className="flex-1 space-y-2 p-2">
+            {chat.map(([n, m]) => (<p key={n} className="text-[10px] leading-tight text-slate-600"><b className="text-slate-800">{n}</b> {m}</p>))}
+          </div>
+          <div className="flex items-center gap-1.5 border-t border-red-200 p-1.5">
+            <span className="flex-1 rounded-full border border-red-200 px-2 py-1 text-[9px] text-slate-400">Digite sua mensagem...</span>
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-red-600 text-[10px] text-white">&hearts;</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        <div className="rounded-xl bg-red-600 py-2 text-center text-white">
+          <p className="text-sm font-extrabold leading-none">FRETE GR&Aacute;TIS</p>
+          <p className="mt-0.5 text-[8px]">Acima de R$199,00</p>
+        </div>
+        <div className="grid grid-cols-2 overflow-hidden rounded-xl border-2 border-red-600 text-center text-[10px] font-extrabold">
+          <span className="grid place-items-center bg-red-600 text-white">LIVE15</span>
+          <span className="grid place-items-center text-red-600">10% OFF</span>
+        </div>
+        <div className="grid place-items-center rounded-xl border-2 border-red-600 text-[10px] font-bold text-slate-900">Compartilhar</div>
       </div>
     </Browser>
   );
