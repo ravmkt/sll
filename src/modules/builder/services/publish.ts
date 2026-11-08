@@ -36,6 +36,12 @@ async function resolvePublicUrls(storeId: string, pageSlug: string) {
   return { url: `${window.location.origin}/p/${storeRef}/${pageSlug}`, customUrl };
 }
 
+export async function getPublishedUrl(id: string): Promise<string> {
+  const page = await getPage(id);
+  if (page.status !== 'published' || !page.published_html_path) return '';
+  return (await resolvePublicUrls(page.store_id, page.slug)).url;
+}
+
 export async function publishPage(id: string, title: string, content: PageContent) {
   await savePage(id, title, content);
   const page = await getPage(id);

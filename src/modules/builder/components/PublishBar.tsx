@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { useBuilder } from '../store';
-import { buildPreviewHtml, publishPage } from '../services/publish';
+import { buildPreviewHtml, getPublishedUrl, publishPage } from '../services/publish';
 import SuccessModal from './SuccessModal';
 
 export default function PublishBar({ id, title }: { id: string; title: string }) {
@@ -10,6 +10,12 @@ export default function PublishBar({ id, title }: { id: string; title: string })
   const [url, setUrl] = useState('');
   const [version, setVersion] = useState(0);
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    getPublishedUrl(id).then((u) => { if (alive && u) setUrl(u); }).catch(() => {});
+    return () => { alive = false; };
+  }, [id]);
 
   async function preview() {
     try {
