@@ -101,9 +101,10 @@ function CarInst({ p, dev, list }: { p: Record<string, string>; dev: 'd' | 'm'; 
   const n0 = list.length;
   const rep = k('Repeat') === '1';
   const cap = dev === 'm' ? 2 : 12;
-  const v = clampN(Math.round(num(k('View'), dev === 'm' ? 2 : 1)), 1, rep ? cap : Math.min(cap, n0));
-  const eff = rep && v > n0 ? Math.ceil(v / n0) * n0 : n0;
-  const items = Array.from({ length: eff }, (_, i) => list[i % n0]);
+  const v = clampN(Math.round(num(k('View'), dev === 'm' ? 2 : 1)), 1, Math.min(cap, n0));
+  const eff = n0;
+  const items = list;
+  const card = clampN(Math.round(num(k('Card'), dev === 'm' ? 150 : 220)), 40, 1200);
   const sh = k('Shape') || (p.ratio === 'auto' ? 'orig' : dev === 'd' ? 'l169' : 'sq');
   const ratio = SHAPE_RATIO[sh];
   const size = clampN(Math.round(num(k('Size'), 100)), 10, 100);
@@ -117,7 +118,7 @@ function CarInst({ p, dev, list }: { p: Record<string, string>; dev: 'd' | 'm'; 
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || eff < 2) return undefined;
+    if (!el || (eff < 2 && !rep)) return undefined;
     const make = new Function('return ' + CAROUSEL_JS)() as (r: HTMLElement) => () => void;
     return make(el);
   }, [sig, eff]);
@@ -129,6 +130,7 @@ function CarInst({ p, dev, list }: { p: Record<string, string>; dev: 'd' | 'm'; 
       data-car=""
       data-mode={mode}
       data-secs={sec}
+      data-card={rep ? card : 0}
       style={{ maxWidth: mw > 0 ? mw : undefined, margin: '0 auto', overflow: 'hidden', '--v': v } as CSSProperties}
     >
       <div className="sll-car-vp" style={{ margin: `0 -${gap / 2}px` }}>
@@ -145,7 +147,7 @@ function CarInst({ p, dev, list }: { p: Record<string, string>; dev: 'd' | 'm'; 
             );
             const href = (it.href || '').trim();
             return (
-              <div key={i} className="sll-car-s" style={{ padding: `0 ${gap / 2}px` }}>
+              <div key={i} className="sll-car-s" style={{ padding: `0 ${gap / 2}px`, flex: rep ? `0 0 ${card}px` : undefined }}>
                 {href ? <a href={safeUrl(href)} draggable={false} style={{ display: 'block' }}>{im}</a> : im}
               </div>
             );
@@ -197,12 +199,13 @@ const carDev = (d: 'd' | 'm'): CarField[] => {
     { key: d + 'Mode', label: 'Troca', type: 'select', options: CAR_MODES, group: g, def: 'auto' },
     {
       key: d + 'View', label: 'Imagens vis\u00edveis', type: 'number', min: 1, max: cap, group: g, def: d === 'd' ? '1' : '2',
-      maxFn: (p) => (p[d + 'Repeat'] === '1' ? cap : Math.min(cap, imgCount(p))),
+      maxFn: (p) => Math.min(cap, imgCount(p)),
     },
     {
-      key: d + 'Repeat', label: 'Repetir imagens para preencher', type: 'select', group: g, def: '0',
+      key: d + 'Repeat', label: 'Repetir para preencher a largura (ignora imagens vis\u00edveis)', type: 'select', group: g, def: '0',
       options: [{ value: '0', label: 'N\u00e3o' }, { value: '1', label: 'Sim' }],
     },
+    { key: d + 'Card', label: 'Largura do card ao repetir (px)', type: 'number', min: 40, max: 1200, group: g, def: d === 'd' ? '220' : '150' },
     { key: d + 'Shape', label: 'Formato', type: 'select', options: SHAPE_OPTS, group: g, def: d === 'd' ? 'l169' : 'sq' },
     { key: d + 'Size', label: 'Tamanho da imagem (% da coluna)', type: 'number', min: 10, max: 100, group: g, def: '100' },
     { key: d + 'Gap', label: 'Espa\u00e7o entre imagens (px)', type: 'number', min: 0, max: 80, group: g, def: d === 'd' ? '12' : '8' },
@@ -218,7 +221,7 @@ const CAROUSEL: BlockDef = {
       { src: 'https://placehold.co/1200x500?text=Imagem+2', alt: '', href: '' },
       { src: 'https://placehold.co/1200x500?text=Imagem+3', alt: '', href: '' },
     ]),
-    dMode: 'auto', dView: '1', dRepeat: '0', dShape: 'l169', dSize: '100', dGap: '12', dMaxW: '1200',
+    dMode: 'auto', dView: '1', dRepeat: '0', dCard: '220', mCard: '150', dShape: 'l169', dSize: '100', dGap: '12', dMaxW: '1200',
     mMode: 'auto', mView: '2', mRepeat: '0', mShape: 'sq', mSize: '100', mGap: '8', mMaxW: '0',
     secs: '4',
     fit: 'cover',
