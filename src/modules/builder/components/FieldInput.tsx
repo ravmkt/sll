@@ -21,8 +21,10 @@ function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (
   const [open, setOpen] = useState<number | null>(null);
   const [armed, setArmed] = useState<number | null>(null);
   const [over, setOver] = useState<number | null>(null);
+  const [drag, setDrag] = useState<number | null>(null);
   const dragRef = useRef<number | null>(null);
   const endDrag = () => {
+    setDrag(null);
     dragRef.current = null;
     setArmed(null);
     setOver(null);
@@ -61,6 +63,9 @@ function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (
                 dragRef.current = i;
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/plain', String(i));
+                const sm = (e.currentTarget as HTMLElement).querySelector('summary');
+                if (sm) e.dataTransfer.setDragImage(sm, 24, 16);
+                setTimeout(() => { setDrag(i); setOpen(null); }, 0);
               }}
               onDragOver={(e) => {
                 if (dragRef.current === null) return;
@@ -74,7 +79,13 @@ function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (
                 drop(i);
               }}
               onDragEnd={endDrag}
-              style={over === i && dragRef.current !== null && dragRef.current !== i ? { outline: '2px solid #0094eb' } : undefined}
+              style={{
+                opacity: drag === i ? 0.4 : 1,
+                boxShadow:
+                  over === i && dragRef.current !== null && dragRef.current !== i
+                    ? dragRef.current < i ? '0 3px 0 0 #0094eb' : '0 -3px 0 0 #0094eb'
+                    : undefined,
+              }}
               onToggle={(e) => {
                 const o = (e.currentTarget as HTMLDetailsElement).open;
                 setOpen((cur) => (o ? i : cur === i ? null : cur));
