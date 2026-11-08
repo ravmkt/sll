@@ -33,7 +33,9 @@ export const ALIGN_OPTIONS = [
 
 export function safeUrl(s = ''): string {
   const t = s.trim();
-  return /^(https?:\/\/|\/|#|mailto:|tel:)/i.test(t) ? t : '#';
+  if (/^(https?:\/\/|\/|#|mailto:|tel:)/i.test(t)) return t;
+  if (/^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?#:].*)?$/i.test(t)) return `https://${t}`;
+  return '#';
 }
 
 export function parseItems(v?: string): Record<string, string>[] {
