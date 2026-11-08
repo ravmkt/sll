@@ -19,6 +19,7 @@ import { brl } from '../services/products';
 import type { Block, BlockType } from '../types';
 import type { Field } from '../registry-extra';
 import FieldInput from '../components/FieldInput';
+import SuccessModal from '../components/SuccessModal';
 import { fieldValue, productDescription } from '../styleKit';
 
 const collision: CollisionDetection = (args) => {
@@ -290,6 +291,7 @@ export default function BuilderEditorPage() {
   const moveTo = useBuilder((s) => s.moveTo);
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState('');
+  const [saved, setSaved] = useState(false);
   const [overlay, setOverlay] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -336,6 +338,7 @@ export default function BuilderEditorPage() {
     try {
       await savePage(id, title, { blocks });
       setStatus('Salvo');
+      setSaved(true);
     } catch (err) {
       setStatus((err as Error).message);
     }
@@ -358,6 +361,12 @@ export default function BuilderEditorPage() {
           Salvar
         </button>
       </header>
+      <SuccessModal
+        open={saved}
+        onClose={() => setSaved(false)}
+        title={'P\u00e1gina salva!'}
+        message={'Suas altera\u00e7\u00f5es foram salvas com sucesso.'}
+      />
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setOverlay(null)}>
         <div className="flex min-h-0 flex-1">
           <aside className="w-64 shrink-0 space-y-5 overflow-y-auto border-r border-slate-200 bg-white p-4">
