@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import {
-  CircleHelp, CirclePlay, Image as ImageIcon, LayoutTemplate, MessageSquareQuote,
+  CircleHelp, CirclePlay, Megaphone, Image as ImageIcon, LayoutTemplate, MessageSquareQuote,
   MousePointerClick, ShoppingBag, TextCursorInput, Timer, Type,
 } from 'lucide-react';
 import type { BlockType } from './types';
@@ -25,6 +25,12 @@ const cols = (n: number): PaletteItem => ({
 
 export const PALETTE: { title: string; items: PaletteItem[] }[] = [
   { title: 'Layout', items: [cols(1), cols(2), cols(3), cols(4)] },
+  {
+    title: 'Loja',
+    items: [
+      { key: 'announcement', type: 'announcement', label: 'Barra de an\u00fancio', icon: Megaphone },
+    ],
+  },
   {
     title: 'Conteúdo',
     items: [

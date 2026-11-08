@@ -1,12 +1,14 @@
 import type { CSSProperties } from 'react';
 import type { BlockType } from './types';
 import { EXTRA_BLOCKS, type BlockDef } from './registry-extra';
+import { STORE_BLOCKS } from './blocks/store';
 import { ALIGN_OPTIONS, boxCss, boxFields, num, safeUrl, textCss, textFields } from './styleKit';
 
 const align = (p: Record<string, string>, d: string) => (p.align || d) as CSSProperties['textAlign'];
 
 export const BLOCKS = {
   ...(EXTRA_BLOCKS as Record<Exclude<BlockType, 'hero' | 'text' | 'image' | 'button'>, BlockDef>),
+  ...(STORE_BLOCKS as Record<'announcement', BlockDef>),
   hero: {
     label: 'Hero',
     defaults: { title: 'Título principal', subtitle: 'Subtítulo da sua oferta', cta: 'Comprar agora', href: '#', bg: '#111827', align: 'center' },
