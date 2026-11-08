@@ -326,7 +326,52 @@ Deno.serve(async (req) => {
       const { data } = await admin.from('yampi_connections').select('last_sync_at,webhook_status').eq('store_id', c.store_id).maybeSingle();
       return json(data ?? {});
     }
-    if (body.action === 'register_webhook') return json({ status: await registerWebhook(c) });
+            if (body.action === 'push') {
+          const { data: pv } = await admin.from('product_variants').select('external_id').eq('store_id', c.store_id).eq('sku', String(body.sku || '')).maybeSingle();
+          if (!pv?.external_id) return json({ error: 'SKU sem external_id.' }, 400);
+          const id = encodeURIComponent(String(pv.external_id));
+          const res: Record<string, unknown> = {};
+          if (body.price !== undefined) {
+            const price = Number(body.price);
+            const sale = Number(body.sale_price ?? 0) || 0;
+            if (!(price > 0) || sale < 0 || (sale > 0 && sale >= price)) return json({ error: 'Preco invalido.' }, 400);
+            const cur = (await yampi(c, `catalog/skus/${id}`)).data;
+            await yampi(c, `catalog/skus/${id}`, {
+              method: 'PUT',
+              body: JSON.stringify({
+                product_id: cur.product_id, sku: cur.sku, barcode: cur.barcode, erp_id: cur.erp_id,
+                blocked_sale: cur.blocked_sale, quantity_managed: cur.quantity_managed, price_cost: cur.price_cost,
+                price_sale: price, price_discount: sale,
+                weight: cur.weight, height: cur.height, width: cur.width, length: cur.length,
+              }),
+            });
+            res.price = 'ok';
+          }
+          if (body.stock !== undefined) {
+            const qty = Math.floor(Number(body.stock));
+            if (!Number.isFinite(qty) || qty < 0) return json({ error: 'Estoque invalido.' }, 400);
+            const lines: any[] = (await yampi(c, `catalog/skus/${id}/stocks`)).data ?? [];
+            if (lines.length !== 1) return json({ error: `SKU com ${lines.length} linhas de estoque; envio bloqueado.` }, 400);
+            await yampi(c, `catalog/skus/${id}/stocks/${lines[0].id}`, {
+              method: 'PUT',
+              body: JSON.stringify({ stock_id: lines[0].stock_id, quantity: qty, min_quantity: lines[0].min_quantity ?? 0 }),
+            });
+            res.stock = 'ok';
+          }
+          const after = (await yampi(c, `catalog/skus/${id}`)).data;
+          res.after = { price_sale: after.price_sale, price_discount: after.price_discount, total_in_stock: after.total_in_stock };
+          return json(res);
+        }
+        if (body.action === 'register_webhook') return json({ status: await registerWebhook(c) });
+        if (body.action === 'probe') {
+          const { data: pv } = await admin.from('product_variants').select('external_id').eq('store_id', c.store_id).eq('sku', String(body.sku || '')).maybeSingle();
+          if (!pv?.external_id) return json({ error: 'SKU sem external_id.' }, 400);
+          const out: Record<string, unknown> = { external_id: pv.external_id };
+          for (const p of [`catalog/skus/${pv.external_id}`, `catalog/skus/${pv.external_id}/stocks`]) {
+            try { out[p] = await yampi(c, p); } catch (e) { out[p] = { error: e instanceof Error ? e.message : String(e) }; }
+          }
+          return json(out);
+        }
     if (body.action === 'sync') {
       if (!body.product_id && c.webhook_status !== 'ok') await registerWebhook(c);
       const r = await syncStore(c.store_id, body.product_id ? String(body.product_id) : undefined);
