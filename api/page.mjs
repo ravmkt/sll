@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     }
     if (!store) return fail(res, 404, 'Página não encontrada');
 
-    const r = await fetch(`${base}/storage/v1/object/public/builder-pages/${store}/${slug}/index.html`);
+    const r = await fetch(`${base}/storage/v1/object/public/builder-pages/${store}/${slug}/index.html?t=${Date.now()}`, { cache: 'no-store' });
     if (!r.ok) return fail(res, 404, 'Página não encontrada');
 
     const html = await r.text();
