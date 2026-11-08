@@ -98,14 +98,12 @@ export default function PlatformConnectCard({ storeId }: Props) {
 
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-5">
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex h-14 w-40 items-center justify-center rounded-xl border border-slate-200 bg-white px-3">
-          {logoIdx < LOGOS.length ? (
-            <img src={LOGOS[logoIdx]} alt="Yampi" onError={() => setLogoIdx((i) => i + 1)} className="h-10 w-auto max-w-full object-contain" />
-          ) : (
-            <span className="text-sm font-black text-slate-700">Yampi</span>
-          )}
-        </div>
+      <div className="flex flex-col items-center gap-3">
+        {logoIdx < LOGOS.length ? (
+          <img src={LOGOS[logoIdx]} alt="Yampi" onError={() => setLogoIdx((i) => i + 1)} className="h-16 w-auto max-w-[240px] object-contain" />
+        ) : (
+          <span className="text-2xl font-black text-slate-700 dark:text-white">Yampi</span>
+        )}
         {checking ? (
           <Loader2 size={16} className="animate-spin text-slate-400" />
         ) : connected ? (
@@ -116,21 +114,21 @@ export default function PlatformConnectCard({ storeId }: Props) {
       </div>
 
       {!checking && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-nowrap items-center justify-center gap-2">
           {connected ? (
             <>
-              <button type="button" onClick={doSync} disabled={syncing} className="inline-flex items-center gap-2 rounded-xl border border-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#0094eb] hover:bg-[#0094eb]/10 disabled:opacity-50 cursor-pointer">
+              <button type="button" onClick={doSync} disabled={syncing} className="inline-flex items-center gap-2 rounded-xl border border-[#0094eb] px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-[#0094eb] hover:bg-[#0094eb]/10 disabled:opacity-50 cursor-pointer">
                 {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Sincronizar agora
               </button>
-              <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] cursor-pointer">
+              <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] cursor-pointer">
                 <Link2 size={14} /> Atualizar credenciais
               </button>
-              <button type="button" onClick={doDisconnect} disabled={removing} className="inline-flex items-center gap-2 rounded-xl border border-rose-300 px-4 py-2 text-xs font-black uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 disabled:opacity-50 cursor-pointer">
+              <button type="button" onClick={doDisconnect} disabled={removing} className="inline-flex items-center gap-2 rounded-xl border border-rose-300 px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 disabled:opacity-50 cursor-pointer">
                 {removing ? <Loader2 size={14} className="animate-spin" /> : <Unlink size={14} />} Desconectar
               </button>
             </>
           ) : (
-            <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] cursor-pointer">
+            <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] cursor-pointer">
               <Link2 size={14} /> Conectar
             </button>
           )}
@@ -138,7 +136,7 @@ export default function PlatformConnectCard({ storeId }: Props) {
       )}
 
       {connected && info && (
-        <p className="text-[11px] text-slate-400">
+        <p className="text-center text-[11px] text-slate-400">
           {info.last_sync_at ? `Última sincronização: ${new Date(info.last_sync_at).toLocaleString('pt-BR')}` : 'Ainda não sincronizado.'}
           {' · '}
           {info.webhook_status === 'ok' ? 'Tempo real ativo' : info.webhook_status ? 'Tempo real indisponível (confere a cada 30 min)' : 'Tempo real não configurado'}

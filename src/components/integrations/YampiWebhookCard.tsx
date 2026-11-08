@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Copy, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,7 +91,7 @@ export default function YampiWebhookCard({ storeId, call }: Props) {
   }[state];
 
   return (
-    <div className="rounded-xl border bg-card p-5 space-y-4">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold">Ative a sincronização automática</h3>
@@ -106,8 +106,8 @@ export default function YampiWebhookCard({ storeId, call }: Props) {
         <li>
           Na Yampi, abra <b>Configurações &gt; Webhooks &gt; Novo webhook</b> e use esta URL:
           <div className="mt-2 flex gap-2">
-            <Input readOnly value={info?.url ?? ''} className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
-            <Button type="button" variant="outline" onClick={copy} disabled={!info}>
+            <Input readOnly value={info?.url ?? ''} className="font-mono text-xs border-slate-200 dark:border-slate-700" onFocus={(e) => e.currentTarget.select()} />
+            <Button type="button" variant="outline" className="border-slate-200 dark:border-slate-700" onClick={copy} disabled={!info}>
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
@@ -124,7 +124,7 @@ export default function YampiWebhookCard({ storeId, call }: Props) {
         <li>
           Salve o webhook na Yampi, copie a <b>Chave secreta</b> (começa com <code>wh_</code>) e cole aqui:
           <div className="mt-2 flex gap-2">
-            <Input value={key} onChange={(e) => setKey(e.target.value)} placeholder="wh_..." className="font-mono text-xs" />
+            <Input value={key} onChange={(e) => setKey(e.target.value)} placeholder="wh_..." className="font-mono text-xs border-slate-200 dark:border-slate-700" />
             <Button type="button" onClick={save} disabled={busy || !key.trim()}>
               Salvar
             </Button>
@@ -133,7 +133,7 @@ export default function YampiWebhookCard({ storeId, call }: Props) {
         <li>
           Altere o estoque de um produto na Yampi e clique em Testar.
           <div className="mt-2">
-            <Button type="button" variant="outline" onClick={test} disabled={busy}>
+            <Button type="button" variant="outline" className="border-slate-200 dark:border-slate-700" onClick={test} disabled={busy}>
               <RefreshCw className={`mr-2 h-4 w-4 ${busy ? 'animate-spin' : ''}`} />
               Testar
             </Button>
