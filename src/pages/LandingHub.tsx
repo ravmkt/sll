@@ -332,6 +332,8 @@ const TILES = [
   "from-amber-200 to-yellow-300",
   "from-violet-200 to-sky-200",
 ];
+const Skel = ({ className = "" }: { className?: string }) => <div className={`rounded-lg bg-slate-100 ${className}`} />;
+
 function MImg({ src, className = "", tile = 0 }: { src: string; className?: string; tile?: number }) {
   const [err, setErr] = useState(false);
   if (err) return <div className={`bg-gradient-to-br ${TILES[tile % TILES.length]} ${className}`} />;
@@ -354,7 +356,7 @@ function StoriesMock() {
           </div>
         ))}
       </div>
-      <MImg src="banner-home.jpg" tile={1} className="mt-6 h-32 w-full rounded-lg" />
+      <MImg src="banner-home.png" tile={1} className="mt-6 h-32 w-full rounded-lg" />
       <div className="mt-4 grid grid-cols-3 gap-3">
         {[1, 2, 3].map((i) => <MImg key={i} src={`home-${n2(i)}.jpg`} tile={i + 2} className="h-20 w-full rounded-lg" />)}
       </div>
