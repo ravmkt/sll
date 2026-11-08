@@ -98,9 +98,9 @@ export default function MeuPlanoPage() {
       setFiles(((l.data?.files ?? []) as FileRow[]).filter((f) => Number(f.bytes) > 0));
       if (!u.error) setUsage(u.data as Usage);
       setVer((x) => x + 1);
-    } catch {
+    } catch (e: any) {
       setFiles([]);
-      setMsg({ ok: false, text: 'Não foi possível carregar seus arquivos.' });
+      setMsg({ ok: false, text: 'Não foi possível carregar seus arquivos: ' + (e?.message || 'erro desconhecido') });
     }
   }, []);
 
