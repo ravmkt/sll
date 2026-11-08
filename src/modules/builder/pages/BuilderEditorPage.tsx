@@ -263,8 +263,8 @@ function PropertiesPanel() {
           />
         </>
       )}
-      {plain.map(renderField)}
-      {[...groups.entries()].map(([title, list]) => {
+      
+      {[...(plain.length ? ([['Geral', plain]] as [string, Field[]][]) : []), ...groups.entries()].map(([title, list]) => {
             const isOpen = open?.id === block.id && open.title === title;
             return (
               <div key={`${block.id}-${title}`} className="rounded-lg border border-slate-200 bg-slate-50/50">
