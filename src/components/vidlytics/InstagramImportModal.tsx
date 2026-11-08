@@ -125,9 +125,9 @@ export default function InstagramImportModal({ storeId, onClose }: { storeId: st
               <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
                 {integration ? 'Sessão do Instagram expirada.' : 'Instagram não conectado.'}
               </p>
-              <p className="mt-1 text-xs text-slate-500">Conecte sua conta em Integração para importar vídeos.</p>
+              <p className="mt-1 text-xs text-slate-500">Conecte sua conta em Integrações para importar vídeos.</p>
               <Link to="/dashboard/integracao" onClick={onClose} className="mt-4 inline-block rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white">
-                Ir para Integração
+                Ir para Integrações
               </Link>
             </div>
           )}

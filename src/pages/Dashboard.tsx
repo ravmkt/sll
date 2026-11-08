@@ -68,7 +68,7 @@ type Shortcut = { key: string; icon: ElementType; title: string; text: string; t
 const SHORTCUT_POOL: Shortcut[] = [
   { key: 'cat', icon: Package, title: 'Vídeos e catálogo', text: 'Organize o conteúdo da sua loja', to: PRODUCTS_ROUTE },
   { key: 'ins', icon: Lightbulb, title: 'Insights', text: '', to: TIPS_ROUTE, tour: 'noah' },
-  { key: 'inst', icon: Plug, title: 'Instalação', text: 'Acesse a configuração dos módulos', to: '/dashboard/integracao' },
+  { key: 'inst', icon: Plug, title: 'Instalação', text: 'Acesse a configuração dos módulos', to: '/dashboard/instalacao' },
   { key: 'plan', icon: DollarSign, title: 'Assinatura & Planos', text: 'Gerencie módulos e cobrança', to: '/dashboard/planos' },
   { key: 'club', icon: Gift, title: 'Clube SLL', text: 'Indique lojas e acompanhe ganhos', to: '/dashboard/afiliados' },
   { key: 'met', icon: Activity, title: 'Métricas', text: 'Relatório completo de resultados', to: METRICS_ROUTE },

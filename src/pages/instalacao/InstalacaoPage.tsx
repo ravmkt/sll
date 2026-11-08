@@ -4,7 +4,6 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLoja } from "@/contexts/LojaContext";
 import { supabase } from "@/lib/supabase";
 import { getActiveSubscriptions } from "@/services/subscriptions/getStoreSubscriptions";
-import { SocialIntegrationsCard } from "@/components/integracao/SocialIntegrationsCard";
 
 declare const __APP_BUILD_ID__: string;
 
@@ -13,7 +12,7 @@ declare const __APP_BUILD_ID__: string;
 const KNOWN_MODULES = ["vidlytics", "stream_sell", "gamification", "reviews"] as const;
 type ModuleKey = (typeof KNOWN_MODULES)[number];
 
-export const IntegrationPage = () => {
+export const InstalacaoPage = () => {
   const { storeId } = useLoja();
 
   const [copied, setCopied] = useState(false);
@@ -308,7 +307,6 @@ window.SLL_STORE_ID = "${storeId || ""}";
         />
 
         {/* Conexões de Redes Sociais */}
-        <SocialIntegrationsCard storeId={storeId} />
       </div>
     </DashboardLayout>
   );
@@ -406,7 +404,7 @@ function ScriptBlock({
   );
 }
 
-export default IntegrationPage;
+export default InstalacaoPage;
 
 
 

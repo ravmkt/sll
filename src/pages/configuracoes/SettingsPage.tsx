@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,6 @@ import {
   Loader2, Save, Image as ImageIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import PlatformConnectCard from '@/components/configuracoes/PlatformConnectCard';
 import DomainSettings from '@/components/domains/DomainSettings';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
@@ -448,12 +447,6 @@ const SettingsPage: React.FC = () => {
 
             {/* PLATAFORMA CONECTADA */}
             <div className="h-full [&>*]:h-full">
-              <PlatformConnectCard
-                storeId={storeId || ''}
-                platform={form.platform}
-                platforms={PLATAFORMAS}
-                onChangePlatform={(p) => setForm((prev) => ({ ...prev, platform: p }))}
-              />
             </div>
 
             {/* MEU DOMÍNIO */}

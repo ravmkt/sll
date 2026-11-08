@@ -11,6 +11,7 @@ const PREFIX = [
   '/dashboard/afiliados',
   '/dashboard/settings',
   '/dashboard/integracao',
+  '/dashboard/instalacao',
   '/dashboard/assinaturas',
   '/dashboard/planos',
   '/dashboard/meu-plano',

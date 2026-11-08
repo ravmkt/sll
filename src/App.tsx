@@ -56,7 +56,8 @@ const MeuPlano = lazy(() => import('@/pages/meu-plano/MeuPlanoPage'));
 const Planos = lazy(() => import('./pages/planos/Planos'));
 const Checkout = lazy(() => import('./pages/checkout/CheckoutPage'));
 const PlanosGatePage = lazy(() => import('./pages/planos/PlanosGatePage'));
-const IntegrationPage = lazy(() => import('./pages/integracao/IntegrationPage'));
+const IntegrationPage = lazy(() => import('./pages/integracoes/IntegracoesPage'));
+const InstalacaoPage = lazy(() => import('./pages/instalacao/InstalacaoPage'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
 const DicasNoah = lazy(() => import('./pages/dicas/DicasNoah'));
@@ -267,6 +268,18 @@ function AppRoutes() {
             user ? (
               <SubscriptionGate>
                 <IntegrationPage />
+              </SubscriptionGate>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
+            <Route
+          path="/dashboard/instalacao"
+          element={
+            user ? (
+              <SubscriptionGate>
+                <InstalacaoPage />
               </SubscriptionGate>
             ) : (
               <Navigate to="/auth" replace />

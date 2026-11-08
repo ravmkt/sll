@@ -295,7 +295,8 @@ Deno.serve(async (req) => {
       const kind = await hmacKind(raw, c.webhook_hmac_key, hdr);
       console.log('yampi-hmac', JSON.stringify({ store: c.store_id, key: !!c.webhook_hmac_key, header: !!hdr, ok: kind }));
       if (Deno.env.get('YAMPI_HMAC_ENFORCE') === 'true' && c.webhook_hmac_key && !kind) return json({ error: 'invalid signature' }, 401);
-      await admin.from('yampi_connections').update({ dirty_at: new Date().toISOString() }).eq('store_id', c.store_id);
+      const hookAt = new Date().toISOString();
+      await admin.from('yampi_connections').update({ dirty_at: hookAt, webhook_last_at: hookAt, ...(kind ? { webhook_status: 'ok' } : {}) }).eq('store_id', c.store_id);
       await recordLiveSale(c.store_id, raw);
       EdgeRuntime.waitUntil(syncStore(c.store_id).catch(() => null));
       return json({ ok: true });
@@ -305,7 +306,7 @@ Deno.serve(async (req) => {
     const key = Deno.env.get('CRON_KEY');
     if (body.action === 'cron') {
       if (!key || req.headers.get('x-cron-key') !== key) return json({ error: 'forbidden' }, 403);
-      const cutoff = new Date(Date.now() - 30 * 60000).toISOString();
+      const cutoff = new Date(Date.now() - 5 * 60000).toISOString();
       const { data } = await admin.from('yampi_connections').select('store_id')
         .or(`dirty_at.not.is.null,last_sync_at.is.null,last_sync_at.lt.${cutoff}`).limit(20);
       EdgeRuntime.waitUntil((async () => { for (const r of data || []) await syncStore(r.store_id).catch(() => null); })());
@@ -364,6 +365,18 @@ Deno.serve(async (req) => {
           return json(res);
         }
         if (body.action === 'register_webhook') return json({ status: await registerWebhook(c) });
+
+    if (body.action === 'webhook_info') {
+      const { data } = await admin.from('yampi_connections').select('webhook_last_at').eq('store_id', c.store_id).maybeSingle();
+      return json({ url: `${SELF}?s=${c.webhook_secret}`, status: c.webhook_status, has_key: !!c.webhook_hmac_key, last_at: data?.webhook_last_at ?? null });
+    }
+
+    if (body.action === 'save_webhook_key') {
+      const k = String(body.webhook_key ?? '').trim();
+      if (!/^wh_[A-Za-z0-9]{16,}$/.test(k)) return json({ error: 'Chave inválida. Ela começa com wh_.' });
+      await admin.from('yampi_connections').update({ webhook_hmac_key: k, webhook_status: 'ok' }).eq('store_id', c.store_id);
+      return json({ ok: true });
+    }
         if (body.action === 'probe') {
           const { data: pv } = await admin.from('product_variants').select('external_id').eq('store_id', c.store_id).eq('sku', String(body.sku || '')).maybeSingle();
           if (!pv?.external_id) return json({ error: 'SKU sem external_id.' }, 400);
