@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
@@ -51,9 +52,9 @@ function Tile({ item, on, onClick }: { item: Item; on: boolean; onClick: () => v
   );
 }
 
-function Modal({ open, title, onClose, children }: { open: boolean; title: string; onClose: () => void; children: ReactNode }) {
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return createPortal(
-    <div className={open ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4' : 'hidden'} onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
       <div
         className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#1a1f35]"
         onClick={(e) => e.stopPropagation()}
@@ -71,13 +72,17 @@ function Modal({ open, title, onClose, children }: { open: boolean; title: strin
   );
 }
 
+type OpenKey = 'yampi' | 'instagram' | 'tiktok' | null;
+
 export default function IntegracoesPage() {
   const { storeId } = useLoja();
   const [status, setStatus] = useState<Record<string, boolean>>({});
-  // Volta do login do Instagram/TikTok: abre o modal de redes sociais para processar o retorno.
-  const [open, setOpen] = useState<string | null>(() => {
+  // Volta do login: abre so o modal da rede de origem para processar o retorno.
+  const [open, setOpen] = useState<OpenKey>(() => {
     const p = new URLSearchParams(window.location.search);
-    return p.has('code') || p.has('tiktok') ? 'social' : null;
+    if (p.has('tiktok')) return 'tiktok';
+    if (p.has('code')) return 'instagram';
+    return null;
   });
 
   const load = useCallback(async () => {
@@ -123,7 +128,7 @@ export default function IntegracoesPage() {
               <h2 className={H2}>Plataformas de e-commerce</h2>
               <div className="flex flex-wrap gap-4">
                 {PLATFORMS.map((p) => (
-                  <Tile key={p.key} item={p} on={!!status[p.key]} onClick={() => setOpen(p.key)} />
+                  <Tile key={p.key} item={p} on={!!status[p.key]} onClick={() => setOpen(p.key as OpenKey)} />
                 ))}
               </div>
             </section>
@@ -132,21 +137,35 @@ export default function IntegracoesPage() {
               <h2 className={H2}>Redes sociais</h2>
               <div className="flex flex-wrap gap-4">
                 {SOCIALS.map((s) => (
-                  <Tile key={s.key} item={s} on={!!status[s.key]} onClick={() => setOpen('social')} />
+                  <Tile key={s.key} item={s} on={!!status[s.key]} onClick={() => setOpen(s.key as OpenKey)} />
                 ))}
               </div>
             </section>
 
             {open === 'yampi' && (
-              <Modal open title="Yampi" onClose={close}>
+              <Modal title="Yampi" onClose={close}>
                 <PlatformConnectCard storeId={storeId} platform="Yampi" platforms={['Yampi']} onChangePlatform={() => {}} />
                 {status.yampi && <YampiWebhookCard storeId={storeId} call={call} />}
+                <Link
+                  to="/dashboard/instalacao"
+                  className="block rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-[#0091ff] hover:bg-blue-100"
+                >
+                  Proximo passo: instalar o script de rastreamento &rarr;
+                </Link>
               </Modal>
             )}
 
-            <Modal open={open === 'social'} title="Redes sociais" onClose={close}>
-              <SocialIntegrationsCard storeId={storeId} />
-            </Modal>
+            {open === 'instagram' && (
+              <Modal title="Instagram" onClose={close}>
+                <SocialIntegrationsCard storeId={storeId} only="instagram" />
+              </Modal>
+            )}
+
+            {open === 'tiktok' && (
+              <Modal title="TikTok" onClose={close}>
+                <SocialIntegrationsCard storeId={storeId} only="tiktok" />
+              </Modal>
+            )}
           </>
         )}
       </div>
