@@ -158,7 +158,7 @@ export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
         <div className="flex flex-col justify-center gap-3">
           <h2 className="text-3xl font-bold">{p.name}</h2>
           <p className="text-2xl font-semibold text-emerald-600">{p.price}</p>
-          <span className="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-center font-semibold text-white">{p.cta}</span>
+          <a href={p.href} className="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-center font-semibold text-white">{p.cta}</a>
         </div>
       </section>
     ),

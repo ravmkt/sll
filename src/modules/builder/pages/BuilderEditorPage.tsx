@@ -14,6 +14,8 @@ import { PALETTE, type PaletteItem } from '../palette';
 import { findBlock, findLoc, useBuilder, type Target } from '../store';
 import { getPage, savePage } from '../services/pages';
 import PublishBar from '../components/PublishBar';
+import ProductPickerModal from '../components/ProductPickerModal';
+import { brl } from '../services/products';
 import type { Block, BlockType } from '../types';
 import type { Field } from '../registry-extra';
 
@@ -206,6 +208,7 @@ function PropertiesPanel() {
   const setCols = useBuilder((s) => s.setCols);
   const duplicate = useBuilder((s) => s.duplicate);
   const remove = useBuilder((s) => s.remove);
+  const [pick, setPick] = useState(false);
   if (!block)
     return <p className="p-5 text-sm font-medium text-slate-500">Selecione um bloco para editar.</p>;
   const def = BLOCKS[block.type];
@@ -223,6 +226,27 @@ function PropertiesPanel() {
           </button>
         </div>
       </div>
+      {block.type === 'product' && (
+        <>
+          <button
+            type="button"
+            onClick={() => setPick(true)}
+            className="w-full rounded-xl bg-[#0094eb] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#007bc4]"
+          >
+            Escolher produto da loja
+          </button>
+          <ProductPickerModal
+            open={pick}
+            onClose={() => setPick(false)}
+            onSelect={(p) => {
+              update(block.id, 'name', p.name);
+              update(block.id, 'image', p.image || block.props.image || '');
+              update(block.id, 'price', brl(p.salePrice ?? p.price));
+              if (p.url) update(block.id, 'href', p.url);
+            }}
+          />
+        </>
+      )}
       {def.fields.map((f) =>
         block.type === 'columns' && f.key === 'cols' ? (
           <div key={f.key}>
