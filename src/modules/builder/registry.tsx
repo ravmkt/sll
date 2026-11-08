@@ -8,7 +8,7 @@ const align = (p: Record<string, string>, d: string) => (p.align || d) as CSSPro
 
 export const BLOCKS = {
   ...(EXTRA_BLOCKS as Record<Exclude<BlockType, 'hero' | 'text' | 'image' | 'button'>, BlockDef>),
-  ...(STORE_BLOCKS as Record<'announcement', BlockDef>),
+  ...(STORE_BLOCKS as Record<'announcement' | 'highlights', BlockDef>),
   hero: {
     label: 'Hero',
     defaults: { title: 'Título principal', subtitle: 'Subtítulo da sua oferta', cta: 'Comprar agora', href: '#', bg: '#111827', align: 'center' },
