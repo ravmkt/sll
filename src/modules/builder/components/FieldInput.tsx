@@ -176,7 +176,7 @@ export default function FieldInput({ f, value, onChange, props }: { f: Field; va
           value={value}
           onChange={(e) => {
             const v = e.target.value;
-            if (v !== ' && mx !== undefined && Number(v) > mx) onChange(String(mx));
+            if (v !== '' && mx !== undefined && Number(v) > mx) onChange(String(mx));
             else onChange(v);
           }}
           className={INPUT}

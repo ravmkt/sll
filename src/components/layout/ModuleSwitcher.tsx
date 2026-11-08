@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, LayoutTemplate, Radio } from 'lucide-react';
+import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, LayoutTemplate, Radio, Boxes } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { supabase } from '@/lib/supabase';
 import { getCatalogModules, type CatalogModule } from '@/services/plans/getCatalogShowcase';
@@ -13,6 +13,7 @@ type Item = { key: string; name: string; category: string; path: string; icon: E
 const SWITCHER_MODULES: Item[] = [
   { key: 'vidlytics', name: 'Vidlytics', category: 'Vídeos Interativos', path: '/dashboard/modules/vidlytics', icon: Layers, logo: '/assets/vidlytics-logo-ico.png' },
   { key: 'stream_sell', name: 'Stream Sell', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/stream-sell', icon: Radio, logo: '/assets/stream-sell-logo-ico.png' },
+  { key: 'gestor', name: 'Gestor', category: 'Operação e Gestão', path: '/dashboard/modules/gestor', icon: Boxes },
   { key: 'builder', name: 'Builder', category: 'Páginas & Domínio Próprio', path: '/dashboard/modules/builder', icon: LayoutTemplate },
   { key: 'gamification', name: 'Gamificação', category: 'Engajamento & Prêmios', path: '/dashboard/modules/gamificacao', icon: Gamepad2, soon: true },
 ];
