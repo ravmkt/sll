@@ -41,7 +41,7 @@ const MOVE_OPTIONS: { value: MoveType; label: string }[] = [
   { value: 'adjustment', label: 'Ajuste para novo saldo' },
 ];
 
-const selectCls = 'h-10 w-full rounded-md border border-input bg-background px-3 text-sm';
+const selectCls = 'h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900';
 
 export default function GestorPage() {
   const { storeId, loading: lojaLoading } = useLoja();
@@ -277,7 +277,7 @@ export default function GestorPage() {
       </div>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent>
+        <DialogContent className="bg-white text-slate-900 [&_input]:bg-white [&_input]:text-slate-900 [&_textarea]:bg-white [&_textarea]:text-slate-900 [&_label]:text-slate-700">
           <DialogHeader><DialogTitle>{editing?.name}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div>
@@ -297,10 +297,10 @@ export default function GestorPage() {
       </Dialog>
 
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg bg-white text-slate-900 [&_input]:bg-white [&_input]:text-slate-900 [&_textarea]:bg-white [&_textarea]:text-slate-900 [&_label]:text-slate-700">
           <DialogHeader>
             <DialogTitle>
-              {target?.product.name} · {target?.variant.title || target?.variant.sku}
+              {target?.product.name}{target && (target.variant.title || target.variant.sku) !== target.product.name && <> &middot; {target.variant.title || target.variant.sku}</>}
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm">Saldo atual: <b>{target?.variant.stock ?? 0}</b></p>
