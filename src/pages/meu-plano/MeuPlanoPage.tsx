@@ -1,36 +1,46 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Film, Image as ImageIcon, Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { Film, Image as ImageIcon, FileText, Trash2, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getCurrentStoreId } from '@/modules/builder/services/pages';
 import StorageUsageCard from '@/components/billing/StorageUsageCard';
 
-type FileRow = { kind: 'video' | 'builder'; id: string; name: string; bytes: number; created_at: string | null; url?: string | null };
+type FileRow = {
+  id: string; bucket: string; module: string; name: string; title?: string | null;
+  vid_id?: string | null; bytes: number; created_at: string | null;
+};
 type Usage = { used_bytes: number; limit_bytes: number | null };
-type Filter = 'all' | 'video' | 'builder';
 type Sort = 'size' | 'date';
 
 const MB = 1024 * 1024;
 const GB = 1024 * MB;
 const fmt = (n: number) => (n >= GB ? `${(n / GB).toFixed(2).replace('.', ',')} GB` : `${(n / MB).toFixed(1).replace('.', ',')} MB`);
 
-async function removeVideo(f: FileRow): Promise<void> {
+const canDelete = (f: FileRow) => f.module === 'Vidlytics' || (f.module === 'Builder' && f.bucket === 'builder-assets');
+const reason = (f: FileRow) => (f.module === 'Loja' ? 'Em uso pela loja' : f.bucket === 'builder-pages' ? 'Exclua a página no Builder' : 'Indisponível');
+
+async function removeFile(f: FileRow, storeId: string): Promise<void> {
   const sb = supabase as any;
-  const { data, error } = await sb.schema('vidlytics').from('vid_videos').delete().eq('id', f.id).select('id');
-  if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('Sem permissão para excluir este vídeo.');
-  const m = f.url ? f.url.match(/\/object\/public\/([^/]+)\/(.+?)(?:\?|$)/) : null;
-  if (m) {
-    const r = await sb.storage.from(m[1]).remove([decodeURIComponent(m[2])]);
-    if (r.error) console.warn('[MeuPlano] arquivo físico não removido:', r.error.message);
+  const paths = [f.id];
+  if (f.bucket === 'videos' && f.module === 'Vidlytics' && !f.id.includes('/thumbnails/')) {
+    paths.push(`${storeId}/thumbnails/${f.name.replace(/\.[^.]*$/, '')}_thumb.jpg`);
   }
+  const r = await sb.storage.from(f.bucket).remove(paths);
+  if (r.error) throw new Error(r.error.message);
+  if (!r.data || r.data.length === 0) throw new Error('Não foi possível excluir: sem permissão no armazenamento.');
+
+  if (f.vid_id) {
+    const d = await sb.schema('vidlytics').from('vid_videos').delete().eq('id', f.vid_id).select('id');
+    if (d.error) throw new Error(d.error.message);
+  }
+  if (f.bucket === 'builder-assets') await sb.rpc('refresh_builder_storage', { p_store: storeId });
 }
 
 export default function MeuPlanoPage() {
   const [storeId, setStoreId] = useState<string | null>(null);
   const [files, setFiles] = useState<FileRow[] | null>(null);
   const [usage, setUsage] = useState<Usage | null>(null);
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<string>('all');
   const [sort, setSort] = useState<Sort>('size');
   const [target, setTarget] = useState<FileRow | null>(null);
   const [busy, setBusy] = useState(false);
@@ -58,8 +68,10 @@ export default function MeuPlanoPage() {
 
   useEffect(() => { void load(); }, [load]);
 
+  const modules = useMemo(() => Array.from(new Set((files ?? []).map((f) => f.module))), [files]);
+
   const list = useMemo(() => {
-    const base = (files ?? []).filter((f) => filter === 'all' || f.kind === filter);
+    const base = (files ?? []).filter((f) => filter === 'all' || f.module === filter);
     return [...base].sort((a, b) =>
       sort === 'size'
         ? b.bytes - a.bytes
@@ -72,16 +84,8 @@ export default function MeuPlanoPage() {
     setBusy(true);
     setMsg(null);
     try {
-      if (target.kind === 'builder') {
-        const sb = supabase as any;
-        const r = await sb.storage.from('builder-assets').remove([target.id]);
-        if (r.error) throw new Error(r.error.message);
-        if (!r.data || r.data.length === 0) throw new Error('Nao foi possivel excluir: sem permissao no armazenamento.');
-        await sb.rpc('refresh_builder_storage', { p_store: storeId });
-      } else {
-        await removeVideo(target);
-      }
-      setMsg({ ok: true, text: `"${target.name}" foi excluído.` });
+      await removeFile(target, storeId);
+      setMsg({ ok: true, text: `"${target.title || target.name}" foi excluído.` });
       setTarget(null);
       await load();
     } catch (e: any) {
@@ -92,8 +96,9 @@ export default function MeuPlanoPage() {
   };
 
   const pct = usage?.limit_bytes ? (usage.used_bytes / usage.limit_bytes) * 100 : 0;
-  const chip = (k: Filter, label: string) => (
+  const chip = (k: string, label: string) => (
     <button
+      key={k}
       type="button"
       onClick={() => setFilter(k)}
       className={`rounded-full px-3 py-1 text-xs font-bold transition ${filter === k ? 'bg-[#0094eb] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'}`}
@@ -106,7 +111,7 @@ export default function MeuPlanoPage() {
     <div className="mx-auto w-full max-w-4xl space-y-5 p-4 md:p-6">
       <div>
         <h1 className="text-xl font-black text-slate-900 dark:text-white">Meu plano</h1>
-        <p className="text-sm text-slate-500">Veja quanto você já usa do seu plano e libere espaço excluindo arquivos.</p>
+        <p className="text-sm text-slate-500">Veja quanto você já usa do seu plano em toda a plataforma e libere espaço excluindo arquivos.</p>
       </div>
 
       <StorageUsageCard key={ver} />
@@ -128,7 +133,7 @@ export default function MeuPlanoPage() {
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-[#1a1f2c]">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex gap-2">{chip('all', 'Todos')}{chip('video', 'Vídeos')}{chip('builder', 'Builder')}</div>
+          <div className="flex flex-wrap gap-2">{chip('all', 'Todos')}{modules.map((m) => chip(m, m))}</div>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as Sort)}
@@ -146,26 +151,29 @@ export default function MeuPlanoPage() {
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {list.map((f) => {
-              const isVid = f.kind === 'video' || /\.(mp4|webm)$/i.test(f.name);
-              const Icon = isVid ? Film : ImageIcon;
+              const Icon = /\.(mp4|webm|mov)$/i.test(f.name) ? Film : /\.html?$/i.test(f.name) ? FileText : ImageIcon;
               return (
-                <li key={`${f.kind}:${f.id}`} className="flex items-center gap-3 py-2.5">
+                <li key={`${f.bucket}:${f.id}`} className="flex items-center gap-3 py-2.5">
                   <Icon className="h-5 w-5 shrink-0 text-slate-400" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{f.name}</p>
+                    <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{f.title || f.name}</p>
                     <p className="text-xs text-slate-500">
-                      {f.kind === 'video' ? 'Vidlytics' : 'Builder'}
+                      {f.module}
                       {f.created_at ? ` · ${new Date(f.created_at).toLocaleDateString('pt-BR')}` : ''}
                     </p>
                   </div>
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{fmt(Number(f.bytes))}</span>
-                  <button
-                    type="button"
-                    onClick={() => setTarget(f)}
-                    className="flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" /> Excluir
-                  </button>
+                  {canDelete(f) ? (
+                    <button
+                      type="button"
+                      onClick={() => setTarget(f)}
+                      className="flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Excluir
+                    </button>
+                  ) : (
+                    <span className="w-28 text-right text-[11px] text-slate-400">{reason(f)}</span>
+                  )}
                 </li>
               );
             })}
@@ -178,7 +186,7 @@ export default function MeuPlanoPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl dark:bg-[#1a1f2c]">
             <h2 className="text-base font-black text-slate-900 dark:text-white">Excluir arquivo?</h2>
             <p className="mt-2 break-all text-sm text-slate-600 dark:text-slate-300">
-              <strong>{target.name}</strong> ({fmt(Number(target.bytes))}) será removido para sempre.
+              <strong>{target.title || target.name}</strong> ({fmt(Number(target.bytes))}) será removido para sempre.
             </p>
             <p className="mt-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
               Se este arquivo estiver em uma página, widget ou vídeo publicado, ele deixará de aparecer lá.
