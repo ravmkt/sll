@@ -164,7 +164,7 @@ export default function BuilderEditorPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-gray-100">
+    <div className="flex h-full flex-col bg-gray-100">
       <header className="flex items-center gap-4 border-b bg-white px-4 py-2">
         <Link to="/dashboard/modules/builder" className="text-sm text-gray-500 hover:underline">← Voltar</Link>
         <input value={title} onChange={(e) => setTitle(e.target.value)} className="flex-1 rounded border px-3 py-1 font-medium" />

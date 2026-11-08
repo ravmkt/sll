@@ -1,6 +1,8 @@
 import StreamSellLanding from '@/pages/landing/StreamSellLanding';
 import BuilderListPage from '@/modules/builder/pages/BuilderListPage';
 import BuilderEditorPage from '@/modules/builder/pages/BuilderEditorPage';
+import BuilderEditorShell from '@/modules/builder/components/BuilderEditorShell';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import RadarRoutes from '@/pages/radar/RadarRoutes';
 import LiveCockpitRedirect from '@/pages/streamsell/LiveCockpitRedirect';
 import VidlyticsLanding from '@/pages/landing/VidlyticsLanding';
@@ -339,8 +341,8 @@ function AppRoutes() {
         <Route path="/checkout/:id" element={user ? <CheckoutIdRedirect /> : <Navigate to="/auth" replace />} />
         <Route path="/redefinir-senha" element={<ResetPassword />} />
         <Route path="/dashboard/modules/radar/*" element={user ? (<SubscriptionGate><ModuleGate moduleKey="radar"><RadarRoutes /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
-        <Route path="/dashboard/modules/builder" element={user ? <ModuleGate moduleKey="builder"><BuilderListPage /></ModuleGate> : <Navigate to="/auth" replace />} />
-        <Route path="/dashboard/modules/builder/:id" element={user ? <ModuleGate moduleKey="builder"><BuilderEditorPage /></ModuleGate> : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/builder" element={user ? <ModuleGate moduleKey="builder"><DashboardLayout><BuilderListPage /></DashboardLayout></ModuleGate> : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/builder/:id" element={user ? <ModuleGate moduleKey="builder"><BuilderEditorShell><BuilderEditorPage /></BuilderEditorShell></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes></DashboardShell></>
     </Suspense>
