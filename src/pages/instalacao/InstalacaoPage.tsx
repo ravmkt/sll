@@ -156,7 +156,7 @@ window.SLL_STORE_ID = "${storeId || ""}";
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-[#0091ff]">
             <Store className="h-3.5 w-3.5" />
-            Integração
+            Instalação &amp; Script
           </div>
           <h1 className="mt-3 text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
             Instalação do SLL

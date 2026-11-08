@@ -84,9 +84,3 @@ end $$;
 
 revoke all on function public.store_files_list(uuid) from public, anon;
 grant execute on function public.store_files_list(uuid) to authenticated;
-
--- Conferencia: total por modulo da sua loja (troque pelo id da loja se precisar)
-select e ->> 'module' as modulo, count(*) as arquivos, sum((e ->> 'bytes')::bigint) as bytes
-from jsonb_array_elements(
-  public.store_files_list('47ad9ac3-71e7-4f6b-8d26-2a0d6a6552b6'::uuid) -> 'files') e
-group by 1 order by 3 desc;
