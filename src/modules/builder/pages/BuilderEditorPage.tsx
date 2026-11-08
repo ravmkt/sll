@@ -211,7 +211,7 @@ function PropertiesPanel() {
     ) : (
       <label key={f.key} className="block">
         <span className="mb-1.5 block text-xs font-semibold text-slate-600">{f.label}</span>
-        <FieldInput f={f} value={fieldValue(f, block.props)} onChange={(v) => update(block.id, f.key, v)} />
+        <FieldInput f={f} value={fieldValue(f, block.props)} onChange={(v) => update(block.id, f.key, v)} props={block.props} />
       </label>
     );
 

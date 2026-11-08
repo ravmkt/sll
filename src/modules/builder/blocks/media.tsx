@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
+import { CAROUSEL_JS } from './carouselJs';
 import type { BlockType } from '../types';
 import type { BlockDef } from '../registry-extra';
 import { ALIGN_OPTIONS, num, parseItems, safeUrl, textCss, textFields } from '../styleKit';
@@ -78,6 +80,95 @@ function coverDoc(cover: string, href: string): string {
   );
 }
 
+const CAR_CSS =
+  '.sll-car-vp{overflow:hidden}' +
+  '.sll-car-tr{display:flex;touch-action:pan-y;user-select:none;-webkit-user-select:none;will-change:transform}' +
+  '.sll-car-s{flex:0 0 calc(100% / var(--v));min-width:0;box-sizing:border-box}' +
+  '.sll-car{--v:var(--vd)}@media(max-width:700px){.sll-car{--v:var(--vm)}}';
+
+const clampN = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+const imgCount = (p: Record<string, string>) => Math.max(1, parseItems(p.items).filter((x) => x.src).length);
+
+function CarouselView({ p }: { p: Record<string, string> }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const list = parseItems(p.items).filter((x) => x.src);
+  const n = list.length;
+  const sig = JSON.stringify(p);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || n < 2) return undefined;
+    const make = new Function('return ' + CAROUSEL_JS)() as (r: HTMLElement) => () => void;
+    return make(el);
+  }, [sig, n]);
+
+  if (n === 0) {
+    return <section style={{ padding: 32, textAlign: 'center', color: '#6b7280' }}>{'Adicione imagens ao carrossel.'}</section>;
+  }
+
+  const dv = clampN(Math.round(num(p.dView, 1)), 1, n);
+  const mv = clampN(Math.round(num(p.mView, 1)), 1, Math.min(2, n));
+  const dm = p.dMode || p.mode || 'auto';
+  const mm = p.mMode || p.mode || 'auto';
+  const sec = clampN(num(p.secs, 4), 1, 30);
+  const gap = clampN(num(p.gap, 12), 0, 80);
+  const mw = num(p.maxW, 1200);
+  const ratio = p.ratio && p.ratio !== 'auto' ? p.ratio : undefined;
+  const fit = p.fit === 'contain' ? 'contain' : 'cover';
+  const rootStyle = {
+    maxWidth: mw > 0 ? mw : undefined,
+    margin: '0 auto',
+    overflow: 'hidden',
+    '--vd': dv,
+    '--vm': mv,
+  } as CSSProperties;
+
+  return (
+    <section style={{ background: p.bg || undefined, padding: `${num(p.pad, 16)}px 32px` }}>
+      <style dangerouslySetInnerHTML={{ __html: CAR_CSS }} />
+      <div
+        key={sig}
+        ref={ref}
+        className="sll-car"
+        data-car=""
+        data-dm={dm}
+        data-mm={mm}
+        data-dv={dv}
+        data-mv={mv}
+        data-secs={sec}
+        style={rootStyle}
+      >
+        <div className="sll-car-vp" style={{ margin: `0 -${gap / 2}px` }}>
+          <div className="sll-car-tr" data-car-tr="" style={{ cursor: n > 1 ? 'grab' : undefined }}>
+            {list.map((it, i) => {
+              const im = (
+                <img
+                  src={safeUrl(it.src)}
+                  alt={it.alt || ''}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  draggable={false}
+                  style={{ width: '100%', display: 'block', aspectRatio: ratio, objectFit: fit, borderRadius: num(p.radius, 8) }}
+                />
+              );
+              const href = (it.href || '').trim();
+              return (
+                <div key={i} className="sll-car-s" style={{ padding: `0 ${gap / 2}px` }}>
+                  {href ? <a href={safeUrl(href)} draggable={false} style={{ display: 'block' }}>{im}</a> : im}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const CAR_MODES = [
+  { value: 'auto', label: 'Autom\u00e1tica (infinita)' },
+  { value: 'manual', label: 'Manual: arrastar (infinita)' },
+];
+
 const CAROUSEL: BlockDef = {
   label: 'Carrossel de imagens',
   defaults: {
@@ -86,10 +177,14 @@ const CAROUSEL: BlockDef = {
       { src: 'https://placehold.co/1200x500?text=Imagem+2', alt: '', href: '' },
       { src: 'https://placehold.co/1200x500?text=Imagem+3', alt: '', href: '' },
     ]),
-    mode: 'auto',
+    dMode: 'auto',
+    mMode: 'auto',
+    dView: '1',
+    mView: '1',
     secs: '4',
     ratio: '16 / 9',
     fit: 'cover',
+    gap: '12',
     maxW: '1200',
     radius: '8',
     pad: '16',
@@ -109,91 +204,24 @@ const CAROUSEL: BlockDef = {
         { key: 'href', label: 'Link (opcional)' },
       ],
     },
+    { key: 'dMode', label: 'Troca no desktop', type: 'select', options: CAR_MODES, group: 'Desktop', def: 'auto' },
+    { key: 'dView', label: 'Imagens vis\u00edveis (m\u00e1x. = qtd. de imagens)', type: 'number', min: 1, max: 12, maxFn: imgCount, group: 'Desktop', def: '1' },
+    { key: 'mMode', label: 'Troca no celular', type: 'select', options: CAR_MODES, group: 'Celular', def: 'auto' },
+    { key: 'mView', label: 'Imagens vis\u00edveis (m\u00e1x. 2)', type: 'number', min: 1, max: 2, maxFn: (p) => Math.min(2, imgCount(p)), group: 'Celular', def: '1' },
+    { key: 'secs', label: 'Segundos por troca (autom\u00e1tico)', type: 'number', min: 1, max: 30, group: 'Imagens', def: '4' },
+    { key: 'ratio', label: 'Propor\u00e7\u00e3o', type: 'select', group: 'Imagens', def: '16 / 9', options: [{ value: 'auto', label: 'Original' }, ...RATIOS] },
     {
-      key: 'mode', label: 'Troca', type: 'select', group: 'Carrossel', def: 'auto',
-      options: [{ value: 'auto', label: 'Autom\u00e1tica (infinita)' }, { value: 'manual', label: 'Manual (deslizar)' }],
-    },
-    { key: 'secs', label: 'Segundos por imagem', type: 'number', min: 1, max: 30, group: 'Carrossel', def: '4' },
-    { key: 'ratio', label: 'Propor\u00e7\u00e3o', type: 'select', group: 'Carrossel', def: '16 / 9', options: [{ value: 'auto', label: 'Original' }, ...RATIOS] },
-    {
-      key: 'fit', label: 'Ajuste da imagem', type: 'select', group: 'Carrossel', def: 'cover',
+      key: 'fit', label: 'Ajuste da imagem', type: 'select', group: 'Imagens', def: 'cover',
       options: [{ value: 'cover', label: 'Preencher (recorta)' }, { value: 'contain', label: 'Mostrar inteira' }],
     },
+    { key: 'gap', label: 'Espa\u00e7o entre imagens (px)', type: 'number', min: 0, max: 80, group: 'Imagens', def: '12' },
+    { key: 'radius', label: 'Arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Imagens', def: '8' },
     { key: 'maxW', label: 'Largura m\u00e1xima (px, 0 = total)', type: 'number', min: 0, max: 2400, group: 'Layout', def: '1200' },
-    { key: 'radius', label: 'Arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Layout', def: '8' },
     { key: 'bg', label: 'Cor de fundo da se\u00e7\u00e3o', type: 'color', group: 'Layout' },
     { key: 'pad', label: 'Espa\u00e7o vertical (px)', type: 'number', min: 0, max: 200, group: 'Layout', def: '16' },
   ],
-  render: (p) => {
-    const list = parseItems(p.items).filter((x) => x.src);
-    const n = list.length;
-    if (n === 0) {
-      return <section style={{ padding: 32, textAlign: 'center', color: '#6b7280' }}>{'Adicione imagens ao carrossel.'}</section>;
-    }
-    const auto = p.mode !== 'manual' && n > 1;
-    const sec = Math.min(30, Math.max(1, num(p.secs, 4)));
-    const cls = `sll-car-${n}-${String(sec).replace('.', '_')}`;
-    const ratio = p.ratio && p.ratio !== 'auto' ? p.ratio : undefined;
-    const fit = p.fit === 'contain' ? 'contain' : 'cover';
-    const mw = num(p.maxW, 1200);
-
-    let css = '';
-    if (auto) {
-      const P = 100 / n;
-      const S = 100 / (n + 1);
-      let k = '';
-      for (let i = 0; i < n; i++) {
-        k += `${(i * P).toFixed(3)}%,${(i * P + P * 0.85).toFixed(3)}%{transform:translateX(-${(i * S).toFixed(4)}%)}`;
-      }
-      k += `100%{transform:translateX(-${(n * S).toFixed(4)}%)}`;
-      css =
-        `@keyframes ${cls}{${k}}` +
-        `.${cls} .sll-car-t{animation:${cls} ${n * sec}s ease-in-out infinite}` +
-        `.${cls}:hover .sll-car-t{animation-play-state:paused}` +
-        '@media(prefers-reduced-motion:reduce){.' + cls + ' .sll-car-t{animation:none}}';
-    }
-
-    const slides = auto ? [...list, list[0]] : list;
-    const track: CSSProperties = auto
-      ? { display: 'flex', width: `${(n + 1) * 100}%` }
-      : { display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory' };
-    const slide: CSSProperties = auto
-      ? { flex: `0 0 ${100 / (n + 1)}%`, minWidth: 0 }
-      : { flex: '0 0 100%', minWidth: 0, scrollSnapAlign: 'start' };
-
-    return (
-      <section style={{ background: p.bg || undefined, padding: `${num(p.pad, 16)}px 32px` }}>
-        {css ? <style dangerouslySetInnerHTML={{ __html: css }} /> : null}
-        <div
-          className={auto ? cls : undefined}
-          style={{ maxWidth: mw > 0 ? mw : undefined, margin: '0 auto', overflow: 'hidden', borderRadius: num(p.radius, 8) }}
-        >
-          <div className="sll-car-t" style={track}>
-            {slides.map((it, i) => {
-              const dup = auto && i === n;
-              const im = (
-                <img
-                  src={safeUrl(it.src)}
-                  alt={dup ? '' : it.alt || ''}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  draggable={false}
-                  style={{ width: '100%', display: 'block', aspectRatio: ratio, objectFit: fit }}
-                />
-              );
-              const href = (it.href || '').trim();
-              return (
-                <div key={i} aria-hidden={dup ? true : undefined} style={slide}>
-                  {href ? <a href={safeUrl(href)} tabIndex={dup ? -1 : undefined} style={{ display: 'block' }}>{im}</a> : im}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-    );
-  },
+  render: (p) => <CarouselView p={p} />,
 };
-
 export const MEDIA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
   carousel: CAROUSEL,
   video: {

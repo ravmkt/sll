@@ -1,5 +1,6 @@
 import type { Block, BuilderPage } from '../types';
 import { renderBlocksHtml } from '../renderStatic';
+import { CAROUSEL_JS } from '../blocks/carouselJs';
 
 const esc = (s = '') =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -8,6 +9,7 @@ const CSS = `*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-
 
 function runtime(apiUrl: string, anonKey: string, pageId: string): string {
   const js = `(function(){var API=${JSON.stringify(apiUrl)},KEY=${JSON.stringify(anonKey)},PAGE=${JSON.stringify(pageId)};
+try{var CAR=${CAROUSEL_JS};document.querySelectorAll('[data-car]').forEach(function(el){CAR(el)})}catch(e){}
 function p(n){return String(n).padStart(2,'0')}
 document.querySelectorAll('[data-end]').forEach(function(el){var end=new Date(el.getAttribute('data-end')).getTime(),c=el.querySelector('[data-clock]');
 function t(){var s=Math.floor(Math.max(0,end-Date.now())/1000);c.textContent=p(Math.floor(s/86400))+'d '+p(Math.floor(s%86400/3600))+'h '+p(Math.floor(s%3600/60))+'m '+p(s%60)+'s'}

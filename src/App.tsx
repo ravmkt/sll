@@ -46,6 +46,7 @@ const StreamDestinos = lazy(() => import('./pages/streamsell/Destinos'));
 const StreamSellLayout = lazy(() => import('./components/streamsell/StreamSellLayout'));
 const LegacyLiveRedirect = lazy(() => import('./pages/streamsell/LegacyLiveRedirect'));
 const Products = lazy(() => import('./pages/Products'));
+const GestorPage = lazy(() => import('@/modules/gestor/pages/GestorPage'));
 const Medidas = lazy(() => import('./pages/Medidas'));
 const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
 const ClubeRules = lazy(() => import('./pages/afiliados/ClubeRules'));
@@ -341,6 +342,7 @@ function AppRoutes() {
         <Route path="/checkout/:id" element={user ? <CheckoutIdRedirect /> : <Navigate to="/auth" replace />} />
         <Route path="/redefinir-senha" element={<ResetPassword />} />
         <Route path="/dashboard/modules/radar/*" element={user ? (<SubscriptionGate><ModuleGate moduleKey="radar"><RadarRoutes /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/gestor" element={user ? <ModuleGate moduleKey="gestor"><GestorPage /></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderListPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/:id" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout editor><BuilderEditorPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />

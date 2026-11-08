@@ -18,6 +18,7 @@ const act = (fn: () => void) => (e: MouseEvent) => {
 
 function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (v: string) => void }) {
   const list: Items = parseItems(value);
+  const [open, setOpen] = useState<number | null>(null);
   const set = (next: Items) => onChange(JSON.stringify(next));
   const move = (i: number, d: number) => {
     const j = i + d;
@@ -25,13 +26,22 @@ function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (
     const n = [...list];
     [n[i], n[j]] = [n[j], n[i]];
     set(n);
+    setOpen(j);
   };
   const canAdd = !f.maxItems || list.length < f.maxItems;
   const ico = 'rounded p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900';
   return (
     <div className="space-y-2">
       {list.map((it, i) => (
-        <details key={i} className="rounded-lg border border-slate-200 bg-slate-50">
+        <details
+              key={i}
+              open={open === i}
+              onToggle={(e) => {
+                const o = (e.currentTarget as HTMLDetailsElement).open;
+                setOpen((cur) => (o ? i : cur === i ? null : cur));
+              }}
+              className="rounded-lg border border-slate-200 bg-slate-50"
+            >
           <summary className="flex cursor-pointer items-center justify-between px-3 py-2 text-xs font-semibold text-slate-700">
             <span>{f.itemLabel ?? 'Item'} {i + 1}</span>
             <span className="flex gap-0.5">
@@ -41,7 +51,7 @@ function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (
               <button type="button" title="Descer" onClick={act(() => move(i, 1))} className={ico}>
                 <ArrowDown className="h-3.5 w-3.5" />
               </button>
-              <button type="button" title="Remover" onClick={act(() => set(list.filter((_, k) => k !== i)))} className={`${ico} hover:!text-red-600`}>
+              <button type="button" title="Remover" onClick={act(() => { set(list.filter((_, k) => k !== i)); setOpen(null); })} className={`${ico} hover:!text-red-600`}>
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </span>
@@ -63,7 +73,7 @@ function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (
       {canAdd && (
         <button
           type="button"
-          onClick={() => set([...list, { ...(f.itemDefaults ?? {}) }])}
+          onClick={() => { set([...list, { ...(f.itemDefaults ?? {}) }]); setOpen(list.length); }}
           className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 py-2 text-xs font-semibold text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]"
         >
           <Plus className="h-3.5 w-3.5" /> Adicionar {(f.itemLabel ?? 'item').toLowerCase()}
@@ -125,7 +135,7 @@ function UploadField({ f, value, onChange }: { f: Field; value: string; onChange
   );
 }
 
-export default function FieldInput({ f, value, onChange }: { f: Field; value: string; onChange: (v: string) => void }) {
+export default function FieldInput({ f, value, onChange, props }: { f: Field; value: string; onChange: (v: string) => void; props?: Record<string, string> }) {
   const type = f.type ?? (f.key === 'bg' || f.key === 'color' ? 'color' : f.key === 'endsAt' ? 'datetime' : 'text');
   if (type === 'repeater') return <Repeater f={f} value={value} onChange={onChange} />;
   if (type === 'upload') return <UploadField f={f} value={value} onChange={onChange} />;
@@ -156,7 +166,23 @@ export default function FieldInput({ f, value, onChange }: { f: Field; value: st
       </div>
     );
   if (type === 'number')
-    return <input type="number" min={f.min} max={f.max} value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
+    {
+      const mx = f.maxFn && props ? f.maxFn(props) : f.max;
+      return (
+        <input
+          type="number"
+          min={f.min}
+          max={mx}
+          value={value}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v !== ' && mx !== undefined && Number(v) > mx) onChange(String(mx));
+            else onChange(v);
+          }}
+          className={INPUT}
+        />
+      );
+    }
   if (type === 'datetime')
     return <input type="datetime-local" value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
   return <input value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;

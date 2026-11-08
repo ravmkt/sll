@@ -16,6 +16,7 @@ export interface Field {
   itemDefaults?: Record<string, string>;
   maxItems?: number;
   accept?: 'image' | 'video';
+  maxFn?: (p: Record<string, string>) => number;
   def?: string | ((p: Record<string, string>) => string);
 }
 export interface BlockDef {
