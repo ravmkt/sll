@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     const html = await r.text();
     res.status(200);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=5, must-revalidate');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader(
       'Content-Security-Policy',
