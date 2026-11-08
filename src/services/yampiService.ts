@@ -6,8 +6,20 @@ const sb: any = supabase;
 export interface YampiSku { id: string; sku: string; title: string; option: string; value: string; price: number; sale: number; stock: number }
 export interface YampiProduct {
   id: string; name: string; active: boolean; url: string; image: string; images: string[];
-  category: string; tier: 'tree' | 'root' | 'loose' | 'none'; loose: string[]; skus: YampiSku[];
+  description?: string; category: string; tier: 'tree' | 'root' | 'loose' | 'none'; loose: string[]; skus: YampiSku[];
 }
+
+const cleanDesc = (s?: string): string | null => {
+  const v = (s ?? '')
+    .replace(/<br\s*\/?>|<\/p>|<\/li>|<\/div>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, 600);
+  return v || null;
+};
 
 async function call<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await sb.functions.invoke('yampi-import', { body });
@@ -78,6 +90,7 @@ export async function importYampiProducts(
       name: p.name.trim(),
       price: prices.length ? Math.min(...prices) : 0,
       product_url: p.url,
+      short_description: cleanDesc(p.description),
       image_url: p.image || '',
       images: p.images,
       category: matchCategory(p.category, catMap),
