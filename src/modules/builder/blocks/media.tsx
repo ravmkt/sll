@@ -113,6 +113,7 @@ function CarInst({ p, dev, list }: { p: Record<string, string>; dev: 'd' | 'm'; 
   const sec = clampN(num(k('Secs') ?? p.secs, 4), 1, 30);
   const fit = (k('Fit') || p.fit) === 'contain' ? 'contain' : 'cover';
   const pad = clampN(num(k('Pad') ?? p.pad, 16), 0, 200);
+  const bg = k('Bg') || p.bg || '';
   const radius = sh === 'round' ? '50%' : `${num(k('Radius') ?? p.radius, 8)}px`;
   const sig = JSON.stringify(p);
 
@@ -124,9 +125,9 @@ function CarInst({ p, dev, list }: { p: Record<string, string>; dev: 'd' | 'm'; 
   }, [sig, eff]);
 
   return (
+    <div className={dev === 'd' ? 'sll-car-d' : 'sll-car-m'} style={{ background: bg || undefined, padding: '0 32px' }}>
     <div
       ref={ref}
-      className={dev === 'd' ? 'sll-car-d' : 'sll-car-m'}
       data-car=""
       data-mode={mode}
       data-secs={sec}
@@ -155,6 +156,7 @@ function CarInst({ p, dev, list }: { p: Record<string, string>; dev: 'd' | 'm'; 
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
@@ -165,7 +167,7 @@ function CarouselView({ p }: { p: Record<string, string> }) {
   }
   const sig = JSON.stringify(p);
   return (
-    <section style={{ background: p.bg || undefined, padding: '0 32px' }}>
+    <section>
       <style dangerouslySetInnerHTML={{ __html: CAR_CSS }} />
       <div className="sll-car-c">
         <CarInst key={sig + 'd'} p={p} dev="d" list={list} />
@@ -216,6 +218,7 @@ const carDev = (d: 'd' | 'm'): CarField[] => {
     { key: d + 'Gap', label: 'Espa\u00e7o entre imagens (px)', type: 'number', min: 0, max: 80, group: g, def: d === 'd' ? '12' : '8' },
     { key: d + 'MaxW', label: 'Largura m\u00e1xima (px, 0 = total)', type: 'number', min: 0, max: 2400, group: g, def: d === 'd' ? '1200' : '0' },
     { key: d + 'Radius', label: 'Arredondamento (px)', type: 'number', min: 0, max: 60, group: g, def: '8' },
+    { key: d + 'Bg', label: 'Cor de fundo', type: 'color', group: g },
     { key: d + 'Pad', label: 'Espa\u00e7o vertical (px)', type: 'number', min: 0, max: 200, group: g, def: '16' },
   ];
 };
@@ -230,7 +233,6 @@ const CAROUSEL: BlockDef = {
     ]),
     dMode: 'auto', dSecs: '4', dView: '1', dRepeat: '0', dCard: '220', dShape: 'l169', dFit: 'cover', dSize: '100', dGap: '12', dMaxW: '1200', dRadius: '8', dPad: '16',
     mMode: 'auto', mSecs: '4', mView: '2', mRepeat: '0', mCard: '150', mShape: 'sq', mFit: 'cover', mSize: '100', mGap: '8', mMaxW: '0', mRadius: '8', mPad: '16',
-    bg: '',
   },
   fields: [
     {
@@ -248,7 +250,6 @@ const CAROUSEL: BlockDef = {
     },
     ...carDev('d'),
     ...carDev('m'),
-    { key: 'bg', label: 'Cor de fundo da se\u00e7\u00e3o', type: 'color', group: 'Geral' },
   ],
   render: (p) => <CarouselView p={p} />,
 };
