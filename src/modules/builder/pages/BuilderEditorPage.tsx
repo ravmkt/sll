@@ -7,7 +7,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ArrowLeft, Copy, GripVertical, Trash2 } from 'lucide-react';
+import { ArrowLeft, Copy, Eye, EyeOff, GripVertical, Trash2 } from 'lucide-react';
 import { BLOCKS } from '../registry';
 import { renderBlock } from '../render';
 import { PALETTE, type PaletteItem } from '../palette';
@@ -18,6 +18,7 @@ import ProductPickerModal from '../components/ProductPickerModal';
 import { brl } from '../services/products';
 import type { Block, BlockType } from '../types';
 import type { Field } from '../registry-extra';
+import FieldInput from '../components/FieldInput';
 
 const collision: CollisionDetection = (args) => {
   const hits = pointerWithin(args);
@@ -101,7 +102,7 @@ function CanvasBlock({ block }: { block: Block }) {
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : block.props.hidden === '1' ? 0.35 : 1 }}
       onClick={(e) => {
         e.stopPropagation();
         select(block.id);
@@ -135,7 +136,8 @@ function CanvasBlock({ block }: { block: Block }) {
           <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
-      {block.type === 'columns' ? (
+      {block.props.hidden === '1' && <span className="absolute left-2 top-2 z-20 rounded bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-white">OCULTO</span>}
+          {block.type === 'columns' ? (
         <ColumnsEditor block={block} />
       ) : (
         <div className="pointer-events-none">{renderBlock(block)}</div>
@@ -164,44 +166,6 @@ function Canvas() {
   );
 }
 
-const INPUT =
-  'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20';
-
-function FieldInput({ f, value, onChange }: { f: Field; value: string; onChange: (v: string) => void }) {
-  const type = f.type ?? (f.key === 'bg' || f.key === 'color' ? 'color' : f.key === 'endsAt' ? 'datetime' : 'text');
-  if (f.multiline) return <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
-  if (type === 'select')
-    return (
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={INPUT}>
-        {f.options?.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-    );
-  if (type === 'color')
-    return (
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={/^#[0-9a-f]{6}$/i.test(value) ? value : '#ffffff'}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-12 cursor-pointer rounded-lg border border-slate-200 bg-white p-0.5"
-        />
-        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder="#000000" className={INPUT} />
-        {value && (
-          <button type="button" onClick={() => onChange('')} className="text-xs font-semibold text-slate-500 hover:text-red-600">
-            Limpar
-          </button>
-        )}
-      </div>
-    );
-  if (type === 'number')
-    return <input type="number" min={f.min} max={f.max} value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
-  if (type === 'datetime')
-    return <input type="datetime-local" value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
-  return <input value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
-}
-
 function PropertiesPanel() {
   const block = useBuilder((s) => findBlock(s.blocks, s.selectedId ?? ''));
   const update = useBuilder((s) => s.update);
@@ -213,11 +177,54 @@ function PropertiesPanel() {
     return <p className="p-5 text-sm font-medium text-slate-500">Selecione um bloco para editar.</p>;
   const def = BLOCKS[block.type];
   const n = block.children?.length ?? 0;
+  const hidden = block.props.hidden === '1';
+
+  const plain: Field[] = [];
+  const groups = new Map<string, Field[]>();
+  for (const f of def.fields) {
+    if (!f.group) plain.push(f);
+    else groups.set(f.group, [...(groups.get(f.group) ?? []), f]);
+  }
+
+  const renderField = (f: Field) =>
+    block.type === 'columns' && f.key === 'cols' ? (
+      <div key={f.key}>
+        <span className="mb-1.5 block text-xs font-semibold text-slate-600">{f.label}</span>
+        <div className="grid grid-cols-4 gap-1.5">
+          {[1, 2, 3, 4].map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCols(block.id, c)}
+              className={`rounded-lg border py-2 text-sm font-bold transition-colors ${
+                n === c ? 'border-[#0094eb] bg-[#0094eb] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0094eb]'
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : (
+      <label key={f.key} className="block">
+        <span className="mb-1.5 block text-xs font-semibold text-slate-600">{f.label}</span>
+        <FieldInput f={f} value={block.props[f.key] ?? ''} onChange={(v) => update(block.id, f.key, v)} />
+      </label>
+    );
+
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold uppercase tracking-wide text-slate-900">{def.label}</h3>
         <div className="flex gap-1">
+          <button
+            type="button"
+            title={hidden ? 'Mostrar bloco' : 'Ocultar bloco'}
+            onClick={() => update(block.id, 'hidden', hidden ? '' : '1')}
+            className={`rounded-lg border p-1.5 ${hidden ? 'border-[#0094eb] text-[#0094eb]' : 'border-slate-200 text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]'}`}
+          >
+            {hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
           <button type="button" title="Duplicar" onClick={() => duplicate(block.id)} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]">
             <Copy className="h-4 w-4" />
           </button>
@@ -226,6 +233,11 @@ function PropertiesPanel() {
           </button>
         </div>
       </div>
+      {hidden && (
+        <p className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600">
+          Bloco oculto: não aparece na página publicada.
+        </p>
+      )}
       {block.type === 'product' && (
         <>
           <button
@@ -247,36 +259,18 @@ function PropertiesPanel() {
           />
         </>
       )}
-      {def.fields.map((f) =>
-        block.type === 'columns' && f.key === 'cols' ? (
-          <div key={f.key}>
-            <span className="mb-1.5 block text-xs font-semibold text-slate-600">{f.label}</span>
-            <div className="grid grid-cols-4 gap-1.5">
-              {[1, 2, 3, 4].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCols(block.id, c)}
-                  className={`rounded-lg border py-2 text-sm font-bold transition-colors ${
-                    n === c ? 'border-[#0094eb] bg-[#0094eb] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0094eb]'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <label key={f.key} className="block">
-            <span className="mb-1.5 block text-xs font-semibold text-slate-600">{f.label}</span>
-            <FieldInput f={f} value={block.props[f.key] ?? ''} onChange={(v) => update(block.id, f.key, v)} />
-          </label>
-        ),
-      )}
+      {plain.map(renderField)}
+      {[...groups.entries()].map(([title, list]) => (
+        <details key={`${block.id}-${title}`} className="rounded-lg border border-slate-200 bg-slate-50/50">
+          <summary className="cursor-pointer select-none px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-700">
+            {title}
+          </summary>
+          <div className="space-y-3 border-t border-slate-200 p-3">{list.map(renderField)}</div>
+        </details>
+      ))}
     </div>
   );
 }
-
 function resolveTarget(overId: string, blocks: Block[]): Target | null {
   if (overId === 'canvas') return { parentId: null, col: 0 };
   if (overId.startsWith('col:')) {
