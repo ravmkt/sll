@@ -324,6 +324,14 @@ const PlayDot = ({ size = "h-8 w-8" }: { size?: string }) => (
   </span>
 );
 
+const TILES = [
+  "from-orange-200 to-rose-300",
+  "from-sky-200 to-indigo-300",
+  "from-emerald-200 to-teal-300",
+  "from-pink-200 to-fuchsia-300",
+  "from-amber-200 to-yellow-300",
+  "from-violet-200 to-sky-200",
+];
 function MImg({ src, className = "", tile = 0 }: { src: string; className?: string; tile?: number }) {
   const [err, setErr] = useState(false);
   if (err) return <div className={`bg-gradient-to-br ${TILES[tile % TILES.length]} ${className}`} />;
