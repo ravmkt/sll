@@ -1,3 +1,4 @@
+import { DeviceFrame } from '../components/DeviceFrame';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -391,9 +392,7 @@ export default function BuilderEditorPage() {
             ))}
           </aside>
           <main className="min-w-0 flex-1 overflow-y-auto p-6">
-            <div className="mx-auto max-w-4xl">
-              <Canvas />
-            </div>
+            <DeviceFrame><Canvas /></DeviceFrame>
           </main>
           <aside className="w-80 shrink-0 overflow-y-auto border-l border-slate-200 bg-white">
             <PropertiesPanel />
