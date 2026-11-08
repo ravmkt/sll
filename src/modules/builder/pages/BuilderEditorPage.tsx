@@ -19,6 +19,7 @@ import { brl } from '../services/products';
 import type { Block, BlockType } from '../types';
 import type { Field } from '../registry-extra';
 import FieldInput from '../components/FieldInput';
+import { fieldValue, productDescription } from '../styleKit';
 
 const collision: CollisionDetection = (args) => {
   const hits = pointerWithin(args);
@@ -208,7 +209,7 @@ function PropertiesPanel() {
     ) : (
       <label key={f.key} className="block">
         <span className="mb-1.5 block text-xs font-semibold text-slate-600">{f.label}</span>
-        <FieldInput f={f} value={block.props[f.key] ?? ''} onChange={(v) => update(block.id, f.key, v)} />
+        <FieldInput f={f} value={fieldValue(f, block.props)} onChange={(v) => update(block.id, f.key, v)} />
       </label>
     );
 
@@ -254,6 +255,7 @@ function PropertiesPanel() {
               update(block.id, 'name', p.name);
               update(block.id, 'image', p.image || block.props.image || '');
               update(block.id, 'price', brl(p.salePrice ?? p.price));
+              update(block.id, 'desc', productDescription(p));
               if (p.url) update(block.id, 'href', p.url);
             }}
           />

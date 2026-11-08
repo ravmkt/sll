@@ -15,6 +15,7 @@ export interface Field {
   itemLabel?: string;
   itemDefaults?: Record<string, string>;
   maxItems?: number;
+  def?: string | ((p: Record<string, string>) => string);
 }
 export interface BlockDef {
   label: string;
@@ -30,6 +31,10 @@ function toEmbed(url: string): string {
 
 const PROD_CSS = '.sll-prod{display:grid;grid-template-columns:1fr 1fr;gap:32px}@media(max-width:700px){.sll-prod{grid-template-columns:1fr}}';
 const T3_CSS = '.sll-t3{display:grid;gap:16px;grid-template-columns:repeat(3,1fr)}@media(max-width:700px){.sll-t3{grid-template-columns:1fr}}';
+const byLayout = (h: string, c: string, m: string) => (p: Record<string, string>) => {
+  const l = p.layout || 'horizontal';
+  return l === 'horizontal' ? h : l === 'mini' ? m : c;
+};
 const COLS_CSS = '@media(max-width:640px){.sll-stack{grid-template-columns:1fr !important}}';
 const card = { margin: 0, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,.08)' } as const;
 
@@ -202,15 +207,15 @@ export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       { key: 'price', label: 'Preço' },
       { key: 'cta', label: 'Texto do botão' },
       { key: 'href', label: 'Link de compra' },
-      ...textFields('name', 'Nome'),
-      ...textFields('desc', 'Descrição', 60),
-      ...textFields('price', 'Preço'),
-      ...textFields('cta', 'Botão', 40),
-      ...boxFields('cta', 'Botão'),
-      ...boxFields('card', 'Card'),
-      { key: 'imgRadius', label: 'Imagem: arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Imagem e seção' },
+      ...textFields('name', 'Nome', 80, { size: byLayout('30', '20', '14'), color: '#111827', style: 'bold' }),
+      ...textFields('desc', 'Descrição', 60, { size: byLayout('14', '14', '12'), color: '#4b5563', style: 'normal' }),
+      ...textFields('price', 'Preço', 80, { size: byLayout('24', '22', '16'), color: '#059669', style: 'bold' }),
+      ...textFields('cta', 'Botão', 40, { size: '16', color: '#ffffff', style: 'bold' }),
+      ...boxFields('cta', 'Botão', true, { bg: '#059669', pad: '12', bw: '0', radius: '8' }),
+      ...boxFields('card', 'Card', true, { bg: byLayout('', '#ffffff', '#ffffff'), pad: byLayout('0', '16', '16'), bw: byLayout('0', '1', '1'), radius: byLayout('0', '12', '12') }),
+      { key: 'imgRadius', label: 'Imagem: arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Imagem e seção', def: '8' },
       { key: 'secBg', label: 'Seção: cor de fundo', type: 'color', group: 'Imagem e seção' },
-      { key: 'secPad', label: 'Seção: espaço vertical (px)', type: 'number', min: 0, max: 200, group: 'Imagem e seção' },
+      { key: 'secPad', label: 'Seção: espaço vertical (px)', type: 'number', min: 0, max: 200, group: 'Imagem e seção', def: byLayout('40', '24', '24') },
     ],
     render: (p) => {
       const layout = p.layout || 'horizontal';

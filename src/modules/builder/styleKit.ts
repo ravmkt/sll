@@ -52,28 +52,53 @@ export function num(v: string | undefined, d: number): number {
   return Number.isFinite(n) ? n : d;
 }
 
-export function textFields(k: string, label: string, max = 80): Field[] {
+type Def = Field['def'];
+type TextDef = { size?: Def; color?: Def; style?: Def };
+type BoxDef = { bg?: Def; pad?: Def; bw?: Def; bc?: Def; radius?: Def; shadow?: Def };
+
+export function fieldValue(f: Field, p: Record<string, string>): string {
+  const v = p[f.key];
+  if (v !== undefined && v !== '') return v;
+  return typeof f.def === 'function' ? f.def(p) : (f.def ?? '');
+}
+
+export function textFields(k: string, label: string, max = 80, d: TextDef = {}): Field[] {
   return [
-    { key: `${k}Size`, label: `${label}: tamanho (px)`, type: 'number', min: 8, max, group: label },
-    { key: `${k}Color`, label: `${label}: cor`, type: 'color', group: label },
-    { key: `${k}Style`, label: `${label}: estilo`, type: 'select', options: STYLE_OPTIONS, group: label },
+    { key: `${k}Size`, label: `${label}: tamanho (px)`, type: 'number', min: 8, max, group: label, def: d.size },
+    { key: `${k}Color`, label: `${label}: cor`, type: 'color', group: label, def: d.color },
+    { key: `${k}Style`, label: `${label}: estilo`, type: 'select', options: STYLE_OPTIONS, group: label, def: d.style },
     { key: `${k}Font`, label: `${label}: fonte`, type: 'select', options: FONT_OPTIONS, group: label },
   ];
 }
 
-export function boxFields(k: string, label: string, withBg = true): Field[] {
+export function boxFields(k: string, label: string, withBg = true, d: BoxDef = {}): Field[] {
   const f: Field[] = [];
-  if (withBg) f.push({ key: `${k}Bg`, label: `${label}: cor de fundo`, type: 'color', group: label });
+  if (withBg) f.push({ key: `${k}Bg`, label: `${label}: cor de fundo`, type: 'color', group: label, def: d.bg });
   f.push(
-    { key: `${k}Pad`, label: `${label}: espaço interno (px)`, type: 'number', min: 0, max: 120, group: label },
-    { key: `${k}Bw`, label: `${label}: borda (px)`, type: 'number', min: 0, max: 20, group: label },
-    { key: `${k}Bc`, label: `${label}: cor da borda`, type: 'color', group: label },
-    { key: `${k}Radius`, label: `${label}: arredondamento (px)`, type: 'number', min: 0, max: 60, group: label },
-    { key: `${k}Shadow`, label: `${label}: sombra`, type: 'select', options: SHADOW_OPTIONS, group: label },
+    { key: `${k}Pad`, label: `${label}: espaço interno (px)`, type: 'number', min: 0, max: 120, group: label, def: d.pad },
+    { key: `${k}Bw`, label: `${label}: borda (px)`, type: 'number', min: 0, max: 20, group: label, def: d.bw },
+    { key: `${k}Bc`, label: `${label}: cor da borda`, type: 'color', group: label, def: d.bc ?? '#e5e7eb' },
+    { key: `${k}Radius`, label: `${label}: arredondamento (px)`, type: 'number', min: 0, max: 60, group: label, def: d.radius },
+    { key: `${k}Shadow`, label: `${label}: sombra`, type: 'select', options: SHADOW_OPTIONS, group: label, def: d.shadow },
   );
   return f;
 }
 
+export function productDescription(p: unknown): string {
+  const o = (p ?? {}) as Record<string, unknown>;
+  const raw = [o.description, o.shortDescription, o.short_description, o.desc, o.summary].find(
+    (v) => typeof v === 'string' && v.trim(),
+  ) as string | undefined;
+  if (!raw) return '';
+  return raw
+    .replace(/<br\s*\/?>|<\/p>|<\/li>|<\/div>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, 600);
+}
 export function textCss(
   p: Record<string, string>,
   k: string,
