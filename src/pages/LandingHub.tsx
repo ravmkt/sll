@@ -517,7 +517,19 @@ function Calculator() {
 
 /* ---------- integração ---------- */
 function Integration() {
-  const platforms = ["Yampi", "Shopify", "Nuvemshop", "Tray", "WooCommerce", "Cartpanda", "VTEX", "Loja própria"];
+  const platforms: { name: string; logo?: string }[] = [
+    { name: "Yampi", logo: "yampi.png" },
+    { name: "Shopify", logo: "shopify.png" },
+    { name: "Nuvemshop", logo: "nuvemshop.png" },
+    { name: "Tray", logo: "tray.png" },
+    { name: "WooCommerce", logo: "woocommerce.png" },
+    { name: "Cartpanda", logo: "cartpanda.png" },
+    { name: "VTEX", logo: "vtex.png" },
+    { name: "Bagy", logo: "bagy.png" },
+    { name: "Irroba", logo: "irroba.png" },
+    { name: "Loja Integrada", logo: "lojaintegrada.png" },
+    { name: "Loja própria" },
+  ];
   const steps = [
     { n: "1", t: "Crie sua conta", d: "Cadastro em minutos, sem cartão." },
     { n: "2", t: "Cole o código", d: "No GTM (tag HTML personalizada) ou direto no tema." },
@@ -530,7 +542,11 @@ function Integration() {
         <div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {platforms.map((p) => (
-              <div key={p} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-center text-sm font-bold text-slate-700">{p}</div>
+              <div key={p.name} className="grid h-14 place-items-center rounded-xl border border-slate-200 bg-white px-3">
+                    {p.logo
+                      ? <img src={`/assets/platforms/${p.logo}`} alt={p.name} loading="lazy" className="h-8 w-full object-contain" />
+                      : <span className="text-sm font-bold text-slate-700">{p.name}</span>}
+                  </div>
             ))}
           </div>
           <ol className="mt-8 space-y-4">
