@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
           name: p.name,
           active: !!p.active,
           url: p.url || '',
+          description: String(p.description || p.seo_description || ''),
           image: imgs[0] || '',
           images: imgs,
           category: tree?.name || root?.name || '',

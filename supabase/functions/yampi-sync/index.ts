@@ -158,6 +158,18 @@ async function hmacKind(raw: string, key: string | null, header: string | null) 
   return null;
 }
 
+function cleanDesc(s: unknown): string | null {
+  const v = String(s ?? '')
+    .replace(/<br\s*\/?>|<\/p>|<\/li>|<\/div>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, 600);
+  return v || null;
+}
+
 async function syncStore(storeId: string, onlyProduct?: string) {
   const started = new Date();
   const { data: claimed } = await admin.from('yampi_connections')
@@ -177,7 +189,7 @@ async function syncStore(storeId: string, onlyProduct?: string) {
           }
         }
     const prods = await pageAll<any>((a, b) =>
-      admin.from('products').select('id,external_id,price').eq('store_id', storeId).eq('source_platform', 'yampi').order('id').range(a, b));
+      admin.from('products').select('id,external_id,price,short_description').eq('store_id', storeId).eq('source_platform', 'yampi').order('id').range(a, b));
     const vars = await pageAll<any>((a, b) =>
       admin.from('product_variants').select('id,product_id,external_id,price,sale_price,stock').eq('store_id', storeId).order('id').range(a, b));
     const byProd = new Map<string, any[]>();
@@ -188,6 +200,13 @@ async function syncStore(storeId: string, onlyProduct?: string) {
     for (const p of onlyProduct ? prods.filter((x) => x.id === onlyProduct) : prods) {
       const y = remote.get(String(p.external_id));
       if (!y) { s.not_found++; continue; }
+      const desc = cleanDesc(y.description || y.seo_description);
+      if (desc && !String(p.short_description ?? '').trim()) {
+        jobs.push(async () => {
+          const { error } = await admin.from('products').update({ short_description: desc }).eq('id', p.id);
+          if (error) s.failed++;
+        });
+      }
       const skus: any[] = y.skus?.data ?? [];
       if (!skus.length) continue;
       s.products++;
