@@ -68,7 +68,7 @@ async function fetchProducts(c: Conn) {
   let page = 1;
   let total = 1;
   do {
-    const j = await yampi(c, `catalog/products?include=skus&limit=100&page=${page}`);
+    const j = await yampi(c, `catalog/products?include=skus,texts&limit=100&page=${page}`);
     for (const p of j.data || []) out.set(String(p.id), p);
     total = Number(j.meta?.pagination?.total_pages || 1);
     page++;
@@ -81,7 +81,7 @@ async function fetchRemote(c: Conn, storeId: string, onlyProduct?: string) {
     const { data } = await admin.from('products').select('external_id').eq('id', onlyProduct).eq('store_id', storeId).maybeSingle();
     if (data?.external_id) {
       try {
-        const j = await yampi(c, `catalog/products/${encodeURIComponent(String(data.external_id))}?include=skus`);
+        const j = await yampi(c, `catalog/products/${encodeURIComponent(String(data.external_id))}?include=skus,texts`);
         if (j?.data?.id) return new Map<string, any>([[String(j.data.id), j.data]]);
       } catch { /* cai para a listagem completa */ }
     }
@@ -200,7 +200,7 @@ async function syncStore(storeId: string, onlyProduct?: string) {
     for (const p of onlyProduct ? prods.filter((x) => x.id === onlyProduct) : prods) {
       const y = remote.get(String(p.external_id));
       if (!y) { s.not_found++; continue; }
-      const desc = cleanDesc(y.description || y.seo_description);
+      const desc = cleanDesc(y.texts?.data?.description);
       if (desc && !String(p.short_description ?? '').trim()) {
         jobs.push(async () => {
           const { error } = await admin.from('products').update({ short_description: desc }).eq('id', p.id);

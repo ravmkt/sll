@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       const c: Cred = { alias: conn.alias, token: conn.user_token, secret: conn.user_secret };
       const cats = await all(c, 'catalog/categories');
       const parents = new Set(cats.filter((x: any) => x.parent_id).map((x: any) => x.parent_id));
-      const prods = await all(c, 'catalog/products?include=categories,skus,images');
+      const prods = await all(c, 'catalog/products?include=categories,skus,images,texts');
       const products = prods.map((p: any) => {
         const cs: any[] = p.categories?.data ?? [];
         const tree = cs.find((x) => x.parent_id);
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
           name: p.name,
           active: !!p.active,
           url: p.url || '',
-          description: String(p.description || p.seo_description || ''),
+          description: String(p.texts?.data?.description || '),
           image: imgs[0] || '',
           images: imgs,
           category: tree?.name || root?.name || '',
