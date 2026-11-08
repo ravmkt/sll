@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, Link2, Loader2, RefreshCw, Repeat, X } from 'lucide-react';
-import { getYampiStatus, saveYampiCredentials } from '@/services/yampiService';
+import { CheckCircle2, Link2, Loader2, RefreshCw, Unlink, X } from 'lucide-react';
+import { disconnectYampi, getYampiStatus, saveYampiCredentials } from '@/services/yampiService';
 import { getYampiSyncInfo, registerYampiWebhook, syncYampi, type SyncInfo } from '@/services/yampiSyncService';
 import { showError, showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
@@ -9,64 +9,41 @@ import { errMsg, ghostBtn, inputCls, labelCls } from '@/components/products/Moda
 
 type Props = {
   storeId: string;
-  platform: string;
-  platforms: string[];
-  onChangePlatform: (p: string) => void;
+  platform?: string;
+  platforms?: string[];
+  onChangePlatform?: (p: string) => void;
 };
 
-const SUPPORTED = ['yampi'];
+const LOGOS = ['/assets/platforms/yampi.svg', '/assets/platforms/yampi.png'];
 
-const keyOf = (p: string) =>
-  p.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
-
-export default function PlatformConnectCard({ storeId, platform, platforms, onChangePlatform }: Props) {
-  const key = keyOf(platform || '');
-  const selectValue = platforms.find((p) => keyOf(p) === key) ?? '';
-  const supported = SUPPORTED.includes(key);
+export default function PlatformConnectCard({ storeId }: Props) {
   const [connected, setConnected] = useState(false);
   const [checking, setChecking] = useState(false);
   const [alias, setAlias] = useState('');
   const [token, setToken] = useState('');
   const [secret, setSecret] = useState('');
   const [open, setOpen] = useState(false);
-  const [changing, setChanging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [logoIdx, setLogoIdx] = useState(0);
   const [syncing, setSyncing] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [info, setInfo] = useState<SyncInfo | null>(null);
-  const [yampiOn, setYampiOn] = useState(false);
-  const userPicked = useRef(false);
-
-  useEffect(() => { setLogoIdx(0); }, [key]);
 
   useEffect(() => {
     if (!storeId) return;
     let alive = true;
+    setChecking(true);
     getYampiStatus(storeId)
-      .then((s) => { if (alive) setYampiOn(!!s.connected); })
-      .catch(() => { /* sem conexao salva */ });
+      .then((s) => {
+        if (!alive) return;
+        setConnected(!!s.connected);
+        if (s.alias) setAlias(s.alias);
+        if (s.connected) getYampiSyncInfo(storeId).then((i) => { if (alive) setInfo(i); }).catch(() => { /* sem info */ });
+      })
+      .catch(() => { /* sem conexao salva */ })
+      .finally(() => { if (alive) setChecking(false); });
     return () => { alive = false; };
   }, [storeId]);
-
-  useEffect(() => {
-    if (!yampiOn || userPicked.current || key === 'yampi') return;
-    const y = platforms.find((p) => keyOf(p) === 'yampi');
-    if (y) onChangePlatform(y);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [yampiOn, key, platforms]);
-
-  useEffect(() => {
-    let alive = true;
-    setConnected(false);
-    if (storeId && key === 'yampi') {
-      setChecking(true);
-      getYampiStatus(storeId)
-        .then((s) => { if (!alive) return; setConnected(!!s.connected); if (s.alias) setAlias(s.alias); if (s.connected) getYampiSyncInfo(storeId).then((i) => { if (alive) setInfo(i); }).catch(() => { /* sem info */ }); })
-        .catch(() => { /* sem conexao salva */ })
-        .finally(() => { if (alive) setChecking(false); });
-    }
-    return () => { alive = false; };
-  }, [storeId, key]);
 
   const connect = async () => {
     if (!alias.trim() || !token.trim() || !secret.trim()) return showError('Preencha alias, User-Token e User-Secret-Key.');
@@ -77,9 +54,10 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
       setOpen(false);
       setToken('');
       setSecret('');
-      setYampiOn(true);
       showSuccess('Yampi conectada.');
-      registerYampiWebhook(storeId).then((r) => setInfo((i) => ({ last_sync_at: i?.last_sync_at ?? null, webhook_status: r.status }))).catch(() => { /* cron cobre */ });
+      registerYampiWebhook(storeId)
+        .then((r) => setInfo((i) => ({ last_sync_at: i?.last_sync_at ?? null, webhook_status: r.status })))
+        .catch(() => { /* cron cobre */ });
     } catch (e) {
       showError(errMsg(e));
     } finally {
@@ -100,71 +78,66 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
     }
   };
 
-  const logos = [`/assets/platforms/${key}.svg`, `/assets/platforms/${key}.png`];
+  const doDisconnect = async () => {
+    if (!window.confirm('Desconectar a Yampi? A sincronização de estoque e preços será interrompida. Os produtos já importados continuam no SLL.')) return;
+    setRemoving(true);
+    try {
+      await disconnectYampi(storeId);
+      setConnected(false);
+      setInfo(null);
+      setAlias('');
+      setToken('');
+      setSecret('');
+      showSuccess('Yampi desconectada.');
+    } catch (e) {
+      showError(errMsg(e));
+    } finally {
+      setRemoving(false);
+    }
+  };
 
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 sm:p-8 space-y-5">
-      <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-        <h2 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">Plataforma de E-commerce</h2>
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-          Conecte sua loja para importar produtos, variações e manter estoque e preços sincronizados.
-        </p>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex h-14 w-40 items-center justify-center rounded-xl border border-slate-200 bg-white px-3">
+          {logoIdx < LOGOS.length ? (
+            <img src={LOGOS[logoIdx]} alt="Yampi" onError={() => setLogoIdx((i) => i + 1)} className="h-10 w-auto max-w-full object-contain" />
+          ) : (
+            <span className="text-sm font-black text-slate-700">Yampi</span>
+          )}
+        </div>
+        {checking ? (
+          <Loader2 size={16} className="animate-spin text-slate-400" />
+        ) : connected ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 text-[11px] font-bold text-emerald-600">
+            <CheckCircle2 size={13} /> Conectado{alias ? ` · ${alias}` : ''}
+          </span>
+        ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-40 items-center justify-center rounded-xl border border-slate-200 bg-white px-3">
-            {key && logoIdx < logos.length ? (
-              <img src={logos[logoIdx]} alt={platform} onError={() => setLogoIdx((i) => i + 1)} className="h-10 w-auto max-w-full object-contain" />
-            ) : (
-              <span className="text-sm font-black text-slate-700">{platform || 'Selecione'}</span>
-            )}
-          </div>
-          <div>
-            {checking ? (
-              <Loader2 size={16} className="animate-spin text-slate-400" />
-            ) : !platform ? (
-              <span className="text-xs font-semibold text-slate-400">Selecione sua plataforma</span>
-            ) : !supported ? (
-              <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-[11px] font-bold text-slate-500">
-                {key === 'outra' ? 'Importe por XML ou planilha' : 'Integração em breve'}
-              </span>
-            ) : connected ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 text-[11px] font-bold text-emerald-600">
-                <CheckCircle2 size={13} /> Conectado{alias ? ` · ${alias}` : ''}
-              </span>
-            ) : (
-              <span className="rounded-full bg-amber-50 dark:bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-600">Não conectado</span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {supported && connected && (
-            <button type="button" onClick={doSync} disabled={syncing} className="inline-flex items-center gap-2 rounded-xl border border-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#0094eb] hover:bg-[#0094eb]/10 disabled:opacity-50 cursor-pointer">
-              {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Sincronizar agora
+      {!checking && (
+        <div className="flex flex-wrap items-center gap-2">
+          {connected ? (
+            <>
+              <button type="button" onClick={doSync} disabled={syncing} className="inline-flex items-center gap-2 rounded-xl border border-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#0094eb] hover:bg-[#0094eb]/10 disabled:opacity-50 cursor-pointer">
+                {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Sincronizar agora
+              </button>
+              <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] cursor-pointer">
+                <Link2 size={14} /> Atualizar credenciais
+              </button>
+              <button type="button" onClick={doDisconnect} disabled={removing} className="inline-flex items-center gap-2 rounded-xl border border-rose-300 px-4 py-2 text-xs font-black uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 disabled:opacity-50 cursor-pointer">
+                {removing ? <Loader2 size={14} className="animate-spin" /> : <Unlink size={14} />} Desconectar
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] cursor-pointer">
+              <Link2 size={14} /> Conectar
             </button>
           )}
-          {supported && (
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] cursor-pointer"
-            >
-              <Link2 size={14} /> {connected ? 'Atualizar credenciais' : 'Conectar'}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setChanging((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
-          >
-            <Repeat size={14} /> Alterar plataforma
-          </button>
         </div>
-      </div>
+      )}
 
-      {supported && connected && info && (
+      {connected && info && (
         <p className="text-[11px] text-slate-400">
           {info.last_sync_at ? `Última sincronização: ${new Date(info.last_sync_at).toLocaleString('pt-BR')}` : 'Ainda não sincronizado.'}
           {' · '}
@@ -172,25 +145,11 @@ export default function PlatformConnectCard({ storeId, platform, platforms, onCh
         </p>
       )}
 
-      {changing && (
-        <div className="space-y-2">
-          <select
-            value={selectValue}
-            onChange={(e) => { userPicked.current = true; onChangePlatform(e.target.value); setChanging(false); }}
-            className="w-full md:w-72 px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
-          >
-            <option value="">Selecione...</option>
-            {platforms.map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
-          <p className="text-[10px] text-slate-400">Clique em "Salvar Configurações" para gravar a troca.</p>
-        </div>
-      )}
-
       {open && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => !busy && setOpen(false)}>
           <div className="w-full max-w-md space-y-4 rounded-2xl bg-white dark:bg-[#1a1f35] p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-black text-slate-900 dark:text-white">Conectar Yampi</h3>
+              <h3 className="text-base font-black text-slate-900 dark:text-white">{connected ? 'Atualizar credenciais' : 'Conectar Yampi'}</h3>
               <button type="button" onClick={() => setOpen(false)} className="cursor-pointer text-slate-400 hover:text-slate-600"><X size={18} /></button>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">

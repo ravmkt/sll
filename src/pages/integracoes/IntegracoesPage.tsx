@@ -143,7 +143,7 @@ export default function IntegracoesPage() {
             </section>
 
             {open === 'yampi' && (
-              <Modal title="Yampi" onClose={close}>
+              <Modal title="" onClose={close}>
                 <PlatformConnectCard storeId={storeId} platform="Yampi" platforms={['Yampi']} onChangePlatform={() => {}} />
                 {status.yampi && <YampiWebhookCard storeId={storeId} call={call} />}
                 <Link

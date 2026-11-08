@@ -8,7 +8,7 @@ import StorageUsageCard from '@/components/billing/StorageUsageCard';
 type FileRow = {
   id: string; bucket: string; module: string; name: string; title?: string | null;
   vid_id?: string | null; bytes: number; created_at: string | null;
-  thumb_path?: string | null; in_use?: boolean; used_in?: string[];
+  thumb_path?: string | null; in_use?: boolean; used_in?: { t: string; l: string | null }[];
 };
 type Usage = { used_bytes: number; limit_bytes: number | null };
 type Sort = 'size' | 'date';
@@ -40,6 +40,16 @@ async function removeFile(f: FileRow): Promise<void> {
     if (d.error) throw new Error(d.error.message);
   }
 }
+
+const kind = (t: string) =>
+  /live|stream/i.test(t) ? 'Live'
+  : /stor(y|ies)/i.test(t) ? 'Story'
+  : /vid_|video/i.test(t) ? 'Vídeo'
+  : /page|builder/i.test(t) ? 'Página'
+  : /product/i.test(t) ? 'Produto'
+  : t.replace(/_/g, ' ');
+const usedText = (f: FileRow) =>
+  (f.used_in ?? []).map((u) => (u.l ? `${kind(u.t)}: ${u.l}` : kind(u.t))).join(' · ');
 
 function Thumb({ f }: { f: FileRow }) {
   const [imgFail, setImgFail] = useState(false);
@@ -235,6 +245,7 @@ export default function MeuPlanoPage() {
                     ) : (
                       <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{label}</p>
                     )}
+                    {f.used_in && f.used_in.length > 0 && (<p className="truncate text-xs font-medium text-emerald-700" title={usedText(f)}>Usado em: {usedText(f)}</p>)}
                     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
                       <span>
                         {f.module}
@@ -243,7 +254,7 @@ export default function MeuPlanoPage() {
                       {f.in_use ? (
                         <span
                           className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700"
-                          title={f.used_in && f.used_in.length ? `Usado em: ${f.used_in.join(', ')}` : 'Em uso pela loja'}
+                          title={f.used_in && f.used_in.length ? `Usado em: ${usedText(f)}` : 'Em uso pela loja'}
                         >
                           Em uso
                         </span>
@@ -282,7 +293,7 @@ export default function MeuPlanoPage() {
             </p>
             {target.in_use ? (
               <p className="mt-2 rounded-lg bg-red-50 p-2 text-xs font-semibold text-red-700">
-                Este arquivo está em uso{target.used_in && target.used_in.length ? ` (${target.used_in.join(', ')})` : ''}. Ao excluir, ele deixará de aparecer onde estiver publicado.
+                Este arquivo está em uso{target.used_in && target.used_in.length ? ` (${usedText(target)})` : ''}. Ao excluir, ele deixará de aparecer onde estiver publicado.
               </p>
             ) : (
               <p className="mt-2 rounded-lg bg-emerald-50 p-2 text-xs font-semibold text-emerald-700">

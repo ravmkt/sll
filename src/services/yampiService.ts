@@ -35,6 +35,7 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
 export const getYampiStatus = (storeId: string) => call<{ connected: boolean; alias?: string }>({ action: 'status', store_id: storeId });
 export const saveYampiCredentials = (storeId: string, alias: string, token: string, secret: string) =>
   call<{ ok: boolean }>({ action: 'save', store_id: storeId, alias, token, secret });
+export const disconnectYampi = (storeId: string) => call<{ ok: boolean }>({ action: 'disconnect', store_id: storeId });
 export const fetchYampi = (storeId: string) => call<{ products: YampiProduct[]; categories: number }>({ action: 'fetch', store_id: storeId });
 
 async function pageAll<T>(build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>): Promise<T[]> {

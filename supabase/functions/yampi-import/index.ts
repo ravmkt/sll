@@ -68,6 +68,12 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (action === 'disconnect') {
+      const { error } = await admin.from('yampi_connections').delete().eq('store_id', store_id);
+      if (error) throw error;
+      return json({ ok: true });
+    }
+
     if (action === 'fetch') {
       if (!conn) return json({ error: 'Yampi não conectada.' }, 400);
       const c: Cred = { alias: conn.alias, token: conn.user_token, secret: conn.user_secret };
@@ -86,7 +92,7 @@ Deno.serve(async (req) => {
           name: p.name,
           active: !!p.active,
           url: p.url || '',
-          description: String(p.texts?.data?.description || '),
+          description: String(p.texts?.data?.description || ''),
           image: imgs[0] || '',
           images: imgs,
           category: tree?.name || root?.name || '',
