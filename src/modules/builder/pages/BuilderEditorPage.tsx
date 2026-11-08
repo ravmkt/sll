@@ -1,70 +1,143 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
-  DndContext,
-  PointerSensor,
-  useDraggable,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
+  DndContext, DragOverlay, PointerSensor, pointerWithin, rectIntersection,
+  useDraggable, useDroppable, useSensor, useSensors,
+  type CollisionDetection, type DragEndEvent, type DragStartEvent,
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { BLOCKS, BLOCK_TYPES } from '../registry';
-import { useBuilder } from '../store';
+import { ArrowLeft, Copy, GripVertical, Trash2 } from 'lucide-react';
+import { BLOCKS } from '../registry';
+import { renderBlock } from '../render';
+import { PALETTE, type PaletteItem } from '../palette';
+import { findBlock, findLoc, useBuilder, type Target } from '../store';
 import { getPage, savePage } from '../services/pages';
 import PublishBar from '../components/PublishBar';
 import type { Block, BlockType } from '../types';
+import type { Field } from '../registry-extra';
 
-function PaletteItem({ type }: { type: BlockType }) {
+const collision: CollisionDetection = (args) => {
+  const hits = pointerWithin(args);
+  const list = (hits.length ? hits : rectIntersection(args)).filter((c) => c.id !== args.active.id);
+  const area = (id: string | number) => {
+    const r = args.droppableRects.get(id);
+    return r ? r.width * r.height : 0;
+  };
+  return [...list].sort((a, b) => area(a.id) - area(b.id));
+};
+
+function PaletteTile({ item }: { item: PaletteItem }) {
   const add = useBuilder((s) => s.add);
+  const Icon = item.icon;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `palette-${type}`,
-    data: { from: 'palette', type },
+    id: `palette-${item.key}`,
+    data: { from: 'palette', type: item.type, cols: item.cols, label: item.label },
   });
   return (
     <button
       ref={setNodeRef}
+      type="button"
       {...listeners}
       {...attributes}
-      onClick={() => add(type)}
-      className={`w-full rounded-md border bg-white px-3 py-2 text-left text-sm hover:border-emerald-500 ${isDragging ? 'opacity-40' : ''}`}
+      onClick={() => add(item.type, undefined, item.cols)}
+      title={`${item.label} — clique ou arraste`}
+      className={`flex cursor-grab flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-3 text-[11px] font-semibold text-slate-600 transition-colors hover:border-[#0094eb] hover:text-[#0094eb] ${isDragging ? 'opacity-40' : ''}`}
     >
-      {BLOCKS[type].label}
+      <Icon className="h-5 w-5" />
+      <span className="leading-tight">{item.label}</span>
     </button>
   );
 }
 
+function ColumnDrop({ parentId, index, items }: { parentId: string; index: number; items: Block[] }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `col:${parentId}:${index}` });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-h-[96px] min-w-0 rounded-lg border-2 border-dashed p-1 transition-colors ${isOver ? 'border-[#0094eb] bg-[#0094eb]/5' : 'border-slate-300'}`}
+    >
+      <SortableContext items={items.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+        {items.map((b) => (
+          <CanvasBlock key={b.id} block={b} />
+        ))}
+      </SortableContext>
+      {items.length === 0 && (
+        <p className="py-8 text-center text-xs font-medium text-slate-400">Solte um elemento aqui</p>
+      )}
+    </div>
+  );
+}
+
+function ColumnsEditor({ block }: { block: Block }) {
+  const cols = block.children ?? [];
+  return (
+    <div style={{ background: block.props.bg || undefined, padding: `${Number(block.props.pad) || 0}px` }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${cols.length || 1},minmax(0,1fr))`,
+          gap: `${Number(block.props.gap) || 0}px`,
+          alignItems: block.props.align || 'stretch',
+        }}
+      >
+        {cols.map((items, i) => (
+          <ColumnDrop key={i} parentId={block.id} index={i} items={items} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CanvasBlock({ block }: { block: Block }) {
-  const selectedId = useBuilder((s) => s.selectedId);
+  const selected = useBuilder((s) => s.selectedId === block.id);
   const select = useBuilder((s) => s.select);
   const remove = useBuilder((s) => s.remove);
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
-  const selected = selectedId === block.id;
+  const duplicate = useBuilder((s) => s.duplicate);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
 
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      onClick={() => select(block.id)}
-      className={`group relative ${selected ? 'ring-2 ring-emerald-500' : 'hover:ring-1 hover:ring-gray-300'}`}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
+      onClick={(e) => {
+        e.stopPropagation();
+        select(block.id);
+      }}
+      className={`group/b relative ${selected ? 'ring-2 ring-[#0094eb]' : 'hover:ring-1 hover:ring-slate-300'}`}
     >
-      <div className="absolute right-2 top-2 z-10 hidden gap-1 group-hover:flex">
-        <button {...listeners} {...attributes} className="cursor-grab rounded bg-gray-800 px-2 py-1 text-xs text-white">
-          Mover
+      <div className={`absolute right-2 top-2 z-20 gap-1 ${selected ? 'flex' : 'hidden group-hover/b:flex'}`}>
+        <button
+          type="button"
+          {...listeners}
+          {...attributes}
+          title="Arrastar"
+          className="cursor-grab rounded-md bg-slate-800 p-1.5 text-white"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
         </button>
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            remove(block.id);
-          }}
-          className="rounded bg-red-600 px-2 py-1 text-xs text-white"
+          type="button"
+          title="Duplicar"
+          onClick={(e) => { e.stopPropagation(); duplicate(block.id); }}
+          className="rounded-md bg-[#0094eb] p-1.5 text-white"
         >
-          Excluir
+          <Copy className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          title="Excluir"
+          onClick={(e) => { e.stopPropagation(); remove(block.id); }}
+          className="rounded-md bg-red-600 p-1.5 text-white"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
-      <div className="pointer-events-none">{BLOCKS[block.type].render(block.props)}</div>
+      {block.type === 'columns' ? (
+        <ColumnsEditor block={block} />
+      ) : (
+        <div className="pointer-events-none">{renderBlock(block)}</div>
+      )}
     </div>
   );
 }
@@ -74,48 +147,119 @@ function Canvas() {
   const select = useBuilder((s) => s.select);
   const { setNodeRef } = useDroppable({ id: 'canvas' });
   return (
-    <div ref={setNodeRef} onClick={() => select(null)} className="min-h-[600px] bg-white shadow">
+    <div ref={setNodeRef} onClick={() => select(null)} className="min-h-[600px] bg-white shadow-sm">
       <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
         {blocks.map((b) => (
           <CanvasBlock key={b.id} block={b} />
         ))}
       </SortableContext>
       {blocks.length === 0 && (
-        <p className="p-16 text-center text-gray-400">Arraste ou clique em um elemento à esquerda</p>
+        <p className="p-16 text-center text-sm font-medium text-slate-400">
+          Arraste ou clique em um elemento à esquerda
+        </p>
       )}
     </div>
   );
 }
 
+const INPUT =
+  'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20';
+
+function FieldInput({ f, value, onChange }: { f: Field; value: string; onChange: (v: string) => void }) {
+  const type = f.type ?? (f.key === 'bg' || f.key === 'color' ? 'color' : f.key === 'endsAt' ? 'datetime' : 'text');
+  if (f.multiline) return <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
+  if (type === 'select')
+    return (
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={INPUT}>
+        {f.options?.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    );
+  if (type === 'color')
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={/^#[0-9a-f]{6}$/i.test(value) ? value : '#ffffff'}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-9 w-12 cursor-pointer rounded-lg border border-slate-200 bg-white p-0.5"
+        />
+        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder="#000000" className={INPUT} />
+        {value && (
+          <button type="button" onClick={() => onChange('')} className="text-xs font-semibold text-slate-500 hover:text-red-600">
+            Limpar
+          </button>
+        )}
+      </div>
+    );
+  if (type === 'number')
+    return <input type="number" min={f.min} max={f.max} value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
+  if (type === 'datetime')
+    return <input type="datetime-local" value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
+  return <input value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
+}
+
 function PropertiesPanel() {
-  const block = useBuilder((s) => s.blocks.find((b) => b.id === s.selectedId));
+  const block = useBuilder((s) => findBlock(s.blocks, s.selectedId ?? ''));
   const update = useBuilder((s) => s.update);
-  if (!block) return <p className="p-4 text-sm text-gray-500">Selecione um bloco para editar.</p>;
+  const setCols = useBuilder((s) => s.setCols);
+  const duplicate = useBuilder((s) => s.duplicate);
+  const remove = useBuilder((s) => s.remove);
+  if (!block)
+    return <p className="p-5 text-sm font-medium text-slate-500">Selecione um bloco para editar.</p>;
   const def = BLOCKS[block.type];
+  const n = block.children?.length ?? 0;
   return (
-    <div className="space-y-3 p-4">
-      <h3 className="font-semibold">{def.label}</h3>
-      {def.fields.map((f) => (
-        <label key={f.key} className="block text-sm">
-          <span className="mb-1 block text-gray-600">{f.label}</span>
-          {f.multiline ? (
-            <textarea
-              rows={4}
-              value={block.props[f.key] ?? ''}
-              onChange={(e) => update(block.id, f.key, e.target.value)}
-              className="w-full rounded border p-2"
-            />
-          ) : (
-            <input
-              value={block.props[f.key] ?? ''}
-              onChange={(e) => update(block.id, f.key, e.target.value)}
-              className="w-full rounded border p-2"
-            />
-          )}
-        </label>
-      ))}
+    <div className="space-y-4 p-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-900">{def.label}</h3>
+        <div className="flex gap-1">
+          <button type="button" title="Duplicar" onClick={() => duplicate(block.id)} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]">
+            <Copy className="h-4 w-4" />
+          </button>
+          <button type="button" title="Excluir" onClick={() => remove(block.id)} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:border-red-500 hover:text-red-600">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      {def.fields.map((f) =>
+        block.type === 'columns' && f.key === 'cols' ? (
+          <div key={f.key}>
+            <span className="mb-1.5 block text-xs font-semibold text-slate-600">{f.label}</span>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[1, 2, 3, 4].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCols(block.id, c)}
+                  className={`rounded-lg border py-2 text-sm font-bold transition-colors ${
+                    n === c ? 'border-[#0094eb] bg-[#0094eb] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0094eb]'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <label key={f.key} className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-600">{f.label}</span>
+            <FieldInput f={f} value={block.props[f.key] ?? ''} onChange={(v) => update(block.id, f.key, v)} />
+          </label>
+        ),
+      )}
     </div>
   );
+}
+
+function resolveTarget(overId: string, blocks: Block[]): Target | null {
+  if (overId === 'canvas') return { parentId: null, col: 0 };
+  if (overId.startsWith('col:')) {
+    const [, pid, c] = overId.split(':');
+    return { parentId: pid, col: Number(c) };
+  }
+  return findLoc(blocks, overId);
 }
 
 export default function BuilderEditorPage() {
@@ -123,9 +267,10 @@ export default function BuilderEditorPage() {
   const blocks = useBuilder((s) => s.blocks);
   const load = useBuilder((s) => s.load);
   const add = useBuilder((s) => s.add);
-  const move = useBuilder((s) => s.move);
+  const moveTo = useBuilder((s) => s.moveTo);
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState('');
+  const [overlay, setOverlay] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   useEffect(() => {
@@ -138,18 +283,31 @@ export default function BuilderEditorPage() {
       .catch((e) => setStatus(e.message));
   }, [id, load]);
 
+  function handleDragStart(e: DragStartEvent) {
+    const d = e.active.data.current as { from?: string; label?: string } | undefined;
+    if (d?.from === 'palette') return setOverlay(d.label ?? '');
+    const b = findBlock(blocks, String(e.active.id));
+    setOverlay(b ? BLOCKS[b.type].label : null);
+  }
+
   function handleDragEnd(e: DragEndEvent) {
+    setOverlay(null);
     const { active, over } = e;
     if (!over) return;
-    const data = active.data.current as { from?: string; type?: BlockType } | undefined;
-    const overIndex = blocks.findIndex((b) => b.id === over.id);
+    const overId = String(over.id);
+    const t = resolveTarget(overId, blocks);
+    if (!t) return;
+    const data = active.data.current as { from?: string; type?: BlockType; cols?: number } | undefined;
+    const isPalette = data?.from === 'palette' && !!data.type;
+    const activeLoc = isPalette ? null : findLoc(blocks, String(active.id));
+    const sameList = !!activeLoc && activeLoc.parentId === t.parentId && activeLoc.col === t.col;
 
-    if (data?.from === 'palette' && data.type) {
-      add(data.type, overIndex >= 0 ? overIndex : undefined);
-      return;
+    if (t.index !== undefined && !sameList) {
+      const a = active.rect.current.translated;
+      if (a && a.top + a.height / 2 > over.rect.top + over.rect.height / 2) t.index += 1;
     }
-    const from = blocks.findIndex((b) => b.id === active.id);
-    if (from >= 0 && overIndex >= 0 && from !== overIndex) move(from, overIndex);
+    if (isPalette) add(data!.type!, t, data!.cols);
+    else moveTo(String(active.id), t);
   }
 
   async function handleSave() {
@@ -164,33 +322,53 @@ export default function BuilderEditorPage() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-gray-100">
-      <header className="flex items-center gap-4 border-b bg-white px-4 py-2">
-        <Link to="/dashboard/modules/builder" className="text-sm text-gray-500 hover:underline">← Voltar</Link>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} className="flex-1 rounded border px-3 py-1 font-medium" />
-        <span className="text-sm text-gray-500">{status}</span>
+    <div className="flex h-full flex-col bg-slate-50">
+      <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
+        <Link to="/dashboard/modules/builder" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-[#0094eb]">
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </Link>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="flex-1 rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-800 outline-none focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20"
+        />
+        <span className="text-sm text-slate-500">{status}</span>
         <PublishBar id={id!} title={title} />
-        <button onClick={handleSave} className="rounded-md bg-emerald-600 px-4 py-2 text-white">Salvar</button>
+        <button type="button" onClick={handleSave} className="rounded-xl bg-[#0094eb] px-4 py-2 text-sm font-bold text-white hover:bg-[#007bc4]">
+          Salvar
+        </button>
       </header>
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={collision} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setOverlay(null)}>
         <div className="flex min-h-0 flex-1">
-          <aside className="w-56 space-y-2 overflow-y-auto border-r bg-gray-50 p-3">
-            <p className="text-xs font-semibold uppercase text-gray-500">Elementos</p>
-            {BLOCK_TYPES.map((t) => (
-              <PaletteItem key={t} type={t} />
+          <aside className="w-64 shrink-0 space-y-5 overflow-y-auto border-r border-slate-200 bg-white p-4">
+            {PALETTE.map((g) => (
+              <div key={g.title}>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-900">{g.title}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {g.items.map((it) => (
+                    <PaletteTile key={it.key} item={it} />
+                  ))}
+                </div>
+              </div>
             ))}
           </aside>
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className="min-w-0 flex-1 overflow-y-auto p-6">
             <div className="mx-auto max-w-4xl">
               <Canvas />
             </div>
           </main>
-          <aside className="w-72 overflow-y-auto border-l bg-white">
+          <aside className="w-80 shrink-0 overflow-y-auto border-l border-slate-200 bg-white">
             <PropertiesPanel />
           </aside>
         </div>
+        <DragOverlay dropAnimation={null}>
+          {overlay && (
+            <div className="rounded-xl border border-[#0094eb] bg-white px-4 py-2 text-xs font-bold text-[#0094eb] shadow-xl">
+              {overlay}
+            </div>
+          )}
+        </DragOverlay>
       </DndContext>
     </div>
   );
 }
-

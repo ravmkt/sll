@@ -1,9 +1,10 @@
-﻿export type BlockType = 'hero' | 'text' | 'image' | 'button' | 'video' | 'testimonials' | 'faq' | 'timer' | 'form' | 'product';
+export type BlockType = 'columns' | 'hero' | 'text' | 'image' | 'button' | 'video' | 'testimonials' | 'faq' | 'timer' | 'form' | 'product';
 
 export interface Block {
   id: string;
   type: BlockType;
   props: Record<string, string>;
+  children?: Block[][];
 }
 
 export interface PageContent {
@@ -22,5 +23,3 @@ export interface BuilderPage {
   published_version?: number | null;
   published_html_path?: string | null;
 }
-
-

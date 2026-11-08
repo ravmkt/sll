@@ -1,12 +1,12 @@
-﻿import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import type { BlockType } from './types';
 
-export interface Field { key: string; label: string; multiline?: boolean }
+export interface Field { key: string; label: string; multiline?: boolean; type?: 'text' | 'color' | 'number' | 'select' | 'datetime'; options?: { value: string; label: string }[]; min?: number; max?: number }
 export interface BlockDef {
   label: string;
   defaults: Record<string, string>;
   fields: Field[];
-  render: (p: Record<string, string>) => ReactElement;
+  render: (p: Record<string, string>, kids?: ReactNode[]) => ReactElement;
 }
 
 function toEmbed(url: string): string {
@@ -15,6 +15,40 @@ function toEmbed(url: string): string {
 }
 
 export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
+  columns: {
+    label: 'Colunas',
+    defaults: { cols: '2', gap: '16', pad: '24', align: 'stretch', stack: '1', bg: '' },
+    fields: [
+      { key: 'cols', label: 'Número de colunas' },
+      { key: 'gap', label: 'Espaço entre colunas (px)', type: 'number', min: 0, max: 80 },
+      { key: 'pad', label: 'Espaço interno (px)', type: 'number', min: 0, max: 120 },
+      { key: 'align', label: 'Alinhamento vertical', type: 'select', options: [
+        { value: 'stretch', label: 'Esticar' }, { value: 'start', label: 'Topo' },
+        { value: 'center', label: 'Centro' }, { value: 'end', label: 'Base' },
+      ] },
+      { key: 'stack', label: 'No celular', type: 'select', options: [
+        { value: '1', label: 'Empilhar colunas' }, { value: '0', label: 'Manter lado a lado' },
+      ] },
+      { key: 'bg', label: 'Cor de fundo', type: 'color' },
+    ],
+    render: (p, kids) => {
+      const n = Math.min(4, Math.max(1, Number(p.cols) || 2));
+      return (
+        <section style={{ background: p.bg || undefined, padding: `${Number(p.pad) || 0}px` }}>
+          <style>{`@media(max-width:640px){.sll-cols[data-stack="1"]{grid-template-columns:1fr !important}}`}</style>
+          <div
+            className="sll-cols"
+            data-stack={p.stack}
+            style={{ display: 'grid', gridTemplateColumns: `repeat(${n},minmax(0,1fr))`, gap: `${Number(p.gap) || 0}px`, alignItems: p.align || 'stretch' }}
+          >
+            {Array.from({ length: n }, (_, i) => (
+              <div key={i} style={{ minWidth: 0 }}>{kids?.[i]}</div>
+            ))}
+          </div>
+        </section>
+      );
+    },
+  },
   video: {
     label: 'Vídeo',
     defaults: { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
