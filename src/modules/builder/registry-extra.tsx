@@ -144,23 +144,60 @@ export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
   },
   product: {
     label: 'Produto',
-    defaults: { image: 'https://placehold.co/600x600', name: 'Nome do produto', price: 'R$ 199,90', cta: 'Comprar agora', href: '#' },
+    defaults: { layout: 'horizontal', image: 'https://placehold.co/600x600', name: 'Nome do produto', price: 'R$ 199,90', cta: 'Comprar agora', href: '#' },
     fields: [
+      { key: 'layout', label: 'Layout', type: 'select', options: [
+        { value: 'horizontal', label: 'Imagem ao lado' },
+        { value: 'card', label: 'Card (foto em cima)' },
+        { value: 'mini', label: 'Miniatura em cima' },
+      ] },
       { key: 'image', label: 'URL da imagem' },
       { key: 'name', label: 'Nome' },
       { key: 'price', label: 'Preço' },
       { key: 'cta', label: 'Texto do botão' },
       { key: 'href', label: 'Link de compra' },
     ],
-    render: (p) => (
-      <section className="mx-auto grid max-w-4xl gap-8 px-8 py-10 md:grid-cols-2">
-        <img src={p.image} alt={p.name} loading="lazy" className="w-full rounded-lg" />
-        <div className="flex flex-col justify-center gap-3">
-          <h2 className="text-3xl font-bold">{p.name}</h2>
-          <p className="text-2xl font-semibold text-emerald-600">{p.price}</p>
-          <a href={p.href} className="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-center font-semibold text-white">{p.cta}</a>
-        </div>
-      </section>
-    ),
+    render: (p) => {
+      const layout = p.layout || 'horizontal';
+      const btn = (
+        <a href={p.href} className="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-center font-semibold text-white">{p.cta}</a>
+      );
+      if (layout === 'horizontal') {
+        return (
+          <section className="mx-auto grid max-w-4xl gap-8 px-8 py-10 md:grid-cols-2">
+            <img src={p.image} alt={p.name} loading="lazy" className="w-full rounded-lg" />
+            <div className="flex flex-col justify-center gap-3">
+              <h2 className="text-3xl font-bold">{p.name}</h2>
+              <p className="text-2xl font-semibold text-emerald-600">{p.price}</p>
+              {btn}
+            </div>
+          </section>
+        );
+      }
+      const mini = layout === 'mini';
+      return (
+        <section style={{ padding: '24px 32px' }}>
+          <div
+            style={{
+              margin: '0 auto', maxWidth: mini ? 220 : 360, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', gap: 8, textAlign: 'center', padding: 16,
+              border: '1px solid #e5e7eb', borderRadius: 12, background: '#fff',
+            }}
+          >
+            <img
+              src={p.image}
+              alt={p.name}
+              loading="lazy"
+              style={mini
+                ? { width: 110, height: 110, objectFit: 'cover', borderRadius: 8 }
+                : { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderRadius: 8 }}
+            />
+            <h2 style={{ margin: 0, fontSize: mini ? 14 : 20, fontWeight: mini ? 600 : 700 }}>{p.name}</h2>
+            <p style={{ margin: 0, fontSize: mini ? 16 : 22, fontWeight: 600, color: '#059669' }}>{p.price}</p>
+            {btn}
+          </div>
+        </section>
+      );
+    },
   },
 };
