@@ -81,89 +81,93 @@ function coverDoc(cover: string, href: string): string {
 }
 
 const CAR_CSS =
+  '.sll-car-c{container-type:inline-size}' +
+  '.sll-car-m{display:none}' +
+  '@container (max-width:700px){.sll-car-d{display:none}.sll-car-m{display:block}}' +
   '.sll-car-vp{overflow:hidden}' +
   '.sll-car-tr{display:flex;touch-action:pan-y;user-select:none;-webkit-user-select:none;will-change:transform}' +
-  '.sll-car-s{flex:0 0 calc(100% / var(--v));min-width:0;box-sizing:border-box}' +
-  '.sll-car{--v:var(--vd);--z:var(--zd)}@media(max-width:700px){.sll-car{--v:var(--vm);--z:var(--zm)}}' +
-  '.sll-car-s img{width:calc(var(--z) * 1%);margin:0 auto}';
+  '.sll-car-s{flex:0 0 calc(100% / var(--v));min-width:0;box-sizing:border-box}';
 
 const clampN = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const imgCount = (p: Record<string, string>) => Math.max(1, parseItems(p.items).filter((x) => x.src).length);
 
-function CarouselView({ p }: { p: Record<string, string> }) {
+const SHAPE_RATIO: Record<string, string | undefined> = {
+  r916: '9 / 16', r34: '3 / 4', l169: '16 / 9', l43: '4 / 3', sq: '1 / 1', round: '1 / 1', orig: undefined,
+};
+
+function CarInst({ p, dev, list }: { p: Record<string, string>; dev: 'd' | 'm'; list: ReturnType<typeof parseItems> }) {
   const ref = useRef<HTMLDivElement>(null);
-  const list = parseItems(p.items).filter((x) => x.src);
-  const n = list.length;
+  const k = (s: string) => p[dev + s];
+  const n0 = list.length;
+  const rep = k('Repeat') === '1';
+  const cap = dev === 'm' ? 2 : 12;
+  const v = clampN(Math.round(num(k('View'), dev === 'm' ? 2 : 1)), 1, rep ? cap : Math.min(cap, n0));
+  const eff = rep && v > n0 ? Math.ceil(v / n0) * n0 : n0;
+  const items = Array.from({ length: eff }, (_, i) => list[i % n0]);
+  const sh = k('Shape') || (p.ratio === 'auto' ? 'orig' : dev === 'd' ? 'l169' : 'sq');
+  const ratio = SHAPE_RATIO[sh];
+  const size = clampN(Math.round(num(k('Size'), 100)), 10, 100);
+  const gap = clampN(num(k('Gap') ?? p.gap, dev === 'd' ? 12 : 8), 0, 80);
+  const mw = num(k('MaxW') ?? p.maxW, dev === 'd' ? 1200 : 0);
+  const mode = k('Mode') || p.mode || 'auto';
+  const sec = clampN(num(p.secs, 4), 1, 30);
+  const fit = p.fit === 'contain' ? 'contain' : 'cover';
+  const radius = sh === 'round' ? '50%' : `${num(p.radius, 8)}px`;
   const sig = JSON.stringify(p);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || n < 2) return undefined;
+    if (!el || eff < 2) return undefined;
     const make = new Function('return ' + CAROUSEL_JS)() as (r: HTMLElement) => () => void;
     return make(el);
-  }, [sig, n]);
+  }, [sig, eff]);
 
-  if (n === 0) {
+  return (
+    <div
+      ref={ref}
+      className={dev === 'd' ? 'sll-car-d' : 'sll-car-m'}
+      data-car=""
+      data-mode={mode}
+      data-secs={sec}
+      style={{ maxWidth: mw > 0 ? mw : undefined, margin: '0 auto', overflow: 'hidden', '--v': v } as CSSProperties}
+    >
+      <div className="sll-car-vp" style={{ margin: `0 -${gap / 2}px` }}>
+        <div className="sll-car-tr" data-car-tr="" style={{ cursor: eff > 1 ? 'grab' : undefined }}>
+          {items.map((it, i) => {
+            const im = (
+              <img
+                src={safeUrl(it.src)}
+                alt={it.alt || ''}
+                loading={dev === 'd' && i === 0 ? 'eager' : 'lazy'}
+                draggable={false}
+                style={{ display: 'block', width: `${size}%`, margin: '0 auto', aspectRatio: ratio, objectFit: fit, borderRadius: radius }}
+              />
+            );
+            const href = (it.href || '').trim();
+            return (
+              <div key={i} className="sll-car-s" style={{ padding: `0 ${gap / 2}px` }}>
+                {href ? <a href={safeUrl(href)} draggable={false} style={{ display: 'block' }}>{im}</a> : im}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CarouselView({ p }: { p: Record<string, string> }) {
+  const list = parseItems(p.items).filter((x) => x.src);
+  if (list.length === 0) {
     return <section style={{ padding: 32, textAlign: 'center', color: '#6b7280' }}>{'Adicione imagens ao carrossel.'}</section>;
   }
-
-  const dv = clampN(Math.round(num(p.dView, 1)), 1, n);
-  const mv = clampN(Math.round(num(p.mView, 1)), 1, Math.min(2, n));
-  const zd = clampN(Math.round(num(p.dSize, 100)), 10, 100);
-  const zm = clampN(Math.round(num(p.mSize, 100)), 10, 100);
-  const dm = p.dMode || p.mode || 'auto';
-  const mm = p.mMode || p.mode || 'auto';
-  const sec = clampN(num(p.secs, 4), 1, 30);
-  const gap = clampN(num(p.gap, 12), 0, 80);
-  const mw = num(p.maxW, 1200);
-  const ratio = p.ratio && p.ratio !== 'auto' ? p.ratio : undefined;
-  const fit = p.fit === 'contain' ? 'contain' : 'cover';
-  const rootStyle = {
-    maxWidth: mw > 0 ? mw : undefined,
-    margin: '0 auto',
-    overflow: 'hidden',
-    '--vd': dv,
-    '--vm': mv,
-    '--zd': zd,
-    '--zm': zm,
-  } as CSSProperties;
-
+  const sig = JSON.stringify(p);
   return (
     <section style={{ background: p.bg || undefined, padding: `${num(p.pad, 16)}px 32px` }}>
       <style dangerouslySetInnerHTML={{ __html: CAR_CSS }} />
-      <div
-        key={sig}
-        ref={ref}
-        className="sll-car"
-        data-car=""
-        data-dm={dm}
-        data-mm={mm}
-        data-dv={dv}
-        data-mv={mv}
-        data-secs={sec}
-        style={rootStyle}
-      >
-        <div className="sll-car-vp" style={{ margin: `0 -${gap / 2}px` }}>
-          <div className="sll-car-tr" data-car-tr="" style={{ cursor: n > 1 ? 'grab' : undefined }}>
-            {list.map((it, i) => {
-              const im = (
-                <img
-                  src={safeUrl(it.src)}
-                  alt={it.alt || ''}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  draggable={false}
-                  style={{ display: 'block', aspectRatio: ratio, objectFit: fit, borderRadius: num(p.radius, 8) }}
-                />
-              );
-              const href = (it.href || '').trim();
-              return (
-                <div key={i} className="sll-car-s" style={{ padding: `0 ${gap / 2}px` }}>
-                  {href ? <a href={safeUrl(href)} draggable={false} style={{ display: 'block' }}>{im}</a> : im}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      <div className="sll-car-c">
+        <CarInst key={sig + 'd'} p={p} dev="d" list={list} />
+        <CarInst key={sig + 'm'} p={p} dev="m" list={list} />
       </div>
     </section>
   );
@@ -174,6 +178,38 @@ const CAR_MODES = [
   { value: 'manual', label: 'Manual: arrastar (infinita)' },
 ];
 
+const SHAPE_OPTS = [
+  { value: 'r916', label: 'Retrato 9:16' },
+  { value: 'r34', label: 'Retrato 3:4' },
+  { value: 'l169', label: 'Paisagem 16:9' },
+  { value: 'l43', label: 'Paisagem 4:3' },
+  { value: 'sq', label: 'Quadrado' },
+  { value: 'round', label: 'Redondo' },
+  { value: 'orig', label: 'Original' },
+];
+
+type CarField = BlockDef['fields'][number];
+
+const carDev = (d: 'd' | 'm'): CarField[] => {
+  const g = d === 'd' ? 'Desktop' : 'Celular';
+  const cap = d === 'd' ? 12 : 2;
+  return [
+    { key: d + 'Mode', label: 'Troca', type: 'select', options: CAR_MODES, group: g, def: 'auto' },
+    {
+      key: d + 'View', label: 'Imagens vis\u00edveis', type: 'number', min: 1, max: cap, group: g, def: d === 'd' ? '1' : '2',
+      maxFn: (p) => (p[d + 'Repeat'] === '1' ? cap : Math.min(cap, imgCount(p))),
+    },
+    {
+      key: d + 'Repeat', label: 'Repetir imagens para preencher', type: 'select', group: g, def: '0',
+      options: [{ value: '0', label: 'N\u00e3o' }, { value: '1', label: 'Sim' }],
+    },
+    { key: d + 'Shape', label: 'Formato', type: 'select', options: SHAPE_OPTS, group: g, def: d === 'd' ? 'l169' : 'sq' },
+    { key: d + 'Size', label: 'Tamanho da imagem (% da coluna)', type: 'number', min: 10, max: 100, group: g, def: '100' },
+    { key: d + 'Gap', label: 'Espa\u00e7o entre imagens (px)', type: 'number', min: 0, max: 80, group: g, def: d === 'd' ? '12' : '8' },
+    { key: d + 'MaxW', label: 'Largura m\u00e1xima (px, 0 = total)', type: 'number', min: 0, max: 2400, group: g, def: d === 'd' ? '1200' : '0' },
+  ];
+};
+
 const CAROUSEL: BlockDef = {
   label: 'Carrossel de imagens',
   defaults: {
@@ -182,17 +218,10 @@ const CAROUSEL: BlockDef = {
       { src: 'https://placehold.co/1200x500?text=Imagem+2', alt: '', href: '' },
       { src: 'https://placehold.co/1200x500?text=Imagem+3', alt: '', href: '' },
     ]),
-    dMode: 'auto',
-    mMode: 'auto',
-    dView: '1',
-    mView: '2',
-    dSize: '100',
-    mSize: '100',
+    dMode: 'auto', dView: '1', dRepeat: '0', dShape: 'l169', dSize: '100', dGap: '12', dMaxW: '1200',
+    mMode: 'auto', mView: '2', mRepeat: '0', mShape: 'sq', mSize: '100', mGap: '8', mMaxW: '0',
     secs: '4',
-    ratio: '16 / 9',
     fit: 'cover',
-    gap: '12',
-    maxW: '1200',
     radius: '8',
     pad: '16',
     bg: '',
@@ -211,23 +240,16 @@ const CAROUSEL: BlockDef = {
         { key: 'href', label: 'Link (opcional)' },
       ],
     },
-    { key: 'dMode', label: 'Troca no desktop', type: 'select', options: CAR_MODES, group: 'Desktop', def: 'auto' },
-    { key: 'dView', label: 'Imagens vis\u00edveis (m\u00e1x. = qtd. de imagens)', type: 'number', min: 1, max: 12, maxFn: imgCount, group: 'Desktop', def: '1' },
-    { key: 'dSize', label: 'Tamanho da imagem (% da coluna)', type: 'number', min: 10, max: 100, group: 'Desktop', def: '100' },
-    { key: 'mMode', label: 'Troca no celular', type: 'select', options: CAR_MODES, group: 'Celular', def: 'auto' },
-    { key: 'mView', label: 'Imagens vis\u00edveis (m\u00e1x. 2)', type: 'number', min: 1, max: 2, maxFn: (p) => Math.min(2, imgCount(p)), group: 'Celular', def: '2' },
-    { key: 'mSize', label: 'Tamanho da imagem (% da coluna)', type: 'number', min: 10, max: 100, group: 'Celular', def: '100' },
-    { key: 'secs', label: 'Segundos por troca (autom\u00e1tico)', type: 'number', min: 1, max: 30, group: 'Imagens', def: '4' },
-    { key: 'ratio', label: 'Propor\u00e7\u00e3o', type: 'select', group: 'Imagens', def: '16 / 9', options: [{ value: 'auto', label: 'Original' }, ...RATIOS] },
+    ...carDev('d'),
+    ...carDev('m'),
+    { key: 'secs', label: 'Segundos por troca (autom\u00e1tico)', type: 'number', min: 1, max: 30, group: 'Geral', def: '4' },
     {
-      key: 'fit', label: 'Ajuste da imagem', type: 'select', group: 'Imagens', def: 'cover',
+      key: 'fit', label: 'Ajuste da imagem', type: 'select', group: 'Geral', def: 'cover',
       options: [{ value: 'cover', label: 'Preencher (recorta)' }, { value: 'contain', label: 'Mostrar inteira' }],
     },
-    { key: 'gap', label: 'Espa\u00e7o entre imagens (px)', type: 'number', min: 0, max: 80, group: 'Imagens', def: '12' },
-    { key: 'radius', label: 'Arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Imagens', def: '8' },
-    { key: 'maxW', label: 'Largura m\u00e1xima (px, 0 = total)', type: 'number', min: 0, max: 2400, group: 'Layout', def: '1200' },
-    { key: 'bg', label: 'Cor de fundo da se\u00e7\u00e3o', type: 'color', group: 'Layout' },
-    { key: 'pad', label: 'Espa\u00e7o vertical (px)', type: 'number', min: 0, max: 200, group: 'Layout', def: '16' },
+    { key: 'radius', label: 'Arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Geral', def: '8' },
+    { key: 'bg', label: 'Cor de fundo da se\u00e7\u00e3o', type: 'color', group: 'Geral' },
+    { key: 'pad', label: 'Espa\u00e7o vertical (px)', type: 'number', min: 0, max: 200, group: 'Geral', def: '16' },
   ],
   render: (p) => <CarouselView p={p} />,
 };
