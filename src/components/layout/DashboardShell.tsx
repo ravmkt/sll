@@ -13,6 +13,7 @@ const PREFIX = [
   '/dashboard/integracao',
   '/dashboard/assinaturas',
   '/dashboard/planos',
+  '/dashboard/meu-plano',
   '/dashboard/insights-noah',
   '/dashboard/dicas',
   '/dashboard/metricas',

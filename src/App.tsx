@@ -52,6 +52,7 @@ const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
 const ClubeRules = lazy(() => import('./pages/afiliados/ClubeRules'));
 const SettingsPage = lazy(() => import('./pages/configuracoes/SettingsPage'));
 const Assinaturas = lazy(() => import('./pages/assinaturas/Assinaturas'));
+const MeuPlano = lazy(() => import('@/pages/meu-plano/MeuPlanoPage'));
 const Planos = lazy(() => import('./pages/planos/Planos'));
 const Checkout = lazy(() => import('./pages/checkout/CheckoutPage'));
 const PlanosGatePage = lazy(() => import('./pages/planos/PlanosGatePage'));
@@ -112,6 +113,10 @@ function AppRoutes() {
         <Route
           path="/dashboard/planos"
           element={user ? <Planos /> : <Navigate to="/auth" replace />}
+        />
+        <Route
+          path="/dashboard/meu-plano"
+          element={user ? <MeuPlano /> : <Navigate to="/auth" replace />}
         />
         <Route
           path="/dashboard/assinaturas"

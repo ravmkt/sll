@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Package, Lightbulb, Crown, LogOut, PanelLeftClose, PanelLeftOpen, MessageSquarePlus } from 'lucide-react';
+  LayoutDashboard, Package, Gauge, Lightbulb, Crown, LogOut, PanelLeftClose, PanelLeftOpen, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
 import PushCard from '@/components/layout/PushCard';
@@ -26,6 +26,7 @@ const GROUPS: Group[] = [
     items: [
       { name: 'Visão Geral', icon: LayoutDashboard, path: '/dashboard', exact: true },
       { name: 'Produtos & Catálogo', icon: Package, path: '/dashboard/produtos' },
+      { name: 'Meu plano', icon: Gauge, path: '/dashboard/meu-plano' },
     ],
   },
   // Ecossistema oculto temporariamente: reativar quando houver mais módulos além do Vidlytics.
