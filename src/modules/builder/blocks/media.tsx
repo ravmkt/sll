@@ -1,4 +1,5 @@
 import { BANNER } from './banner';
+import { BANNERS } from './banners';
 import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { CAROUSEL_JS } from './carouselJs';
@@ -255,7 +256,7 @@ const CAROUSEL: BlockDef = {
   render: (p) => <CarouselView p={p} />,
 };
 export const MEDIA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
-  carousel: CAROUSEL, banner: BANNER,
+  carousel: CAROUSEL, banner: BANNER, banners: BANNERS,
   video: {
     label: 'V\u00eddeo',
     defaults: {

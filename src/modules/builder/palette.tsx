@@ -42,6 +42,7 @@ export const PALETTE: { title: string; items: PaletteItem[] }[] = [
       { key: 'video', type: 'video', label: 'Vídeo', icon: CirclePlay },
           { key: 'carousel', type: 'carousel', label: 'Carrossel de imagens', icon: Images },
           { key: 'banner', type: 'banner', label: 'Banner principal', icon: Images },
+          { key: 'banners', type: 'banners', label: '1 a 3 banners', icon: Images },
     ],
   },
   {
