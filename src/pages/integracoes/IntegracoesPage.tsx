@@ -22,24 +22,31 @@ const SOCIALS: Item[] = [
 
 const H2 = 'text-base font-black uppercase tracking-tight text-slate-900 dark:text-white';
 
+const EXTS = ['svg', 'png', 'webp', 'jpg'];
+
 function Tile({ item, on, onClick }: { item: Item; on: boolean; onClick: () => void }) {
-  const [failed, setFailed] = useState(false);
+  const base = item.logo.replace(/\.[a-z0-9]+$/i, '');
+  const first = (item.logo.split('.').pop() || 'svg').toLowerCase();
+  const srcs = [item.logo, ...EXTS.filter((e) => e !== first).map((e) => base + '.' + e)];
+  const [idx, setIdx] = useState(0);
+  const failed = idx >= srcs.length;
   return (
     <button
       type="button"
       onClick={onClick}
-      className="relative flex h-32 w-40 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-[#1a1f35]"
+      title={item.label}
+      aria-label={item.label}
+      className="relative flex h-36 w-56 cursor-pointer flex-col items-center justify-center rounded-2xl p-6 border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-[#1a1f35]"
     >
       <span
         title={on ? 'Conectado' : 'Desconectado'}
         className={'absolute right-3 top-3 h-3 w-3 rounded-full ' + (on ? 'bg-emerald-500' : 'bg-rose-500')}
       />
       {failed ? (
-        <span className="text-3xl font-black text-slate-300">{item.label.charAt(0)}</span>
+        <span className="text-5xl font-black text-slate-300">{item.label.charAt(0)}</span>
       ) : (
-        <img src={item.logo} alt={item.label} className="h-10 w-auto max-w-[110px] object-contain" onError={() => setFailed(true)} />
+        <img src={srcs[idx]} alt={item.label} className="max-h-20 w-auto max-w-[170px] object-contain" onError={() => setIdx((i) => i + 1)} />
       )}
-      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{item.label}</span>
     </button>
   );
 }
