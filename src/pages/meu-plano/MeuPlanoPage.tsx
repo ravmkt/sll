@@ -16,7 +16,7 @@ const MB = 1024 * 1024;
 const GB = 1024 * MB;
 const fmt = (n: number) => (n >= GB ? `${(n / GB).toFixed(2).replace('.', ',')} GB` : `${(n / MB).toFixed(1).replace('.', ',')} MB`);
 
-const canDelete = (f: FileRow) => f.module === 'Vidlytics' || (f.module === 'Builder' && f.bucket === 'builder-assets');
+const canDelete = (f: FileRow) => f.module === 'Vidlytics' || f.module === 'Stream Sell' || (f.module === 'Builder' && f.bucket === 'builder-assets');
 const reason = (f: FileRow) => (f.module === 'Loja' ? 'Em uso pela loja' : f.bucket === 'builder-pages' ? 'Exclua a página no Builder' : 'Indisponível');
 
 async function removeFile(f: FileRow, storeId: string): Promise<void> {
