@@ -96,9 +96,9 @@ export const MEDIA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       bg: '',
     },
     fields: [
-      { key: 'url', label: 'Link ou c\u00f3digo do v\u00eddeo (YouTube, Vimeo, Panda ou MP4)' },
+      { key: 'url', label: 'Link, c\u00f3digo ou arquivo MP4 (YouTube, Vimeo, Panda)', type: 'upload', accept: 'video' },
       { key: 'title', label: 'T\u00edtulo (opcional)' },
-      { key: 'cover', label: 'Imagem de capa (opcional)' },
+      { key: 'cover', label: 'Imagem de capa (opcional)', type: 'upload', accept: 'image' },
       ...textFields('title', 'T\u00edtulo', 60, { size: '24', color: '#111827', style: 'bold' }),
       { key: 'autoplay', label: 'Iniciar sozinho (sem som)', type: 'select', options: yesNo('Sim', 'N\u00e3o'), group: 'Reprodu\u00e7\u00e3o', def: '0' },
       { key: 'loop', label: 'Repetir', type: 'select', options: yesNo('Sim', 'N\u00e3o'), group: 'Reprodu\u00e7\u00e3o', def: '0' },

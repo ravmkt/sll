@@ -6,7 +6,7 @@ export interface Field {
   key: string;
   label: string;
   multiline?: boolean;
-  type?: 'text' | 'color' | 'number' | 'select' | 'datetime' | 'repeater';
+  type?: 'text' | 'color' | 'number' | 'select' | 'datetime' | 'repeater' | 'upload';
   options?: { value: string; label: string }[];
   min?: number;
   max?: number;
@@ -15,6 +15,7 @@ export interface Field {
   itemLabel?: string;
   itemDefaults?: Record<string, string>;
   maxItems?: number;
+  accept?: 'image' | 'video';
   def?: string | ((p: Record<string, string>) => string);
 }
 export interface BlockDef {

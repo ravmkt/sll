@@ -1,7 +1,9 @@
-import type { MouseEvent } from 'react';
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import type { ChangeEvent, MouseEvent } from 'react';
+import { ArrowDown, ArrowUp, Loader2, Plus, Trash2, Upload as UploadIcon } from 'lucide-react';
 import type { Field } from '../registry-extra';
 import { parseItems } from '../styleKit';
+import { ACCEPT, uploadBuilderAsset } from '../services/assets';
 
 export const INPUT =
   'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20';
@@ -71,9 +73,62 @@ function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (
   );
 }
 
+function UploadField({ f, value, onChange }: { f: Field; value: string; onChange: (v: string) => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const kind = f.accept ?? 'image';
+  const pick = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setBusy(true);
+    setErr('');
+    try {
+      onChange(await uploadBuilderAsset(file, kind));
+    } catch (x) {
+      setErr(x instanceof Error ? x.message : 'Falha no envio');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={kind === 'video' ? 'Cole o link ou envie um arquivo' : 'Cole o link ou envie uma imagem'}
+          className={INPUT}
+        />
+        <button
+          type="button"
+          disabled={busy}
+          onClick={act(() => ref.current?.click())}
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-[#0094eb] hover:text-[#0094eb] disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadIcon className="h-3.5 w-3.5" />}
+          {busy ? 'Enviando' : 'Enviar'}
+        </button>
+        <input ref={ref} type="file" accept={ACCEPT[kind]} className="hidden" onClick={(e) => e.stopPropagation()} onChange={pick} />
+      </div>
+      {kind === 'image' && /^https?:\/\//i.test(value) && (
+        <img src={value} alt="" className="h-16 w-auto rounded border border-slate-200 object-cover" />
+      )}
+      {value && (
+        <button type="button" onClick={act(() => onChange(''))} className="text-xs font-semibold text-slate-500 hover:text-red-600">
+          Limpar
+        </button>
+      )}
+      {err && <p className="text-xs font-medium text-red-600">{err}</p>}
+    </div>
+  );
+}
+
 export default function FieldInput({ f, value, onChange }: { f: Field; value: string; onChange: (v: string) => void }) {
   const type = f.type ?? (f.key === 'bg' || f.key === 'color' ? 'color' : f.key === 'endsAt' ? 'datetime' : 'text');
   if (type === 'repeater') return <Repeater f={f} value={value} onChange={onChange} />;
+  if (type === 'upload') return <UploadField f={f} value={value} onChange={onChange} />;
   if (f.multiline) return <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
   if (type === 'select')
     return (
