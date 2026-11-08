@@ -191,7 +191,7 @@ async function syncStore(storeId: string, onlyProduct?: string) {
     const prods = await pageAll<any>((a, b) =>
       admin.from('products').select('id,external_id,price,short_description').eq('store_id', storeId).eq('source_platform', 'yampi').order('id').range(a, b));
     const vars = await pageAll<any>((a, b) =>
-      admin.from('product_variants').select('id,product_id,external_id,price,sale_price,stock').eq('store_id', storeId).order('id').range(a, b));
+      admin.from('product_variants').select('id,product_id,external_id,price,sale_price,stock,sync_hold_until').eq('store_id', storeId).order('id').range(a, b));
     const byProd = new Map<string, any[]>();
     for (const v of vars) { const l = byProd.get(v.product_id) || []; l.push(v); byProd.set(v.product_id, l); }
 
@@ -223,7 +223,7 @@ async function syncStore(storeId: string, onlyProduct?: string) {
         if (price > 0) prices.push(price);
         const v = local.find((x) => String(x.external_id) === ext);
         if (v) {
-          if (Number(v.price) !== price || Number(v.sale_price ?? 0) !== Number(sale ?? 0) || Number(v.stock) !== stock) {
+          if (!(v.sync_hold_until && new Date(v.sync_hold_until).getTime() > Date.now()) && (Number(v.price) !== price || Number(v.sale_price ?? 0) !== Number(sale ?? 0) || Number(v.stock) !== stock)) {
             jobs.push(async () => {
               const { error } = await admin.from('product_variants').update({ price, sale_price: sale, stock, updated_at: now }).eq('id', v.id);
               if (error) s.failed++; else s.variants_updated++;
@@ -329,6 +329,7 @@ Deno.serve(async (req) => {
             if (body.action === 'push') {
           const { data: pv } = await admin.from('product_variants').select('external_id').eq('store_id', c.store_id).eq('sku', String(body.sku || '')).maybeSingle();
           if (!pv?.external_id) return json({ error: 'SKU sem external_id.' }, 400);
+          await admin.from('product_variants').update({ sync_hold_until: new Date(Date.now() + 60000).toISOString() }).eq('store_id', c.store_id).eq('sku', String(body.sku));
           const id = encodeURIComponent(String(pv.external_id));
           const res: Record<string, unknown> = {};
           if (body.price !== undefined) {

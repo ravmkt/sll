@@ -92,3 +92,26 @@ export async function stockHistory(variantId: string): Promise<Movement[]> {
   if (error) throw error;
   return (data || []) as Movement[];
 }
+export async function holdSync(variantId: string): Promise<void> {
+  await sb
+    .from('product_variants')
+    .update({ sync_hold_until: new Date(Date.now() + 60000).toISOString() })
+    .eq('id', variantId);
+}
+
+export async function pushStockToYampi(storeId: string, sku: string, stock: number): Promise<'ok' | 'skip' | 'erro'> {
+  try {
+    const { error } = await supabase.functions.invoke('yampi-sync', {
+      body: { action: 'push', store_id: storeId, sku, stock },
+    });
+    if (!error) return 'ok';
+    let msg = '';
+    try { msg = String((await (error as any).context.json())?.error || ''); } catch { /* sem corpo */ }
+    if (/não conectada|sem external_id/i.test(msg)) return 'skip';
+    console.warn('yampi push:', msg || error.message);
+    return 'erro';
+  } catch (e) {
+    console.warn('yampi push:', e);
+    return 'erro';
+  }
+}

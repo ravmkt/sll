@@ -17,6 +17,8 @@ import {
   listGestorProducts,
   listGestorVariants,
   moveStock,
+  holdSync,
+  pushStockToYampi,
   stockHistory,
   updateGestorProduct,
 } from '../services/gestor';
@@ -173,8 +175,10 @@ export default function GestorPage() {
     }
     setMoving(true);
     try {
+      await holdSync(target.variant.id);
       const bal = await moveStock(target.variant.id, mType, delta, mNote);
-      showSuccess(`Estoque atualizado. Saldo: ${bal}`);
+      const yampi = await pushStockToYampi(storeId, target.variant.sku, bal);
+      showSuccess(`Estoque atualizado. Saldo: ${bal}${yampi === 'ok' ? ' · enviado à Yampi' : yampi === 'erro' ? ' · ERP salvo, mas o envio à Yampi falhou' : ''}`);
       const updated = { ...target.variant, stock: bal };
       setTarget({ ...target, variant: updated });
       setMQty('');
