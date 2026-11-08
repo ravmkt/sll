@@ -1,10 +1,10 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ElementType } from 'react';
 import { Clock, CreditCard, Gift, Headphones, Heart, Package, RefreshCw, ShieldCheck, Star, Truck } from 'lucide-react';
 import type { BlockType } from '../types';
-import type { BlockDef, Field } from '../registry-extra';
-import { ALIGN_OPTIONS, boxCss, boxFields, num, safeUrl, textCss, textFields } from '../styleKit';
+import type { BlockDef } from '../registry-extra';
+import { ALIGN_OPTIONS, boxCss, boxFields, num, parseItems, safeUrl, textCss, textFields } from '../styleKit';
 
-const ICONS: Record<string, React.ElementType> = {
+const ICONS: Record<string, ElementType> = {
   truck: Truck, refresh: RefreshCw, shield: ShieldCheck, card: CreditCard, gift: Gift,
   clock: Clock, star: Star, heart: Heart, support: Headphones, package: Package,
 };
@@ -22,13 +22,30 @@ const ICON_OPTIONS = [
   { value: 'package', label: 'Pacote' },
 ];
 
-const DEFAULT_ICONS = ['truck', 'refresh', 'shield', 'card'];
+const DEFAULT_ITEMS = JSON.stringify([
+  { i: 'truck', t: 'Frete gr\u00e1tis', d: 'Em compras acima de R$ 199' },
+  { i: 'refresh', t: 'Troca f\u00e1cil', d: '7 dias para trocar' },
+  { i: 'shield', t: 'Compra segura', d: 'Seus dados protegidos' },
+]);
 
-const itemFields = (n: number): Field[] => [
-  { key: `i${n}`, label: `Item ${n}: \u00edcone`, type: 'select', options: ICON_OPTIONS, group: `Item ${n}`, def: DEFAULT_ICONS[n - 1] },
-  { key: `t${n}`, label: `Item ${n}: t\u00edtulo`, group: `Item ${n}` },
-  { key: `d${n}`, label: `Item ${n}: texto`, group: `Item ${n}` },
-];
+const HL_CSS =
+  '.sll-hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}' +
+  '@media(max-width:640px){' +
+  '.sll-hl[data-m="c"]{display:flex;position:relative;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}' +
+  '.sll-hl[data-m="c"]::-webkit-scrollbar{display:none}' +
+  '.sll-hl[data-m="c"]>.sll-hl-i{flex:0 0 85%;scroll-snap-align:center}' +
+  '}';
+
+const HL_JS =
+  '(function(){if(window.__sllHl)return;window.__sllHl=1;' +
+  'function init(){var els=document.querySelectorAll(\'.sll-hl[data-m="c"][data-s]\');' +
+  'Array.prototype.forEach.call(els,function(el){var s=Number(el.getAttribute("data-s"));if(!(s>0))return;var pause=0;' +
+  'el.addEventListener("touchstart",function(){pause=Date.now()+8000},{passive:true});' +
+  'setInterval(function(){if(Date.now()<pause)return;if(getComputedStyle(el).display!=="flex")return;' +
+  'var k=el.children;if(k.length<2)return;var c=el.scrollLeft+el.clientWidth/2,b=0,d=1e9;' +
+  'for(var j=0;j<k.length;j++){var m=Math.abs(k[j].offsetLeft+k[j].offsetWidth/2-c);if(m<d){d=m;b=j}}' +
+  'var n=k[(b+1)%k.length];el.scrollTo({left:n.offsetLeft+n.offsetWidth/2-el.clientWidth/2,behavior:"smooth"})},s*1000)})}' +
+  'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init()})();';
 
 export const STORE_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
   announcement: {
@@ -68,55 +85,64 @@ export const STORE_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
   highlights: {
     label: 'Destaques informativos',
     defaults: {
-      count: '3',
+      items: DEFAULT_ITEMS,
+      mobile: 'stack',
+      sec: '4',
       bg: '#f9fafb',
       pad: '24',
       gap: '16',
       align: 'center',
       iconSize: '32',
       iconColor: '#111827',
-      i1: 'truck', t1: 'Frete gr\u00e1tis', d1: 'Em compras acima de R$ 199',
-      i2: 'refresh', t2: 'Troca f\u00e1cil', d2: '7 dias para trocar',
-      i3: 'shield', t3: 'Compra segura', d3: 'Seus dados protegidos',
-      i4: 'card', t4: 'At\u00e9 12x', d4: 'No cart\u00e3o de cr\u00e9dito',
     },
     fields: [
-      { key: 'count', label: 'Quantidade de itens', type: 'select', options: [{ value: '2', label: '2' }, { value: '3', label: '3' }, { value: '4', label: '4' }], group: 'Faixa', def: '3' },
+      {
+        key: 'items',
+        label: 'Itens',
+        type: 'repeater',
+        group: 'Itens',
+        itemLabel: 'Item',
+        maxItems: 4,
+        itemDefaults: { i: 'star', t: 'Novo destaque', d: 'Texto curto' },
+        item: [
+          { key: 'i', label: '\u00cdcone', type: 'select', options: ICON_OPTIONS },
+          { key: 't', label: 'T\u00edtulo' },
+          { key: 'd', label: 'Texto' },
+        ],
+      },
+      { key: 'mobile', label: 'No celular', type: 'select', options: [{ value: 'stack', label: 'Empilhar' }, { value: 'carousel', label: 'Carrossel (arrastar)' }], group: 'Celular', def: 'stack' },
+      { key: 'sec', label: 'Trocar a cada (segundos, s\u00f3 no carrossel, 0 = manual)', type: 'number', min: 0, max: 60, group: 'Celular', def: '4' },
       { key: 'bg', label: 'Cor de fundo da faixa', type: 'color', group: 'Faixa', def: '#f9fafb' },
       { key: 'pad', label: 'Espa\u00e7o vertical (px)', type: 'number', min: 0, max: 120, group: 'Faixa', def: '24' },
       { key: 'gap', label: 'Espa\u00e7o entre itens (px)', type: 'number', min: 0, max: 80, group: 'Faixa', def: '16' },
       { key: 'align', label: 'Alinhamento', type: 'select', options: ALIGN_OPTIONS, group: 'Faixa', def: 'center' },
       { key: 'iconSize', label: '\u00cdcone: tamanho (px)', type: 'number', min: 12, max: 96, group: '\u00cdcone', def: '32' },
       { key: 'iconColor', label: '\u00cdcone: cor', type: 'color', group: '\u00cdcone', def: '#111827' },
-      ...itemFields(1),
-      ...itemFields(2),
-      ...itemFields(3),
-      ...itemFields(4),
       ...textFields('title', 'T\u00edtulo', 40, { size: '16', color: '#111827', style: 'bold' }),
       ...textFields('desc', 'Texto', 40, { size: '14', color: '#4b5563', style: 'normal' }),
-      ...boxFields('card', 'Cart\u00e3o', true, { pad: '16', radius: '8' }),
+      ...boxFields('card', 'Cards', true, { pad: '16', radius: '8' }),
     ],
     render: (p) => {
-      const n = Math.min(4, Math.max(1, num(p.count, 3)));
+      const list = parseItems(p.items).slice(0, 4).filter((x) => x.t || x.d);
+      const carousel = p.mobile === 'carousel';
+      const sec = Math.max(0, num(p.sec, 4));
       const al = p.align || 'center';
       const flex = al === 'left' ? 'flex-start' : al === 'right' ? 'flex-end' : 'center';
-      const items = [1, 2, 3, 4].slice(0, n).filter((i) => p[`t${i}`] || p[`d${i}`]);
       return (
         <section style={{ background: p.bg || '#f9fafb', padding: `${num(p.pad, 24)}px 16px` }}>
+          <style dangerouslySetInnerHTML={{ __html: HL_CSS }} />
           <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: num(p.gap, 16),
-              maxWidth: 1100,
-              margin: '0 auto',
-            }}
+            className="sll-hl"
+            data-m={carousel ? 'c' : 's'}
+            data-s={carousel && sec > 0 ? String(sec) : undefined}
+            style={{ gap: num(p.gap, 16), maxWidth: 1100, margin: '0 auto' }}
           >
-            {items.map((i) => {
-              const Ic = ICONS[p[`i${i}`]] || Truck;
+            {list.map((it, k) => {
+              const Ic = ICONS[it.i] || Truck;
               return (
                 <div
-                  key={i}
+                  key={k}
+                  className="sll-hl-i"
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -127,12 +153,13 @@ export const STORE_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
                   }}
                 >
                   <Ic size={num(p.iconSize, 32)} color={p.iconColor || '#111827'} strokeWidth={2} />
-                  {p[`t${i}`] ? <div style={textCss(p, 'title', { size: 16, color: '#111827', style: 'bold' })}>{p[`t${i}`]}</div> : null}
-                  {p[`d${i}`] ? <div style={textCss(p, 'desc', { size: 14, color: '#4b5563', style: 'normal' })}>{p[`d${i}`]}</div> : null}
+                  {it.t ? <div style={textCss(p, 'title', { size: 16, color: '#111827', style: 'bold' })}>{it.t}</div> : null}
+                  {it.d ? <div style={textCss(p, 'desc', { size: 14, color: '#4b5563', style: 'normal' })}>{it.d}</div> : null}
                 </div>
               );
             })}
           </div>
+          {carousel && sec > 0 ? <script dangerouslySetInnerHTML={{ __html: HL_JS }} /> : null}
         </section>
       );
     },
