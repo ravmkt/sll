@@ -264,20 +264,22 @@ function PropertiesPanel() {
         </>
       )}
       {plain.map(renderField)}
-      {[...groups.entries()].map(([title, list]) => (
-        <details key={`${block.id}-${title}`} open={open?.id === block.id && open.title === title} className="rounded-lg border border-slate-200 bg-slate-50/50">
-          <summary
-                onClick={(e) => {
-                  e.preventDefault();
-                  setOpen(open?.id === block.id && open.title === title ? null : { id: block.id, title });
-                }}
-                className="cursor-pointer select-none px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-700"
-              >
-            {title}
-          </summary>
-          <div className="space-y-3 border-t border-slate-200 p-3">{list.map(renderField)}</div>
-        </details>
-      ))}
+      {[...groups.entries()].map(([title, list]) => {
+            const isOpen = open?.id === block.id && open.title === title;
+            return (
+              <div key={`${block.id}-${title}`} className="rounded-lg border border-slate-200 bg-slate-50/50">
+                <button
+                  type="button"
+                  onClick={() => setOpen(isOpen ? null : { id: block.id, title })}
+                  className="flex w-full cursor-pointer select-none items-center gap-2 px-3 py-2 text-left text-xs font-bold uppercase tracking-wide text-slate-700"
+                >
+                  <span className="text-[10px]">{isOpen ? '\u25BC' : '\u25B6'}</span>
+                  {title}
+                </button>
+                {isOpen && <div className="space-y-3 border-t border-slate-200 p-3">{list.map(renderField)}</div>}
+              </div>
+            );
+          })}
     </div>
   );
 }
