@@ -28,7 +28,7 @@ const TikTokIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   </svg>
 );
 
-export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
+export function SocialIntegrationsCard({ storeId, only }: { storeId?: string; only?: "instagram" | "tiktok" }) {
   const [integrations, setIntegrations] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
@@ -165,10 +165,12 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
 
   const isIgConnected = Boolean(igAccount && igAccount.status !== "expired" && igAccount.status !== "disconnected");
   const isTtConnected = Boolean(ttAccount && ttAccount.status !== "expired" && ttAccount.status !== "disconnected");
+  const showIg = !only || only === "instagram";
+  const showTt = !only || only === "tiktok";
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-10 shadow-sm space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+    <div className={only ? "space-y-4" : "rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-10 shadow-sm space-y-6"}>
+      <div className={`${only ? "hidden " : ""}flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4`}>
         <div>
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-50 text-xs font-bold text-pink-600 border border-pink-100">
@@ -192,9 +194,9 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
         </button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className={`grid gap-6 ${only ? "" : "md:grid-cols-2"}`}>
         {/* Card Instagram */}
-        <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-pink-50/20 p-6 transition-all hover:shadow-md hover:border-pink-200">
+        <div className={`${showIg ? "" : "hidden "}flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-pink-50/20 p-6 transition-all hover:shadow-md hover:border-pink-200`}>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -272,7 +274,7 @@ export function SocialIntegrationsCard({ storeId }: { storeId?: string }) {
         </div>
 
         {/* Card TikTok */}
-        <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/50 p-6 transition-all hover:shadow-md hover:border-slate-300">
+        <div className={`${showTt ? "" : "hidden "}flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/50 p-6 transition-all hover:shadow-md hover:border-slate-300`}>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
