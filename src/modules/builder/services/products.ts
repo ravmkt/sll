@@ -1,7 +1,8 @@
-﻿import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { getCurrentStoreId } from './pages';
 
 export interface StoreProduct {
+  description?: string;
   id: string;
   name: string;
   sku: string | null;
@@ -29,7 +30,7 @@ export async function searchProducts(term: string, limit = 30): Promise<StorePro
   const storeId = await getCurrentStoreId();
   let q = supabase
     .from('products')
-    .select('id,name,sku,price,sale_price,image_url,images,product_url')
+    .select('id,name,sku,price,sale_price,image_url,images,product_url,short_description')
     .eq('store_id', storeId)
     .eq('active', true)
     .order('created_at', { ascending: false })
@@ -48,6 +49,7 @@ export async function searchProducts(term: string, limit = 30): Promise<StorePro
     salePrice: r.sale_price != null ? Number(r.sale_price) : null,
     image: firstImage(r),
     url: r.product_url ?? '',
+    description: (r as { short_description?: string | null }).short_description ?? '',
   }));
 }
 
