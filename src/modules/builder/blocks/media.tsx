@@ -16,11 +16,13 @@ const RATIOS = [
   { value: '21 / 9', label: '21:9 (panor\u00e2mico)' },
 ];
 
-type Src = { kind: 'file' | 'yt' | 'vimeo' | 'other'; id: string; url: string };
+type Src = { kind: 'file' | 'yt' | 'vimeo' | 'panda' | 'other'; id: string; url: string };
 type Opt = { auto: boolean; mute: boolean; loop: boolean; ctl: boolean };
 
 function parse(raw: string): Src {
-  const url = raw.trim();
+  const ifr = raw.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+  const url = (ifr ? ifr[1] : raw).trim();
+  if (/pandavideo\.com\.br/i.test(url)) return { kind: 'panda', id: '', url: safeUrl(url) };
   if (/\.(mp4|webm|ogg)($|\?)/i.test(url)) return { kind: 'file', id: '', url: safeUrl(url) };
   const yt = url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
   if (yt) return { kind: 'yt', id: yt[1], url };
@@ -47,6 +49,17 @@ function embed(s: Src, o: Opt): string {
     const qs = q.toString();
     return `https://player.vimeo.com/video/${s.id}${qs ? `?${qs}` : ''}`;
   }
+  if (s.kind === 'panda') {
+    try {
+      const u = new URL(s.url);
+      if (o.auto) u.searchParams.set('autoplay', 'true');
+      if (o.mute) u.searchParams.set('muted', 'true');
+      if (o.loop) u.searchParams.set('loop', 'true');
+      return u.toString();
+    } catch {
+      return s.url;
+    }
+  }
   return s.url;
 }
 
@@ -67,7 +80,7 @@ export const MEDIA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
   video: {
     label: 'V\u00eddeo',
     defaults: {
-      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
       title: '',
       cover: '',
       autoplay: '0',
@@ -81,7 +94,7 @@ export const MEDIA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       bg: '',
     },
     fields: [
-      { key: 'url', label: 'Link do v\u00eddeo (YouTube, Vimeo ou MP4)' },
+      { key: 'url', label: 'Link ou c\u00f3digo do v\u00eddeo (YouTube, Vimeo, Panda ou MP4)' },
       { key: 'title', label: 'T\u00edtulo (opcional)' },
       { key: 'cover', label: 'Imagem de capa (opcional)' },
       ...textFields('title', 'T\u00edtulo', 60, { size: '24', color: '#111827', style: 'bold' }),
