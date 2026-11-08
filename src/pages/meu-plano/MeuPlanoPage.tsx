@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Film, Image as ImageIcon, Trash2, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getCurrentStoreId } from '@/modules/builder/services/pages';
-import { deleteBuilderAsset } from '@/modules/builder/services/assets';
 import StorageUsageCard from '@/components/billing/StorageUsageCard';
 
 type FileRow = { kind: 'video' | 'builder'; id: string; name: string; bytes: number; created_at: string | null; url?: string | null };
@@ -74,8 +73,11 @@ export default function MeuPlanoPage() {
     setMsg(null);
     try {
       if (target.kind === 'builder') {
-        const url = supabase.storage.from('builder-assets').getPublicUrl(target.id).data.publicUrl;
-        await deleteBuilderAsset(url);
+        const sb = supabase as any;
+        const r = await sb.storage.from('builder-assets').remove([target.id]);
+        if (r.error) throw new Error(r.error.message);
+        if (!r.data || r.data.length === 0) throw new Error('Nao foi possivel excluir: sem permissao no armazenamento.');
+        await sb.rpc('refresh_builder_storage', { p_store: storeId });
       } else {
         await removeVideo(target);
       }
