@@ -53,3 +53,18 @@ export async function uploadBuilderAsset(file: File, kind: AssetKind): Promise<s
 
   return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
+export async function deleteBuilderAsset(url: string): Promise<void> {
+  const marker = `/object/public/${BUCKET}/`;
+  const i = url.indexOf(marker);
+  if (i < 0) return;
+  const path = decodeURIComponent(url.slice(i + marker.length).split('?')[0]);
+  const storeId = await getCurrentStoreId();
+  if (path.split('/')[0] !== storeId) return;
+
+  const sb = supabase as unknown as SupabaseClient;
+  const del = await sb.storage.from(BUCKET).remove([path]);
+  if (del.error) throw new Error('Falha ao remover o arquivo.');
+
+  const r = await sb.rpc('refresh_builder_storage', { p_store: storeId });
+  if (r.error) console.warn('refresh_builder_storage', r.error.message);
+}
