@@ -1,3 +1,4 @@
+import StorageUsageCard from '@/components/billing/StorageUsageCard';
 import { VISAO_GERAL_TAGS } from '@/tours/visaoGeralVidlyticsTour';
 import TourTagger from '@/tours/TourTagger';
 import { setModuleAppEnabled } from '@/services/moduleAppService';
@@ -488,6 +489,7 @@ export default function VisaoGeralTab() {
         <h3 className="text-xl font-bold leading-tight text-slate-900 mb-3 px-1">
           Consumo do Plano
         </h3>
+        <div className="mb-4"><StorageUsageCard /></div>
         <div data-tour="vg-consumo" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Visualizações */}

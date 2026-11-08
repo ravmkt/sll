@@ -1,3 +1,4 @@
+import StorageUsageCard from '@/components/billing/StorageUsageCard';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPage, listPages } from '../services/pages';
@@ -37,6 +38,7 @@ export default function BuilderListPage() {
         </div>
       </div>
       {error && <p className="mb-4 text-red-600">{error}</p>}
+      <div className="mb-4"><StorageUsageCard /></div>
       <ul className="divide-y rounded-md border">
         {pages.map((p) => (
           <li key={p.id} className="flex items-center justify-between p-4">

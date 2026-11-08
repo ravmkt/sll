@@ -1,3 +1,4 @@
+import StorageUsageCard from '@/components/billing/StorageUsageCard';
 import InvoiceDocs from '@/components/admin/InvoiceDocs';
 import { supabase as sbRef } from '@/lib/supabase';
 import { Copy as CopyIcon } from 'lucide-react';
@@ -95,6 +96,7 @@ export function ResumoTab({ storeId, data }: { storeId: string; data: AdminStore
             ? <Kpi label="Plano" value="Assinatura ativa" />
             : <Kpi label="Trial até" value={dt(s.trial_ends_at)} />}
       </div>
+      <StorageUsageCard storeId={storeId} dark />
       <div className={CARD}>
         <p className="mb-3 text-[15px] font-bold text-white">Eventos por tipo</p>
         <div className="space-y-2">
