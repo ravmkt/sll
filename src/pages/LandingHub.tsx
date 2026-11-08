@@ -139,7 +139,7 @@ function PhoneMockup() {
         <div className="absolute inset-x-2 bottom-2 z-10">
           <span className="mb-1.5 inline-block rounded-full bg-red-600 px-3 py-0.5 text-[10px] font-bold text-white ring-2 ring-white/80">Restam 2</span>
           <div className="flex items-center gap-2 rounded-xl border-2 border-sky-500 bg-white p-1.5">
-            <MImg src="blazer-bege.jpg" tile={1} className="h-10 w-10 shrink-0 rounded-md" />
+            <MImg src="prod-bazer.jpg" tile={1} className="h-10 w-10 shrink-0 rounded-md" />
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-medium leading-tight text-slate-900">Blazer Linho Bege</p>
               <p className="text-[11px] text-sky-500">R$ 149,90</p>
