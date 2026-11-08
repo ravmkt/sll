@@ -16,7 +16,7 @@ const RATIOS = [
   { value: '21 / 9', label: '21:9 (panor\u00e2mico)' },
 ];
 
-type Src = { kind: 'file' | 'yt' | 'vimeo' | 'panda' | 'other'; id: string; url: string };
+type Src = { kind: 'file' | 'yt' | 'vimeo' | 'panda' | 'other'; id: string; url: string; h?: string };
 type Opt = { auto: boolean; mute: boolean; loop: boolean; ctl: boolean };
 
 function parse(raw: string): Src {
@@ -26,8 +26,9 @@ function parse(raw: string): Src {
   if (/\.(mp4|webm|ogg)($|\?)/i.test(url)) return { kind: 'file', id: '', url: safeUrl(url) };
   const yt = url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
   if (yt) return { kind: 'yt', id: yt[1], url };
-  const vm = url.match(/vimeo\.com\/(?:.*\/)?(\d+)/);
-  if (vm) return { kind: 'vimeo', id: vm[1], url };
+  const vm = url.match(/vimeo\.com\/(?:.*\/)?(\d+)(?:\/([a-f0-9]+))?/i);
+  const vh = url.match(/[?&]h=([a-f0-9]+)/i);
+  if (vm) return { kind: 'vimeo', id: vm[1], url, h: vm[2] || vh?.[1] };
   return { kind: 'other', id: '', url: safeUrl(url) };
 }
 
@@ -42,6 +43,7 @@ function embed(s: Src, o: Opt): string {
   }
   if (s.kind === 'vimeo') {
     const q = new URLSearchParams();
+    if (s.h) q.set('h', s.h);
     if (o.auto) q.set('autoplay', '1');
     if (o.mute) q.set('muted', '1');
     if (o.loop) q.set('loop', '1');
