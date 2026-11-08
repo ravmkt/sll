@@ -28,25 +28,34 @@ const DEFAULT_ITEMS = JSON.stringify([
   { i: 'shield', t: 'Compra segura', d: 'Seus dados protegidos' },
 ]);
 
-const HL_CSS =
-  '.sll-hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}' +
-  '@media(max-width:640px){' +
-  '.sll-hl[data-m="c"]{display:flex;position:relative;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}' +
-  '.sll-hl[data-m="c"]::-webkit-scrollbar{display:none}' +
-  '.sll-hl[data-m="c"]>.sll-hl-i{flex:0 0 85%;scroll-snap-align:center}' +
-  '}';
+const HL_CSS = `.sll-hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.sll-hl-i[data-clone]{display:none !important}
+@media(max-width:640px){
+.sll-hl[data-m="c"]{display:flex;position:relative;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.sll-hl[data-m="c"]::-webkit-scrollbar{display:none}
+.sll-hl[data-m="c"]>.sll-hl-i{flex:0 0 85%;scroll-snap-align:center;scroll-snap-stop:always}
+.sll-hl[data-m="c"]>.sll-hl-i[data-clone]{display:flex !important}
+}`;
 
-const HL_JS =
-  '(function(){if(window.__sllHl)return;window.__sllHl=1;' +
-  'function init(){var els=document.querySelectorAll(\'.sll-hl[data-m="c"][data-s]\');' +
-  'Array.prototype.forEach.call(els,function(el){var s=Number(el.getAttribute("data-s"));if(!(s>0))return;var pause=0;' +
-  'el.addEventListener("touchstart",function(){pause=Date.now()+8000},{passive:true});' +
-  'setInterval(function(){if(Date.now()<pause)return;if(getComputedStyle(el).display!=="flex")return;' +
-  'var k=el.children;if(k.length<2)return;var c=el.scrollLeft+el.clientWidth/2,b=0,d=1e9;' +
-  'for(var j=0;j<k.length;j++){var m=Math.abs(k[j].offsetLeft+k[j].offsetWidth/2-c);if(m<d){d=m;b=j}}' +
-  'var n=k[(b+1)%k.length];el.scrollTo({left:n.offsetLeft+n.offsetWidth/2-el.clientWidth/2,behavior:"smooth"})},s*1000)})}' +
-  'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init()})();';
-
+const HL_JS = `(function(){if(window.__sllHl)return;window.__sllHl=1;
+var mq=window.matchMedia("(max-width:640px)");
+function setup(el){
+var orig=Array.prototype.slice.call(el.children),n=orig.length;if(n<2)return;
+orig.forEach(function(k){var a=k.cloneNode(true);a.setAttribute("data-clone","1");a.setAttribute("aria-hidden","true");el.insertBefore(a,orig[0])});
+orig.forEach(function(k){var a=k.cloneNode(true);a.setAttribute("data-clone","1");a.setAttribute("aria-hidden","true");el.appendChild(a)});
+var s=Number(el.getAttribute("data-s"))||0,pause=0,t;
+function pos(i){var k=el.children[i];return k.offsetLeft+k.offsetWidth/2-el.clientWidth/2}
+function near(){var k=el.children,m=el.scrollLeft+el.clientWidth/2,b=0,d=1e9;for(var j=0;j<k.length;j++){var x=Math.abs(k[j].offsetLeft+k[j].offsetWidth/2-m);if(x<d){d=x;b=j}}return b}
+function jump(v){el.style.scrollSnapType="none";el.scrollLeft=v;requestAnimationFrame(function(){el.style.scrollSnapType=""})}
+function center(){if(mq.matches)jump(pos(n))}
+function norm(){if(!mq.matches)return;var b=near(),w=el.children[2*n].offsetLeft-el.children[n].offsetLeft;if(b<n)jump(el.scrollLeft+w);else if(b>=2*n)jump(el.scrollLeft-w)}
+el.addEventListener("scroll",function(){clearTimeout(t);t=setTimeout(norm,120)},{passive:true});
+el.addEventListener("touchstart",function(){pause=Date.now()+8000},{passive:true});
+if(s>0)setInterval(function(){if(!mq.matches||Date.now()<pause)return;var i=Math.min(near()+1,3*n-1);el.scrollTo({left:pos(i),behavior:"smooth"})},s*1000);
+center();window.addEventListener("load",center);
+if(mq.addEventListener)mq.addEventListener("change",center);else mq.addListener(center)}
+function init(){Array.prototype.forEach.call(document.querySelectorAll('.sll-hl[data-m="c"]'),setup)}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init()})();`;
 export const STORE_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
   announcement: {
     label: 'Barra de an\u00fancio',
@@ -159,7 +168,7 @@ export const STORE_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
               );
             })}
           </div>
-          {carousel && sec > 0 ? <script dangerouslySetInnerHTML={{ __html: HL_JS }} /> : null}
+          {carousel ? <script dangerouslySetInnerHTML={{ __html: HL_JS }} /> : null}
         </section>
       );
     },
