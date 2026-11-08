@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -7,24 +9,93 @@ import YampiWebhookCard from '@/components/integrations/YampiWebhookCard';
 import { getYampiStatus } from '@/services/yampiService';
 import { SocialIntegrationsCard } from "@/components/integracao/SocialIntegrationsCard";
 
+type Item = { key: string; label: string; logo: string };
+
+// Nova plataforma: adicione uma linha aqui e o modal dela mais abaixo.
+const PLATFORMS: Item[] = [
+  { key: 'yampi', label: 'Yampi', logo: '/assets/platforms/yampi.svg' },
+];
+const SOCIALS: Item[] = [
+  { key: 'instagram', label: 'Instagram', logo: '/assets/platforms/instagram.png' },
+  { key: 'tiktok', label: 'TikTok', logo: '/assets/platforms/tiktok.png' },
+];
+
 const H2 = 'text-base font-black uppercase tracking-tight text-slate-900 dark:text-white';
+
+function Tile({ item, on, onClick }: { item: Item; on: boolean; onClick: () => void }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative flex h-32 w-40 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-[#1a1f35]"
+    >
+      <span
+        title={on ? 'Conectado' : 'Desconectado'}
+        className={'absolute right-3 top-3 h-3 w-3 rounded-full ' + (on ? 'bg-emerald-500' : 'bg-rose-500')}
+      />
+      {failed ? (
+        <span className="text-3xl font-black text-slate-300">{item.label.charAt(0)}</span>
+      ) : (
+        <img src={item.logo} alt={item.label} className="h-10 w-auto max-w-[110px] object-contain" onError={() => setFailed(true)} />
+      )}
+      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{item.label}</span>
+    </button>
+  );
+}
+
+function Modal({ open, title, onClose, children }: { open: boolean; title: string; onClose: () => void; children: ReactNode }) {
+  return createPortal(
+    <div className={open ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4' : 'hidden'} onClick={onClose}>
+      <div
+        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#1a1f35]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+          <h3 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">{title}</h3>
+          <button type="button" onClick={onClose} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="space-y-4 overflow-y-auto p-6">{children}</div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 export default function IntegracoesPage() {
   const { storeId } = useLoja();
-  const [yampiOn, setYampiOn] = useState(false);
+  const [status, setStatus] = useState<Record<string, boolean>>({});
+  // Volta do login do Instagram/TikTok: abre o modal de redes sociais para processar o retorno.
+  const [open, setOpen] = useState<string | null>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return p.has('code') || p.has('tiktok') ? 'social' : null;
+  });
+
+  const load = useCallback(async () => {
+    if (!storeId) return;
+    const next: Record<string, boolean> = {};
+    try {
+      const y = await getYampiStatus(storeId);
+      next.yampi = !!y.connected;
+    } catch { next.yampi = false; }
+    try {
+      const { data } = await (supabase as any).from('store_integrations').select('platform,status').eq('store_id', storeId);
+      for (const r of (data ?? []) as { platform: string; status: string | null }[]) {
+        if (r.status !== 'expired') next[String(r.platform).toLowerCase()] = true;
+      }
+    } catch { /* sem status */ }
+    setStatus(next);
+  }, [storeId]);
 
   useEffect(() => {
-    if (!storeId || yampiOn) return;
-    let alive = true;
-    const check = () => {
-      getYampiStatus(storeId)
-        .then((s) => { if (alive && s.connected) setYampiOn(true); })
-        .catch(() => { /* sem status */ });
-    };
-    check();
-    const t = window.setInterval(check, 4000);
-    return () => { alive = false; window.clearInterval(t); };
-  }, [storeId, yampiOn]);
+    load();
+    const t = window.setInterval(load, 5000);
+    return () => window.clearInterval(t);
+  }, [load]);
+
+  const close = () => { setOpen(null); load(); };
 
   const call = async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke('yampi-sync', { body: { store_id: storeId, ...body } });
@@ -35,25 +106,40 @@ export default function IntegracoesPage() {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <div>
-          <h1 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">Integrações</h1>
-          <p className="mt-1 text-sm text-slate-500">Conecte sua plataforma de e-commerce e suas redes sociais ao SLL.</p>
-        </div>
+        <h1 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">Integrações</h1>
 
         {!storeId ? (
           <p className="text-sm text-slate-500">Carregando loja...</p>
         ) : (
           <>
-            <section className="space-y-4">
+            <section className="space-y-3">
               <h2 className={H2}>Plataformas de e-commerce</h2>
-              <PlatformConnectCard storeId={storeId} platform="Yampi" platforms={['Yampi']} onChangePlatform={() => {}} />
-              {yampiOn && <YampiWebhookCard storeId={storeId} call={call} />}
+              <div className="flex flex-wrap gap-4">
+                {PLATFORMS.map((p) => (
+                  <Tile key={p.key} item={p} on={!!status[p.key]} onClick={() => setOpen(p.key)} />
+                ))}
+              </div>
             </section>
 
-            <section className="space-y-4">
+            <section className="space-y-3">
               <h2 className={H2}>Redes sociais</h2>
-              <SocialIntegrationsCard storeId={storeId} />
+              <div className="flex flex-wrap gap-4">
+                {SOCIALS.map((s) => (
+                  <Tile key={s.key} item={s} on={!!status[s.key]} onClick={() => setOpen('social')} />
+                ))}
+              </div>
             </section>
+
+            {open === 'yampi' && (
+              <Modal open title="Yampi" onClose={close}>
+                <PlatformConnectCard storeId={storeId} platform="Yampi" platforms={['Yampi']} onChangePlatform={() => {}} />
+                {status.yampi && <YampiWebhookCard storeId={storeId} call={call} />}
+              </Modal>
+            )}
+
+            <Modal open={open === 'social'} title="Redes sociais" onClose={close}>
+              <SocialIntegrationsCard storeId={storeId} />
+            </Modal>
           </>
         )}
       </div>
