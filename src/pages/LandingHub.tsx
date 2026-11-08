@@ -324,6 +324,14 @@ const PlayDot = ({ size = "h-8 w-8" }: { size?: string }) => (
   </span>
 );
 
+function MImg({ src, className = "", tile = 0 }: { src: string; className?: string; tile?: number }) {
+  const [err, setErr] = useState(false);
+  if (err) return <div className={`bg-gradient-to-br ${TILES[tile % TILES.length]} ${className}`} />;
+  return <img src={`/assets/mock/${src}`} alt="" loading="lazy" onError={() => setErr(true)} className={`object-cover ${className}`} />;
+}
+
+const n2 = (n: number) => String(n).padStart(2, "0");
+
 function StoriesMock() {
   const names = ["Novidades", "Vestidos", "Looks", "Promo", "Verão", "Bastidores"];
   return (
@@ -332,28 +340,15 @@ function StoriesMock() {
         {names.map((n, i) => (
           <div key={n} className="flex shrink-0 flex-col items-center gap-1.5">
             <div className="rounded-full bg-gradient-to-tr from-sky-500 to-emerald-400 p-[3px]">
-              <div className="rounded-full bg-white p-[2px]"><Look i={i} className="h-14 w-14 rounded-full" /></div>
+              <div className="rounded-full bg-white p-[2px]"><MImg src={`story-${n2(i + 1)}.jpg`} tile={i} className="h-14 w-14 rounded-full" /></div>
             </div>
             <span className="text-[10px] font-medium text-slate-600">{n}</span>
           </div>
         ))}
       </div>
-      <Look i={4} className="mt-6 h-32 w-full rounded-xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
-        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-white">
-          <p className="text-[10px] font-semibold uppercase tracking-widest opacity-90">Coleção Verão</p>
-          <p className="text-lg font-extrabold leading-tight">Até 30% off</p>
-          <span className="mt-2 inline-block rounded-full bg-white px-3 py-1 text-[10px] font-bold text-slate-900">Ver ofertas</span>
-        </div>
-      </Look>
+      <MImg src="banner-home.jpg" tile={1} className="mt-6 h-32 w-full rounded-lg" />
       <div className="mt-4 grid grid-cols-3 gap-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i}>
-            <Look i={i} className="aspect-[4/5] rounded-lg" />
-            <p className="mt-1.5 truncate text-[11px] font-semibold text-slate-700">{ITEMS[i].name}</p>
-            <p className="text-[11px] font-bold text-emerald-600">R$ {ITEMS[i].price}</p>
-          </div>
-        ))}
+        {[1, 2, 3].map((i) => <MImg key={i} src={`home-${n2(i)}.jpg`} tile={i + 2} className="h-20 w-full rounded-lg" />)}
       </div>
     </Browser>
   );
@@ -362,14 +357,13 @@ function StoriesMock() {
 function CarouselMock() {
   return (
     <Browser>
-      <p className="mb-4 text-sm font-bold text-slate-800">Looks do momento</p>
+      <Skel className="mb-4 h-4 w-40" />
       <div className="flex gap-3 overflow-hidden">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div key={i} className="w-28 shrink-0">
-            <Look i={i} className="aspect-[9/16] rounded-2xl">
-              <PlayDot />
-              <span className="absolute inset-x-2 bottom-2 rounded-lg bg-white/90 px-2 py-1 text-center text-[10px] font-bold text-slate-800">R$ {ITEMS[i].price}</span>
-            </Look>
+        {[1, 2, 3, 4, 5].map((n, i) => (
+          <div key={n} className="relative aspect-[9/16] w-28 shrink-0 overflow-hidden rounded-2xl">
+            <MImg src={`video-${n2(n)}.jpg`} tile={i} className="absolute inset-0 h-full w-full" />
+            <span className="absolute left-1/2 top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/80"><Play className="h-3.5 w-3.5 text-slate-800" /></span>
+            <span className="absolute inset-x-2 bottom-2 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-800">R$ {89 + i * 30},90</span>
           </div>
         ))}
       </div>
@@ -381,25 +375,15 @@ function FloatingMock() {
   return (
     <Browser>
       <div className="grid grid-cols-2 gap-4">
-        <Look i={0} className="h-60 rounded-xl" />
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Vestidos</p>
-          <p className="mt-1 text-base font-extrabold leading-tight text-slate-900">Vestido Midi Linho Bege</p>
-          <p className="mt-2 text-[11px] text-slate-400 line-through">R$ 249,90</p>
-          <p className="text-xl font-extrabold text-emerald-600">R$ 189,90</p>
-          <div className="mt-3 flex gap-1.5">
-            {["P", "M", "G", "GG"].map((s) => (
-              <span key={s} className={`grid h-7 w-7 place-items-center rounded-md border text-[11px] font-bold ${s === "M" ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 text-slate-600"}`}>{s}</span>
-            ))}
-          </div>
-          <span className="mt-4 block rounded-lg bg-emerald-500 py-2.5 text-center text-xs font-bold text-white">Comprar agora</span>
-        </div>
+        <MImg src="produto-principal.jpg" tile={4} className="h-52 w-full rounded-lg" />
+        <div className="space-y-3"><Skel className="h-5 w-3/4" /><Skel className="h-4 w-1/3" /><Skel className="h-3 w-full" /><Skel className="h-3 w-5/6" /><Skel className="h-10 w-full" /></div>
       </div>
       <div className="absolute bottom-4 right-4 w-24">
-        <Look i={2} className="aspect-[9/16] rounded-2xl shadow-xl ring-4 ring-white">
-          <span className="absolute right-1.5 top-1.5 z-10 grid h-5 w-5 place-items-center rounded-full bg-black/50 text-white"><X className="h-3 w-3" /></span>
-          <PlayDot />
-        </Look>
+        <div className="relative aspect-[9/16] overflow-hidden rounded-2xl shadow-xl ring-4 ring-white">
+          <MImg src="video-01.jpg" tile={0} className="absolute inset-0 h-full w-full" />
+          <span className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-black/40 text-white"><X className="h-3 w-3" /></span>
+          <span className="absolute left-1/2 top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/85"><Play className="h-3.5 w-3.5" /></span>
+        </div>
       </div>
     </Browser>
   );
@@ -408,12 +392,13 @@ function FloatingMock() {
 function GridMock() {
   return (
     <Browser>
-      <p className="mb-4 text-sm font-bold text-slate-800">Veja o produto em uso</p>
+      <Skel className="mb-4 h-4 w-48" />
       <div className="grid grid-cols-3 gap-3">
-        {[0, 1, 2, 3, 4, 5].map((i) => (
-          <Look key={i} i={i} className="aspect-square rounded-xl">
-            <span className="absolute bottom-1.5 left-1.5 grid h-6 w-6 place-items-center rounded-full bg-white/90"><Play className="h-3 w-3" /></span>
-          </Look>
+        {[1, 2, 3, 4, 5, 6].map((n, i) => (
+          <div key={n} className="relative aspect-square overflow-hidden rounded-xl">
+            <MImg src={`grade-${n2(n)}.jpg`} tile={i} className="absolute inset-0 h-full w-full" />
+            <span className="absolute bottom-1.5 left-1.5 grid h-6 w-6 place-items-center rounded-full bg-white/85"><Play className="h-3 w-3" /></span>
+          </div>
         ))}
       </div>
     </Browser>
@@ -421,22 +406,22 @@ function GridMock() {
 }
 
 function LiveMock() {
-  const chat = [["Ana", "Quero o tamanho M!"], ["Bia", "Lindo demais"], ["Carla", "Qual o frete?"], ["Dani", "Comprei!"]];
+  const chat = [["Ana", "Quero o tamanho M!"], ["Bia", "Lindo demais 😍"], ["Carla", "Qual o frete?"], ["Dani", "Comprei! ✅"]];
   return (
     <Browser>
       <div className="grid grid-cols-[1fr_130px] gap-3">
         <div>
-          <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-200">
-            <img src="/assets/streamsell-template-01.jpg" alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+          <div className="relative aspect-video overflow-hidden rounded-xl">
+            <MImg src="live-capa.jpg" tile={5} className="absolute inset-0 h-full w-full" />
             <span className="absolute left-2 top-2 flex items-center gap-1 rounded bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white"><Radio className="h-3 w-3" /> AO VIVO</span>
             <span className="absolute right-2 top-2 flex items-center gap-1 rounded bg-black/45 px-2 py-0.5 text-[10px] text-white"><Eye className="h-3 w-3" /> 842</span>
           </div>
           <div className="mt-3 flex gap-2">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="flex-1 rounded-lg border border-slate-200 p-1.5">
-                <Look i={i} className="aspect-square rounded" />
-                <p className="mt-1 text-[10px] font-bold text-emerald-600">R$ {ITEMS[i].price}</p>
-                <span className="mt-1 block w-full rounded bg-emerald-500 py-1 text-center text-[9px] font-bold text-white">Comprar</span>
+            {[1, 2, 3].map((n, i) => (
+              <div key={n} className="flex-1 rounded-lg border border-slate-200 p-1.5">
+                <MImg src={`prod-${n2(n)}.jpg`} tile={i} className="aspect-square w-full rounded" />
+                <p className="mt-1 text-[10px] font-bold text-emerald-600">R$ {79 + i * 40}</p>
+                <button className="mt-1 w-full rounded bg-emerald-500 py-1 text-[9px] font-bold text-white">Comprar</button>
               </div>
             ))}
           </div>
