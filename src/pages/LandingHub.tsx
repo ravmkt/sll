@@ -117,55 +117,40 @@ function Header() {
 
 /* ---------- hero ---------- */
 function PhoneMockup() {
-  const [viewers, setViewers] = useState(1284);
-  useEffect(() => {
-    const t = setInterval(() => setViewers((v) => Math.max(900, v + Math.round((Math.random() - 0.4) * 14))), 2200);
-    return () => clearInterval(t);
-  }, []);
-
   return (
-    <div className="relative mx-auto w-[280px]">
-      <div className="absolute -inset-10 -z-10 rounded-full bg-gradient-to-tr from-sky-200/70 via-emerald-100/60 to-transparent blur-3xl" />
-      <div className="relative h-[580px] rounded-[3rem] bg-slate-900 p-3 shadow-2xl shadow-slate-900/30">
-        <div className="absolute left-1/2 top-4 z-30 h-5 w-24 -translate-x-1/2 rounded-full bg-slate-900" />
-        <div className="relative h-full overflow-hidden rounded-[2.4rem] bg-gradient-to-b from-rose-300 via-fuchsia-300 to-indigo-400">
-          <video
+    <div className="relative mx-auto w-[270px] rounded-[2.6rem] bg-slate-900 p-[10px] shadow-2xl">
+      <div className="absolute left-1/2 top-[14px] z-20 h-5 w-20 -translate-x-1/2 rounded-full bg-slate-900" />
+      <div className="relative aspect-[9/17] overflow-hidden rounded-[2rem] bg-black">
+        <video className="absolute inset-0 h-full w-full object-cover"
             src="/assets/landing/hero-demo.mp4" autoPlay muted loop playsInline preload="metadata"
             onError={(e) => { e.currentTarget.style.display = "none"; }}
-            className="absolute inset-0 h-full w-full object-cover"
+           
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
-          <div className="absolute inset-x-4 top-10 z-10 flex gap-1">
-            <span className="h-0.5 flex-1 rounded bg-white" /><span className="h-0.5 flex-1 rounded bg-white/40" /><span className="h-0.5 flex-1 rounded bg-white/40" />
+        <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-3 pt-9">
+          <div className="flex items-center gap-2">
+            <MImg src="logo-loja.png" tile={0} className="h-8 w-8 rounded-full ring-2 ring-white/70" />
+            <span className="text-base font-light tracking-wide text-white drop-shadow">BLACK FRIDAY</span>
           </div>
-          <div className="absolute left-4 top-14 z-10 flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur">
-            <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" /></span>
-            <Eye className="h-3 w-3" /> {viewers.toLocaleString("pt-BR")} assistindo agora
-          </div>
-          <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-4 text-white">
-            <div className="flex flex-col items-center text-[10px]"><Heart className="h-6 w-6" />12,4k</div>
-            <div className="flex flex-col items-center text-[10px]"><MessageCircle className="h-6 w-6" />386</div>
-          </div>
-          <div className="absolute inset-x-3 bottom-4 z-10 rounded-2xl bg-white p-3 shadow-xl">
-            <div className="flex items-center gap-3">
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-amber-200 to-rose-200"><ShoppingBag className="h-6 w-6 text-rose-500" /></div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold text-slate-900">Vestido Midi Linho Bege</p>
-                <p className="text-[10px] text-slate-400 line-through">R$ 249,90</p>
-                <p className="text-sm font-extrabold text-emerald-600">R$ 189,90</p>
-              </div>
+          <span className="flex items-center gap-1 rounded-full bg-red-600 py-0.5 pl-0.5 pr-2 text-[11px] font-extrabold text-white ring-2 ring-white/80">
+            <span className="grid h-4 w-4 place-items-center rounded-full bg-white"><Play className="h-2.5 w-2.5 fill-red-600 text-red-600" /></span>
+            LIVE
+          </span>
+        </div>
+        <div className="absolute inset-x-2 bottom-2 z-10">
+          <span className="mb-1.5 inline-block rounded-full bg-red-600 px-3 py-0.5 text-[10px] font-bold text-white ring-2 ring-white/80">Restam 2</span>
+          <div className="flex items-center gap-2 rounded-xl border-2 border-sky-500 bg-white p-1.5">
+            <MImg src="prod-01.jpg" tile={1} className="h-10 w-10 shrink-0 rounded-md" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-medium leading-tight text-slate-900">Palazzo Linho Bege</p>
+              <p className="text-[11px] text-sky-500">R$ 149,90</p>
             </div>
-            <div className="relative mt-2.5">
-              <span className="absolute inset-0 animate-ping rounded-xl bg-emerald-400/40" />
-              <button className="relative w-full rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-white">Comprar agora</button>
-            </div>
+            <span className="shrink-0 rounded-full bg-sky-500 px-2.5 py-1 text-[10px] font-bold text-white">Comprar</span>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
 function Hero() {
   return (
     <section className="relative overflow-hidden px-4 pb-16 pt-28 md:pb-24 md:pt-36">
