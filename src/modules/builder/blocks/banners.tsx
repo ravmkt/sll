@@ -42,7 +42,8 @@ function BansDev({ p, dev, list }: { p: Record<string, string>; dev: 'd' | 'm'; 
   const mw = num(k('MaxW'), 0);
   const radius = clampN(num(k('Radius'), 8), 0, 60);
   const ov = clampN(num(k('Overlay'), 0), 0, 90);
-  const ratio = RATIO[k('Shape') || (m ? 'l169' : 'l169')];
+  const shape = k('Shape') || 'l169';
+  const ratio = shape === 'round' ? '1 / 1' : RATIO[shape];
   const fit = k('Fit') === 'contain' ? 'contain' : 'cover';
   const color = k('Color') || '#ffffff';
   const align = k('Align') || 'center';
@@ -63,7 +64,7 @@ function BansDev({ p, dev, list }: { p: Record<string, string>; dev: 'd' | 'm'; 
           const hasText = showText && (it.title || it.btn);
           const link = it.link.trim();
           const box: CSSProperties = {
-            position: 'relative', overflow: 'hidden', borderRadius: radius, aspectRatio: ratio, display: 'block', background: '#f3f4f6',
+            position: 'relative', overflow: 'hidden', borderRadius: shape === 'round' ? '50%' : radius, aspectRatio: ratio, display: 'block', background: '#f3f4f6',
           };
           const inner = (
             <div style={box}>
@@ -141,6 +142,7 @@ const SHAPES = [
   { value: 'l169', label: 'Paisagem 16:9' },
   { value: 'l43', label: 'Paisagem 4:3' },
   { value: 'sq', label: 'Quadrado' },
+  { value: 'round', label: 'Redondo' },
   { value: 'r34', label: 'Retrato 3:4' },
   { value: 'r916', label: 'Retrato 9:16' },
   { value: 'orig', label: 'Original' },
