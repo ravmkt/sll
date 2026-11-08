@@ -422,8 +422,9 @@ function LiveMock() {
         </div>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-[1fr_170px_1fr]">
-        <div className="order-2 overflow-hidden rounded-xl border-2 border-red-600 md:order-1">
+      <div className="grid gap-2 md:grid-cols-[1fr_200px_1fr]">
+        {/* Coluna 1: produtos */}
+        <div className="flex flex-col overflow-hidden rounded-xl border-2 border-red-600">
           <div className="bg-red-600 py-1.5 text-center text-[10px] font-bold text-white">PRODUTOS DA LIVE</div>
           <div className="space-y-1.5 p-1.5">
             {LIVE_ITEMS.map((it, i) => (
@@ -431,8 +432,8 @@ function LiveMock() {
                 <span className="w-6 shrink-0 text-center text-xs font-extrabold">{it.n}</span>
                 <MImg src={it.img} tile={i} className="h-12 w-12 shrink-0" />
                 <div className="min-w-0 flex-1 py-1">
-                  <p className="truncate text-[10px] font-semibold leading-tight">{it.name}</p>
-                  <p className={`text-[10px] font-bold ${it.live ? "text-white" : "text-red-600"}`}>{it.price}</p>
+                  <p className="break-words text-[10px] font-semibold leading-tight">{it.name}</p>
+                  <p className={`whitespace-nowrap text-[10px] font-bold ${it.live ? "text-white" : "text-red-600"}`}>{it.price}</p>
                   {it.left > 0 && <span className={`mt-0.5 inline-block rounded-full px-1.5 py-px text-[8px] font-bold ${it.live ? "bg-white/20 text-white" : "bg-red-600 text-white"}`}>Restam {it.left}</span>}
                 </div>
                 <span className={`shrink-0 rounded-full px-2 py-1 text-[8px] font-bold ${it.live ? "bg-white text-red-600" : "bg-red-600 text-white"}`}>Comprar</span>
@@ -441,7 +442,8 @@ function LiveMock() {
           </div>
         </div>
 
-        <div className="relative order-1 min-h-[400px] overflow-hidden rounded-xl border-2 border-slate-900 bg-black md:order-2">
+        {/* Coluna 2: player 9:16 (define a altura da linha) */}
+        <div className="relative order-first mx-auto aspect-[9/16] w-[200px] self-start overflow-hidden rounded-xl border-2 border-slate-900 bg-black md:order-none">
           <video className="absolute inset-0 h-full w-full object-cover"
             src="/assets/landing/hero-demo.mp4" autoPlay muted loop playsInline preload="metadata" />
           <div className="absolute inset-x-0 top-0 z-10 bg-black py-1.5 text-center text-[10px] font-bold text-white">Especial Anivers&aacute;rio</div>
@@ -450,15 +452,16 @@ function LiveMock() {
             <div className="flex items-center gap-1.5 rounded-xl border-2 border-red-600 bg-white p-1">
               <MImg src="prod-bazer.jpg" tile={3} className="h-9 w-9 shrink-0 rounded-md" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[9px] font-medium leading-tight text-slate-900">Blazer Linho Bege</p>
-                <p className="text-[10px] font-bold text-red-600">R$ 249,90</p>
+                <p className="break-words text-[9px] font-medium leading-tight text-slate-900">Blazer Linho Bege</p>
+                <p className="whitespace-nowrap text-[10px] font-bold text-red-600">R$ 249,90</p>
               </div>
               <span className="shrink-0 rounded-full bg-red-600 px-2 py-1 text-[8px] font-bold text-white">Comprar</span>
             </div>
           </div>
         </div>
 
-        <div className="order-3 flex flex-col overflow-hidden rounded-xl border-2 border-red-600">
+        {/* Coluna 3: chat */}
+        <div className="flex flex-col overflow-hidden rounded-xl border-2 border-red-600">
           <div className="bg-red-600 py-1.5 text-center text-[10px] font-bold text-white">CHAT DA LIVE</div>
           <div className="flex-1 space-y-2 p-2">
             {chat.map(([n, m]) => (<p key={n} className="text-[10px] leading-tight text-slate-600"><b className="text-slate-800">{n}</b> {m}</p>))}
@@ -468,18 +471,17 @@ function LiveMock() {
             <span className="grid h-5 w-5 place-items-center rounded-full bg-red-600 text-[10px] text-white">&hearts;</span>
           </div>
         </div>
-      </div>
 
-      <div className="mt-2 grid grid-cols-3 gap-2">
-        <div className="rounded-xl bg-red-600 py-2 text-center text-white">
-          <p className="text-sm font-extrabold leading-none">FRETE GR&Aacute;TIS</p>
-          <p className="mt-0.5 text-[8px]">Acima de R$199,00</p>
+        {/* Rodape: mesmas 3 colunas do grid acima */}
+        <div className="flex flex-col justify-center rounded-xl bg-red-600 py-3 text-center text-white">
+          <p className="text-base font-extrabold leading-none">FRETE GR&Aacute;TIS</p>
+          <p className="mt-1 text-[9px]">Acima de R$199,00</p>
         </div>
         <div className="grid grid-cols-2 overflow-hidden rounded-xl border-2 border-red-600 text-center text-[10px] font-extrabold">
-          <span className="grid place-items-center bg-red-600 text-white">LIVE15</span>
+          <span className="grid place-items-center bg-red-600 py-3 text-white">LIVE15</span>
           <span className="grid place-items-center text-red-600">10% OFF</span>
         </div>
-        <div className="grid place-items-center rounded-xl border-2 border-red-600 text-[10px] font-bold text-slate-900">Compartilhar</div>
+        <div className="grid place-items-center rounded-xl border-2 border-red-600 py-3 text-[11px] font-bold text-slate-900">Compartilhar</div>
       </div>
     </Browser>
   );
