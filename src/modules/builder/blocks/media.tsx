@@ -84,7 +84,8 @@ const CAR_CSS =
   '.sll-car-vp{overflow:hidden}' +
   '.sll-car-tr{display:flex;touch-action:pan-y;user-select:none;-webkit-user-select:none;will-change:transform}' +
   '.sll-car-s{flex:0 0 calc(100% / var(--v));min-width:0;box-sizing:border-box}' +
-  '.sll-car{--v:var(--vd)}@media(max-width:700px){.sll-car{--v:var(--vm)}}';
+  '.sll-car{--v:var(--vd);--z:var(--zd)}@media(max-width:700px){.sll-car{--v:var(--vm);--z:var(--zm)}}' +
+  '.sll-car-s img{width:calc(var(--z) * 1%);margin:0 auto}';
 
 const clampN = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const imgCount = (p: Record<string, string>) => Math.max(1, parseItems(p.items).filter((x) => x.src).length);
@@ -108,6 +109,8 @@ function CarouselView({ p }: { p: Record<string, string> }) {
 
   const dv = clampN(Math.round(num(p.dView, 1)), 1, n);
   const mv = clampN(Math.round(num(p.mView, 1)), 1, Math.min(2, n));
+  const zd = clampN(Math.round(num(p.dSize, 100)), 10, 100);
+  const zm = clampN(Math.round(num(p.mSize, 100)), 10, 100);
   const dm = p.dMode || p.mode || 'auto';
   const mm = p.mMode || p.mode || 'auto';
   const sec = clampN(num(p.secs, 4), 1, 30);
@@ -121,6 +124,8 @@ function CarouselView({ p }: { p: Record<string, string> }) {
     overflow: 'hidden',
     '--vd': dv,
     '--vm': mv,
+    '--zd': zd,
+    '--zm': zm,
   } as CSSProperties;
 
   return (
@@ -147,7 +152,7 @@ function CarouselView({ p }: { p: Record<string, string> }) {
                   alt={it.alt || ''}
                   loading={i === 0 ? 'eager' : 'lazy'}
                   draggable={false}
-                  style={{ width: '100%', display: 'block', aspectRatio: ratio, objectFit: fit, borderRadius: num(p.radius, 8) }}
+                  style={{ display: 'block', aspectRatio: ratio, objectFit: fit, borderRadius: num(p.radius, 8) }}
                 />
               );
               const href = (it.href || '').trim();
@@ -180,7 +185,9 @@ const CAROUSEL: BlockDef = {
     dMode: 'auto',
     mMode: 'auto',
     dView: '1',
-    mView: '1',
+    mView: '2',
+    dSize: '100',
+    mSize: '100',
     secs: '4',
     ratio: '16 / 9',
     fit: 'cover',
@@ -206,8 +213,10 @@ const CAROUSEL: BlockDef = {
     },
     { key: 'dMode', label: 'Troca no desktop', type: 'select', options: CAR_MODES, group: 'Desktop', def: 'auto' },
     { key: 'dView', label: 'Imagens vis\u00edveis (m\u00e1x. = qtd. de imagens)', type: 'number', min: 1, max: 12, maxFn: imgCount, group: 'Desktop', def: '1' },
+    { key: 'dSize', label: 'Tamanho da imagem (% da coluna)', type: 'number', min: 10, max: 100, group: 'Desktop', def: '100' },
     { key: 'mMode', label: 'Troca no celular', type: 'select', options: CAR_MODES, group: 'Celular', def: 'auto' },
-    { key: 'mView', label: 'Imagens vis\u00edveis (m\u00e1x. 2)', type: 'number', min: 1, max: 2, maxFn: (p) => Math.min(2, imgCount(p)), group: 'Celular', def: '1' },
+    { key: 'mView', label: 'Imagens vis\u00edveis (m\u00e1x. 2)', type: 'number', min: 1, max: 2, maxFn: (p) => Math.min(2, imgCount(p)), group: 'Celular', def: '2' },
+    { key: 'mSize', label: 'Tamanho da imagem (% da coluna)', type: 'number', min: 10, max: 100, group: 'Celular', def: '100' },
     { key: 'secs', label: 'Segundos por troca (autom\u00e1tico)', type: 'number', min: 1, max: 30, group: 'Imagens', def: '4' },
     { key: 'ratio', label: 'Propor\u00e7\u00e3o', type: 'select', group: 'Imagens', def: '16 / 9', options: [{ value: 'auto', label: 'Original' }, ...RATIOS] },
     {

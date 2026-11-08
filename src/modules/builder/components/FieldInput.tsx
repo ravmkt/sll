@@ -19,6 +19,24 @@ const act = (fn: () => void) => (e: MouseEvent) => {
 function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (v: string) => void }) {
   const list: Items = parseItems(value);
   const [open, setOpen] = useState<number | null>(null);
+  const [armed, setArmed] = useState<number | null>(null);
+  const [over, setOver] = useState<number | null>(null);
+  const dragRef = useRef<number | null>(null);
+  const endDrag = () => {
+    dragRef.current = null;
+    setArmed(null);
+    setOver(null);
+  };
+  const drop = (to: number) => {
+    const from = dragRef.current;
+    endDrag();
+    if (from === null || from === to) return;
+    const n = [...list];
+    const [m] = n.splice(from, 1);
+    n.splice(to, 0, m);
+    set(n);
+    setOpen(null);
+  };
   const set = (next: Items) => onChange(JSON.stringify(next));
   const move = (i: number, d: number) => {
     const j = i + d;
@@ -36,6 +54,27 @@ function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (
         <details
               key={i}
               open={open === i}
+              draggable={armed === i}
+              onMouseDown={(e) => setArmed((e.target as HTMLElement).closest('summary') ? i : null)}
+              onDragStart={(e) => {
+                e.stopPropagation();
+                dragRef.current = i;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', String(i));
+              }}
+              onDragOver={(e) => {
+                if (dragRef.current === null) return;
+                e.preventDefault();
+                setOver(i);
+              }}
+              onDrop={(e) => {
+                if (dragRef.current === null) return;
+                e.preventDefault();
+                e.stopPropagation();
+                drop(i);
+              }}
+              onDragEnd={endDrag}
+              style={over === i && dragRef.current !== null && dragRef.current !== i ? { outline: '2px solid #0094eb' } : undefined}
               onToggle={(e) => {
                 const o = (e.currentTarget as HTMLDetailsElement).open;
                 setOpen((cur) => (o ? i : cur === i ? null : cur));
