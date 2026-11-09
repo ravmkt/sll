@@ -3,6 +3,9 @@ import type { ChangeEvent, MouseEvent } from 'react';
 import { ArrowDown, ArrowUp, Loader2, Plus, Trash2, Upload as UploadIcon } from 'lucide-react';
 import type { Field } from '../registry-extra';
 import { parseItems } from '../styleKit';
+import { createPortal } from 'react-dom';
+import ProductPickerModal from './ProductPickerModal';
+import type { StoreProduct } from '../services/products';
 import { ACCEPT, uploadBuilderAsset } from '../services/assets';
 
 export const INPUT =
@@ -185,10 +188,59 @@ function UploadField({ f, value, onChange }: { f: Field; value: string; onChange
   );
 }
 
+function ProductsField({ f, value, onChange }: { f: Field; value: string; onChange: (v: string) => void }) {
+  const list: Items = parseItems(value);
+  const [open, setOpen] = useState(false);
+  const set = (next: Items) => onChange(JSON.stringify(next));
+  const move = (i: number, d: number) => {
+    const j = i + d;
+    if (j < 0 || j >= list.length) return;
+    const n = [...list];
+    [n[i], n[j]] = [n[j], n[i]];
+    set(n);
+  };
+  const add = (p: StoreProduct) => {
+    if (list.some((x) => x.id === p.id)) return;
+    set([...list, { id: p.id, n: p.name, p: p.price != null ? String(p.price) : '', s: p.salePrice != null ? String(p.salePrice) : '', i: p.image, u: p.url }]);
+  };
+  const canAdd = !f.maxItems || list.length < f.maxItems;
+  const ico = 'rounded p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900';
+  return (
+    <div className="space-y-2">
+      {list.map((it, i) => (
+        <div key={i} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
+          {it.i ? <img src={it.i} alt="" className="h-10 w-10 shrink-0 rounded object-cover" /> : <div className="h-10 w-10 shrink-0 rounded bg-slate-200" />}
+          <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700">{it.n}</span>
+          <button type="button" title="Subir" onClick={act(() => move(i, -1))} className={ico}><ArrowUp className="h-3.5 w-3.5" /></button>
+          <button type="button" title="Descer" onClick={act(() => move(i, 1))} className={ico}><ArrowDown className="h-3.5 w-3.5" /></button>
+          <button type="button" title="Remover" onClick={act(() => set(list.filter((_, k) => k !== i)))} className={`${ico} hover:!text-red-600`}><Trash2 className="h-3.5 w-3.5" /></button>
+        </div>
+      ))}
+      {canAdd && (
+        <button
+          type="button"
+          onClick={act(() => setOpen(true))}
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 py-2 text-xs font-semibold text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]"
+        >
+          <Plus className="h-3.5 w-3.5" /> Adicionar produto
+        </button>
+      )}
+      <p className="text-[11px] text-slate-400">Pre\u00e7o, foto e nome s\u00e3o atualizados automaticamente ao publicar.</p>
+      {open && createPortal(
+        <div onClick={(e) => e.stopPropagation()}>
+          <ProductPickerModal open={open} onClose={() => setOpen(false)} onSelect={add} />
+        </div>,
+        document.body,
+      )}
+    </div>
+  );
+}
+
 export default function FieldInput({ f, value, onChange, props }: { f: Field; value: string; onChange: (v: string) => void; props?: Record<string, string> }) {
   const type = f.type ?? (f.key === 'bg' || f.key === 'color' ? 'color' : f.key === 'endsAt' ? 'datetime' : 'text');
   if (type === 'repeater') return <Repeater f={f} value={value} onChange={onChange} />;
   if (type === 'upload') return <UploadField f={f} value={value} onChange={onChange} />;
+  if (type === 'products') return <ProductsField f={f} value={value} onChange={onChange} />;
   if (f.multiline) return <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} className={INPUT} />;
   if (type === 'select')
     return (

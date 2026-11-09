@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import {
-  CircleHelp, CirclePlay, Images, Megaphone, ShieldCheck, Image as ImageIcon, LayoutTemplate, MessageSquareQuote,
+  CircleHelp, CirclePlay, Images, LayoutGrid, Megaphone, ShieldCheck, Image as ImageIcon, LayoutTemplate, MessageSquareQuote,
   MousePointerClick, ShoppingBag, TextCursorInput, Timer, Type,
 } from 'lucide-react';
 import type { BlockType } from './types';
@@ -30,6 +30,7 @@ export const PALETTE: { title: string; items: PaletteItem[] }[] = [
     items: [
       { key: 'announcement', type: 'announcement', label: 'Barra de an\u00fancio', icon: Megaphone },
       { key: 'highlights', type: 'highlights', label: 'Destaques informativos', icon: ShieldCheck },
+          { key: 'showcase', type: 'showcase', label: 'Vitrine de produtos', icon: LayoutGrid },
     ],
   },
   {

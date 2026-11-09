@@ -55,3 +55,25 @@ export async function searchProducts(term: string, limit = 30): Promise<StorePro
 
 export const brl = (v: number | null) =>
   v == null ? '' : v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+export async function getProductsByIds(ids: string[]): Promise<StoreProduct[]> {
+  if (!ids.length) return [];
+  const storeId = await getCurrentStoreId();
+  const { data, error } = await supabase
+    .from('products')
+    .select('id,name,sku,price,sale_price,image_url,images,product_url,short_description')
+    .eq('store_id', storeId)
+    .eq('active', true)
+    .in('id', ids);
+  if (error) throw error;
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    sku: r.sku ?? null,
+    price: r.price != null ? Number(r.price) : null,
+    salePrice: r.sale_price != null ? Number(r.sale_price) : null,
+    image: firstImage(r),
+    url: r.product_url ?? '',
+    description: r.short_description ?? '',
+  }));
+}

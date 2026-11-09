@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import type { BlockType } from './types';
 import { EXTRA_BLOCKS, type BlockDef } from './registry-extra';
 import { STORE_BLOCKS } from './blocks/store';
+import { SHOWCASE_BLOCKS } from './blocks/showcase';
 import { MEDIA_BLOCKS } from './blocks/media';
 import { ALIGN_OPTIONS, boxCss, boxFields, num, safeUrl, textCss, textFields } from './styleKit';
 
@@ -11,6 +12,7 @@ export const BLOCKS = {
   ...(EXTRA_BLOCKS as Record<Exclude<BlockType, 'hero' | 'text' | 'image' | 'button'>, BlockDef>),
   ...(MEDIA_BLOCKS as Record<'video' | 'carousel', BlockDef>),
   ...(STORE_BLOCKS as Record<'announcement' | 'highlights', BlockDef>),
+  ...(SHOWCASE_BLOCKS as Record<'showcase', BlockDef>),
   hero: {
     label: 'Hero',
     defaults: { title: 'Título principal', subtitle: 'Subtítulo da sua oferta', cta: 'Comprar agora', href: '#', bg: '#111827', align: 'center' },

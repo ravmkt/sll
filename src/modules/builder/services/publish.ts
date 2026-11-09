@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { getPage, savePage } from './pages';
 import { renderPageHtml } from '../publish/renderHtml';
+import { refreshShowcases } from './showcase';
 import type { PageContent } from '../types';
 
 const BUCKET = 'builder-pages';
@@ -45,7 +46,7 @@ export async function getPublishedUrl(id: string): Promise<string> {
 export async function publishPage(id: string, title: string, content: PageContent) {
   await savePage(id, title, content);
   const page = await getPage(id);
-  const html = renderPageHtml(page, cfg());
+  const html = renderPageHtml({ ...page, content: await refreshShowcases(page.content) }, cfg());
   const path = `${page.store_id}/${page.slug}/index.html`;
 
   const up = await supabase.storage.from(BUCKET).upload(path, new Blob([html], { type: 'text/html; charset=utf-8' }), {

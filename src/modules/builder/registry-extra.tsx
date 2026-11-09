@@ -6,7 +6,7 @@ export interface Field {
   key: string;
   label: string;
   multiline?: boolean;
-  type?: 'text' | 'color' | 'number' | 'select' | 'datetime' | 'repeater' | 'upload';
+  type?: 'text' | 'color' | 'number' | 'select' | 'datetime' | 'repeater' | 'upload' | 'products';
   options?: { value: string; label: string }[];
   min?: number;
   max?: number;
