@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { ChangeEvent, MouseEvent } from 'react';
-import { ArrowDown, ArrowUp, Loader2, Plus, Trash2, Upload as UploadIcon } from 'lucide-react';
+import { ArrowDown, ArrowUp, Loader2, Plus, RefreshCw, Trash2, Upload as UploadIcon } from 'lucide-react';
 import type { Field } from '../registry-extra';
 import { parseItems } from '../styleKit';
 import { createPortal } from 'react-dom';
@@ -190,7 +190,7 @@ function UploadField({ f, value, onChange }: { f: Field; value: string; onChange
 
 function ProductsField({ f, value, onChange }: { f: Field; value: string; onChange: (v: string) => void }) {
   const list: Items = parseItems(value);
-  const [open, setOpen] = useState(false);
+  const [target, setTarget] = useState<number | null>(null);
   const set = (next: Items) => onChange(JSON.stringify(next));
   const move = (i: number, d: number) => {
     const j = i + d;
@@ -199,9 +199,14 @@ function ProductsField({ f, value, onChange }: { f: Field; value: string; onChan
     [n[i], n[j]] = [n[j], n[i]];
     set(n);
   };
-  const add = (p: StoreProduct) => {
-    if (list.some((x) => x.id === p.id)) return;
-    set([...list, { id: p.id, n: p.name, p: p.price != null ? String(p.price) : '', s: p.salePrice != null ? String(p.salePrice) : '', i: p.image, u: p.url }]);
+  const pick = (p: StoreProduct) => {
+    const it = { id: p.id, n: p.name, p: p.price != null ? String(p.price) : '', s: p.salePrice != null ? String(p.salePrice) : '', i: p.image, u: p.url };
+    if (target !== null && target >= 0 && target < list.length) {
+      set(list.map((x, k) => (k === target ? it : x)));
+    } else {
+      if (list.some((x) => x.id === p.id)) return;
+      set([...list, it]);
+    }
   };
   const canAdd = !f.maxItems || list.length < f.maxItems;
   const ico = 'rounded p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900';
@@ -209,8 +214,16 @@ function ProductsField({ f, value, onChange }: { f: Field; value: string; onChan
     <div className="space-y-2">
       {list.map((it, i) => (
         <div key={i} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
-          {it.i ? <img src={it.i} alt="" className="h-10 w-10 shrink-0 rounded object-cover" /> : <div className="h-10 w-10 shrink-0 rounded bg-slate-200" />}
-          <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700">{it.n}</span>
+          <button
+            type="button"
+            title="Clique para trocar o produto"
+            onClick={act(() => setTarget(i))}
+            className="flex min-w-0 flex-1 items-center gap-2 rounded text-left hover:bg-slate-100"
+          >
+            {it.i ? <img src={it.i} alt="" className="h-10 w-10 shrink-0 rounded object-cover" /> : <div className="h-10 w-10 shrink-0 rounded bg-slate-200" />}
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700">{it.n}</span>
+          </button>
+          <button type="button" title="Trocar produto" onClick={act(() => setTarget(i))} className={ico}><RefreshCw className="h-3.5 w-3.5" /></button>
           <button type="button" title="Subir" onClick={act(() => move(i, -1))} className={ico}><ArrowUp className="h-3.5 w-3.5" /></button>
           <button type="button" title="Descer" onClick={act(() => move(i, 1))} className={ico}><ArrowDown className="h-3.5 w-3.5" /></button>
           <button type="button" title="Remover" onClick={act(() => set(list.filter((_, k) => k !== i)))} className={`${ico} hover:!text-red-600`}><Trash2 className="h-3.5 w-3.5" /></button>
@@ -219,23 +232,22 @@ function ProductsField({ f, value, onChange }: { f: Field; value: string; onChan
       {canAdd && (
         <button
           type="button"
-          onClick={act(() => setOpen(true))}
+          onClick={act(() => setTarget(-1))}
           className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 py-2 text-xs font-semibold text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]"
         >
           <Plus className="h-3.5 w-3.5" /> Adicionar produto
         </button>
       )}
-      <p className="text-[11px] text-slate-400">Pre\u00e7o, foto e nome s\u00e3o atualizados automaticamente ao publicar.</p>
-      {open && createPortal(
+      <p className="text-[11px] text-slate-400">{'Clique em um produto para troc\u00e1-lo. Pre\u00e7o, foto e nome s\u00e3o atualizados ao publicar.'}</p>
+      {target !== null && createPortal(
         <div onClick={(e) => e.stopPropagation()}>
-          <ProductPickerModal open={open} onClose={() => setOpen(false)} onSelect={add} />
+          <ProductPickerModal open onClose={() => setTarget(null)} onSelect={pick} />
         </div>,
         document.body,
       )}
     </div>
   );
 }
-
 export default function FieldInput({ f, value, onChange, props }: { f: Field; value: string; onChange: (v: string) => void; props?: Record<string, string> }) {
   const type = f.type ?? (f.key === 'bg' || f.key === 'color' ? 'color' : f.key === 'endsAt' ? 'datetime' : 'text');
   if (type === 'repeater') return <Repeater f={f} value={value} onChange={onChange} />;
