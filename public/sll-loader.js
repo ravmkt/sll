@@ -47,7 +47,8 @@
     stream_sell: "streamsell-widgets.js",
   live_commerce: "streamsell-widgets.js",
     gamification: "gamification-widget.js",
-    reviews: "reviews-widget.js"
+    reviews: "reviews-widget.js",
+    radar: "radar-widget.js"
   };
 
   var loadedModules = [];
@@ -87,7 +88,7 @@
 
   function resolveScript(mod) {
     if (typeof mod !== "string" || /[^a-z0-9_-]/i.test(mod)) return null;
-    return MODULE_TO_SCRIPT[mod] || (mod + "-widget.js");
+    return Object.prototype.hasOwnProperty.call(MODULE_TO_SCRIPT, mod) ? MODULE_TO_SCRIPT[mod] : null;
   }
 
   function injectModule(scriptName) {
