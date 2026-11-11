@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Gate, createGate, deleteGate, gateSummary, listGates, updateGate } from "../services/gates";
 import { refreshStoreScript } from "../services/storeScript";
+import StoreScriptCard from "../components/StoreScriptCard";
 
 type Form = {
   id?: string;
@@ -71,7 +72,7 @@ export default function GatePage() {
   const [form, setForm] = useState<Form | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const snippet = `<script async src="${window.location.origin}/sll-gate.js"></script>`;
+  const snippet = `<script src="${window.location.origin}/sll-gate.js"></script>`;
 
   const load = useCallback(async () => {
     if (!storeId) return;
@@ -202,6 +203,8 @@ export default function GatePage() {
 
       {error && <p className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
 
+      {storeId && <StoreScriptCard storeId={storeId} />}
+
       {form && (
         <div className="space-y-4 rounded-lg border p-4">
           <h2 className="font-semibold">{form.id ? "Editar campanha" : "Nova campanha"}</h2>
@@ -322,6 +325,7 @@ export default function GatePage() {
           <strong>Initialization - All Pages</strong> para evitar piscar a home antes do redirecionamento.
         </p>
         <div className="flex items-center gap-2">
+          <p className="w-full text-xs text-muted-foreground">Instalação manual (só se não usar a instalação automática): cole no &lt;head&gt;, sem async, como primeiro script.</p>
           <code className="flex-1 overflow-x-auto rounded bg-muted p-2 text-xs">{snippet}</code>
           <Button
             size="sm"
@@ -339,4 +343,6 @@ export default function GatePage() {
     </div>
   );
 }
+
+
 
