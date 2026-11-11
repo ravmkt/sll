@@ -1,10 +1,13 @@
 {
-  "rewrites": [
+  "redirects": [
     {
       "source": "/",
       "has": [{ "type": "host", "value": "black.useanny.com" }],
-      "destination": "/api/page?slug=black-mgrq"
-    },
+      "destination": "/black-mgrq",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
     { "source": "/p/:store/:slug", "destination": "/api/page?store=:store&slug=:slug" },
     {
       "source": "/:slug",
