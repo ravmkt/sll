@@ -4,6 +4,7 @@ import { useLoja } from "@/contexts/LojaContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Gate, createGate, deleteGate, gateSummary, listGates, updateGate } from "../services/gates";
+import { refreshStoreScript } from "../services/storeScript";
 
 type Form = {
   id?: string;
@@ -142,6 +143,7 @@ export default function GatePage() {
       };
       if (form.id) await updateGate(form.id, payload);
       else await createGate(storeId, payload);
+      void refreshStoreScript(storeId);
       setForm(null);
       await load();
     } catch (e) {
@@ -154,6 +156,7 @@ export default function GatePage() {
   const toggle = async (g: Gate) => {
     try {
       await updateGate(g.id, { enabled: !g.enabled });
+      void refreshStoreScript(storeId);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro");
@@ -164,6 +167,7 @@ export default function GatePage() {
     if (!window.confirm(`Excluir a campanha "${g.name}"?`)) return;
     try {
       await deleteGate(g.id);
+      void refreshStoreScript(storeId);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro");
@@ -335,3 +339,4 @@ export default function GatePage() {
     </div>
   );
 }
+
