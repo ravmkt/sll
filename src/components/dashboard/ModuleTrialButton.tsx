@@ -39,7 +39,7 @@ export default function ModuleTrialButton({ slug, route }: { slug: string; route
       const r = await startModuleTrial(storeId, slug);
       if (r.status === 'denied') {
         if (r.reason === 'store_url_required') {
-          navigate('/dashboard/onboarding');
+          setMsg('Cadastre a URL da sua loja nas configurações para iniciar o teste.');
           return;
         }
         setUsed(true);

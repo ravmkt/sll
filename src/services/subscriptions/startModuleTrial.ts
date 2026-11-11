@@ -11,7 +11,7 @@ export interface StartTrialResult {
 
 export const TRIAL_DENIED_TEXT: Record<StartTrialDeniedReason, string> = {
   trial_used: 'O teste gratuito deste módulo já foi utilizado nesta loja.',
-  store_url_required: 'Informe o endereço da sua loja no onboarding para iniciar o teste.',
+  store_url_required: 'Informe o endereço da sua loja nas configurações da loja para iniciar o teste.',
   domain_used: 'O teste gratuito deste módulo já foi utilizado para este domínio.',
 };
 
