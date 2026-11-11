@@ -40,7 +40,8 @@ async function resolvePublicUrls(storeId: string, pageSlug: string) {
 export async function getPublishedUrl(id: string): Promise<string> {
   const page = await getPage(id);
   if (page.status !== 'published' || !page.published_html_path) return '';
-  return (await resolvePublicUrls(page.store_id, page.slug)).url;
+  const r = await resolvePublicUrls(page.store_id, page.slug);
+  return r.customUrl ?? r.url;
 }
 
 export async function publishPage(id: string, title: string, content: PageContent) {
@@ -67,5 +68,5 @@ export async function publishPage(id: string, title: string, content: PageConten
   if (upd.error) throw upd.error;
 
   const { url, customUrl } = await resolvePublicUrls(page.store_id, page.slug);
-  return { url, customUrl, version };
+  return { url: customUrl ?? url, customUrl, longUrl: url, version };
 }
