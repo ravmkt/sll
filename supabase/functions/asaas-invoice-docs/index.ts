@@ -15,7 +15,7 @@ const json = (b: unknown, s = 200) =>
 
 async function isSuperadmin(user: { id: string; app_metadata?: Record<string, unknown> }) {
   if (user.app_metadata?.is_superadmin === true) return true;
-  const { data, error } = await admin.from("admin_superusers").select("*").eq("user_id", user.id).limit(1);
+  const { data, error } = await admin.from("admin_superusers").select("*").eq("user_id", user.id).eq("is_active", true).limit(1);
   return !error && !!data && data.length > 0;
 }
 

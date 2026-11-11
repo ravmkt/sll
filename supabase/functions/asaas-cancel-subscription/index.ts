@@ -33,7 +33,7 @@ async function isSuperadmin(user: { id: string; app_metadata?: Record<string, un
   const { data, error } = await supabaseAdmin
     .from("admin_superusers")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", user.id).eq("is_active", true)
     .limit(1);
   return !error && !!data && data.length > 0;
 }
