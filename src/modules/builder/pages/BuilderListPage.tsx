@@ -1,7 +1,7 @@
 import StorageUsageCard from '@/components/billing/StorageUsageCard';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createPage, listPages } from '../services/pages';
+import { createPage, deletePage, listPages } from '../services/pages';
 import type { BuilderPage } from '../types';
 
 export default function BuilderListPage() {
@@ -12,6 +12,16 @@ export default function BuilderListPage() {
   useEffect(() => {
     listPages().then(setPages).catch((e) => setError(e.message));
   }, []);
+
+  async function handleDelete(p: BuilderPage) {
+    if (!window.confirm(`Excluir a página "${p.title}"? Essa ação não pode ser desfeita e o link /${p.slug} sai do ar.`)) return;
+    try {
+      await deletePage(p.id);
+      setPages((prev) => prev.filter((x) => x.id !== p.id));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
 
   async function handleCreate(type: 'landing' | 'product') {
     const title = window.prompt('Nome da página');
@@ -46,7 +56,10 @@ export default function BuilderListPage() {
               <p className="font-medium">{p.title}</p>
               <p className="text-sm text-gray-500">{p.type} · {p.status} · /{p.slug}</p>
             </div>
-            <Link to={`/dashboard/modules/builder/${p.id}`} className="text-emerald-600 hover:underline">Editar</Link>
+            <div className="flex items-center gap-4">
+                  <Link to={`/dashboard/modules/builder/${p.id}`} className="text-emerald-600 hover:underline">Editar</Link>
+                  <button onClick={() => handleDelete(p)} className="text-red-600 hover:underline">Excluir</button>
+                </div>
           </li>
         ))}
         {pages.length === 0 && <li className="p-4 text-gray-500">Nenhuma página criada.</li>}
@@ -54,3 +67,4 @@ export default function BuilderListPage() {
     </div>
   );
 }
+

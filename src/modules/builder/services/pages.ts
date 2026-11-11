@@ -63,3 +63,15 @@ async function uniqueSlug(storeId: string, base: string): Promise<string> {
   while (isTaken(`${base}-${n}`)) n++;
   return `${base}-${n}`;
 }
+
+export async function deletePage(id: string): Promise<void> {
+  const page = await getPage(id);
+  if (page.published_html_path) {
+    const rm = await supabase.storage.from('builder-pages').remove([page.published_html_path]);
+    if (rm.error) throw rm.error;
+  }
+  const v = await db().from('page_versions').delete().eq('page_id', id);
+  if (v.error) throw v.error;
+  const { error } = await db().from('pages').delete().eq('id', id);
+  if (error) throw error;
+}
