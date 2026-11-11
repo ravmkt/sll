@@ -14,7 +14,6 @@ import TermsPage from "@/pages/legal/TermsPage";
 import ExclusaoDadosPage from "@/pages/legal/ExclusaoDadosPage";
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { OnboardingGuard } from '@/components/onboarding/OnboardingGuard';
 import { SocialPopupOverlay } from '@/components/SocialPopupOverlay';
 import { Toaster } from 'sonner';
 import ScrollToTop from '@/components/layout/ScrollToTop';
@@ -59,7 +58,6 @@ const PlanosGatePage = lazy(() => import('./pages/planos/PlanosGatePage'));
 const IntegrationPage = lazy(() => import('./pages/integracoes/IntegracoesPage'));
 const InstalacaoPage = lazy(() => import('./pages/instalacao/InstalacaoPage'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
-const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
 const DicasNoah = lazy(() => import('./pages/dicas/DicasNoah'));
 const InstagramCallback = lazy(() => import('./pages/auth/InstagramCallback'));
 const IdeasBoard = lazy(() => import('@/pages/IdeasBoard'));
@@ -91,7 +89,7 @@ function AppRoutes() {
       {user && <GlobalTrialBanner />}
       {user && <TrialExpiredModal />}
 
-      <><CheckoutIntentWatcher /><OnboardingGuard /><SocialPopupOverlay /><ScrollToTop />
+      <><CheckoutIntentWatcher /><SocialPopupOverlay /><ScrollToTop />
       <DashboardShell>
           <Routes>
         <Route path="/sobre" element={<AboutPage />} />
@@ -328,7 +326,7 @@ function AppRoutes() {
           }
         />
         <Route path="/dashboard/pedidos-dos-lojistas" element={user ? <IdeasBoard /> : <Navigate to="/auth" replace />} />
-        <Route path="/dashboard/onboarding" element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/onboarding" element={<Navigate to="/dashboard" replace />} />
         <Route
           path="/dashboard/dicas"
           element={
@@ -379,3 +377,4 @@ export default function App() {
     </Router>
   );
 }
+
