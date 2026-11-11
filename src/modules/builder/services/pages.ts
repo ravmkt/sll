@@ -1,4 +1,4 @@
-﻿import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import type { BuilderPage, PageContent } from '../types';
 
@@ -33,7 +33,7 @@ export async function getPage(id: string): Promise<BuilderPage> {
 export async function createPage(title: string, type: 'landing' | 'product'): Promise<BuilderPage> {
   const storeId = await getCurrentStoreId();
   const base = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const slug = `${base || 'pagina'}-${Math.random().toString(36).slice(2, 6)}`;
+  const slug = await uniqueSlug(storeId, base || 'pagina');
   const { data, error } = await db()
     .from('pages')
     .insert({ store_id: storeId, type, title, slug, content: { blocks: [] } })
@@ -49,4 +49,17 @@ export async function savePage(id: string, title: string, content: PageContent):
     .update({ title, content, updated_at: new Date().toISOString() })
     .eq('id', id);
   if (error) throw error;
+}
+
+const RESERVED_SLUGS = new Set(['api', 'assets', 'p', 'admin', 'login', 'index', 'sll-loader']);
+
+async function uniqueSlug(storeId: string, base: string): Promise<string> {
+  const { data, error } = await db().from('pages').select('slug').eq('store_id', storeId).like('slug', `${base}%`);
+  if (error) throw error;
+  const taken = new Set((data ?? []).map((r) => r.slug as string));
+  const isTaken = (s: string) => taken.has(s) || RESERVED_SLUGS.has(s);
+  if (!isTaken(base)) return base;
+  let n = 2;
+  while (isTaken(`${base}-${n}`)) n++;
+  return `${base}-${n}`;
 }
