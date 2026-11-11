@@ -1,5 +1,10 @@
 {
   "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "black.useanny.com" }],
+      "destination": "/api/page?slug=black-mgrq"
+    },
     { "source": "/p/:store/:slug", "destination": "/api/page?store=:store&slug=:slug" },
     {
       "source": "/:slug",
