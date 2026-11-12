@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
+import EmojiPicker from './EmojiPicker';
 
 const W = 1920;
 const H = 1080;
@@ -64,6 +65,7 @@ export function DeviceFrame({ children }: { children: ReactNode }) {
   return (
     <div className="w-full">
       <div className="sticky top-0 z-20 mb-3 flex flex-wrap items-center justify-center gap-3">
+          <div className="absolute right-0 top-0"><EmojiPicker /></div>
         <div className="inline-flex gap-1 rounded-lg border bg-white p-1 shadow-sm">
           {btn('d', 'Desktop', <Monitor size={16} />)}
           {btn('m', 'Celular', <Smartphone size={16} />)}
