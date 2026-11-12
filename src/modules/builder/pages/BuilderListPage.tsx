@@ -46,7 +46,7 @@ export default function BuilderListPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 p-6 font-sans text-slate-800">
+    <div className="space-y-6 font-sans text-slate-800">
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0094eb]/10">

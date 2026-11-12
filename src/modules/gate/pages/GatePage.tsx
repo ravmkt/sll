@@ -8,6 +8,7 @@ import { Gate, createGate, deleteGate, gateSummary, listGates, updateGate } from
 import { refreshStoreScript } from "../services/storeScript";
 import { BuilderPageOption, listPublishedPages } from "../services/builderPages";
 import StoreScriptCard from "../components/StoreScriptCard";
+import type { GateTab } from "../components/GateSidebar";
 
 type Form = {
   id?: string;
@@ -100,7 +101,7 @@ function Metric({ label, value, icon: Icon, tone }: { label: string; value: numb
   );
 }
 
-export default function GatePage() {
+export default function GatePage({ tab = "campanhas" }: { tab?: GateTab }) {
   const { store } = useLoja();
   const storeId = store?.id;
   const [gates, setGates] = useState<Gate[]>([]);
@@ -254,8 +255,8 @@ export default function GatePage() {
   const selected = form && pages.some((p) => p.id === form.landing_id) ? form.landing_id! : CUSTOM;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
-      <div className="mx-auto w-full max-w-7xl space-y-6 p-6">
+    <div className="font-sans text-slate-800">
+      <div className="space-y-6">
         <div className={`${card} flex flex-wrap items-center justify-between gap-4`}>
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0094eb]/10">
@@ -277,7 +278,7 @@ export default function GatePage() {
 
         {error && <p className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className={tab === "campanhas" ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" : "hidden"}>
           <Metric label="Campanhas no ar" value={live} icon={ShieldCheck} tone="bg-emerald-50 text-emerald-600" />
           <Metric label="Redirecionados" value={sum("redirect")} icon={ArrowRightLeft} tone="bg-sky-50 text-[#0094eb]" />
           <Metric label="Views da campanha" value={sum("view")} icon={Eye} tone="bg-violet-50 text-violet-600" />
@@ -375,7 +376,7 @@ export default function GatePage() {
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className={tab === "campanhas" ? "space-y-4" : "hidden"}>
           <CardTitle icon={ShieldCheck}>Campanhas</CardTitle>
           {gates.length === 0 && !form && (
             <div className={`${card} text-sm text-slate-500`}>Nenhuma campanha criada.</div>
@@ -431,7 +432,7 @@ export default function GatePage() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className={tab === "instalacao" ? "grid grid-cols-1 gap-4 lg:grid-cols-2" : "hidden"}>
           <StoreScriptCard storeId={storeId} />
           <div className={`${card} space-y-4`}>
             <CardTitle icon={Code2}>Instalação via GTM</CardTitle>
