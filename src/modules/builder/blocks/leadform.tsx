@@ -1,9 +1,11 @@
 import type { CSSProperties } from 'react';
 import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
-import { num, safeUrl } from '../styleKit';
+import { ALIGN_OPTIONS, num, safeUrl } from '../styleKit';
 import { Css, RCSS, rich, sec, secFields, tcss, tf } from './campaign';
 import { glowFields, glowStyle } from '../bg';
+import { NEON_CSS, neonClass, neonFields, neonVars } from '../neon';
+import { cardFillFields, cardFillStyle } from '../leadfill';
 
 const YN = [{ value: '1', label: 'Sim' }, { value: '0', label: 'N\u00e3o' }];
 const yn = (key: string, label: string, def: string, group: string): Field => ({ key, label, type: 'select', options: YN, group, def });
@@ -23,13 +25,13 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       successColor: '#f5e6b3', couponColor: '#d4af37', couponBc: '#d4af37', couponBg: '#0b0a08', previewSuccess: '0',
       cardBg: '#14110d', cardBc: '#5c4a1f', radius: '16', cardPad: '24', maxW: '480',
       inputBg: DARK, inputBc: '#5c4a1f', inputColor: '#ffffff',
-      btnBg: '#d4af37', btnColor: '#0b0a08', bg: DARK, pad: '16',
+      btnBg: '#d4af37', btnColor: '#0b0a08', pad: '16',
     },
     fields: [
-      { key: 'title', label: 'T\u00edtulo' },
-      { key: 'sub', label: 'Texto de apoio (use **texto** para negrito)', multiline: true },
-      { key: 'btn', label: 'Texto do bot\u00e3o' },
-      { key: 'success', label: 'Mensagem ap\u00f3s o cadastro', multiline: true },
+      { key: 'title', label: 'T\u00edtulo', emoji: true },
+      { key: 'sub', label: 'Texto de apoio (use **texto** para negrito)', multiline: true, emoji: true },
+      { key: 'btn', label: 'Texto do bot\u00e3o', emoji: true },
+      { key: 'success', label: 'Mensagem ap\u00f3s o cadastro', multiline: true, emoji: true },
       yn('askName', 'Pedir nome', '1', 'Campos'),
       yn('askEmail', 'Pedir e-mail', '1', 'Campos'),
       yn('askWhatsapp', 'Pedir WhatsApp', '1', 'Campos'),
@@ -42,8 +44,8 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       { key: 'couponBc', label: 'Cupom: cor da borda', type: 'color', group: AFTER, def: '#d4af37' },
       { key: 'couponBg', label: 'Cupom: cor de fundo', type: 'color', group: AFTER, def: '#0b0a08' },
       yn('previewSuccess', 'Pr\u00e9-visualizar sucesso (s\u00f3 no editor, n\u00e3o aparece publicado)', '0', AFTER),
-      { key: 'cardBg', label: 'Card: cor de fundo', type: 'color', group: 'Card', def: '#14110d' },
-      { key: 'cardBc', label: 'Card: cor da borda', type: 'color', group: 'Card', def: '#5c4a1f' },
+      ...cardFillFields(),
+      { key: 'cardBc', label: 'Card: cor da borda', type: 'color', group: 'Card', def: '#5c4a1f', showIf: (p) => p.neon !== '1' },
       { key: 'radius', label: 'Card: arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Card', def: '16' },
       { key: 'cardPad', label: 'Card: espa\u00e7o interno (px)', type: 'number', min: 0, max: 80, group: 'Card', def: '24' },
       { key: 'maxW', label: 'Card: largura m\u00e1xima (px)', type: 'number', min: 240, max: 900, group: 'Card', def: '480' },
@@ -55,7 +57,9 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       ...tf('title', 'T\u00edtulo', 22, 19, '#d4af37', 'bold'),
       ...tf('sub', 'Texto de apoio', 15, 14, '#e5e7eb'),
       ...glowFields('Brilho do card'),
-      ...secFields('16'),
+      ...neonFields('Neon do card'),
+      { key: 'pad', label: 'Espa\u00e7o vertical (px)', type: 'number', min: 0, max: 200, group: 'Se\u00e7\u00e3o', def: '16' },
+      { key: 'align', label: 'Alinhamento', type: 'select', options: ALIGN_OPTIONS, group: 'Se\u00e7\u00e3o', def: 'center' },
     ],
     render: (p) => {
       const hasWa = p.askWhatsapp !== '0';
@@ -73,12 +77,12 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       const btnBg = p.btnBg || '#d4af37';
       const btnColor = p.btnColor || '#0b0a08';
       return (
-        <section style={sec(p, 16)}>
-          <Css s={RCSS} />
+        <section style={{ ...sec(p, 16), background: 'transparent', backgroundImage: 'none' }}>
+          <Css s={RCSS + NEON_CSS} />
           <div
-            style={{
+            className={neonClass(p).trim() || undefined}style={{
               maxWidth: num(p.maxW, 480), margin: '0 auto', padding: num(p.cardPad, 24), boxSizing: 'border-box', textAlign: 'center',
-              background: p.cardBg || '#14110d', border: `1px solid ${p.cardBc || '#5c4a1f'}`, borderRadius: num(p.radius, 16), ...glowStyle(p),
+              ...cardFillStyle(p), position: 'relative', border: p.neon === '1' ? 'none' : `1px solid ${p.cardBc || '#5c4a1f'}`, borderRadius: num(p.radius, 16), ...glowStyle(p), ...neonVars(p),
             }}
           >
             {p.title ? (
