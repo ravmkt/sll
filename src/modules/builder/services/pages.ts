@@ -75,3 +75,9 @@ export async function deletePage(id: string): Promise<void> {
   const { error } = await db().from('pages').delete().eq('id', id);
   if (error) throw error;
 }
+
+export async function createPageFromContent(title: string, type: 'landing' | 'product', content: PageContent): Promise<BuilderPage> {
+  const page = await createPage(title, type);
+  await savePage(page.id, title, content);
+  return { ...page, content };
+}

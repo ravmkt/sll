@@ -1,3 +1,4 @@
+import { LayoutDashboard, LayoutGrid } from 'lucide-react';
 import type { ElementType } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { ArrowLeft, LayoutTemplate, Users, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
@@ -10,7 +11,9 @@ const LOGO_ICO = '/assets/builder-sell-logo-ico.png';
 type Item = { name: string; icon: ElementType; path: string; end: boolean };
 
 const ITEMS: Item[] = [
-  { name: 'Minhas páginas', icon: LayoutTemplate, path: '/dashboard/modules/builder', end: false },
+  { name: 'Visão Geral', icon: LayoutDashboard, path: '/dashboard/modules/builder', end: true },
+  { name: 'Minhas páginas', icon: LayoutTemplate, path: '/dashboard/modules/builder/paginas', end: false },
+  { name: 'Templates', icon: LayoutGrid, path: '/dashboard/modules/builder/templates', end: false },
   { name: 'Leads', icon: Users, path: '/dashboard/leads', end: false },
 ];
 

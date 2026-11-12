@@ -12,6 +12,11 @@ const MODULES = {
     title: 'Seus vídeos vendendo por você',
     subtitle: (n: string) => `Olá, ${n}. Acompanhe o desempenho dos seus vídeos e o impacto nas vendas.`,
   },
+  builder: {
+    location: 'builder' as never,
+    title: 'Suas páginas captando clientes',
+    subtitle: (n: string) => `Olá, ${n}. Acompanhe visitas, leads e o desempenho das suas páginas.`,
+  },
   live: {
     location: 'live' as const,
     title: 'Sua próxima live vende mais',

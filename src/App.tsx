@@ -1,5 +1,7 @@
 import StreamSellLanding from '@/pages/landing/StreamSellLanding';
 import BuilderListPage from '@/modules/builder/pages/BuilderListPage';
+import BuilderOverviewPage from '@/modules/builder/pages/BuilderOverviewPage';
+import BuilderTemplatesPage from '@/modules/builder/pages/BuilderTemplatesPage';
 import BuilderEditorPage from '@/modules/builder/pages/BuilderEditorPage';
 import BuilderLayout from '@/modules/builder/components/BuilderLayout';
 import PulseLayout from '@/modules/pulse/components/PulseLayout';
@@ -378,7 +380,9 @@ function AppRoutes() {
         <Route path="/dashboard/modules/gestor" element={user ? <ModuleGate moduleKey="gestor"><GestorPage /></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/gate" element={<Navigate to="/dashboard/modules/pulse" replace />} />
     <Route path="/dashboard/modules/pulse" element={user ? <ModuleGate moduleKey="gate"><PulseLayout>{(tab) => (tab === 'campanhas' || tab === 'instalacao' ? <PulsePage tab={tab} /> : <PulseSoon tab={tab} />)}</PulseLayout></ModuleGate> : <Navigate to="/auth" replace />} />
-        <Route path="/dashboard/modules/builder" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderListPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/builder" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderOverviewPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/builder/paginas" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderListPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/builder/templates" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderTemplatesPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/:id" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout editor><BuilderEditorPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes></DashboardShell></>
