@@ -5,6 +5,9 @@ import type { AppModuleKey } from '@/services/moduleAppService';
 const HINT: Record<AppModuleKey, { on: string; off: string }> = {
   vidlytics: { on: 'Vídeos online na sua loja', off: 'Vídeos ocultos na sua loja' },
   stream_sell: { on: 'Lives online na sua loja', off: 'Lives ocultas na sua loja' },
+  pulse: { on: 'Pulse ativo na sua loja', off: 'Pulse desativado na sua loja' },
+  radar: { on: 'Radar ativo na sua loja', off: 'Radar desativado na sua loja' },
+  builder: { on: 'Builder ativo na sua loja', off: 'Builder desativado na sua loja' },
 };
 
 export default function AppToggle({ moduleKey = 'vidlytics' }: { moduleKey?: AppModuleKey }) {

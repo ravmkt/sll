@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { TopBar } from '@/components/layout/TopBar';
+import AppToggle from '@/components/vidlytics/AppToggle';
 import { AppFooter } from '@/components/layout/AppFooter';
 import { RadarStoreProvider, useRadarCtx } from '@/hooks/radar/useRadarStore';
 import { ErrorBox, Skeleton } from './RadarUI';
@@ -22,7 +23,7 @@ function Shell() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={{ paddingTop: 'calc(var(--trial-h, 0px) + var(--notice-h, 0px))' }}>
-      <TopBar />
+      <TopBar actions={<AppToggle moduleKey="radar" />} />
       <div className="flex flex-1">
         <RadarSidebar isCollapsed={collapsed} onToggle={toggle} />
         <div className="flex min-w-0 flex-1 flex-col">

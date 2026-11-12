@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { TopBar } from '@/components/layout/TopBar';
+import AppToggle from '@/components/vidlytics/AppToggle';
 import { AppFooter } from '@/components/layout/AppFooter';
 import { BuilderSidebar } from '@/modules/builder/components/BuilderSidebar';
 
@@ -27,7 +28,7 @@ export default function BuilderLayout({ children, editor = false }: { children: 
   if (editor) {
     return (
       <div className="flex h-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-800" style={pad}>
-        <TopBar />
+        <TopBar actions={<AppToggle moduleKey="builder" />} />
         <div className="flex min-h-0 flex-1">
           <BuilderSidebar isCollapsed={collapsed} onToggle={toggle} />
           <div className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</div>
@@ -38,7 +39,7 @@ export default function BuilderLayout({ children, editor = false }: { children: 
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={pad}>
-      <TopBar />
+      <TopBar actions={<AppToggle moduleKey="builder" />} />
       <div className="flex flex-1">
         <BuilderSidebar isCollapsed={collapsed} onToggle={toggle} />
         <div className="flex min-w-0 flex-1 flex-col">

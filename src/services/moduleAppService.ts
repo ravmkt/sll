@@ -2,7 +2,9 @@ import { supabase } from '@/lib/supabase';
 
 const sb: any = supabase;
 
-export type AppModuleKey = 'vidlytics' | 'stream_sell';
+export type AppModuleKey = 'vidlytics' | 'stream_sell' | 'pulse' | 'radar' | 'builder';
+
+const TABLE_MODULES: AppModuleKey[] = ['pulse', 'radar', 'builder'];
 
 export async function getModuleAppEnabled(storeId: string, moduleKey: AppModuleKey): Promise<boolean> {
   const { data, error } = await sb.rpc('get_module_app_enabled', { p_store_id: storeId, p_module: moduleKey });
@@ -11,14 +13,21 @@ export async function getModuleAppEnabled(storeId: string, moduleKey: AppModuleK
 }
 
 export async function setModuleAppEnabled(storeId: string, moduleKey: AppModuleKey, enabled: boolean): Promise<boolean> {
-  const patch =
-    moduleKey === 'stream_sell'
-      ? { live_app_enabled: enabled }
-      : enabled
-        ? { app_enabled: true, widget_enabled: true }
-        : { app_enabled: false };
-  const { data, error } = await sb.from('store_settings').update(patch).eq('store_id', storeId).select('store_id');
-  if (error || !data || data.length === 0) return false;
+  if (TABLE_MODULES.includes(moduleKey)) {
+    const { error } = await sb
+      .from('store_module_apps')
+      .upsert({ store_id: storeId, module_key: moduleKey, enabled, updated_at: new Date().toISOString() }, { onConflict: 'store_id,module_key' });
+    if (error) return false;
+  } else {
+    const patch =
+      moduleKey === 'stream_sell'
+        ? { live_app_enabled: enabled }
+        : enabled
+          ? { app_enabled: true, widget_enabled: true }
+          : { app_enabled: false };
+    const { data, error } = await sb.from('store_settings').update(patch).eq('store_id', storeId).select('store_id');
+    if (error || !data || data.length === 0) return false;
+  }
   window.dispatchEvent(new CustomEvent('sll:module-app-enabled', { detail: { module: moduleKey, enabled } }));
   if (moduleKey === 'vidlytics') {
     window.dispatchEvent(new CustomEvent('vidlytics:app-enabled', { detail: enabled }));

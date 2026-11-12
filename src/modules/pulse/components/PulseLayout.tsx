@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { TopBar } from '@/components/layout/TopBar';
+import AppToggle from '@/components/vidlytics/AppToggle';
 import { AppFooter } from '@/components/layout/AppFooter';
 import { PulseSidebar, type PulseTab } from './PulseSidebar';
 
@@ -20,7 +21,7 @@ export default function PulseLayout({ children }: { children: (tab: PulseTab) =>
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={{ paddingTop: 'calc(var(--trial-h, 0px) + var(--notice-h, 0px))' }}>
-      <TopBar />
+      <TopBar actions={<AppToggle moduleKey="pulse" />} />
       <div className="flex flex-1">
         <PulseSidebar activeTab={tab} onTabChange={setTab} isCollapsed={collapsed} onToggle={toggle} />
         <div className="flex min-w-0 flex-1 flex-col">
