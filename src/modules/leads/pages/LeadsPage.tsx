@@ -150,6 +150,44 @@ function SortTh({ label, k, sort, onSort }: { label: string; k: SortKey; sort: S
   );
 }
 
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
+function openMail(email: string) {
+  if (!email) return;
+  let opened = false;
+  const mark = () => { opened = true; };
+  const onVis = () => { if (document.hidden) opened = true; };
+  window.addEventListener('blur', mark);
+  document.addEventListener('visibilitychange', onVis);
+  window.location.href = 'mailto:' + email;
+  window.setTimeout(async () => {
+    window.removeEventListener('blur', mark);
+    document.removeEventListener('visibilitychange', onVis);
+    if (opened) return;
+    const ok = await copyText(email);
+    toast.info(ok ? 'Nenhum programa de e-mail encontrado. E-mail copiado: ' + email : 'Nenhum programa de e-mail encontrado. E-mail: ' + email);
+  }, 1500);
+}
+
 export default function LeadsPage() {
   const { storeId } = useLoja();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -314,7 +352,7 @@ export default function LeadsPage() {
                           <span title="Sem WhatsApp" className={actionCls + ' cursor-not-allowed opacity-30'}><MessageCircle size={16} /></span>
                         )}
                         {l.email ? (
-                          <button type="button" title="Enviar e-mail" onClick={() => window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(l.email || ''), '_blank', 'noopener,noreferrer')} className={actionCls + ' hover:bg-sky-50 hover:text-[#0094eb]'}><Mail size={16} /></button>
+                          <button type="button" title="Enviar e-mail" onClick={() => openMail(l.email || '')} className={actionCls + ' hover:bg-sky-50 hover:text-[#0094eb]'}><Mail size={16} /></button>
                         ) : (
                           <span title="Sem e-mail" className={actionCls + ' cursor-not-allowed opacity-30'}><Mail size={16} /></span>
                         )}
