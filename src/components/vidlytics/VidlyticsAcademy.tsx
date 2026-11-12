@@ -11,6 +11,8 @@ const VID_PLAYLIST_ID =
 const HUB_PLAYLIST_ID = (import.meta.env.VITE_ACADEMY_HUB_PLAYLIST_ID as string | undefined) || '';
 const CHANNEL_URL = (import.meta.env.VITE_ACADEMY_CHANNEL_URL as string | undefined) || 'https://www.youtube.com';
 const SS_PLAYLIST_ID = (import.meta.env.VITE_ACADEMY_STREAMSELL_PLAYLIST_ID as string | undefined) || 'PLUDa6nzRbJ0Y';
+const BUILDER_PLAYLIST_ID = (import.meta.env.VITE_ACADEMY_BUILDER_PLAYLIST_ID as string | undefined) || 'PLIRprlCqZ_0w';
+const BUILDER_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=' + BUILDER_PLAYLIST_ID;
 const SS_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=' + SS_PLAYLIST_ID;
 const SUBSCRIBE_URL = CHANNEL_URL + (CHANNEL_URL.includes('?') ? '&' : '?') + 'sub_confirmation=1';
 
@@ -26,11 +28,12 @@ function YoutubeMark({ className }: { className: string }) {
   );
 }
 
-export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 'hub' | 'vidlytics' | 'streamsell' }) {
+export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 'hub' | 'vidlytics' | 'streamsell' | 'builder' }) {
   const hub = variant === 'hub';
   const streamsell = variant === 'streamsell';
-  const PLAYLIST_ID = streamsell ? SS_PLAYLIST_ID : hub ? (HUB_PLAYLIST_ID || VID_PLAYLIST_ID) : VID_PLAYLIST_ID;
-  const channelUrl = streamsell ? SS_PLAYLIST_URL : CHANNEL_URL;
+  const builder = variant === 'builder';
+  const PLAYLIST_ID = builder ? BUILDER_PLAYLIST_ID : streamsell ? SS_PLAYLIST_ID : hub ? (HUB_PLAYLIST_ID || VID_PLAYLIST_ID) : VID_PLAYLIST_ID;
+  const channelUrl = builder ? BUILDER_PLAYLIST_URL : streamsell ? SS_PLAYLIST_URL : CHANNEL_URL;
   const [videos, setVideos] = useState<AcademyVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,13 +73,13 @@ export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 
   };
 
   // ACADEMY_VAZIO_STREAMSELL
-  if (streamsell && PLAYLIST_ID && !loading && videos.length === 0 && !error) {
+  if ((streamsell || builder) && PLAYLIST_ID && !loading && videos.length === 0 && !error) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <p className="text-sm font-semibold text-slate-800">SLL Academy</p>
         <p className="mt-1 text-xs text-slate-500">Novos v&iacute;deos em breve.</p>
         <a
-          href={SS_PLAYLIST_URL}
+          href={channelUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-3 inline-flex items-center rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700"
@@ -96,7 +99,7 @@ export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 
       <div className="flex flex-col items-start gap-2">
         <img src="/assets/sll-academy-logo-wide.png" alt="SLL Academy" className="h-auto w-[165px] shrink-0 object-contain object-left" />
         <p className="text-sm font-medium text-slate-700">
-          {streamsell ? 'Aprenda a configurar sua live, apresentar seus produtos e vender mais com Stream Sell.' : hub ? 'Aulas e dicas do nosso canal para impulsionar o seu e-commerce: operação, tráfego, margem e vendas.' : 'Veja como configurar o Vidlytics, tire dúvidas e aprenda dicas para vender mais com vídeos interativos.'}
+          {builder ? 'Aprenda a criar p\u00e1ginas que convertem, usar os templates e captar mais leads com o Builder.' : streamsell ? 'Aprenda a configurar sua live, apresentar seus produtos e vender mais com Stream Sell.' : hub ? 'Aulas e dicas do nosso canal para impulsionar o seu e-commerce: operação, tráfego, margem e vendas.' : 'Veja como configurar o Vidlytics, tire dúvidas e aprenda dicas para vender mais com vídeos interativos.'}
         </p>
       </div>
 

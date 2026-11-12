@@ -1,3 +1,4 @@
+import VidlyticsAcademy from '@/components/vidlytics/VidlyticsAcademy';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Activity, Check, Eye, FileText, Link2, Pencil, Share2, TrendingDown, TrendingUp, Trophy, Users } from 'lucide-react';
@@ -202,6 +203,7 @@ export default function BuilderOverviewPage() {
           </div>
         </div>
       </div>
-    </div>
+    <VidlyticsAcademy variant="builder" />
+</div>
   );
 }
