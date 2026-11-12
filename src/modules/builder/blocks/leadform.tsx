@@ -3,7 +3,7 @@ import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
 import { ALIGN_OPTIONS, num, safeUrl } from '../styleKit';
 import { Css, RCSS, rich, sec, secFields, tcss, tf } from './campaign';
-import { glowFields, glowStyle } from '../bg';
+import { glowStyle } from '../bg';
 import { NEON_CSS, neonClass, neonFields, neonVars } from '../neon';
 import { cardFillFields, cardFillStyle } from '../leadfill';
 
@@ -56,7 +56,6 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       { key: 'btnColor', label: 'Bot\u00e3o: cor do texto', type: 'color', group: 'Bot\u00e3o', def: '#0b0a08' },
       ...tf('title', 'T\u00edtulo', 22, 19, '#d4af37', 'bold'),
       ...tf('sub', 'Texto de apoio', 15, 14, '#e5e7eb'),
-      ...glowFields('Brilho do card'),
       ...neonFields('Neon do card'),
       { key: 'pad', label: 'Espa\u00e7o vertical (px)', type: 'number', min: 0, max: 200, group: 'Se\u00e7\u00e3o', def: '16' },
       { key: 'align', label: 'Alinhamento', type: 'select', options: ALIGN_OPTIONS, group: 'Se\u00e7\u00e3o', def: 'center' },
