@@ -34,7 +34,7 @@ const CATS: Record<string, E[]> = {
     ['1F49A', 'coracao verde'], ['1F499', 'coracao azul'], ['1F9E1', 'coracao laranja'], ['1F90D', 'coracao branco'],
     ['1F496', 'coracao brilhante'], ['1F49D', 'coracao presente'], ['1F48C', 'carta amor'], ['1F534', 'bolinha vermelha'],
     ['1F7E1', 'bolinha amarela'], ['1F7E2', 'bolinha verde'], ['27A1', 'seta direita'], ['2B07', 'seta baixo'],
-    ['1F449', 'dedo direita'], ['1F447', 'dedo baixo'], ['25B6', 'play'], ['2795', 'mais'],
+    ['25B6', 'play'], ['2795', 'mais'],
     ['1F538', 'losango laranja'], ['1F539', 'losango azul'], ['1F947', 'medalha ouro primeiro'], ['1F948', 'medalha prata'],
     ['1F949', 'medalha bronze'], ['1F308', 'arco iris'], ['2600', 'sol verao'], ['2744', 'neve inverno'],
     ['1F384', 'natal arvore'], ['1F385', 'papai noel natal'], ['1F383', 'abobora halloween'], ['1F490', 'buque flores dia das maes'],
@@ -45,7 +45,8 @@ const CATS: Record<string, E[]> = {
     ['1F970', 'amor'], ['1F631', 'chocado'], ['1F92F', 'mente explodindo'], ['1F64C', 'maos para cima'],
     ['1F44F', 'palmas'], ['1F44D', 'joia positivo'], ['1F44C', 'ok perfeito'], ['1F64F', 'obrigado por favor'],
     ['1F4AA', 'forca'], ['1F91D', 'acordo parceria'], ['270C', 'paz vitoria'], ['1F440', 'olhos olha'],
-    ['1F91E', 'dedos cruzados sorte'],
+    ['1F91E', 'dedos cruzados sorte'], ['1F448', 'dedo esquerda mao apontando'], ['1F449', 'dedo direita mao apontando'],
+    ['1F446', 'dedo cima mao apontando'], ['1F447', 'dedo baixo mao apontando'], ['261D', 'dedo indicador cima'],
   ],
   'Contato': [
     ['1F4AC', 'conversa chat mensagem'], ['1F4DE', 'telefone'], ['1F4E7', 'email'], ['2709', 'envelope'],
@@ -148,7 +149,7 @@ export default function EmojiPicker() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar (ex.: fogo, frete, cora\u00e7\u00e3o)"
+            placeholder={'Buscar (ex.: fogo, frete, cora\u00e7\u00e3o)'}
             className="mb-2 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-[#0094eb]"
           />
           {!q && (
