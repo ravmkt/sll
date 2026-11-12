@@ -26,7 +26,7 @@ const FIELDS: Field[] = [
       { value: '1', label: 'Ligado (reduz o conte\u00fado para caber na tela)' },
     ],
   },
-  { key: 'fitMin', label: 'Escala m\u00ednima do ajuste (%) - padr\u00e3o 60', group: G_SIZE },
+  { key: 'fitMin', label: 'Escala m\u00ednima do ajuste (%) - padr\u00e3o 40', group: G_SIZE },
   {
     key: 'sllBadge', label: 'Selo "Feito com SLL Hub" no rodap\u00e9', type: 'select', group: G_SIZE, def: '1',
     options: [
