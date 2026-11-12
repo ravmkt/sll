@@ -1,4 +1,4 @@
-﻿import type { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import type { BlockType } from './types';
 import { EXTRA_BLOCKS, type BlockDef } from './registry-extra';
 import { STORE_BLOCKS } from './blocks/store';
@@ -72,15 +72,48 @@ export const BLOCKS = {
     ),
   },
   image: {
-    label: 'Imagem',
-    defaults: { src: 'https://placehold.co/1200x500', alt: 'Imagem' },
-    fields: [
-      { key: 'src', label: 'URL da imagem' },
-      { key: 'alt', label: 'Texto alternativo' },
-      { key: 'radius', label: 'Arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Estilo', def: '0' },
-    ],
-    render: (p) => <img src={safeUrl(p.src)} alt={p.alt} loading="lazy" style={{ width: '100%', display: 'block', borderRadius: num(p.radius, 0) }} />,
-  },
+        label: 'Imagem',
+        defaults: { src: 'https://placehold.co/1200x500', alt: 'Imagem' },
+        fields: [
+          { key: 'src', label: 'URL da imagem' },
+          { key: 'alt', label: 'Texto alternativo' },
+          { key: 'imgW', label: 'Largura (%)', type: 'number', min: 5, max: 100, group: 'Tamanho e posi\u00e7\u00e3o', def: '100' },
+          { key: 'imgMaxW', label: 'Largura m\u00e1xima (px, vazio = sem limite)', type: 'number', min: 20, max: 1920, group: 'Tamanho e posi\u00e7\u00e3o' },
+          { key: 'imgH', label: 'Altura fixa (px, vazio = autom\u00e1tica)', type: 'number', min: 20, max: 2000, group: 'Tamanho e posi\u00e7\u00e3o' },
+          {
+            key: 'imgFit', label: 'Ajuste (com altura fixa)', type: 'select', group: 'Tamanho e posi\u00e7\u00e3o', def: 'cover',
+            options: [
+              { value: 'cover', label: 'Preencher (recorta)' },
+              { value: 'contain', label: 'Conter (inteira)' },
+              { value: 'fill', label: 'Esticar' },
+            ],
+          },
+          { key: 'imgAlign', label: 'Alinhamento', type: 'select', options: ALIGN_OPTIONS, group: 'Tamanho e posi\u00e7\u00e3o', def: 'center' },
+          { key: 'radius', label: 'Arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Estilo', def: '0' },
+        ],
+        render: (p) => {
+          const w = Math.min(Math.max(num(p.imgW, 100), 5), 100);
+          const h = num(p.imgH, 0);
+          const mw = num(p.imgMaxW, 0);
+          const a = p.imgAlign || 'center';
+          return (
+            <img
+              src={safeUrl(p.src)}
+              alt={p.alt}
+              loading="lazy"
+              style={{
+                display: 'block',
+                width: `${w}%`,
+                maxWidth: mw > 0 ? `${mw}px` : '100%',
+                height: h > 0 ? `${h}px` : 'auto',
+                objectFit: (p.imgFit || 'cover') as 'cover' | 'contain' | 'fill',
+                margin: a === 'left' ? '0 auto 0 0' : a === 'right' ? '0 0 0 auto' : '0 auto',
+                borderRadius: num(p.radius, 0),
+              }}
+            />
+          );
+        },
+      },
   button: {
     label: 'Botão',
     defaults: { label: 'Clique aqui', href: '#', color: '#10b981', align: 'center' },
