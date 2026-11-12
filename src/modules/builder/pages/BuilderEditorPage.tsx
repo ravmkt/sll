@@ -163,7 +163,7 @@ function Canvas() {
       ref={setNodeRef}
       onClick={() => select(null)}
       className="min-h-[600px] bg-white shadow-2xl"
-      style={{ ...bgStyle(settings), minHeight: minH || undefined }}
+      style={{ ...bgStyle(settings), minHeight: minH || 'var(--sll-dmin, 600px)' }}
     >
       <div style={{ maxWidth: maxW || undefined, margin: '0 auto' }}>
         <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>

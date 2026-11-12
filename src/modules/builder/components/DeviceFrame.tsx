@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
 
 const W = 1920;
@@ -93,7 +93,7 @@ export function DeviceFrame({ children }: { children: ReactNode }) {
           </div>
         ) : (
           <div style={{ width: W * scale, height: h * scale, margin: '0 auto' }}>
-            <div ref={inner} style={{ width: W, transformOrigin: 'top left', transform: 'scale(' + scale + ')' }}>
+            <div ref={inner} style={{ width: W, transformOrigin: 'top left', transform: 'scale(' + scale + ')', '--sll-dmin': H + 'px' } as CSSProperties}>
               {children}
             </div>
           </div>

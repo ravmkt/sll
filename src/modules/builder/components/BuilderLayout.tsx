@@ -28,12 +28,7 @@ export default function BuilderLayout({ children, editor = false }: { children: 
 
   if (editor) {
     return (
-      <div className="flex h-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-800" style={pad}>
-        {bar}
-        <div className="flex min-h-0 flex-1">
-          <BuilderSidebar isCollapsed={collapsed} onToggle={toggle} />
-          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</div>
-        </div>
+      <div className="flex h-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-800" style={pad}><div className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</div>
       </div>
     );
   }
