@@ -1,3 +1,4 @@
+import { PRESETS_DESKTOP_LOJA_FECHADA } from './presets-desktop-loja-fechada';
 import type { Preset, Theme, P } from './presets';
 import { mk, brand, badge, head, chips, count, benefits, form, GOLD, NAVY } from './presets';
 
@@ -93,3 +94,5 @@ export const PRESETS_DESKTOP: Preset[] = [
     }),
   },
 ];
+
+PRESETS_DESKTOP.push(...PRESETS_DESKTOP_LOJA_FECHADA);
