@@ -1,3 +1,4 @@
+import { PRESETS_DESKTOP_FOGO_FIEL } from './presets-desktop-fogo-fiel';
 import { PRESETS_DESKTOP_FOGO } from './presets-desktop-fogo';
 import { PRESETS_DESKTOP_LOJA_FECHADA } from './presets-desktop-loja-fechada';
 import type { Preset, Theme, P } from './presets';
@@ -99,3 +100,5 @@ export const PRESETS_DESKTOP: Preset[] = [
 PRESETS_DESKTOP.push(...PRESETS_DESKTOP_LOJA_FECHADA);
 
 PRESETS_DESKTOP.push(...PRESETS_DESKTOP_FOGO);
+
+PRESETS_DESKTOP.push(...PRESETS_DESKTOP_FOGO_FIEL);

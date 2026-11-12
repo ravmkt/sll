@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from 'react';
-import { bgFields, bgStyle } from './bg';
+import { bgFields, bgStyle, colTpl } from './bg';
 import type { BlockType } from './types';
 import { boxCss, boxFields, num, safeUrl, textCss, textFields } from './styleKit';
 
@@ -53,7 +53,8 @@ export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
         { value: 'stretch', label: 'Esticar' }, { value: 'start', label: 'Topo' },
         { value: 'center', label: 'Centro' }, { value: 'end', label: 'Base' },
       ] },
-      { key: 'stack', label: 'No celular', type: 'select', options: [
+      { key: 'ratio', label: 'Propor\u00e7\u00e3o das colunas (ex: 60,40)' },
+          { key: 'stack', label: 'No celular', type: 'select', options: [
         { value: '1', label: 'Empilhar colunas' }, { value: '0', label: 'Manter lado a lado' },
       ] },
       ...bgFields(),
@@ -65,7 +66,7 @@ export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
           <style>{COLS_CSS}</style>
           <div
             className={p.stack === '0' ? 'sll-cols' : 'sll-cols sll-stack'}
-            style={{ display: 'grid', gridTemplateColumns: `repeat(${n},minmax(0,1fr))`, gap: `${Number(p.gap) || 0}px`, alignItems: p.align || 'stretch' }}
+            style={{ display: 'grid', gridTemplateColumns: colTpl(p.ratio, n), gap: `${Number(p.gap) || 0}px`, alignItems: p.align || 'stretch' }}
           >
             {Array.from({ length: n }, (_, i) => (
               <div key={i} style={{ minWidth: 0 }}>{kids?.[i]}</div>

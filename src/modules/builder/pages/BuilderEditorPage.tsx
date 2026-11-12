@@ -1,4 +1,4 @@
-import { bgStyle } from '../bg';
+import { bgStyle, colTpl } from '../bg';
 import { DeviceFrame } from '../components/DeviceFrame';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -83,7 +83,7 @@ function ColumnsEditor({ block }: { block: Block }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${cols.length || 1},minmax(0,1fr))`,
+          gridTemplateColumns: colTpl(block.props.ratio, cols.length || 1),
           gap: `${Number(block.props.gap) || 0}px`,
           alignItems: block.props.align || 'stretch',
         }}

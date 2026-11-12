@@ -71,3 +71,8 @@ export const glowFields = (group = 'Brilho'): Field[] => [
   { key: 'glow', label: 'Brilho: cor (vazio = sem brilho)', type: 'color', group },
   { key: 'glowSize', label: 'Brilho: intensidade (px)', type: 'number', min: 2, max: 60, group, def: '14' },
 ];
+
+export const colTpl = (ratio: string | undefined, n: number): string => {
+  const w = (ratio || '').split(/[,:/\s]+/).map(Number).filter((x) => Number.isFinite(x) && x > 0);
+  return w.length === n ? w.map((x) => `minmax(0,${x}fr)`).join(' ') : `repeat(${n},minmax(0,1fr))`;
+};
