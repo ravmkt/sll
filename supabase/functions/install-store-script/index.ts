@@ -11,7 +11,7 @@ const json = (b: unknown, status = 200) =>
 const BASE = Deno.env.get('SUPABASE_URL')!;
 const HUB = (Deno.env.get('HUB_ORIGIN') ?? 'https://app.sllhub.com.br').replace(/\/$/, '');
 const API = 'https://api.dooki.com.br/v2';
-const SCRIPT_NAME = 'SLL Loader';
+const SCRIPT_NAME = 'SLL Hub - Pulse';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const admin = createClient(BASE, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
