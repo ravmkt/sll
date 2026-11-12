@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download, Mail, MessageCircle, Pencil, Search, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog';
 import { useLoja } from '@/contexts/LojaContext';
 import { deleteLead, listLeads, listTouchpoints, updateLead, STATUSES, STATUS_LABEL, type Lead, type LeadStatus } from '../services/leadsService';
 
@@ -158,6 +159,7 @@ export default function LeadsPage() {
   const [source, setSource] = useState('');
   const [sort, setSort] = useState<Sort>({ key: 'date', dir: 'desc' });
   const [editing, setEditing] = useState<Lead | null>(null);
+  const [del, setDel] = useState<Lead | null>(null);
 
   const load = useCallback(async () => {
     if (!storeId) return;
@@ -215,14 +217,17 @@ export default function LeadsPage() {
     }
   };
 
-  const remove = async (l: Lead) => {
-    if (!window.confirm('Excluir este lead?')) return;
+  const confirmDelete = async () => {
+    const l = del;
+    if (!l) return;
     try {
       await deleteLead(l.id);
       setLeads((prev) => prev.filter((x) => x.id !== l.id));
       toast.success('Lead excluído');
     } catch {
       toast.error('Não foi possível excluir');
+    } finally {
+      setDel(null);
     }
   };
 
@@ -314,7 +319,7 @@ export default function LeadsPage() {
                           <span title="Sem e-mail" className={actionCls + ' cursor-not-allowed opacity-30'}><Mail size={16} /></span>
                         )}
                         <button type="button" title="Editar" onClick={() => setEditing(l)} className={actionCls + ' hover:bg-slate-100 hover:text-slate-700'}><Pencil size={16} /></button>
-                        <button type="button" title="Excluir" onClick={() => void remove(l)} className={actionCls + ' hover:bg-red-50 hover:text-red-600'}><Trash2 size={16} /></button>
+                        <button type="button" title="Excluir" onClick={() => setDel(l)} className={actionCls + ' hover:bg-red-50 hover:text-red-600'}><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -325,6 +330,13 @@ export default function LeadsPage() {
         </table>
       </div>
 
+      <ConfirmDeleteDialog
+        isOpen={!!del}
+        title="Excluir lead"
+        message={del ? 'Tem certeza que deseja excluir "' + (del.name || del.email || del.whatsapp || 'este lead') + '"? Esta ação não pode ser desfeita.' : ''}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setDel(null)}
+      />
       {editing ? <LeadEdit lead={editing} onClose={() => setEditing(null)} onSaved={patchLocal} /> : null}
     </div>
   );
