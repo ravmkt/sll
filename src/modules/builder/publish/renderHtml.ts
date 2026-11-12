@@ -7,14 +7,15 @@ const esc = (s = '') =>
 
 const CSS = `*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1f2937;line-height:1.5}img,video,iframe{max-width:100%}h1,h2,h3,p{overflow-wrap:anywhere}`;
 
-function runtime(apiUrl: string, anonKey: string, pageId: string): string {
-  const js = `(function(){var API=${JSON.stringify(apiUrl)},KEY=${JSON.stringify(anonKey)},PAGE=${JSON.stringify(pageId)};
+function runtime(apiUrl: string, anonKey: string, pageId: string, preview = false): string {
+  const js = `(function(){var API=${JSON.stringify(apiUrl)},KEY=${JSON.stringify(anonKey)},PAGE=${JSON.stringify(pageId)},PV=${preview ? 1 : 0};
 try{var CAR=${CAROUSEL_JS};document.querySelectorAll('[data-car]').forEach(function(el){CAR(el)})}catch(e){}
 function p(n){return String(n).padStart(2,'0')}
-try{var VK='sllv_'+PAGE,SID=sessionStorage.getItem('sllsid');if(!SID){SID=Math.random().toString(36).slice(2)+Date.now().toString(36);sessionStorage.setItem('sllsid',SID)}
+try{if(!PV){var VK='sllv_'+PAGE,SID=null;try{SID=localStorage.getItem('sllvid')}catch(e){}
+if(!SID){SID=Math.random().toString(36).slice(2)+Date.now().toString(36);try{localStorage.setItem('sllvid',SID)}catch(e){}}
 function tr(ev){fetch(API+'/rest/v1/rpc/track_page_view',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},body:JSON.stringify({p_page_id:PAGE,p_session:SID,p_event:ev})}).catch(function(){})}
 if(!sessionStorage.getItem(VK)){sessionStorage.setItem(VK,'1');tr('view')}
-document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href')||'';if(h.charAt(0)==='#'||h.indexOf('javascript:')===0)return;tr('cta_click')})}catch(e){}
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href')||'';if(h.charAt(0)==='#'||h.indexOf('javascript:')===0)return;tr('cta_click')})}}catch(e){}
 function done(f,b){var m=document.createElement('div');m.style.textAlign='center';
 var t=document.createElement('p');t.textContent=f.getAttribute('data-success')||'';t.style.cssText='margin:0 0 12px;font-weight:700;font-size:17px;line-height:1.4;color:'+(f.getAttribute('data-sc')||'#f5e6b3');m.appendChild(t);
 var c=f.getAttribute('data-coupon');if(c){var q=document.createElement('p');q.textContent=c;q.style.cssText='display:inline-block;margin:0 0 12px;padding:10px 18px;border-radius:10px;font-size:22px;font-weight:800;letter-spacing:.08em;color:'+(f.getAttribute('data-cc')||'#d4af37')+';background:'+(f.getAttribute('data-cbg')||'transparent')+';border:2px dashed '+(f.getAttribute('data-cbc')||'#d4af37');m.appendChild(q)}
@@ -37,8 +38,9 @@ body:JSON.stringify({p_page_id:PAGE,p_name:g('name'),p_email:g('email'),p_whatsa
 
 export function renderPageHtml(
   page: Pick<BuilderPage, 'id' | 'title' | 'content'>,
-  cfg: { apiUrl: string; anonKey: string },
+  cfg: { apiUrl: string; anonKey: string; preview?: boolean },
 ): string {
   const body = renderBlocksHtml(page.content.blocks as Block[]);
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(page.title)}</title><style>${CSS}</style></head><body>${body}<script>${runtime(cfg.apiUrl, cfg.anonKey, page.id)}</script></body></html>`;
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(page.title)}</title><style>${CSS}</style></head><body>${body}<script>${runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview)}</script></body></html>`;
 }
+

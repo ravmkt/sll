@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+﻿import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { getPage, savePage } from './pages';
 import { renderPageHtml } from '../publish/renderHtml';
@@ -14,7 +14,7 @@ const cfg = () => ({
 
 export async function buildPreviewHtml(id: string, title: string, content: PageContent): Promise<string> {
   const page = await getPage(id);
-  return renderPageHtml({ id: page.id, title, content }, cfg());
+  return renderPageHtml({ id: page.id, title, content }, { ...cfg(), preview: true });
 }
 
 async function resolvePublicUrls(storeId: string, pageSlug: string) {
@@ -70,3 +70,4 @@ export async function publishPage(id: string, title: string, content: PageConten
   const { url, customUrl } = await resolvePublicUrls(page.store_id, page.slug);
   return { url: customUrl ?? url, customUrl, longUrl: url, version };
 }
+
