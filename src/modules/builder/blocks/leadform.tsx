@@ -39,6 +39,7 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       yn('askName', 'Pedir nome', '1', 'Campos'),
       yn('askEmail', 'Pedir e-mail', '1', 'Campos'),
       yn('askWhatsapp', 'Pedir WhatsApp', '1', 'Campos'),
+          { key: 'tag', label: 'Tag dos leads (ex.: Black Friday)', group: 'Campos', showIf: (p) => p.mode !== 'direct' },
       { key: 'coupon', label: 'Cupom exibido ap\u00f3s o cadastro (opcional)', group: AFTER },
       yn('vip', 'Mostrar bot\u00e3o do grupo VIP ap\u00f3s o cadastro', '0', AFTER),
       { key: 'vipUrl', label: 'Link do grupo VIP', group: AFTER },
@@ -116,6 +117,7 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
               data-cbg={cbg}
               data-vip={vipUrl}
               data-vip-label={p.vipLabel || 'Entrar no grupo VIP'}
+                  data-tag={p.tag && p.tag.trim() ? p.tag.trim() : undefined}
               onSubmit={(e) => e.preventDefault()}
               style={{ display: 'flex', flexDirection: 'column', gap: 10, textAlign: 'left' }}
             >
