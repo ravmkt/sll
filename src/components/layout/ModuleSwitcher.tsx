@@ -15,7 +15,7 @@ const SWITCHER_MODULES: Item[] = [
   { key: 'stream_sell', name: 'Stream Sell', category: 'Transmissões Ao Vivo', path: '/dashboard/modules/stream-sell', icon: Radio, logo: '/assets/stream-sell-logo-ico.png' },
   { key: 'gestor', name: 'Gestor', category: 'Operação e Gestão', path: '/dashboard/modules/gestor', icon: Boxes },
   { key: 'builder', name: 'Builder', category: 'Páginas & Domínio Próprio', path: '/dashboard/modules/builder', icon: LayoutTemplate },
-  { key: 'gate', name: 'Gate', category: 'Páginas & Domínio Próprio', path: '/dashboard/modules/gate', icon: LayoutTemplate },
+  { key: 'gate', name: 'Pulse', category: 'Páginas & Domínio Próprio', path: '/dashboard/modules/pulse', icon: LayoutTemplate },
   { key: 'gamification', name: 'Gamificação', category: 'Engajamento & Prêmios', path: '/dashboard/modules/gamificacao', icon: Gamepad2, soon: true },
 ];
 

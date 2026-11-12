@@ -27,7 +27,7 @@ export default function StoreScriptCard({ storeId }: { storeId: string }) {
   }, [load]);
 
   const run = async (action: Action) => {
-    if (action === "uninstall" && !window.confirm("Remover o script da loja? O Gate deixará de funcionar.")) return;
+    if (action === "uninstall" && !window.confirm("Remover o script da loja? O Pulse deixará de funcionar.")) return;
     setBusy(action);
     setError("");
     try {
@@ -62,7 +62,7 @@ export default function StoreScriptCard({ storeId }: { storeId: string }) {
           </span>
         )}
       </div>
-      <p className="text-xs text-slate-500">Instala o script do Gate na loja sem mexer no GTM ou no tema.</p>
+      <p className="text-xs text-slate-500">Instala o script do Pulse na loja sem mexer no GTM ou no tema.</p>
 
       {error && <p className="rounded-xl bg-rose-50 p-3 text-xs text-rose-700">{error}</p>}
 

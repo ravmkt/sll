@@ -8,7 +8,7 @@ import { Gate, createGate, deleteGate, gateSummary, listGates, updateGate } from
 import { refreshStoreScript } from "../services/storeScript";
 import { BuilderPageOption, listPublishedPages } from "../services/builderPages";
 import StoreScriptCard from "../components/StoreScriptCard";
-import type { GateTab } from "../components/GateSidebar";
+import type { PulseTab } from "../components/PulseSidebar";
 
 type Form = {
   id?: string;
@@ -101,7 +101,7 @@ function Metric({ label, value, icon: Icon, tone }: { label: string; value: numb
   );
 }
 
-export default function GatePage({ tab = "campanhas" }: { tab?: GateTab }) {
+export default function PulsePage({ tab = "campanhas" }: { tab?: PulseTab }) {
   const { store } = useLoja();
   const storeId = store?.id;
   const [gates, setGates] = useState<Gate[]>([]);
@@ -263,7 +263,7 @@ export default function GatePage({ tab = "campanhas" }: { tab?: GateTab }) {
               <ShieldCheck className="h-7 w-7 text-[#0094eb]" />
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Gate</h1>
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Pulse</h1>
               <p className="text-sm text-slate-500">
                 Bloqueia toda a loja e leva os visitantes para uma página de campanha até a data final.
               </p>

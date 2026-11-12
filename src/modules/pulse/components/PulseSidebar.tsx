@@ -4,16 +4,16 @@ import { ArrowLeft, Code2, LogOut, PanelLeftClose, PanelLeftOpen, ShieldCheck } 
 import { useAuth } from '@/contexts/AuthContext';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 
-export type GateTab = 'campanhas' | 'instalacao';
+export type PulseTab = 'campanhas' | 'instalacao';
 
-const ITEMS: { id: GateTab; label: string; icon: ElementType }[] = [
+const ITEMS: { id: PulseTab; label: string; icon: ElementType }[] = [
   { id: 'campanhas', label: 'Campanhas', icon: ShieldCheck },
   { id: 'instalacao', label: 'Instalação', icon: Code2 },
 ];
 
-export function GateSidebar({
+export function PulseSidebar({
   activeTab, onTabChange, isCollapsed, onToggle,
-}: { activeTab: GateTab; onTabChange: (t: GateTab) => void; isCollapsed: boolean; onToggle: () => void }) {
+}: { activeTab: PulseTab; onTabChange: (t: PulseTab) => void; isCollapsed: boolean; onToggle: () => void }) {
   const navigate = useNavigate();
   const { signOut } = useAuth() as { signOut: () => Promise<unknown> | void };
   const isExpanded = !isCollapsed;
@@ -28,7 +28,7 @@ export function GateSidebar({
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10">
           <ShieldCheck className="h-6 w-6 text-[#0094eb]" />
         </div>
-        {isExpanded && <span className="text-2xl font-extrabold tracking-tight text-slate-900">Gate</span>}
+        {isExpanded && <span className="text-2xl font-extrabold tracking-tight text-slate-900">Pulse</span>}
       </div>
 
       <div className="px-4 pt-3">
@@ -108,4 +108,4 @@ export function GateSidebar({
   );
 }
 
-export default GateSidebar;
+export default PulseSidebar;
