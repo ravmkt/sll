@@ -27,6 +27,13 @@ const FIELDS: Field[] = [
     ],
   },
   { key: 'fitMin', label: 'Escala m\u00ednima do ajuste (%) - padr\u00e3o 60', group: G_SIZE },
+  {
+    key: 'sllBadge', label: 'Selo "Feito com SLL Hub" no rodap\u00e9', type: 'select', group: G_SIZE, def: '1',
+    options: [
+      { value: '1', label: 'Mostrar' },
+      { value: '0', label: 'Ocultar' },
+    ],
+  },
   { key: 'minH', label: 'Altura m\u00ednima da p\u00e1gina (px)', type: 'number', min: 0, max: 5000, group: G_SIZE },
   { key: 'seoTitle', label: 'T\u00edtulo SEO (ideal at\u00e9 60 caracteres)', group: G_SEO },
   { key: 'seoDesc', label: 'Meta description (ideal at\u00e9 160 caracteres)', multiline: true, group: G_SEO },

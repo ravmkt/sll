@@ -46,6 +46,7 @@ export function renderPageHtml(
   const maxW = Number(s.maxW) > 0 ? Number(s.maxW) : 0;
   const minH = Number(s.minH) > 0 ? Number(s.minH) : 0;
   const full = s.fullH === '1';
+  const sllBadgeHtml = s.sllBadge === '0' ? '' : '<a href="https://sllhub.com.br" target="_blank" rel="noopener" style="position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:2147483000;display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,.45);color:#fff;font:600 11px/1 Arial,sans-serif;text-decoration:none;opacity:.85;white-space:nowrap"><span>Feito com SLL Hub</span><img src="https://app.sllhub.com.br/sll-hub-logo.png" alt="SLL Hub" style="height:16px;width:auto;display:block" onerror="this.remove()"></a>';
   const fit = s.fitScreen === '1';
   const fitPct = Math.min(100, Math.max(30, Number(s.fitMin) || 60));
   const fitJs = fit ? '<script>' + [
@@ -73,6 +74,6 @@ export function renderPageHtml(
   const bgCss = styleToCss(bgStyle(s));
   const pageBgAttr = ' style="' + esc((bgCss ? bgCss + ';' : '') + 'min-height:100%') + '"';
   const pageBgCss = 'html,body{margin:0}body{min-height:100vh}' + (bgCss ? 'body{background:transparent}' : '');
-  return '<!doctype html><html lang="pt-BR"' + pageBgAttr + '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + fullCss + pageBgCss + '</style></head><body>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script>' + fitJs + '</body></html>';
+  return '<!doctype html><html lang="pt-BR"' + pageBgAttr + '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + fullCss + pageBgCss + '</style></head><body>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script>' + fitJs + '' + sllBadgeHtml + '</body></html>';
 }
 
