@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Lightbulb, LayoutGrid, ListChecks, LogOut, PanelLeftClose, PanelLeftOpen,
-  Plug, Radar, RefreshCw, Settings, Shield, Sparkles, TrendingUp,
+  Plug, RefreshCw, Settings, Shield, Sparkles, TrendingUp,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { RadarStoreProvider, useRadarCtx } from '@/hooks/radar/useRadarStore';
@@ -63,8 +63,11 @@ function Shell() {
       <div className="flex flex-1">
         <aside className={`${collapsed ? 'w-16' : 'w-64'} hidden shrink-0 flex-col border-r border-slate-200 bg-white transition-all md:flex`}>
           <div className="flex h-24 items-center justify-center gap-2 border-b border-slate-100">
-            <Radar className="h-7 w-7 text-blue-600" />
-            {!collapsed && <span className="text-2xl font-bold text-slate-900">Rad<span className="text-blue-600">ar</span></span>}
+            {collapsed ? (
+                  <img src="/assets/radar-logo-ico.png" alt="Radar" className="h-11 w-11 object-contain" />
+                ) : (
+                  <img src="/assets/radar-logo-wide.png" alt="Radar" className="h-14 w-auto max-w-full object-contain" />
+                )}
           </div>
           <div className="p-3">
             <button type="button" onClick={() => setCollapsed((c) => !c)} className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-100 py-2 text-sm font-medium text-slate-600">

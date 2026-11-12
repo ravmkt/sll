@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, BellRing, CalendarClock, Code2, DoorOpen, LogOut, PanelLeftClose, PanelLeftOpen, Rocket, Users, Zap } from 'lucide-react';
+import { ArrowLeft, BellRing, CalendarClock, Code2, DoorOpen, LogOut, PanelLeftClose, PanelLeftOpen, Rocket, Users, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 
@@ -30,10 +30,11 @@ export function PulseSidebar({
       }`}
     >
       <div className="flex h-24 items-center justify-center gap-3 border-b border-slate-200 p-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10">
-          <Activity className="h-6 w-6 text-[#0094eb]" />
-        </div>
-        {isExpanded && <span className="text-2xl font-extrabold tracking-tight text-slate-900">Pulse</span>}
+        {isExpanded ? (
+              <img src="/assets/pulse-logo-wide.png" alt="Pulse" className="h-14 w-auto max-w-full object-contain" />
+            ) : (
+              <img src="/assets/pulse-logo-ico.png" alt="Pulse" className="h-11 w-11 object-contain" />
+            )}
       </div>
 
       <div className="px-4 pt-3">
