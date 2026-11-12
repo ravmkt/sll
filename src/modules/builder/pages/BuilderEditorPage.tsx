@@ -1,5 +1,6 @@
 import { bgStyle, colTpl } from '../bg';
 import PageSettingsPanel from '../components/PageSettingsPanel';
+import EmojiPicker from '../components/EmojiPicker';
 import { DeviceFrame } from '../components/DeviceFrame';
 import { useHideSupport } from '../hooks/useHideSupport';
 import { useEffect, useState } from 'react';
@@ -199,6 +200,7 @@ function PropertiesPanel() {
   const plain: Field[] = [];
   const groups = new Map<string, Field[]>();
   for (const f of def.fields) {
+    if (f.showIf && !f.showIf(block.props)) continue;
     if (!f.group) plain.push(f);
     else groups.set(f.group, [...(groups.get(f.group) ?? []), f]);
   }
@@ -226,6 +228,7 @@ function PropertiesPanel() {
       <label key={f.key} className="block">
         <span className="mb-1.5 block text-xs font-semibold text-slate-600">{f.label}</span>
         <FieldInput f={f} value={fieldValue(f, block.props)} onChange={(v) => update(block.id, f.key, v)} props={block.props} />
+            {f.emoji && <EmojiPicker onPick={(e) => update(block.id, f.key, fieldValue(f, block.props) + e)} />}
       </label>
     );
 

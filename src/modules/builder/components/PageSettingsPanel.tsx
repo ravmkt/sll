@@ -55,7 +55,7 @@ export default function PageSettingsPanel() {
             </button>
             {isOpen && (
               <div className="space-y-3 border-t border-slate-200 p-3">
-                {list.map((f) => (
+                {list.filter((f) => !f.showIf || f.showIf(settings)).map((f) => (
                   <label key={f.key} className="block">
                     <span className="mb-1.5 block text-xs font-semibold text-slate-600">{f.label}</span>
                     <FieldInput f={f} value={fieldValue(f, settings)} onChange={(v) => setSetting(f.key, v)} props={settings} />

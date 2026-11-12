@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { bgFields, bgStyle, glowFields, glowStyle } from '../bg';
+import { NEON_CSS, neonClass, neonFields, neonVars } from '../neon';
 import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
 import { ALIGN_OPTIONS, FONT_OPTIONS, STYLE_OPTIONS, num, parseItems, safeUrl } from '../styleKit';
@@ -95,21 +96,22 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
     label: 'Selo de campanha',
     defaults: { text: '\u2726 BLACK FRIDAY \u00b7 16 A 30 DE NOVEMBRO \u2726', bc: '#8a6d2f', fill: '', radius: '999', bg: DARK, pad: '16', align: 'center' },
     fields: [
-      { key: 'text', label: 'Texto do selo' },
-      { key: 'bc', label: 'Cor da borda', type: 'color', def: '#8a6d2f' },
+      { key: 'text', label: 'Texto do selo', emoji: true },
+      { key: 'bc', label: 'Cor da borda', type: 'color', def: '#8a6d2f', showIf: (p) => p.neon !== '1' },
       { key: 'fill', label: 'Cor de preenchimento', type: 'color' },
       { key: 'radius', label: 'Arredondamento (px)', type: 'number', min: 0, max: 999, def: '999' },
+      ...neonFields(),
       ...tf('t', 'Texto', 13, 11, '#d4af37', 'bold'),
       ...secFields('16'),
     ],
     render: (p) => (
       <section style={sec(p, 16)}>
-        <Css s={RCSS} />
+        <Css s={RCSS + NEON_CSS} />
         <span
-          className="sll-r"
+          className={'sll-r' + neonClass(p)}
           style={{
             display: 'inline-block', padding: '8px 18px', letterSpacing: '.08em', textTransform: 'uppercase',
-            border: `1px solid ${p.bc || '#8a6d2f'}`, background: p.fill || undefined, borderRadius: num(p.radius, 999),
+            position: 'relative', border: p.neon === '1' ? 'none' : `1px solid ${p.bc || '#8a6d2f'}`, background: p.fill || undefined, borderRadius: num(p.radius, 999), ...neonVars(p),
             ...tcss(p, 't', { s: 13, m: 11, c: '#d4af37', st: 'bold' }),
           }}
         >

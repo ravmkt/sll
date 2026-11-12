@@ -19,6 +19,8 @@ export interface Field {
   accept?: 'image' | 'video';
   maxFn?: (p: Record<string, string>) => number;
   def?: string | ((p: Record<string, string>) => string);
+  showIf?: (p: Record<string, string>) => boolean;
+  emoji?: boolean;
 }
 export interface BlockDef {
   label: string;

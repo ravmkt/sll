@@ -8,6 +8,7 @@ export const BG_TYPES = [
   { value: 'color', label: 'Cor s\u00f3lida' },
   { value: 'gradient', label: 'Degrad\u00ea' },
   { value: 'image', label: 'Imagem' },
+  { value: 'transparent', label: 'Transparente' },
 ];
 const BG_SIZES = [
   { value: 'cover', label: 'Cobrir (recorta)' },
@@ -27,6 +28,7 @@ const esc = (u: string) => u.replace(/["'()\s\\]/g, (c) => '%' + c.charCodeAt(0)
 export function bgStyle(p: P): CSSProperties {
   const type = p.bgType || 'color';
   const color = p.bg || undefined;
+  if (type === 'transparent') return { background: 'transparent' };
 
   if (type === 'gradient') {
     const a = Number(p.bgAngle);
@@ -50,15 +52,17 @@ export function bgStyle(p: P): CSSProperties {
   return { background: color };
 }
 
+const only = (...t: string[]) => (p: P) => t.includes(p.bgType || 'color');
+
 export const bgFields = (group = 'Fundo'): Field[] => [
   { key: 'bgType', label: 'Tipo de fundo', type: 'select', options: BG_TYPES, group, def: 'color' },
-  { key: 'bg', label: 'Cor (ou cor 1 do degrad\u00ea)', type: 'color', group },
-  { key: 'bg2', label: 'Degrad\u00ea: cor 2', type: 'color', group, def: '#000000' },
-  { key: 'bgAngle', label: 'Degrad\u00ea: \u00e2ngulo (graus)', type: 'number', min: 0, max: 360, group, def: '135' },
-  { key: 'bgImg', label: 'Imagem de fundo', type: 'upload', accept: 'image', group },
-  { key: 'bgOverlay', label: 'Imagem: pel\u00edcula escura (%)', type: 'number', min: 0, max: 90, group, def: '0' },
-  { key: 'bgSize', label: 'Imagem: ajuste', type: 'select', options: BG_SIZES, group, def: 'cover' },
-  { key: 'bgPos', label: 'Imagem: posi\u00e7\u00e3o', type: 'select', options: BG_POS, group, def: 'center' },
+  { key: 'bg', label: 'Cor (ou cor 1 do degrad\u00ea)', type: 'color', group, showIf: only('color', 'gradient') },
+  { key: 'bg2', label: 'Degrad\u00ea: cor 2', type: 'color', group, def: '#000000', showIf: only('gradient') },
+  { key: 'bgAngle', label: 'Degrad\u00ea: \u00e2ngulo (graus)', type: 'number', min: 0, max: 360, group, def: '135', showIf: only('gradient') },
+  { key: 'bgImg', label: 'Imagem de fundo', type: 'upload', accept: 'image', group, showIf: only('image') },
+  { key: 'bgOverlay', label: 'Imagem: pel\u00edcula escura (%)', type: 'number', min: 0, max: 90, group, def: '0', showIf: only('image') },
+  { key: 'bgSize', label: 'Imagem: ajuste', type: 'select', options: BG_SIZES, group, def: 'cover', showIf: only('image') },
+  { key: 'bgPos', label: 'Imagem: posi\u00e7\u00e3o', type: 'select', options: BG_POS, group, def: 'center', showIf: only('image') },
 ];
 
 export const glowStyle = (p: P): CSSProperties => {
