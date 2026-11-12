@@ -17,6 +17,20 @@ async function rpc(base, key, fn, args) {
   return typeof v === 'string' && UUID.test(v) ? v : null;
 }
 
+async function builderEnabled(base, key, store) {
+  try {
+    const r = await fetch(`${base}/rest/v1/rpc/get_module_app_enabled`, {
+      method: 'POST',
+      headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_store_id: store, p_module: 'builder' }),
+    });
+    if (!r.ok) return true;
+    return (await r.json()) !== false;
+  } catch {
+    return true;
+  }
+}
+
 export default async function handler(req, res) {
   const ref = String(req.query.store || '');
   const slug = String(req.query.slug || '');
