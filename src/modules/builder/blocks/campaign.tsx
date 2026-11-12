@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { bgFields, bgStyle, fillFields, fillStyle, glowFields, glowStyle } from '../bg';
+import { objFillCss, objFillFields, secPlain, secPlainFields } from '../objfill';
+import { bgFields, bgStyle, glowFields, glowStyle } from '../bg';
 import { NEON_CSS, neonClass, neonFields, neonVars } from '../neon';
 import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
@@ -94,24 +95,26 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
 
   badge: {
     label: 'Selo de campanha',
-    defaults: { text: '\u2726 BLACK FRIDAY \u00b7 16 A 30 DE NOVEMBRO \u2726', bc: '#8a6d2f', fill: '', radius: '999', bg: DARK, pad: '16', align: 'center' },
+    defaults: { text: '\u2726 BLACK FRIDAY \u00b7 16 A 30 DE NOVEMBRO \u2726', bc: '#8a6d2f', fill: '', radius: '999', pad: '16', align: 'center' },
     fields: [
       { key: 'text', label: 'Texto do selo', emoji: true },
       { key: 'bc', label: 'Cor da borda', type: 'color', def: '#8a6d2f', showIf: (p) => p.neon !== '1' },
-      { key: 'fill', label: 'Cor de preenchimento', type: 'color' },
       { key: 'radius', label: 'Arredondamento (px)', type: 'number', min: 0, max: 999, def: '999' },
+      ...objFillFields('fill', 'Fundo', 'transparent', '#000000'),
       ...neonFields(),
       ...tf('t', 'Texto', 13, 11, '#d4af37', 'bold'),
-      ...secFields('16'),
+      ...secPlainFields('16'),
     ],
     render: (p) => (
-      <section style={sec(p, 16)}>
+      <section style={secPlain(p, 16)}>
         <Css s={RCSS + NEON_CSS} />
         <span
           className={'sll-r' + neonClass(p)}
           style={{
             display: 'inline-block', padding: '8px 18px', letterSpacing: '.08em', textTransform: 'uppercase',
-            position: 'relative', border: p.neon === '1' ? 'none' : `1px solid ${p.bc || '#8a6d2f'}`, background: p.fill || undefined, borderRadius: num(p.radius, 999), ...neonVars(p),
+            position: 'relative', border: p.neon === '1' ? 'none' : `1px solid ${p.bc || '#8a6d2f'}`,
+            ...objFillCss(p, 'fill', 'transparent', '#000000'),
+            borderRadius: num(p.radius, 999), ...neonVars(p),
             ...tcss(p, 't', { s: 13, m: 11, c: '#d4af37', st: 'bold' }),
           }}
         >
@@ -130,29 +133,35 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
         { t: '\ud83d\udcb3 6x sem juros' },
         { t: '\ud83d\ude9a Frete gr\u00e1tis R$ 459+' },
       ]),
-      chipBg: '#14110d', chipBc: '#5c4a1f', gap: '10', bg: DARK, pad: '16', align: 'center',
+      chipBg: '#14110d', chipBc: '#5c4a1f', gap: '10', pad: '16', align: 'center',
     },
     fields: [
       { key: 'items', label: 'Selos', type: 'repeater', itemLabel: 'Selo', itemDefaults: { t: 'Novo selo' }, maxItems: 8, item: [{ key: 't', label: 'Texto' }] },
-      ...fillFields('chipBg', 'Selo', '#14110d', 'Fundo do selo'),
+      ...objFillFields('chipBg', 'Fundo', 'color', '#14110d'),
       { key: 'chipBc', label: 'Cor da borda do selo', type: 'color', group: 'Selo', def: '#5c4a1f', showIf: (p) => p.neon !== '1' },
       { key: 'gap', label: 'Espa\u00e7o entre selos (px)', type: 'number', min: 0, max: 40, group: 'Selo', def: '10' },
       ...neonFields(),
       ...tf('t', 'Texto', 13, 12, '#e5e7eb'),
-      ...secFields('16'),
+      ...secPlainFields('16'),
     ],
     render: (p) => (
-      <section style={sec(p, 16)}>
-        <Css s={RCSS} />
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: num(p.gap, 10) }}>
-            <Css s={NEON_CSS} />
+      <section style={secPlain(p, 16)}>
+        <Css s={RCSS + NEON_CSS} />
+        <div
+          style={{
+            display: 'flex', flexWrap: 'wrap', gap: num(p.gap, 10),
+            justifyContent: p.align === 'left' ? 'flex-start' : p.align === 'right' ? 'flex-end' : 'center',
+          }}
+        >
           {parseItems(p.items).filter((x) => x.t).map((x, i) => (
             <span
               key={i}
               className={'sll-r' + neonClass(p)}
               style={{
-                padding: '8px 16px', borderRadius: 999,
-                position: 'relative', background: fillStyle(p, 'chipBg', '#14110d'), border: p.neon === '1' ? 'none' : `1px solid ${p.chipBc || '#5c4a1f'}`, ...neonVars(p),
+                position: 'relative', padding: '8px 16px', borderRadius: 999,
+                ...objFillCss(p, 'chipBg', 'color', '#14110d'),
+                border: p.neon === '1' ? 'none' : `1px solid ${p.chipBc || '#5c4a1f'}`,
+                ...neonVars(p),
                 ...tcss(p, 't', { s: 13, m: 12, c: '#e5e7eb' }),
               }}
             >
@@ -163,7 +172,6 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       </section>
     ),
   },
-
   heading: {
     label: 'T\u00edtulo da campanha',
     defaults: {
@@ -204,7 +212,7 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
     defaults: {
       endsAt: '2026-11-27T23:59', lD: 'Dias', lH: 'Horas', lM: 'Min', lS: 'Seg',
       boxBg: '#14110d', boxBc: '#8a6d2f', lblColor: '#9ca3af', radius: '12',
-      gap: '12', gapM: '8', boxW: '110', boxWM: '64', bg: DARK, pad: '24',
+      gap: '12', gapM: '8', boxW: '110', boxWM: '64', pad: '24',
     },
     fields: [
       { key: 'endsAt', label: 'Data final', type: 'datetime' },
@@ -212,18 +220,18 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       { key: 'lH', label: 'R\u00f3tulo: horas', group: 'R\u00f3tulos' },
       { key: 'lM', label: 'R\u00f3tulo: minutos', group: 'R\u00f3tulos' },
       { key: 'lS', label: 'R\u00f3tulo: segundos', group: 'R\u00f3tulos' },
-      ...fillFields('boxBg', 'Caixas', '#14110d', 'Caixa: fundo'),
+      ...objFillFields('boxBg', 'Fundo', 'color', '#14110d'),
       { key: 'boxBc', label: 'Caixa: cor da borda', type: 'color', group: 'Caixas', def: '#8a6d2f', showIf: (p) => p.neon !== '1' },
       { key: 'lblColor', label: 'Cor dos r\u00f3tulos', type: 'color', group: 'Caixas', def: '#9ca3af' },
       { key: 'radius', label: 'Caixa: arredondamento (px)', type: 'number', min: 0, max: 40, group: 'Caixas', def: '12' },
       ...glowFields('Caixas'),
-      ...neonFields(),
-          { key: 'boxW', label: 'Caixa: largura no PC (px)', type: 'number', min: 40, max: 240, group: 'Caixas', def: '110' },
+      { key: 'boxW', label: 'Caixa: largura no PC (px)', type: 'number', min: 40, max: 240, group: 'Caixas', def: '110' },
       { key: 'boxWM', label: 'Caixa: largura no celular (px)', type: 'number', min: 40, max: 120, group: 'Caixas', def: '64' },
       { key: 'gap', label: 'Espa\u00e7o entre caixas no PC (px)', type: 'number', min: 0, max: 40, group: 'Caixas', def: '12' },
       { key: 'gapM', label: 'Espa\u00e7o entre caixas no celular (px)', type: 'number', min: 0, max: 24, group: 'Caixas', def: '8' },
+      ...neonFields(),
       ...tf('n', 'N\u00famero', 40, 26, '#d4af37', 'bold'),
-      ...secFields('24'),
+      ...secPlainFields('24'),
     ],
     render: (p) => {
       const v = parts(p.endsAt);
@@ -233,7 +241,7 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
         '--w': `${num(p.boxW, 110)}px`, '--wm': `${num(p.boxWM, 64)}px`,
       } as unknown as CSSProperties;
       return (
-        <section style={sec(p, 24)}>
+        <section style={secPlain(p, 24)}>
           <Css s={RCSS + CD_CSS + NEON_CSS} />
           <div className="sll-cd" data-cd={p.endsAt || undefined} style={vars}>
             {labels.map((l, i) => (
@@ -241,8 +249,10 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
                 key={i}
                 className={'sll-cdb' + neonClass(p)}
                 style={{
-                  textAlign: 'center', padding: '14px 6px', position: 'relative', background: fillStyle(p, 'boxBg', '#14110d'),
-                  border: p.neon === '1' ? 'none' : `1px solid ${p.boxBc || '#8a6d2f'}`, borderRadius: num(p.radius, 12), ...glowStyle(p), ...neonVars(p),
+                  position: 'relative', textAlign: 'center', padding: '14px 6px',
+                  ...objFillCss(p, 'boxBg', 'color', '#14110d'),
+                  border: p.neon === '1' ? 'none' : `1px solid ${p.boxBc || '#8a6d2f'}`,
+                  borderRadius: num(p.radius, 12), ...glowStyle(p), ...neonVars(p),
                 }}
               >
                 <div data-u className="sll-r" style={{ lineHeight: 1.1, ...tcss(p, 'n', { s: 40, m: 26, c: '#d4af37', st: 'bold' }) }}>
@@ -269,29 +279,33 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
         { ic: '\u26a1', t: '+ 5% de desconto no PIX' },
         { ic: '\ud83c\udf81', t: 'Brinde em compras acima de R$ 300' },
       ]),
-      cardBg: '#14110d', cardBc: '#5c4a1f', radius: '16', cardPad: '24', maxW: '640', bg: DARK, pad: '16',
+      cardBg: '#14110d', cardBc: '#5c4a1f', radius: '16', cardPad: '24', maxW: '640', pad: '16',
     },
     fields: [
-      { key: 'title', label: 'T\u00edtulo do card' },
-      { key: 'intro', label: 'Texto de abertura (opcional)', multiline: true },
+      { key: 'title', label: 'T\u00edtulo do card', emoji: true },
+      { key: 'intro', label: 'Texto de abertura (opcional)', multiline: true, emoji: true },
       { key: 'items', label: 'Itens', type: 'repeater', itemLabel: 'Item', itemDefaults: { ic: '\u2714', t: 'Novo benef\u00edcio' }, maxItems: 12,
         item: [{ key: 'ic', label: '\u00cdcone (emoji)' }, { key: 't', label: 'Texto (use **texto** para negrito)' }] },
-      { key: 'cardBg', label: 'Card: cor de fundo', type: 'color', group: 'Card', def: '#14110d' },
-      { key: 'cardBc', label: 'Card: cor da borda', type: 'color', group: 'Card', def: '#5c4a1f' },
+      ...objFillFields('cardBg', 'Fundo', 'color', '#14110d'),
+      { key: 'cardBc', label: 'Card: cor da borda', type: 'color', group: 'Card', def: '#5c4a1f', showIf: (p) => p.neon !== '1' },
       { key: 'radius', label: 'Card: arredondamento (px)', type: 'number', min: 0, max: 60, group: 'Card', def: '16' },
       { key: 'cardPad', label: 'Card: espa\u00e7o interno (px)', type: 'number', min: 0, max: 80, group: 'Card', def: '24' },
       { key: 'maxW', label: 'Card: largura m\u00e1xima (px)', type: 'number', min: 240, max: 1200, group: 'Card', def: '640' },
+      ...neonFields(),
       ...tf('title', 'T\u00edtulo', 16, 15, '#d4af37', 'bold'),
       ...tf('item', 'Itens', 15, 14, '#e5e7eb'),
-      ...secFields('16'),
+      ...secPlainFields('16'),
     ],
     render: (p) => (
-      <section style={{ ...sec(p, 16), textAlign: 'left' }}>
-        <Css s={RCSS} />
+      <section style={{ ...secPlain(p, 16), textAlign: 'left' }}>
+        <Css s={RCSS + NEON_CSS} />
         <div
+          className={neonClass(p).trim()}
           style={{
-            maxWidth: num(p.maxW, 640), margin: '0 auto', padding: num(p.cardPad, 24), boxSizing: 'border-box',
-            background: p.cardBg || '#14110d', border: `1px solid ${p.cardBc || '#5c4a1f'}`, borderRadius: num(p.radius, 16),
+            position: 'relative', maxWidth: num(p.maxW, 640), margin: '0 auto', padding: num(p.cardPad, 24), boxSizing: 'border-box',
+            ...objFillCss(p, 'cardBg', 'color', '#14110d'),
+            border: p.neon === '1' ? 'none' : `1px solid ${p.cardBc || '#5c4a1f'}`,
+            borderRadius: num(p.radius, 16), ...neonVars(p),
           }}
         >
           {p.title ? (
