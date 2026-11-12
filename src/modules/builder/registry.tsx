@@ -1,9 +1,10 @@
-import type { CSSProperties } from 'react';
+﻿import type { CSSProperties } from 'react';
 import type { BlockType } from './types';
 import { EXTRA_BLOCKS, type BlockDef } from './registry-extra';
 import { STORE_BLOCKS } from './blocks/store';
 import { SHOWCASE_BLOCKS } from './blocks/showcase';
 import { CAMPAIGN_BLOCKS } from './blocks/campaign';
+import { LEADFORM_BLOCKS } from './blocks/leadform';
 import { MEDIA_BLOCKS } from './blocks/media';
 import { ALIGN_OPTIONS, boxCss, boxFields, num, safeUrl, textCss, textFields } from './styleKit';
 
@@ -15,6 +16,7 @@ export const BLOCKS = {
   ...(STORE_BLOCKS as Record<'announcement' | 'highlights', BlockDef>),
   ...(SHOWCASE_BLOCKS as Record<'showcase', BlockDef>),
   ...(CAMPAIGN_BLOCKS as Record<'brandbar' | 'badge' | 'chips' | 'heading' | 'countdown' | 'benefits', BlockDef>),
+  ...(LEADFORM_BLOCKS as Record<'leadform', BlockDef>),
   hero: {
     label: 'Hero',
     defaults: { title: 'Título principal', subtitle: 'Subtítulo da sua oferta', cta: 'Comprar agora', href: '#', bg: '#111827', align: 'center' },

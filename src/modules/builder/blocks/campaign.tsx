@@ -1,19 +1,19 @@
-import type { CSSProperties, ReactNode } from 'react';
+﻿import type { CSSProperties, ReactNode } from 'react';
 import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
 import { ALIGN_OPTIONS, FONT_OPTIONS, STYLE_OPTIONS, num, parseItems, safeUrl } from '../styleKit';
 
-const RCSS =
-  '.sll-r{font-size:var(--d)}.sll-lg{height:var(--lh)}@media(max-width:640px){.sll-r{font-size:var(--m)}.sll-lg{height:var(--lhm)}}';
+export const RCSS =
+  '.sll-r{font-size:var(--d)}.sll-lg{height:var(--lh)}@container (max-width:600px){.sll-r{font-size:var(--m)}.sll-lg{height:var(--lhm)}}';
 const CD_CSS =
-  '.sll-cd{gap:var(--g)}.sll-cdb{min-width:var(--w)}@media(max-width:640px){.sll-cd{gap:var(--gm)}.sll-cdb{min-width:var(--wm)}}';
+  '.sll-cd{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--g);width:100%;max-width:calc(var(--w)*4 + var(--g)*3);margin:0 auto}.sll-cdb{min-width:0}@container (max-width:600px){.sll-cd{gap:var(--gm);max-width:calc(var(--wm)*4 + var(--gm)*3)}}';
 
-const Css = ({ s }: { s: string }) => <style dangerouslySetInnerHTML={{ __html: s }} />;
+export const Css = ({ s }: { s: string }) => <style dangerouslySetInnerHTML={{ __html: s }} />;
 const align = (p: Record<string, string>, d: string) => (p.align || d) as CSSProperties['textAlign'];
-const rich = (s = ''): ReactNode => s.split('**').map((t, i) => (i % 2 ? <strong key={i}>{t}</strong> : t));
+export const rich = (s = ''): ReactNode => s.split('**').map((t, i) => (i % 2 ? <strong key={i}>{t}</strong> : t));
 const pad2 = (n: number) => String(Math.max(0, n)).padStart(2, '0');
 
-function tf(k: string, label: string, s: number, m: number, c: string, st = 'normal'): Field[] {
+export function tf(k: string, label: string, s: number, m: number, c: string, st = 'normal'): Field[] {
   return [
     { key: `${k}Size`, label: `${label}: tamanho no PC (px)`, type: 'number', min: 8, max: 120, group: label, def: String(s) },
     { key: `${k}SizeM`, label: `${label}: tamanho no celular (px)`, type: 'number', min: 8, max: 120, group: label, def: String(m) },
@@ -23,7 +23,7 @@ function tf(k: string, label: string, s: number, m: number, c: string, st = 'nor
   ];
 }
 
-function tcss(p: Record<string, string>, k: string, d: { s: number; m: number; c: string; st?: string }): CSSProperties {
+export function tcss(p: Record<string, string>, k: string, d: { s: number; m: number; c: string; st?: string }): CSSProperties {
   const st = p[`${k}Style`] || d.st || 'normal';
   return {
     '--d': `${num(p[`${k}Size`], d.s)}px`,
@@ -35,12 +35,13 @@ function tcss(p: Record<string, string>, k: string, d: { s: number; m: number; c
   } as unknown as CSSProperties;
 }
 
-const secFields = (pad: string): Field[] => [
+export const secFields = (pad: string): Field[] => [
   { key: 'bg', label: 'Cor de fundo', type: 'color', group: 'Se\u00e7\u00e3o' },
   { key: 'pad', label: 'Espa\u00e7o vertical (px)', type: 'number', min: 0, max: 200, group: 'Se\u00e7\u00e3o', def: pad },
   { key: 'align', label: 'Alinhamento', type: 'select', options: ALIGN_OPTIONS, group: 'Se\u00e7\u00e3o', def: 'center' },
 ];
-const sec = (p: Record<string, string>, d: number): CSSProperties => ({
+export const sec = (p: Record<string, string>, d: number): CSSProperties => ({
+  ...({ containerType: 'inline-size' } as CSSProperties),
   background: p.bg || undefined,
   padding: `${num(p.pad, d)}px 24px`,
   textAlign: align(p, 'center'),
@@ -227,7 +228,7 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       return (
         <section style={sec(p, 24)}>
           <Css s={RCSS + CD_CSS} />
-          <div className="sll-cd" data-cd={p.endsAt || undefined} style={{ display: 'flex', justifyContent: 'center', ...vars }}>
+          <div className="sll-cd" data-cd={p.endsAt || undefined} style={vars}>
             {labels.map((l, i) => (
               <div
                 key={i}

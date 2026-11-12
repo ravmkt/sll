@@ -1,10 +1,10 @@
-import type { ElementType } from 'react';
+﻿import type { ElementType } from 'react';
 import {
   CircleHelp, CirclePlay, Images, LayoutGrid, Megaphone, ShieldCheck, Image as ImageIcon, LayoutTemplate, MessageSquareQuote,
   MousePointerClick, ShoppingBag, TextCursorInput, Timer, Type,
 } from 'lucide-react';
 import type { BlockType } from './types';
-import { Heading1, Hourglass, ListChecks, Store, Tag, Tags } from 'lucide-react';
+import { Heading1, Hourglass, ListChecks, Store, Tag, Tags, UserPlus } from 'lucide-react';
 
 export interface PaletteItem { key: string; type: BlockType; label: string; icon: ElementType; cols?: number }
 
@@ -35,6 +35,7 @@ export const PALETTE: { title: string; items: PaletteItem[] }[] = [
       { key: 'chips', type: 'chips', label: 'Selos de benef\u00edcios', icon: Tags },
       { key: 'countdown', type: 'countdown', label: 'Contagem regressiva', icon: Hourglass },
       { key: 'benefits', type: 'benefits', label: 'Card de benef\u00edcios', icon: ListChecks },
+          { key: 'leadform', type: 'leadform', label: 'Formul\u00e1rio de cadastro', icon: UserPlus },
     ],
   },
   {
