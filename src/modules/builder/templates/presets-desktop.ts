@@ -5,7 +5,7 @@ const asset = (name: string) => `${window.location.origin}/assets/templates/${na
 
 // Ajuste so aqui se a estrutura do bloco "columns" for diferente (ver diag-columns.txt)
 const cols = (n: '2' | '3', left: any[], right: any[], extra: any[] = []) => {
-  const c: any = mk('columns', { count: n, stackMobile: '1', gap: '32', align: 'center' } as P);
+  const c: any = mk('columns', { cols: n, stack: '1', gap: '32', align: 'center' } as P);
   c.children = n === '2' ? [left, right] : [left, right, extra];
   return c;
 };

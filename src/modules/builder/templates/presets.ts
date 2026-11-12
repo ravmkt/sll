@@ -10,8 +10,8 @@ export type Preset = {
 };
 
 export const END = '2026-11-27T23:59';
-const GOLD: Theme = { bg: '#0b0a08', card: '#14110d', line: '#5c4a1f', accent: '#d4af37', text: '#f5f5f4', muted: '#e5e7eb', btnText: '#0b0a08', input: '#0b0a08' };
-const NAVY: Theme = { bg: '#0b1220', card: '#131c2f', line: '#2a3a5c', accent: '#38bdf8', text: '#f1f5f9', muted: '#94a3b8', btnText: '#0b1220', input: '#0b1220' };
+export const GOLD: Theme = { bg: '#0b0a08', card: '#14110d', line: '#5c4a1f', accent: '#d4af37', text: '#f5f5f4', muted: '#e5e7eb', btnText: '#0b0a08', input: '#0b0a08' };
+export const NAVY: Theme = { bg: '#0b1220', card: '#131c2f', line: '#2a3a5c', accent: '#38bdf8', text: '#f1f5f9', muted: '#94a3b8', btnText: '#0b1220', input: '#0b1220' };
 const LIGHT: Theme = { bg: '#ffffff', card: '#f8fafc', line: '#e2e8f0', accent: '#111827', text: '#111827', muted: '#64748b', btnText: '#ffffff', input: '#ffffff' };
 const HOT: Theme = { bg: '#0a0a0a', card: '#18181b', line: '#3f3f46', accent: '#f43f5e', text: '#fafafa', muted: '#a1a1aa', btnText: '#ffffff', input: '#0a0a0a' };
 
