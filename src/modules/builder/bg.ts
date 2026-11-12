@@ -60,3 +60,14 @@ export const bgFields = (group = 'Fundo'): Field[] => [
   { key: 'bgSize', label: 'Imagem: ajuste', type: 'select', options: BG_SIZES, group, def: 'cover' },
   { key: 'bgPos', label: 'Imagem: posi\u00e7\u00e3o', type: 'select', options: BG_POS, group, def: 'center' },
 ];
+
+export const glowStyle = (p: P): CSSProperties => {
+  if (!p.glow) return {};
+  const n = Math.min(Math.max(Number(p.glowSize) || 14, 2), 60);
+  return { boxShadow: `0 0 ${n / 2}px ${p.glow}, 0 0 ${n * 2}px ${p.glow}` };
+};
+
+export const glowFields = (group = 'Brilho'): Field[] => [
+  { key: 'glow', label: 'Brilho: cor (vazio = sem brilho)', type: 'color', group },
+  { key: 'glowSize', label: 'Brilho: intensidade (px)', type: 'number', min: 2, max: 60, group, def: '14' },
+];

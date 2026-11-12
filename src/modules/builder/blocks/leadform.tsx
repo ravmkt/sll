@@ -3,6 +3,7 @@ import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
 import { num, safeUrl } from '../styleKit';
 import { Css, RCSS, rich, sec, secFields, tcss, tf } from './campaign';
+import { glowFields, glowStyle } from '../bg';
 
 const YN = [{ value: '1', label: 'Sim' }, { value: '0', label: 'N\u00e3o' }];
 const yn = (key: string, label: string, def: string, group: string): Field => ({ key, label, type: 'select', options: YN, group, def });
@@ -53,6 +54,7 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       { key: 'btnColor', label: 'Bot\u00e3o: cor do texto', type: 'color', group: 'Bot\u00e3o', def: '#0b0a08' },
       ...tf('title', 'T\u00edtulo', 22, 19, '#d4af37', 'bold'),
       ...tf('sub', 'Texto de apoio', 15, 14, '#e5e7eb'),
+      ...glowFields('Brilho do card'),
       ...secFields('16'),
     ],
     render: (p) => {
@@ -76,7 +78,7 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
           <div
             style={{
               maxWidth: num(p.maxW, 480), margin: '0 auto', padding: num(p.cardPad, 24), boxSizing: 'border-box', textAlign: 'center',
-              background: p.cardBg || '#14110d', border: `1px solid ${p.cardBc || '#5c4a1f'}`, borderRadius: num(p.radius, 16),
+              background: p.cardBg || '#14110d', border: `1px solid ${p.cardBc || '#5c4a1f'}`, borderRadius: num(p.radius, 16), ...glowStyle(p),
             }}
           >
             {p.title ? (

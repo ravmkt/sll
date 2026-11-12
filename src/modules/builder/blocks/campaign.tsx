@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { bgFields, bgStyle } from '../bg';
+import { bgFields, bgStyle, glowFields, glowStyle } from '../bg';
 import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
 import { ALIGN_OPTIONS, FONT_OPTIONS, STYLE_OPTIONS, num, parseItems, safeUrl } from '../styleKit';
@@ -212,7 +212,8 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       { key: 'boxBc', label: 'Caixa: cor da borda', type: 'color', group: 'Caixas', def: '#8a6d2f' },
       { key: 'lblColor', label: 'Cor dos r\u00f3tulos', type: 'color', group: 'Caixas', def: '#9ca3af' },
       { key: 'radius', label: 'Caixa: arredondamento (px)', type: 'number', min: 0, max: 40, group: 'Caixas', def: '12' },
-      { key: 'boxW', label: 'Caixa: largura no PC (px)', type: 'number', min: 40, max: 240, group: 'Caixas', def: '110' },
+      ...glowFields('Caixas'),
+          { key: 'boxW', label: 'Caixa: largura no PC (px)', type: 'number', min: 40, max: 240, group: 'Caixas', def: '110' },
       { key: 'boxWM', label: 'Caixa: largura no celular (px)', type: 'number', min: 40, max: 120, group: 'Caixas', def: '64' },
       { key: 'gap', label: 'Espa\u00e7o entre caixas no PC (px)', type: 'number', min: 0, max: 40, group: 'Caixas', def: '12' },
       { key: 'gapM', label: 'Espa\u00e7o entre caixas no celular (px)', type: 'number', min: 0, max: 24, group: 'Caixas', def: '8' },
@@ -236,7 +237,7 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
                 className="sll-cdb"
                 style={{
                   textAlign: 'center', padding: '14px 6px', background: p.boxBg || '#14110d',
-                  border: `1px solid ${p.boxBc || '#8a6d2f'}`, borderRadius: num(p.radius, 12),
+                  border: `1px solid ${p.boxBc || '#8a6d2f'}`, borderRadius: num(p.radius, 12), ...glowStyle(p),
                 }}
               >
                 <div data-u className="sll-r" style={{ lineHeight: 1.1, ...tcss(p, 'n', { s: 40, m: 26, c: '#d4af37', st: 'bold' }) }}>

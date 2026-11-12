@@ -27,13 +27,13 @@ export const PRESETS_DESKTOP_FOGO: Preset[] = [
             ...CLEAR, align: 'left', l1Color: YELLOW, l2Color: '#ffffff',
             l1Size: '72', l1SizeM: '40', l2Size: '64', l2SizeM: '34',
           }),
-          count(GOLD, { ...CLEAR, boxBg: '#000000b3', boxBc: YELLOW, nColor: YELLOW, lblColor: '#e5e7eb' }),
+          count(GOLD, { ...CLEAR, boxBg: '#000000b3', boxBc: YELLOW, glow: YELLOW, glowSize: '14', nColor: YELLOW, lblColor: '#e5e7eb' }),
         ],
         [
           badge(GOLD, '\ud83d\udd12 LOJA FECHADA PARA PREPARA\u00c7\u00c3O', { ...CLEAR, bc: YELLOW, tColor: '#ffffff' }),
           form(GOLD, {
             ...CLEAR,
-            cardBg: '#14110dd9', cardBc: YELLOW, titleColor: '#ffffff', btnBg: YELLOW, btnColor: '#0b0a08',
+            cardBg: '#14110dd9', cardBc: YELLOW, glow: YELLOW, glowSize: '16', titleColor: '#ffffff', btnBg: YELLOW, btnColor: '#0b0a08',
             title: 'GARANTA SEU ACESSO VIP',
             sub: '\ud83d\udd12 Seus dados est\u00e3o seguros. **Sem spam.**',
             btn: 'QUERO ACESSO ANTECIPADO \u2192',
