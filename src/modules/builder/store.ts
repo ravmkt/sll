@@ -80,7 +80,10 @@ const cloneBlock = (b: Block): Block => ({
 interface BuilderState {
   blocks: Block[];
   selectedId: string | null;
-  load: (blocks: Block[]) => void;
+  pageId: string | null;
+  settings: Record<string, string>;
+  setSetting: (key: string, value: string) => void;
+  load: (blocks: Block[], settings?: Record<string, string>, pageId?: string) => void;
   add: (type: BlockType, target?: Target, cols?: number) => void;
   moveTo: (id: string, target: Target) => void;
   update: (id: string, key: string, value: string) => void;
@@ -93,7 +96,10 @@ interface BuilderState {
 export const useBuilder = create<BuilderState>((set) => ({
   blocks: [],
   selectedId: null,
-  load: (blocks) => set({ blocks, selectedId: null }),
+  pageId: null,
+  settings: {},
+  setSetting: (key, value) => set((s) => ({ settings: { ...s.settings, [key]: value } })),
+  load: (blocks, settings = {}, pageId) => set({ blocks, settings, pageId: pageId ?? null, selectedId: null }),
   add: (type, target, cols) =>
     set((s) => {
       const block = makeBlock(type, cols);

@@ -1,4 +1,5 @@
 import { bgStyle, colTpl } from '../bg';
+import PageSettingsPanel from '../components/PageSettingsPanel';
 import { DeviceFrame } from '../components/DeviceFrame';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -152,20 +153,30 @@ function CanvasBlock({ block }: { block: Block }) {
 
 function Canvas() {
   const blocks = useBuilder((s) => s.blocks);
+  const settings = useBuilder((s) => s.settings);
   const select = useBuilder((s) => s.select);
   const { setNodeRef } = useDroppable({ id: 'canvas' });
+  const maxW = Number(settings.maxW) > 0 ? Number(settings.maxW) : 0;
+  const minH = Number(settings.minH) > 0 ? Number(settings.minH) : 0;
   return (
-    <div ref={setNodeRef} onClick={() => select(null)} className="min-h-[600px] bg-white shadow-sm">
-      <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-        {blocks.map((b) => (
-          <CanvasBlock key={b.id} block={b} />
-        ))}
-      </SortableContext>
-      {blocks.length === 0 && (
-        <p className="p-16 text-center text-sm font-medium text-slate-400">
-          Arraste ou clique em um elemento à esquerda
-        </p>
-      )}
+    <div
+      ref={setNodeRef}
+      onClick={() => select(null)}
+      className="min-h-[600px] bg-white shadow-sm"
+      style={{ ...bgStyle(settings), minHeight: minH || undefined }}
+    >
+      <div style={{ maxWidth: maxW || undefined, margin: '0 auto' }}>
+        <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+          {blocks.map((b) => (
+            <CanvasBlock key={b.id} block={b} />
+          ))}
+        </SortableContext>
+        {blocks.length === 0 && (
+          <p className="p-16 text-center text-sm font-medium text-slate-400">
+            {'Arraste ou clique em um elemento \u00e0 esquerda'}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -179,7 +190,7 @@ function PropertiesPanel() {
   const [pick, setPick] = useState(false);
   const [open, setOpen] = useState<{ id: string; title: string } | null>(null);
   if (!block)
-    return <p className="p-5 text-sm font-medium text-slate-500">Selecione um bloco para editar.</p>;
+    return <PageSettingsPanel />;
   const def = BLOCKS[block.type];
   const n = block.children?.length ?? 0;
   const hidden = block.props.hidden === '1';
@@ -298,6 +309,7 @@ export default function BuilderEditorPage() {
   const { id } = useParams();
   const blocks = useBuilder((s) => s.blocks);
   const load = useBuilder((s) => s.load);
+  const settings = useBuilder((s) => s.settings);
   const add = useBuilder((s) => s.add);
   const moveTo = useBuilder((s) => s.moveTo);
   const [title, setTitle] = useState('');
@@ -311,7 +323,7 @@ export default function BuilderEditorPage() {
     getPage(id)
       .then((p) => {
         setTitle(p.title);
-        load(p.content?.blocks ?? []);
+        load(p.content?.blocks ?? [], p.content?.settings ?? {}, id);
       })
       .catch((e) => setStatus(e.message));
   }, [id, load]);
@@ -347,7 +359,7 @@ export default function BuilderEditorPage() {
     if (!id) return;
     setStatus('Salvando...');
     try {
-      await savePage(id, title, { blocks });
+      await savePage(id, title, { blocks, settings });
       setStatus('Salvo');
       setSaved(true);
     } catch (err) {
@@ -367,7 +379,8 @@ export default function BuilderEditorPage() {
           className="flex-1 rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-800 outline-none focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20"
         />
         <span className="text-sm text-slate-500">{status}</span>
-        <PublishBar id={id!} title={title} />
+        <button type="button" onClick={() => useBuilder.getState().select(null)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]">{'Config. da p\u00e1gina'}</button>
+            <PublishBar id={id!} title={title} />
         <button type="button" onClick={handleSave} className="rounded-xl bg-[#0094eb] px-4 py-2 text-sm font-bold text-white hover:bg-[#007bc4]">
           Salvar
         </button>

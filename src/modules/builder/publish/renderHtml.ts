@@ -1,6 +1,8 @@
-﻿import type { Block, BuilderPage } from '../types';
+import type { Block, BuilderPage } from '../types';
 import { renderBlocksHtml } from '../renderStatic';
 import { CAROUSEL_JS } from '../blocks/carouselJs';
+import { seoHead } from './seo';
+import { bgStyle, styleToCss } from '../bg';
 
 const esc = (s = '') =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -40,7 +42,13 @@ export function renderPageHtml(
   page: Pick<BuilderPage, 'id' | 'title' | 'content'>,
   cfg: { apiUrl: string; anonKey: string; preview?: boolean },
 ): string {
-  const body = renderBlocksHtml(page.content.blocks as Block[]);
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(page.title)}</title><style>${CSS}</style></head><body>${body}<script>${runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview)}</script></body></html>`;
+  const s = page.content.settings ?? {};
+  const maxW = Number(s.maxW) > 0 ? Number(s.maxW) : 0;
+  const minH = Number(s.minH) > 0 ? Number(s.minH) : 0;
+  const wrap = [maxW ? 'max-width:' + maxW + 'px' : '', maxW ? 'margin:0 auto' : '', minH ? 'min-height:' + minH + 'px' : ''].filter(Boolean).join(';');
+  const inner = renderBlocksHtml(page.content.blocks as Block[]);
+  const body = wrap ? '<main style="' + wrap + '">' + inner + '</main>' : inner;
+  const bgCss = styleToCss(bgStyle(s));
+  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + '</style></head><body' + (bgCss ? ' style="' + esc(bgCss) + '"' : '') + '>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script></body></html>';
 }
 

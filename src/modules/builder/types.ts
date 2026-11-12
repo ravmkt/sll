@@ -1,4 +1,4 @@
-﻿export type BlockType = 'columns' | 'hero' | 'text' | 'image' | 'button' | 'video' | 'testimonials' | 'faq' | 'timer' | 'form' | 'product' | 'announcement' | 'highlights' | 'carousel' | 'banner' | 'banners' | 'showcase' | 'brandbar' | 'badge' | 'chips' | 'heading' | 'countdown' | 'benefits' | 'leadform';
+export type BlockType = 'columns' | 'hero' | 'text' | 'image' | 'button' | 'video' | 'testimonials' | 'faq' | 'timer' | 'form' | 'product' | 'announcement' | 'highlights' | 'carousel' | 'banner' | 'banners' | 'showcase' | 'brandbar' | 'badge' | 'chips' | 'heading' | 'countdown' | 'benefits' | 'leadform';
 
 export interface Block {
   id: string;
@@ -9,6 +9,7 @@ export interface Block {
 
 export interface PageContent {
   blocks: Block[];
+  settings?: Record<string, string>;
 }
 
 export interface BuilderPage {

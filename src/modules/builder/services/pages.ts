@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import type { BuilderPage, PageContent } from '../types';
+import { useBuilder } from '../store';
 
 const db = () => (supabase as unknown as SupabaseClient).schema('builder');
 
@@ -43,7 +44,17 @@ export async function createPage(title: string, type: 'landing' | 'product'): Pr
   return data as BuilderPage;
 }
 
+export async function withSettings(id: string, content: PageContent): Promise<PageContent> {
+  if (content.settings) return content;
+  const st = useBuilder.getState();
+  if (st.pageId === id) return { ...content, settings: st.settings };
+  const cur = await db().from('pages').select('content').eq('id', id).maybeSingle();
+  const prev = (cur.data?.content as PageContent | undefined)?.settings;
+  return prev ? { ...content, settings: prev } : content;
+}
+
 export async function savePage(id: string, title: string, content: PageContent): Promise<void> {
+  content = await withSettings(id, content);
   const { error } = await db()
     .from('pages')
     .update({ title, content, updated_at: new Date().toISOString() })

@@ -76,3 +76,9 @@ export const colTpl = (ratio: string | undefined, n: number): string => {
   const w = (ratio || '').split(/[,:/\s]+/).map(Number).filter((x) => Number.isFinite(x) && x > 0);
   return w.length === n ? w.map((x) => `minmax(0,${x}fr)`).join(' ') : `repeat(${n},minmax(0,1fr))`;
 };
+
+export const styleToCss = (s: CSSProperties): string =>
+  Object.entries(s)
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .map(([k, v]) => k.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()) + ':' + String(v))
+    .join(';');
