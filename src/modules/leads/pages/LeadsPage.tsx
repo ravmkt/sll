@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download, Mail, MessageCircle, Pencil, Search, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog';
+import EmailCopiedDialog from '@/components/EmailCopiedDialog';
 import { useLoja } from '@/contexts/LojaContext';
 import { deleteLead, listLeads, listTouchpoints, updateLead, STATUSES, STATUS_LABEL, type Lead, type LeadStatus } from '../services/leadsService';
 
@@ -171,7 +172,7 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-function openMail(email: string) {
+function openMail(email: string, notify: (email: string, copied: boolean) => void) {
   if (!email) return;
   let opened = false;
   const mark = () => { opened = true; };
@@ -184,7 +185,7 @@ function openMail(email: string) {
     document.removeEventListener('visibilitychange', onVis);
     if (opened) return;
     const ok = await copyText(email);
-    toast.info(ok ? 'Nenhum programa de e-mail encontrado. E-mail copiado: ' + email : 'Nenhum programa de e-mail encontrado. E-mail: ' + email);
+    notify(email, ok);
   }, 1500);
 }
 
@@ -198,6 +199,7 @@ export default function LeadsPage() {
   const [sort, setSort] = useState<Sort>({ key: 'date', dir: 'desc' });
   const [editing, setEditing] = useState<Lead | null>(null);
   const [del, setDel] = useState<Lead | null>(null);
+  const [mailInfo, setMailInfo] = useState<{ email: string; copied: boolean } | null>(null);
 
   const load = useCallback(async () => {
     if (!storeId) return;
@@ -352,7 +354,7 @@ export default function LeadsPage() {
                           <span title="Sem WhatsApp" className={actionCls + ' cursor-not-allowed opacity-30'}><MessageCircle size={16} /></span>
                         )}
                         {l.email ? (
-                          <button type="button" title="Enviar e-mail" onClick={() => openMail(l.email || '')} className={actionCls + ' hover:bg-sky-50 hover:text-[#0094eb]'}><Mail size={16} /></button>
+                          <button type="button" title="Enviar e-mail" onClick={() => openMail(l.email || '', (em, copied) => setMailInfo({ email: em, copied }))} className={actionCls + ' hover:bg-sky-50 hover:text-[#0094eb]'}><Mail size={16} /></button>
                         ) : (
                           <span title="Sem e-mail" className={actionCls + ' cursor-not-allowed opacity-30'}><Mail size={16} /></span>
                         )}
@@ -368,6 +370,7 @@ export default function LeadsPage() {
         </table>
       </div>
 
+      <EmailCopiedDialog isOpen={!!mailInfo} email={mailInfo?.email || ''} copied={mailInfo?.copied ?? true} onClose={() => setMailInfo(null)} />
       <ConfirmDeleteDialog
         isOpen={!!del}
         title="Excluir lead"
