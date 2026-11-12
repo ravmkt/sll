@@ -1,4 +1,4 @@
-import type { Block, BuilderPage } from '../types';
+﻿import type { Block, BuilderPage } from '../types';
 import { renderBlocksHtml } from '../renderStatic';
 import { CAROUSEL_JS } from '../blocks/carouselJs';
 
@@ -11,7 +11,10 @@ function runtime(apiUrl: string, anonKey: string, pageId: string): string {
   const js = `(function(){var API=${JSON.stringify(apiUrl)},KEY=${JSON.stringify(anonKey)},PAGE=${JSON.stringify(pageId)};
 try{var CAR=${CAROUSEL_JS};document.querySelectorAll('[data-car]').forEach(function(el){CAR(el)})}catch(e){}
 function p(n){return String(n).padStart(2,'0')}
-try{var VK='sllv_'+PAGE;if(!sessionStorage.getItem(VK)){sessionStorage.setItem(VK,'1');fetch(API+'/rest/v1/rpc/track_page_view',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},body:JSON.stringify({p_page_id:PAGE})}).catch(function(){})}}catch(e){}
+try{var VK='sllv_'+PAGE,SID=sessionStorage.getItem('sllsid');if(!SID){SID=Math.random().toString(36).slice(2)+Date.now().toString(36);sessionStorage.setItem('sllsid',SID)}
+function tr(ev){fetch(API+'/rest/v1/rpc/track_page_view',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},body:JSON.stringify({p_page_id:PAGE,p_session:SID,p_event:ev})}).catch(function(){})}
+if(!sessionStorage.getItem(VK)){sessionStorage.setItem(VK,'1');tr('view')}
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href')||'';if(h.charAt(0)==='#'||h.indexOf('javascript:')===0)return;tr('cta_click')})}catch(e){}
 function done(f,b){var m=document.createElement('div');m.style.textAlign='center';
 var t=document.createElement('p');t.textContent=f.getAttribute('data-success')||'';t.style.cssText='margin:0 0 12px;font-weight:700;font-size:17px;line-height:1.4;color:'+(f.getAttribute('data-sc')||'#f5e6b3');m.appendChild(t);
 var c=f.getAttribute('data-coupon');if(c){var q=document.createElement('p');q.textContent=c;q.style.cssText='display:inline-block;margin:0 0 12px;padding:10px 18px;border-radius:10px;font-size:22px;font-weight:800;letter-spacing:.08em;color:'+(f.getAttribute('data-cc')||'#d4af37')+';background:'+(f.getAttribute('data-cbg')||'transparent')+';border:2px dashed '+(f.getAttribute('data-cbc')||'#d4af37');m.appendChild(q)}
