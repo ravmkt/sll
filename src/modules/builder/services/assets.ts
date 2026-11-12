@@ -27,9 +27,15 @@ export const ACCEPT: Record<AssetKind, string> = {
 
 const mb = (n: number) => `${(n / MB).toFixed(1).replace('.', ',')} MB`;
 
+const EXT_MIME: Record<string, string> = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+  gif: 'image/gif', avif: 'image/avif', mp4: 'video/mp4', webm: 'video/webm',
+};
+
 export async function uploadBuilderAsset(file: File, kind: AssetKind): Promise<string> {
   const rule = RULES[kind];
-  const ext = rule.types[file.type];
+  const mime = file.type || EXT_MIME[(file.name.split('.').pop() ?? '').toLowerCase()] || '';
+  const ext = rule.types[mime];
   if (!ext) throw new Error(`Formato n\u00e3o aceito. Envie ${rule.label}.`);
   if (file.size > rule.max) throw new Error(`O arquivo tem ${mb(file.size)}. O limite \u00e9 ${mb(rule.max)}.`);
 
@@ -42,7 +48,7 @@ export async function uploadBuilderAsset(file: File, kind: AssetKind): Promise<s
 
   const path = `${storeId}/${crypto.randomUUID()}.${ext}`;
   const up = await sb.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type,
+    contentType: mime,
     cacheControl: '31536000',
     upsert: false,
   });
