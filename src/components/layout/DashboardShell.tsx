@@ -19,6 +19,7 @@ const PREFIX = [
   '/dashboard/dicas',
   '/dashboard/metricas',
   '/dashboard/pedidos-dos-lojistas',
+  '/dashboard/leads',
 ];
 
 function inShell(pathname: string): boolean {

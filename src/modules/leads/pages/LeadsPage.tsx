@@ -100,8 +100,9 @@ export default function LeadsPage() {
     setLoading(true);
     try {
       setLeads(await listLeads(storeId));
-    } catch {
-      toast.error('Erro ao carregar leads');
+    } catch (e) {
+      console.error('[leads]', e);
+      toast.error('Erro ao carregar leads: ' + ((e as { message?: string })?.message || ''));
     } finally {
       setLoading(false);
     }
