@@ -1,44 +1,44 @@
 import type { Block, BlockType, PageContent } from '../types';
 import { makeBlock } from '../store';
 
-type P = Record<string, string>;
-type Theme = { bg: string; card: string; line: string; accent: string; text: string; muted: string; btnText: string; input: string };
+export type P = Record<string, string>;
+export type Theme = { bg: string; card: string; line: string; accent: string; text: string; muted: string; btnText: string; input: string };
 
 export type Preset = {
   id: string; name: string; category: string; type: 'landing'; description: string;
   swatch: [string, string, string]; build: () => PageContent;
 };
 
-const END = '2026-11-27T23:59';
+export const END = '2026-11-27T23:59';
 const GOLD: Theme = { bg: '#0b0a08', card: '#14110d', line: '#5c4a1f', accent: '#d4af37', text: '#f5f5f4', muted: '#e5e7eb', btnText: '#0b0a08', input: '#0b0a08' };
 const NAVY: Theme = { bg: '#0b1220', card: '#131c2f', line: '#2a3a5c', accent: '#38bdf8', text: '#f1f5f9', muted: '#94a3b8', btnText: '#0b1220', input: '#0b1220' };
 const LIGHT: Theme = { bg: '#ffffff', card: '#f8fafc', line: '#e2e8f0', accent: '#111827', text: '#111827', muted: '#64748b', btnText: '#ffffff', input: '#ffffff' };
 const HOT: Theme = { bg: '#0a0a0a', card: '#18181b', line: '#3f3f46', accent: '#f43f5e', text: '#fafafa', muted: '#a1a1aa', btnText: '#ffffff', input: '#0a0a0a' };
 
-const mk = (type: BlockType, props: P = {}): Block => {
+export const mk = (type: BlockType, props: P = {}): Block => {
   const b = makeBlock(type);
   return { ...b, props: { ...b.props, ...props } };
 };
-const list = (a: P[]) => JSON.stringify(a);
+export const list = (a: P[]) => JSON.stringify(a);
 
-const brand = (t: Theme, o: P = {}) => mk('brandbar', { bg: t.bg, nameColor: t.accent, ...o });
-const badge = (t: Theme, text: string, o: P = {}) => mk('badge', { text, bg: t.bg, bc: t.accent, tColor: t.accent, ...o });
-const head = (t: Theme, l1: string, l2: string, sub: string, o: P = {}) =>
+export const brand = (t: Theme, o: P = {}) => mk('brandbar', { bg: t.bg, nameColor: t.accent, ...o });
+export const badge = (t: Theme, text: string, o: P = {}) => mk('badge', { text, bg: t.bg, bc: t.accent, tColor: t.accent, ...o });
+export const head = (t: Theme, l1: string, l2: string, sub: string, o: P = {}) =>
   mk('heading', { l1, l2, sub, bg: t.bg, l1Color: t.text, l2Color: t.accent, subColor: t.muted, ...o });
-const chips = (t: Theme, items: P[], o: P = {}) =>
+export const chips = (t: Theme, items: P[], o: P = {}) =>
   mk('chips', { items: list(items), bg: t.bg, chipBg: t.card, chipBc: t.line, tColor: t.text, ...o });
-const count = (t: Theme, o: P = {}) =>
+export const count = (t: Theme, o: P = {}) =>
   mk('countdown', { endsAt: END, bg: t.bg, boxBg: t.card, boxBc: t.line, lblColor: t.muted, nColor: t.accent, ...o });
-const benefits = (t: Theme, title: string, intro: string, items: P[]) =>
+export const benefits = (t: Theme, title: string, intro: string, items: P[]) =>
   mk('benefits', { title, intro, items: list(items), bg: t.bg, cardBg: t.card, cardBc: t.line, titleColor: t.accent, itemColor: t.text });
-const form = (t: Theme, o: P) =>
+export const form = (t: Theme, o: P) =>
   mk('leadform', {
     bg: t.bg, cardBg: t.card, cardBc: t.line, inputBg: t.input, inputBc: t.line, inputColor: t.text,
     btnBg: t.accent, btnColor: t.btnText, titleColor: t.accent, subColor: t.muted,
     successColor: t.text, couponColor: t.accent, couponBc: t.accent, couponBg: t.bg, ...o,
   });
 
-const BF = '\u2726 BLACK FRIDAY \u00b7 27 DE NOVEMBRO \u2726';
+export const BF = '\u2726 BLACK FRIDAY \u00b7 27 DE NOVEMBRO \u2726';
 
 export const PRESETS: Preset[] = [
   {
