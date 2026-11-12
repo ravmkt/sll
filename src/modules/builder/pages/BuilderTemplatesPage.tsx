@@ -5,6 +5,7 @@ import { createPageFromContent } from '../services/pages';
 import { listTemplates } from '../services/templates';
 import { PRESETS } from '../templates/presets';
 import { PRESETS_MEDIA } from '../templates/presets-media';
+import { PRESETS_DESKTOP } from '../templates/presets-desktop';
 import type { PageContent } from '../types';
 
 type Item = {
@@ -23,7 +24,7 @@ const readThumbs = (): Record<string, string> => {
 };
 const defaultThumb = (id: string) => `/assets/templates/${id.replace('preset:', '')}.jpg`;
 
-const presetItems: Item[] = [...PRESETS, ...PRESETS_MEDIA].map((p) => ({
+const presetItems: Item[] = [...PRESETS, ...PRESETS_MEDIA, ...PRESETS_DESKTOP].map((p) => ({
   id: p.id, name: p.name, category: p.category, type: p.type, swatch: p.swatch, getContent: p.build,
 }));
 
