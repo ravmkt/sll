@@ -1,3 +1,4 @@
+import { bgStyle } from '../bg';
 import { DeviceFrame } from '../components/DeviceFrame';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -78,7 +79,7 @@ function ColumnDrop({ parentId, index, items }: { parentId: string; index: numbe
 function ColumnsEditor({ block }: { block: Block }) {
   const cols = block.children ?? [];
   return (
-    <div style={{ background: block.props.bg || undefined, padding: `${Number(block.props.pad) || 0}px` }}>
+    <div style={{ ...bgStyle(block.props), padding: `${Number(block.props.pad) || 0}px` }}>
       <div
         style={{
           display: 'grid',

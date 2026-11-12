@@ -1,4 +1,5 @@
 import type { ReactElement, ReactNode } from 'react';
+import { bgFields, bgStyle } from './bg';
 import type { BlockType } from './types';
 import { boxCss, boxFields, num, safeUrl, textCss, textFields } from './styleKit';
 
@@ -55,12 +56,12 @@ export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       { key: 'stack', label: 'No celular', type: 'select', options: [
         { value: '1', label: 'Empilhar colunas' }, { value: '0', label: 'Manter lado a lado' },
       ] },
-      { key: 'bg', label: 'Cor de fundo', type: 'color' },
+      ...bgFields(),
     ],
     render: (p, kids) => {
       const n = Math.min(4, Math.max(1, Number(p.cols) || 2));
       return (
-        <section style={{ background: p.bg || undefined, padding: `${Number(p.pad) || 0}px` }}>
+        <section style={{ ...bgStyle(p), padding: `${Number(p.pad) || 0}px` }}>
           <style>{COLS_CSS}</style>
           <div
             className={p.stack === '0' ? 'sll-cols' : 'sll-cols sll-stack'}

@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { bgFields, bgStyle } from '../bg';
 import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
 import { ALIGN_OPTIONS, FONT_OPTIONS, STYLE_OPTIONS, num, parseItems, safeUrl } from '../styleKit';
@@ -36,13 +37,13 @@ export function tcss(p: Record<string, string>, k: string, d: { s: number; m: nu
 }
 
 export const secFields = (pad: string): Field[] => [
-  { key: 'bg', label: 'Cor de fundo', type: 'color', group: 'Se\u00e7\u00e3o' },
+  ...bgFields(),
   { key: 'pad', label: 'Espa\u00e7o vertical (px)', type: 'number', min: 0, max: 200, group: 'Se\u00e7\u00e3o', def: pad },
   { key: 'align', label: 'Alinhamento', type: 'select', options: ALIGN_OPTIONS, group: 'Se\u00e7\u00e3o', def: 'center' },
 ];
 export const sec = (p: Record<string, string>, d: number): CSSProperties => ({
   ...({ containerType: 'inline-size' } as CSSProperties),
-  background: p.bg || undefined,
+  ...bgStyle(p),
   padding: `${num(p.pad, d)}px 24px`,
   textAlign: align(p, 'center'),
 });
