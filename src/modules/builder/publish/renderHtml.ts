@@ -45,12 +45,14 @@ export function renderPageHtml(
   const s = page.content.settings ?? {};
   const maxW = Number(s.maxW) > 0 ? Number(s.maxW) : 0;
   const minH = Number(s.minH) > 0 ? Number(s.minH) : 0;
-  const wrap = [maxW ? 'max-width:' + maxW + 'px' : '', maxW ? 'margin:0 auto' : '', minH ? 'min-height:' + minH + 'px' : ''].filter(Boolean).join(';');
+  const full = s.fullH === '1';
+  const fullCss = full ? 'html{min-height:100%}body{min-height:100vh;min-height:100dvh}' : '';
+  const wrap = [maxW ? 'max-width:' + maxW + 'px' : '', maxW ? 'margin:0 auto' : '', minH ? 'min-height:' + minH + 'px' : '', full ? 'min-height:100vh;min-height:100dvh' : ''].filter(Boolean).join(';');
   const inner = renderBlocksHtml(page.content.blocks as Block[]);
   const body = wrap ? '<main style="' + wrap + '">' + inner + '</main>' : inner;
   const bgCss = styleToCss(bgStyle(s));
   const pageBgAttr = ' style="' + esc((bgCss ? bgCss + ';' : '') + 'min-height:100%') + '"';
   const pageBgCss = 'html,body{margin:0}body{min-height:100vh}' + (bgCss ? 'body{background:transparent}' : '');
-  return '<!doctype html><html lang="pt-BR"' + pageBgAttr + '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + pageBgCss + '</style></head><body>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script></body></html>';
+  return '<!doctype html><html lang="pt-BR"' + pageBgAttr + '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + fullCss + pageBgCss + '</style></head><body>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script></body></html>';
 }
 
