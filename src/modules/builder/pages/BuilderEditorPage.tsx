@@ -79,8 +79,8 @@ function ColumnDrop({ parentId, index, items }: { parentId: string; index: numbe
 function ColumnsEditor({ block }: { block: Block }) {
   const cols = block.children ?? [];
   return (
-    <div style={{ ...bgStyle(block.props), padding: `${Number(block.props.pad) || 0}px` }}>
-      <div
+    <div className="sll-colsec" style={{ ...bgStyle(block.props), padding: `${Number(block.props.pad) || 0}px` }}>
+      <div className={block.props.stack === '0' ? undefined : 'sll-stack'}
         style={{
           display: 'grid',
           gridTemplateColumns: colTpl(block.props.ratio, cols.length || 1),

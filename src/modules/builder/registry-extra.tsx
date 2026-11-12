@@ -38,7 +38,7 @@ const byLayout = (h: string, c: string, m: string) => (p: Record<string, string>
   const l = p.layout || 'horizontal';
   return l === 'horizontal' ? h : l === 'mini' ? m : c;
 };
-const COLS_CSS = '@media(max-width:640px){.sll-stack{grid-template-columns:1fr !important}}';
+const COLS_CSS = '.sll-colsec{container-type:inline-size}@container (max-width:640px){.sll-stack{grid-template-columns:1fr !important}.sll-stack>div:empty{display:none}}';
 const card = { margin: 0, border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,.08)' } as const;
 
 export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
@@ -62,7 +62,7 @@ export const EXTRA_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
     render: (p, kids) => {
       const n = Math.min(4, Math.max(1, Number(p.cols) || 2));
       return (
-        <section style={{ ...bgStyle(p), padding: `${Number(p.pad) || 0}px` }}>
+        <section className="sll-colsec" style={{ ...bgStyle(p), padding: `${Number(p.pad) || 0}px` }}>
           <style>{COLS_CSS}</style>
           <div
             className={p.stack === '0' ? 'sll-cols' : 'sll-cols sll-stack'}
