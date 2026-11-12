@@ -309,7 +309,7 @@ export default function LeadsPage() {
                           <span title="Sem WhatsApp" className={actionCls + ' cursor-not-allowed opacity-30'}><MessageCircle size={16} /></span>
                         )}
                         {l.email ? (
-                          <a href={'mailto:' + l.email} title="Enviar e-mail" className={actionCls + ' hover:bg-sky-50 hover:text-[#0094eb]'}><Mail size={16} /></a>
+                          <a href={'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(l.email)} target="_blank" rel="noopener noreferrer" title="Enviar e-mail" className={actionCls + ' hover:bg-sky-50 hover:text-[#0094eb]'}><Mail size={16} /></a>
                         ) : (
                           <span title="Sem e-mail" className={actionCls + ' cursor-not-allowed opacity-30'}><Mail size={16} /></span>
                         )}
