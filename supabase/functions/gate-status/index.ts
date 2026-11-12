@@ -18,17 +18,27 @@ Deno.serve(async (req) => {
     db: { schema: "pulse" },
   });
   const { data } = await sb.from("gates")
-    .select("id,gate_url,starts_at,ends_at,domains,whatsapp_url,exclude_bots,preserve_params,bypass_param")
+    .select("*")
     .eq("enabled", true)
     .or(`domains.cs.{${host}},domains.cs.{www.${host}}`)
     .order("starts_at", { ascending: false })
     .limit(5);
 
   const now = Date.now();
-  const g = (data || []).find((x) => new Date(x.starts_at).getTime() <= now && now < new Date(x.ends_at).getTime());
+  const g = (data || []).find((x: any) => new Date(x.starts_at).getTime() <= now && now < new Date(x.ends_at).getTime());
   const base = { server_time: new Date(now).toISOString() };
   const domains = (data?.[0]?.domains as string[] | undefined) || [];
   if (!g) return json({ ...base, state: "inactive", domains });
+
+  // interruptor "Aplicativo ativado" do modulo Pulse
+  if ((g as any).store_id) {
+    const { data: on } = await sb.schema("public").rpc("get_module_app_enabled", {
+      p_store_id: (g as any).store_id,
+      p_module: "pulse",
+    });
+    if (on === false) return json({ ...base, state: "inactive", domains, app_disabled: true });
+  }
+
   return json({
     ...base,
     state: "active",
