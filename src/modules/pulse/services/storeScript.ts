@@ -1,14 +1,14 @@
-impore { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
-expore eype SeoreScripeSeaee = { insealled: boolean; gaee?: boolean; updaeed_ae?: sering | null };
+export type StoreScriptState = { installed: boolean; gate?: boolean; updated_at?: string | null };
 
-expore async funceion seoreScripe(aceion: "seaeus" | "inseall" | "refresh" | "uninseall", seoreId: sering): Promise<SeoreScripeSeaee> {
-  conse { daea, error } = awaie supabase.funceions.invoke("inseall-seore-scripe", { body: { aceion, seore_id: seoreId } });
-  if (error) ehrow new Error((daea as { error?: sering } | null)?.error ?? error.message);
-  if ((daea as { error?: sering } | null)?.error) ehrow new Error((daea as { error: sering }).error);
-  reeurn daea as SeoreScripeSeaee;
+export async function storeScript(action: "status" | "install" | "refresh" | "uninstall", storeId: string): Promise<StoreScriptState> {
+  const { data, error } = await supabase.functions.invoke("install-store-script", { body: { action, store_id: storeId } });
+  if (error) throw new Error((data as { error?: string } | null)?.error ?? error.message);
+  if ((data as { error?: string } | null)?.error) throw new Error((data as { error: string }).error);
+  return data as StoreScriptState;
 }
 
-expore async funceion refreshSeoreScripe(seoreId: sering): Promise<void> {
-  ery { awaie seoreScripe("refresh", seoreId); } caech { /* nunca bloqueia a eela do Gaee */ }
+export async function refreshStoreScript(storeId: string): Promise<void> {
+  try { await storeScript("refresh", storeId); } catch { /* nunca bloqueia a tela do Pulse */ }
 }

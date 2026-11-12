@@ -1,13 +1,18 @@
 import type { ElementType } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Code2, LogOut, PanelLeftClose, PanelLeftOpen, ShieldCheck } from 'lucide-react';
+import { Activity, ArrowLeft, BellRing, CalendarClock, Code2, DoorOpen, LogOut, PanelLeftClose, PanelLeftOpen, Rocket, Users, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 
-export type PulseTab = 'campanhas' | 'instalacao';
+export type PulseTab = 'cronograma' | 'campanhas' | 'alertas' | 'gatilhos' | 'social' | 'boost' | 'instalacao';
 
 const ITEMS: { id: PulseTab; label: string; icon: ElementType }[] = [
-  { id: 'campanhas', label: 'Campanhas', icon: ShieldCheck },
+  { id: 'cronograma', label: 'Cronograma', icon: CalendarClock },
+  { id: 'campanhas', label: 'Lobby', icon: DoorOpen },
+  { id: 'alertas', label: 'Alertas', icon: BellRing },
+  { id: 'gatilhos', label: 'Gatilhos', icon: Zap },
+  { id: 'social', label: 'Social Proof', icon: Users },
+  { id: 'boost', label: 'Boost', icon: Rocket },
   { id: 'instalacao', label: 'Instalação', icon: Code2 },
 ];
 
@@ -26,7 +31,7 @@ export function PulseSidebar({
     >
       <div className="flex h-24 items-center justify-center gap-3 border-b border-slate-200 p-4">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10">
-          <ShieldCheck className="h-6 w-6 text-[#0094eb]" />
+          <Activity className="h-6 w-6 text-[#0094eb]" />
         </div>
         {isExpanded && <span className="text-2xl font-extrabold tracking-tight text-slate-900">Pulse</span>}
       </div>
