@@ -5,7 +5,7 @@ import AppToggle from '@/components/vidlytics/AppToggle';
 import { AppFooter } from '@/components/layout/AppFooter';
 import { BuilderSidebar } from '@/modules/builder/components/BuilderSidebar';
 
-const KEY_LIST = 'sll_builder_sidebar_collapsed';
+const KEY_LIST = 'sll_builder_list_sidebar_collapsed';
 const KEY_EDITOR = 'sll_builder_editor_sidebar_collapsed';
 
 export default function BuilderLayout({ children, editor = false }: { children: ReactNode; editor?: boolean }) {
@@ -24,11 +24,12 @@ export default function BuilderLayout({ children, editor = false }: { children: 
     });
 
   const pad = { paddingTop: 'calc(var(--trial-h, 0px) + var(--notice-h, 0px))' };
+  const bar = <TopBar actions={<AppToggle moduleKey="builder" />} />;
 
   if (editor) {
     return (
       <div className="flex h-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-800" style={pad}>
-        <TopBar actions={<AppToggle moduleKey="builder" />} />
+        {bar}
         <div className="flex min-h-0 flex-1">
           <BuilderSidebar isCollapsed={collapsed} onToggle={toggle} />
           <div className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</div>
@@ -39,7 +40,7 @@ export default function BuilderLayout({ children, editor = false }: { children: 
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={pad}>
-      <TopBar actions={<AppToggle moduleKey="builder" />} />
+      {bar}
       <div className="flex flex-1">
         <BuilderSidebar isCollapsed={collapsed} onToggle={toggle} />
         <div className="flex min-w-0 flex-1 flex-col">
