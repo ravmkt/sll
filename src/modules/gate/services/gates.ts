@@ -16,6 +16,7 @@ export interface Gate {
   exclude_bots: boolean;
   preserve_params: boolean;
   bypass_param: string;
+  landing_id?: string | null;
 }
 
 export type GateInput = Omit<Gate, "id" | "store_id">;
