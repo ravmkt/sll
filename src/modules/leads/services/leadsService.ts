@@ -41,7 +41,7 @@ export async function listLeads(storeId: string): Promise<Lead[]> {
   }));
 }
 
-export async function updateLead(id: string, patch: Partial<Pick<Lead, 'status' | 'tags' | 'notes'>>): Promise<void> {
+export async function updateLead(id: string, patch: Partial<Pick<Lead, 'status' | 'tags' | 'notes' | 'name' | 'email' | 'whatsapp'>>): Promise<void> {
   const { error } = await supabase.from('leads').update(patch).eq('id', id);
   if (error) throw error;
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Download, Search, Trash2, Users, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, Mail, MessageCircle, Pencil, Search, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLoja } from '@/contexts/LojaContext';
 import { deleteLead, listLeads, listTouchpoints, updateLead, STATUSES, STATUS_LABEL, type Lead, type LeadStatus } from '../services/leadsService';
@@ -15,6 +15,23 @@ const STATUS_CLASS: Record<LeadStatus, string> = {
   converted: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   lost: 'bg-slate-100 text-slate-600 border-slate-200',
 };
+
+type SortKey = 'contact' | 'source' | 'status' | 'tags' | 'date';
+type Sort = { key: SortKey; dir: 'asc' | 'desc' };
+
+function sortValue(l: Lead, k: SortKey): string | number {
+  if (k === 'contact') return (l.name || l.email || l.whatsapp || '').toLowerCase();
+  if (k === 'source') return srcLabel(l.source).toLowerCase();
+  if (k === 'status') return STATUS_LABEL[l.status].toLowerCase();
+  if (k === 'tags') return l.tags.join(' ').toLowerCase();
+  return new Date(l.created_at).getTime();
+}
+
+function waLink(w: string | null): string | null {
+  const d = (w || '').replace(/\D/g, '');
+  if (d.length < 10) return null;
+  return 'https://wa.me/' + (d.length <= 11 ? '55' + d : d);
+}
 
 function csvCell(v: unknown): string {
   let s = v == null ? '' : String(v);
@@ -36,26 +53,41 @@ function exportCsv(rows: Lead[]) {
   URL.revokeObjectURL(url);
 }
 
-function LeadDetail({ lead, onClose, onSaved }: { lead: Lead; onClose: () => void; onSaved: (l: Lead) => void }) {
+const fieldCls = 'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-[#0094eb] focus:outline-none';
+const labelCls = 'mb-1 block text-xs font-medium text-slate-600';
+
+function LeadEdit({ lead, onClose, onSaved }: { lead: Lead; onClose: () => void; onSaved: (l: Lead) => void }) {
+  const [name, setName] = useState(lead.name || '');
+  const [email, setEmail] = useState(lead.email || '');
+  const [whatsapp, setWhatsapp] = useState(lead.whatsapp || '');
   const [status, setStatus] = useState<LeadStatus>(lead.status);
   const [tags, setTags] = useState(lead.tags.join(', '));
   const [notes, setNotes] = useState(lead.notes || '');
   const [saving, setSaving] = useState(false);
   const [history, setHistory] = useState<{ id: string; source: string | null; created_at: string }[]>([]);
+
   useEffect(() => {
     listTouchpoints(lead.id).then(setHistory).catch(() => setHistory([]));
   }, [lead.id]);
 
   const save = async () => {
+    const em = email.trim().toLowerCase();
+    const wa = whatsapp.trim();
+    if (!em && !wa) {
+      toast.error('Informe e-mail ou WhatsApp');
+      return;
+    }
     setSaving(true);
     try {
       const nextTags = Array.from(new Set(tags.split(',').map((t) => t.trim()).filter(Boolean)));
-      await updateLead(lead.id, { status, tags: nextTags, notes: notes.trim() || null });
-      onSaved({ ...lead, status, tags: nextTags, notes: notes.trim() || null });
+      const patch = { name: name.trim() || null, email: em || null, whatsapp: wa || null, status, tags: nextTags, notes: notes.trim() || null };
+      await updateLead(lead.id, patch);
+      onSaved({ ...lead, ...patch });
       toast.success('Lead atualizado');
       onClose();
-    } catch {
-      toast.error('Não foi possível salvar');
+    } catch (e) {
+      const code = (e as { code?: string })?.code;
+      toast.error(code === '23505' ? 'Este e-mail ou WhatsApp já pertence a outro lead' : 'Não foi possível salvar');
     } finally {
       setSaving(false);
     }
@@ -63,38 +95,57 @@ function LeadDetail({ lead, onClose, onSaved }: { lead: Lead; onClose: () => voi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-start justify-between">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">{lead.name || 'Sem nome'}</h3>
-            <p className="text-xs text-slate-500">{lead.email || '-'} · {lead.whatsapp || '-'}</p>
-          </div>
+          <h3 className="text-lg font-bold text-slate-900">Editar lead</h3>
           <button type="button" onClick={onClose} className="cursor-pointer text-slate-400 hover:text-slate-700"><X size={18} /></button>
         </div>
+        <label className={labelCls}>Nome</label>
+        <input value={name} onChange={(e) => setName(e.target.value)} className={fieldCls + ' mb-3'} />
+        <label className={labelCls}>E-mail</label>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={fieldCls + ' mb-3'} />
+        <label className={labelCls}>WhatsApp</label>
+        <input type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className={fieldCls + ' mb-3'} />
+        <label className={labelCls}>Status</label>
+        <select value={status} onChange={(e) => setStatus(e.target.value as LeadStatus)} className={fieldCls + ' mb-3'}>
+          {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+        </select>
+        <label className={labelCls}>Tags (separadas por vírgula)</label>
+        <input value={tags} onChange={(e) => setTags(e.target.value)} className={fieldCls + ' mb-3'} />
+        <label className={labelCls}>Notas</label>
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={fieldCls + ' mb-3'} />
         {history.length > 0 ? (
-          <div className="mb-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+          <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
             <p className="mb-1 text-xs font-medium text-slate-600">Histórico de cadastros ({history.length})</p>
             <ul className="max-h-28 space-y-0.5 overflow-y-auto text-xs text-slate-500">
               {history.map((h) => <li key={h.id}>{srcLabel(h.source)} · {fmtDate(h.created_at)}</li>)}
             </ul>
           </div>
         ) : null}
-        <label className="mb-1 block text-xs font-medium text-slate-600">Status</label>
-        <select value={status} onChange={(e) => setStatus(e.target.value as LeadStatus)} className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
-          {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-        </select>
-        <label className="mb-1 block text-xs font-medium text-slate-600">Tags (separadas por vírgula)</label>
-        <input value={tags} onChange={(e) => setTags(e.target.value)} className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-        <label className="mb-1 block text-xs font-medium text-slate-600">Notas</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} className="mb-4 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="cursor-pointer rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">Cancelar</button>
-          <button type="button" disabled={saving} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007bc4] disabled:opacity-60">
+          <button type="button" onClick={onClose} className="cursor-pointer rounded-full px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">Cancelar</button>
+          <button type="button" disabled={saving} onClick={save} className="cursor-pointer rounded-full bg-[#0094eb] px-5 py-2 text-sm font-semibold text-white hover:bg-[#007bc4] disabled:opacity-60">
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function SortTh({ label, k, sort, onSort }: { label: string; k: SortKey; sort: Sort; onSort: (k: SortKey) => void }) {
+  const active = sort.key === k;
+  const Icon = !active ? ArrowUpDown : sort.dir === 'asc' ? ArrowUp : ArrowDown;
+  return (
+    <th className="px-4 py-3">
+      <button
+        type="button"
+        onClick={() => onSort(k)}
+        className={`inline-flex cursor-pointer items-center gap-1 text-[11px] font-bold uppercase tracking-wider ${active ? 'text-[#0094eb]' : 'text-slate-500 hover:text-slate-700'}`}
+      >
+        {label} <Icon size={12} />
+      </button>
+    </th>
   );
 }
 
@@ -105,7 +156,8 @@ export default function LeadsPage() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [source, setSource] = useState('');
-  const [selected, setSelected] = useState<Lead | null>(null);
+  const [sort, setSort] = useState<Sort>({ key: 'date', dir: 'desc' });
+  const [editing, setEditing] = useState<Lead | null>(null);
 
   const load = useCallback(async () => {
     if (!storeId) return;
@@ -127,7 +179,7 @@ export default function LeadsPage() {
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
     const digits = t.replace(/\D/g, '');
-    return leads.filter((l) => {
+    const list = leads.filter((l) => {
       if (status && l.status !== status) return false;
       if (source && l.source !== source) return false;
       if (!t) return true;
@@ -138,7 +190,17 @@ export default function LeadsPage() {
         (digits.length > 0 && (l.whatsapp || '').replace(/\D/g, '').includes(digits))
       );
     });
-  }, [leads, q, status, source]);
+    const mul = sort.dir === 'asc' ? 1 : -1;
+    return [...list].sort((a, b) => {
+      const x = sortValue(a, sort.key);
+      const y = sortValue(b, sort.key);
+      const r = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'pt-BR');
+      return r * mul;
+    });
+  }, [leads, q, status, source, sort]);
+
+  const onSort = (k: SortKey) =>
+    setSort((s) => (s.key === k ? { key: k, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: 'asc' }));
 
   const patchLocal = (l: Lead) => setLeads((prev) => prev.map((x) => (x.id === l.id ? l : x)));
 
@@ -166,21 +228,20 @@ export default function LeadsPage() {
 
   if (!storeId) return <div className="p-6 text-sm text-slate-500">Selecione uma loja para ver os leads.</div>;
 
+  const actionCls = 'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-slate-400 transition-colors';
+
   return (
     <div className="mx-auto w-full max-w-6xl p-4 sm:p-6">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0094eb]/10 text-[#0094eb]"><Users size={20} /></div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Leads</h1>
-            <p className="text-xs text-slate-500">{filtered.length} de {leads.length} contatos captados</p>
-          </div>
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900">Leads</h1>
+          <p className="mt-1 text-sm text-slate-500">{filtered.length} de {leads.length} contatos captados</p>
         </div>
         <button
           type="button"
           disabled={!filtered.length}
           onClick={() => exportCsv(filtered)}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-[#0094eb] hover:text-[#0094eb] disabled:opacity-50"
+          className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-[#0094eb] hover:text-[#0094eb] disabled:opacity-50"
         >
           <Download size={16} /> Exportar CSV
         </button>
@@ -201,16 +262,16 @@ export default function LeadsPage() {
         </select>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="bg-slate-50">
             <tr>
-              <th className="px-4 py-3">Contato</th>
-              <th className="px-4 py-3">Origem</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Tags</th>
-              <th className="px-4 py-3">Data</th>
-              <th className="px-4 py-3" />
+              <SortTh label="Contato" k="contact" sort={sort} onSort={onSort} />
+              <SortTh label="Origem" k="source" sort={sort} onSort={onSort} />
+              <SortTh label="Status" k="status" sort={sort} onSort={onSort} />
+              <SortTh label="Tags" k="tags" sort={sort} onSort={onSort} />
+              <SortTh label="Data" k="date" sort={sort} onSort={onSort} />
+              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -219,36 +280,52 @@ export default function LeadsPage() {
             ) : filtered.length === 0 ? (
               <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">Nenhum lead encontrado.</td></tr>
             ) : (
-              filtered.map((l) => (
-                <tr key={l.id} className="hover:bg-slate-50/60">
-                  <td className="cursor-pointer px-4 py-3" onClick={() => setSelected(l)}>
-                    <div className="font-medium text-slate-900">{l.name || 'Sem nome'}</div>
-                    <div className="text-xs text-slate-500">{l.email || '-'}</div>
-                    <div className="text-xs text-slate-500">{l.whatsapp || '-'}</div>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{srcLabel(l.source)}</td>
-                  <td className="px-4 py-3">
-                    <select value={l.status} onChange={(e) => void changeStatus(l, e.target.value as LeadStatus)} className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs font-medium ${STATUS_CLASS[l.status]}`}>
-                      {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {l.tags.map((t) => <span key={t} className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{t}</span>)}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{fmtDate(l.created_at)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button type="button" title="Excluir" onClick={() => void remove(l)} className="cursor-pointer text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
-                  </td>
-                </tr>
-              ))
+              filtered.map((l) => {
+                const wa = waLink(l.whatsapp);
+                return (
+                  <tr key={l.id} className="hover:bg-slate-50/60">
+                    <td className="px-4 py-3">
+                      <div className="font-bold text-slate-900">{l.name || 'Sem nome'}</div>
+                      <div className="text-xs text-slate-500">{l.email || '-'}</div>
+                      <div className="text-xs text-slate-500">{l.whatsapp || '-'}</div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{srcLabel(l.source)}</td>
+                    <td className="px-4 py-3">
+                      <select value={l.status} onChange={(e) => void changeStatus(l, e.target.value as LeadStatus)} className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs font-semibold ${STATUS_CLASS[l.status]}`}>
+                        {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {l.tags.map((t) => <span key={t} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">{t}</span>)}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{fmtDate(l.created_at)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        {wa ? (
+                          <a href={wa} target="_blank" rel="noopener noreferrer" title="Enviar WhatsApp" className={actionCls + ' hover:bg-emerald-50 hover:text-emerald-600'}><MessageCircle size={16} /></a>
+                        ) : (
+                          <span title="Sem WhatsApp" className={actionCls + ' cursor-not-allowed opacity-30'}><MessageCircle size={16} /></span>
+                        )}
+                        {l.email ? (
+                          <a href={'mailto:' + l.email} title="Enviar e-mail" className={actionCls + ' hover:bg-sky-50 hover:text-[#0094eb]'}><Mail size={16} /></a>
+                        ) : (
+                          <span title="Sem e-mail" className={actionCls + ' cursor-not-allowed opacity-30'}><Mail size={16} /></span>
+                        )}
+                        <button type="button" title="Editar" onClick={() => setEditing(l)} className={actionCls + ' hover:bg-slate-100 hover:text-slate-700'}><Pencil size={16} /></button>
+                        <button type="button" title="Excluir" onClick={() => void remove(l)} className={actionCls + ' hover:bg-red-50 hover:text-red-600'}><Trash2 size={16} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
-      {selected ? <LeadDetail lead={selected} onClose={() => setSelected(null)} onSaved={patchLocal} /> : null}
+      {editing ? <LeadEdit lead={editing} onClose={() => setEditing(null)} onSaved={patchLocal} /> : null}
     </div>
   );
 }
