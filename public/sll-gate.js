@@ -1,15 +1,15 @@
-(function () {
+﻿(function () {
   "use strict";
   if (window.__sllGate) return;
   window.__sllGate = true;
-  if (location.pathname !== "/") return;
 
   var API = "https://flivmllysdhaydhogmhg.supabase.co/functions/v1";
   var host = location.hostname.toLowerCase().replace(/^www\./, "");
   var qs = new URLSearchParams(location.search);
   var BOT = /bot|crawl|spider|slurp|bing|google|yandex|baidu|duckduck|facebookexternalhit|whatsapp|telegram|lighthouse|headless|preview/i;
   var CACHE_KEY = "sll_gate_cfg_" + host;
-  var CACHE_TTL = 5 * 60 * 1000;
+  var TTL_ACTIVE = 5 * 60 * 1000;
+  var TTL_INACTIVE = 60 * 1000;
 
   if (!document.getElementById("sll-gate-hide")) {
     var style = document.createElement("style");
@@ -18,7 +18,10 @@
     (document.head || document.documentElement).appendChild(style);
   }
   function show() { var s = document.getElementById("sll-gate-hide"); if (s) s.remove(); }
-  var safety = setTimeout(show, 1500);
+  var safety = setTimeout(show, 2000);
+  function done() { clearTimeout(safety); show(); }
+
+  window.addEventListener("pageshow", function (e) { if (e.persisted) location.reload(); });
 
   function pickUtm() {
     var o = {};
@@ -36,12 +39,16 @@
       navigator.sendBeacon(API + "/gate-event", new Blob([body], { type: "text/plain" }));
     } catch (e) {}
   }
-  function done() { clearTimeout(safety); show(); }
 
   function readCache() {
     try {
       var c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
-      if (c && c.t && Date.now() - c.t < CACHE_TTL && c.g) return c.g;
+      if (!c || !c.t || !c.g) return null;
+      var g = c.g;
+      var ttl = g.state === "active" ? TTL_ACTIVE : TTL_INACTIVE;
+      if (Date.now() - c.t >= ttl) return null;
+      if (g.state === "active" && g.ends_at && Date.now() >= new Date(g.ends_at).getTime()) return null;
+      return g;
     } catch (e) {}
     return null;
   }
@@ -51,11 +58,12 @@
   function fetchStatus() {
     return fetch(API + "/gate-status?host=" + encodeURIComponent(host))
       .then(function (r) { return r.json(); })
-      .then(function (g) { writeCache(g || { state: "inactive" }); return g; });
+      .then(function (g) { g = g || { state: "inactive" }; writeCache(g); return g; });
   }
 
   function decide(g) {
     if (!g || g.state !== "active") return done();
+    if (g.ends_at && Date.now() >= new Date(g.ends_at).getTime()) return done();
     if (g.exclude_bots && BOT.test(navigator.userAgent)) return done();
 
     var bp = g.bypass_param || "sll_bypass";
@@ -68,13 +76,12 @@
 
     var target;
     try { target = new URL(g.gate_url, location.href); } catch (e) { return done(); }
-    if (target.hostname.replace(/^www\./, "") === host) return done();
-    try { if (sessionStorage.getItem("sll_gate_r") === g.gate_id) return done(); } catch (e) {}
+    var sameHost = target.hostname.replace(/^www\./, "") === host;
+    if (sameHost && location.pathname.indexOf(target.pathname) === 0) return done();
 
     if (g.preserve_params) {
       qs.forEach(function (v, k) { if (!target.searchParams.has(k)) target.searchParams.set(k, v); });
     }
-    try { sessionStorage.setItem("sll_gate_r", g.gate_id); } catch (e) {}
     track(g.gate_id, "redirect");
     location.replace(target.toString());
   }

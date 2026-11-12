@@ -34,7 +34,7 @@ async function yampi(c: Conn, method: string, path: string, body?: unknown) {
 async function hasActiveGate(storeId: string) {
   const now = new Date().toISOString();
   const { data } = await admin.schema('gate').from('gates').select('id')
-    .eq('store_id', storeId).eq('enabled', true).lte('starts_at', now).gt('ends_at', now).limit(1);
+    .eq('store_id', storeId).eq('enabled', true).gt('ends_at', now).limit(1);
   return (data?.length ?? 0) > 0;
 }
 
