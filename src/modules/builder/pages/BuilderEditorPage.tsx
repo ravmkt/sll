@@ -1,6 +1,7 @@
 import { bgStyle, colTpl } from '../bg';
 import PageSettingsPanel from '../components/PageSettingsPanel';
 import { DeviceFrame } from '../components/DeviceFrame';
+import { useHideSupport } from '../hooks/useHideSupport';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -307,6 +308,7 @@ function resolveTarget(overId: string, blocks: Block[]): Target | null {
 
 export default function BuilderEditorPage() {
   const { id } = useParams();
+  useHideSupport();
   const blocks = useBuilder((s) => s.blocks);
   const load = useBuilder((s) => s.load);
   const settings = useBuilder((s) => s.settings);
