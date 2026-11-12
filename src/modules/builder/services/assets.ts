@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { getCurrentStoreId } from './pages';
+import { toWebp } from './webp';
 
 export type AssetKind = 'image' | 'video';
 
@@ -32,7 +33,8 @@ const EXT_MIME: Record<string, string> = {
   gif: 'image/gif', avif: 'image/avif', mp4: 'video/mp4', webm: 'video/webm',
 };
 
-export async function uploadBuilderAsset(file: File, kind: AssetKind): Promise<string> {
+export async function uploadBuilderAsset(original: File, kind: AssetKind): Promise<string> {
+  const file = kind === 'image' ? await toWebp(original) : original;
   const rule = RULES[kind];
   const mime = file.type || EXT_MIME[(file.name.split('.').pop() ?? '').toLowerCase()] || '';
   const ext = rule.types[mime];
