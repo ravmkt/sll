@@ -46,6 +46,26 @@ export function renderPageHtml(
   const maxW = Number(s.maxW) > 0 ? Number(s.maxW) : 0;
   const minH = Number(s.minH) > 0 ? Number(s.minH) : 0;
   const full = s.fullH === '1';
+  const fit = s.fitScreen === '1';
+  const fitPct = Math.min(100, Math.max(30, Number(s.fitMin) || 60));
+  const fitJs = fit ? '<script>' + [
+    '(function(){',
+    'var MIN=' + fitPct / 100 + ';',
+    'var b=document.body;var t;',
+    'function fit(){',
+    'b.style.zoom="";',
+    'if(window.innerWidth<900){return;}',
+    'var h=document.documentElement.scrollHeight,vh=window.innerHeight-1;',
+    'var z=h>vh?Math.max(MIN,Math.floor((vh/h)*1000)/1000):1;',
+    'if(z<1){b.style.zoom=z;}',
+    '}',
+    'function sched(){clearTimeout(t);t=setTimeout(fit,60);}',
+    'window.addEventListener("resize",sched);',
+    'window.addEventListener("load",sched);',
+    'if(document.fonts&&document.fonts.ready){document.fonts.ready.then(sched);}',
+    'sched();',
+    '})();',
+  ].join('') + '</script>' : '';
   const fullCss = full ? 'html{min-height:100%}body{min-height:100vh;min-height:100dvh}' : '';
   const wrap = [maxW ? 'max-width:' + maxW + 'px' : '', maxW ? 'margin:0 auto' : '', minH ? 'min-height:' + minH + 'px' : '', full ? 'min-height:100vh;min-height:100dvh' : ''].filter(Boolean).join(';');
   const inner = renderBlocksHtml(page.content.blocks as Block[]);
@@ -53,6 +73,6 @@ export function renderPageHtml(
   const bgCss = styleToCss(bgStyle(s));
   const pageBgAttr = ' style="' + esc((bgCss ? bgCss + ';' : '') + 'min-height:100%') + '"';
   const pageBgCss = 'html,body{margin:0}body{min-height:100vh}' + (bgCss ? 'body{background:transparent}' : '');
-  return '<!doctype html><html lang="pt-BR"' + pageBgAttr + '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + fullCss + pageBgCss + '</style></head><body>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script></body></html>';
+  return '<!doctype html><html lang="pt-BR"' + pageBgAttr + '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + fullCss + pageBgCss + '</style></head><body>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script>' + fitJs + '</body></html>';
 }
 

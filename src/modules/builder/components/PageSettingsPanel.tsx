@@ -19,6 +19,14 @@ const FIELDS: Field[] = [
       { value: '1', label: 'Tela inteira (100vh)' },
     ],
   },
+  {
+    key: 'fitScreen', label: 'Ajustar conte\u00fado \u00e0 tela (sem rolagem)', type: 'select', group: G_SIZE, def: '0',
+    options: [
+      { value: '0', label: 'Desligado' },
+      { value: '1', label: 'Ligado (reduz o conte\u00fado para caber na tela)' },
+    ],
+  },
+  { key: 'fitMin', label: 'Escala m\u00ednima do ajuste (%) - padr\u00e3o 60', group: G_SIZE },
   { key: 'minH', label: 'Altura m\u00ednima da p\u00e1gina (px)', type: 'number', min: 0, max: 5000, group: G_SIZE },
   { key: 'seoTitle', label: 'T\u00edtulo SEO (ideal at\u00e9 60 caracteres)', group: G_SEO },
   { key: 'seoDesc', label: 'Meta description (ideal at\u00e9 160 caracteres)', multiline: true, group: G_SEO },
