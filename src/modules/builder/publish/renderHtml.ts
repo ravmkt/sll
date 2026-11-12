@@ -49,6 +49,8 @@ export function renderPageHtml(
   const inner = renderBlocksHtml(page.content.blocks as Block[]);
   const body = wrap ? '<main style="' + wrap + '">' + inner + '</main>' : inner;
   const bgCss = styleToCss(bgStyle(s));
-  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + '</style></head><body' + (bgCss ? ' style="' + esc(bgCss) + '"' : '') + '>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script></body></html>';
+  const pageBgAttr = ' style="' + esc((bgCss ? bgCss + ';' : '') + 'min-height:100%') + '"';
+  const pageBgCss = 'html,body{margin:0}body{min-height:100vh}' + (bgCss ? 'body{background:transparent}' : '');
+  return '<!doctype html><html lang="pt-BR"' + pageBgAttr + '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + pageBgCss + '</style></head><body>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script></body></html>';
 }
 
