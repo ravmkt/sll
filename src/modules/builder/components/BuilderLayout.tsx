@@ -4,9 +4,11 @@ import { TopBar } from '@/components/layout/TopBar';
 import { AppFooter } from '@/components/layout/AppFooter';
 import { BuilderSidebar } from '@/modules/builder/components/BuilderSidebar';
 
-const KEY = 'sll_builder_sidebar_collapsed';
+const KEY_LIST = 'sll_builder_sidebar_collapsed';
+const KEY_EDITOR = 'sll_builder_editor_sidebar_collapsed';
 
 export default function BuilderLayout({ children, editor = false }: { children: ReactNode; editor?: boolean }) {
+  const KEY = editor ? KEY_EDITOR : KEY_LIST;
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
       const v = localStorage.getItem(KEY);
