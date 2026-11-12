@@ -14,8 +14,8 @@ const MODULES = {
   },
   builder: {
     location: 'builder' as never,
-    title: 'Suas páginas captando clientes',
-    subtitle: (n: string) => `Olá, ${n}. Acompanhe visitas, leads e o desempenho das suas páginas.`,
+    title: 'Crie páginas incríveis',
+    subtitle: (n: string) => `Olá, ${n}. Crie e acompanhe o desempenho das suas páginas.`,
   },
   live: {
     location: 'live' as const,
