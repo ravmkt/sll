@@ -50,3 +50,18 @@ export async function deleteLead(id: string): Promise<void> {
   const { error } = await supabase.from('leads').delete().eq('id', id);
   if (error) throw error;
 }
+export interface Touchpoint {
+  id: string;
+  source: string | null;
+  created_at: string;
+}
+
+export async function listTouchpoints(leadId: string): Promise<Touchpoint[]> {
+  const { data, error } = await supabase
+    .from('lead_touchpoints')
+    .select('id, source, created_at')
+    .eq('lead_id', leadId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []) as Touchpoint[];
+}

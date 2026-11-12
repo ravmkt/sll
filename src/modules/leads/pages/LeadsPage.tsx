@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, Search, Trash2, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLoja } from '@/contexts/LojaContext';
-import { deleteLead, listLeads, updateLead, STATUSES, STATUS_LABEL, type Lead, type LeadStatus } from '../services/leadsService';
+import { deleteLead, listLeads, listTouchpoints, updateLead, STATUSES, STATUS_LABEL, type Lead, type LeadStatus } from '../services/leadsService';
 
 const SOURCE_LABEL: Record<string, string> = { builder: 'Builder' };
 const srcLabel = (s: string | null) => (s ? SOURCE_LABEL[s] || s : '-');
@@ -41,6 +41,10 @@ function LeadDetail({ lead, onClose, onSaved }: { lead: Lead; onClose: () => voi
   const [tags, setTags] = useState(lead.tags.join(', '));
   const [notes, setNotes] = useState(lead.notes || '');
   const [saving, setSaving] = useState(false);
+  const [history, setHistory] = useState<{ id: string; source: string | null; created_at: string }[]>([]);
+  useEffect(() => {
+    listTouchpoints(lead.id).then(setHistory).catch(() => setHistory([]));
+  }, [lead.id]);
 
   const save = async () => {
     setSaving(true);
@@ -67,6 +71,14 @@ function LeadDetail({ lead, onClose, onSaved }: { lead: Lead; onClose: () => voi
           </div>
           <button type="button" onClick={onClose} className="cursor-pointer text-slate-400 hover:text-slate-700"><X size={18} /></button>
         </div>
+        {history.length > 0 ? (
+          <div className="mb-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <p className="mb-1 text-xs font-medium text-slate-600">Histórico de cadastros ({history.length})</p>
+            <ul className="max-h-28 space-y-0.5 overflow-y-auto text-xs text-slate-500">
+              {history.map((h) => <li key={h.id}>{srcLabel(h.source)} · {fmtDate(h.created_at)}</li>)}
+            </ul>
+          </div>
+        ) : null}
         <label className="mb-1 block text-xs font-medium text-slate-600">Status</label>
         <select value={status} onChange={(e) => setStatus(e.target.value as LeadStatus)} className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
           {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
