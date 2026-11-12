@@ -3,12 +3,12 @@ import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
 import { ALIGN_OPTIONS, num, safeUrl } from '../styleKit';
 import { Css, RCSS, rich, sec, secFields, tcss, tf } from './campaign';
-import { glowStyle } from '../bg';
+
 import { NEON_CSS, neonClass, neonFields, neonVars } from '../neon';
 import { cardFillFields, cardFillStyle } from '../leadfill';
 
 const YN = [{ value: '1', label: 'Sim' }, { value: '0', label: 'N\u00e3o' }];
-const yn = (key: string, label: string, def: string, group: string): Field => ({ key, label, type: 'select', options: YN, group, def });
+const yn = (key: string, label: string, def: string, group: string): Field => ({ key, label, type: 'select', options: YN, group, def, showIf: (p) => p.mode !== 'direct' });
 const DARK = '#0b0a08';
 const AFTER = 'Ap\u00f3s o cadastro';
 
@@ -21,14 +21,18 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       btn: 'Quero acesso antecipado',
       success: 'Cadastro realizado! Voc\u00ea receber\u00e1 o aviso em primeira m\u00e3o.',
       askName: '1', askEmail: '1', askWhatsapp: '1',
-      coupon: '', vip: '0', vipUrl: '', vipLabel: 'Entrar no grupo VIP',
+      mode: 'form', coupon: '', vip: '0', vipUrl: '', vipLabel: 'Entrar no grupo VIP',
       successColor: '#f5e6b3', couponColor: '#d4af37', couponBc: '#d4af37', couponBg: '#0b0a08', previewSuccess: '0',
       cardBg: '#14110d', cardBc: '#5c4a1f', radius: '16', cardPad: '24', maxW: '480',
       inputBg: DARK, inputBc: '#5c4a1f', inputColor: '#ffffff',
       btnBg: '#d4af37', btnColor: '#0b0a08', pad: '16',
     },
     fields: [
-      { key: 'title', label: 'T\u00edtulo', emoji: true },
+      { key: 'mode', label: 'Modo do formul\u00e1rio', type: 'select', def: 'form', options: [
+            { value: 'form', label: 'Cadastro (nome, e-mail, WhatsApp)' },
+            { value: 'direct', label: 'S\u00f3 bot\u00e3o: vai direto ao link do grupo VIP' },
+          ] },
+          { key: 'title', label: 'T\u00edtulo', emoji: true },
       { key: 'sub', label: 'Texto de apoio (use **texto** para negrito)', multiline: true, emoji: true },
       { key: 'btn', label: 'Texto do bot\u00e3o', emoji: true },
       { key: 'success', label: 'Mensagem ap\u00f3s o cadastro', multiline: true, emoji: true },
@@ -64,6 +68,8 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       const hasWa = p.askWhatsapp !== '0';
       const hasEmail = p.askEmail !== '0' || !hasWa;
       const hasName = p.askName !== '0';
+          const direct = p.mode === 'direct';
+          const directUrl = p.vipUrl ? safeUrl(p.vipUrl) : '#';
       const vipUrl = p.vip === '1' && p.vipUrl ? safeUrl(p.vipUrl) : undefined;
       const sc = p.successColor || '#f5e6b3';
       const cc = p.couponColor || '#d4af37';
@@ -81,7 +87,7 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
           <div
             className={neonClass(p).trim() || undefined}style={{
               maxWidth: num(p.maxW, 480), margin: '0 auto', padding: num(p.cardPad, 24), boxSizing: 'border-box', textAlign: 'center',
-              ...cardFillStyle(p), position: 'relative', border: p.neon === '1' ? 'none' : `1px solid ${p.cardBc || '#5c4a1f'}`, borderRadius: num(p.radius, 16), ...glowStyle(p), ...neonVars(p),
+              ...cardFillStyle(p), position: 'relative', border: p.neon === '1' ? 'none' : `1px solid ${p.cardBc || '#5c4a1f'}`, borderRadius: num(p.radius, 16), ...neonVars(p),
             }}
           >
             {p.title ? (
@@ -90,7 +96,17 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
             {p.sub ? (
               <p className="sll-r" style={{ margin: '0 0 16px', lineHeight: 1.5, whiteSpace: 'pre-line', ...tcss(p, 'sub', { s: 15, m: 14, c: '#e5e7eb' }) }}>{rich(p.sub)}</p>
             ) : null}
-            <form
+            {direct ? (
+<a
+                  href={directUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'block', textAlign: 'center', textDecoration: 'none', padding: '14px 20px', borderRadius: 10, fontSize: 16, fontWeight: 700, backgroundColor: btnBg, color: btnColor }}
+                >
+                  {p.btn || 'Entrar no grupo VIP'}
+                </a>
+) : (
+<form
               data-sll-form="1"
               data-success={p.success || 'Cadastro realizado!'}
               data-sc={sc}
@@ -113,7 +129,8 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
                 {p.btn || 'Enviar'}
               </button>
             </form>
-            {p.previewSuccess === '1' ? (
+)}
+            {!direct && p.previewSuccess === '1' ? (
               <div data-sll-preview="1" style={{ marginTop: 16, paddingTop: 16, borderTop: `1px dashed ${p.cardBc || '#5c4a1f'}`, textAlign: 'center' }}>
                 <p style={{ margin: '0 0 12px', fontWeight: 700, fontSize: 17, lineHeight: 1.4, color: sc }}>{p.success || 'Cadastro realizado!'}</p>
                 {p.coupon ? (
@@ -139,3 +156,11 @@ export const LEADFORM_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
     },
   },
 };
+
+const NOT_DIRECT = new Set(['success', 'coupon', 'vipLabel', 'successColor', 'couponColor', 'couponBc', 'couponBg']);
+const lfDef = LEADFORM_BLOCKS.leadform;
+if (lfDef) {
+  lfDef.fields = lfDef.fields.map((f): Field =>
+    NOT_DIRECT.has(f.key) ? { ...f, showIf: (p: Record<string, string>) => p.mode !== 'direct' } : f,
+  );
+}
