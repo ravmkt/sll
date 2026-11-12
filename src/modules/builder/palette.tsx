@@ -4,6 +4,7 @@ import {
   MousePointerClick, ShoppingBag, TextCursorInput, Timer, Type,
 } from 'lucide-react';
 import type { BlockType } from './types';
+import { Heading1, Hourglass, ListChecks, Store, Tag, Tags } from 'lucide-react';
 
 export interface PaletteItem { key: string; type: BlockType; label: string; icon: ElementType; cols?: number }
 
@@ -25,6 +26,17 @@ const cols = (n: number): PaletteItem => ({
 
 export const PALETTE: { title: string; items: PaletteItem[] }[] = [
   { title: 'Layout', items: [cols(1), cols(2), cols(3), cols(4)] },
+  {
+    title: 'Campanha',
+    items: [
+      { key: 'brandbar', type: 'brandbar', label: 'Cabe\u00e7alho da marca', icon: Store },
+      { key: 'badge', type: 'badge', label: 'Selo de campanha', icon: Tag },
+      { key: 'heading', type: 'heading', label: 'T\u00edtulo da campanha', icon: Heading1 },
+      { key: 'chips', type: 'chips', label: 'Selos de benef\u00edcios', icon: Tags },
+      { key: 'countdown', type: 'countdown', label: 'Contagem regressiva', icon: Hourglass },
+      { key: 'benefits', type: 'benefits', label: 'Card de benef\u00edcios', icon: ListChecks },
+    ],
+  },
   {
     title: 'Loja',
     items: [

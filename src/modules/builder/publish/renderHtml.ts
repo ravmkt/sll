@@ -14,6 +14,7 @@ function p(n){return String(n).padStart(2,'0')}
 document.querySelectorAll('[data-end]').forEach(function(el){var end=new Date(el.getAttribute('data-end')).getTime(),c=el.querySelector('[data-clock]');
 function t(){var s=Math.floor(Math.max(0,end-Date.now())/1000);c.textContent=p(Math.floor(s/86400))+'d '+p(Math.floor(s%86400/3600))+'h '+p(Math.floor(s%3600/60))+'m '+p(s%60)+'s'}
 t();setInterval(t,1000)});
+document.querySelectorAll('[data-cd]').forEach(function(el){var end=new Date(el.getAttribute('data-cd')).getTime(),n=el.querySelectorAll('[data-u]');function t(){var s=Math.floor(Math.max(0,end-Date.now())/1000),v=[Math.floor(s/86400),Math.floor(s%86400/3600),Math.floor(s%3600/60),s%60];n.forEach(function(x,i){x.textContent=p(v[i])})}if(!isNaN(end)){t();setInterval(t,1000)}});
 document.querySelectorAll('[data-sll-form]').forEach(function(f){f.addEventListener('submit',function(e){e.preventDefault();
 var b=f.querySelector('button'),x=f.elements;b.disabled=true;
 fetch(API+'/rest/v1/rpc/capture_lead',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},
