@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import type { ChangeEvent, MouseEvent } from 'react';
+import type { ChangeEvent, MouseEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { ArrowDown, ArrowUp, Loader2, Plus, RefreshCw, Trash2, Upload as UploadIcon } from 'lucide-react';
 import type { Field } from '../registry-extra';
 import { parseItems } from '../styleKit';
@@ -248,8 +248,102 @@ function ProductsField({ f, value, onChange }: { f: Field; value: string; onChan
     </div>
   );
 }
+function RatioField({ value, onChange, n }: { value: string; onChange: (v: string) => void; n: number }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [drag, setDrag] = useState<number | null>(null);
+
+  if (n < 2) {
+    return <p className="text-[11px] text-slate-400">Com 1 coluna n&atilde;o h&aacute; propor&ccedil;&atilde;o para ajustar.</p>;
+  }
+
+  const raw = (value || '').split(/[,:/\s]+/).map(Number).filter((x) => Number.isFinite(x) && x > 0);
+  const w = raw.length === n ? raw : Array.from({ length: n }, () => 1);
+  const total = w.reduce((a, c) => a + c, 0);
+  const edges: number[] = [];
+  let acc = 0;
+  for (let i = 0; i < n - 1; i++) {
+    acc += (w[i] / total) * 100;
+    edges.push(Math.round(acc));
+  }
+  const parts = edges.map((e, i) => e - (i > 0 ? edges[i - 1] : 0));
+  parts.push(100 - edges[n - 2]);
+
+  const MIN = 10;
+  const move = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (drag === null || !box.current) return;
+    const r = box.current.getBoundingClientRect();
+    if (r.width <= 0) return;
+    const x = ((e.clientX - r.left) / r.width) * 100;
+    const lo = (drag > 0 ? edges[drag - 1] : 0) + MIN;
+    const hi = (drag < n - 2 ? edges[drag + 1] : 100) - MIN;
+    const pos = Math.round(Math.min(Math.max(x, lo), hi));
+    if (pos === edges[drag]) return;
+    const ne = [...edges];
+    ne[drag] = pos;
+    const out = ne.map((v, i) => v - (i > 0 ? ne[i - 1] : 0));
+    out.push(100 - ne[n - 2]);
+    onChange(out.join(','));
+  };
+  const end = () => setDrag(null);
+
+  return (
+    <div className="space-y-2">
+      <div
+        ref={box}
+        className="relative flex h-14 select-none overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+        onPointerMove={move}
+        onPointerUp={end}
+        onPointerCancel={end}
+      >
+        {parts.map((p, i) => (
+          <div
+            key={i}
+            style={{ flexGrow: p, flexBasis: 0, minWidth: 0 }}
+            className="m-1 flex items-center justify-center rounded bg-[#0094eb]/15 text-xs font-bold text-[#0094eb]"
+          >
+            {p}%
+          </div>
+        ))}
+        {edges.map((e, i) => (
+          <div
+            key={i}
+            title="Arraste para ajustar"
+            style={{ left: e + '%' }}
+            className="absolute top-0 h-full w-4 -translate-x-1/2 cursor-col-resize touch-none"
+            onClick={(ev) => ev.stopPropagation()}
+            onPointerDown={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              ev.currentTarget.setPointerCapture(ev.pointerId);
+              setDrag(i);
+            }}
+          >
+            <div className="mx-auto h-full w-1 rounded bg-[#0094eb]" />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={parts.join(',')} className={INPUT} />
+        <button
+          type="button"
+          onClick={act(() => onChange(''))}
+          className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-[#0094eb] hover:text-[#0094eb]"
+        >
+          Igualar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function FieldInput({ f, value, onChange, props }: { f: Field; value: string; onChange: (v: string) => void; props?: Record<string, string> }) {
   const type = f.type ?? (f.key === 'bg' || f.key === 'color' ? 'color' : f.key === 'endsAt' ? 'datetime' : 'text');
+  if (!f.type && f.key === 'ratio') {
+    const pc = Number(props?.cols);
+    const guess = (value || '').split(/[,:/\s]+/).filter(Boolean).length;
+    return <RatioField value={value} onChange={onChange} n={pc >= 1 && pc <= 4 ? pc : guess >= 2 ? guess : 2} />;
+  }
+  if (!f.type && /^URL da imagem/i.test(f.label)) return <UploadField f={f} value={value} onChange={onChange} />;
   if (type === 'repeater') return <Repeater f={f} value={value} onChange={onChange} />;
   if (type === 'upload') return <UploadField f={f} value={value} onChange={onChange} />;
   if (type === 'products') return <ProductsField f={f} value={value} onChange={onChange} />;
