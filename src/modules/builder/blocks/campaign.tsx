@@ -1,4 +1,4 @@
-﻿import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
 import { ALIGN_OPTIONS, FONT_OPTIONS, STYLE_OPTIONS, num, parseItems, safeUrl } from '../styleKit';
@@ -197,7 +197,7 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
   countdown: {
     label: 'Contagem regressiva',
     defaults: {
-      endsAt: '2026-11-30T23:59', lD: 'Dias', lH: 'Horas', lM: 'Min', lS: 'Seg',
+      endsAt: '2026-11-27T23:59', lD: 'Dias', lH: 'Horas', lM: 'Min', lS: 'Seg',
       boxBg: '#14110d', boxBc: '#8a6d2f', lblColor: '#9ca3af', radius: '12',
       gap: '12', gapM: '8', boxW: '110', boxWM: '64', bg: DARK, pad: '24',
     },
