@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowLeft, LayoutTemplate, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ArrowLeft, LayoutTemplate, Users, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 
@@ -15,6 +15,7 @@ const GROUPS: Group[] = [
     title: 'Builder',
     items: [
       { name: 'Minhas páginas', icon: LayoutTemplate, path: '/dashboard/modules/builder' },
+          { name: 'Leads', icon: Users, path: '/dashboard/leads' },
     ],
   },
   {

@@ -64,6 +64,7 @@ const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const DicasNoah = lazy(() => import('./pages/dicas/DicasNoah'));
 const InstagramCallback = lazy(() => import('./pages/auth/InstagramCallback'));
 const IdeasBoard = lazy(() => import('@/pages/IdeasBoard'));
+const LeadsPage = lazy(() => import('@/modules/leads/pages/LeadsPage'));
 
 function PageLoader() {
   return (
@@ -288,7 +289,20 @@ function AppRoutes() {
           }
         />
 
-        {/* SLL Master (SuperAdmin): protegido pelo AdminGuard, fora do SubscriptionGate */}
+        <Route
+              path="/dashboard/leads"
+              element={
+                user ? (
+                  <SubscriptionGate>
+                    <LeadsPage />
+                  </SubscriptionGate>
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
+              }
+            />
+
+            {/* SLL Master (SuperAdmin): protegido pelo AdminGuard, fora do SubscriptionGate */}
         <Route
           path="/admin-master"
           element={

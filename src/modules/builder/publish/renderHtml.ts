@@ -1,4 +1,4 @@
-﻿import type { Block, BuilderPage } from '../types';
+import type { Block, BuilderPage } from '../types';
 import { renderBlocksHtml } from '../renderStatic';
 import { CAROUSEL_JS } from '../blocks/carouselJs';
 
@@ -12,11 +12,12 @@ function runtime(apiUrl: string, anonKey: string, pageId: string): string {
 try{var CAR=${CAROUSEL_JS};document.querySelectorAll('[data-car]').forEach(function(el){CAR(el)})}catch(e){}
 function p(n){return String(n).padStart(2,'0')}
 function done(f,b){var m=document.createElement('div');m.style.textAlign='center';
-var t=document.createElement('p');t.textContent=f.getAttribute('data-success')||'';t.style.margin='0 0 12px';t.style.fontWeight='700';m.appendChild(t);
-var c=f.getAttribute('data-coupon');if(c){var q=document.createElement('p');q.textContent=c;q.style.cssText='display:inline-block;margin:0 0 12px;padding:10px 18px;border:2px dashed currentColor;border-radius:10px;font-size:22px;font-weight:800;letter-spacing:.08em';m.appendChild(q)}
+var t=document.createElement('p');t.textContent=f.getAttribute('data-success')||'';t.style.cssText='margin:0 0 12px;font-weight:700;font-size:17px;line-height:1.4;color:'+(f.getAttribute('data-sc')||'#f5e6b3');m.appendChild(t);
+var c=f.getAttribute('data-coupon');if(c){var q=document.createElement('p');q.textContent=c;q.style.cssText='display:inline-block;margin:0 0 12px;padding:10px 18px;border-radius:10px;font-size:22px;font-weight:800;letter-spacing:.08em;color:'+(f.getAttribute('data-cc')||'#d4af37')+';background:'+(f.getAttribute('data-cbg')||'transparent')+';border:2px dashed '+(f.getAttribute('data-cbc')||'#d4af37');m.appendChild(q)}
 var v=f.getAttribute('data-vip');if(v){var a=document.createElement('a');a.href=v;a.target='_blank';a.rel='noopener';a.textContent=f.getAttribute('data-vip-label')||'Entrar no grupo VIP';
 a.style.cssText='display:block;padding:14px 20px;border-radius:10px;font-weight:700;text-decoration:none;text-align:center;background:'+(b.style.backgroundColor||'#10b981')+';color:'+(b.style.color||'#fff');m.appendChild(a)}
 f.replaceChildren(m)}
+document.querySelectorAll('[data-sll-preview]').forEach(function(e){e.remove()});
 document.querySelectorAll('[data-end]').forEach(function(el){var end=new Date(el.getAttribute('data-end')).getTime(),c=el.querySelector('[data-clock]');
 function t(){var s=Math.floor(Math.max(0,end-Date.now())/1000);c.textContent=p(Math.floor(s/86400))+'d '+p(Math.floor(s%86400/3600))+'h '+p(Math.floor(s%3600/60))+'m '+p(s%60)+'s'}
 t();setInterval(t,1000)});
