@@ -162,7 +162,7 @@ function Canvas() {
     <div
       ref={setNodeRef}
       onClick={() => select(null)}
-      className="min-h-[600px] bg-white shadow-sm"
+      className="min-h-[600px] bg-white shadow-2xl"
       style={{ ...bgStyle(settings), minHeight: minH || undefined }}
     >
       <div style={{ maxWidth: maxW || undefined, margin: '0 auto' }}>
@@ -173,7 +173,7 @@ function Canvas() {
         </SortableContext>
         {blocks.length === 0 && (
           <p className="p-16 text-center text-sm font-medium text-slate-400">
-            {'Arraste ou clique em um elemento \u00e0 esquerda'}
+            {'Arraste ou clique em um elemento da paleta abaixo'}
           </p>
         )}
       </div>
@@ -392,26 +392,30 @@ export default function BuilderEditorPage() {
         message={'Suas altera\u00e7\u00f5es foram salvas com sucesso.'}
       />
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setOverlay(null)}>
-        <div className="flex min-h-0 flex-1">
-          <aside className="w-64 shrink-0 space-y-5 overflow-y-auto border-r border-slate-200 bg-white p-4">
-            {PALETTE.map((g) => (
-              <div key={g.title}>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-900">{g.title}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {g.items.map((it) => (
-                    <PaletteTile key={it.key} item={it} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </aside>
-          <main className="min-w-0 flex-1 overflow-y-auto p-6">
+        <div className="flex min-h-0 flex-1 flex-col"><div className="flex min-h-0 flex-1">
+<main className="min-w-0 flex-1 overflow-y-auto bg-slate-900 p-6">
             <DeviceFrame><Canvas /></DeviceFrame>
           </main>
           <aside className="w-80 shrink-0 overflow-y-auto border-l border-slate-200 bg-white">
             <PropertiesPanel />
           </aside>
         </div>
+            <div className="shrink-0 border-t border-slate-200 bg-white">
+              <div className="flex gap-6 overflow-x-auto px-4 py-2">
+                {PALETTE.map((g) => (
+                  <div key={g.title} className="shrink-0">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-900">{g.title}</p>
+                    <div className="flex gap-2">
+                      {g.items.map((it) => (
+                        <div key={it.key} className="w-[92px]">
+                          <PaletteTile item={it} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>          </div>
         <DragOverlay dropAnimation={null}>
           {overlay && (
             <div className="rounded-xl border border-[#0094eb] bg-white px-4 py-2 text-xs font-bold text-[#0094eb] shadow-xl">
