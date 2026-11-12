@@ -86,3 +86,31 @@ export const styleToCss = (s: CSSProperties): string =>
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
     .map(([k, v]) => k.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()) + ':' + String(v))
     .join(';');
+
+const FILL_TYPES = [
+  { value: 'color', label: 'Cor s\u00f3lida' },
+  { value: 'gradient', label: 'Degrad\u00ea' },
+  { value: 'transparent', label: 'Transparente' },
+];
+
+export const fillFields = (k: string, group: string, def: string, label = 'Fundo'): Field[] => {
+  const ty = (p: P) => p[`${k}Type`] || 'color';
+  return [
+    { key: `${k}Type`, label: `${label}: tipo`, type: 'select', options: FILL_TYPES, group, def: 'color' },
+    { key: k, label: `${label}: cor (ou cor 1 do degrad\u00ea)`, type: 'color', group, def, showIf: (p) => ty(p) === 'color' || ty(p) === 'gradient' },
+    { key: `${k}2`, label: `${label}: degrad\u00ea cor 2`, type: 'color', group, def: '#000000', showIf: (p) => ty(p) === 'gradient' },
+    { key: `${k}Angle`, label: `${label}: degrad\u00ea \u00e2ngulo (graus)`, type: 'number', min: 0, max: 360, group, def: '135', showIf: (p) => ty(p) === 'gradient' },
+  ];
+};
+
+export const fillStyle = (p: P, k: string, def: string): string => {
+  const ty = p[`${k}Type`] || 'color';
+  if (ty === 'transparent') return 'transparent';
+  const c1 = p[k] || def;
+  if (ty === 'gradient') {
+    const a = Number(p[`${k}Angle`]);
+    const ang = p[`${k}Angle`] && Number.isFinite(a) ? a : 135;
+    return `linear-gradient(${ang}deg, ${c1}, ${p[`${k}2`] || '#000000'})`;
+  }
+  return c1;
+};

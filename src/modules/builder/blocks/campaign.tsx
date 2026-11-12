@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { bgFields, bgStyle, glowFields, glowStyle } from '../bg';
+import { bgFields, bgStyle, fillFields, fillStyle, glowFields, glowStyle } from '../bg';
 import { NEON_CSS, neonClass, neonFields, neonVars } from '../neon';
 import type { BlockType } from '../types';
 import type { BlockDef, Field } from '../registry-extra';
@@ -134,9 +134,10 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
     },
     fields: [
       { key: 'items', label: 'Selos', type: 'repeater', itemLabel: 'Selo', itemDefaults: { t: 'Novo selo' }, maxItems: 8, item: [{ key: 't', label: 'Texto' }] },
-      { key: 'chipBg', label: 'Cor de fundo do selo', type: 'color', group: 'Selo', def: '#14110d' },
-      { key: 'chipBc', label: 'Cor da borda do selo', type: 'color', group: 'Selo', def: '#5c4a1f' },
+      ...fillFields('chipBg', 'Selo', '#14110d', 'Fundo do selo'),
+      { key: 'chipBc', label: 'Cor da borda do selo', type: 'color', group: 'Selo', def: '#5c4a1f', showIf: (p) => p.neon !== '1' },
       { key: 'gap', label: 'Espa\u00e7o entre selos (px)', type: 'number', min: 0, max: 40, group: 'Selo', def: '10' },
+      ...neonFields(),
       ...tf('t', 'Texto', 13, 12, '#e5e7eb'),
       ...secFields('16'),
     ],
@@ -144,13 +145,14 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       <section style={sec(p, 16)}>
         <Css s={RCSS} />
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: num(p.gap, 10) }}>
+            <Css s={NEON_CSS} />
           {parseItems(p.items).filter((x) => x.t).map((x, i) => (
             <span
               key={i}
-              className="sll-r"
+              className={'sll-r' + neonClass(p)}
               style={{
                 padding: '8px 16px', borderRadius: 999,
-                background: p.chipBg || '#14110d', border: `1px solid ${p.chipBc || '#5c4a1f'}`,
+                position: 'relative', background: fillStyle(p, 'chipBg', '#14110d'), border: p.neon === '1' ? 'none' : `1px solid ${p.chipBc || '#5c4a1f'}`, ...neonVars(p),
                 ...tcss(p, 't', { s: 13, m: 12, c: '#e5e7eb' }),
               }}
             >
@@ -210,11 +212,12 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       { key: 'lH', label: 'R\u00f3tulo: horas', group: 'R\u00f3tulos' },
       { key: 'lM', label: 'R\u00f3tulo: minutos', group: 'R\u00f3tulos' },
       { key: 'lS', label: 'R\u00f3tulo: segundos', group: 'R\u00f3tulos' },
-      { key: 'boxBg', label: 'Caixa: cor de fundo', type: 'color', group: 'Caixas', def: '#14110d' },
-      { key: 'boxBc', label: 'Caixa: cor da borda', type: 'color', group: 'Caixas', def: '#8a6d2f' },
+      ...fillFields('boxBg', 'Caixas', '#14110d', 'Caixa: fundo'),
+      { key: 'boxBc', label: 'Caixa: cor da borda', type: 'color', group: 'Caixas', def: '#8a6d2f', showIf: (p) => p.neon !== '1' },
       { key: 'lblColor', label: 'Cor dos r\u00f3tulos', type: 'color', group: 'Caixas', def: '#9ca3af' },
       { key: 'radius', label: 'Caixa: arredondamento (px)', type: 'number', min: 0, max: 40, group: 'Caixas', def: '12' },
       ...glowFields('Caixas'),
+      ...neonFields(),
           { key: 'boxW', label: 'Caixa: largura no PC (px)', type: 'number', min: 40, max: 240, group: 'Caixas', def: '110' },
       { key: 'boxWM', label: 'Caixa: largura no celular (px)', type: 'number', min: 40, max: 120, group: 'Caixas', def: '64' },
       { key: 'gap', label: 'Espa\u00e7o entre caixas no PC (px)', type: 'number', min: 0, max: 40, group: 'Caixas', def: '12' },
@@ -231,15 +234,15 @@ export const CAMPAIGN_BLOCKS: Partial<Record<BlockType, BlockDef>> = {
       } as unknown as CSSProperties;
       return (
         <section style={sec(p, 24)}>
-          <Css s={RCSS + CD_CSS} />
+          <Css s={RCSS + CD_CSS + NEON_CSS} />
           <div className="sll-cd" data-cd={p.endsAt || undefined} style={vars}>
             {labels.map((l, i) => (
               <div
                 key={i}
-                className="sll-cdb"
+                className={'sll-cdb' + neonClass(p)}
                 style={{
-                  textAlign: 'center', padding: '14px 6px', background: p.boxBg || '#14110d',
-                  border: `1px solid ${p.boxBc || '#8a6d2f'}`, borderRadius: num(p.radius, 12), ...glowStyle(p),
+                  textAlign: 'center', padding: '14px 6px', position: 'relative', background: fillStyle(p, 'boxBg', '#14110d'),
+                  border: p.neon === '1' ? 'none' : `1px solid ${p.boxBc || '#8a6d2f'}`, borderRadius: num(p.radius, 12), ...glowStyle(p), ...neonVars(p),
                 }}
               >
                 <div data-u className="sll-r" style={{ lineHeight: 1.1, ...tcss(p, 'n', { s: 40, m: 26, c: '#d4af37', st: 'bold' }) }}>
