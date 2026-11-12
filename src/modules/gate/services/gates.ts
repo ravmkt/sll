@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
-const db = () => (supabase as unknown as SupabaseClient).schema("gate");
+const db = () => (supabase as unknown as SupabaseClient).schema("pulse");
 
 export interface Gate {
   id: string;

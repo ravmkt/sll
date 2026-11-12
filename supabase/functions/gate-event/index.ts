@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
   for (const k of UTM_KEYS) if (typeof src[k] === "string") utm[k] = (src[k] as string).slice(0, 200);
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
-    db: { schema: "gate" },
+    db: { schema: "pulse" },
   });
   const { error } = await sb.from("gate_events").insert({
     gate_id: gateId,

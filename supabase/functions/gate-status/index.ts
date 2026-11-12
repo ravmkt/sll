@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   if (!host) return json({ state: "inactive", server_time: new Date().toISOString() });
 
   const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
-    db: { schema: "gate" },
+    db: { schema: "pulse" },
   });
   const { data } = await sb.from("gates")
     .select("id,gate_url,starts_at,ends_at,domains,whatsapp_url,exclude_bots,preserve_params,bypass_param")
