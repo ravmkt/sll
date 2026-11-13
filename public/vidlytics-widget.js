@@ -4604,7 +4604,25 @@ if (showVerProduto) {
      ABERTURA DO MODAL
      ================================================================ */
 
+function __vlLiftOverlay() {
+  try {
+    if (!overlay || !overlay.parentNode) return;
+    if (overlay.getRootNode && overlay.getRootNode() !== document) return;
+    if (overlay.parentNode !== document.documentElement) document.documentElement.appendChild(overlay);
+    overlay.style.setProperty('position', 'fixed', 'important');
+    overlay.style.setProperty('top', '0', 'important');
+    overlay.style.setProperty('left', '0', 'important');
+    overlay.style.setProperty('right', '0', 'important');
+    overlay.style.setProperty('bottom', '0', 'important');
+    overlay.style.setProperty('width', '100%', 'important');
+    overlay.style.setProperty('height', '100%', 'important');
+    overlay.style.setProperty('zoom', '1', 'important');
+  } catch (e) { /* noop */ }
+}
+
 function openStoryModal(storyIndex, videoIndex) {
+  __vlLiftOverlay();
+  setTimeout(__vlLiftOverlay, 0);
   if (!(overlay && overlay.classList.contains('vl-active'))) isUserMuted = !storyOpts(storyIndex).sound;
   if (!currentStories || currentStories.length === 0) return;
   if (storyIndex === undefined || storyIndex === null) storyIndex = 0;
