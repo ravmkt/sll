@@ -2488,7 +2488,7 @@ function applyHostPosition(host, appearance) {
     var shadow = modalConfig.shadow_enabled !== false ? '0 24px 80px rgba(15,23,42,.24)' : 'none';
     return (
       '*,*::before,*::after{box-sizing:border-box!important;}'
-      + '.vl-overlay{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;background:rgba(15,23,42,.62)!important;display:none!important;align-items:center!important;justify-content:center!important;z-index:' + cfg.zIndex + '!important;font-family:' + font + '!important;font-size:' + toNumber(fontSize, 14) + 'px!important;}'
+      + '.vl-overlay{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,.9)!important;display:none!important;align-items:center!important;justify-content:center!important;z-index:' + cfg.zIndex + '!important;font-family:' + font + '!important;font-size:' + toNumber(fontSize, 14) + 'px!important;}'
       + '.vl-overlay.vl-active{display:flex!important;}'
 + '.vl-modal{position:relative!important;width:100%!important;max-width:420px!important;height:100%!important;max-height:100dvh!important;background:#000!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;border:' + modalBorderWidthNum + 'px solid ' + modalBorderColor + '!important;box-shadow:' + shadow + '!important;}'
       + '.vl-modal>div:not(.vl-comments-panel-full):not(.vl-sizing-panel-full){position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;height:100%!important;}'
@@ -2759,7 +2759,7 @@ function applyHostPosition(host, appearance) {
       + '.vl-ring{pointer-events:none!important;width:' + cfg.width + '!important;height:' + cfg.height + '!important;border-radius:' + cfg.radius + '!important;padding:' + cfg.borderWidth + '!important;overflow:hidden!important;display:block!important;position:relative!important;background:' + borderBackground + '!important;box-shadow:0 12px 30px rgba(15,23,42,.18)!important;}'
       + '.vl-inner{pointer-events:none!important;position:relative!important;width:100%!important;height:100%!important;border-radius:' + cfg.innerRadius + '!important;overflow:hidden!important;background:#000!important;display:block!important;}'
       + '.vl-img{pointer-events:none!important;position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;object-fit:' + behaviorConfig.objectFit + '!important;object-position:center!important;display:block!important;border:none!important;border-radius:' + cfg.innerRadius + '!important;}'
-      + '.vl-play-badge{pointer-events:none!important;position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;width:34px!important;height:34px!important;border-radius:999px!important;background:rgba(15,23,42,.62)!important;color:#fff!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:15px!important;line-height:1!important;box-shadow:0 6px 18px rgba(0,0,0,.25)!important;}'
+      + '.vl-play-badge{pointer-events:none!important;position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;width:34px!important;height:34px!important;border-radius:999px!important;background:rgba(0,0,0,.9)!important;color:#fff!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:15px!important;line-height:1!important;box-shadow:0 6px 18px rgba(0,0,0,.25)!important;}'
       + '.vl-play-badge::before{content:""!important;margin-left:3px!important;width:0!important;height:0!important;border-top:8px solid transparent!important;border-bottom:8px solid transparent!important;border-left:12px solid #fff!important;display:block!important;}'
       + '.vl-dismiss{all:unset!important;-webkit-appearance:none!important;appearance:none!important;position:absolute!important;top:-14px!important;right:-14px!important;width:22px!important;height:22px!important;background:transparent!important;color:#000!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:16px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;z-index:20!important;pointer-events:auto!important;border-radius:0!important;box-shadow:none!important;outline:none!important;border:none!important;padding:0!important;margin:0!important;text-shadow:0 0 4px rgba(255,255,255,.9)!important;}'
       + '.vl-label{pointer-events:none!important;width:' + cfg.width + '!important;max-width:' + cfg.width + '!important;font-family:' + font + '!important;font-size:11px!important;line-height:12px!important;font-weight:700!important;color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.8)!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;display:block!important;}';
@@ -4104,7 +4104,18 @@ if (closingVideo) {
     var videos = story.videos || [];
     var video = videos[currentVideoIndex];
     var appearanceConfig = normalizeModalAppearanceConfig(getStoryAppearance(story) || currentAppearance);
-try { var _dim = storyOpts(currentStoryIndex).dim; if (_dim !== null && overlay) overlay.style.setProperty('background', 'rgba(0,0,0,' + (_dim / 100) + ')', 'important'); } catch (e) { /* noop */ }
+try {
+    var _dim = storyOpts(currentStoryIndex).dim;
+    if (_dim === null || _dim === undefined) _dim = 90;
+    if (!document.getElementById('vl-dim-fix')) {
+      var _st = document.createElement('style');
+      _st.id = 'vl-dim-fix';
+      _st.textContent = 'html:has(.vl-overlay.vl-active)::after{content:"";position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,var(--vl-dim-page,.9));z-index:2147483000;pointer-events:none}.vl-overlay{z-index:2147483647!important}';
+      document.head.appendChild(_st);
+    }
+    document.documentElement.style.setProperty('--vl-dim-page', String(_dim / 100));
+    if (overlay) overlay.style.setProperty('background', 'transparent', 'important');
+  } catch (e) { /* noop */ }
     var modalEl = modalContent.classList.contains('vl-modal') ? modalContent : modalContent.closest('.vl-modal');
 if (modalEl) {
   var bw = parseInt(appearanceConfig.border_width, 10) || 0;
