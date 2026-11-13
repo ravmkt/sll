@@ -12,6 +12,8 @@ const BASE = Deno.env.get('SUPABASE_URL')!;
 const HUB = (Deno.env.get('HUB_ORIGIN') ?? 'https://app.sllhub.com.br').replace(/\/$/, '');
 const API = 'https://api.dooki.com.br/v2';
 const SCRIPT_NAME = 'SLL Hub - Pulse';
+const CHECKOUT_NAME = 'SLL Hub - Checkout';
+const CHECKOUT_PAGES = ['checkout', 'thank-you', 'thankyou'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const admin = createClient(BASE, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
@@ -43,6 +45,37 @@ function buildContent(storeId: string, gate: boolean, token: string) {
   return gate ? `<script src="${HUB}/sll-gate.js"></script>\n${loader}` : loader;
 }
 
+async function listScripts(c: Conn): Promise<any[]> {
+  const r = await yampi(c, 'GET', 'store/scripts?limit=100');
+  return Array.isArray(r.data?.data) ? r.data.data : [];
+}
+
+async function installCheckout(c: Conn, content: string) {
+  const tried: string[] = [];
+  try {
+    const mine = (await listScripts(c)).filter((s) => s?.name === CHECKOUT_NAME);
+    if (mine.length) {
+      const page = String(mine[0].page ?? 'checkout');
+      await yampi(c, 'PUT', `store/scripts/${mine[0].id}`, { name: CHECKOUT_NAME, page, content, active: true });
+      return { page, id: mine[0].id, tried };
+    }
+    for (const page of CHECKOUT_PAGES) {
+      try {
+        const r = await yampi(c, 'POST', 'store/scripts', { name: CHECKOUT_NAME, page, content, active: true });
+        const id = r.data?.data?.id ?? null;
+        if (id) return { page, id, tried };
+        tried.push(`${page}: sem id (HTTP ${r.status})`);
+      } catch (e) {
+        tried.push(`${page}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  } catch (e) {
+    tried.push(e instanceof Error ? e.message : String(e));
+  }
+  console.log('install-checkout falhou', JSON.stringify(tried));
+  return { page: null, id: null, tried };
+}
+
 async function install(c: Conn) {
   const gate = await hasActiveGate(c.store_id);
   const { data: stRow } = await admin.from('stores').select('security_token').eq('id', c.store_id).maybeSingle();
@@ -61,11 +94,15 @@ async function install(c: Conn) {
   await admin.from('yampi_connections')
     .update({ script_id: id, script_gate: gate, script_updated_at: new Date().toISOString() })
     .eq('store_id', c.store_id);
-  return { installed: true, gate, script_id: id };
+  const checkout = await installCheckout(c, buildContent(c.store_id, false, token));
+  return { installed: true, gate, script_id: id, checkout };
 }
 
 async function uninstall(c: Conn) {
   if (c.script_id) await yampi(c, 'DELETE', `store/scripts/${c.script_id}`);
+  try {
+    for (const s of (await listScripts(c)).filter((x) => x?.name === CHECKOUT_NAME)) await yampi(c, 'DELETE', `store/scripts/${s.id}`);
+  } catch { /* sem script de checkout */ }
   await admin.from('yampi_connections')
     .update({ script_id: null, script_gate: false, script_updated_at: new Date().toISOString() })
     .eq('store_id', c.store_id);
