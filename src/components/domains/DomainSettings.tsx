@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,35 @@ type DomainInfo = {
   ipv4: string;
   verification: { type: string; domain: string; value: string }[];
 };
+
+const URL_KEYS = ["store_url", "url", "website", "site_url", "shop_url", "primary_domain", "custom_domain", "store_domain", "domain"];
+
+function toHost(raw: string): string {
+  return String(raw || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .split(/[/?#]/)[0]
+    .replace(/:\d+$/, "");
+}
+
+async function loadRootDomain(storeId: string): Promise<string> {
+  for (const col of ["id", "store_id"]) {
+    try {
+      const { data, error } = await supabase.from("stores").select("*").eq(col, storeId).limit(1).maybeSingle();
+      if (error || !data) continue;
+      const row = data as Record<string, unknown>;
+      for (const k of URL_KEYS) {
+        const h = toHost(String(row[k] ?? ""));
+        if (h && h.includes(".")) return h;
+      }
+    } catch {
+      /* tenta a proxima coluna */
+    }
+  }
+  return "";
+}
 
 async function callApi(body: Record<string, unknown>): Promise<DomainInfo[]> {
   const { data } = await supabase.auth.getSession();
@@ -31,6 +60,8 @@ export default function DomainSettings({ storeId }: { storeId: string }) {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [root, setRoot] = useState("");
+  const [fullMode, setFullMode] = useState(false);
 
   const run = useCallback(
     async (body: Record<string, unknown>) => {
@@ -51,38 +82,76 @@ export default function DomainSettings({ storeId }: { storeId: string }) {
     run({ action: "list" });
   }, [run]);
 
+  useEffect(() => {
+    let alive = true;
+    loadRootDomain(storeId).then((h) => alive && setRoot(h));
+    return () => {
+      alive = false;
+    };
+  }, [storeId]);
+
+  const useSub = !!root && !fullMode;
+
+  let sub = toHost(input);
+  if (useSub && sub.endsWith("." + root)) sub = sub.slice(0, -(root.length + 1));
+  sub = sub.replace(/[^a-z0-9-]/g, "").replace(/^-+|-+$/g, "");
+
+  const full = useSub ? (sub ? `${sub}.${root}` : "") : toHost(input);
+  const valid = useSub ? sub.length > 0 : /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(full);
+
+  const add = async () => {
+    if (!valid || busy) return;
+    await run({ action: "add", domain: full });
+    setInput("");
+  };
+
   return (
     <div className="space-y-4 max-w-2xl">
       <div>
         <h2 className="text-lg font-semibold">Meu domínio</h2>
-        <p className="text-sm text-muted-foreground">Publique suas páginas no seu próprio domínio ou subdomínio.</p>
+        <p className="text-sm text-muted-foreground">
+          {useSub
+            ? `Digite só o subdomínio. Ele fica dentro do domínio da sua loja (${root}).`
+            : "Publique suas páginas no seu próprio domínio ou subdomínio."}
+        </p>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={async (e) => {
+          onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
-              if (!input.trim() || busy) return;
-              await run({ action: "add", domain: input });
-              setInput("");
+              add();
             }
           }}
-          placeholder="promo.minhaloja.com.br"
+          placeholder={useSub ? "black" : "promo.minhaloja.com.br"}
         />
-        <Button
-          type="button"
-          disabled={busy || !input.trim()}
-          onClick={async () => {
-            await run({ action: "add", domain: input });
-            setInput("");
-          }}
-        >
+        {useSub && <span className="text-sm text-muted-foreground whitespace-nowrap">.{root}</span>}
+        <Button type="button" disabled={busy || !valid} onClick={add}>
           Adicionar
         </Button>
       </div>
+
+      {useSub && full && (
+        <p className="text-xs text-muted-foreground">
+          Suas páginas do Builder ficarão em <span className="font-mono">{full}/nome-da-pagina</span>
+        </p>
+      )}
+
+      {root && (
+        <button
+          type="button"
+          className="text-xs text-muted-foreground underline"
+          onClick={() => {
+            setFullMode((v) => !v);
+            setInput("");
+          }}
+        >
+          {fullMode ? `Voltar a usar ${root}` : "Usar outro domínio"}
+        </button>
+      )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -149,4 +218,3 @@ export default function DomainSettings({ storeId }: { storeId: string }) {
     </div>
   );
 }
-
