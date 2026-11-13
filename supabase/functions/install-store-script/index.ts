@@ -73,7 +73,31 @@ async function installCheckout(c: Conn, content: string) {
     tried.push(e instanceof Error ? e.message : String(e));
   }
   console.log('install-checkout falhou', JSON.stringify(tried));
-  return { page: null, id: null, tried };
+  let scripts: unknown = null;
+  let probe = '';
+  try {
+    scripts = (await listScripts(c)).map((s) => ({ id: s.id, name: s.name, page: s.page, active: s.active }));
+  } catch (e) {
+    scripts = e instanceof Error ? e.message : String(e);
+  }
+  try {
+    const r = await fetch(`${API}/${encodeURIComponent(c.alias)}/store/scripts`, {
+      method: 'POST',
+      headers: { 'User-Token': c.user_token, 'User-Secret-Key': c.user_secret, Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'SLL probe', page: 'x', content: '<!-- probe -->', active: false }),
+    });
+    const txt = await r.text();
+    probe = `HTTP ${r.status}: ${txt.slice(0, 1500)}`;
+    if (r.ok) {
+      try {
+        const pid = JSON.parse(txt)?.data?.id;
+        if (pid) await yampi(c, 'DELETE', `store/scripts/${pid}`);
+      } catch { /* sem id */ }
+    }
+  } catch (e) {
+    probe = e instanceof Error ? e.message : String(e);
+  }
+  return { page: null, id: null, tried, scripts, probe };
 }
 
 async function install(c: Conn) {
