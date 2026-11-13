@@ -200,9 +200,17 @@ export class VidlyticsDatabaseService {
     const events = await VidlyticsDatabaseService.fetchActivityEvents(storeId, startDate, endDate);
     const viewMap = new Map<string, number>();
     const clickMap = new Map<string, number>();
+    const seenUniq = new Set<string>();
     events.forEach((e) => {
       if (!e.video_id) return;
-      const m = e.event_type === 'video_view' ? viewMap : clickMap;
+      const isView = e.event_type === 'video_view';
+      const vis = String((e as any).visitor_id || '');
+      if (vis) {
+        const uk = (isView ? 'v' : 'c') + '|' + e.video_id + '|' + vis + '|' + localDay(e.created_at);
+        if (seenUniq.has(uk)) return;
+        seenUniq.add(uk);
+      }
+      const m = isView ? viewMap : clickMap;
       m.set(e.video_id, (m.get(e.video_id) || 0) + 1);
     });
     return rows.map((r: any) => {
