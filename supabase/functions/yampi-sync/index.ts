@@ -31,16 +31,27 @@ async function recordLiveSale(storeId: string, raw: string) {
     const liveId = m ? m[1].toLowerCase() : '';
     const fromLive = /stream_sell/.test(raw) || /live_[0-9a-f]{8}-/i.test(raw);
     console.log('yampi-order', JSON.stringify({ store: storeId, order: orderId, total, live: liveId || null, fromLive, keys: Object.keys(o).slice(0, 40).join(',') }));
-    if (!orderId || !liveId || !fromLive) return;
+    if (!orderId) return;
 
-    const { data: live } = await admin.schema('streamsell').from('lives').select('id').eq('id', liveId).eq('store_id', storeId).maybeSingle();
-    if (!live) { console.warn('yampi-order: live nao pertence a loja', liveId); return; }
+    let live: { id: string } | null = null;
+    if (liveId && fromLive) {
+      const r = await admin.schema('streamsell').from('lives').select('id').eq('id', liveId).eq('store_id', storeId).maybeSingle();
+      live = r.data;
+      if (!live) console.warn('yampi-order: live nao pertence a loja', liveId);
+    }
 
-    const row = { total, module: 'stream_sell', source_id: liveId, status: 'paid' };
     const { data: ex } = await admin.from('sll_conversions').select('id').eq('store_id', storeId).eq('order_id', orderId).maybeSingle();
-    const res = ex
-      ? await admin.from('sll_conversions').update(row).eq('id', ex.id)
-      : await admin.from('sll_conversions').insert({ store_id: storeId, order_id: orderId, ...row });
+    let res: { error: { message: string } | null };
+    if (live) {
+      const row = { total, module: 'stream_sell', source_id: liveId, status: 'paid' };
+      res = ex
+        ? await admin.from('sll_conversions').update(row).eq('id', ex.id)
+        : await admin.from('sll_conversions').insert({ store_id: storeId, order_id: orderId, ...row });
+    } else if (ex) {
+      res = await admin.from('sll_conversions').update(total > 0 ? { status: 'paid', total } : { status: 'paid' }).eq('id', ex.id);
+    } else {
+      res = await admin.from('sll_conversions').insert({ store_id: storeId, order_id: orderId, total, module: 'direct', source_id: null, status: 'paid' });
+    }
     if (res.error) console.error('yampi-order: erro ao gravar', res.error.message);
   } catch (e) {
     console.error('yampi-order: falha', e instanceof Error ? e.message : String(e));
