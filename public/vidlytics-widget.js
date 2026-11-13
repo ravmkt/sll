@@ -4106,7 +4106,23 @@ if (closingVideo) {
     } catch (e) { /* noop */ }
   }
 
-  function renderStoryModal() {
+  function hideSingleArrows() {
+  try {
+    var total = 0;
+    (currentStories || []).forEach(function (s) { total += ((s && s.videos) || []).length; });
+    if (total > 1) return;
+    var list = document.querySelectorAll('.vl-nav-arrow');
+    for (var i = 0; i < list.length; i++) list[i].style.setProperty('display', 'none', 'important');
+  } catch (e) { /* noop */ }
+}
+
+function renderStoryModal() {
+  var r = renderStoryModalBase();
+  hideSingleArrows();
+  return r;
+}
+
+function renderStoryModalBase() {
     renderStoryModalBase();
     hideNavIfSingle();
   }
