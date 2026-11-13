@@ -154,8 +154,8 @@ export function OverviewTab({
         const dateString = dateLimit.toISOString()
 
         const [viewsRes, clicksRes, conversionsRes, socialRes, referralRes] = await Promise.all([
-          supabase.from('tracking_events').select('*', { count: 'exact', head: true }).eq('tenant_id', resolvedStoreId).eq('event_type', 'story_open').gte('created_at', dateString),
-          supabase.from('tracking_events').select('*', { count: 'exact', head: true }).eq('tenant_id', resolvedStoreId).eq('event_type', 'cta_click').gte('created_at', dateString),
+          supabase.from('store_activity_events').select('*', { count: 'exact', head: true }).eq('store_id', resolvedStoreId).eq('event_type', 'story_open').gte('created_at', dateString),
+          supabase.from('store_activity_events').select('*', { count: 'exact', head: true }).eq('store_id', resolvedStoreId).in('event_type', ['cta_click', 'product_click', 'whatsapp_click']).gte('created_at', dateString),
           supabase.from('conversions').select('order_value, status, created_at').eq('store_id', resolvedStoreId).gte('created_at', dateString),
           supabase.from('tracking_events').select('event_type, created_at').eq('tenant_id', resolvedStoreId).in('event_type', ['story_like', 'story_comment']).gte('created_at', dateString),
           supabase.from('referral_rewards').select('amount, created_at').eq('referrer_store_id', resolvedStoreId).eq('status', 'paid').gte('created_at', dateString)
@@ -229,10 +229,7 @@ export function OverviewTab({
         }
 
         const { data: rawEvents } = await supabase
-          .from('tracking_events')
-          .select('created_at, event_type')
-          .eq('tenant_id', resolvedStoreId)
-          .in('event_type', ['story_open', 'cta_click'])
+          .from('store_activity_events')$1.select('created_at, event_type')$2.eq('store_id', resolvedStoreId)$3.in('event_type', ['story_open', 'cta_click', 'product_click', 'whatsapp_click'])
           .gte('created_at', dateString)
           .order('created_at', { ascending: true })
 
@@ -242,7 +239,7 @@ export function OverviewTab({
             if (perfDayMap[label]) {
               if (ev.event_type === 'story_open') {
                 perfDayMap[label].views += 1
-              } else if (ev.event_type === 'cta_click') {
+              } else if (['cta_click', 'product_click', 'whatsapp_click'].includes(ev.event_type)) {
                 perfDayMap[label].clicks += 1
               }
             }
