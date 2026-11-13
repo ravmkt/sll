@@ -190,6 +190,8 @@ export const createDefaultGridMobileConfig = (): GridConfig => ({
 
 // ──────────────────── Modal ────────────────────
 export const createDefaultModalConfig = (): ModalConfig & Record<string, any> => ({
+  overlay_opacity: 90,
+  start_with_sound: false,
   show_title: true,
   show_play_button: true,
   show_product: true,

@@ -241,6 +241,8 @@ export type AppearanceBase = {
   modal_show_product_button?: boolean;
   modal_hide_stories?: boolean;
   modal_shadow_enabled?: boolean;
+  modal_overlay_opacity?: number;
+  modal_start_with_sound?: boolean;
   modal_border_color?: string;
   modal_border_width?: string | number;
   modal_border_radius?: string | number;

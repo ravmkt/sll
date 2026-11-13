@@ -53,6 +53,8 @@ const createDefaultDeviceConfig = () => ({
   modal_show_like_button: true,
   modal_show_comment_button: true,
   modal_show_share_button: true,
+  modal_overlay_opacity: 90,
+  modal_start_with_sound: false,
   modal_show_product: true,
 });
 

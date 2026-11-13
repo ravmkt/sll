@@ -1710,6 +1710,21 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         <CheckboxField label="Exibir botão Like (Curtir)" checked={getC('modal_show_like_button') !== false} onChange={(v: boolean) => setC('modal_show_like_button', v)} />
                         <CheckboxField label="Exibir botão de Comentários" checked={getC('modal_show_comment_button') !== false} onChange={(v: boolean) => setC('modal_show_comment_button', v)} />
                         <CheckboxField label="Exibir botão de Compartilhar" checked={getC('modal_show_share_button') !== false} onChange={(v: boolean) => setC('modal_show_share_button', v)} />
+                        <div className="space-y-1 pt-3">
+                          <label className="text-sm font-medium">
+                            {'Escurecimento do fundo do player: '}{Number(getC('modal_overlay_opacity') || 90)}%
+                          </label>
+                          <input
+                            type="range"
+                            min={10}
+                            max={100}
+                            step={5}
+                            className="w-full"
+                            value={Number(getC('modal_overlay_opacity') || 90)}
+                            onChange={(e) => setC('modal_overlay_opacity', Number(e.target.value))}
+                          />
+                        </div>
+                        <CheckboxField label={'Abrir o v\u00eddeo com \u00e1udio ligado'} checked={getC('modal_start_with_sound') === true} onChange={(v: boolean) => setC('modal_start_with_sound', v)} />
                       </div>
                     </Accordion>
 
