@@ -60,7 +60,7 @@ export default async function handler(req, res) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader(
       'Content-Security-Policy',
-      `default-src 'none'; img-src https: data:; media-src https:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-src https://www.youtube.com; connect-src ${base}; form-action 'none'; base-uri 'none'`
+      `default-src 'none'; img-src https: data:; media-src https:; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://app.sllhub.com.br; frame-src https://www.youtube.com; connect-src ${base}; form-action 'none'; base-uri 'none'`
     );
     res.send(html);
   } catch {
