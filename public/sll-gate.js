@@ -63,6 +63,7 @@
 
   function decide(g) {
     if (!g || g.state !== "active") return done();
+    if (g.starts_at && Date.now() < new Date(g.starts_at).getTime()) return done();
     if (g.ends_at && Date.now() >= new Date(g.ends_at).getTime()) return done();
     if (g.exclude_bots && BOT.test(navigator.userAgent)) return done();
 
@@ -86,7 +87,7 @@
     location.replace(target.toString());
   }
 
-  var cached = readCache();
+  var cached = readCache() || window.__sllGateCfg || null;
   if (cached) {
     decide(cached);
     fetchStatus().catch(function () {});

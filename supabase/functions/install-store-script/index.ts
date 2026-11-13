@@ -40,9 +40,31 @@ async function hasActiveGate(storeId: string) {
   return (data?.length ?? 0) > 0;
 }
 
-function buildContent(storeId: string, gate: boolean, token: string) {
+async function gateConfigJson(storeId: string): Promise<string> {
+  try {
+    const { data } = await admin.schema('pulse').from('gates')
+      .select('id,gate_url,starts_at,ends_at,exclude_bots,preserve_params,bypass_param')
+      .eq('store_id', storeId)
+      .eq('enabled', true)
+      .order('starts_at', { ascending: false })
+      .limit(5);
+    const now = Date.now();
+    const g = (data || []).find((x: any) => new Date(x.ends_at).getTime() > now);
+    if (!g) return '';
+    return JSON.stringify({
+      state: 'active', gate_id: g.id, gate_url: g.gate_url, starts_at: g.starts_at, ends_at: g.ends_at,
+      exclude_bots: g.exclude_bots, preserve_params: g.preserve_params, bypass_param: g.bypass_param,
+    }).replace(/</g, '\\u003c');
+  } catch {
+    return '';
+  }
+}
+
+function buildContent(storeId: string, gate: boolean, token: string, cfg = '') {
   const loader = `<script async src="${HUB}/sll-loader.js" data-store-id="${storeId}"${token ? ` data-token="${token}"` : ""}></script>`;
-  return gate ? `<script src="${HUB}/sll-gate.js"></script>\n${loader}` : loader;
+  if (!gate) return loader;
+  const pre = cfg ? `<script>window.__sllGateCfg=${cfg};</script>\n` : '';
+  return `${pre}<script src="${HUB}/sll-gate.js"></script>\n${loader}`;
 }
 
 async function listScripts(c: Conn): Promise<any[]> {
@@ -102,9 +124,10 @@ async function installCheckout(c: Conn, content: string) {
 
 async function install(c: Conn) {
   const gate = await hasActiveGate(c.store_id);
+  const gateCfg = gate ? await gateConfigJson(c.store_id) : '';
   const { data: stRow } = await admin.from('stores').select('security_token').eq('id', c.store_id).maybeSingle();
   const token = String(stRow?.security_token ?? '').replace(/[^\w-]/g, '');
-  const payload = { name: SCRIPT_NAME, page: 'all', content: buildContent(c.store_id, gate, token), active: true };
+  const payload = { name: SCRIPT_NAME, page: 'all', content: buildContent(c.store_id, gate, token, gateCfg), active: true };
   let id: number | null = c.script_id;
   if (id) {
     const r = await yampi(c, 'PUT', `store/scripts/${id}`, payload);
