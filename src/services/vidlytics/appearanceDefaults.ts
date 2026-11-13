@@ -197,6 +197,8 @@ export const createDefaultModalConfig = (): ModalConfig & Record<string, any> =>
   info_card_link: '',
   info_card_bg: '#0094EB',
   info_card_color: '#FFFFFF',
+  info_card_glow: false,
+  info_card_anim: false,
   show_title: true,
   show_play_button: true,
   show_product: true,

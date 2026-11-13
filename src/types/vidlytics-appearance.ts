@@ -248,6 +248,8 @@ export type AppearanceBase = {
   modal_info_card_link?: string;
   modal_info_card_bg?: string;
   modal_info_card_color?: string;
+  modal_info_card_glow?: boolean;
+  modal_info_card_anim?: boolean;
   modal_border_color?: string;
   modal_border_width?: string | number;
   modal_border_radius?: string | number;

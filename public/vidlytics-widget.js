@@ -129,7 +129,7 @@ function ensureModalStylesInLightDOM(appearance) {
 }
 
   function readInfoCard(a) {
-    var o = { on: false, text: '', link: '', bg: '#0094EB', color: '#FFFFFF' };
+    var o = { on: false, text: '', link: '', bg: '#0094EB', color: '#FFFFFF', glow: false, anim: false };
     try {
       var en = readConfigValue(a, 'modal_config', 'info_card_enabled', 'modal_info_card_enabled', false);
       o.on = (en === true || en === 'true' || en === 1 || en === '1');
@@ -141,6 +141,10 @@ function ensureModalStylesInLightDOM(appearance) {
       if (bg) o.bg = String(bg);
       var fc = readConfigValue(a, 'modal_config', 'info_card_color', 'modal_info_card_color', '');
       if (fc) o.color = String(fc);
+      var gl = readConfigValue(a, 'modal_config', 'info_card_glow', 'modal_info_card_glow', false);
+      o.glow = (gl === true || gl === 'true' || gl === 1 || gl === '1');
+      var an = readConfigValue(a, 'modal_config', 'info_card_anim', 'modal_info_card_anim', false);
+      o.anim = (an === true || an === 'true' || an === 1 || an === '1');
     } catch (e) { /* noop */ }
     return o;
   }
@@ -170,6 +174,18 @@ function ensureModalStylesInLightDOM(appearance) {
     el.style.cssText = 'position:absolute;left:12px;right:12px;bottom:12px;z-index:70;padding:10px 14px;border-radius:12px;text-align:center;font-size:14px;font-weight:600;line-height:1.3;text-decoration:none;box-sizing:border-box;box-shadow:0 4px 14px rgba(0,0,0,.35);' + (href ? 'cursor:pointer;' : '');
     el.style.background = c.bg;
     el.style.color = c.color;
+    if (c.glow) { el.style.setProperty('box-shadow', '0 0 22px 6px ' + c.bg + ', 0 4px 14px rgba(0,0,0,.35)', 'important'); }
+    if (c.anim) {
+      var _rt = host.getRootNode ? host.getRootNode() : document;
+      var _tg = (_rt && _rt.host) ? _rt : document.head;
+      if (!_tg.querySelector('#vl-info-anim')) {
+        var _s = document.createElement('style');
+        _s.id = 'vl-info-anim';
+        _s.textContent = '@keyframes vl-info-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}';
+        _tg.appendChild(_s);
+      }
+      el.style.animation = 'vl-info-pulse 1.6s ease-in-out infinite';
+    }
     el.onclick = function (e) { e.stopPropagation(); };
     host.appendChild(el);
   }

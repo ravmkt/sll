@@ -846,6 +846,8 @@ const normalizeTableItemForClient = <T extends Record<string, any>>(
     if (dk.info_card_link !== undefined && dk.info_card_link !== null) appearance.modal_info_card_link = String(dk.info_card_link);
     if (dk.info_card_bg) appearance.modal_info_card_bg = String(dk.info_card_bg);
     if (dk.info_card_color) appearance.modal_info_card_color = String(dk.info_card_color);
+  if (dk.info_card_glow !== undefined) appearance.modal_info_card_glow = dk.info_card_glow === true || dk.info_card_glow === 'true';
+  if (dk.info_card_anim !== undefined) appearance.modal_info_card_anim = dk.info_card_anim === true || dk.info_card_anim === 'true';
     }
   } catch { /* mantem os padroes */ }
 
@@ -888,6 +890,8 @@ const sanitizeTablePayload = <T extends Record<string, any>>(
     if (ni.modal_info_card_link !== undefined && ni.modal_info_card_link !== null) cur.info_card_link = String(ni.modal_info_card_link);
     if (ni.modal_info_card_bg) cur.info_card_bg = String(ni.modal_info_card_bg);
     if (ni.modal_info_card_color) cur.info_card_color = String(ni.modal_info_card_color);
+  if (ni.modal_info_card_glow !== undefined) cur.info_card_glow = ni.modal_info_card_glow === true || ni.modal_info_card_glow === 'true';
+  if (ni.modal_info_card_anim !== undefined) cur.info_card_anim = ni.modal_info_card_anim === true || ni.modal_info_card_anim === 'true';
         mc[dev] = cur;
       }
       ni.modal_config = mc;

@@ -576,7 +576,7 @@ const ModalPlayerPreview = ({ playerConfig, primaryColor, isMobile = false }: { 
 
         {(pc as any).info_card_enabled && (pc as any).info_card_text && (
           <div className="relative z-20 px-3 pb-2">
-            <div className="rounded-xl px-3 py-2 text-center text-xs font-semibold shadow-lg" style={{ background: (pc as any).info_card_bg || '#0094EB', color: (pc as any).info_card_color || '#FFFFFF' }}>
+            <div className={'rounded-xl px-3 py-2 text-center text-xs font-semibold shadow-lg' + ((pc as any).info_card_anim ? ' animate-pulse' : '')} style={{ background: (pc as any).info_card_bg || '#0094EB', color: (pc as any).info_card_color || '#FFFFFF', boxShadow: (pc as any).info_card_glow ? ('0 0 22px 6px ' + ((pc as any).info_card_bg || '#0094EB')) : undefined }}>
               {(pc as any).info_card_text}
             </div>
           </div>
@@ -898,6 +898,8 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
         info_card_text: getC('modal_info_card_text') || '',
         info_card_bg: getC('modal_info_card_bg') || '#0094EB',
         info_card_color: getC('modal_info_card_color') || '#FFFFFF',
+        info_card_glow: getC('modal_info_card_glow') === true,
+        info_card_anim: getC('modal_info_card_anim') === true,
     show_title: getC('modal_show_title') !== false,
     title_text: getC('modal_title_text') ?? 'Título do vídeo',
     title_font_size: getC('modal_title_font_size') ?? 14,
@@ -1700,8 +1702,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 {/* ABA PLAYER (MODAL) */}
                 {activeTab === 'player' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    {previewDevice === 'desktop' && (
-<Accordion title="1. Bordas" isOpen={openAccordion === '1. Bordas' || openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Bordas')}>
+                    <Accordion title="1. Bordas" isOpen={openAccordion === '1. Bordas' || openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Bordas')}>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Cor da Borda" className="col-span-2">
                           <ColorInput value={getC('modal_border_color') || '#0094EB'} onChange={(v: string) => setC('modal_border_color', v)} />
@@ -1714,7 +1715,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         </FormField>
                       </div>
                     </Accordion>
-)}
 
                     <Accordion title="2. Elementos Visíveis" isOpen={openAccordion === '2. Elementos Visíveis'} onClick={() => toggleAccordion('2. Elementos Visíveis')}>
                       <div className="flex flex-col">
@@ -1765,56 +1765,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                                 <ColorInput value={getC('modal_info_card_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_info_card_color', v)} />
                               </FormField>
                             </div>
+                            <CheckboxField label={'Glow (brilho atr\u00e1s do card)'} checked={getC('modal_info_card_glow') === true} onChange={(v: boolean) => setC('modal_info_card_glow', v)} />
+                            <CheckboxField label={'Anima\u00e7\u00e3o (card pulsando)'} checked={getC('modal_info_card_anim') === true} onChange={(v: boolean) => setC('modal_info_card_anim', v)} />
                           </div>
                         )}
-                        <div className="space-y-3 pt-3 mt-3 border-t border-slate-100 dark:border-slate-800">
-                          <div className="text-sm font-semibold">Borda do player</div>
-                          <div className="space-y-1">
-                            <label className="text-sm font-medium">
-                              {'Espessura: '}{modalBorderNum('modal_border_width', 2)}px
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={10}
-                              step={1}
-                              className="w-full"
-                              value={modalBorderNum('modal_border_width', 2)}
-                              onChange={(e) => setC('modal_border_width', String(e.target.value))}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-sm font-medium">
-                              {'Raio: '}{modalBorderNum('modal_border_radius', 12)}px
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={40}
-                              step={1}
-                              className="w-full"
-                              value={modalBorderNum('modal_border_radius', 12)}
-                              onChange={(e) => setC('modal_border_radius', String(e.target.value))}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-sm font-medium">Cor</label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="color"
-                                className="h-9 w-12 cursor-pointer rounded border border-slate-200"
-                                value={modalBorderColor()}
-                                onChange={(e) => setC('modal_border_color', e.target.value)}
-                              />
-                              <input
-                                type="text"
-                                className={inputClass}
-                                value={String(getC('modal_border_color') || modalBorderColor())}
-                                onChange={(e) => setC('modal_border_color', e.target.value)}
-                              />
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </Accordion>
 
