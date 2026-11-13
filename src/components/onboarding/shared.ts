@@ -42,8 +42,8 @@ export function youtubeId(v: string): string | null {
   const m = t.match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/)([\w-]{11})/);
   return m ? m[1] : null;
 }
-export const sllSnippet = (storeId: string) =>
-  `<script async src="${window.location.origin}/sll-loader.js" data-store-id="${storeId}"></script>`;
+export const sllSnippet = (storeId: string, token?: string) =>
+  `<script async src="${window.location.origin}/sll-loader.js" data-store-id="${storeId}"${token ? ` data-token="${token}"` : ''}></script>`;
 
 export function validateStore(d: WizardData): string | null {
   if (!normalizeUrl(d.store_url)) return 'Informe a URL da sua loja (ex.: www.sualoja.com.br).';

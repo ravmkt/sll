@@ -17,7 +17,8 @@ const GTM_STEPS: [string, string][] = [
   ['Publique', 'Clique em Enviar e depois em Publicar. Em seguida, volte aqui e use o botão Testar conexão.'],
 ];
 
-function YampiBox({ storeId }: { storeId: string }) {
+function YampiBox({ storeId, onInstalled }: { storeId: string; onInstalled: () => void }) {
+  const [inst, setInst] = useState<'idle' | 'ok' | 'fail'>('idle');
   const [connected, setConnected] = useState(false);
   const [alias, setAlias] = useState('');
   const [token, setToken] = useState('');
@@ -27,7 +28,7 @@ function YampiBox({ storeId }: { storeId: string }) {
 
   useEffect(() => {
     let alive = true;
-    getYampiStatus(storeId).then((s) => { if (!alive) return; setConnected(!!s.connected); if (s.alias) setAlias(s.alias); }).catch(() => { /* sem status */ });
+    getYampiStatus(storeId).then((s) => { if (!alive) return; setConnected(!!s.connected); if (s.connected) sb.functions.invoke('install-store-script', { body: { action: 'refresh', store_id: storeId } }).catch(() => { /* sem script */ }); if (s.alias) setAlias(s.alias); }).catch(() => { /* sem status */ });
     return () => { alive = false; };
   }, [storeId]);
 
@@ -38,6 +39,8 @@ function YampiBox({ storeId }: { storeId: string }) {
       await saveYampiCredentials(storeId, alias.trim(), token.trim(), secret.trim());
       setConnected(true); setToken(''); setSecret('');
       registerYampiWebhook(storeId).catch(() => { /* o cron cobre */ });
+          const r = await sb.functions.invoke('install-store-script', { body: { action: 'install', store_id: storeId } });
+          if (r.error) setInst('fail'); else { setInst('ok'); onInstalled(); }
     } catch (e: any) { setErr(e?.message || 'Não foi possível conectar a Yampi.'); }
     setBusy(false);
   };
@@ -50,6 +53,8 @@ function YampiBox({ storeId }: { storeId: string }) {
         {connected && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-700"><CheckCircle2 size={11} /> Conectada</span>}
       </div>
       <p className="mt-1 text-xs text-slate-500">Importe produtos e sincronize pedidos. Use as credenciais de API do painel da Yampi.</p>
+          {inst === 'ok' && <p className="mt-2 text-xs font-semibold text-emerald-700">Script do SLL instalado automaticamente na Yampi. Nada mais a fazer.</p>}
+          {inst === 'fail' && <p className="mt-2 text-xs font-semibold text-amber-700">Yampi conectada, mas o script nao foi instalado. Use GTM ou insercao manual.</p>}
       {!connected && (
         <div className="mt-3 space-y-3">
           <div className="grid gap-3 sm:grid-cols-3">
@@ -71,7 +76,12 @@ export function StepConnection({ data, storeId, onChange }: StepProps) {
   const [copied, setCopied] = useState(false);
   const [testing, setTesting] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const snippet = sllSnippet(storeId);
+  const [snipToken, setSnipToken] = useState('');
+  useEffect(() => {
+    sb.from('stores').select('security_token').eq('id', storeId).maybeSingle()
+      .then((r: any) => setSnipToken(r?.data?.security_token ?? ''));
+  }, [storeId]);
+  const snippet = sllSnippet(storeId, snipToken);
   const method = data.connection_method;
 
   const copy = async () => {
@@ -178,7 +188,7 @@ export function StepConnection({ data, storeId, onChange }: StepProps) {
 
       <div className="pt-3">
         <span className={LABEL}>Integrações</span>
-        <YampiBox storeId={storeId} />
+        <YampiBox storeId={storeId} onInstalled={() => onChange({ connection_method: 'yampi' })} />
       </div>
     </div>
   );

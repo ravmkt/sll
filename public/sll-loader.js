@@ -3,7 +3,7 @@
   if (window.__SLL_LOADER_INITIALIZED__) return;
   window.__SLL_LOADER_INITIALIZED__ = true;
 
-  var LOADER_VERSION = "1.1.0";
+  var LOADER_VERSION = "1.2.0";
   var SUPABASE_URL = "https://flivmllysdhaydhogmhg.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_fYM4F5uRs_8DbYF7ozy0hA_eA_Z5XUz";
 
@@ -101,6 +101,18 @@
     s.setAttribute("data-store-id", storeId);
     s.onerror = function() { ping("script_load_failed:" + scriptName); };
     document.head.appendChild(s);
+  }
+
+  // Rastreamento de vendas: so carrega na pagina de confirmacao do pedido
+  var trackToken = currentScript ? currentScript.getAttribute("data-token") : null;
+  if (!trackToken && window.SLL_TOKEN) trackToken = window.SLL_TOKEN;
+  if (trackToken && !document.getElementById("sll-script-tracking") &&
+      /(finalization|obrigado|thank[-_]?you|order-received|order-confirmation|checkout\/success|pedido-confirmado)/i.test(window.location.pathname)) {
+    var ts = document.createElement("script");
+    ts.id = "sll-script-tracking";
+    ts.async = true;
+    ts.src = (baseUrl ? baseUrl + "/" : "/") + "sll-tracking.js?store=" + encodeURIComponent(storeId) + "&token=" + encodeURIComponent(trackToken);
+    document.head.appendChild(ts);
   }
 
   // Consulta modulos ativos via RPC segura

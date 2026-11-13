@@ -96,9 +96,10 @@ window.SLL_STORE_ID = "${storeId || ""}";
 <script
   src="${publicUrl}/sll-loader.js"
   data-store-id="${storeId || ""}"
-  async
+      ${securityToken ? `data-token="${securityToken}"` : ""}
+      async
 ></script>`;
-  }, [storeId, publicUrl]);
+  }, [storeId, publicUrl, securityToken]);
 
   const trackingScriptCode = useMemo(() => {
     return `<script>

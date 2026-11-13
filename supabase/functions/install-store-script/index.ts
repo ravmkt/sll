@@ -38,14 +38,16 @@ async function hasActiveGate(storeId: string) {
   return (data?.length ?? 0) > 0;
 }
 
-function buildContent(storeId: string, gate: boolean) {
-  const loader = `<script async src="${HUB}/sll-loader.js" data-store-id="${storeId}"></script>`;
+function buildContent(storeId: string, gate: boolean, token: string) {
+  const loader = `<script async src="${HUB}/sll-loader.js" data-store-id="${storeId}"${token ? ` data-token="${token}"` : '}></script>`;
   return gate ? `<script src="${HUB}/sll-gate.js"></script>\n${loader}` : loader;
 }
 
 async function install(c: Conn) {
   const gate = await hasActiveGate(c.store_id);
-  const payload = { name: SCRIPT_NAME, page: 'all', content: buildContent(c.store_id, gate), active: true };
+  const { data: stRow } = await admin.from('stores').select('security_token').eq('id', c.store_id).maybeSingle();
+  const token = String(stRow?.security_token ?? '').replace(/[^\w-]/g, '');
+  const payload = { name: SCRIPT_NAME, page: 'all', content: buildContent(c.store_id, gate, token), active: true };
   let id: number | null = c.script_id;
   if (id) {
     const r = await yampi(c, 'PUT', `store/scripts/${id}`, payload);
