@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
     video_id: uuidOrNull(b.videoId),
     product_id: uuidOrNull(b.productId),
     session_id: typeof b.sessionId === 'string' ? b.sessionId.slice(0, 100) : null,
+        visitor_id: typeof b.visitorId === 'string' && b.visitorId ? b.visitorId.slice(0, 100) : null,
     watch_second: watch,
     metadata: {
       browser: (req.headers.get('user-agent') || '').slice(0, 300),

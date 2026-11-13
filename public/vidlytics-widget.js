@@ -2862,6 +2862,17 @@ function generateSessionId() {
   });
 }
 
+function vlGetVisitorId() {
+  try {
+    var v = localStorage.getItem('vly_visitor_id');
+    if (!v) {
+      v = 'vly_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+      localStorage.setItem('vly_visitor_id', v);
+    }
+    return v;
+  } catch (err) { return null; }
+}
+
 function sendAnalyticsEvent(eventType, videoId, productId, extraData) {
   if (!storeId || !supabaseUrl || !supabaseAnonKey) return;
 
@@ -2939,6 +2950,7 @@ var payload = {
   storyId: cleanStoryId,
   pageUrl: resolvedPageUrl,
   deviceType: resolvedDevice,
+  visitorId: vlGetVisitorId(),
   pagePath: resolvedPath,
   sessionId: (extraData && extraData.sessionId) || null,
   watchSecond: (extraData && typeof extraData.watchSecond === 'number') ? extraData.watchSecond : vlClickSecond(String(eventType).trim(), cleanVideoId)

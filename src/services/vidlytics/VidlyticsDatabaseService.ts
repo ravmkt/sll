@@ -221,7 +221,7 @@ export class VidlyticsDatabaseService {
     for (let from = 0; ; from += page) {
       const { data, error } = await supabase
         .from('store_activity_events')
-        .select('event_type, video_id, created_at')
+        .select('event_type, video_id, created_at, visitor_id')
         .eq('store_id', storeId)
         .in('event_type', ['video_view', 'product_click', 'whatsapp_click', 'cta_click'])
         .gte('created_at', startDate)
@@ -280,10 +280,18 @@ export class VidlyticsDatabaseService {
     let totalClicks = 0;
     const series = new Map<string, any>();
     base.dailySeries.forEach((p: any) => series.set(p.date, { ...p, views: 0, clicks: 0 }));
+    const seenUniq = new Set<string>();
     events.forEach((e) => {
       const d = localDay(e.created_at);
       const p = series.get(d) || { date: d, views: 0, clicks: 0, likes: 0, ctr: 0 };
-      if (e.event_type === 'video_view') { p.views += 1; totalViews += 1; } else if (/click/i.test(String(e.event_type))) { p.clicks += 1; totalClicks += 1; }
+      const vis = String((e as any).visitor_id || '');
+          const kind = e.event_type === 'video_view' ? 'v' : (/click/i.test(String(e.event_type)) ? 'c' : '');
+          if (kind && vis) {
+            const uk = kind + '|' + String((e as any).video_id || '') + '|' + vis + '|' + d;
+            if (seenUniq.has(uk)) return;
+            seenUniq.add(uk);
+          }
+          if (e.event_type === 'video_view') { p.views += 1; totalViews += 1; } else if (/click/i.test(String(e.event_type))) { p.clicks += 1; totalClicks += 1; }
       series.set(d, p);
     });
     const dailySeries = Array.from(series.values())
