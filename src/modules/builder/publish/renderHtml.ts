@@ -56,7 +56,11 @@ export function renderPageHtml(
   const fitJs = fit ? '<script>' + [
     '(function(){',
     'var MIN=' + fitPct / 100 + ';',
-    'var b=document.body,d=document.documentElement,t;',
+    'var d=document.documentElement,t;',
+    'var b=document.createElement("div");b.id="sll-fit";',
+    'var k=Array.prototype.slice.call(document.body.childNodes);',
+    'for(var i=0;i<k.length;i++){var n=k[i];if(n.nodeType===1&&(n.tagName==="SCRIPT"||n.tagName==="LINK"||n.tagName==="STYLE"||(n.tagName==="A"&&/sllhub/.test(n.href||"")))){continue;}b.appendChild(n);}',
+    'document.body.insertBefore(b,document.body.firstChild);',
     'function fit(){',
     'b.style.zoom="";',
     'if(window.innerWidth<900)return;',
