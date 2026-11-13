@@ -128,6 +128,23 @@ function ensureModalStylesInLightDOM(appearance) {
   document.head.appendChild(style);
 }
 
+  function readModalOpts(a) {
+    var o = { dim: null, sound: false };
+    try {
+      a = a || {};
+      var d = readConfigValue(a, 'modal_config', 'overlay_opacity', 'modal_overlay_opacity', '');
+      if (d !== '' && d !== null && d !== undefined && isFinite(Number(d))) o.dim = Math.min(100, Math.max(0, Number(d)));
+      var s = readConfigValue(a, 'modal_config', 'start_with_sound', 'modal_start_with_sound', false);
+      o.sound = (s === true || s === 'true' || s === 1 || s === '1');
+    } catch (e) { /* usa padrao */ }
+    return o;
+  }
+
+  function storyOpts(i) {
+    try { return readModalOpts(getStoryAppearance(currentStories[i || 0]) || currentAppearance); }
+    catch (e) { return readModalOpts(currentAppearance); }
+  }
+
   function createFullscreenPlayer() {
     if (fsPlayerOverlay) return;
 
@@ -137,11 +154,11 @@ function ensureModalStylesInLightDOM(appearance) {
       var fsStyle = document.createElement('style');
       fsStyle.id = 'vl-fs-player-styles';
       fsStyle.textContent =
-        '.vl-fullscreen-player{position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,.96)!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:0!important;pointer-events:none!important;transition:opacity .3s ease!important;}' +
+        '.vl-fullscreen-player{position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,var(--vl-dim,.96))!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:0!important;pointer-events:none!important;transition:opacity .3s ease!important;}' +
         '.vl-fullscreen-player.vl-active{opacity:1!important;pointer-events:all!important;}' +
         '.vl-fs-close{position:absolute!important;top:18px!important;right:28px!important;width:42px!important;height:42px!important;border:none!important;background:rgba(255,255,255,.12)!important;border-radius:50%!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#fff!important;font-size:28px!important;z-index:20!important;line-height:1!important;transition:background .2s!important;}' +
         '.vl-fs-close:hover{background:rgba(255,255,255,.22)!important;}' +
-        '.vl-fs-container{width:92vw!important;max-width:1200px!important;aspect-ratio:16/9!important;position:relative!important;}' +
+        '.vl-fs-container{width:min(92vw,1200px,calc(88vh * 16 / 9))!important;aspect-ratio:16/9!important;position:relative!important;}' +
         '.vl-fs-container iframe,.vl-fs-container video{width:100%!important;height:100%!important;border:none!important;border-radius:8px!important;}' +
         '.vl-fs-container video{object-fit:contain!important;background:#000!important;}';
       document.head.appendChild(fsStyle);
@@ -194,7 +211,7 @@ function ensureModalStylesInLightDOM(appearance) {
     if (sourceType === 'youtube' || sourceType === 'yt') {
       var ytId = extractYouTubeId(videoUrl);
       if (ytId) {
-        fsPlayerContainer.innerHTML = '<iframe src="https://www.youtube.com/embed/' + ytId + '?autoplay=1&mute=1&enablejsapi=1&rel=0" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>';
+        fsPlayerContainer.innerHTML = '<iframe src="https://www.youtube.com/embed/' + ytId + '?autoplay=1&mute=' + (readModalOpts(currentAppearance).sound ? '0' : '1') + '&enablejsapi=1&rel=0" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>';
       }
     }
     
@@ -225,6 +242,10 @@ function ensureModalStylesInLightDOM(appearance) {
       fsPlayerContainer.innerHTML = '<video src="' + videoUrl + '" controls autoplay playsinline></video>';
     }
 
+    var fo = readModalOpts(currentAppearance);
+    if (fo.dim !== null) fsPlayerOverlay.style.setProperty('--vl-dim', String(fo.dim / 100));
+    var fv = fsPlayerContainer.querySelector('video');
+    if (fv) fv.muted = !fo.sound;
     fsPlayerOverlay.classList.add('vl-active');
   }
 
@@ -4083,7 +4104,8 @@ if (closingVideo) {
     var videos = story.videos || [];
     var video = videos[currentVideoIndex];
     var appearanceConfig = normalizeModalAppearanceConfig(getStoryAppearance(story) || currentAppearance);
-var modalEl = modalContent.classList.contains('vl-modal') ? modalContent : modalContent.closest('.vl-modal');
+try { var _dim = storyOpts(currentStoryIndex).dim; if (_dim !== null && overlay) overlay.style.setProperty('background', 'rgba(0,0,0,' + (_dim / 100) + ')', 'important'); } catch (e) { /* noop */ }
+    var modalEl = modalContent.classList.contains('vl-modal') ? modalContent : modalContent.closest('.vl-modal');
 if (modalEl) {
   var bw = parseInt(appearanceConfig.border_width, 10) || 0;
   var br = parseInt(appearanceConfig.border_radius, 10) || 0;
@@ -4541,6 +4563,7 @@ if (showVerProduto) {
      ================================================================ */
 
 function openStoryModal(storyIndex, videoIndex) {
+  if (!(overlay && overlay.classList.contains('vl-active'))) isUserMuted = !storyOpts(storyIndex).sound;
   if (!currentStories || currentStories.length === 0) return;
   if (storyIndex === undefined || storyIndex === null) storyIndex = 0;
   currentStoryIndex = Math.max(0, Math.min(storyIndex, currentStories.length - 1));
