@@ -223,7 +223,7 @@ export class VidlyticsDatabaseService {
         .from('store_activity_events')
         .select('event_type, video_id, created_at')
         .eq('store_id', storeId)
-        .in('event_type', ['video_view', 'product_click', 'whatsapp_click'])
+        .in('event_type', ['video_view', 'product_click', 'whatsapp_click', 'cta_click'])
         .gte('created_at', startDate)
         .lte('created_at', endTs)
         .order('created_at', { ascending: true })
