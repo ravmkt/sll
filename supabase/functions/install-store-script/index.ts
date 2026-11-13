@@ -60,11 +60,19 @@ async function gateConfigJson(storeId: string): Promise<string> {
   }
 }
 
+let GATE_INLINE = '';
+try {
+  const gr = await fetch(`${HUB}/sll-gate.js`, { headers: { 'Cache-Control': 'no-cache' } });
+  const gs = gr.ok ? await gr.text() : '';
+  if (gs.includes('__sllGate') && !gs.includes('</script')) GATE_INLINE = gs;
+} catch { /* usa o src externo */ }
+
 function buildContent(storeId: string, gate: boolean, token: string, cfg = '') {
   const loader = `<script async src="${HUB}/sll-loader.js" data-store-id="${storeId}"${token ? ` data-token="${token}"` : ""}></script>`;
   if (!gate) return loader;
   const pre = cfg ? `<script>window.__sllGateCfg=${cfg};</script>\n` : '';
-  return `${pre}<script src="${HUB}/sll-gate.js"></script>\n${loader}`;
+  const g = GATE_INLINE ? `<script>${GATE_INLINE}</script>` : `<script src="${HUB}/sll-gate.js"></script>`;
+  return `${pre}${g}\n${loader}`;
 }
 
 async function listScripts(c: Conn): Promise<any[]> {

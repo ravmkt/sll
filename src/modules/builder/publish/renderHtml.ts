@@ -76,6 +76,6 @@ export function renderPageHtml(
   const bgCss = styleToCss(bgStyle(s));
   const pageBgAttr = ' style="' + esc((bgCss ? bgCss + ';' : '') + 'min-height:100%') + '"';
   const pageBgCss = 'html,body{margin:0}body{min-height:100vh;position:relative}' + (bgCss ? 'body{background:transparent}' : '');
-  return '<!doctype html><html lang="pt-BR"' + pageBgAttr + '><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + fullCss + 'html[style*="url("]{background-color:#141414}' + pageBgCss + '</style></head><body>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script>' + fitJs + '' + sllBadgeHtml + '</body></html>';
+  return '<!doctype html><html lang="pt-BR"' + pageBgAttr + '><head><meta charset="utf-8"><link rel="preconnect" href="https://flivmllysdhaydhogmhg.supabase.co" crossorigin><meta name="viewport" content="width=device-width,initial-scale=1">' + seoHead(s, page.title) + '<style>' + CSS + fullCss + 'html[style*="url("]{background-color:#141414}' + pageBgCss + '</style></head><body>' + body + '<script>' + runtime(cfg.apiUrl, cfg.anonKey, page.id, cfg.preview) + '</script>' + fitJs + '' + sllBadgeHtml + '</body></html>';
 }
 
