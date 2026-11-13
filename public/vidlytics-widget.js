@@ -128,6 +128,52 @@ function ensureModalStylesInLightDOM(appearance) {
   document.head.appendChild(style);
 }
 
+  function readInfoCard(a) {
+    var o = { on: false, text: '', link: '', bg: '#0094EB', color: '#FFFFFF' };
+    try {
+      var en = readConfigValue(a, 'modal_config', 'info_card_enabled', 'modal_info_card_enabled', false);
+      o.on = (en === true || en === 'true' || en === 1 || en === '1');
+      var t = readConfigValue(a, 'modal_config', 'info_card_text', 'modal_info_card_text', '');
+      o.text = String(t === undefined || t === null ? '' : t);
+      var l = readConfigValue(a, 'modal_config', 'info_card_link', 'modal_info_card_link', '');
+      o.link = String(l === undefined || l === null ? '' : l);
+      var bg = readConfigValue(a, 'modal_config', 'info_card_bg', 'modal_info_card_bg', '');
+      if (bg) o.bg = String(bg);
+      var fc = readConfigValue(a, 'modal_config', 'info_card_color', 'modal_info_card_color', '');
+      if (fc) o.color = String(fc);
+    } catch (e) { /* noop */ }
+    return o;
+  }
+
+  function safeInfoLink(u) {
+    u = String(u || '').trim();
+    if (!u) return '';
+    if (!/^[a-z][a-z0-9+.\-]*:/i.test(u)) u = 'https://' + u;
+    return /^https?:\/\//i.test(u) ? u : '';
+  }
+
+  function renderInfoCard() {
+    var host = null;
+    if (modalContent) host = modalContent.classList.contains('vl-modal') ? modalContent : (modalContent.closest('.vl-modal') || modalContent);
+    if (!host) return;
+    var olds = host.querySelectorAll('.vl-info-card');
+    for (var i = 0; i < olds.length; i += 1) { if (olds[i].parentNode) olds[i].parentNode.removeChild(olds[i]); }
+    var story = currentStories[currentStoryIndex];
+    if (!story) return;
+    var c = readInfoCard(getStoryAppearance(story) || currentAppearance);
+    if (!c.on || !c.text) return;
+    var href = safeInfoLink(c.link);
+    var el = document.createElement(href ? 'a' : 'div');
+    el.className = 'vl-info-card';
+    if (href) { el.href = href; el.target = '_blank'; el.rel = 'noopener noreferrer'; }
+    el.textContent = c.text;
+    el.style.cssText = 'position:absolute;left:12px;right:12px;bottom:12px;z-index:70;padding:10px 14px;border-radius:12px;text-align:center;font-size:14px;font-weight:600;line-height:1.3;text-decoration:none;box-sizing:border-box;box-shadow:0 4px 14px rgba(0,0,0,.35);' + (href ? 'cursor:pointer;' : '');
+    el.style.background = c.bg;
+    el.style.color = c.color;
+    el.onclick = function (e) { e.stopPropagation(); };
+    host.appendChild(el);
+  }
+
   function readModalOpts(a) {
     var o = { dim: null, sound: false };
     try {
@@ -4119,6 +4165,7 @@ if (closingVideo) {
 function renderStoryModal() {
   var r = renderStoryModalBase();
   hideSingleArrows();
+  try { renderInfoCard(); } catch (e) { /* noop */ }
   return r;
 }
 

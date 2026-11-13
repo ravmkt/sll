@@ -55,6 +55,11 @@ const createDefaultDeviceConfig = () => ({
   modal_show_share_button: true,
   modal_overlay_opacity: 90,
   modal_start_with_sound: false,
+  modal_info_card_enabled: false,
+  modal_info_card_text: '',
+  modal_info_card_link: '',
+  modal_info_card_bg: '#0094EB',
+  modal_info_card_color: '#FFFFFF',
   modal_show_product: true,
 });
 

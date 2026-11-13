@@ -192,6 +192,11 @@ export const createDefaultGridMobileConfig = (): GridConfig => ({
 export const createDefaultModalConfig = (): ModalConfig & Record<string, any> => ({
   overlay_opacity: 90,
   start_with_sound: false,
+  info_card_enabled: false,
+  info_card_text: '',
+  info_card_link: '',
+  info_card_bg: '#0094EB',
+  info_card_color: '#FFFFFF',
   show_title: true,
   show_play_button: true,
   show_product: true,

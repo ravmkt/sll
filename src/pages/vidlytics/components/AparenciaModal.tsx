@@ -574,6 +574,13 @@ const ModalPlayerPreview = ({ playerConfig, primaryColor, isMobile = false }: { 
           </div>
         </div>
 
+        {(pc as any).info_card_enabled && (pc as any).info_card_text && (
+          <div className="relative z-20 px-3 pb-2">
+            <div className="rounded-xl px-3 py-2 text-center text-xs font-semibold shadow-lg" style={{ background: (pc as any).info_card_bg || '#0094EB', color: (pc as any).info_card_color || '#FFFFFF' }}>
+              {(pc as any).info_card_text}
+            </div>
+          </div>
+        )}
         {showProduct && (
           <div className="relative z-20 px-3 pb-3">
             <div className="w-full flex items-center gap-2 overflow-hidden box-border pointer-events-none" style={{ backgroundColor: pc.product_card_bg || '#FFFFFF', border: `${Number(pc.product_card_border_width ?? 1)}px solid ${pc.product_card_border_color || '#E2E8F0'}`, borderRadius: `${Number(pc.product_card_border_radius ?? 12)}px`, padding: '8px' }}>
@@ -887,6 +894,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     border_color: getC('modal_border_color') || formData?.primary_color || '#0094EB',
     border_width: getC('modal_border_width') ?? 2,
     border_radius: getC('modal_border_radius') ?? 16,
+        info_card_enabled: getC('modal_info_card_enabled') === true,
+        info_card_text: getC('modal_info_card_text') || '',
+        info_card_bg: getC('modal_info_card_bg') || '#0094EB',
+        info_card_color: getC('modal_info_card_color') || '#FFFFFF',
     show_title: getC('modal_show_title') !== false,
     title_text: getC('modal_title_text') ?? 'Título do vídeo',
     title_font_size: getC('modal_title_font_size') ?? 14,
@@ -1690,7 +1701,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 {activeTab === 'player' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     {previewDevice === 'desktop' && (
-<Accordion title="1. Borda" isOpen={openAccordion === '1. Borda' || openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Borda')}>
+<Accordion title="1. Bordas" isOpen={openAccordion === '1. Bordas' || openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Bordas')}>
                       <div className="grid grid-cols-2 gap-4">
                         <FormField label="Cor da Borda" className="col-span-2">
                           <ColorInput value={getC('modal_border_color') || '#0094EB'} onChange={(v: string) => setC('modal_border_color', v)} />
@@ -1737,6 +1748,25 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           />
                         </div>
                         <CheckboxField label={'Abrir o v\u00eddeo com \u00e1udio ligado'} checked={getC('modal_start_with_sound') === true} onChange={(v: boolean) => setC('modal_start_with_sound', v)} />
+                        <CheckboxField label={'Card informativo'} checked={getC('modal_info_card_enabled') === true} onChange={(v: boolean) => setC('modal_info_card_enabled', v)} />
+                        {getC('modal_info_card_enabled') === true && (
+                          <div className="p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 space-y-3">
+                            <FormField label={'Texto do card (m\u00e1x. 120 caracteres)'}>
+                              <input type="text" maxLength={120} value={getC('modal_info_card_text') || ''} onChange={e => setC('modal_info_card_text', e.target.value)} className={inputClass} />
+                            </FormField>
+                            <FormField label={'Link (opcional)'}>
+                              <input type="text" placeholder="https://chat.whatsapp.com/..." value={getC('modal_info_card_link') || ''} onChange={e => setC('modal_info_card_link', e.target.value)} className={inputClass} />
+                            </FormField>
+                            <div className="grid grid-cols-2 gap-3">
+                              <FormField label={'Cor do card'}>
+                                <ColorInput value={getC('modal_info_card_bg') || '#0094EB'} onChange={(v: string) => setC('modal_info_card_bg', v)} />
+                              </FormField>
+                              <FormField label={'Cor da fonte'}>
+                                <ColorInput value={getC('modal_info_card_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_info_card_color', v)} />
+                              </FormField>
+                            </div>
+                          </div>
+                        )}
                         <div className="space-y-3 pt-3 mt-3 border-t border-slate-100 dark:border-slate-800">
                           <div className="text-sm font-semibold">Borda do player</div>
                           <div className="space-y-1">

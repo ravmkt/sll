@@ -841,6 +841,11 @@ const normalizeTableItemForClient = <T extends Record<string, any>>(
     }
     if (dk.start_with_sound !== undefined && dk.start_with_sound !== null) {
       appearance.modal_start_with_sound = dk.start_with_sound === true || dk.start_with_sound === 'true';
+    if (dk.info_card_enabled !== undefined) appearance.modal_info_card_enabled = dk.info_card_enabled === true || dk.info_card_enabled === 'true';
+    if (dk.info_card_text !== undefined && dk.info_card_text !== null) appearance.modal_info_card_text = String(dk.info_card_text);
+    if (dk.info_card_link !== undefined && dk.info_card_link !== null) appearance.modal_info_card_link = String(dk.info_card_link);
+    if (dk.info_card_bg) appearance.modal_info_card_bg = String(dk.info_card_bg);
+    if (dk.info_card_color) appearance.modal_info_card_color = String(dk.info_card_color);
     }
   } catch { /* mantem os padroes */ }
 
@@ -878,6 +883,11 @@ const sanitizeTablePayload = <T extends Record<string, any>>(
         const cur = mc[dev] && typeof mc[dev] === 'object' ? { ...mc[dev] } : {};
         if (hasDim) cur.overlay_opacity = Math.min(100, Math.max(0, Number(ni.modal_overlay_opacity)));
         if (hasSnd) cur.start_with_sound = ni.modal_start_with_sound === true || ni.modal_start_with_sound === 'true';
+    if (ni.modal_info_card_enabled !== undefined) cur.info_card_enabled = ni.modal_info_card_enabled === true || ni.modal_info_card_enabled === 'true';
+    if (ni.modal_info_card_text !== undefined && ni.modal_info_card_text !== null) cur.info_card_text = String(ni.modal_info_card_text);
+    if (ni.modal_info_card_link !== undefined && ni.modal_info_card_link !== null) cur.info_card_link = String(ni.modal_info_card_link);
+    if (ni.modal_info_card_bg) cur.info_card_bg = String(ni.modal_info_card_bg);
+    if (ni.modal_info_card_color) cur.info_card_color = String(ni.modal_info_card_color);
         mc[dev] = cur;
       }
       ni.modal_config = mc;

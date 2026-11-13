@@ -243,6 +243,11 @@ export type AppearanceBase = {
   modal_shadow_enabled?: boolean;
   modal_overlay_opacity?: number;
   modal_start_with_sound?: boolean;
+  modal_info_card_enabled?: boolean;
+  modal_info_card_text?: string;
+  modal_info_card_link?: string;
+  modal_info_card_bg?: string;
+  modal_info_card_color?: string;
   modal_border_color?: string;
   modal_border_width?: string | number;
   modal_border_radius?: string | number;
