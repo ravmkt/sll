@@ -18,6 +18,7 @@ const PURPOSES: { key: string; label: string; desc: string; web: boolean }[] = [
   { key: 'insights', label: 'Insights personalizados', desc: 'Recomendações por loja a partir das métricas reais (em breve).', web: false },
   { key: 'feedback', label: 'Feedback pós-live', desc: 'Análise de cada live ao encerrar, comparada às anteriores (em breve).', web: false },
   { key: 'benchmarks', label: 'Benchmarks de mercado', desc: 'Atualização dos benchmarks por setor, com busca na web.', web: true },
+  { key: 'tryon', label: 'Provador Virtual (Try-On)', desc: 'Gera as imagens do provador. Desligada, nenhuma loja consegue gerar.', web: false },
 ];
 
 const CARD = 'rounded-2xl border border-white/10 bg-white/5 p-5';
@@ -135,8 +136,8 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
     return map;
   }, [models]);
 
-  const modelOptions = (current: string) => {
-    const list = models.map((m) => m.model);
+  const modelOptions = (current: string, purpose = '') => {
+    const list = models.map((m) => m.model).filter((x) => (purpose === 'tryon') === x.includes('image'));
     if (current && !list.includes(current)) list.unshift(current);
     return list;
   };
@@ -248,7 +249,7 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-        {[['support', 'feedback'], ['insights', 'benchmarks']].map((keys, ci) => (
+        {[['support', 'feedback'], ['insights', 'benchmarks', 'tryon']].map((keys, ci) => (
         <div key={ci} className="space-y-4">
         {PURPOSES.filter((p) => keys.includes(p.key)).map((p) => {
           const d = draft[p.key];
@@ -271,13 +272,13 @@ export default function IaTab({ range }: { range: { from: Date; to: Date } }) {
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="space-y-1 text-xs text-slate-400">Modelo principal
                   <select className={INPUT} value={d.model} onChange={(e) => set(p.key, { model: e.target.value })}>
-                    {modelOptions(d.model).map((m) => <option key={m} value={m} className="text-black">{m}</option>)}
+                    {modelOptions(d.model, p.key).map((m) => <option key={m} value={m} className="text-black">{m}</option>)}
                   </select>
                 </label>
                 <label className="space-y-1 text-xs text-slate-400">{"Modelo de reserva (opcional)"}
                   <select className={INPUT} value={d.fallback_model} onChange={(e) => set(p.key, { fallback_model: e.target.value })}>
                     <option value="" className="text-black">{"Nenhum"}</option>
-                    {modelOptions(d.fallback_model).map((m) => <option key={m} value={m} className="text-black">{m}</option>)}
+                    {modelOptions(d.fallback_model, p.key).map((m) => <option key={m} value={m} className="text-black">{m}</option>)}
                   </select>
                 </label>
               </div>
