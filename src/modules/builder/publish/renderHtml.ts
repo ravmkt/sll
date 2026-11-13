@@ -32,7 +32,7 @@ document.querySelectorAll('[data-cd]').forEach(function(el){var end=new Date(el.
 document.querySelectorAll('[data-sll-form]').forEach(function(f){f.addEventListener('submit',function(e){e.preventDefault();
 var b=f.querySelector('button'),x=f.elements;function g(n){return x[n]?x[n].value:''}b.disabled=true;
 fetch(API+'/rest/v1/rpc/capture_lead',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},
-body:JSON.stringify({p_page_id:PAGE,p_name:g('name'),p_email:g('email'),p_whatsapp:g('whatsapp')})})
+body:JSON.stringify({p_page_id:PAGE,p_name:g('name'),p_email:g('email'),p_whatsapp:g('whatsapp'),p_tag:f.getAttribute('data-tag')||null})})
 .then(function(r){if(!r.ok)throw new Error('err');done(f,b)})
 .catch(function(){b.disabled=false;alert('Não foi possível enviar. Tente novamente.')})})});})();`;
   return js.replace(/<\//g, '<\\/');
