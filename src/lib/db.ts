@@ -832,6 +832,18 @@ const normalizeTableItemForClient = <T extends Record<string, any>>(
     appearance.isDefault = appearance.is_default;
   }
 
+  // Modal: devolve overlay_opacity e start_with_sound do JSONB para os campos planos da interface
+  try {
+    const mc0: any = typeof appearance.modal_config === 'string' ? JSON.parse(appearance.modal_config) : appearance.modal_config;
+    const dk: any = mc0 && mc0.desktop ? mc0.desktop : {};
+    if (dk.overlay_opacity !== undefined && dk.overlay_opacity !== null && dk.overlay_opacity !== '') {
+      appearance.modal_overlay_opacity = Number(dk.overlay_opacity);
+    }
+    if (dk.start_with_sound !== undefined && dk.start_with_sound !== null) {
+      appearance.modal_start_with_sound = dk.start_with_sound === true || dk.start_with_sound === 'true';
+    }
+  } catch { /* mantem os padroes */ }
+
   // Garante que os JSONBs sejam objetos (defensivo)
   ['floating_config', 'carousel_config', 'grid_config', 'modal_config'].forEach(key => {
     if (appearance[key] && typeof appearance[key] === 'string') {
@@ -854,6 +866,23 @@ const sanitizeTablePayload = <T extends Record<string, any>>(
   item: T,
 ): T => {
   const normalizedItem = normalizeTablePayloadBeforeSave(tableName, item);
+  {
+    const ni = normalizedItem as any;
+    const hasDim = ni.modal_overlay_opacity !== undefined && ni.modal_overlay_opacity !== null && ni.modal_overlay_opacity !== '';
+    const hasSnd = ni.modal_start_with_sound !== undefined && ni.modal_start_with_sound !== null;
+    if (hasDim || hasSnd) {
+      let mc: any = ni.modal_config;
+      if (typeof mc === 'string') { try { mc = JSON.parse(mc); } catch { mc = null; } }
+      if (!mc || typeof mc !== 'object') mc = {};
+      for (const dev of ['desktop', 'mobile']) {
+        const cur = mc[dev] && typeof mc[dev] === 'object' ? { ...mc[dev] } : {};
+        if (hasDim) cur.overlay_opacity = Math.min(100, Math.max(0, Number(ni.modal_overlay_opacity)));
+        if (hasSnd) cur.start_with_sound = ni.modal_start_with_sound === true || ni.modal_start_with_sound === 'true';
+        mc[dev] = cur;
+      }
+      ni.modal_config = mc;
+    }
+  }
   const allowedFields = TABLE_ALLOWED_FIELDS[tableName];
 
   if (!allowedFields) return normalizedItem;
