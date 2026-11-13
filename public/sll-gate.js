@@ -14,7 +14,7 @@
   if (!document.getElementById("sll-gate-hide")) {
     var style = document.createElement("style");
     style.id = "sll-gate-hide";
-    style.textContent = "html{visibility:hidden!important}";
+    style.textContent = "html{background:#141414!important}body{visibility:hidden!important}";
     (document.head || document.documentElement).appendChild(style);
   }
   function show() { var s = document.getElementById("sll-gate-hide"); if (s) s.remove(); }
