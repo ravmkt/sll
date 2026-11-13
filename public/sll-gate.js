@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   "use strict";
   if (window.__sllGate) return;
   window.__sllGate = true;
@@ -18,7 +18,7 @@
     (document.head || document.documentElement).appendChild(style);
   }
   function show() { var s = document.getElementById("sll-gate-hide"); if (s) s.remove(); }
-  var safety = setTimeout(show, 2000);
+  var safety = setTimeout(show, 4000);
   function done() { clearTimeout(safety); show(); }
 
   window.addEventListener("pageshow", function (e) { if (e.persisted) location.reload(); });
