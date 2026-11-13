@@ -45,6 +45,13 @@ export async function createPage(title: string, type: 'landing' | 'product'): Pr
 }
 
 export async function withSettings(id: string, content: PageContent): Promise<PageContent> {
+  const c = await withSettingsBase(id, content);
+  let sid = '';
+  try { sid = String((await getCurrentStoreId()) ?? ''); } catch { /* sem loja */ }
+  return sid ? { ...c, settings: { ...(c.settings ?? {}), sllStoreId: sid } } : c;
+}
+
+async function withSettingsBase(id: string, content: PageContent): Promise<PageContent> {
   if (content.settings) return content;
   const st = useBuilder.getState();
   if (st.pageId === id) return { ...content, settings: st.settings };
