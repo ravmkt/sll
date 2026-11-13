@@ -8,7 +8,7 @@ const cors = {
 
 const ALLOWED = new Set([
   'video_view', 'story_open', 'story_complete', 'video_close', 'next_video', 'progress',
-  'product_view', 'product_click', 'whatsapp_click', 'share', 'comment', 'like', 'unlike',
+  'product_view', 'product_click', 'whatsapp_click', 'cta_click', 'share', 'comment', 'like', 'unlike',
 ]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

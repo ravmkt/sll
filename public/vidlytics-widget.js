@@ -186,7 +186,15 @@ function ensureModalStylesInLightDOM(appearance) {
       }
       el.style.animation = 'vl-info-pulse 1.6s ease-in-out infinite';
     }
-    el.onclick = function (e) { e.stopPropagation(); };
+    el.onclick = function (e) {
+      e.stopPropagation();
+      if (!href) return;
+      try {
+        var _st = currentStories[currentStoryIndex];
+        var _vd = (_st && _st.videos) ? _st.videos[currentVideoIndex] : null;
+        sendAnalyticsEvent('cta_click', _vd ? _vd.id : null, null, { story_id: _st ? _st.id : null });
+      } catch (_) { /* noop */ }
+    };
     host.appendChild(el);
   }
 

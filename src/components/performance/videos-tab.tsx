@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useLoja } from '@/contexts/LojaContext';
 import { db } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import {
   getVideoMetricsRows,
   type AnalyticsInterval,
@@ -67,6 +68,7 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
   const { storeId } = useLoja();
   const [loading, setLoading] = useState(true);
   const [videos, setVideos] = useState<VideoMetricsRow[]>([]);
+  const [clicksMap, setClicksMap] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('views');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -93,8 +95,37 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
           customRange,
         );
 
+        let finalRows = rows;
+        let cmap: Record<string, number> = {};
+        try {
+          const to = customRange.to ? new Date(customRange.to) : new Date();
+          if (interval === 'custom' && customRange.to) to.setHours(23, 59, 59, 999);
+          const from = interval === 'custom' && customRange.from
+            ? new Date(customRange.from)
+            : new Date(to.getTime() - (interval === '7' ? 7 : 30) * 86400000);
+          if (interval === 'custom' && customRange.from) from.setHours(0, 0, 0, 0);
+          const { data: cl, error: clErr } = await (supabase as any).rpc('get_video_click_totals', {
+            p_store_id: storeId,
+            p_start: from.toISOString(),
+            p_end: to.toISOString(),
+          });
+          if (!clErr && Array.isArray(cl)) {
+            (cl as any[]).forEach((r) => { cmap[String(r.video_id)] = Number(r.clicks) || 0; });
+            finalRows = rows.map((r) => {
+              const c = cmap[String(r.id)] || 0;
+              const vw = r.metrics.views || 0;
+              return { ...r, metrics: { ...r.metrics, ctr: vw > 0 ? (c / vw) * 100 : 0 } };
+            });
+          } else {
+            cmap = {};
+          }
+        } catch {
+          cmap = {};
+        }
+
         if (!mounted) return;
-        setVideos(rows);
+        setClicksMap(cmap);
+        setVideos(finalRows);
       } catch (e) {
         console.error('Erro ao carregar Vídeos:', e);
       } finally {
@@ -527,6 +558,9 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
                       >
                         {video.metrics.ctr.toFixed(1).replace('.', ',')}%
                       </span>
+                      <p className="mt-1 text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                        {(clicksMap[video.id] || 0).toLocaleString()} cliques
+                      </p>
                     </td>
 
                     {/* Conversões */}
