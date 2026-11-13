@@ -4096,7 +4096,22 @@ if (closingVideo) {
     resumePreviews();
   }
 
+  function hideNavIfSingle() {
+    try {
+      var total = 0;
+      (currentStories || []).forEach(function (s) { total += ((s && s.videos) || []).length; });
+      if (total > 1 || !modalContent) return;
+      var arrows = modalContent.querySelectorAll('.vl-nav-arrow');
+      for (var i = 0; i < arrows.length; i++) arrows[i].style.setProperty('display', 'none', 'important');
+    } catch (e) { /* noop */ }
+  }
+
   function renderStoryModal() {
+    renderStoryModalBase();
+    hideNavIfSingle();
+  }
+
+  function renderStoryModalBase() {
     if (!modalContent) return;
     modalContent.innerHTML = '';
     var story = currentStories[currentStoryIndex];

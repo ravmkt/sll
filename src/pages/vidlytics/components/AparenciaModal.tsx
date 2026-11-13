@@ -710,6 +710,15 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
   }, [isOpen, resolvedStoreId]);
 
   const getC = (key: string) => getConfig(previewDevice, key);
+  const modalBorderNum = (key: string, def: number) => {
+    const v = getC(key);
+    const n = Number(v);
+    return v === undefined || v === null || v === '' || Number.isNaN(n) ? def : n;
+  };
+  const modalBorderColor = () => {
+    const v = String(getC('modal_border_color') || '');
+    return /^#[0-9a-fA-F]{6}$/.test(v) ? v : '#0094EB';
+  };
   const setC = (key: string, value: any) => {
     setConfig(previewDevice, key, value);
     // Mobile -> Desktop: se o Desktop ainda esta igual ao Mobile neste campo, acompanha
@@ -885,6 +894,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     show_like_button: getC('modal_show_like_button') !== false,
     show_comment_button: getC('modal_show_comment_button') !== false,
     show_share_button: getC('modal_show_share_button') !== false,
+    border_color: modalBorderColor(),
+    border_width: String(modalBorderNum('modal_border_width', 2)),
+    border_radius: String(modalBorderNum('modal_border_radius', 12)),
     show_product: getC('modal_show_product') !== false,
     product_card_bg: getC('modal_product_card_bg') || '#FFFFFF',
     product_card_border_color: getC('modal_product_card_border_color') || '#E2E8F0',
@@ -1725,6 +1737,54 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           />
                         </div>
                         <CheckboxField label={'Abrir o v\u00eddeo com \u00e1udio ligado'} checked={getC('modal_start_with_sound') === true} onChange={(v: boolean) => setC('modal_start_with_sound', v)} />
+                        <div className="space-y-3 pt-3 mt-3 border-t border-slate-100 dark:border-slate-800">
+                          <div className="text-sm font-semibold">Borda do player</div>
+                          <div className="space-y-1">
+                            <label className="text-sm font-medium">
+                              {'Espessura: '}{modalBorderNum('modal_border_width', 2)}px
+                            </label>
+                            <input
+                              type="range"
+                              min={0}
+                              max={10}
+                              step={1}
+                              className="w-full"
+                              value={modalBorderNum('modal_border_width', 2)}
+                              onChange={(e) => setC('modal_border_width', String(e.target.value))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-sm font-medium">
+                              {'Raio: '}{modalBorderNum('modal_border_radius', 12)}px
+                            </label>
+                            <input
+                              type="range"
+                              min={0}
+                              max={40}
+                              step={1}
+                              className="w-full"
+                              value={modalBorderNum('modal_border_radius', 12)}
+                              onChange={(e) => setC('modal_border_radius', String(e.target.value))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-sm font-medium">Cor</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                className="h-9 w-12 cursor-pointer rounded border border-slate-200"
+                                value={modalBorderColor()}
+                                onChange={(e) => setC('modal_border_color', e.target.value)}
+                              />
+                              <input
+                                type="text"
+                                className={inputClass}
+                                value={String(getC('modal_border_color') || modalBorderColor())}
+                                onChange={(e) => setC('modal_border_color', e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </Accordion>
 
