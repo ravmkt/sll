@@ -39,7 +39,7 @@ async function hasActiveGate(storeId: string) {
 }
 
 function buildContent(storeId: string, gate: boolean, token: string) {
-  const loader = `<script async src="${HUB}/sll-loader.js" data-store-id="${storeId}"${token ? ` data-token="${token}"` : '}></script>`;
+  const loader = `<script async src="${HUB}/sll-loader.js" data-store-id="${storeId}"${token ? ` data-token="${token}"` : ""}></script>`;
   return gate ? `<script src="${HUB}/sll-gate.js"></script>\n${loader}` : loader;
 }
 
