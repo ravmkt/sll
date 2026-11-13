@@ -5,6 +5,7 @@ import { disconnectYampi, getYampiStatus, saveYampiCredentials } from '@/service
 import { getYampiSyncInfo, registerYampiWebhook, syncYampi, type SyncInfo } from '@/services/yampiSyncService';
 import { showError, showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import { errMsg, ghostBtn, inputCls, labelCls } from '@/components/products/Modal';
 
 type Props = {
@@ -15,6 +16,7 @@ type Props = {
 };
 
 const LOGOS = ['/assets/platforms/yampi.svg', '/assets/platforms/yampi.png'];
+const sb: any = supabase;
 
 export default function PlatformConnectCard({ storeId }: Props) {
   const [connected, setConnected] = useState(false);
@@ -38,7 +40,10 @@ export default function PlatformConnectCard({ storeId }: Props) {
         if (!alive) return;
         setConnected(!!s.connected);
         if (s.alias) setAlias(s.alias);
-        if (s.connected) getYampiSyncInfo(storeId).then((i) => { if (alive) setInfo(i); }).catch(() => { /* sem info */ });
+        if (s.connected) {
+              getYampiSyncInfo(storeId).then((i) => { if (alive) setInfo(i); }).catch(() => { /* sem info */ });
+              sb.functions.invoke('install-store-script', { body: { action: 'refresh', store_id: storeId } }).catch(() => { /* sem script */ });
+            }
       })
       .catch(() => { /* sem conexao salva */ })
       .finally(() => { if (alive) setChecking(false); });
@@ -55,6 +60,12 @@ export default function PlatformConnectCard({ storeId }: Props) {
       setToken('');
       setSecret('');
       showSuccess('Yampi conectada.');
+          sb.functions.invoke('install-store-script', { body: { action: 'install', store_id: storeId } })
+            .then((r: any) => {
+              if (r?.error) showError('Yampi conectada, mas o script do SLL nao foi instalado. Use GTM ou insercao manual.');
+              else showSuccess('Script do SLL instalado automaticamente na Yampi.');
+            })
+            .catch(() => showError('Yampi conectada, mas o script do SLL nao foi instalado.'));
       registerYampiWebhook(storeId)
         .then((r) => setInfo((i) => ({ last_sync_at: i?.last_sync_at ?? null, webhook_status: r.status })))
         .catch(() => { /* cron cobre */ });
