@@ -1,94 +1,102 @@
 ﻿import { useEffect, useRef, useState } from 'react';
+import { Crosshair, Loader2 } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { Crosshair } from 'lucide-react';
 
-export type PlacementPosition = 'before' | 'after' | 'prepend' | 'append';
-export interface Placement { selector: string; position: PlacementPosition; }
+export type Position = 'before' | 'after' | 'prepend' | 'append';
+export interface Placement { selector: string; position: Position; }
+
+const POSITIONS: { v: Position; label: string }[] = [
+  { v: 'before', label: 'Acima do elemento' },
+  { v: 'after', label: 'Abaixo do elemento' },
+  { v: 'prepend', label: 'Dentro, no início' },
+  { v: 'append', label: 'Dentro, no fim' },
+];
+const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[#0094EB]';
 
 interface Props {
   supabase: SupabaseClient;
   storeId: string;
   storeUrl?: string;
   value: Placement;
-  onChange: (v: Placement) => void;
+  onChange: (p: Placement) => void;
 }
-
-const POSITIONS: { value: PlacementPosition; label: string }[] = [
-  { value: 'before', label: 'Acima do elemento' },
-  { value: 'after', label: 'Abaixo do elemento' },
-  { value: 'prepend', label: 'Dentro, no início' },
-  { value: 'append', label: 'Dentro, no fim' },
-];
 
 export default function WidgetPlacementPicker({ supabase, storeId, storeUrl, value, onChange }: Props) {
   const [waiting, setWaiting] = useState(false);
+  const [err, setErr] = useState('');
   const timer = useRef<number | null>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
   const stop = () => {
-    if (timer.current) window.clearInterval(timer.current);
-    timer.current = null;
+    if (timer.current) { window.clearInterval(timer.current); timer.current = null; }
     setWaiting(false);
   };
   useEffect(() => stop, []);
 
-  async function pick() {
-    const input = window.prompt('Informe a URL completa da página da sua loja para selecionar o elemento:', storeUrl || 'https://');
-    if (!input) return;
-    let url: URL;
-    try { url = new URL(/^https?:\/\//i.test(input) ? input : 'https://' + input); }
-    catch { alert('URL inválida.'); return; }
+  async function start() {
+    setErr('');
+    let base = (storeUrl || '').trim();
+    if (!base) { setErr('URL da loja não encontrada.'); return; }
+    if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
 
     const win = window.open('', '_blank');
-    const token = 'sel_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
-    const { error } = await supabase.rpc('widgets_selector_create', { p_store_id: storeId, p_token: token });
-    if (error) { win?.close(); alert('Erro ao iniciar seleção: ' + error.message); return; }
+    try {
+      const { data, error } = await supabase.rpc('widgets_selector_create', { p_store_id: storeId });
+      if (error || !data) throw new Error(error?.message || 'Falha ao criar token.');
+      const token = data as string;
+      const url = new URL(base);
+      url.searchParams.set('sllPickToken', token);
+      if (win) win.location.href = url.toString(); else window.open(url.toString(), '_blank');
 
-    url.searchParams.set('sllPickToken', token);
-    if (win) win.location.href = url.toString(); else window.location.href = url.toString();
-
-    setWaiting(true);
-    const started = Date.now();
-    timer.current = window.setInterval(async () => {
-      if (Date.now() - started > 5 * 60 * 1000) { stop(); return; }
-      const { data } = await supabase.rpc('widgets_selector_poll', { p_token: token });
-      if (typeof data === 'string' && data) {
-        onChange({ ...value, selector: data });
-        stop();
-      }
-    }, 2000);
+      setWaiting(true);
+      const startedAt = Date.now();
+      stop();
+      setWaiting(true);
+      timer.current = window.setInterval(async () => {
+        if (Date.now() - startedAt > 5 * 60 * 1000) { stop(); setErr('Tempo esgotado. Tente novamente.'); return; }
+        const r = await supabase.rpc('widgets_selector_poll', { p_store_id: storeId, p_token: token });
+        if (!r.error && r.data) {
+          stop();
+          onChange({ ...valueRef.current, selector: r.data as string });
+        }
+      }, 2000);
+    } catch (e) {
+      win?.close();
+      setErr(e instanceof Error ? e.message : 'Erro ao abrir a loja.');
+    }
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_220px] gap-3 items-end">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" onClick={start} disabled={waiting}
+          className="inline-flex items-center gap-2 rounded-xl bg-[#0094EB] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+          {waiting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />}
+          {waiting ? 'Aguardando seleção na loja...' : 'Selecionar elemento na loja'}
+        </button>
+        {waiting && <button type="button" onClick={stop} className="text-xs font-semibold text-slate-500 underline">Cancelar</button>}
+      </div>
+      <p className="text-xs text-slate-500">
+        Uma aba da loja será aberta. Passe o mouse, clique no elemento desejado (ex.: banner) e confirme.
+      </p>
+      {err && <p className="text-xs font-semibold text-red-600">{err}</p>}
+
       <label className="block">
-        <span className="text-[10px] font-bold uppercase text-slate-400">Seletor CSS do elemento</span>
-        <input
-          type="text"
-          value={value.selector}
-          onChange={(e) => onChange({ ...value, selector: e.target.value })}
-          placeholder=".banner"
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"
-        />
+        <span className="mb-1 block text-[10px] font-bold uppercase text-slate-400">Seletor CSS</span>
+        <input className={inputCls + ' font-mono'} value={value.selector} placeholder="#banner-principal"
+          onChange={(e) => onChange({ ...value, selector: e.target.value })} />
       </label>
-      <button
-        type="button"
-        onClick={pick}
-        disabled={waiting}
-        className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-bold text-sky-600 disabled:opacity-60"
-      >
-        <Crosshair className="h-4 w-4" />
-        {waiting ? 'Aguardando...' : 'Selecionar'}
-      </button>
-      <label className="block">
-        <span className="text-[10px] font-bold uppercase text-slate-400">Posição</span>
-        <select
-          value={value.position}
-          onChange={(e) => onChange({ ...value, position: e.target.value as PlacementPosition })}
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"
-        >
-          {POSITIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-        </select>
-      </label>
+
+      <div className="grid grid-cols-2 gap-2">
+        {POSITIONS.map((p) => (
+          <button key={p.v} type="button" onClick={() => onChange({ ...value, position: p.v })}
+            className={`rounded-xl border px-3 py-2.5 text-sm font-semibold ${value.position === p.v
+              ? 'border-[#0094EB] bg-sky-50 text-[#0094EB]' : 'border-slate-200 text-slate-600'}`}>
+            {p.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
