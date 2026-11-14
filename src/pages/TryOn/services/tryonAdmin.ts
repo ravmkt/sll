@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export type TryOnOverview = Record<string, unknown>;
 export type TryOnSettings = Record<string, unknown>;
