@@ -1,7 +1,8 @@
 ﻿import { useState } from 'react';
-import { Monitor, Plus, Smartphone, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Monitor, Plus, Smartphone, Trash2, X } from 'lucide-react';
 import WidgetPlacementPicker, { type Placement } from './WidgetPlacementPicker';
 import BenefitsBarPreview from './BenefitsBarPreview';
+import { ColorField as Color } from './RulerConfigControls';
 import IconPicker from './IconPicker';
 import { infoCardsService } from '../../services/infoCardsService';
 import { BENEFIT_TEMPLATES, DEFAULT_DESIGN, DEFAULT_ICON, ICON_MAP, type BenefitTemplate } from '../../lib/benefitIcons';
@@ -18,14 +19,6 @@ const POSITIONS: { id: IconPosition; label: string }[] = [
 const validLink = (l?: string) => !l || /^(https?:\/\/|\/)/i.test(l.trim());
 const sec = 'rounded-2xl border border-slate-200 bg-white p-5';
 const h3 = 'mb-4 text-sm font-extrabold uppercase text-slate-800';
-
-function Color({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <label className="block"><span className={labelCls}>{label}</span>
-      <input type="color" value={/^#[0-9a-f]{6}$/i.test(value) ? value : '#000000'} onChange={(e) => onChange(e.target.value)}
-        className="h-9 w-full cursor-pointer rounded-lg border border-slate-200 bg-white p-1" /></label>
-  );
-}
 
 interface Props { ctx: WidgetsCtx; initial: InfoCard | null; defaultName: string; onClose: () => void; onSaved: () => void }
 
@@ -50,6 +43,13 @@ export default function BenefitsModal({ ctx, initial, defaultName, onClose, onSa
   const setIcon = (p: Partial<IconSettings>) => { setIc((s) => ({ ...s, ...p })); setTplId(''); };
   const setDesign = (p: Partial<BenefitsDesign>) => { setDs((s) => ({ ...s, ...p })); setTplId(''); };
   const setItem = (i: number, p: Partial<BenefitItem>) => setItems((l) => l.map((x, k) => (k === i ? { ...x, ...p } : x)));
+  const moveItem = (i: number, dir: -1 | 1) => setItems((l) => {
+    const j = i + dir;
+    if (j < 0 || j >= l.length) return l;
+    const c = [...l];
+    [c[i], c[j]] = [c[j], c[i]];
+    return c;
+  });
   const filled = items.filter((i) => i.label.trim() || i.value.trim());
 
   function applyTemplate(t: BenefitTemplate) {
@@ -88,11 +88,10 @@ export default function BenefitsModal({ ctx, initial, defaultName, onClose, onSa
             <section className={sec}>
               <h3 className={h3}>1. Template</h3>
               <div className="grid grid-cols-3 gap-2">
-                {BENEFIT_TEMPLATES.map((t) => (
+                {BENEFIT_TEMPLATES.map((t, ti) => (
                   <button key={t.id} type="button" onClick={() => applyTemplate(t)}
                     className={`rounded-xl border p-3 text-left ${tplId === t.id ? 'border-[#0094EB] bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
-                    <div className="text-sm font-bold text-slate-800">{t.name}</div>
-                    <div className="mt-0.5 text-xs text-slate-500">{t.description}</div>
+                    <div className="text-sm font-bold text-slate-800">Template {ti + 1}</div>
                   </button>
                 ))}
               </div>
@@ -113,7 +112,13 @@ export default function BenefitsModal({ ctx, initial, defaultName, onClose, onSa
                         <input className={inputCls} value={it.label} placeholder="Título (ex.: Frete grátis)" onChange={(e) => setItem(i, { label: e.target.value })} />
                         <input className={inputCls} value={it.value} placeholder="Subtítulo (ex.: acima de R$ 199)" onChange={(e) => setItem(i, { value: e.target.value })} />
                       </div>
-                      <button type="button" onClick={() => setItems(items.filter((_, k) => k !== i))}
+                      <div className="flex flex-col gap-1">
+                            <button type="button" disabled={i === 0} onClick={() => moveItem(i, -1)} aria-label="Mover para cima"
+                              className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button>
+                            <button type="button" disabled={i === items.length - 1} onClick={() => moveItem(i, 1)} aria-label="Mover para baixo"
+                              className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-30"><ArrowDown className="h-3.5 w-3.5" /></button>
+                          </div>
+                          <button type="button" onClick={() => setItems(items.filter((_, k) => k !== i))}
                         className="rounded-xl border border-slate-200 px-3 py-2.5 text-slate-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
                     </div>
                     <input className={`${inputCls} mt-2`} value={it.link ?? ''} placeholder="Link ao clicar (opcional): https://..." onChange={(e) => setItem(i, { link: e.target.value })} />
