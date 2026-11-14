@@ -1,12 +1,12 @@
-﻿(function () {
+(function () {
   if (window.__SLL_WIDGETS__) return;
   window.__SLL_WIDGETS__ = true;
   var VERSION = "1.0.0";
   var cur = document.currentScript;
-  var cfg = window.SLL_CONFIG || {};
-  var STORE = cfg.storeId || (cur && cur.getAttribute("data-store"));
-  var API = cfg.supabaseUrl || (cur && cur.getAttribute("data-api"));
-  var KEY = cfg.anonKey || (cur && cur.getAttribute("data-anon"));
+  var cfg = window.VIDLYTICS_CONFIG || {};
+  var STORE = window.SLL_STORE_ID || (cur && cur.getAttribute("data-store-id"));
+  var API = cfg.supabaseUrl;
+  var KEY = cfg.anonKey;
   if (!STORE || !API || !KEY) return;
 
   var device = window.innerWidth < 768 ? "mobile" : "desktop";
@@ -99,6 +99,50 @@
     }
   };
 
+  function waitFor(sel, cb, ms) {
+    var find = function () { try { return document.querySelector(sel); } catch (e) { return null; } };
+    var el = find();
+    if (el) return cb(el);
+    var mo = new MutationObserver(function () {
+      var e = find();
+      if (e) { mo.disconnect(); cb(e); }
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+    setTimeout(function () { mo.disconnect(); }, ms || 10000);
+  }
+
+  R.tier_ruler = function (w) {
+    var c = w.config || {}, pl = c.placement || {};
+    if (!pl.selector || !Array.isArray(c.tiers)) return;
+    var col = function (v, d) { return /^#[0-9a-f]{3,8}$/i.test(v || "") ? v : d; };
+    var bg = col(c.bg, "#0b0b0b"), card = col(c.card, "#17150f"), border = col(c.border, "#c9a84c"),
+        accent = col(c.accent, "#c9a84c"), text = col(c.text, "#ffffff"), muted = col(c.muted, "#9aa3b2");
+    var cards = c.tiers.map(function (t) {
+      return '<div class="c' + (t.highlight ? ' h' : '') + '"><div class="l">' + esc(t.label) + '</div><div class="v">' +
+        esc(t.value) + '</div><div class="n">' + esc(t.note) + '</div></div>';
+    }).join("");
+    var css = ":host{display:block}.w{background:" + bg + ";padding:24px 12px}" +
+      ".g{display:grid;grid-template-columns:repeat(" + Math.min(c.tiers.length, 4) + ",1fr);gap:16px;max-width:1200px;margin:0 auto}" +
+      ".c{background:linear-gradient(180deg," + card + ",#0f0e0a);border:1px solid " + border + ";border-radius:12px;padding:22px 12px;text-align:center}" +
+      ".c.h{border-color:" + text + ";box-shadow:0 0 24px rgba(201,168,76,.18);transform:scale(1.02)}" +
+      ".l{font-size:11px;letter-spacing:.12em;color:#cfd6e4}" +
+      ".v{font:900 34px/1.2 'Arial Black',Impact,sans-serif;color:" + accent + ";margin:10px 0}.h .v{color:" + text + "}" +
+      ".n{font-size:12px;color:" + muted + "}" +
+      ".f{text-align:center;margin-top:14px;font-size:12px;color:#e8c26a}" +
+      "@media(max-width:768px){.g{gap:8px}.c{padding:14px 6px}.c.h{transform:none}.v{font-size:20px}.l{font-size:9px}.n{font-size:10px}}";
+    waitFor(pl.selector, function (target) {
+      if (document.querySelector('[data-sll-widget="' + w.id + '"]')) return;
+      var host = document.createElement("div");
+      host.setAttribute("data-sll-widget", w.id);
+      var root = host.attachShadow({ mode: "open" });
+      root.innerHTML = "<style>*{box-sizing:border-box;font-family:system-ui,sans-serif}" + css + "</style>" +
+        '<div class="w"><div class="g">' + cards + '</div>' + (c.footer ? '<div class="f">' + esc(c.footer) + '</div>' : '') + '</div>';
+      var pos = { before: "beforebegin", after: "afterend", prepend: "afterbegin", append: "beforeend" }[pl.position] || "afterend";
+      target.insertAdjacentElement(pos, host);
+      var k = "sll_imp_" + w.id;
+      if (!sessionStorage.getItem(k)) { sessionStorage.setItem(k, "1"); track(w.id, "impression"); }
+    });
+  };
   function schedule(w) {
     var t = w.trigger || { type: "delay", seconds: 0 };
     var fire = function () { if (R[w.type] && allowed(w)) R[w.type](w); };

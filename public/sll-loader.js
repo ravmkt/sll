@@ -49,7 +49,8 @@
     gamification: "gamification-widget.js",
     reviews: "reviews-widget.js",
     radar: "radar-widget.js",
-    tryon: "tryon-widget.js"
+    tryon: "tryon-widget.js",
+        widgets: "widgets-widget.js"
   };
 
   var loadedModules = [];
