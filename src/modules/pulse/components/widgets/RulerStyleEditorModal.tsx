@@ -53,6 +53,16 @@ export default function RulerStyleEditorModal({ initial, content, existingNames 
   const setLine = (i: number, p: Partial<LineStyle>) => patch({ lines: a.lines.map((l, k) => (k === i ? { ...l, ...p } : l)) });
   const toggle = (id: string) => setOpen((o) => (o === id ? '' : id));
 
+  const [demoHl, setDemoHl] = useState(false);
+  const hasHl = content.tiers.some((t) => t.highlight);
+  const previewContent = useMemo<RulerContent>(() => {
+    if (!demoHl || hasHl) return content;
+    const base = content.tiers.length
+      ? content.tiers
+      : [{ label: 'Leve 2', value: '5% OFF' }, { label: 'Leve 3', value: '10% OFF' }, { label: 'Leve 4', value: '15% OFF' }];
+    const mid = Math.floor(base.length / 2);
+    return { ...content, tiers: base.map((t, i) => (i === mid ? { ...t, highlight: true } : t)) } as RulerContent;
+  }, [demoHl, hasHl, content]);
   function checkName(n: string, checkDup: boolean): string {
     if (!n) return 'Informe um nome para o estilo.';
     const low = n.toLowerCase();
@@ -157,9 +167,6 @@ export default function RulerStyleEditorModal({ initial, content, existingNames 
               <ColorField label="Cor da borda" value={a.card_border_color} onChange={(v) => set('card_border_color', v)} />
               <NumField label="Espessura (px)" value={a.card_border_width} max={12} onChange={(v) => set('card_border_width', v)} />
               <NumField label="Arredondamento (px)" value={a.card_radius} max={60} onChange={(v) => set('card_radius', v)} />
-              <Sub>Card destacado</Sub>
-              <ColorField label="Cor da borda" value={a.hl_border_color} onChange={(v) => set('hl_border_color', v)} />
-              <CheckField label="Brilho (glow)" checked={a.hl_glow} onChange={(v) => set('hl_glow', v)} />
             </>
           )}
         </>
@@ -173,7 +180,6 @@ export default function RulerStyleEditorModal({ initial, content, existingNames 
           <ColorField label="Cor de destaque" value={a.accent_color} onChange={(v) => set('accent_color', v)} />
           {!cards && <ColorField label="Trilho da régua" value={a.track_color} onChange={(v) => set('track_color', v)} />}
           {cards && <ColorField label="Fundo do card" value={a.card_bg_color} onChange={(v) => set('card_bg_color', v)} />}
-          {cards && <ColorField label="Fundo do destacado" value={a.hl_bg_color} onChange={(v) => set('hl_bg_color', v)} />}
         </Grid2>
       ),
     },
@@ -221,16 +227,40 @@ export default function RulerStyleEditorModal({ initial, content, existingNames 
               </div>
             </div>
           ))}
-          {cards && (
-            <>
-              <Sub>Card destacado</Sub>
-              <ColorField label="Cor da linha 2" value={a.hl_main_color || a.lines[1]?.color || '#000000'} onChange={(v) => set('hl_main_color', v)} />
-            </>
-          )}
         </>
       ),
     },
     {
+          id: 'destaque', title: 'Card Destacado', show: cards,
+          body: (
+            <>
+              {!hasHl && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-700">
+                  Nenhum card está marcado como destacado. Na página <b>Régua</b>, clique na estrela de um card para ver estas opções na loja.
+                </div>
+              )}
+              {!hasHl && (
+                <ToggleBtn active={demoHl} onClick={() => setDemoHl(!demoHl)}>Destacar card de exemplo no preview</ToggleBtn>
+              )}
+              <Sub>Borda e fundo</Sub>
+              <Grid2>
+                <ColorField label="Cor da borda" value={a.hl_border_color} onChange={(v) => set('hl_border_color', v)} />
+                <ColorField label="Fundo" value={a.hl_bg_color} onChange={(v) => set('hl_bg_color', v)} />
+              </Grid2>
+              <Sub>Texto</Sub>
+              <ColorField label="Cor da linha 2" value={a.hl_main_color || a.lines[1]?.color || '#000000'} onChange={(v) => set('hl_main_color', v)} />
+              <Sub>Brilho (glow)</Sub>
+              <CheckField label="Ativar brilho" checked={a.hl_glow} onChange={(v) => set('hl_glow', v)} />
+              {a.hl_glow && (
+                <>
+                  <ColorField label="Cor do brilho" value={a.hl_glow_color || a.hl_border_color} onChange={(v) => set('hl_glow_color', v)} />
+                  <NumField label="Tamanho do brilho (px)" value={a.hl_glow_size ?? 22} min={4} max={60} onChange={(v) => set('hl_glow_size', v)} />
+                </>
+              )}
+            </>
+          ),
+        },
+        {
       id: 'barra', title: 'Barra da Régua', show: !cards,
       body: (
         <>
@@ -319,7 +349,7 @@ export default function RulerStyleEditorModal({ initial, content, existingNames 
                 <div className="absolute left-1/2 top-0 h-5 w-24 -translate-x-1/2 rounded-b-2xl bg-[#1e2140]" />
                 <div className="h-full overflow-hidden rounded-[32px] px-1 pt-8">
                   <div className="mx-2 h-28 rounded-lg bg-slate-100" />
-                  <RulerPreview a={a} content={content} />
+                  <RulerPreview a={a} content={previewContent} />
                   <div className="mx-2 mt-3 h-3 w-2/3 rounded bg-slate-100" />
                   <div className="mx-2 mt-2 h-3 w-1/2 rounded bg-slate-100" />
                 </div>
@@ -333,7 +363,7 @@ export default function RulerStyleEditorModal({ initial, content, existingNames 
                 </div>
                 <div className="p-6">
                   <div className="h-32 rounded-lg bg-slate-100" />
-                  <RulerPreview a={a} content={content} />
+                  <RulerPreview a={a} content={previewContent} />
                   <div className="mt-3 h-3 w-1/3 rounded bg-slate-100" />
                   <div className="mt-2 h-3 w-1/4 rounded bg-slate-100" />
                 </div>

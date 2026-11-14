@@ -32,7 +32,9 @@ export interface RulerAppearance {
   infinite: boolean; autoplay_ms: number; anim_ms: number; pause_hover: boolean; cards_gap: number;
   card_padding: number; card_radius: number; card_border_width: number;
   card_border_color: string; card_bg_color: string;
-  hl_border_color: string; hl_bg_color: string; hl_glow: boolean; hl_main_color: string;
+  hl_border_color: string; hl_bg_color: string; hl_glow: boolean;
+  hl_glow_color?: string;
+  hl_glow_size?: number; hl_main_color: string;
   lines: LineStyle[];
 }
 
