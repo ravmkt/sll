@@ -17,7 +17,7 @@ import AboutPage from "@/pages/legal/AboutPage";
 import TermsPage from "@/pages/legal/TermsPage";
 import ExclusaoDadosPage from "@/pages/legal/ExclusaoDadosPage";
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { SocialPopupOverlay } from '@/components/SocialPopupOverlay';
 import { Toaster } from 'sonner';
 import ScrollToTop from '@/components/layout/ScrollToTop';
@@ -37,6 +37,7 @@ const LandingHub = lazy(() => import("@/pages/LandingHub"));
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const TryOnPage = lazy(() => import('./pages/tryon/TryOnPage'));
 const BillingSuccess = lazy(() => import('./pages/checkout/BillingSuccess'));
 const CheckoutIdRedirect = lazy(() => import('./pages/checkout/CheckoutIdRedirect'));
 const Metricas = lazy(() => import('./pages/Metricas'));
@@ -390,14 +391,22 @@ function AppRoutes() {
   );
 }
 
+function TryOnSwitch({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  if (pathname === '/tryon' || pathname.startsWith('/tryon/')) {
+    return <Suspense fallback={null}><TryOnPage /></Suspense>;
+  }
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
-    <Router>
+    <Router><TryOnSwitch>
       <LojaProvider>
         <AppRoutes />
         <Toaster richColors position="top-right" />
       </LojaProvider>
-    </Router>
+    </TryOnSwitch></Router>
   );
 }
 
