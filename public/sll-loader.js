@@ -1,4 +1,4 @@
-(function() {
+﻿(function() {
   "use strict";
   if (window.__SLL_LOADER_INITIALIZED__) return;
   window.__SLL_LOADER_INITIALIZED__ = true;
@@ -147,6 +147,9 @@
     ts.src = (baseUrl ? baseUrl + "/" : "/") + "sll-tracking.js?store=" + encodeURIComponent(storeId) + "&token=" + encodeURIComponent(trackToken);
     document.head.appendChild(ts);
   }
+
+  // Seletor visual do modulo Widgets (independe de modulo ativo)
+  if (/[?&]sllPickToken=/.test(window.location.search)) { injectModule("widgets-picker.js"); }
 
   // Consulta modulos ativos via RPC segura
   var rpcUrl = SUPABASE_URL + "/rest/v1/rpc/get_store_active_modules";
