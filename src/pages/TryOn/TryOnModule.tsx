@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useTryOnStore } from './hooks/useTryOnStore';
 
 const VisaoGeralTab = lazy(() => import('./tabs/VisaoGeralTab'));
+const AparenciaTab = lazy(() => import('./tabs/AparenciaTab'));
 
 const TABS = [
   { key: 'geral', label: 'Visão Geral' },
@@ -26,6 +27,7 @@ export default function TryOnModule() {
       return <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error ?? 'Loja não encontrada.'}</div>;
     }
     if (tab === 'geral') return <VisaoGeralTab storeId={store.id} onGoTab={(t) => setParams({ tab: t })} />;
+    if (tab === 'aparencia') return <AparenciaTab />;
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
         Aba "{TABS.find((t) => t.key === tab)?.label}" em construção.
