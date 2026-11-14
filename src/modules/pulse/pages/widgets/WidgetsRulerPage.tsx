@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Monitor, Plus, Ruler, Save, Smartphone, Trash2 } from 'lucide-react';
 import RulerPreview from '../../components/widgets/RulerPreview';
+import RulerCardsEditor from '../../components/widgets/RulerCardsEditor';
 import WidgetPlacementPicker, { type Placement } from '../../components/widgets/WidgetPlacementPicker';
 import { widgetsService } from '../../services/widgetsService';
 import { SAMPLE_CONTENT, mergeConfig, type RulerSettings, type Tier, type WidgetStyle, type WidgetsCtx } from '../../types/widgets';
@@ -33,6 +34,7 @@ export default function WidgetsRulerPage({ ctx }: { ctx: WidgetsCtx }) {
 
   const style = styles.find((s) => s.id === form.style_id) ?? styles.find((s) => s.is_default);
   const cfg = mergeConfig(style?.config);
+  const isCards = (['mobile', 'desktop'] as const).some((d) => (cfg[d] as { layout?: string }).layout === 'cards');
   const hasContent = form.title.trim() !== '' || form.tiers.length > 0;
   const preview = hasContent ? { title: form.title, tiers: form.tiers, footer: form.footer } : SAMPLE_CONTENT;
 
@@ -41,12 +43,12 @@ export default function WidgetsRulerPage({ ctx }: { ctx: WidgetsCtx }) {
 
   async function persist(next: Form, okText: string) {
     if (next.active && !next.placement.selector.trim()) { setMsg({ ok: false, text: 'Selecione o elemento da loja antes de ativar.' }); return false; }
-    if (next.active && next.tiers.filter((t) => t.label.trim() && t.value.trim()).length === 0) {
+    if (next.active && next.tiers.filter((t) => (t.label.trim() && t.value.trim()) || (t.lines ?? []).some((l) => l.text.trim())).length === 0) {
       setMsg({ ok: false, text: 'Adicione ao menos uma faixa completa antes de ativar.' }); return false;
     }
     setSaving(true); setMsg(null);
     try {
-      const clean = { ...next, tiers: next.tiers.filter((t) => t.label.trim() || t.value.trim()) };
+      const clean = { ...next, tiers: next.tiers.filter((t) => t.label.trim() || t.value.trim() || (t.lines ?? []).some((l) => l.text.trim())) };
       await svc.saveRuler(ctx.storeId, clean);
       setForm(clean);
       setMsg({ ok: true, text: okText });
@@ -101,8 +103,9 @@ export default function WidgetsRulerPage({ ctx }: { ctx: WidgetsCtx }) {
                 onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
 
             <div className="mt-4">
-              <span className={labelCls}>Faixas da régua (até 6)</span>
-              <div className="space-y-2">
+              <span className={labelCls}>{isCards ? 'Cards da régua (quantidade livre)' : 'Faixas da régua (até 6)'}</span>
+                  {isCards && <RulerCardsEditor tiers={form.tiers} onChange={(tiers) => setForm((f) => ({ ...f, tiers }))} />}
+              <div className={isCards ? 'hidden' : 'space-y-2'}>
                 {form.tiers.map((t, i) => (
                   <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
                     <input className={inputCls} value={t.label} placeholder="2 peças" onChange={(e) => setTier(i, 'label', e.target.value)} />
@@ -112,7 +115,7 @@ export default function WidgetsRulerPage({ ctx }: { ctx: WidgetsCtx }) {
                   </div>
                 ))}
               </div>
-              {form.tiers.length < 6 && (
+              {!isCards && form.tiers.length < 6 && (
                 <button type="button" onClick={() => setForm({ ...form, tiers: [...form.tiers, { label: '', value: '' }] })}
                   className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-600">
                   <Plus className="h-3.5 w-3.5" /> Adicionar faixa
