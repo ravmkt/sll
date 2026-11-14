@@ -1,4 +1,5 @@
 import { Suspense, lazy } from 'react';
+
 import { useSearchParams } from 'react-router-dom';
 import { useTryOnStore } from './hooks/useTryOnStore';
 
@@ -13,6 +14,8 @@ const TABS = [
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
+
+const AparenciaTab = lazy(() => import('./tabs/AparenciaTab'));
 
 export default function TryOnModule() {
   const [params, setParams] = useSearchParams();
