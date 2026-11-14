@@ -67,7 +67,7 @@ const PROMPT =
   "You are a virtual try-on editor. Image 1 is the CUSTOMER: a real person photo. Image 2 is a PRODUCT PHOTO of a garment, and it may show another model wearing it. " +
   "IGNORE the model in image 2 completely (her face, hair, body, pose, skin and background). Use image 2 ONLY as a reference for the clothing: color, fabric, pattern, cut, trims and details. " +
   "Edit image 1: replace the clothes the customer is wearing with the garment from image 2. The output MUST show the CUSTOMER from image 1, with her exact face, identity, hair, skin tone, body shape, pose, framing and background. " +
-  "The output must NOT show the model from image 2. If image 2 shows a full outfit, dress the customer in the full outfit. Natural lighting, correct fit, realistic folds. Return only the final image, no text.";
+  "The output must NOT show the model from image 2. If image 2 shows a full outfit, dress the customer in the full outfit. Match the skin tone of ALL visible skin (hands, arms, neck, legs, feet) exactly to the customer face in image 1, never to the model in image 2. Natural lighting, correct fit, realistic folds. Return only the final image, no text.";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
   const { data: cfg } = await admin.from("admin_ai_settings").select("model").eq("purpose", "tryon").maybeSingle();
   const model = cfg?.model || DEFAULT_MODEL;
 
-  const cacheKey = await sha256(`${storeId}|${await sha256(photo.bytes)}|${garmentUrl}|${model}|p2`);
+  const cacheKey = await sha256(`${storeId}|${await sha256(photo.bytes)}|${garmentUrl}|${model}|p3`);
   const { data: hit } = await tdb.from("results").select("id, result_path").eq("store_id", storeId).eq("cache_key", cacheKey).eq("status", "done").order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (hit?.result_path) {
     const { data: s } = await admin.storage.from("tryon-results").createSignedUrl(hit.result_path, 3600);
