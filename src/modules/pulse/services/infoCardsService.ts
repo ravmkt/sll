@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+﻿import type { SupabaseClient } from '@supabase/supabase-js';
 import type { InfoCard, InfoCardInput } from '../types/infoCards';
 
 async function call<T>(sb: SupabaseClient, fn: string, args: Record<string, unknown>): Promise<T> {
@@ -14,6 +14,10 @@ export const infoCardsService = (sb: SupabaseClient) => ({
     call<InfoCard>(sb, 'widgets_card_save', {
       p_store_id: storeId, p_id: c.id ?? null, p_name: c.name, p_active: c.active, p_title: c.title,
       p_tiers: c.tiers, p_footer: c.footer, p_placement: c.placement, p_style_id: c.style_id,
+      p_extra: {
+        kind: c.kind, icon_position: c.icon_position, icon_size: c.icon_size, icon_color: c.icon_color,
+        icon_bg: c.icon_bg, icon_bg_color: c.icon_bg_color, design: c.design,
+      },
     }),
 
   setActive: (storeId: string, id: string, active: boolean) =>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pencil, PanelTop, Plus, Trash2 } from 'lucide-react';
 import InfoCardModal from '../../components/widgets/InfoCardModal';
 import { infoCardsService } from '../../services/infoCardsService';
@@ -22,7 +22,7 @@ export default function WidgetsInfoCardsPage({ ctx }: { ctx: WidgetsCtx }) {
     setLoading(true); setError('');
     try {
       const [c, s] = await Promise.all([svc.list(ctx.storeId), wsvc.listStyles(ctx.storeId)]);
-      setCards(c); setStyles(s);
+      setCards(c.filter((x) => x.kind !== 'benefits')); setStyles(s);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao carregar.');
     } finally { setLoading(false); }
