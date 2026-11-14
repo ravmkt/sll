@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Monitor, Pencil, Ruler, Save, Smartphone, X } from 'lucide-react';
 import RulerPreview from './RulerPreview';
+import RulerCardsStyleFields from './RulerCardsStyleFields';
 import type { RulerAppearance, RulerContent, RulerStyleConfig } from '../../types/widgets';
 import type { StyleInput } from '../../services/widgetsService';
 
@@ -94,6 +95,7 @@ export default function RulerStyleEditorModal({ initial, content, onClose, onSav
   const set = <K extends keyof RulerAppearance>(k: K, v: RulerAppearance[K]) =>
     setCfg((p) => ({ ...p, [device]: { ...p[device], [k]: v } }));
   const toggle = (n: number) => setOpen((o) => (o === n ? 0 : n));
+  const patch = (p: Partial<RulerAppearance>) => setCfg((prev) => ({ ...prev, [device]: { ...prev[device], ...p } }));
 
   async function save() {
     if (!name.trim()) { setErr('Informe um nome para o estilo.'); return; }
@@ -149,7 +151,10 @@ export default function RulerStyleEditorModal({ initial, content, onClose, onSav
               </div>
             </div>
 
-            <Section n={1} title="Dimensões & Margens" open={open === 1} onToggle={() => toggle(1)}>
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <RulerCardsStyleFields a={a} set={patch} />
+        </div>
+\n        <Section n={1} title="Dimensões & Margens" open={open === 1} onToggle={() => toggle(1)}>
               <Num label="Largura máx. (px, 0 = total)" value={a.max_width} onChange={(v) => set('max_width', v)} max={1600} />
               <Num label="Espaço interno vertical (px)" value={a.padding_y} onChange={(v) => set('padding_y', v)} />
               <Num label="Espaço interno horizontal (px)" value={a.padding_x} onChange={(v) => set('padding_x', v)} />

@@ -88,7 +88,7 @@ async function copyText(t: string): Promise<boolean> {
 const KEY = 'sll-emoji-recent';
 const RECENT = 'Recentes';
 
-export default function EmojiPicker() {
+export default function EmojiPicker({ onPick, compact }: { onPick?: (e: string) => void; compact?: boolean } = {}) {
   const [open, setOpen] = useState(false);
   const [cat, setCat] = useState('Promo\u00e7\u00f5es');
   const [q, setQ] = useState('');
@@ -122,7 +122,8 @@ export default function EmojiPicker() {
   }, [q, cat, recent]);
 
   const pick = async (e: string) => {
-    const ok = await copyText(e);
+    const ok = onPick ? true : await copyText(e);
+    if (onPick) { onPick(e); setOpen(false); }
     setMsg(ok ? e + ' copiado! Cole com Ctrl+V' : 'N\u00e3o foi poss\u00edvel copiar');
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setMsg(''), 2000);
@@ -142,7 +143,7 @@ export default function EmojiPicker() {
         onClick={() => setOpen(!open)}
         className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:text-[#0094eb]"
       >
-        {'\u{1F600} Emojis'}
+        {compact ? '\u{1F600}' : '\u{1F600} Emojis'}
       </button>
       {open && (
         <div className="absolute right-0 top-full z-30 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
