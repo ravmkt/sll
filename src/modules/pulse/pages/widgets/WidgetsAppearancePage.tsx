@@ -3,6 +3,7 @@ import { Palette, Pencil, Plus, Trash2 } from 'lucide-react';
 import RulerPreview from '../../components/widgets/RulerPreview';
 import RulerStyleEditorModal, { type EditorInitial } from '../../components/widgets/RulerStyleEditorModal';
 import { widgetsService, type StyleInput } from '../../services/widgetsService';
+import { infoCardsService } from '../../services/infoCardsService';
 import { PRESETS, SAMPLE_CONTENT, buildConfig, mergeConfig, type RulerContent, type WidgetStyle, type WidgetsCtx } from '../../types/widgets';
 
 export default function WidgetsAppearancePage({ ctx }: { ctx: WidgetsCtx }) {
@@ -16,9 +17,10 @@ export default function WidgetsAppearancePage({ ctx }: { ctx: WidgetsCtx }) {
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const [s, r] = await Promise.all([svc.listStyles(ctx.storeId), svc.getRuler(ctx.storeId)]);
+      const [s, cs] = await Promise.all([svc.listStyles(ctx.storeId), infoCardsService(ctx.supabase).list(ctx.storeId)]);
+      const r = cs.find((c) => c.tiers?.length);
       setStyles(s);
-      if (r.tiers?.length) setContent({ title: r.title, tiers: r.tiers, footer: r.footer });
+      if (r) setContent({ title: r.title, tiers: r.tiers, footer: r.footer });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao carregar.');
     } finally { setLoading(false); }
@@ -93,7 +95,7 @@ export default function WidgetsAppearancePage({ ctx }: { ctx: WidgetsCtx }) {
       </div>
 
       <h2 className="mt-10 text-lg font-extrabold text-slate-900">Templates</h2>
-      <p className="mb-3 mt-3 text-sm font-semibold text-slate-600">Régua</p>
+      <p className="mb-3 mt-3 text-sm font-semibold text-slate-600">Card informativo</p>
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {PRESETS.map((p) => (
           <div key={p.name} className="rounded-2xl border border-slate-200 bg-white p-4">

@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   'use strict';
   if (window.__SLL_WIDGETS__) return;
   window.__SLL_WIDGETS__ = true;
@@ -226,7 +226,7 @@ var DEF = {
     var n = tiers.length;
 
     var host = mk('div', 'display:block;width:100%');
-    host.id = 'sll-widgets-ruler';
+    host.id = 'sll-widgets-card-' + (r.id || '');
     var sh = host.attachShadow({ mode: 'open' });
     var box = mk('div', 'box-sizing:border-box;width:100%;font-family:inherit;margin:' + a.margin_top + 'px auto ' + a.margin_bottom + 'px;padding:' +
       a.padding_y + 'px ' + a.padding_x + 'px;background:' + a.bg_color + ';border-radius:' + a.border_radius + 'px;' +
@@ -294,7 +294,9 @@ var DEF = {
     if (token && /^sel_[0-9a-f]{32}$/.test(token)) { startPicker(token); return; }
     if (!STORE_ID) return;
     rpc('widgets_public_config', { p_store_id: STORE_ID }).then(function (conf) {
-      if (conf && conf.ruler) mount(conf);
+      if (!conf) return;
+          var list = conf.cards || (conf.ruler ? [conf.ruler] : []);
+          list.forEach(function (c) { mount({ ruler: c, style: c.style || conf.style }); });
     }).catch(function () {});
   }
 

@@ -1,20 +1,18 @@
 import { useState } from 'react';
-import { LayoutGrid, Palette, Ruler } from 'lucide-react';
-import WidgetsOverviewPage from './WidgetsOverviewPage';
-import WidgetsRulerPage from './WidgetsRulerPage';
+import { PanelTop, Palette } from 'lucide-react';
+import WidgetsInfoCardsPage from './WidgetsInfoCardsPage';
 import WidgetsAppearancePage from './WidgetsAppearancePage';
 import type { WidgetsCtx } from '../../types/widgets';
 
-type Sub = 'overview' | 'ruler' | 'appearance';
+type Sub = 'cards' | 'appearance';
 
-const SUBS: { id: Sub; label: string; icon: typeof LayoutGrid }[] = [
-  { id: 'overview', label: 'Visão Geral', icon: LayoutGrid },
-  { id: 'ruler', label: 'Régua', icon: Ruler },
+const SUBS: { id: Sub; label: string; icon: typeof PanelTop }[] = [
+  { id: 'cards', label: 'Card informativo', icon: PanelTop },
   { id: 'appearance', label: 'Aparência', icon: Palette },
 ];
 
 export default function WidgetsModule({ ctx }: { ctx: WidgetsCtx }) {
-  const [sub, setSub] = useState<Sub>('overview');
+  const [sub, setSub] = useState<Sub>('cards');
   return (
     <div className="space-y-5">
       <nav className="flex flex-wrap gap-2">
@@ -31,8 +29,7 @@ export default function WidgetsModule({ ctx }: { ctx: WidgetsCtx }) {
           </button>
         ))}
       </nav>
-      {sub === 'overview' && <WidgetsOverviewPage ctx={ctx} />}
-      {sub === 'ruler' && <WidgetsRulerPage ctx={ctx} />}
+      {sub === 'cards' && <WidgetsInfoCardsPage ctx={ctx} />}
       {sub === 'appearance' && <WidgetsAppearancePage ctx={ctx} />}
     </div>
   );
