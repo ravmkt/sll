@@ -4,7 +4,7 @@ import type { CarouselDesign, CarouselItem } from '../../types/infoCards';
 
 interface Props { title: string; items: CarouselItem[]; ds: CarouselDesign; device: 'mobile' | 'desktop' }
 
-export default function CarouselPreview({ title, items, ds, device }: Props) {
+function CarouselInner({ title, items, ds, device }: Props) {
   const mobile = device === 'mobile';
   const pv = Math.max(1, mobile ? ds.per_mobile : ds.per_desktop);
   const radius = ds.shape === 'circle' ? '50%' : ds.shape === 'rounded' ? ds.img_radius : 0;
@@ -17,7 +17,7 @@ export default function CarouselPreview({ title, items, ds, device }: Props) {
   };
   return (
     <div>
-      {title.trim() && <div style={{ textAlign: 'center', fontWeight: 800, fontSize: 16, color: '#0F172A', marginBottom: 10 }}>{title}</div>}
+      {title.trim() && <div style={{ textAlign: 'center', fontWeight: 800, fontSize: 16, color: ds.title_color, marginBottom: 10 }}>{title}</div>}
       {items.length === 0 && <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">Adicione imagens para ver o preview</div>}
       <div style={{ position: 'relative' }}>
         <div style={{ display: 'flex', gap: ds.gap, overflowX: 'auto', scrollbarWidth: 'none' }}>
@@ -46,6 +46,15 @@ export default function CarouselPreview({ title, items, ds, device }: Props) {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+export default function CarouselPreview(props: Props) {
+  const ds = props.ds;
+  return (
+    <div style={{ background: ds.bg_on ? ds.bg_color : 'transparent', padding: ds.pad, boxSizing: 'border-box' }}>
+      <CarouselInner {...props} />
     </div>
   );
 }

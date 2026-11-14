@@ -229,6 +229,15 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
                     <input type="range" min={10} max={22} value={ds.caption_size} onChange={(e) => setD({ caption_size: Number(e.target.value) })} className="w-full" /></label>
                 )}
               </div>
+              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
+                <label className="col-span-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                  <input type="checkbox" checked={ds.bg_on} onChange={(e) => setD({ bg_on: e.target.checked })} /> Usar cor de fundo no carrossel
+                </label>
+                {ds.bg_on && <Color label="Cor de fundo" value={ds.bg_color} onChange={(v) => setD({ bg_color: v })} />}
+                <label className="block"><span className={labelCls}>Espaçamento interno: {ds.pad}px</span>
+                  <input type="range" min={0} max={48} value={ds.pad} onChange={(e) => setD({ pad: Number(e.target.value) })} className="w-full" /></label>
+                {title.trim() && <Color label="Cor do título" value={ds.title_color} onChange={(v) => setD({ title_color: v })} />}
+              </div>
               <div className="mt-3 flex flex-wrap items-center gap-5 text-sm text-slate-700">
                 <label className="flex items-center gap-2"><input type="checkbox" checked={ds.arrows} onChange={(e) => setD({ arrows: e.target.checked })} /> Setas (desktop)</label>
                 <label className="flex items-center gap-2"><input type="checkbox" checked={ds.autoplay} onChange={(e) => setD({ autoplay: e.target.checked })} /> Rolagem automática</label>

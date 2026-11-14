@@ -13,6 +13,7 @@ export interface CarouselDesign {
   caption_pos: 'below' | 'overlay' | 'none'; caption_color: string; caption_size: number;
   gap: number; per_desktop: number; per_mobile: number;
   arrows: boolean; arrow_color: string; autoplay: boolean; autoplay_ms: number;
+  bg_on: boolean; bg_color: string; pad: number; title_color: string;
 }
 
 export type BenefitItem = Tier & { icon?: string; icon_svg?: string; link?: string };
