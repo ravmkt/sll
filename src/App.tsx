@@ -37,7 +37,8 @@ const LandingHub = lazy(() => import("@/pages/LandingHub"));
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const TryOnPage = lazy(() => import('./pages/tryon/TryOnPage'));
+const TryOnPage = lazy(() => import('./pages/TryOn/TryOnPage'));
+const TryOnModule = lazy(() => import('./pages/TryOn/TryOnModule'));
 const BillingSuccess = lazy(() => import('./pages/checkout/BillingSuccess'));
 const CheckoutIdRedirect = lazy(() => import('./pages/checkout/CheckoutIdRedirect'));
 const Metricas = lazy(() => import('./pages/Metricas'));
@@ -385,6 +386,7 @@ function AppRoutes() {
         <Route path="/dashboard/modules/builder/paginas" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderListPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/templates" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderTemplatesPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/:id" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout editor><BuilderEditorPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/tryon" element={user ? (<SubscriptionGate><ModuleGate moduleKey="tryon"><TryOnModule /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes></DashboardShell></>
     </Suspense>
