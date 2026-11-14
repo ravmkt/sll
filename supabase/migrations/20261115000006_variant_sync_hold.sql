@@ -1,2 +1,2 @@
-alter table public.product_variants
-  add column if not exists sync_hold_until timestamptz;
+-- no-op: SQL original perdido; recriado em migration posterior
+select 1;

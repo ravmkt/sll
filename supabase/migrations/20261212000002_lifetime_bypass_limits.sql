@@ -104,17 +104,17 @@ end;
 $function$;
 
 -- 4) Gate: sem limite de campanhas para lojas vitalicias
-create or replace function gate.enforce_max_gates()
+create or replace function pulse.enforce_max_gates()
  returns trigger
  language plpgsql
  security definer
- set search_path to 'public', 'gate'
+ set search_path to 'public', 'pulse'
 as $function$
 begin
   if coalesce((select is_lifetime from public.stores where id = new.store_id), false) then
     return new;
   end if;
-  if (select count(*) from gate.gates where store_id = new.store_id)
+  if (select count(*) from pulse.gates where store_id = new.store_id)
      >= (select coalesce(max_gates, 1) from public.stores where id = new.store_id) then
     raise exception 'Limite de campanhas atingido para esta loja';
   end if;
