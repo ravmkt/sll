@@ -67,7 +67,7 @@ const PROMPT =
   "Task: virtual try-on image edit. Image 1 is the customer. Image 2 is a product photo of a garment worn by another model. " +
   "Edit image 1 so the customer is now wearing the garment from image 2 INSTEAD of her current clothes. The change must be clearly visible: completely cover and replace her current top, including any lace or sheer sleeves, so nothing of the old top shows. " +
   "The garment must match image 2 in color, cut, collar, buttons, zipper, pockets and length, fitted to the customer's own body size. Use only the garment from image 2, never the model's face, body or skin. " +
-  "Everything else comes from image 1: her face, hair, skin tone on all visible skin, body proportions, pose and background. Keep her pose exactly as in image 1: same arm and hand positions (hands stay in the pockets if they were), so every part of her old sleeves is covered by the new garment sleeves and no old fabric is visible anywhere. Output only the edited image, no text.";
+  "Everything else comes from image 1: her face, hair, skin tone on all visible skin, body proportions, pose and background. Output only the edited image, no text.";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
   const { data: cfg } = await admin.from("admin_ai_settings").select("model").eq("purpose", "tryon").maybeSingle();
   const model = cfg?.model || DEFAULT_MODEL;
 
-  const cacheKey = await sha256(`${storeId}|${await sha256(photo.bytes)}|${garmentUrl}|${model}|p6`);
+  const cacheKey = await sha256(`${storeId}|${await sha256(photo.bytes)}|${garmentUrl}|${model}|p7`);
   const { data: hit } = await tdb.from("results").select("id, result_path").eq("store_id", storeId).eq("cache_key", cacheKey).eq("status", "done").order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (hit?.result_path) {
     const { data: s } = await admin.storage.from("tryon-results").createSignedUrl(hit.result_path, 3600);
