@@ -1,4 +1,4 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 export function buildCards(a, tiers) {
   var timers = [];
   function mk(tag, css, text) {
@@ -18,9 +18,10 @@ export function buildCards(a, tiers) {
     var hl = !!t.highlight;
     var bc = t.border_color || (hl ? a.hl_border_color : a.card_border_color);
     var bg = t.bg_color || (hl ? a.hl_bg_color : a.card_bg_color);
+    var gc = a.hl_glow_color || bc; var gm = /^#[0-9a-f]{6}$/i.test(gc) ? gc + '99' : gc;
     var c = mk('div', 'box-sizing:border-box;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;' +
       'padding:' + a.card_padding + 'px;border-radius:' + a.card_radius + 'px;border:' + a.card_border_width + 'px solid ' + bc + ';background:' + bg +
-      (hl && a.hl_glow ? ';box-shadow:0 0 0 1px ' + bc + ',0 0 22px ' + bc + '55' : ''));
+      (hl && a.hl_glow ? ';box-shadow:0 0 0 1px ' + gc + ',0 0 ' + (+a.hl_glow_size || 22) + 'px ' + gm : ''));
     var L = (t.lines && t.lines.length) ? t.lines : [{ text: t.label || '' }, { text: t.value || '' }, { text: '' }];
     for (var i = 0; i < 3; i++) {
       var ln = L[i];
@@ -53,7 +54,7 @@ export function buildCards(a, tiers) {
   var animMs = Math.max(100, +a.anim_ms || 500);
   var basis = 'calc((100% - ' + (gap * (v - 1)) + 'px) / ' + v + ')';
   var step = '((100% - ' + (gap * (v - 1)) + 'px) / ' + v + ' + ' + gap + 'px)';
-  var vp = mk('div', 'overflow:hidden;width:100%;padding:8px 0;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none');
+  var vp = mk('div', 'overflow:hidden;box-sizing:content-box;width:100%;margin:-16px -24px;padding:24px;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none');
   var track = mk('div', 'display:flex;gap:' + gap + 'px;will-change:transform');
   var seq = [], k;
   if (inf) for (k = n - v; k < n; k++) seq.push(tiers[k]);
