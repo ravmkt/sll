@@ -64,10 +64,10 @@ async function fetchGarment(url: string): Promise<{ mime: string; bytes: Uint8Ar
 }
 
 const PROMPT =
-  "You are a virtual try-on editor. Image 1 is the CUSTOMER: a real person photo. Image 2 is a PRODUCT PHOTO of a garment, and it may show another model wearing it. " +
-  "IGNORE the model in image 2 completely (her face, hair, body, pose, skin and background). Use image 2 ONLY as a reference for the clothing: color, fabric, pattern, cut, trims and details. " +
-  "Edit image 1: replace the clothes the customer is wearing with the garment from image 2. The output MUST show the CUSTOMER from image 1, with her exact face, identity, hair, skin tone, body shape, pose, framing and background. " +
-  "The output must NOT show the model from image 2. If image 2 shows a full outfit, dress the customer in the full outfit. Match the skin tone of ALL visible skin (hands, arms, neck, legs, feet) exactly to the customer face in image 1, never to the model in image 2. REMOVE ALL original clothing of the customer that the new garment replaces: no sleeves, lace, sheer fabric or straps may remain visible outside the new garment outline; her arms and hands must come out of the new garment sleeves or pockets only. Keep the customer body proportions, width, weight and silhouette EXACTLY as in image 1: do not make her look wider, heavier or taller, and fit the garment to HER body, not to the model of image 2. Keep her face and identity unchanged. Natural lighting, correct fit, realistic folds. Return only the final image, no text.";
+  "Task: virtual try-on image edit. Image 1 is the customer. Image 2 is a product photo of a garment worn by another model. " +
+  "Edit image 1 so the customer is now wearing the garment from image 2 INSTEAD of her current clothes. The change must be clearly visible: completely cover and replace her current top, including any lace or sheer sleeves, so nothing of the old top shows. " +
+  "The garment must match image 2 in color, cut, collar, buttons, zipper, pockets and length, fitted to the customer's own body size. Use only the garment from image 2, never the model's face, body or skin. " +
+  "Everything else comes from image 1: her face, hair, skin tone on all visible skin, body proportions, pose and background. Output only the edited image, no text.";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
   const { data: cfg } = await admin.from("admin_ai_settings").select("model").eq("purpose", "tryon").maybeSingle();
   const model = cfg?.model || DEFAULT_MODEL;
 
-  const cacheKey = await sha256(`${storeId}|${await sha256(photo.bytes)}|${garmentUrl}|${model}|p4`);
+  const cacheKey = await sha256(`${storeId}|${await sha256(photo.bytes)}|${garmentUrl}|${model}|p5`);
   const { data: hit } = await tdb.from("results").select("id, result_path").eq("store_id", storeId).eq("cache_key", cacheKey).eq("status", "done").order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (hit?.result_path) {
     const { data: s } = await admin.storage.from("tryon-results").createSignedUrl(hit.result_path, 3600);
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
           { text: "Image 2 (GARMENT reference only - ignore the person in it):" },
           { inlineData: { mimeType: garment.mime, data: encodeBase64(garment.bytes) } },
         ] }],
-        generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+        generationConfig: { responseModalities: ["TEXT", "IMAGE"], temperature: 0.4 },
       }),
     });
     if (!res.ok) return await fail(`gemini ${res.status} ${(await res.text()).replace(/\s+/g, " ").slice(0, 200)}`);
