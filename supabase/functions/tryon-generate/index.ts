@@ -64,9 +64,10 @@ async function fetchGarment(url: string): Promise<{ mime: string; bytes: Uint8Ar
 }
 
 const PROMPT =
-  "Image 1 is a photo of a person. Image 2 is a garment or accessory. Generate a photorealistic image of the SAME person from image 1 wearing the item from image 2. " +
-  "Keep the person's face, skin tone, body shape, pose, hair and the background exactly as in image 1. Keep the item's color, pattern, texture and shape faithful to image 2. " +
-  "Natural lighting, correct fit and realistic folds. Return only the final image, no text.";
+  "You are a virtual try-on editor. Image 1 is the CUSTOMER: a real person photo. Image 2 is a PRODUCT PHOTO of a garment, and it may show another model wearing it. " +
+  "IGNORE the model in image 2 completely (her face, hair, body, pose, skin and background). Use image 2 ONLY as a reference for the clothing: color, fabric, pattern, cut, trims and details. " +
+  "Edit image 1: replace the clothes the customer is wearing with the garment from image 2. The output MUST show the CUSTOMER from image 1, with her exact face, identity, hair, skin tone, body shape, pose, framing and background. " +
+  "The output must NOT show the model from image 2. If image 2 shows a full outfit, dress the customer in the full outfit. Natural lighting, correct fit, realistic folds. Return only the final image, no text.";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -112,7 +113,7 @@ Deno.serve(async (req) => {
   const { data: cfg } = await admin.from("admin_ai_settings").select("model").eq("purpose", "tryon").maybeSingle();
   const model = cfg?.model || DEFAULT_MODEL;
 
-  const cacheKey = await sha256(`${storeId}|${await sha256(photo.bytes)}|${garmentUrl}|${model}`);
+  const cacheKey = await sha256(`${storeId}|${await sha256(photo.bytes)}|${garmentUrl}|${model}|p2`);
   const { data: hit } = await tdb.from("results").select("id, result_path").eq("store_id", storeId).eq("cache_key", cacheKey).eq("status", "done").order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (hit?.result_path) {
     const { data: s } = await admin.storage.from("tryon-results").createSignedUrl(hit.result_path, 3600);
@@ -163,7 +164,9 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         contents: [{ role: "user", parts: [
           { text: PROMPT },
+          { text: "Image 1 (CUSTOMER - keep this person):" },
           { inlineData: { mimeType: photo.mime, data: encodeBase64(photo.bytes) } },
+          { text: "Image 2 (GARMENT reference only - ignore the person in it):" },
           { inlineData: { mimeType: garment.mime, data: encodeBase64(garment.bytes) } },
         ] }],
         generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
