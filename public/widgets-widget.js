@@ -479,7 +479,7 @@ function buildBenefits(conf) {
 
   function init() {
     var token = new URLSearchParams(location.search).get('sllPickToken');
-    if (token && /^sel_[0-9a-f]{32}$/.test(token)) { startPicker(token); return; }
+    if (token && /^sel_[0-9a-f]{32}$/.test(token)) { startPicker(token); }
     if (!STORE_ID) return;
     rpc('widgets_public_config', { p_store_id: STORE_ID }).then(function (conf) {
       if (!conf) return;
