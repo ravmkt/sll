@@ -233,6 +233,30 @@ function bIcon(name, size, color) {
   return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="' + color +
     '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>';
 }
+function bCustom(raw, size, color) {
+  if (!raw) return '';
+  var TAGS = { path: 1, circle: 1, rect: 1, line: 1, polyline: 1, polygon: 1, ellipse: 1, g: 1 };
+  var ATTRS = { d: 1, cx: 1, cy: 1, r: 1, rx: 1, ry: 1, x: 1, y: 1, x1: 1, x2: 1, y1: 1, y2: 1, width: 1, height: 1, points: 1, fill: 1, stroke: 1, 'stroke-width': 1, 'stroke-linecap': 1, 'stroke-linejoin': 1, transform: 1, opacity: 1 };
+  var doc;
+  try { doc = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg">' + String(raw).replace(/<\/?svg[^>]*>/gi, '') + '</svg>', 'image/svg+xml'); } catch (e) { return ''; }
+  var root = doc.documentElement;
+  if (!root || root.nodeName !== 'svg' || doc.querySelector('parsererror')) return '';
+  function clean(node) {
+    Array.prototype.slice.call(node.childNodes).forEach(function (c) {
+      if (c.nodeType !== 1) { node.removeChild(c); return; }
+      if (!TAGS[c.nodeName.toLowerCase()]) { node.removeChild(c); return; }
+      Array.prototype.slice.call(c.attributes).forEach(function (at) {
+        if (!ATTRS[at.name] || /url\(|javascript/i.test(at.value)) c.removeAttribute(at.name);
+      });
+      clean(c);
+    });
+  }
+  clean(root);
+  var inner = Array.prototype.map.call(root.childNodes, function (c) { return new XMLSerializer().serializeToString(c); }).join('');
+  if (!inner) return '';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="' + color +
+    '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>';
+}
 function bTexts(t) {
   var L = t.lines || [];
   return {
@@ -248,7 +272,7 @@ function buildBenefits(conf) {
     return def;
   }
   var tiers = (r.tiers || []).filter(function (t) {
-    if (!t) return false; var x = bTexts(t); return x.title || x.desc || t.icon || t.icon_name;
+    if (!t) return false; var x = bTexts(t); return x.title || x.desc || t.icon || t.icon_name || t.icon_svg;
   });
   var n = tiers.length;
   var pos = (r.icon_position === 'top' || r.icon_position === 'right') ? r.icon_position : 'left';
@@ -258,9 +282,9 @@ function buildBenefits(conf) {
   var iconBgColor = bColor(r.icon_bg_color || pick(['icon_bg_color'], ''), '#E0F2FE');
 
   var bg = bColor(pick(['bg_color', 'bg', 'background'], 'transparent'), 'transparent');
-  var itemBg = bColor(pick(['item_bg_color', 'card_bg_color'], 'transparent'), 'transparent');
-  var titleColor = bColor(pick(['title_color', 'text_color'], '#0F172A'), '#0F172A');
-  var descColor = bColor(pick(['desc_color', 'description_color'], '#64748B'), '#64748B');
+  var itemBg = bColor(pick(['item_bg_color', 'card_bg_color'], d.item_card ? 'rgba(127,127,127,.08)' : 'transparent'), 'transparent');
+  var titleColor = bColor(pick(['title_color', 'text', 'text_color'], '#0F172A'), '#0F172A');
+  var descColor = bColor(pick(['desc_color', 'sub', 'description_color'], '#64748B'), '#64748B');
   var titleSize = bNum(pick(['title_size', 'text_size'], 14), 14);
   var descSize = bNum(pick(['desc_size', 'description_size'], 12), 12);
   var gap = Math.max(0, bNum(pick(['gap'], 12), 12));
@@ -268,13 +292,13 @@ function buildBenefits(conf) {
   var itemRadius = bNum(pick(['item_radius', 'card_radius'], 10), 10);
   var padY = bNum(pick(['padding_y'], 12), 12), padX = bNum(pick(['padding_x'], 16), 16);
   var itemPad = bNum(pick(['item_padding', 'card_padding'], 8), 8);
-  var bw = bNum(pick(['border_width'], 0), 0);
-  var bc = bColor(pick(['border_color'], '#E2E8F0'), '#E2E8F0');
+  var bw = bNum(pick(['border_width'], d.border ? 1 : 0), 0);
+  var bc = bColor(pick(['border_color', 'border'], '#E2E8F0'), '#E2E8F0');
   var mt = bNum(pick(['margin_top'], 12), 12), mb = bNum(pick(['margin_bottom'], 12), 12);
   var maxW = bNum(pick(['max_width'], 0), 0);
   var cols = Math.max(1, Math.round(bNum(pick(['columns'], n), n)));
   var vis = Math.max(1, bNum(pick(['mobile_visible', 'mobile_cols'], pos === 'top' ? 2 : 1), 1));
-  var carousel = n > vis;
+  var carousel = n > vis && d.mobile !== 'stack';
   var autoplay = carousel && pick(['mobile_autoplay'], true) !== false;
   var ms = Math.max(1500, bNum(pick(['autoplay_ms'], 3500), 3500));
   var showDots = carousel && pick(['mobile_dots'], true) !== false;
@@ -287,12 +311,12 @@ function buildBenefits(conf) {
   var css = document.createElement('style');
   css.textContent =
     '.sll-b-track{display:grid;grid-template-columns:repeat(' + cols + ',minmax(0,1fr));gap:' + gap + 'px;position:relative}' +
-    '.sll-b-dots{display:none}' +
+    '.sll-b-dots{display:none}' + (d.divider ? '@media (min-width:769px){.sll-b-item + .sll-b-item{border-left:1px solid ' + bc + '}}' : '') +
     (carousel ? '@media (max-width:768px){' +
       '.sll-b-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}' +
       '.sll-b-track::-webkit-scrollbar{display:none}' +
       '.sll-b-item{flex:0 0 calc((100% - ' + (gap * (vis - 1)) + 'px) / ' + vis + ');scroll-snap-align:start}' +
-      '.sll-b-dots{display:flex;justify-content:center;gap:6px;margin-top:10px}}' : '@media (max-width:768px){.sll-b-track{grid-template-columns:repeat(' + Math.max(1, Math.min(n, Math.ceil(vis))) + ',minmax(0,1fr))}}');
+      '.sll-b-dots{display:flex;justify-content:center;gap:6px;margin-top:10px}}' : '@media (max-width:768px){.sll-b-track{grid-template-columns:repeat(' + (d.mobile === 'stack' ? 1 : Math.max(1, Math.min(n, Math.ceil(vis)))) + ',minmax(0,1fr))}}');
   sh.appendChild(css);
 
   var box = mk('div', 'box-sizing:border-box;width:100%;font-family:inherit;margin:' + mt + 'px auto ' + mb + 'px;padding:' + padY + 'px ' + padX + 'px;background:' + bg +
@@ -307,15 +331,16 @@ function buildBenefits(conf) {
   tiers.forEach(function (t) {
     var x = bTexts(t);
     var href = t.link && /^(https?:)?\/\//i.test(String(t.link)) ? String(t.link) : '';
+    var itemBorder = d.item_card ? 'border:1px solid ' + bc + ';' : '';
     var dir = pos === 'top' ? 'flex-direction:column;text-align:center;' : (pos === 'right' ? 'flex-direction:row-reverse;text-align:right;' : 'flex-direction:row;text-align:left;');
     var el = mk(href ? 'a' : 'div', 'box-sizing:border-box;min-width:0;display:flex;align-items:center;justify-content:center;gap:10px;padding:' + itemPad +
-      'px;border-radius:' + itemRadius + 'px;background:' + itemBg + ';text-decoration:none;' + dir);
+      'px;border-radius:' + itemRadius + 'px;background:' + itemBg + ';text-decoration:none;' + itemBorder + dir);
     el.className = 'sll-b-item';
     if (href) { el.href = href; el.target = '_blank'; el.rel = 'noopener noreferrer'; }
 
     var ic = t.icon || t.icon_name || t.iconName;
-    if (size > 0 && ic) {
-      var svg = bIcon(ic, size, bColor(t.icon_color, accent));
+    if (size > 0 && (ic || t.icon_svg)) {
+      var svg = bCustom(t.icon_svg, size, bColor(t.icon_color, accent)) || bIcon(ic, size, bColor(t.icon_color, accent));
       if (svg) {
         var bx = Math.round(size * 1.7);
         var h = mk('div', 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;' +
