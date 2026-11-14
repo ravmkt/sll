@@ -1,4 +1,9 @@
-﻿-- F-Planos Try-On: trial por módulo, planos e função de entitlement
+﻿-- F-Planos Try-On: módulo, trial por módulo, planos e entitlement
+
+insert into public.hub_modules (slug, name, status, is_public_for_sale, sort_order, description, route_path)
+values ('tryon', 'Try-On', 'hidden', false, 100,
+        'Provador virtual com IA para roupas, óculos e acessórios.', '/tryon')
+on conflict (slug) do nothing;
 
 alter table public.dynamic_plans add column if not exists trial_days integer not null default 0;
 alter table public.subscriptions add column if not exists trial_ends_at timestamptz;
