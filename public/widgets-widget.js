@@ -50,6 +50,23 @@
   }
 
   /* ---------- Modo seletor ---------- */
+  function pickTarget(e, host) {
+    var list = document.elementsFromPoint ? document.elementsFromPoint(e.clientX, e.clientY) : [e.target];
+    var vw = window.innerWidth, vh = window.innerHeight;
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      if (!el || el === host || host.contains(el)) continue;
+      if (el === document.documentElement || el === document.body) continue;
+      if (el.closest && el.closest('[id^="sll-pk-"]')) continue;
+      var cs = window.getComputedStyle(el);
+      if (cs.position === 'fixed' || cs.position === 'absolute') {
+        var r = el.getBoundingClientRect();
+        if (r.width >= vw * 0.9 && r.height >= vh * 0.9) continue;
+      }
+      return el;
+    }
+    return e.target;
+  }
   function startPicker(token) {
     var host = mk('div', 'position:fixed;z-index:2147483647;top:0;left:0;width:0;height:0');
     var sh = host.attachShadow({ mode: 'open' });
@@ -65,14 +82,14 @@
     var chosen = null, locked = false;
     function move(e) {
       if (locked || e.target === host) return;
-      var r = e.target.getBoundingClientRect();
+      var r = pickTarget(e, host).getBoundingClientRect();
       hl.style.cssText += ';display:block;top:' + r.top + 'px;left:' + r.left + 'px;width:' + r.width + 'px;height:' + r.height + 'px';
     }
     function click(e) {
       if (e.target === host || host.contains(e.target)) return;
       e.preventDefault(); e.stopPropagation();
       if (locked) return;
-      chosen = buildSelector(e.target);
+      chosen = buildSelector(pickTarget(e, host));
       locked = true;
       msg.textContent = 'Selecionado: ' + chosen;
       ok.style.display = 'inline-block'; again.style.display = 'inline-block';
