@@ -3,7 +3,7 @@
   if (window.__SLL_LOADER_INITIALIZED__) return;
   window.__SLL_LOADER_INITIALIZED__ = true;
 
-  var LOADER_VERSION = "1.2.0";
+  var LOADER_VERSION = "1.3.0";
   var SUPABASE_URL = "https://flivmllysdhaydhogmhg.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_fYM4F5uRs_8DbYF7ozy0hA_eA_Z5XUz";
 
@@ -48,7 +48,8 @@
   live_commerce: "streamsell-widgets.js",
     gamification: "gamification-widget.js",
     reviews: "reviews-widget.js",
-    radar: "radar-widget.js"
+    radar: "radar-widget.js",
+    tryon: "tryon-widget.js"
   };
 
   var loadedModules = [];
@@ -91,7 +92,38 @@
     return Object.prototype.hasOwnProperty.call(MODULE_TO_SCRIPT, mod) ? MODULE_TO_SCRIPT[mod] : null;
   }
 
+  var APP_URL = "https://app.sllhub.com.br";
+
+  function loadTryon() {
+    fetch(SUPABASE_URL + "/rest/v1/rpc/tryon_public_settings", {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ p_store_id: storeId })
+    })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(s) {
+      if (!s) return;
+      var cfg = window.SLL_TRYON_CONFIG = window.SLL_TRYON_CONFIG || {};
+      cfg.storeId = storeId;
+      cfg.appUrl = cfg.appUrl || (APP_URL + "/tryon");
+      if (s.button_text) cfg.buttonText = s.button_text;
+      if (s.anchor_selector) cfg.anchorSelector = s.anchor_selector;
+      if (typeof s.image_index === "number") cfg.imageIndex = s.image_index;
+      if (Array.isArray(s.hide_keywords) && s.hide_keywords.length) cfg.hideKeywords = s.hide_keywords;
+      injectModule("tryon-widget.js");
+    })
+    .catch(function(e) { ping("tryon_settings_failed:" + e.message); });
+  }
+
   function injectModule(scriptName) {
+    if (scriptName === "tryon-widget.js" && !window.__sllTryonCfg) {
+      window.__sllTryonCfg = true;
+      return loadTryon();
+    }
     var scriptId = "sll-script-" + scriptName.replace(/\.js$/, "");
     if (document.getElementById(scriptId)) return;
     var s = document.createElement("script");
