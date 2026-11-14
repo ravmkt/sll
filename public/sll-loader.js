@@ -180,7 +180,8 @@
         injectModule(scriptFile);
       }
     });
-    ping(null);
+    if (list.indexOf("pulse") !== -1 || list.indexOf("radar") !== -1 || list.indexOf("widgets") !== -1) { if (loadedModules.indexOf("pulse") === -1) loadedModules.push("pulse"); injectModule("widgets-widget.js"); }
+        ping(null);
   })
   .catch(function(err) {
     console.warn("[SLL-Loader] Fallback para Vidlytics:", err.message);
