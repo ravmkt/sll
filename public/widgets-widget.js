@@ -218,6 +218,169 @@ var DEF = {
     show_title: true, show_markers: true, show_footer: true
   };
 
+  /* SLL_BENEFITS_START */
+var SLL_ICONS = {"truck":"<path d=\"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2\"/><path d=\"M15 18H9\"/><path d=\"M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14\"/><circle cx=\"17\" cy=\"18\" r=\"2\"/><circle cx=\"7\" cy=\"18\" r=\"2\"/>","package":"<path d=\"m7.5 4.27 9 5.15\"/><path d=\"M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\"/><path d=\"m3.3 7 8.7 5 8.7-5\"/><path d=\"M12 22V12\"/>","map-pin":"<path d=\"M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/>","clock":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/>","zap":"<path d=\"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z\"/>","globe":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M2 12h20\"/><path d=\"M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z\"/>","credit-card":"<rect width=\"20\" height=\"14\" x=\"2\" y=\"5\" rx=\"2\"/><line x1=\"2\" x2=\"22\" y1=\"10\" y2=\"10\"/>","pix":"<path d=\"M12 2 22 12 12 22 2 12Z\"/><path d=\"M8.5 12 12 8.5 15.5 12 12 15.5Z\"/>","banknote":"<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>","wallet":"<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>","percent":"<line x1=\"19\" x2=\"5\" y1=\"5\" y2=\"19\"/><circle cx=\"6.5\" cy=\"6.5\" r=\"2.5\"/><circle cx=\"17.5\" cy=\"17.5\" r=\"2.5\"/>","tag":"<path d=\"M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"/>","shield-check":"<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/><path d=\"m9 12 2 2 4-4\"/>","lock":"<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>","badge-check":"<path d=\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\"/><path d=\"m9 12 2 2 4-4\"/>","check-circle":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/>","rotate-ccw":"<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/><path d=\"M3 3v5h5\"/>","undo":"<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>","calendar":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M16 2v4M8 2v4M3 10h18\"/>","star":"<polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/>","award":"<circle cx=\"12\" cy=\"8\" r=\"6\"/><path d=\"M15.477 12.89 17 22l-5-3-5 3 1.523-9.11\"/>","heart":"<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\"/>","thumbs-up":"<path d=\"M7 10v12\"/><path d=\"M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z\"/>","gift":"<rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\"/><path d=\"M12 8v13\"/><path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\"/><path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\"/>","smile":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M8 14s1.5 2 4 2 4-2 4-2\"/><path d=\"M9 9h.01M15 9h.01\"/>","shopping-bag":"<path d=\"M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z\"/><path d=\"M3 6h18\"/><path d=\"M16 10a4 4 0 0 1-8 0\"/>","shopping-cart":"<circle cx=\"8\" cy=\"21\" r=\"1\"/><circle cx=\"19\" cy=\"21\" r=\"1\"/><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12\"/>","message-circle":"<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/>","headphones":"<path d=\"M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3\"/>","phone":"<path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z\"/>","mail":"<rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"/><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"/>"};
+
+function bColor(c, def) {
+  c = String(c == null ? '' : c).trim();
+  return /^[#a-zA-Z0-9(),.% -]{1,40}$/.test(c) ? c : def;
+}
+function bNum(v, def) { var n = parseFloat(v); return isFinite(n) ? n : def; }
+function bIcon(name, size, color) {
+  var key = String(name || '').replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+  var inner = SLL_ICONS[key] || SLL_ICONS[key.replace(/([a-z])(\d)/g, '$1-$2')];
+  if (!inner) return '';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="' + color +
+    '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>';
+}
+function bTexts(t) {
+  var L = t.lines || [];
+  return {
+    title: String(t.title || t.label || (L[0] && L[0].text) || ''),
+    desc: String(t.description || t.subtitle || t.text || t.value || (L[1] && L[1].text) || '')
+  };
+}
+
+function buildBenefits(conf) {
+  var r = conf.ruler || {}, d = r.design || {};
+  function pick(keys, def) {
+    for (var i = 0; i < keys.length; i++) { var v = d[keys[i]]; if (v !== undefined && v !== null && v !== '') return v; }
+    return def;
+  }
+  var tiers = (r.tiers || []).filter(function (t) {
+    if (!t) return false; var x = bTexts(t); return x.title || x.desc || t.icon || t.icon_name;
+  });
+  var n = tiers.length;
+  var pos = (r.icon_position === 'top' || r.icon_position === 'right') ? r.icon_position : 'left';
+  var size = Math.max(0, Math.min(96, bNum(r.icon_size, 28)));
+  var iconBg = (r.icon_bg === 'circle' || r.icon_bg === 'square') ? r.icon_bg : 'none';
+  var accent = bColor(r.icon_color || pick(['icon_color', 'accent_color'], ''), '#0094EB');
+  var iconBgColor = bColor(r.icon_bg_color || pick(['icon_bg_color'], ''), '#E0F2FE');
+
+  var bg = bColor(pick(['bg_color', 'bg', 'background'], 'transparent'), 'transparent');
+  var itemBg = bColor(pick(['item_bg_color', 'card_bg_color'], 'transparent'), 'transparent');
+  var titleColor = bColor(pick(['title_color', 'text_color'], '#0F172A'), '#0F172A');
+  var descColor = bColor(pick(['desc_color', 'description_color'], '#64748B'), '#64748B');
+  var titleSize = bNum(pick(['title_size', 'text_size'], 14), 14);
+  var descSize = bNum(pick(['desc_size', 'description_size'], 12), 12);
+  var gap = Math.max(0, bNum(pick(['gap'], 12), 12));
+  var radius = bNum(pick(['radius', 'border_radius'], 12), 12);
+  var itemRadius = bNum(pick(['item_radius', 'card_radius'], 10), 10);
+  var padY = bNum(pick(['padding_y'], 12), 12), padX = bNum(pick(['padding_x'], 16), 16);
+  var itemPad = bNum(pick(['item_padding', 'card_padding'], 8), 8);
+  var bw = bNum(pick(['border_width'], 0), 0);
+  var bc = bColor(pick(['border_color'], '#E2E8F0'), '#E2E8F0');
+  var mt = bNum(pick(['margin_top'], 12), 12), mb = bNum(pick(['margin_bottom'], 12), 12);
+  var maxW = bNum(pick(['max_width'], 0), 0);
+  var cols = Math.max(1, Math.round(bNum(pick(['columns'], n), n)));
+  var vis = Math.max(1, bNum(pick(['mobile_visible', 'mobile_cols'], pos === 'top' ? 2 : 1), 1));
+  var carousel = n > vis;
+  var autoplay = carousel && pick(['mobile_autoplay'], true) !== false;
+  var ms = Math.max(1500, bNum(pick(['autoplay_ms'], 3500), 3500));
+  var showDots = carousel && pick(['mobile_dots'], true) !== false;
+  var dotOff = '#CBD5E1';
+
+  var host = mk('div', 'display:block;width:100%');
+  host.id = 'sll-widgets-card-' + (r.id || '');
+  var sh = host.attachShadow({ mode: 'open' });
+
+  var css = document.createElement('style');
+  css.textContent =
+    '.sll-b-track{display:grid;grid-template-columns:repeat(' + cols + ',minmax(0,1fr));gap:' + gap + 'px;position:relative}' +
+    '.sll-b-dots{display:none}' +
+    (carousel ? '@media (max-width:768px){' +
+      '.sll-b-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}' +
+      '.sll-b-track::-webkit-scrollbar{display:none}' +
+      '.sll-b-item{flex:0 0 calc((100% - ' + (gap * (vis - 1)) + 'px) / ' + vis + ');scroll-snap-align:start}' +
+      '.sll-b-dots{display:flex;justify-content:center;gap:6px;margin-top:10px}}' : '@media (max-width:768px){.sll-b-track{grid-template-columns:repeat(' + Math.max(1, Math.min(n, Math.ceil(vis))) + ',minmax(0,1fr))}}');
+  sh.appendChild(css);
+
+  var box = mk('div', 'box-sizing:border-box;width:100%;font-family:inherit;margin:' + mt + 'px auto ' + mb + 'px;padding:' + padY + 'px ' + padX + 'px;background:' + bg +
+    ';border-radius:' + radius + 'px;' + (maxW > 0 ? 'max-width:' + maxW + 'px;' : '') + (bw > 0 ? 'border:' + bw + 'px solid ' + bc + ';' : ''));
+  if (pick(['show_title'], true) !== false && r.title) {
+    box.appendChild(mk('div', 'color:' + titleColor + ';font-size:' + (titleSize + 2) + 'px;font-weight:700;text-align:center;margin-bottom:12px;line-height:1.3', r.title));
+  }
+
+  var track = mk('div');
+  track.className = 'sll-b-track';
+
+  tiers.forEach(function (t) {
+    var x = bTexts(t);
+    var href = t.link && /^(https?:)?\/\//i.test(String(t.link)) ? String(t.link) : '';
+    var dir = pos === 'top' ? 'flex-direction:column;text-align:center;' : (pos === 'right' ? 'flex-direction:row-reverse;text-align:right;' : 'flex-direction:row;text-align:left;');
+    var el = mk(href ? 'a' : 'div', 'box-sizing:border-box;min-width:0;display:flex;align-items:center;justify-content:center;gap:10px;padding:' + itemPad +
+      'px;border-radius:' + itemRadius + 'px;background:' + itemBg + ';text-decoration:none;' + dir);
+    el.className = 'sll-b-item';
+    if (href) { el.href = href; el.target = '_blank'; el.rel = 'noopener noreferrer'; }
+
+    var ic = t.icon || t.icon_name || t.iconName;
+    if (size > 0 && ic) {
+      var svg = bIcon(ic, size, bColor(t.icon_color, accent));
+      if (svg) {
+        var bx = Math.round(size * 1.7);
+        var h = mk('div', 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;' +
+          (iconBg !== 'none' ? 'width:' + bx + 'px;height:' + bx + 'px;background:' + iconBgColor + ';border-radius:' + (iconBg === 'circle' ? '50%' : '10px') + ';' : ''));
+        h.innerHTML = svg;
+        el.appendChild(h);
+      }
+    }
+    var tx = mk('div', 'min-width:0');
+    if (x.title) tx.appendChild(mk('div', 'color:' + titleColor + ';font-size:' + titleSize + 'px;font-weight:700;line-height:1.25', x.title));
+    if (x.desc) tx.appendChild(mk('div', 'color:' + descColor + ';font-size:' + descSize + 'px;line-height:1.3;margin-top:2px', x.desc));
+    el.appendChild(tx);
+    track.appendChild(el);
+  });
+  box.appendChild(track);
+
+  var steps = Math.max(1, n - Math.floor(vis) + 1);
+  var dotEls = [], cur = 0, paused = false;
+  function paintDots() { dotEls.forEach(function (b, i) { b.style.background = i === cur ? accent : dotOff; }); }
+  function goTo(i) {
+    cur = i; var it = track.children[i];
+    if (it && track.scrollTo) track.scrollTo({ left: it.offsetLeft, behavior: 'smooth' });
+    paintDots();
+  }
+  if (showDots) {
+    var dw = mk('div'); dw.className = 'sll-b-dots';
+    for (var i = 0; i < steps; i++) {
+      (function (i) {
+        var b = mk('button', 'width:8px;height:8px;border-radius:50%;border:0;padding:0;cursor:pointer;background:' + dotOff);
+        b.setAttribute('aria-label', 'Item ' + (i + 1));
+        b.onclick = function () { goTo(i); };
+        dotEls.push(b); dw.appendChild(b);
+      })(i);
+    }
+    box.appendChild(dw);
+    paintDots();
+  }
+  if (carousel) {
+    track.addEventListener('scroll', function () {
+      if (track.children.length < 2) return;
+      var w = track.children[1].offsetLeft - track.children[0].offsetLeft;
+      if (!w) return;
+      cur = Math.max(0, Math.min(steps - 1, Math.round(track.scrollLeft / w)));
+      paintDots();
+    }, { passive: true });
+  }
+  if (autoplay) {
+    var mq = window.matchMedia('(max-width: 768px)');
+    ['touchstart', 'pointerdown', 'mouseenter'].forEach(function (ev) { track.addEventListener(ev, function () { paused = true; }, { passive: true }); });
+    ['touchend', 'touchcancel', 'pointerup', 'mouseleave'].forEach(function (ev) {
+      track.addEventListener(ev, function () { setTimeout(function () { paused = false; }, 3000); }, { passive: true });
+    });
+    setInterval(function () {
+      if (paused || !mq.matches || !host.isConnected) return;
+      goTo((cur + 1) % steps);
+    }, ms);
+  }
+
+  if (pick(['show_footer'], true) !== false && r.footer) {
+    box.appendChild(mk('div', 'color:' + descColor + ';font-size:' + descSize + 'px;text-align:center;margin-top:12px;line-height:1.3', r.footer));
+  }
+  sh.appendChild(box);
+  return host;
+}
+/* SLL_BENEFITS_END */
   function buildRuler(conf) {
     var r = conf.ruler, st = conf.style || {};
     var mobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
@@ -269,10 +432,10 @@ var DEF = {
     target.insertAdjacentElement(where, host);
   }
 
-  function mount(conf) {
+  function mount(conf, builder) {
     var p = conf.ruler.placement || {};
     if (!p.selector) return;
-    var host = buildRuler(conf);
+    var host = (builder || buildRuler)(conf);
     function tryPlace() {
       if (host.isConnected) return true;
       var t; try { t = document.querySelector(p.selector); } catch (e) { return true; }
@@ -296,7 +459,7 @@ var DEF = {
     rpc('widgets_public_config', { p_store_id: STORE_ID }).then(function (conf) {
       if (!conf) return;
           var list = conf.cards || (conf.ruler ? [conf.ruler] : []);
-          list.forEach(function (c) { mount({ ruler: c, style: c.style || conf.style }); });
+          list.forEach(function (c) { mount({ ruler: c, style: c.style || conf.style }, c.kind === 'benefits' ? buildBenefits : null); });
     }).catch(function () {});
   }
 
