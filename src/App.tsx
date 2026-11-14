@@ -1,4 +1,4 @@
-import StreamSellLanding from '@/pages/landing/StreamSellLanding';
+﻿import StreamSellLanding from '@/pages/landing/StreamSellLanding';
 import BuilderListPage from '@/modules/builder/pages/BuilderListPage';
 import BuilderOverviewPage from '@/modules/builder/pages/BuilderOverviewPage';
 import BuilderTemplatesPage from '@/modules/builder/pages/BuilderTemplatesPage';
@@ -33,6 +33,7 @@ import { GlobalTrialBanner } from '@/components/layout/GlobalTrialBanner';
 import TrialExpiredModal from '@/components/layout/TrialExpiredModal';
 import AdminMasterPage from '@/pages/admin/AdminMasterPage';
 import DashboardShell from '@/components/layout/DashboardShell';
+import WidgetsRoutes from '@/modules/widgets/WidgetsRoutes';
 const LandingHub = lazy(() => import("@/pages/LandingHub"));
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
@@ -387,6 +388,7 @@ function AppRoutes() {
         <Route path="/dashboard/modules/builder/templates" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderTemplatesPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/:id" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout editor><BuilderEditorPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/tryon" element={user ? (<SubscriptionGate><ModuleGate moduleKey="tryon"><TryOnModule /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/widgets/*" element={user ? (<SubscriptionGate><ModuleGate moduleKey="widgets"><WidgetsRoutes /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes></DashboardShell></>
     </Suspense>
@@ -411,4 +413,5 @@ export default function App() {
     </TryOnSwitch></Router>
   );
 }
+
 
