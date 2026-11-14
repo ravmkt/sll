@@ -1,4 +1,4 @@
-﻿(function() {
+(function() {
   "use strict";
   if (window.__SLL_LOADER_INITIALIZED__) return;
   window.__SLL_LOADER_INITIALIZED__ = true;
@@ -50,7 +50,8 @@
     reviews: "reviews-widget.js",
     radar: "radar-widget.js",
     tryon: "tryon-widget.js",
-        widgets: "widgets-widget.js"
+        widgets: "widgets-widget.js",
+    pulse: "widgets-widget.js"
   };
 
   var loadedModules = [];
