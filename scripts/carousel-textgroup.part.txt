@@ -1,0 +1,20 @@
+﻿function TextGroup(p: {
+  heading: string; size: number; min: number; max: number; font: CarouselFont; bold: boolean; color: string; noColor?: boolean;
+  onSize: (v: number) => void; onFont: (v: CarouselFont) => void; onBold: (v: boolean) => void; onColor: (v: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <p className="col-span-2 text-xs font-extrabold uppercase text-slate-500">{p.heading}</p>
+      <label className="block"><span className={labelCls}>Tamanho: {p.size}px</span>
+        <input type="range" min={p.min} max={p.max} value={p.size} onChange={(e) => p.onSize(Number(e.target.value))} className="w-full" /></label>
+      <label className="block"><span className={labelCls}>Fonte</span>
+        <select className={inputCls} value={p.font} onChange={(e) => p.onFont(e.target.value as CarouselFont)}>
+          {CAROUSEL_FONTS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+        </select></label>
+      {!p.noColor && <Color label="Cor" value={p.color} onChange={p.onColor} />}
+      <label className="flex items-center gap-2 self-end pb-2.5 text-sm font-semibold text-slate-700">
+        <input type="checkbox" checked={p.bold} onChange={(e) => p.onBold(e.target.checked)} /> Negrito</label>
+    </div>
+  );
+}
+

@@ -1,0 +1,112 @@
+﻿<section className={sec}>
+                  <h3 className={h3}>2. Formato e tamanho da imagem</h3>
+                  <div className="flex gap-2">
+                    {SHAPES.map((s) => <button key={s.id} type="button" onClick={() => setD({ shape: s.id })} className={btnSel(ds.shape === s.id)}>{s.label}</button>)}
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    {ds.shape === 'square' && (
+                      <label className="block"><span className={labelCls}>Proporção</span>
+                        <select className={inputCls} value={ds.aspect} onChange={(e) => setD({ aspect: e.target.value })}>
+                          <option value="1 / 1">Quadrada (1:1)</option><option value="4 / 5">Retrato (4:5)</option>
+                          <option value="3 / 4">Retrato (3:4)</option><option value="16 / 9">Paisagem (16:9)</option>
+                        </select></label>
+                    )}
+                    {ds.shape === 'square' && (
+                      <label className="block"><span className={labelCls}>Arredondar bordas: {ds.img_radius}%</span>
+                        <input type="range" min={0} max={50} value={ds.img_radius} onChange={(e) => setD({ img_radius: Number(e.target.value) })} className="w-full" /></label>
+                    )}
+                    <label className="block"><span className={labelCls}>Ajuste da imagem</span>
+                      <select className={inputCls} value={ds.fit} onChange={(e) => setD({ fit: e.target.value as CarouselDesign['fit'] })}>
+                        <option value="contain">Mostrar inteira</option><option value="cover">Preencher (cortar)</option>
+                      </select></label>
+                    <Color label="Fundo da imagem" value={ds.img_bg} onChange={(v) => setD({ img_bg: v })} />
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <button type="button" onClick={() => setD({ size_mode: 'auto' })} className={btnSel(ds.size_mode === 'auto')}>Tamanho automático</button>
+                    <button type="button" onClick={() => setD({ size_mode: 'fixed' })} className={btnSel(ds.size_mode === 'fixed')}>Tamanho fixo</button>
+                  </div>
+                  {ds.size_mode === 'fixed' ? (
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <label className="block"><span className={labelCls}>Tamanho no desktop: {ds.size_d}px</span>
+                        <input type="range" min={40} max={400} step={2} value={ds.size_d} onChange={(e) => setD({ size_d: Number(e.target.value) })} className="w-full" /></label>
+                      <label className="block"><span className={labelCls}>Tamanho no mobile: {ds.size_m}px</span>
+                        <input type="range" min={40} max={300} step={2} value={ds.size_m} onChange={(e) => setD({ size_m: Number(e.target.value) })} className="w-full" /></label>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-slate-400">O tamanho se ajusta à quantidade de imagens visíveis (seção 4).</p>
+                  )}
+                  <div className="mt-4 flex gap-2">
+                    <button type="button" onClick={() => setD({ border_on: false })} className={btnSel(!ds.border_on)}>Sem borda</button>
+                    <button type="button" onClick={() => setD({ border_on: true })} className={btnSel(ds.border_on)}>Com borda</button>
+                  </div>
+                  {ds.border_on && (
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <Color label="Cor da borda" value={ds.border_color} onChange={(v) => setD({ border_color: v })} />
+                      <label className="block"><span className={labelCls}>Espessura: {ds.border_w}px</span>
+                        <input type="range" min={1} max={8} value={ds.border_w} onChange={(e) => setD({ border_w: Number(e.target.value) })} className="w-full" /></label>
+                    </div>
+                  )}
+                </section>
+
+                <section className={sec}>
+                  <h3 className={h3}>3. Texto</h3>
+                  <TextGroup heading="Título" size={ds.title_size} min={12} max={40} font={ds.title_font} bold={ds.title_bold} color={ds.title_color}
+                    onSize={(v) => setD({ title_size: v })} onFont={(v) => setD({ title_font: v })} onBold={(v) => setD({ title_bold: v })} onColor={(v) => setD({ title_color: v })} />
+                  {!title.trim() && <p className="mt-2 text-xs text-slate-400">Preencha o título na seção 1 para ele aparecer.</p>}
+                  {ds.caption_pos !== 'none' && (
+                    <div className="mt-4 border-t border-slate-100 pt-4">
+                      <TextGroup heading="Legenda" size={ds.caption_size} min={9} max={28} font={ds.caption_font} bold={ds.caption_bold} color={ds.caption_color}
+                        noColor={ds.caption_pos === 'overlay'}
+                        onSize={(v) => setD({ caption_size: v })} onFont={(v) => setD({ caption_font: v })} onBold={(v) => setD({ caption_bold: v })} onColor={(v) => setD({ caption_color: v })} />
+                    </div>
+                  )}
+                </section>
+
+                <section className={sec}>
+                  <h3 className={h3}>4. Layout e espaçamento</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {ds.size_mode === 'auto' && (
+                      <label className="block"><span className={labelCls}>Visíveis no desktop</span>
+                        <select className={inputCls} value={ds.per_desktop} onChange={(e) => setD({ per_desktop: Number(e.target.value) })}>
+                          {VIEWS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+                    )}
+                    {ds.size_mode === 'auto' && (
+                      <label className="block"><span className={labelCls}>Visíveis no mobile</span>
+                        <select className={inputCls} value={ds.per_mobile} onChange={(e) => setD({ per_mobile: Number(e.target.value) })}>
+                          {VIEWS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+                    )}
+                    <label className="block"><span className={labelCls}>Espaço entre imagens: {ds.gap}px</span>
+                      <input type="range" min={0} max={48} value={ds.gap} onChange={(e) => setD({ gap: Number(e.target.value) })} className="w-full" /></label>
+                    <label className="block"><span className={labelCls}>Legenda</span>
+                      <select className={inputCls} value={ds.caption_pos} onChange={(e) => setD({ caption_pos: e.target.value as CarouselDesign['caption_pos'] })}>
+                        <option value="below">Abaixo da imagem</option><option value="overlay">Sobre a imagem</option><option value="none">Sem legenda</option>
+                      </select></label>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
+                    <label className="col-span-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                      <input type="checkbox" checked={ds.bg_on} onChange={(e) => setD({ bg_on: e.target.checked })} /> Usar cor de fundo no carrossel
+                    </label>
+                    {ds.bg_on && <Color label="Cor de fundo" value={ds.bg_color} onChange={(v) => setD({ bg_color: v })} />}
+                    <label className="block"><span className={labelCls}>Espaçamento lateral: {ds.pad_x}px</span>
+                      <input type="range" min={0} max={96} value={ds.pad_x} onChange={(e) => setD({ pad_x: Number(e.target.value) })} className="w-full" /></label>
+                    <label className="block"><span className={labelCls}>Espaçamento superior: {ds.pad_t}px</span>
+                      <input type="range" min={0} max={96} value={ds.pad_t} onChange={(e) => setD({ pad_t: Number(e.target.value) })} className="w-full" /></label>
+                    <label className="block"><span className={labelCls}>Espaçamento inferior: {ds.pad_b}px</span>
+                      <input type="range" min={0} max={96} value={ds.pad_b} onChange={(e) => setD({ pad_b: Number(e.target.value) })} className="w-full" /></label>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-5 text-sm text-slate-700">
+                    <label className="flex items-center gap-2"><input type="checkbox" checked={ds.arrows} onChange={(e) => setD({ arrows: e.target.checked })} /> Setas (desktop)</label>
+                    <label className="flex items-center gap-2"><input type="checkbox" checked={ds.autoplay} onChange={(e) => setD({ autoplay: e.target.checked })} /> Rolagem automática</label>
+                  </div>
+                  {(ds.arrows || ds.autoplay) && (
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      {ds.arrows && <Color label="Cor das setas" value={ds.arrow_color} onChange={(v) => setD({ arrow_color: v })} />}
+                      {ds.autoplay && (
+                        <label className="block"><span className={labelCls}>Intervalo: {(ds.autoplay_ms / 1000).toFixed(1)}s</span>
+                          <input type="range" min={1500} max={10000} step={500} value={ds.autoplay_ms} onChange={(e) => setD({ autoplay_ms: Number(e.target.value) })} className="w-full" /></label>
+                      )}
+                    </div>
+                  )}
+                </section>
+
+                

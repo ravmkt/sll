@@ -282,28 +282,40 @@ function bTexts(t) {
   };
 }
 
-﻿function buildCarousel(conf) {
+﻿﻿function buildCarousel(conf) {
   var r = conf.ruler || {}, d = r.design || {};
   function num(v, def) { v = Number(v); return isFinite(v) ? v : def; }
+  function cl(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function col(v, def) { return (typeof v === 'string' && /^(#[0-9a-f]{3,8}|rgba?\([^)]*\)|transparent)$/i.test(v.trim())) ? v.trim() : def; }
   function url(u, re) { return (typeof u === 'string' && re.test(u.trim())) ? u.trim() : ''; }
+  var FONTS = { arial: 'Arial,Helvetica,sans-serif', verdana: 'Verdana,Geneva,sans-serif', trebuchet: "'Trebuchet MS',sans-serif", georgia: 'Georgia,serif', times: "'Times New Roman',Times,serif", courier: "'Courier New',monospace" };
+  function ff(k) { return Object.prototype.hasOwnProperty.call(FONTS, k) ? 'font-family:' + FONTS[k] + ';' : ''; }
   var reImg = /^https?:\/\//i, reLink = /^(https?:\/\/|\/(?!\/))/i;
   var items = (r.tiers || []).filter(function (t) { return t && url(t.image, reImg); });
-  var shape = (d.shape === 'circle' || d.shape === 'rounded') ? d.shape : 'square';
-  var gap = Math.max(0, Math.min(48, num(d.gap, 16)));
-  var pd = Math.max(1, num(d.per_desktop, 6)), pm = Math.max(1, num(d.per_mobile, 2.5));
-  var radius = shape === 'circle' ? '50%' : shape === 'rounded' ? Math.max(0, num(d.img_radius, 12)) + 'px' : '0';
-  var aspect = shape === 'circle' ? '1 / 1' : (/^\d+ \/ \d+$/.test(d.aspect || '') ? d.aspect : '1 / 1');
+  var circle = d.shape === 'circle';
+  var isNew = d.size_mode != null;
+  var radius = circle ? '50%' : isNew ? cl(num(d.img_radius, 0), 0, 50) + '%' : (d.shape === 'rounded' ? cl(num(d.img_radius, 12), 0, 50) + 'px' : '0');
+  var aspect = circle ? '1 / 1' : (/^\d+ \/ \d+$/.test(d.aspect || '') ? d.aspect : '1 / 1');
   var fit = d.fit === 'cover' ? 'cover' : 'contain';
   var imgBg = col(d.img_bg, '#F5F5F5');
-  var border = d.border_on ? (Math.max(1, num(d.border_w, 1)) + 'px solid ' + col(d.border_color, '#E2E8F0')) : 'none';
+  var border = d.border_on ? (cl(num(d.border_w, 1), 1, 8) + 'px solid ' + col(d.border_color, '#E2E8F0')) : 'none';
+  var gap = cl(num(d.gap, 16), 0, 48);
+  var fixed = d.size_mode === 'fixed';
+  var sizeD = cl(num(d.size_d, 140), 40, 400), sizeM = cl(num(d.size_m, 96), 40, 300);
+  var pd = Math.max(1, num(d.per_desktop, 6)), pm = Math.max(1, num(d.per_mobile, 2.5));
   var capPos = (d.caption_pos === 'overlay' || d.caption_pos === 'none') ? d.caption_pos : 'below';
-  var capColor = col(d.caption_color, '#111111'), capSize = Math.max(9, Math.min(28, num(d.caption_size, 13)));
+  var capCss = ff(d.caption_font) + 'font-weight:' + (d.caption_bold === true ? 700 : 400) + ';font-size:' + cl(num(d.caption_size, 13), 9, 28) + 'px;color:' + col(d.caption_color, '#111111') + ';';
+  var ttlCss = ff(d.title_font) + 'font-weight:' + (d.title_bold === false ? 400 : 700) + ';font-size:' + cl(num(d.title_size, 18), 12, 40) + 'px;color:' + col(d.title_color, '#111111') + ';';
   var arrowColor = col(d.arrow_color, '#111111');
-  var titleColor = col(d.title_color, '#111111');
-  var wrapCss = (d.bg_on === true ? 'background:' + col(d.bg_color, '#FFFFFF') + ';' : '') + 'padding:' + Math.max(0, Math.min(48, num(d.pad, 0))) + 'px;';
+  var legacyPad = num(d.pad, 0);
+  var padX = cl(num(d.pad_x, legacyPad), 0, 96), padT = cl(num(d.pad_t, legacyPad), 0, 96), padB = cl(num(d.pad_b, legacyPad), 0, 96);
+  var wrapCss = (d.bg_on === true ? 'background:' + col(d.bg_color, '#FFFFFF') + ';' : '') + 'padding:' + padT + 'px ' + padX + 'px ' + padB + 'px;';
   var showArrows = d.arrows !== false;
   var autoplay = d.autoplay === true, ms = Math.max(1500, num(d.autoplay_ms, 4000));
+  var deskVars = fixed ? '--sz:' + sizeD + 'px;' : '--pv:' + pd + ';';
+  var mobVars = fixed ? '--sz:' + sizeM + 'px' : '--pv:' + pm;
+  var itemFlex = fixed ? 'flex:0 0 var(--sz)' : 'flex:0 0 calc((100% - var(--gap) * (var(--pv) - 1)) / var(--pv))';
+  var edge = fixed ? '.i:first-child{margin-left:auto}.i:last-child{margin-right:auto}' : '';
 
   var host = document.createElement('div');
   host.id = 'sll-widgets-card-' + (r.id || '');
@@ -312,17 +324,17 @@ function bTexts(t) {
   var st = document.createElement('style');
   st.textContent =
     ':host{display:block}.w{position:relative;margin:12px 0;font-family:inherit;box-sizing:border-box;' + wrapCss + '}' +
-    '.ttl{text-align:center;font-weight:800;font-size:18px;margin-bottom:12px;color:' + titleColor + '}' +
-    '.t{--gap:' + gap + 'px;--pv:' + pd + ';display:flex;gap:var(--gap);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}' +
-    '.t::-webkit-scrollbar{display:none}' +
-    '.i{flex:0 0 calc((100% - var(--gap) * (var(--pv) - 1)) / var(--pv));scroll-snap-align:start;min-width:0;display:block;text-decoration:none;color:inherit}' +
+    '.ttl{text-align:center;margin-bottom:12px;' + ttlCss + '}' +
+    '.t{--gap:' + gap + 'px;' + deskVars + 'display:flex;gap:var(--gap);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}' +
+    '.t::-webkit-scrollbar{display:none}' + edge +
+    '.i{' + itemFlex + ';scroll-snap-align:start;min-width:0;display:block;text-decoration:none;color:inherit}' +
     '.m{position:relative;overflow:hidden;box-sizing:border-box;width:100%;aspect-ratio:' + aspect + ';background:' + imgBg + ';border-radius:' + radius + ';border:' + border + '}' +
     '.m img{width:100%;height:100%;object-fit:' + fit + ';display:block;-webkit-user-drag:none;user-select:none}' +
-    '.c{margin-top:8px;text-align:center;font-size:' + capSize + 'px;color:' + capColor + ';line-height:1.3;overflow-wrap:anywhere}' +
+    '.c{margin-top:8px;text-align:center;' + capCss + 'line-height:1.3;overflow-wrap:anywhere}' +
     '.c.o{position:absolute;left:0;right:0;bottom:0;margin:0;padding:22px 8px 8px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6))}' +
     '.a{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.95);box-shadow:0 1px 4px rgba(0,0,0,.25);color:' + arrowColor + ';cursor:pointer;display:none;align-items:center;justify-content:center;padding:0;z-index:2}' +
     '.a svg{width:18px;height:18px}.a[disabled]{opacity:.35;cursor:default}.a.p{left:4px}.a.n{right:4px}' +
-    '@media (max-width:768px){.t{--pv:' + pm + '}.a{display:none!important}}';
+    '@media (max-width:768px){.t{' + mobVars + '}.a{display:none!important}}';
   sh.appendChild(st);
 
   var wrap = document.createElement('div'); wrap.className = 'w';

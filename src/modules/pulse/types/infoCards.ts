@@ -7,13 +7,17 @@ export type IconBg = 'none' | 'circle' | 'square';
 
 export type CarouselItem = Tier & { image: string; link?: string };
 
+export type CarouselFont = 'inherit' | 'arial' | 'verdana' | 'trebuchet' | 'georgia' | 'times' | 'courier';
+
 export interface CarouselDesign {
-  shape: 'square' | 'rounded' | 'circle'; aspect: string; fit: 'contain' | 'cover'; img_radius: number; img_bg: string;
+  shape: 'square' | 'circle'; aspect: string; fit: 'contain' | 'cover'; img_radius: number; img_bg: string;
+  size_mode: 'auto' | 'fixed'; size_d: number; size_m: number;
   border_on: boolean; border_color: string; border_w: number;
-  caption_pos: 'below' | 'overlay' | 'none'; caption_color: string; caption_size: number;
+  caption_pos: 'below' | 'overlay' | 'none'; caption_color: string; caption_size: number; caption_font: CarouselFont; caption_bold: boolean;
+  title_color: string; title_size: number; title_font: CarouselFont; title_bold: boolean;
   gap: number; per_desktop: number; per_mobile: number;
   arrows: boolean; arrow_color: string; autoplay: boolean; autoplay_ms: number;
-  bg_on: boolean; bg_color: string; pad: number; title_color: string;
+  bg_on: boolean; bg_color: string; pad_x: number; pad_t: number; pad_b: number;
 }
 
 export type BenefitItem = Tier & { icon?: string; icon_svg?: string; link?: string };
