@@ -1,4 +1,4 @@
-﻿-- Renomeia o schema gate para pulse (modulo Pulse)
+-- Renomeia o schema gate para pulse (modulo Pulse)
 set check_function_bodies = off;
 
 alter schema gate rename to pulse;

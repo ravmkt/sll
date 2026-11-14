@@ -1,4 +1,4 @@
-﻿-- 20261114c_feedback_summary_tip_feedback.sql
+-- 20261114c_feedback_summary_tip_feedback.sql
 create or replace function public.admin_master_feedback_summary(p_days int default 30)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare v_since timestamptz := now() - make_interval(days => greatest(coalesce(p_days, 30), 1)); v jsonb;

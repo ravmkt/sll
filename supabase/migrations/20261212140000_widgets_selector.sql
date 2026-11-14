@@ -1,4 +1,4 @@
-﻿-- Sessões de seleção de elemento (módulo Widgets)
+-- Sessões de seleção de elemento (módulo Widgets)
 create table if not exists widgets.selector_sessions (
   token        text primary key,
   store_id     uuid not null references public.stores(id) on delete cascade,

@@ -1,4 +1,4 @@
-﻿-- 0. Colunas de trial (idempotente)
+-- 0. Colunas de trial (idempotente)
 alter table public.dynamic_plans add column if not exists trial_days integer not null default 0;
 alter table public.subscriptions add column if not exists trial_ends_at timestamptz;
 

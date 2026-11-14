@@ -1,4 +1,4 @@
-﻿-- F-Planos Try-On: módulo, trial por módulo, planos e entitlement
+-- F-Planos Try-On: módulo, trial por módulo, planos e entitlement
 
 insert into public.hub_modules (slug, name, status, is_public_for_sale, sort_order, description, route_path)
 values ('tryon', 'Try-On', 'hidden', false, 100,

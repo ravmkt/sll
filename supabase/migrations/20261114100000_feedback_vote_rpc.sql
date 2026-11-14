@@ -1,4 +1,4 @@
-﻿-- 20261114b_feedback_vote_rpc.sql
+-- 20261114b_feedback_vote_rpc.sql
 create or replace function public.submit_feedback_vote(
   p_store_id uuid, p_type text, p_reference_id text, p_vote text, p_comment text default null
 ) returns uuid language plpgsql security definer set search_path = public as $$

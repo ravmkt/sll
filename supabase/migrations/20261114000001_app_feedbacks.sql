@@ -1,4 +1,4 @@
-﻿-- 20261114_app_feedbacks.sql
+-- 20261114_app_feedbacks.sql
 -- Feedbacks dos lojistas: dicas (voto), sugestoes, Noah e wizard NPS
 
 create table if not exists public.app_feedbacks (

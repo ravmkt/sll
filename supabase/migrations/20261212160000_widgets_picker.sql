@@ -1,4 +1,4 @@
-﻿create table if not exists widgets.picker_tokens (
+create table if not exists widgets.picker_tokens (
   token      text primary key,
   store_id   uuid not null references public.stores(id) on delete cascade,
   selector   text,

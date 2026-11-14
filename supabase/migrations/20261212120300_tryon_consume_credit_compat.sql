@@ -1,4 +1,4 @@
-﻿create or replace function tryon.consume_credit(p_store_id uuid, p_cost numeric default 0)
+create or replace function tryon.consume_credit(p_store_id uuid, p_cost numeric default 0)
 returns boolean
 language plpgsql
 security definer

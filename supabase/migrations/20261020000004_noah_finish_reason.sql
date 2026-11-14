@@ -1,4 +1,4 @@
-﻿alter table public.noah_logs add column if not exists finish_reason text;
+alter table public.noah_logs add column if not exists finish_reason text;
 
 create or replace function public.admin_noah_daily(p_start date, p_end date)
 returns table (day date, questions bigint, total_tokens bigint, truncated bigint)

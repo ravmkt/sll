@@ -1,4 +1,4 @@
-﻿-- Gestor: campos fiscais, logisticos e descricao completa
+-- Gestor: campos fiscais, logisticos e descricao completa
 alter table public.products
   add column if not exists description text;
 

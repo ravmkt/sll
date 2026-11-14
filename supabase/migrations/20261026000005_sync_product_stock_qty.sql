@@ -1,4 +1,4 @@
-﻿-- Mantem products.stock_qty = soma de product_variants.stock (widget anon nao le variantes)
+-- Mantem products.stock_qty = soma de product_variants.stock (widget anon nao le variantes)
 CREATE OR REPLACE FUNCTION public.sync_product_stock_qty()
 RETURNS trigger
 LANGUAGE plpgsql

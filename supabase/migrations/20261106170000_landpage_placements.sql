@@ -1,4 +1,4 @@
-﻿-- páginas de venda
+-- páginas de venda
 create table if not exists public.landing_pages (
   id           uuid primary key default gen_random_uuid(),
   slug         text unique not null,

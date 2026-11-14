@@ -1,4 +1,4 @@
-﻿-- GESTOR fase 1: clientes, pedidos, livro de estoque e registro do modulo
+-- GESTOR fase 1: clientes, pedidos, livro de estoque e registro do modulo
 
 -- ===== CLIENTES =====
 create table if not exists public.customers (

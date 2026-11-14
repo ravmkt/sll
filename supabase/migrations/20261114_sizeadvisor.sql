@@ -1,4 +1,4 @@
-﻿drop schema if exists sizeadvisor cascade;
+drop schema if exists sizeadvisor cascade;
 create schema sizeadvisor;
 
 create table sizeadvisor.size_charts (

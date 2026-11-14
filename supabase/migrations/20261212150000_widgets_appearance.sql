@@ -1,4 +1,4 @@
-﻿create schema if not exists widgets;
+create schema if not exists widgets;
 
 create table if not exists widgets.widget_styles (
   id            uuid primary key default gen_random_uuid(),

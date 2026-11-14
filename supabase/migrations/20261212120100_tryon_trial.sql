@@ -1,4 +1,4 @@
-﻿-- Um único registro atual do Try-On por loja
+-- Um único registro atual do Try-On por loja
 create unique index if not exists uq_subscriptions_tryon_current
   on public.subscriptions (store_id)
   where module_key = 'tryon' and is_current;

@@ -1,4 +1,4 @@
-﻿-- Módulo Try-On: schema exclusivo
+-- Módulo Try-On: schema exclusivo
 create schema if not exists tryon;
 
 -- ---------- Helpers ----------

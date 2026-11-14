@@ -1,4 +1,4 @@
-﻿create schema if not exists widgets;
+create schema if not exists widgets;
 
 create or replace function widgets.owns_store(p_store uuid) returns boolean
 language sql stable security definer set search_path = public as $$

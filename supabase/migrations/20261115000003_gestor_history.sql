@@ -1,4 +1,4 @@
-﻿create or replace function public.gestor_stock_history(p_variant uuid, p_limit integer default 50)
+create or replace function public.gestor_stock_history(p_variant uuid, p_limit integer default 50)
 returns table (id uuid, type text, qty integer, balance_after integer, channel text, note text, created_at timestamptz)
 language plpgsql security definer set search_path = public, erp as $$
 declare v_store uuid;
