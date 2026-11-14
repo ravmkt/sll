@@ -103,7 +103,7 @@ export default function WidgetsAppearancePage({ ctx }: { ctx: WidgetsCtx }) {
             <div className="mt-3 flex items-center justify-between">
               <span className="text-sm font-bold text-slate-800">{p.name}</span>
               <button type="button"
-                onClick={() => setEditing({ name: p.name, primary_color: p.color, config: p.config, is_default: false })}
+                onClick={() => setEditing({ name: '', template: p.name, primary_color: p.color, config: p.config, is_default: false })}
                 className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-600">
                 Usar template
               </button>
@@ -113,7 +113,7 @@ export default function WidgetsAppearancePage({ ctx }: { ctx: WidgetsCtx }) {
       </div>
 
       {editing && (
-        <RulerStyleEditorModal initial={editing} content={content} onClose={() => setEditing(null)} onSave={handleSave} />
+        <RulerStyleEditorModal initial={editing} content={content} existingNames={styles.map((s) => s.name)} onClose={() => setEditing(null)} onSave={handleSave} />
       )}
     </div>
   );
