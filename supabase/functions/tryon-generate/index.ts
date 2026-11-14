@@ -1,4 +1,4 @@
-﻿import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { decodeBase64, encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -148,7 +148,8 @@ Deno.serve(async (req) => {
     }).select("id").single();
     if (phErr || !ph) return await fail(`user_photos: ${phErr?.message}`, 500);
 
-    const { data: rs, error: rsErr } = await tdb.from("results").insert({
+    await tdb.from("results").delete().eq("store_id", storeId).eq("cache_key", cacheKey).neq("status", "done");
+        const { data: rs, error: rsErr } = await tdb.from("results").insert({
       store_id: storeId, photo_id: ph.id, product_id: productId, status: "processing",
       provider: "gemini", model, source_image_url: garmentUrl, cache_key: cacheKey,
     }).select("id").single();
