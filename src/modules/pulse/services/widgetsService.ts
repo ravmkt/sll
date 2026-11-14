@@ -1,5 +1,5 @@
-﻿import type { SupabaseClient } from '@supabase/supabase-js';
-import type { RulerSettings, RulerStyleConfig, WidgetStyle } from '../../types/widgets';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { RulerSettings, RulerStyleConfig, WidgetStyle } from '../types/widgets';
 
 export interface StyleInput {
   id?: string | null;

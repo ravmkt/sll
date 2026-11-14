@@ -1,8 +1,8 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Palette, Pencil, Plus, Trash2 } from 'lucide-react';
 import RulerPreview from '../../components/widgets/RulerPreview';
 import RulerStyleEditorModal, { type EditorInitial } from '../../components/widgets/RulerStyleEditorModal';
-import { widgetsService, type StyleInput } from '../../services/widgets/widgetsService';
+import { widgetsService, type StyleInput } from '../../services/widgetsService';
 import { PRESETS, SAMPLE_CONTENT, buildConfig, mergeConfig, type RulerContent, type WidgetStyle, type WidgetsCtx } from '../../types/widgets';
 
 export default function WidgetsAppearancePage({ ctx }: { ctx: WidgetsCtx }) {

@@ -1,8 +1,8 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Monitor, Plus, Ruler, Save, Smartphone, Trash2 } from 'lucide-react';
 import RulerPreview from '../../components/widgets/RulerPreview';
 import WidgetPlacementPicker, { type Placement } from '../../components/widgets/WidgetPlacementPicker';
-import { widgetsService } from '../../services/widgets/widgetsService';
+import { widgetsService } from '../../services/widgetsService';
 import { SAMPLE_CONTENT, mergeConfig, type RulerSettings, type Tier, type WidgetStyle, type WidgetsCtx } from '../../types/widgets';
 
 const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[#0094EB]';

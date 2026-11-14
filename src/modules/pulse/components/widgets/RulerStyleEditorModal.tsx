@@ -1,8 +1,8 @@
-﻿import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Monitor, Pencil, Ruler, Save, Smartphone, X } from 'lucide-react';
 import RulerPreview from './RulerPreview';
 import type { RulerAppearance, RulerContent, RulerStyleConfig } from '../../types/widgets';
-import type { StyleInput } from '../../services/widgets/widgetsService';
+import type { StyleInput } from '../../services/widgetsService';
 
 type Device = 'mobile' | 'desktop';
 const inputCls = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#0094EB]';

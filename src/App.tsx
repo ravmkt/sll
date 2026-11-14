@@ -53,6 +53,7 @@ const LegacyLiveRedirect = lazy(() => import('./pages/streamsell/LegacyLiveRedir
 const Products = lazy(() => import('./pages/Products'));
 const GestorPage = lazy(() => import('@/modules/gestor/pages/GestorPage'));
 const PulsePage = lazy(() => import('@/modules/pulse/pages/PulsePage'));
+const PulseWidgetsTab = lazy(() => import('@/modules/pulse/pages/PulseWidgetsTab'));
 const Medidas = lazy(() => import('./pages/Medidas'));
 const IndicaEGanha = lazy(() => import('./pages/afiliados/IndicaEGanha'));
 const ClubeRules = lazy(() => import('./pages/afiliados/ClubeRules'));
@@ -381,7 +382,7 @@ function AppRoutes() {
         <Route path="/dashboard/modules/radar/*" element={user ? (<SubscriptionGate><ModuleGate moduleKey="radar"><RadarRoutes /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/gestor" element={user ? <ModuleGate moduleKey="gestor"><GestorPage /></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/gate" element={<Navigate to="/dashboard/modules/pulse" replace />} />
-    <Route path="/dashboard/modules/pulse" element={user ? <ModuleGate moduleKey="gate"><PulseLayout>{(tab) => (tab === 'campanhas' || tab === 'instalacao' ? <PulsePage tab={tab} /> : <PulseSoon tab={tab} />)}</PulseLayout></ModuleGate> : <Navigate to="/auth" replace />} />
+    <Route path="/dashboard/modules/pulse" element={user ? <ModuleGate moduleKey="gate"><PulseLayout>{(tab) => (tab === 'campanhas' || tab === 'instalacao' ? <PulsePage tab={tab} /> : tab === 'widgets' ? <Suspense fallback={null}><PulseWidgetsTab /></Suspense> : <PulseSoon tab={tab} />)}</PulseLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderOverviewPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/paginas" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderListPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/templates" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderTemplatesPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />

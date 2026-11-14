@@ -1,7 +1,7 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Palette, Ruler } from 'lucide-react';
-import { widgetsService } from '../../services/widgets/widgetsService';
+import { widgetsService } from '../../services/widgetsService';
 import type { RulerSettings, WidgetsCtx } from '../../types/widgets';
 
 export default function WidgetsOverviewPage({ ctx }: { ctx: WidgetsCtx }) {

@@ -1,10 +1,10 @@
 import type { ElementType } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BellRing, CalendarClock, Code2, DoorOpen, LogOut, PanelLeftClose, PanelLeftOpen, Rocket, Users, Zap } from 'lucide-react';
+import { ArrowLeft, BellRing, CalendarClock, Code2, DoorOpen, LayoutGrid, LogOut, PanelLeftClose, PanelLeftOpen, Rocket, Users, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 
-export type PulseTab = 'cronograma' | 'campanhas' | 'alertas' | 'gatilhos' | 'social' | 'boost' | 'instalacao';
+export type PulseTab = 'cronograma' | 'campanhas' | 'alertas' | 'gatilhos' | 'social' | 'boost' | 'widgets' | 'instalacao';
 
 const ITEMS: { id: PulseTab; label: string; icon: ElementType }[] = [
   { id: 'cronograma', label: 'Cronograma', icon: CalendarClock },
@@ -13,6 +13,7 @@ const ITEMS: { id: PulseTab; label: string; icon: ElementType }[] = [
   { id: 'gatilhos', label: 'Gatilhos', icon: Zap },
   { id: 'social', label: 'Social Proof', icon: Users },
   { id: 'boost', label: 'Boost', icon: Rocket },
+  { id: 'widgets', label: 'Widgets', icon: LayoutGrid },
   { id: 'instalacao', label: 'Instalação', icon: Code2 },
 ];
 
