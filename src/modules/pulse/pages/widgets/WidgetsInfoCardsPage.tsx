@@ -22,7 +22,7 @@ export default function WidgetsInfoCardsPage({ ctx }: { ctx: WidgetsCtx }) {
     setLoading(true); setError('');
     try {
       const [c, s] = await Promise.all([svc.list(ctx.storeId), wsvc.listStyles(ctx.storeId)]);
-      setCards(c.filter((x) => x.kind !== 'benefits')); setStyles(s);
+      setCards(c.filter((x) => x.kind === 'info')); setStyles(s);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao carregar.');
     } finally { setLoading(false); }
