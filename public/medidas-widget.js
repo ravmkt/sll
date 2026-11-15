@@ -20,7 +20,7 @@ window.SLL_MEDIDAS = {
     sizeSelector: null, productRef: null, image: null, chart: null, charts: null, color: '#111'
   }, window.SLL_MEDIDAS || {});
 
-  const LBL = { bust: 'Busto', waist: 'Cintura', hip: 'Quadril', thigh: 'Coxa', height: 'Altura', foot: 'Pé', length: 'Comprimento' };
+  const LBL = { bust: 'Busto', waist: 'Cintura', hip: 'Quadril', thigh: 'Coxa', height: 'Altura', foot: 'Pé', length: 'Comprimento', sleeve: 'Manga', ankle: 'Tornozelo' };
   const BODY_KEYS = ['bust', 'waist', 'hip'];
   const COL = { g: '#34c38f', y: '#f5a623', r: '#e5484d' };
   const lbl = (k) => (k === 'bust' && S.gender === 'M' ? 'Tórax' : LBL[k] || k);
@@ -65,7 +65,7 @@ window.SLL_MEDIDAS = {
       const u = cfg.apiBase + '/sizeadvisor-chart?store_id=' + encodeURIComponent(cfg.storeId) + '&product=' + encodeURIComponent(productRef());
       const r = await fetch(u);
       const j = await r.json();
-      S.charts = j.charts || (j.chart ? [j.chart] : []); S.settings = j.settings || {};
+      S.charts = j.charts || (j.chart ? [j.chart] : []);
     }
     if (S.charts.length) {
       const c = chart();
@@ -349,69 +349,18 @@ window.SLL_MEDIDAS = {
         if (t) { e.preventDefault(); e.stopPropagation(); open(); }
       }, true);
     }
-    autoButton();
+    if (cfg.injectAfter) {
+      const ref = document.querySelector(cfg.injectAfter);
+      if (ref && !document.getElementById('sll-medidas-btn')) {
+        const b = document.createElement('button');
+        b.id = 'sll-medidas-btn'; b.type = 'button'; b.textContent = 'Descubra seu tamanho';
+        b.style.cssText = 'margin:10px 0;padding:12px 20px;border:1px solid #111;background:#fff;cursor:pointer;font-weight:600;border-radius:4px';
+        b.onclick = open;
+        ref.insertAdjacentElement('afterend', b);
+      }
+    }
   }
 
-  /* ---------- botão automático ---------- */
-  function findSizeBlock() {
-    const sizes = new Set(S.charts.flatMap((c) => c.rows.map((r) => r.size.toUpperCase())));
-    const els = [...document.querySelectorAll('button,label,li,a,span,div')]
-      .filter((e) => !host.contains(e) && e.offsetParent && sizes.has(e.textContent.trim().toUpperCase()));
-    const count = new Map();
-    els.forEach((e) => {
-      let n = e.parentElement, d = 0;
-      while (n && d < 4) {
-        if (!count.has(n)) count.set(n, new Set());
-        count.get(n).add(e.textContent.trim().toUpperCase());
-        n = n.parentElement; d++;
-      }
-    });
-    let best = null, bs = 1e9;
-    count.forEach((s, n) => {
-      if (s.size >= 2) { const c = n.getElementsByTagName('*').length; if (c < bs) { best = n; bs = c; } }
-    });
-    if (best) {
-      const p = best.parentElement;
-      if (p && p.children.length <= 2 && /tamanho|size/i.test(p.textContent.slice(0, 40))) best = p;
-    }
-    return best;
-  }
-  function findBuy() {
-    if (cfg.buySelector) return document.querySelector(cfg.buySelector);
-    return [...document.querySelectorAll('button,a,input[type=submit]')].find((e) =>
-      !host.contains(e) && e.offsetParent && /^(comprar|adicionar|add to cart|buy)/i.test((e.textContent || e.value || '').trim()));
-  }
-  function makeBtn(st) {
-    const b = document.createElement('button');
-    const full = st.full_width !== false;
-    b.id = 'sll-medidas-btn'; b.type = 'button';
-    b.textContent = st.button_text || 'Descubra seu tamanho';
-    b.style.cssText = 'display:' + (full ? 'block;width:100%' : 'inline-block') + ';margin:10px 0;padding:12px 20px;cursor:pointer;font-weight:600;font-size:14px;' +
-      'background:' + (st.bg_color || '#111') + ';color:' + (st.text_color || '#fff') + ';' +
-      'border:1px solid ' + (st.border_color || st.bg_color || '#111') + ';border-radius:' + (st.radius == null ? 6 : st.radius) + 'px';
-    b.onclick = (e) => { e.preventDefault(); open(); };
-    return b;
-  }
-  async function autoButton() {
-    try { await loadCharts(); } catch (e) { return; }
-    if (!S.charts.length) return;
-    const st = S.settings || {};
-    const texts = (cfg.openTexts || []).map((s) => s.toLowerCase());
-    let n = 0;
-    const t = setInterval(() => {
-      if (document.getElementById('sll-medidas-btn') || ++n > 40) return clearInterval(t);
-      const own = [...document.querySelectorAll('button,a')].some((e) => e.id !== 'sll-medidas-btn' && !host.contains(e) && texts.includes(e.textContent.trim().toLowerCase()));
-      if (own) return clearInterval(t);
-      const sel = cfg.injectAfter || st.anchor_selector;
-      const custom = sel ? document.querySelector(sel) : null;
-      const size = findSizeBlock(), buy = findBuy();
-      const pref = st.position === 'before_buy' ? [buy, size] : [size, buy];
-      const target = custom || pref[0] || pref[1];
-      if (!target) return;
-      target.insertAdjacentElement(custom ? 'afterend' : 'beforebegin', makeBtn(st));
-      clearInterval(t);
-    }, 500);
-  }
   window.SLLMedidas = { open, close: actions.close };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindTriggers); else bindTriggers();
 })();
