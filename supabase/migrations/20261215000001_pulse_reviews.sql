@@ -1,4 +1,4 @@
-﻿-- Reviews (Pulse): dados em public (multi-modulo); config dos widgets em pulse
+-- Reviews (Pulse): dados em public (multi-modulo); config dos widgets em pulse
 create table if not exists public.reviews (
   id uuid primary key default gen_random_uuid(),
   store_id uuid not null references public.stores(id) on delete cascade,

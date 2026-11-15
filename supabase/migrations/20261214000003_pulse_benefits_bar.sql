@@ -1,4 +1,4 @@
-﻿alter table pulse.info_cards
+alter table pulse.info_cards
   add column if not exists kind text not null default 'info' check (kind in ('info','benefits')),
   add column if not exists icon_position text not null default 'left' check (icon_position in ('top','left','right')),
   add column if not exists icon_size int not null default 28,
