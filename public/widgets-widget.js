@@ -652,6 +652,23 @@ function buildBenefits(conf) {
     return keys.slice(0, 12);
   }
 
+  function ruleOk(pl) {
+    var r = (pl && pl.rule) || 'auto';
+    var v = String((pl && pl.rule_value) || '').trim().toLowerCase();
+    var p = location.pathname.toLowerCase();
+    if (r === 'home') return p === '/' || p === '';
+    if (r === 'url_contains') return !!v && p.indexOf(v) !== -1;
+    if (r === 'url_not_contains') return !v || p.indexOf(v) === -1;
+    if (r === 'url_not_equals') return p.replace(/^\/+|\/+$/g, '') !== v.replace(/^\/+|\/+$/g, '');
+    return true;
+  }
+  function reviewKeys(w, keys) {
+    if (w.scope !== 'product') return null;
+    var pl = w.placement || {}, r = pl.rule || 'auto', v = String(pl.rule_value || '').trim().toLowerCase();
+    if (r === 'home' || r === 'all_pages') return null;
+    if (r === 'url_contains' && v) return keys.concat([v]);
+    return keys;
+  }
   function initReviews() {
     if (!STORE_ID) return;
     rpc('reviews_public_config', { p_store_id: STORE_ID }).then(function (ws) {
@@ -659,11 +676,13 @@ function buildBenefits(conf) {
       var keys = productKeys();
       ws.forEach(function (w) {
         var isProd = w.scope === 'product';
-        if (isProd && !keys.length) return;
+        if (!ruleOk(w.placement)) return;
+            var wk = reviewKeys(w, keys);
+            if (isProd && wk && !wk.length) return;
         if (!w.placement || !w.placement.selector) return;
         loadRenderer().then(function () {
           return rpc('reviews_public_data', {
-            p_store_id: STORE_ID, p_keys: isProd ? keys : null,
+            p_store_id: STORE_ID, p_keys: wk,
             p_min_rating: w.min_rating, p_sources: w.sources, p_limit: w.max_items });
         }).then(function (d) {
           if (!d || !d.reviews || !d.reviews.length) return;

@@ -3,7 +3,8 @@ import { Crosshair, Loader2 } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type Position = 'before' | 'after' | 'prepend' | 'append';
-export interface Placement { selector: string; position: Position; }
+export type PageRule = 'auto' | 'home' | 'all_pages' | 'url_contains' | 'url_not_contains' | 'url_not_equals';
+export interface Placement { selector: string; position: Position; rule?: PageRule; rule_value?: string; }
 
 const POSITIONS: { v: Position; label: string }[] = [
   { v: 'before', label: 'Acima do elemento' },

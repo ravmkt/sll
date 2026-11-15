@@ -1,6 +1,6 @@
 ﻿import { useMemo, useState } from 'react';
 import { Loader2, Palette, X } from 'lucide-react';
-import WidgetPlacementPicker, { type Placement } from './WidgetPlacementPicker';
+import WidgetPlacementPicker, { type Placement, type PageRule } from './WidgetPlacementPicker';
 import ReviewsPreview from './ReviewsPreview';
 import { reviewsService } from '../../services/reviewsService';
 import { TEMPLATES, templateDesign, type ReviewDesign, type ReviewScope, type ReviewSource, type ReviewWidget } from '../../types/reviews';
@@ -21,6 +21,11 @@ const TOGGLES: [keyof ReviewDesign, string][] = [
   ['show_date', 'Data'], ['show_source', 'Origem (Google)'], ['show_verified', 'Compra verificada'], ['show_media', 'Fotos e vídeos'],
 ];
 const GRID_TPL = ['cards_clean', 'text_only', 'photo_wall'];
+const PAGE_RULES: [PageRule, string][] = [
+  ['auto', 'Automático (página do próprio produto)'], ['home', 'Somente na Home'], ['all_pages', 'Todas as páginas'],
+  ['url_contains', 'URL contém'], ['url_not_contains', 'URL não contém'], ['url_not_equals', 'URL diferente'],
+];
+const RULES_WITH_VALUE: PageRule[] = ['url_contains', 'url_not_contains', 'url_not_equals'];
 
 interface Props { ctx: WidgetsCtx; initial: ReviewWidget | null; defaultName: string; onClose: () => void; onSaved: () => void; }
 
@@ -46,6 +51,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
 
   async function save() {
     if (!sources.length) { setError('Escolha ao menos uma origem de avaliações.'); return; }
+    if (RULES_WITH_VALUE.includes(placement.rule ?? 'auto') && !(placement.rule_value ?? '').trim()) { setError('Informe o texto da URL da regra.'); return; }
     if (active && !placement.selector.trim()) { setError('Defina o elemento da loja antes de ativar.'); return; }
     setBusy(true); setError('');
     try {
@@ -162,6 +168,18 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
 
             <div>
               <span className={lbl}>Posição na loja</span>
+                  <div className="mb-3 grid grid-cols-2 gap-3">
+                    <label><span className={lbl}>Regra da página</span>
+                      <select className={inp} value={placement.rule ?? 'auto'}
+                        onChange={(e) => setPlacement({ ...placement, rule: e.target.value as PageRule })}>
+                        {PAGE_RULES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                      </select></label>
+                    {RULES_WITH_VALUE.includes(placement.rule ?? 'auto') && (
+                      <label><span className={lbl}>Texto da URL</span>
+                        <input className={inp} value={placement.rule_value ?? ''} placeholder="confort"
+                          onChange={(e) => setPlacement({ ...placement, rule_value: e.target.value })} /></label>
+                    )}
+                  </div>
               {scope === 'product' && (
                 <label className="mb-3 block">
                   <span className={lbl}>URL de um produto da loja (para escolher o elemento)</span>
