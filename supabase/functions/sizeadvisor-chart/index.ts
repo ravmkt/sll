@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const u = new URL(req.url);
   const storeId = u.searchParams.get("store_id") ?? "";
-  const pageUrl = (u.searchParams.get("url") ?? "").toLowerCase();
+  const pageUrl = ((u.searchParams.get("url") ?? u.searchParams.get("product") ?? "")).toLowerCase();
   if (!/^[0-9a-f-]{36}$/i.test(storeId)) return json({ error: "store_id invalido" }, 400);
 
   const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
