@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
   const { data: settings } = await db
     .from("widget_settings")
-    .select("button_text,bg_color,text_color,border_color,radius,full_width,position,anchor_selector")
+    .select("button_text,bg_color,text_color,border_color,radius,full_width,position,anchor_selector,modal_image_url,modal_image_fit,modal_image_position,show_modal_title,set_layout")
     .eq("store_id", storeId)
     .maybeSingle();
   return json({ gender: out[0]?.gender ?? "F", rows: out[0]?.rows ?? [], charts: out, settings: settings ?? {} });
