@@ -74,6 +74,9 @@ const FIELDS: F[] = [
   { s: "Resultado", k: "result_accent", l: "Cor de destaque", t: "color" },
 ];
 const SECTIONS = Array.from(new Set(FIELDS.map((f) => f.s)));
+type Step = "medidas" | "provador" | "corpo" | "resultado";
+const STEP_OF: Record<string, Step> = { "Provador Virtual": "provador", "Ajuste do corpo": "corpo", "Resultado": "resultado" };
+const RANGES: Record<string, number[]> = { Busto: [70, 130], Cintura: [55, 120], Quadril: [80, 150] };
 const SIZES = ["XPP", "PP", "P", "M", "G", "GG"];
 const ROWS: string[][] = [["Busto", "93 cm"], ["Cintura", "76 cm"], ["Quadril", "100 cm"], ["Comprimento", "98 cm"], ["Manga", "59 cm"]];
 
@@ -84,6 +87,9 @@ export default function MedidasAparencia({ storeId: propStoreId }: { storeId?: s
   const [c, setC] = useState<Cfg>(DEFAULTS);
   const [mc, setMc] = useState<MC>(MC0);
   const [sel, setSel] = useState("XPP");
+  const [open, setOpen] = useState<string>("Foto");
+  const [step, setStep] = useState<Step>("medidas");
+  const [bm, setBm] = useState<Record<string, number>>({ Busto: 91, Cintura: 81, Quadril: 100 });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -154,6 +160,12 @@ export default function MedidasAparencia({ storeId: propStoreId }: { storeId?: s
 
   const lab = "block text-xs font-medium text-gray-700 mb-1";
   const inp = "w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm";
+  const head = "w-full flex items-center justify-between px-3 py-2.5 text-sm font-bold uppercase tracking-wide text-left";
+  const toggle = (name: string) => {
+    const next = open === name ? "" : name;
+    setOpen(next);
+    if (next) setStep(STEP_OF[next] ?? "medidas");
+  };
 
   const renderField = (f: F) => {
     const v = mc[f.k];
@@ -185,6 +197,25 @@ export default function MedidasAparencia({ storeId: propStoreId }: { storeId?: s
 
   const radius = mc.modal_rounded ? mc.modal_radius : 0;
   const chipR = mc.chip_shape === "round" ? 999 : mc.chip_shape === "rounded" ? 8 : 0;
+  const shell = {
+    gridTemplateColumns: "45% 55%", minHeight: 480, background: mc.modal_bg, borderRadius: radius,
+    border: mc.modal_border ? `${mc.modal_border_width}px solid ${mc.modal_border_color}` : "1px solid #e5e7eb",
+  };
+  const photoEl = (
+    <div className="relative bg-gray-100">
+      <img src={c.modal_image_url || "/assets/mock/prod-bazer.jpg"} alt="Foto do modal" className="absolute inset-0 w-full h-full"
+        style={{ objectFit: c.modal_image_fit, objectPosition: c.modal_image_position }}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+    </div>
+  );
+  const genderList = mc.genders === "f" ? ["Feminino"] : mc.genders === "m" ? ["Masculino"] : ["Feminino", "Masculino"];
+  const hw = (v: number) => v * 0.3;
+  const bodyPts = [
+    [62, 70], [100 - hw(bm.Busto), 108], [100 - hw(bm.Cintura), 150], [100 - hw(bm.Quadril), 198],
+    [100 - hw(bm.Quadril) * 0.8, 340], [100 + hw(bm.Quadril) * 0.8, 340], [100 + hw(bm.Quadril), 198],
+    [100 + hw(bm.Cintura), 150], [100 + hw(bm.Busto), 108], [138, 70],
+  ].map((p) => p.join(",")).join(" ");
+  const darkBtn = { background: mc.tryon_btn_bg, color: mc.tryon_btn_color, borderRadius: Math.min(radius, 10) };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -193,8 +224,12 @@ export default function MedidasAparencia({ storeId: propStoreId }: { storeId?: s
 
       <div className="grid lg:grid-cols-[420px_1fr] gap-8">
         <div className="space-y-6">
-          <section className="space-y-3">
-            <h2 className="text-sm font-bold uppercase tracking-wide">Foto</h2>
+          <section className="rounded-md border border-gray-200">
+            <button type="button" onClick={() => toggle("Foto")} className={head}>
+              <span>Foto e layout</span><span>{open === "Foto" ? "−" : "+"}</span>
+            </button>
+            {open === "Foto" && (
+            <div className="p-3 space-y-3">
             <div>
               <label className={lab}>Foto do modal</label>
               <input type="file" accept="image/*" disabled={uploading} className={inp}
@@ -232,12 +267,18 @@ export default function MedidasAparencia({ storeId: propStoreId }: { storeId?: s
                 </select>
               </div>
             </div>
+            </div>
+            )}
           </section>
 
           {SECTIONS.map((s) => (
-            <section key={s} className="space-y-3">
-              <h2 className="text-sm font-bold uppercase tracking-wide">{s}</h2>
-              <div className="grid grid-cols-2 gap-3">{FIELDS.filter((f) => f.s === s).map(renderField)}</div>
+            <section key={s} className="rounded-md border border-gray-200">
+              <button type="button" onClick={() => toggle(s)} className={head}>
+                <span>{s}</span><span>{open === s ? "−" : "+"}</span>
+              </button>
+              {open === s && (
+                <div className="p-3 grid grid-cols-2 gap-3">{FIELDS.filter((f) => f.s === s).map(renderField)}</div>
+              )}
             </section>
           ))}
 
@@ -255,6 +296,15 @@ export default function MedidasAparencia({ storeId: propStoreId }: { storeId?: s
 
         <div className="lg:sticky lg:top-4 self-start">
           <p className="text-sm font-medium text-gray-700 mb-2">Prévia do modal</p>
+          <div className="flex gap-1 mb-3 flex-wrap">
+            {([["medidas", "Medidas"], ["provador", "Provador"], ["corpo", "Corpo"], ["resultado", "Resultado"]] as [Step, string][]).map(([k, n]) => (
+              <button key={k} type="button" onClick={() => setStep(k)}
+                className={"rounded-md px-3 py-1.5 text-xs font-semibold border " + (step === k ? "bg-black text-white border-black" : "bg-white text-gray-700 border-gray-300")}>
+                {n}
+              </button>
+            ))}
+          </div>
+          {step === "medidas" && (
           <div className="grid overflow-hidden shadow-sm"
             style={{
               gridTemplateColumns: "45% 55%", minHeight: 480, background: mc.modal_bg, borderRadius: radius,
@@ -302,6 +352,114 @@ export default function MedidasAparencia({ storeId: propStoreId }: { storeId?: s
               </button>
             </div>
           </div>
+          )}
+
+          {step === "provador" && (
+            <div className="grid overflow-hidden shadow-sm" style={shell}>
+              {photoEl}
+              <div className="p-5 flex flex-col gap-3">
+                <p className="text-xl font-bold">{mc.tryon_title}</p>
+                <p className="text-sm text-gray-600">Preencha os dados para experimentar este produto</p>
+                <div className="flex gap-2">
+                  {genderList.map((g, i) => (
+                    <span key={g} className="px-3 py-1.5 text-sm"
+                      style={{
+                        borderRadius: chipR,
+                        background: i === 0 ? mc.chip_active_bg : mc.chip_bg,
+                        color: i === 0 ? mc.chip_active_text_color : mc.chip_text_color,
+                        border: `${i === 0 ? 2 : 1}px solid ${i === 0 ? mc.chip_active_border_color : mc.chip_border_color}`,
+                      }}>{g}</span>
+                  ))}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[["Altura (cm)", "165"], ["Peso (kg)", "65"], ["Idade", "35"]].map(([l, v]) => (
+                    <div key={l}>
+                      <label className={lab}>{l}</label>
+                      <input className={inp} defaultValue={v} />
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <label className={lab}>Como você gosta de vestir?</label>
+                  <div className="flex gap-2">
+                    {["Ajustado", "Normal", "Folgado"].map((t, i) => (
+                      <span key={t} className="px-3 py-1.5 text-sm"
+                        style={{
+                          borderRadius: chipR,
+                          background: i === 1 ? mc.chip_active_bg : mc.chip_bg,
+                          color: i === 1 ? mc.chip_active_text_color : mc.chip_text_color,
+                          border: `${i === 1 ? 2 : 1}px solid ${i === 1 ? mc.chip_active_border_color : mc.chip_border_color}`,
+                        }}>{t}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-auto flex justify-between">
+                  <span className="px-5 py-2 text-sm font-bold bg-gray-200 rounded-md">Voltar</span>
+                  <span className="px-5 py-2 text-sm font-bold" style={darkBtn}>Próximo</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === "corpo" && (
+            <div className="grid overflow-hidden shadow-sm" style={shell}>
+              <div className="flex items-center justify-center bg-gray-100">
+                <svg viewBox="0 0 200 360" className="h-[420px]">
+                  <circle cx="100" cy="38" r="20" fill={mc.body_fill} />
+                  <rect x="93" y="56" width="14" height="18" fill={mc.body_fill} />
+                  <polygon points={bodyPts} fill={mc.body_fill} />
+                </svg>
+              </div>
+              <div className="p-5 flex flex-col gap-3">
+                <p className="text-xl font-bold">{mc.body_title}</p>
+                <p className="text-sm text-gray-600">{mc.body_text}</p>
+                {Object.keys(RANGES).map((k) => (
+                  <div key={k}>
+                    <label className={lab}>{k} · <b>{bm[k]} cm</b></label>
+                    <input type="range" min={RANGES[k][0]} max={RANGES[k][1]} value={bm[k]}
+                      onChange={(e) => setBm((p) => ({ ...p, [k]: Number(e.target.value) }))}
+                      className="w-full" style={{ accentColor: mc.slider_color }} />
+                  </div>
+                ))}
+                <div className="mt-auto flex justify-between">
+                  <span className="px-5 py-2 text-sm font-bold bg-gray-200 rounded-md">Voltar</span>
+                  <span className="px-5 py-2 text-sm font-bold" style={darkBtn}>Próximo</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === "resultado" && (
+            <div className="grid overflow-hidden shadow-sm" style={shell}>
+              {photoEl}
+              <div className="p-5 flex flex-col gap-3">
+                <p className="text-xs font-bold tracking-wide text-gray-600">{mc.result_label}</p>
+                <div className="flex items-center gap-4">
+                  <div className="rounded-lg border px-6 py-3 font-bold"
+                    style={{ fontSize: mc.result_size_font, color: mc.result_accent, borderColor: mc.result_accent }}>XPP</div>
+                  <span className="px-3 py-1.5 text-xs border rounded-md">Editar medidas</span>
+                </div>
+                {[["Quadril (100 cm)", "ideal", "#22c55e"], ["Cintura (81 cm)", "justo", "#f59e0b"], ["Busto (91 cm)", "levemente folgado", "#22c55e"]].map(([l, t, col]) => (
+                  <div key={l} className="flex items-center justify-between text-sm py-1" style={{ borderBottom: `1px solid ${mc.table_line_color}` }}>
+                    <span style={{ color: mc.table_label_color }}>{l}</span>
+                    <span className="text-white text-xs font-semibold px-2.5 py-0.5 rounded-full" style={{ background: col }}>{t}</span>
+                  </div>
+                ))}
+                <p className="text-xs text-gray-500">Medidas da peça: Comprimento 98 cm · Manga 59 cm</p>
+                <div className="mt-auto flex gap-2 flex-wrap">
+                  {SIZES.map((t) => (
+                    <span key={t} className="px-3 py-1.5 text-sm"
+                      style={{
+                        borderRadius: chipR,
+                        background: t === "XPP" ? mc.chip_active_bg : mc.chip_bg,
+                        color: t === "XPP" ? mc.chip_active_text_color : mc.chip_text_color,
+                        border: `${t === "XPP" ? 2 : 1}px solid ${t === "XPP" ? mc.chip_active_border_color : mc.chip_border_color}`,
+                      }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
