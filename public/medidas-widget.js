@@ -122,6 +122,35 @@ window.SLL_MEDIDAS = {
   const rowOf = (size) => chart().rows.find((r) => r.size === size);
   const bestSize = (c = chart()) => c.rows.slice().sort((a, b) => score(a) - score(b))[0].size;
 
+  /* ---------- modal_config (painel) ---------- */
+  const MC_DEF = {
+    genders: 'both', modal_bg: '#ffffff', modal_radius: 16, modal_rounded: true, modal_border: false,
+    modal_border_color: '#e5e7eb', modal_border_width: 1, chip_bg: '#ffffff', chip_text_color: '#111111',
+    chip_border_color: '#c9a961', chip_active_bg: '#000000', chip_active_text_color: '#ffffff',
+    chip_active_border_color: '#c9a961', chip_shape: 'rounded', title_text: 'Selecione um tamanho e verifique as medidas',
+    title_size: 14, title_color: '#000000', table_line_color: '#e5e7eb', table_label_color: '#374151',
+    table_value_color: '#111111', tryon_title: 'Provador Virtual', tryon_btn_bg: '#111111', tryon_btn_color: '#ffffff',
+    body_title: 'Ajuste o formato do corpo',
+    body_text: 'Este é o formato aproximado do corpo que geramos com suas medidas. Ajuste somente se for necessário.',
+    body_fill: '#e8c4a8', slider_color: '#111111', result_label: 'MELHOR OPÇÃO', result_accent: '#111111', result_size_font: 28
+  };
+  const mc = () => Object.assign({}, MC_DEF, (S.settings && S.settings.modal_config) || {});
+  const gOpt = () => { const g = String(mc().genders || 'both').toLowerCase(); return g[0] === 'f' ? 'F' : g[0] === 'm' ? 'M' : 'both'; };
+  const genderRow = () => gOpt() !== 'both' ? '' : `<div class="row"><button class="chip ${S.gender === 'F' ? 'on' : ''}" data-act="gender" data-v="F">Feminino</button><button class="chip ${S.gender === 'M' ? 'on' : ''}" data-act="gender" data-v="M">Masculino</button></div>`;
+  function applyTheme() {
+    const m = mc(), c = root.querySelector('.card'), set = (k, v) => c.style.setProperty(k, v);
+    const shape = String(m.chip_shape).toLowerCase();
+    set('--mbg', m.modal_bg);
+    set('--mr', (m.modal_rounded ? m.modal_radius : 0) + 'px');
+    set('--mb', m.modal_border ? m.modal_border_width + 'px solid ' + m.modal_border_color : '0');
+    set('--cbg', m.chip_bg); set('--ctc', m.chip_text_color); set('--cbc', m.chip_border_color);
+    set('--cabg', m.chip_active_bg); set('--catc', m.chip_active_text_color); set('--cab', m.chip_active_border_color);
+    set('--cr', /square|quad|reto/.test(shape) ? '2px' : /pill|circle|round(ed)?_full|full/.test(shape) ? '999px' : '8px');
+    set('--tl', m.table_line_color); set('--tlc', m.table_label_color); set('--tvc', m.table_value_color);
+    set('--c', m.tryon_btn_bg); set('--bt', m.tryon_btn_color);
+    set('--sc', m.slider_color); set('--ra', m.result_accent); set('--rsf', m.result_size_font + 'px');
+  }
+
   /* ---------- UI ---------- */
   const host = document.createElement('div');
   host.id = 'sll-medidas-root';
@@ -130,7 +159,7 @@ window.SLL_MEDIDAS = {
   *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
   .ov{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:2147483000;display:none;align-items:center;justify-content:center;padding:12px}
   .ov.on{display:flex}
-  .card{background:#fff;border-radius:6px;width:100%;max-width:900px;max-height:94vh;overflow:auto;position:relative;color:#333}
+  .card{background:var(--mbg,#fff);border-radius:var(--mr,6px);border:var(--mb,0);width:100%;max-width:900px;max-height:94vh;overflow:auto;position:relative;color:#333}
   .x{position:absolute;top:8px;right:8px;width:34px;height:34px;border:0;border-radius:6px;background:#f2f2f2;font-size:20px;cursor:pointer;z-index:3}
   .grid{display:grid;grid-template-columns:1fr 1fr;min-height:480px}
   .l{padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f6f6f6;gap:10px}
@@ -142,23 +171,24 @@ window.SLL_MEDIDAS = {
   .r{padding:36px 32px;display:flex;flex-direction:column;gap:14px;justify-content:center}
   h2{margin:0;font-size:22px;color:#444}
   p{margin:0;font-size:14px;color:#666}
-  .chip{border:1px solid #ccc;background:#fff;border-radius:8px;padding:10px 22px;font-weight:600;cursor:pointer;position:relative}
-  .chip.on{border-color:#111;box-shadow:0 0 0 1px #111}
+  .chip{border:1px solid var(--cbc,#ccc);background:var(--cbg,#fff);color:var(--ctc,#111);border-radius:var(--cr,8px);padding:10px 22px;font-weight:600;cursor:pointer;position:relative}
+  .chip.on{border-color:var(--cab,#111);background:var(--cabg,#fff);color:var(--catc,#111);box-shadow:0 0 0 1px var(--cab,#111)}
   .chip i{position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;background:#34c38f;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-style:normal}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .btn{background:var(--c,#111);color:#fff;border:0;border-radius:6px;padding:12px 24px;font-weight:700;cursor:pointer;font-size:14px}
+  .btn{background:var(--c,#111);color:var(--bt,#fff);border:0;border-radius:6px;padding:12px 24px;font-weight:700;cursor:pointer;font-size:14px}
   .btn.g{background:#e6e6e6;color:#111}
   .btn.s{background:#fff;color:#111;border:1px solid #ccc;padding:6px 12px;font-size:12px;font-weight:500}
-  .tr{display:flex;justify-content:space-between;border-bottom:1px solid #e3e3e3;padding:12px 0;font-size:14px}
+  .tr{display:flex;justify-content:space-between;border-bottom:1px solid var(--tl,#e3e3e3);padding:12px 0;font-size:14px}
+  .tr span:first-child{color:var(--tlc,#333)}.tr span:last-child{color:var(--tvc,#333)}
   label{font-size:13px;display:block}
   input[type=number]{border:1px solid #333;border-radius:4px;padding:8px;width:100px;font-size:14px;margin-right:6px}
   .sl{display:flex;align-items:center;gap:8px;font-size:12px}
-  .sl input{flex:1;accent-color:#111}
+  .sl input{flex:1;accent-color:var(--sc,#111)}
   .sl button{width:30px;height:30px;border:0;border-radius:4px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer}
   .pill{border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;color:#fff}
   .g1{background:#34c38f}.y1{background:#f5a623}.r1{background:#e5484d}
-  .big{width:96px;height:96px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:800;color:#333;background:#fff}
-  .tag{font-size:12px;font-weight:700;letter-spacing:.04em;color:#555}
+  .big{width:96px;height:96px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;font-size:var(--rsf,44px);font-weight:800;color:var(--ra,#333);background:#fff}
+  .tag{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--ra,#555)}
   .err{color:#e5484d;font-size:12px;min-height:14px}
   .foot{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
   .sp{width:44px;height:44px;border:3px solid #ddd;border-top-color:#111;border-radius:50%;animation:s 1s linear infinite}
@@ -202,7 +232,7 @@ window.SLL_MEDIDAS = {
     const bw = val('bust') * 0.27, ww = val('waist') * 0.27, hw = val('hip') * 0.27;
     const P = [[bw * 1.08, 66], [bw, 100], [ww, 140], [hw, 188], [hw * 0.8, 250], [hw * 0.58, 318]];
     const L = P.map(([x, y]) => [100 - x, y]), R = P.map(([x, y]) => [100 + x, y]).reverse();
-    const skin = '#e7c3a6';
+    const skin = mc().body_fill;
     const band = (k, y) => {
       if (!row || !row.measures[k]) return '';
       const w = (val(k) * 0.27) * 2 + 8;
@@ -222,15 +252,15 @@ window.SLL_MEDIDAS = {
       const r = rowOf(S.view) || chart().rows[0];
       return `<div class="grid"><div class="l">${ttl()}${imgBox()}</div><div class="r">
         ${tabs()}
-        <p style="text-align:center">Selecione um tamanho e verifique as medidas</p>
+        <p style="text-align:center;font-size:${+mc().title_size || 14}px;color:${esc(mc().title_color)}">${esc(mc().title_text)}</p>
         <div class="row" style="justify-content:center">${chips(r.size, 'view')}</div>
         ${tableBody(r)}
-        <button class="btn" data-act="toform">Provador Virtual</button></div></div>`;
+        <button class="btn" data-act="toform">${esc(mc().tryon_title)}</button></div></div>`;
     },
     form() {
       return `<div class="grid"><div class="l">${imgBox()}</div><div class="r">
-        <h2>Provador Virtual</h2><p>Preencha os dados para experimentar este produto</p>
-        <div class="row"><button class="chip ${S.gender === 'F' ? 'on' : ''}" data-act="gender" data-v="F">Feminino</button><button class="chip ${S.gender === 'M' ? 'on' : ''}" data-act="gender" data-v="M">Masculino</button></div>
+        <h2>${esc(mc().tryon_title)}</h2><p>Preencha os dados para experimentar este produto</p>
+        ${genderRow()}
         <label>Altura<br><input type="number" id="f-h" value="${esc(S.h)}" inputmode="numeric"> cm</label>
         <label>Peso<br><input type="number" id="f-w" value="${esc(S.w)}" inputmode="numeric"> kg</label>
         <label>Idade<br><input type="number" id="f-age" value="${esc(S.age)}" inputmode="numeric"> anos</label>
@@ -240,7 +270,7 @@ window.SLL_MEDIDAS = {
     },
     body() {
       return `<div class="grid"><div class="l" id="bd">${bodySvg(null)}</div><div class="r">
-        <h2>Ajuste o formato do corpo</h2><p>Este é o formato aproximado do corpo que geramos com suas medidas. Ajuste somente se for necessário.</p>
+        <h2>${esc(mc().body_title)}</h2><p>${esc(mc().body_text)}</p>
         ${BODY_KEYS.map((k) => `<div><div style="font-size:12px;text-align:center">${lbl(k)} · <b id="lv-${k}">${val(k)} cm</b></div>
         <div class="sl"><button data-act="adj" data-k="${k}" data-d="-1" aria-label="menos">−</button><input type="range" min="-10" max="10" step="1" value="${S.adj[k]}" data-k="${k}"><button data-act="adj" data-k="${k}" data-d="1" aria-label="mais">+</button></div></div>`).join('')}
         <div class="foot"><button class="btn g" data-act="toform">Voltar</button><button class="btn" data-act="calc">Próximo</button></div></div></div>`;
@@ -253,7 +283,7 @@ window.SLL_MEDIDAS = {
       const ex = rowKeys(row).filter((k) => !BODY_KEYS.includes(k)).map((k) => lbl(k) + ' ' + rng(row.measures[k])).join(' · ');
       const sts = sc.map((k) => [k, status(k, row)]);
       const bad = sts.some(([, s]) => s.c === 'r');
-      const tag = S.size === best ? 'MELHOR OPÇÃO' : bad ? 'NÃO RECOMENDADO' : 'TAMBÉM SERVE';
+      const tag = S.size === best ? mc().result_label : bad ? 'NÃO RECOMENDADO' : 'TAMBÉM SERVE';
       return `<div class="grid"><div class="l">${imgBox()}</div><div class="r">
         ${tabs()}
         <div class="tag">${tag}${list().length > 1 ? ' · ' + esc(tabName(chart()).toUpperCase()) : ''}</div>
@@ -356,9 +386,11 @@ window.SLL_MEDIDAS = {
     const p = store.get('sll_medidas_profile');
     if (p) { S.gender = p.gender || 'F'; S.h = p.h; S.w = p.w; S.age = p.age; S.pref = p.pref || 0; }
     try { await ensureData(); } catch (e) { S.charts = []; }
+    if (gOpt() !== 'both') S.gender = gOpt();
     S.screen = 'table'; S.base = {}; S.ci = 0; S.sizes = {};
     if (S.charts.length) S.view = chart().rows[0].size;
     document.body.appendChild(host);
+    applyTheme();
     render();
     ov.classList.add('on');
     document.documentElement.style.overflow = 'hidden';
