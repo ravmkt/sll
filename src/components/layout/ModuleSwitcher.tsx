@@ -16,6 +16,7 @@ const SWITCHER_MODULES: Item[] = [
   { key: 'gestor', name: 'Gestor', category: 'Operação e Gestão', path: '/dashboard/modules/gestor', icon: Boxes },
   { key: 'builder', name: 'Builder', category: 'Páginas & Domínio Próprio', path: '/dashboard/modules/builder', icon: LayoutTemplate },
   { key: 'gate', name: 'Pulse', category: 'Páginas & Domínio Próprio', path: '/dashboard/modules/pulse', icon: LayoutTemplate, logo: '/assets/pulse-logo-ico.png' },
+  { key: 'medidas', name: 'Medidas', category: 'Tabela de Medidas', path: '/dashboard/modules/medidas', icon: LayoutTemplate },
   { key: 'radar', name: 'Radar', category: 'Inteligência de Mercado', path: '/dashboard/modules/radar', icon: RadarIcon, logo: '/assets/radar-logo-ico.png' },
   { key: 'gamification', name: 'Gamificação', category: 'Engajamento & Prêmios', path: '/dashboard/modules/gamificacao', icon: Gamepad2, soon: true },
 ];

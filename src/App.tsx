@@ -36,6 +36,7 @@ import AdminMasterPage from '@/pages/admin/AdminMasterPage';
 import DashboardShell from '@/components/layout/DashboardShell';
 import MedidasBotao from "@/pages/MedidasBotao";
 import MedidasAparencia from "@/pages/MedidasAparencia";
+import MedidasLayout from "@/modules/medidas/components/MedidasLayout";
 const LandingHub = lazy(() => import("@/pages/LandingHub"));
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
@@ -387,6 +388,7 @@ function AppRoutes() {
         <Route path="/dashboard/modules/gestor" element={user ? <ModuleGate moduleKey="gestor"><GestorPage /></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/gate" element={<Navigate to="/dashboard/modules/pulse" replace />} />
     <Route path="/dashboard/modules/pulse" element={user ? <ModuleGate moduleKey="gate"><PulseLayout>{(tab) => (tab === 'campanhas' || tab === 'instalacao' ? <PulsePage tab={tab} /> : tab === 'widgets' ? <Suspense fallback={null}><PulseWidgetsTab /></Suspense> : <PulseSoon tab={tab} />)}</PulseLayout></ModuleGate> : <Navigate to="/auth" replace />} />
+    <Route path="/dashboard/modules/medidas" element={user ? <ModuleGate moduleKey="medidas"><MedidasLayout>{(tab) => (tab === 'aparencia' ? <MedidasAparencia /> : <MedidasBotao />)}</MedidasLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderOverviewPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/paginas" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderListPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/templates" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderTemplatesPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
