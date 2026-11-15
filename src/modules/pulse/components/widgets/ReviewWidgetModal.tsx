@@ -52,7 +52,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
   async function save() {
     if (!sources.length) { setError('Escolha ao menos uma origem de avaliações.'); return; }
     if (RULES_WITH_VALUE.includes(placement.rule ?? 'auto') && !(placement.rule_value ?? '').trim()) { setError('Informe o texto da URL da regra.'); return; }
-    if (active && !placement.selector.trim()) { setError('Defina o elemento da loja antes de ativar.'); return; }
+    if (active && scope === 'storefront' && !placement.selector.trim()) { setError('Defina o elemento da loja antes de ativar.'); return; }
     setBusy(true); setError('');
     try {
       await svc.widgetSave(ctx.storeId, {
@@ -168,6 +168,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
 
             <div>
               <span className={lbl}>Posição na loja</span>
+                  {scope === 'product' && <p className="mb-2 text-xs text-slate-500">Deixe o seletor vazio para exibir automaticamente no fim da descrição do produto.</p>}
                   <div className="mb-3 grid grid-cols-2 gap-3">
                     <label><span className={lbl}>Regra da página</span>
                       <select className={inp} value={placement.rule ?? 'auto'}
@@ -192,7 +193,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
                 value={placement} onChange={setPlacement} />
               <label className="mt-3 block">
                 <span className={lbl}>Seletor CSS (manual, opcional)</span>
-                <input className={inp + ' font-mono'} value={placement.selector} placeholder="#product-description"
+                <input className={inp + ' font-mono'} value={placement.selector} placeholder={scope === 'product' ? 'Vazio = automático (fim da descrição)' : '#banner-principal'}
                   onChange={(e) => setPlacement({ ...placement, selector: e.target.value })} />
               </label>
             </div>
