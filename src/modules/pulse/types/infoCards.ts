@@ -5,7 +5,7 @@ export type CardKind = 'info' | 'benefits' | 'carousel';
 export type IconPosition = 'top' | 'left' | 'right';
 export type IconBg = 'none' | 'circle' | 'square';
 
-export type CarouselItem = Tier & { image: string; link?: string };
+export type CarouselItem = Tier & { image: string; link?: string; color?: string };
 
 export type CarouselFont = 'inherit' | 'arial' | 'verdana' | 'trebuchet' | 'georgia' | 'times' | 'courier';
 

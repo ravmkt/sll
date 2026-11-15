@@ -39,7 +39,9 @@ export default function CarouselPreview({ title, items, ds, device }: Props) {
                 position: 'relative', overflow: 'hidden', boxSizing: 'border-box', aspectRatio: aspect, background: ds.img_bg,
                 borderRadius: radius, border: ds.border_on ? `${ds.border_w}px solid ${ds.border_color}` : 'none',
               }}>
-                <img src={it.image} alt={it.label} draggable={false} style={{ width: '100%', height: '100%', objectFit: ds.fit, display: 'block' }} />
+                {it.color
+                  ? <div role="img" aria-label={it.label} style={{ width: '100%', height: '100%', background: it.color }} />
+                  : <img src={it.image} alt={it.label} draggable={false} style={{ width: '100%', height: '100%', objectFit: ds.fit, display: 'block' }} />}
                 {ds.caption_pos === 'overlay' && it.label && (
                   <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '22px 8px 8px', textAlign: 'center', color: '#fff',
                     fontSize: ds.caption_size, fontWeight: ds.caption_bold ? 700 : 400, fontFamily: stack(ds.caption_font),

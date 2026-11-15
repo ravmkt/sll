@@ -91,7 +91,7 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
     [c[i], c[j]] = [c[j], c[i]];
     return c;
   });
-  const filled = items.filter((i) => i.image);
+  const filled = items.filter((i) => i.image || i.color);
 
   async function up(file: File): Promise<string> {
     if (!file.type.startsWith('image/')) throw new Error('Envie apenas imagens.');
@@ -119,7 +119,7 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
   async function replaceFile(i: number, files: FileList | null) {
     if (!files || !files[0]) return;
     setBusy(true); setErr('');
-    try { setItem(i, { image: await up(files[0]) }); }
+    try { setItem(i, { image: await up(files[0]), color: undefined }); }
     catch (e) { setErr(e instanceof Error ? e.message : 'Erro no upload.'); }
     finally { setBusy(false); }
   }
@@ -128,7 +128,7 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
     if (!name.trim()) { setErr('Dê um nome ao carrossel.'); return; }
     if (filled.some((i) => !validLink(i.link))) { setErr('Links devem começar com http://, https:// ou /.'); return; }
     if (active && !placement.selector.trim()) { setErr('Selecione o elemento da loja antes de ativar.'); return; }
-    if (active && filled.length === 0) { setErr('Adicione ao menos uma imagem antes de ativar.'); return; }
+    if (active && filled.length === 0) { setErr('Adicione ao menos um item (imagem ou cor) antes de ativar.'); return; }
     setSaving(true); setErr('');
     try {
       await infoCardsService(ctx.supabase).save(ctx.storeId, {
@@ -164,12 +164,15 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
                   <div key={i} className="rounded-xl border border-slate-200 p-3">
                     <div className="flex items-start gap-2">
                       <label className="relative flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100 text-slate-400" title="Trocar imagem">
-                        {it.image ? <img src={it.image} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="h-5 w-5" />}
+                        {it.color ? <span className="h-full w-full" style={{ background: it.color }} /> : it.image ? <img src={it.image} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="h-5 w-5" />}
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => { void replaceFile(i, e.target.files); e.target.value = ''; }} />
                       </label>
                       <div className="grid flex-1 grid-cols-1 gap-2">
                         <input className={inputCls} value={it.label} placeholder="Legenda (ex.: Para ela)" onChange={(e) => setItem(i, { label: e.target.value })} />
                         <input className={inputCls} value={it.link ?? ''} placeholder="Link ao clicar (opcional): https://..." onChange={(e) => setItem(i, { link: e.target.value })} />
+                            {it.color ? <Color label="Cor do item" value={it.color} onChange={(v) => setItem(i, { color: v })} /> : null}
+                            <button type="button" onClick={() => setItem(i, { color: it.color ? undefined : '#0094EB' })}
+                              className="self-start text-xs font-bold text-sky-600 hover:underline">{it.color ? 'Usar imagem' : 'Usar cor'}</button>
                       </div>
                       <div className="flex flex-col gap-1">
                         <button type="button" disabled={i === 0} onClick={() => moveItem(i, -1)} aria-label="Mover para cima"
@@ -189,7 +192,13 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
                   <input type="file" accept="image/*" multiple disabled={busy} className="hidden" onChange={(e) => { void addFiles(e.target.files); e.target.value = ''; }} />
                 </label>
               )}
-              <p className="mt-2 text-xs text-slate-400">Até {MAX_ITEMS} imagens de até 15 MB. Elas são convertidas automaticamente para WebP.</p>
+              {items.length < MAX_ITEMS && (
+                    <button type="button" onClick={() => setItems((l) => [...l, { label: '', value: '', image: '', link: '', color: '#0094EB' }])}
+                      className="ml-2 mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600">
+                      <span className="h-3 w-3 rounded-full bg-[#0094EB]" /> Adicionar cor
+                    </button>
+                  )}
+                  <p className="mt-2 text-xs text-slate-400">Até {MAX_ITEMS} itens. Imagens de até 15 MB, convertidas para WebP, ou cores sólidas.</p>
             </section>
 
             ﻿<section className={sec}>
