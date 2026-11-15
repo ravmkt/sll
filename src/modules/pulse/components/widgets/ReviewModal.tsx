@@ -74,8 +74,8 @@ export default function ReviewModal({ ctx, initial, onClose, onSaved }: Props) {
         <label className="mt-3 block"><span className={lbl}>Comentário (opcional)</span>
           <textarea rows={4} className={inp} value={f.body} onChange={(e) => set('body', e.target.value)} /></label>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label><span className={lbl}>Produto (slug, ID ou SKU)</span>
-            <input className={inp + ' font-mono'} value={f.product_ref} placeholder="camiseta-x"
+          <label><span className={lbl}>Produto (slug da URL; use * para várias cores)</span>
+            <input className={inp + ' font-mono'} value={f.product_ref} placeholder="scrub-feminino-confort*"
               onChange={(e) => set('product_ref', e.target.value)} /></label>
           <label><span className={lbl}>Nome do produto</span>
             <input className={inp} value={f.product_name} onChange={(e) => set('product_name', e.target.value)} /></label>
