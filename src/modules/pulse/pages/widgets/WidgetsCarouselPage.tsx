@@ -1,13 +1,14 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react';
-import { GalleryHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Copy, GalleryHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import CarouselModal from '../../components/widgets/CarouselModal';
 import { infoCardsService } from '../../services/infoCardsService';
+import { normalizeCarousel } from '../../lib/carouselDefaults';
 import type { InfoCard } from '../../types/infoCards';
 import type { WidgetsCtx } from '../../types/widgets';
 
 const POS: Record<string, string> = { before: 'Acima', after: 'Abaixo', prepend: 'Dentro, início', append: 'Dentro, fim' };
 const SHAPE: Record<string, string> = { square: 'Quadrado', rounded: 'Arredondado', circle: 'Circular' };
-const COLS = 'grid-cols-[2fr_1fr_1fr_2fr_100px_80px]';
+const COLS = 'grid-cols-[2fr_1fr_1fr_2fr_100px_110px]';
 
 export default function WidgetsCarouselPage({ ctx }: { ctx: WidgetsCtx }) {
   const svc = useMemo(() => infoCardsService(ctx.supabase), [ctx.supabase]);
@@ -34,6 +35,18 @@ export default function WidgetsCarouselPage({ ctx }: { ctx: WidgetsCtx }) {
     }
     try { setError(''); await svc.setActive(ctx.storeId, c.id, !c.active); await load(); }
     catch (e) { setError(e instanceof Error ? e.message : 'Erro.'); }
+  }
+  async function duplicate(c: InfoCard) {
+    try {
+      setError('');
+      await svc.save(ctx.storeId, {
+        id: null, name: c.name + ' (cópia)', active: false, title: c.title, tiers: c.tiers, footer: c.footer ?? '',
+        placement: c.placement, style_id: c.style_id, kind: 'carousel',
+        icon_position: c.icon_position, icon_size: c.icon_size, icon_color: c.icon_color,
+        icon_bg: c.icon_bg, icon_bg_color: c.icon_bg_color, design: normalizeCarousel(c.design),
+      });
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : 'Erro ao duplicar.'); }
   }
   async function remove(c: InfoCard) {
     if (!window.confirm(`Excluir o carrossel "${c.name}"?`)) return;
@@ -84,7 +97,8 @@ export default function WidgetsCarouselPage({ ctx }: { ctx: WidgetsCtx }) {
             </span>
             <span className="flex justify-end gap-3 text-slate-400">
               <button type="button" title="Editar" onClick={() => setEditing(c)} className="hover:text-[#0094EB]"><Pencil className="h-4 w-4" /></button>
-              <button type="button" title="Excluir" onClick={() => remove(c)} className="hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
+              <button type="button" title="Duplicar" onClick={() => duplicate(c)} className="hover:text-[#0094EB]"><Copy className="h-4 w-4" /></button>
+                  <button type="button" title="Excluir" onClick={() => remove(c)} className="hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
             </span>
           </div>
         ))}
