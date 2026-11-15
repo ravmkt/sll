@@ -38,6 +38,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
   const [showApp, setShowApp] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [pickUrl, setPickUrl] = useState('');
 
   const setD = <K extends keyof ReviewDesign>(k: K, v: ReviewDesign[K]) => setDesign((d) => ({ ...d, [k]: v }));
   const pickTemplate = (id: string) => { setTemplate(id); setDesign(templateDesign(id)); };
@@ -161,8 +162,21 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
 
             <div>
               <span className={lbl}>Posição na loja</span>
-              <WidgetPlacementPicker supabase={ctx.supabase} storeId={ctx.storeId} storeUrl={ctx.storeUrl}
+              {scope === 'product' && (
+                <label className="mb-3 block">
+                  <span className={lbl}>URL de um produto da loja (para escolher o elemento)</span>
+                  <input className={inp} value={pickUrl} placeholder="https://sualoja.com.br/produto-x/p"
+                    onChange={(e) => setPickUrl(e.target.value)} />
+                </label>
+              )}
+              <WidgetPlacementPicker key={pickUrl.trim()} supabase={ctx.supabase} storeId={ctx.storeId}
+                storeUrl={/^https?:\/\//.test(pickUrl.trim()) ? pickUrl.trim() : ctx.storeUrl}
                 value={placement} onChange={setPlacement} />
+              <label className="mt-3 block">
+                <span className={lbl}>Seletor CSS (manual, opcional)</span>
+                <input className={inp + ' font-mono'} value={placement.selector} placeholder="#product-description"
+                  onChange={(e) => setPlacement({ ...placement, selector: e.target.value })} />
+              </label>
             </div>
 
             <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
