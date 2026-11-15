@@ -163,8 +163,8 @@ window.SLL_MEDIDAS = {
   .foot{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
   .sp{width:44px;height:44px;border:3px solid #ddd;border-top-color:#111;border-radius:50%;animation:s 1s linear infinite}
   @keyframes s{to{transform:rotate(360deg)}}
-  .by{font-size:11px;color:#999;text-align:center;padding:8px}
-  @media(max-width:700px){.grid{grid-template-columns:1fr}.l{padding:14px}.l img{max-height:200px}.l.pz{padding:0}.ph{min-height:220px}.r{padding:20px}}
+  .by{position:absolute;bottom:0;right:0;width:50%;font-size:11px;color:#999;text-align:center;padding:6px}
+  @media(max-width:700px){.grid{grid-template-columns:1fr}.l{padding:14px}.l img{max-height:200px}.l.pz{padding:0}.ph{min-height:220px}.r{padding:20px}.by{position:static;width:auto}}
   </style><div class="ov" part="ov"><div class="card" role="dialog" aria-modal="true" aria-label="Tabela de medidas"><button class="x" data-act="close" aria-label="Fechar">×</button><div id="v"></div><div class="by">Powered by SLL Medidas</div></div></div>`;
   root.querySelector('.card').style.setProperty('--c', cfg.color);
   const ov = root.querySelector('.ov'), V = root.getElementById ? root.getElementById('v') : root.querySelector('#v');
@@ -172,12 +172,15 @@ window.SLL_MEDIDAS = {
   const chips = (cur, sel) => chart().rows.map((r) => `<button class="chip ${r.size === cur ? 'on' : ''}" data-act="${sel}" data-v="${esc(r.size)}">${esc(r.size)}${sel === 'pick' && r.size === bestSize() ? '<i>✓</i>' : ''}</button>`).join('');
   const imgBox = () => {
     const st = S.settings || {};
-    if (st.modal_image_url) return `<div class="ph"><img src="${esc(st.modal_image_url)}" alt="" style="object-fit:${esc(st.modal_image_fit || 'cover')};object-position:${esc(st.modal_image_position || 'center')}"></div>`;
+    const fit = st.modal_image_fit || 'cover';
+    const src = st.modal_image_url || (fit === 'cover' ? productImg() : '');
+    if (src) return `<div class="ph"><img src="${esc(src)}" alt="" style="object-fit:${esc(fit)};object-position:${esc(st.modal_image_position || 'center')}"></div>`;
     const s = productImg();
     return s ? `<img src="${esc(s)}" alt="">` : '<div style="height:260px;width:200px;background:#ddd;border-radius:8px"></div>';
   };
+  const usesPh = () => { const st = S.settings || {}; return !!(st.modal_image_url || ((st.modal_image_fit || 'cover') === 'cover' && productImg())); };
   const ttl = () => (S.settings && S.settings.show_modal_title)
-    ? `<b style="color:#222;text-align:center;padding:${S.settings.modal_image_url ? '14px' : '0'}">Tabela de tamanhos</b>` : '';
+    ? `<b style="color:#222;text-align:center;padding:${usesPh() ? '14px' : '0'}">Tabela de tamanhos</b>` : '';
   const isCombined = () => list().length > 1 && ((S.settings && S.settings.set_layout) || 'combined') === 'combined';
   const rowsHtml = (r) => (eqv(r) ? `<div class="tr"><span>Numeração</span><span>${esc(eqv(r))}</span></div>` : '')
     + rowKeys(r).map((k) => `<div class="tr"><span>${lbl(k)}</span><span>${rng(r.measures[k])}</span></div>`).join('');
@@ -266,7 +269,7 @@ window.SLL_MEDIDAS = {
   function render() {
     if (!S.charts.length) { V.innerHTML = '<div class="r"><h2>Tabela de medidas indisponível</h2><p>Este produto ainda não possui tabela cadastrada.</p></div>'; return; }
     let h = screens[S.screen]();
-    if (S.settings && S.settings.modal_image_url && h.includes('class="ph"')) h = h.replace('<div class="l">', '<div class="l pz">');
+    if (h.includes('class="ph"')) h = h.replace('<div class="l">', '<div class="l pz">');
     V.innerHTML = h;
   }
   const go = (s) => { S.screen = s; render(); };
