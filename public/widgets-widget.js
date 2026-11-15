@@ -753,7 +753,82 @@ function buildBenefits(conf) {
     document.head.appendChild(st);
   }
 
-    function submitReview(w, wk, p) {
+    var RV_MAX_IMG = 1600, RV_MAX_VIDEO_S = 30, RV_MAX_VIDEO_MB = 30;
+  function rvErr(m) { var e = new Error(m); e.sll = true; return e; }
+  function rvUuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    var s = ''; while (s.length < 32) s += Math.floor(Math.random() * 16).toString(16);
+    return s;
+  }
+  function rvBlob(c, q) {
+    return new Promise(function (res, rej) {
+      c.toBlob(function (b) {
+        if (b && b.type === 'image/webp') { res(b); return; }
+        c.toBlob(function (j) { if (j) res(j); else rej(rvErr('N\u00e3o foi poss\u00edvel processar a imagem.')); }, 'image/jpeg', q);
+      }, 'image/webp', q);
+    });
+  }
+  function rvImage(file) {
+    return createImageBitmap(file).then(function (bmp) {
+      var k = Math.min(1, RV_MAX_IMG / Math.max(bmp.width, bmp.height));
+      var c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(bmp.width * k));
+      c.height = Math.max(1, Math.round(bmp.height * k));
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      if (bmp.close) bmp.close();
+      return rvBlob(c, 0.82);
+    }, function () { throw rvErr('Imagem inv\u00e1lida ou n\u00e3o suportada.'); });
+  }
+  function rvPoster(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), v = document.createElement('video'), timer;
+      function end(fn) { clearTimeout(timer); URL.revokeObjectURL(url); fn(); }
+      timer = setTimeout(function () { end(function () { reject(rvErr('N\u00e3o foi poss\u00edvel ler o v\u00eddeo.')); }); }, 15000);
+      v.muted = true; v.playsInline = true; v.preload = 'metadata'; v.src = url;
+      v.onerror = function () { end(function () { reject(rvErr('V\u00eddeo inv\u00e1lido ou formato n\u00e3o suportado.')); }); };
+      v.onloadedmetadata = function () {
+        var d = isFinite(v.duration) ? v.duration : 0;
+        if (d > RV_MAX_VIDEO_S + 0.5) { end(function () { reject(rvErr('O v\u00eddeo deve ter at\u00e9 30 segundos.')); }); return; }
+        v.currentTime = Math.max(0.1, Math.min(0.5, d / 2));
+      };
+      v.onseeked = function () {
+        var k = Math.min(1, 720 / Math.max(v.videoWidth || 1, v.videoHeight || 1));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round((v.videoWidth || 1) * k));
+        c.height = Math.max(1, Math.round((v.videoHeight || 1) * k));
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+        rvBlob(c, 0.8).then(function (b) { end(function () { resolve(b); }); }, function (e) { end(function () { reject(e); }); });
+      };
+    });
+  }
+  function rvPut(blob, type, ext) {
+    var path = 'submissions/' + STORE_ID + '/' + rvUuid() + '.' + ext;
+    return fetch(SB_URL + '/storage/v1/object/reviews/' + path, {
+      method: 'POST',
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': type, 'x-upsert': 'false' },
+      body: blob
+    }).then(function (r) {
+      if (!r.ok) throw rvErr('Falha ao enviar o arquivo. Tente novamente.');
+      return SB_URL + '/storage/v1/object/public/reviews/' + path;
+    }, function () { throw rvErr('Falha de conex\u00e3o ao enviar o arquivo.'); });
+  }
+  function rvExt(b) { return b.type === 'image/jpeg' ? 'jpg' : 'webp'; }
+  function uploadReviewMedia(f) {
+    if (!STORE_ID || !SB_URL) return Promise.reject(rvErr('Envio indispon\u00edvel.'));
+    if (f.type.indexOf('image/') === 0) {
+      return rvImage(f).then(function (b) { return rvPut(b, b.type, rvExt(b)); })
+        .then(function (u) { return { kind: 'image', url: u }; });
+    }
+    if (f.type === 'video/mp4' || f.type === 'video/webm') {
+      if (f.size > RV_MAX_VIDEO_MB * 1048576) return Promise.reject(rvErr('O v\u00eddeo deve ter at\u00e9 30 MB.'));
+      return rvPoster(f).then(function (p) {
+        return Promise.all([rvPut(f, f.type, f.type === 'video/mp4' ? 'mp4' : 'webm'), rvPut(p, p.type, rvExt(p))]);
+      }).then(function (u) { return { kind: 'video', url: u[0], poster_url: u[1] }; });
+    }
+    return Promise.reject(rvErr('Formato n\u00e3o suportado. Use imagem, mp4 ou webm.'));
+  }
+
+  function submitReview(w, wk, p) {
     var ref = null;
     if (w.scope === 'product' && wk && wk.length) {
       ref = wk.slice().sort(function (a, b) { return b.length - a.length; })[0];
@@ -762,7 +837,7 @@ function buildBenefits(conf) {
     var nm = String((og && og.content) || document.title || '').trim().slice(0, 200);
     return rpc('review_submit', { p_store_id: STORE_ID, p_data: {
       product_ref: ref, product_name: nm, author_name: p.name, author_email: p.email,
-      rating: p.rating, title: p.title, body: p.body } });
+      rating: p.rating, title: p.title, body: p.body, media: p.media || [] } });
   }
 
   function initReviews() {
@@ -783,7 +858,7 @@ function buildBenefits(conf) {
         }).then(function (d) {
           if (!d || !d.reviews) return;
               if (!d.reviews.length && !(w.design && w.design.allow_submit)) return;
-          var host = window.SLLReviews.render(w, d, (w.design && w.design.allow_submit) ? { submit: function (p) { return submitReview(w, wk, p); } } : null);
+          var host = window.SLLReviews.render(w, d, (w.design && w.design.allow_submit) ? { submit: function (p) { return submitReview(w, wk, p); }, upload: (w.design.allow_media !== false) ? function (f) { return uploadReviewMedia(f); } : null } : null);
           if (host) resolveAnchor(w, function (pl) { mount({ ruler: { placement: pl }, onPlaced: function (h, t) { if (window.SLLReviews && window.SLLReviews.fit) window.SLLReviews.fit(h, t, w, pl.position); hideNative(w, h); } }, function () { return host; }); });
         }).catch(function () {});
       });

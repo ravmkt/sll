@@ -217,9 +217,12 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
                         Mostra um botão que abre o formulário (nota, nome, e-mail, título e texto). As avaliações chegam como Pendente e só aparecem na loja depois de aprovadas. Sem avaliações aprovadas, o botão aparece mesmo assim.
                       </p>
                       {design.allow_submit && (
+                        <div className="space-y-2"><label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                          <input type="checkbox" checked={design.allow_media !== false} onChange={(e) => setD('allow_media', e.target.checked)} /> Permitir foto e vídeo no formulário
+                        </label>
                         <label className="block"><span className={lbl}>Texto do botão</span>
                           <input className={inp} maxLength={40} value={design.submit_label ?? ''} placeholder="Escrever avaliação"
-                            onChange={(e) => setD('submit_label', e.target.value)} /></label>
+                            onChange={(e) => setD('submit_label', e.target.value)} /></label></div>
                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-2">

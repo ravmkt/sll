@@ -6,7 +6,7 @@
     show_media: true, show_summary: true,
     width_mode: '', align: 'center', padding: 16, margin_x: 0, arrows: true, dots: true, drag: true,
     autoplay: false, interval: 5, per_view_desktop: 3, per_view_mobile: 1, loop: true,
-    allow_submit: false, submit_label: 'Escrever avaliação' };
+    allow_media: true, allow_submit: false, submit_label: 'Escrever avaliação' };
 
   var CSS = [
     '*{box-sizing:border-box}',
@@ -304,7 +304,10 @@
     '.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}' +
     '.hn{font-size:12px;color:#64748B;margin-top:3px}.er{color:#B91C1C;font-size:13px;margin-top:10px;min-height:1px}' +
     '.bt{margin-top:14px;width:100%;padding:11px;border:0;border-radius:8px;background:var(--ac);color:#fff;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer}.bt:disabled{opacity:.6;cursor:default}' +
-    '.ok{text-align:center;padding:12px 0 0}.ok b{display:block;font-size:18px;color:var(--tt);margin-bottom:6px}';
+    '.ok{text-align:center;padding:12px 0 0}.ok b{display:block;font-size:18px;color:var(--tt);margin-bottom:6px}' +
+    '.mdw{margin-top:10px}.ad{display:block;width:100%;background:none;border:1px dashed var(--bd);border-radius:8px;padding:10px;color:var(--ac);font:inherit;font-weight:600;cursor:pointer}' +
+    '.pvw{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.pvi{position:relative;width:64px;height:64px;border:1px solid var(--bd);border-radius:8px;overflow:hidden;background:#F1F5F9;display:flex;align-items:center;justify-content:center}' +
+    '.pvi img{width:100%;height:100%;object-fit:cover}.pvv{font-size:20px;color:#334155}.pvx{position:absolute;top:0;right:0;width:20px;height:20px;border:0;background:rgba(0,0,0,.65);color:#fff;border-radius:0 0 0 6px;line-height:1;cursor:pointer;padding:0}';
 
   function formModal(D, opts) {
     var host = document.createElement('div');
@@ -358,6 +361,54 @@
     form.appendChild(fld('E-mail *', em, 'Seu e-mail n\u00e3o ser\u00e1 exibido.'));
     form.appendChild(fld('T\u00edtulo (opcional)', tt));
     form.appendChild(fld('Sua avalia\u00e7\u00e3o *', bd));
+    var files = [], MAXF = 3;
+    function isVid(f) { return f.type === 'video/mp4' || f.type === 'video/webm'; }
+    function upAll() {
+      if (!files.length || !opts || !opts.upload) return Promise.resolve([]);
+      var res = [], seq = Promise.resolve();
+      files.forEach(function (f, k) {
+        seq = seq.then(function () {
+          go.textContent = 'Enviando arquivo ' + (k + 1) + '/' + files.length + '\u2026';
+          return opts.upload(f);
+        }).then(function (m) { res.push(m); });
+      });
+      return seq.then(function () { go.textContent = 'Enviando\u2026'; return res; });
+    }
+    if (D.allow_media !== false) {
+      var mdw = mk('div', 'mdw'), fi = mk('input'), pv = mk('div', 'pvw');
+      var ad = mk('button', 'ad', '+ Adicionar foto ou v\u00eddeo'); ad.type = 'button';
+      fi.type = 'file'; fi.accept = 'image/*,video/mp4,video/webm'; fi.multiple = true; fi.style.display = 'none';
+      var drawFiles = function () {
+        pv.textContent = '';
+        files.forEach(function (f, k) {
+          var c = mk('div', 'pvi');
+          if (f.type.indexOf('image/') === 0) {
+            var im = mk('img'); im.alt = ''; im.src = URL.createObjectURL(f);
+            im.onload = function () { URL.revokeObjectURL(im.src); };
+            c.appendChild(im);
+          } else c.appendChild(mk('span', 'pvv', '\u25b6'));
+          var rm = mk('button', 'pvx', '\u00d7'); rm.type = 'button'; rm.setAttribute('aria-label', 'Remover');
+          rm.onclick = function () { files.splice(k, 1); drawFiles(); };
+          c.appendChild(rm); pv.appendChild(c);
+        });
+      };
+      ad.onclick = function () { fi.click(); };
+      fi.onchange = function () {
+        err.textContent = '';
+        Array.prototype.forEach.call(fi.files || [], function (f) {
+          if (files.length >= MAXF) { err.textContent = 'M\u00e1ximo de 3 arquivos.'; return; }
+          if (f.type.indexOf('image/') !== 0 && !isVid(f)) { err.textContent = 'Formato n\u00e3o suportado. Use imagem, mp4 ou webm.'; return; }
+          if (isVid(f) && f.size > 30 * 1048576) { err.textContent = 'O v\u00eddeo deve ter at\u00e9 30 MB.'; return; }
+          if (isVid(f) && files.some(isVid)) { err.textContent = 'Envie apenas 1 v\u00eddeo.'; return; }
+          files.push(f);
+        });
+        fi.value = ''; drawFiles();
+      };
+      mdw.appendChild(mk('div', 'lb2', 'Fotos ou v\u00eddeo (opcional)'));
+      mdw.appendChild(ad); mdw.appendChild(pv); mdw.appendChild(fi);
+      mdw.appendChild(mk('div', 'hn', 'At\u00e9 3 arquivos. V\u00eddeo: 1, de at\u00e9 30 s e 30 MB.'));
+      form.appendChild(mdw);
+    }
     form.appendChild(hp); form.appendChild(err); form.appendChild(go);
 
     function done() {
@@ -380,14 +431,14 @@
       if (hp.value) { done(); return; }
       if (!opts || !opts.submit) { err.textContent = 'Pr\u00e9via: o envio funciona apenas na loja.'; return; }
       go.disabled = true; go.textContent = 'Enviando\u2026';
-      opts.submit({ rating: rating, name: n, email: e, title: tt.value.trim(), body: b }).then(function (res) {
+      upAll().then(function (media) { return opts.submit({ rating: rating, name: n, email: e, title: tt.value.trim(), body: b, media: media }); }).then(function (res) {
         if (res && res.ok) { done(); return; }
         var c = res && res.error;
         reset(c === 'duplicate' ? 'Voc\u00ea j\u00e1 avaliou este produto. Obrigado!'
           : c === 'rate_limited' ? 'Muitas avalia\u00e7\u00f5es em pouco tempo. Tente novamente mais tarde.'
           : c === 'invalid' ? 'Confira os campos e tente novamente.'
           : 'N\u00e3o foi poss\u00edvel enviar agora. Tente novamente.');
-      }).catch(function () { reset('N\u00e3o foi poss\u00edvel enviar agora. Tente novamente.'); });
+      }).catch(function (er) { if (er && er.sll) { reset(er.message); return; } reset('N\u00e3o foi poss\u00edvel enviar agora. Tente novamente.'); });
     };
 
     box.appendChild(x); box.appendChild(form); ov.appendChild(box); sh.appendChild(ov);
