@@ -1,3 +1,4 @@
+import AvaliarPage from './modules/pulse/pages/public/AvaliarPage';
 import StreamSellLanding from '@/pages/landing/StreamSellLanding';
 import BuilderListPage from '@/modules/builder/pages/BuilderListPage';
 import BuilderOverviewPage from '@/modules/builder/pages/BuilderOverviewPage';
@@ -102,6 +103,7 @@ function AppRoutes() {
       <DashboardShell>
           <Routes>
         <Route path="/sobre" element={<AboutPage />} />
+            <Route path="/avaliar/:token" element={<AvaliarPage />} />
         <Route path="/privacidade" element={<PrivacyPage />} />
         <Route path="/termos" element={<TermsPage />} />
             <Route path="/exclusao-de-dados" element={<ExclusaoDadosPage />} />

@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   if (window.SLLReviews) return;
   var DEF = { title: 'O que nossos clientes dizem', show_title: true, accent: '#0094EB', star_color: '#F5A623', bg: '#FFFFFF',
     text: '#334155', title_color: '#0F172A', card_bg: '#FFFFFF', border: '#E2E8F0', radius: 12, font: 'inherit', max_width: 0,
@@ -55,7 +55,8 @@
     '.mlh{font-weight:600;color:var(--tt);font-size:16px;margin:6px 0}',
     '.mli{border-top:1px solid var(--bd);padding:14px 0;display:flex;flex-direction:column;gap:6px}',
     '.mlr{display:flex;justify-content:space-between;align-items:center}',
-    '.sbw{margin:0 0 14px}.sb{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer}.sb:hover{opacity:.9}',
+    '.pc{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.pcl{font-size:12px;color:#64748B}.pci{width:32px;height:32px;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:12px;color:#334155;text-decoration:none}.pci img{width:100%;height:100%;object-fit:cover;display:block}a.pci:hover{border-color:var(--ac)}',
+        '.sbw{margin:0 0 14px}.sb{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer}.sb:hover{opacity:.9}',
     '.lb{position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:16px}',
     '.lbb{max-width:min(92vw,900px);max-height:92vh;display:flex;flex-direction:column;gap:8px;color:#fff}',
     '.lbb img,.lbb video{max-width:100%;max-height:78vh;border-radius:8px;display:block;margin:0 auto}',
@@ -146,13 +147,31 @@
     return h;
   }
 
-  function card(root, r, D) {
+  function purch(r, D) {
+        var p = (r.purchased || []).filter(function (i) { return i && i.name; });
+        if (p.length < (D._pmin || 2)) return null;
+        var row = mk('div', 'pc');
+        row.appendChild(mk('span', 'pcl', 'Comprou:'));
+        p.slice(0, 6).forEach(function (i) {
+          var ok = /^https?:\/\//i.test(i.url || '');
+          var a = mk(ok ? 'a' : 'span', 'pci');
+          if (ok) { a.href = i.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+          a.title = i.name; a.setAttribute('aria-label', i.name);
+          if (/^https?:\/\//i.test(i.image || '')) { var im = mk('img'); im.src = i.image; im.alt = i.name; im.loading = 'lazy'; a.appendChild(im); }
+          else a.textContent = i.name.charAt(0).toUpperCase();
+          row.appendChild(a);
+        });
+        if (p.length > 6) row.appendChild(mk('span', 'pcl', '+' + (p.length - 6)));
+        return row;
+      }
+
+      function card(root, r, D) {
     var c = mk('article', 'cd');
     c.appendChild(who(r, D));
     if (D.show_stars) c.appendChild(stars(r.rating));
     if (r.title) c.appendChild(mk('div', 'ct', r.title));
     if (r.body) c.appendChild(mk('p', 'cbd', r.body));
-    if (D.show_media) { var t = thumbs(root, r); if (t) c.appendChild(t); }
+    if (D.show_media) { var t = thumbs(root, r); if (t) c.appendChild(t); } var pc = purch(r, D); if (pc) c.appendChild(pc);
     return c;
   }
 
@@ -283,7 +302,7 @@
       it.appendChild(row);
       if (r.title) it.appendChild(mk('div', 'ct', r.title));
       if (r.body) it.appendChild(mk('p', 'cbd', r.body));
-      if (D.show_media) { var t = thumbs(root, r); if (t) it.appendChild(t); }
+      if (D.show_media) { var t = thumbs(root, r); if (t) it.appendChild(t); } var pc = purch(r, D); if (pc) it.appendChild(pc);
       var ft = mk('div', 'sub');
       if (D.show_verified && r.verified) ft.appendChild(mk('span', 'vf', '✔ Compra verificada'));
       if (r.helpful > 0) ft.appendChild(document.createTextNode((ft.textContent ? ' · ' : '') + 'Útil · ' + r.helpful));
@@ -543,7 +562,7 @@
     var list = (data && data.reviews) || [];
     if (!list.length && !(widget && widget.design && widget.design.allow_submit)) return null;
     var s = (data && data.stats) || { count: list.length, avg: 0, dist: {} };
-    var D = merge(DEF, (widget && widget.design) || {});
+    var D = merge(DEF, (widget && widget.design) || {}); D._pmin = (widget && widget.scope === 'storefront') ? 1 : 2;
     var tpl = widget && T[widget.template] ? widget.template : 'cards_photo';
     var host = mk('div');
     host.setAttribute('data-sll-reviews', tpl);
