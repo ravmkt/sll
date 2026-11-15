@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import EnabledSwitch from '../components/EnabledSwitch';
 import { Camera, CheckCircle2, AlertTriangle, Palette, Code2, RefreshCw } from 'lucide-react';
 import { getOverview, getSettings, type TryOnOverview, type TryOnSettings } from '../services/tryonAdmin';
 
@@ -120,6 +121,8 @@ export default function VisaoGeralTab({ storeId, onGoTab }: Props) {
           <RefreshCw className="h-3.5 w-3.5" /> Atualizar
         </button>
       </div>
+
+      <EnabledSwitch storeId={storeId} enabled={enabled} onChanged={() => void load()} />
 
       {metrics.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
