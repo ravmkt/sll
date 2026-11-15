@@ -69,5 +69,10 @@ Deno.serve(async (req) => {
     }))
     .sort((a, b) => (ORDER[a.category] ?? 9) - (ORDER[b.category] ?? 9));
 
-  return json({ gender: out[0]?.gender ?? "F", rows: out[0]?.rows ?? [], charts: out });
+  const { data: settings } = await db
+    .from("widget_settings")
+    .select("button_text,bg_color,text_color,border_color,radius,full_width,position,anchor_selector")
+    .eq("store_id", storeId)
+    .maybeSingle();
+  return json({ gender: out[0]?.gender ?? "F", rows: out[0]?.rows ?? [], charts: out, settings: settings ?? {} });
 });
