@@ -652,20 +652,72 @@ function buildBenefits(conf) {
     return keys.slice(0, 12);
   }
 
-  function autoPlacement(w) {
-    var pl = w.placement || {};
-    if (pl.selector && String(pl.selector).trim()) return pl;
-    if (w.scope !== 'product') return null;
-    var C = [
+  function sllVisible(e) { return !!(e && (e.offsetWidth || e.offsetHeight || e.getClientRects().length)); }
+  function sllTag(el, pos) {
+    var old = document.querySelectorAll('[data-sll-anchor]');
+    for (var i = 0; i < old.length; i++) old[i].removeAttribute('data-sll-anchor');
+    el.setAttribute('data-sll-anchor', '1');
+    return { selector: '[data-sll-anchor="1"]', position: pos };
+  }
+  function sllFindAnchor(last) {
+    var PRESETS = [
+      ['section[class*="product_similars"]', 'after'],
       ['section.product-specifications > div > div.container:last-child', 'append'],
-      ['.product-description', 'after'],
-      ['[itemprop="description"]', 'after'],
-      ['#product-description', 'after']
+      ['.woocommerce-tabs', 'after']
     ];
-    for (var i = 0; i < C.length; i++) {
-      try { if (document.querySelector(C[i][0])) return { selector: C[i][0], position: C[i][1] }; } catch (e) {}
+    var i, el;
+    for (i = 0; i < PRESETS.length; i++) {
+      try { el = document.querySelector(PRESETS[i][0]); } catch (e) { el = null; }
+      if (el && sllVisible(el)) return sllTag(el, PRESETS[i][1]);
     }
-    return { selector: C[0][0], position: C[0][1] };
+    var okEl = function (e) { return sllVisible(e) && !e.closest('header,footer,nav,[data-sll-reviews]'); };
+    var SEL = '[itemprop="description"],[id*="descri" i],[class*="descri" i]';
+    var total = (document.body.textContent || '').length || 1;
+    var best = null, bestLen = 0, nodes = document.querySelectorAll(SEL);
+    for (i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      if (n === document.body || n === document.documentElement || !okEl(n)) continue;
+      var p = n.parentElement, nested = false;
+      while (p) { if (p.matches && p.matches(SEL)) { nested = true; break; } p = p.parentElement; }
+      if (nested) continue;
+      var len = (n.textContent || '').trim().length;
+      if (len >= 80 && len < total * 0.7 && len > bestLen) { best = n; bestLen = len; }
+    }
+    if (best) return sllTag(best, 'after');
+    var hs = document.querySelectorAll('h2,h3,h4,h5,summary,button,[role="tab"]');
+    var RX = /^(descri(\u00e7|c)(\u00e3|a)o( do produto)?|detalhes do produto|sobre o produto|description|product description)$/i;
+    for (i = 0; i < hs.length; i++) {
+      var h = hs[i], t = (h.textContent || '').trim();
+      if (!RX.test(t) || !okEl(h)) continue;
+      var det = h.closest('details');
+      if (det) return sllTag(det, 'after');
+      var pid = h.getAttribute('aria-controls'), panel = pid && document.getElementById(pid);
+      if (panel) return sllTag(panel, 'after');
+      var c = h;
+      for (var k = 0; k < 4 && c.parentElement; k++) {
+        c = c.parentElement;
+        if ((c.textContent || '').trim().length > t.length + 80) return sllTag(c, 'after');
+      }
+    }
+    if (last) {
+      var m = document.querySelector('main');
+      if (m && sllVisible(m)) return sllTag(m, 'append');
+      var f = document.querySelector('footer');
+      if (f) return sllTag(f, 'before');
+    }
+    return null;
+  }
+  function resolveAnchor(w, cb) {
+    var pl = w.placement || {};
+    if (pl.selector && String(pl.selector).trim()) { cb(pl); return; }
+    if (w.scope !== 'product') return;
+    var t0 = Date.now();
+    (function tick() {
+      var last = Date.now() - t0 > 12000;
+      var r = sllFindAnchor(last);
+      if (r) { cb(r); return; }
+      if (!last) setTimeout(tick, 400);
+    })();
   }
   function ruleOk(pl) {
     var r = (pl && pl.rule) || 'auto';
@@ -694,8 +746,7 @@ function buildBenefits(conf) {
         if (!ruleOk(w.placement)) return;
             var wk = reviewKeys(w, keys);
             if (isProd && wk && !wk.length) return;
-        var pl = autoPlacement(w);
-            if (!pl) return;
+        if (w.scope !== 'product' && !(w.placement && String(w.placement.selector || '').trim())) return;
         loadRenderer().then(function () {
           return rpc('reviews_public_data', {
             p_store_id: STORE_ID, p_keys: wk,
@@ -703,7 +754,7 @@ function buildBenefits(conf) {
         }).then(function (d) {
           if (!d || !d.reviews || !d.reviews.length) return;
           var host = window.SLLReviews.render(w, d);
-          if (host) mount({ ruler: { placement: pl } }, function () { return host; });
+          if (host) resolveAnchor(w, function (pl) { mount({ ruler: { placement: pl } }, function () { return host; }); });
         }).catch(function () {});
       });
     }).catch(function () {});
