@@ -1,24 +1,32 @@
-/*! SLL Medidas Widget v1.1 */
+/*! SLL Medidas Widget v1.0
+GTM (Custom HTML):
+<script>
+window.SLL_MEDIDAS = {
+  storeId: "UUID_DA_LOJA",
+  apiBase: "https://flivmllysdhaydhogmhg.supabase.co/functions/v1",
+  openSelectors: [".btn-tabela-medidas", ".btn-descubra-tamanho"],
+  sizeSelector: ".product-size-option",
+  injectAfter: null
+};
+</script>
+<script src="https://SEU-DOMINIO/medidas-widget.js" async></script>
+*/
 (function () {
   if (window.__sllMedidas) return;
   window.__sllMedidas = true;
 
-  const CS = document.currentScript;
-  const DEF_API = 'https://flivmllysdhaydhogmhg.supabase.co/functions/v1';
   const cfg = Object.assign({
-    storeId: (CS && CS.dataset.store) || null,
-    apiBase: (CS && CS.dataset.api) || DEF_API,
-    openSelectors: [], openTexts: ['Tabela de medidas', 'Descubra seu tamanho'], injectAfter: null,
+    storeId: null, apiBase: null, openSelectors: [], openTexts: [], injectAfter: null,
     sizeSelector: null, productRef: null, image: null, chart: null, charts: null, color: '#111'
   }, window.SLL_MEDIDAS || {});
 
-  const LBL = { bust: 'Busto', waist: 'Cintura', hip: 'Quadril', height: 'Altura', foot: 'Pé', length: 'Comprimento' };
+  const LBL = { bust: 'Busto', waist: 'Cintura', hip: 'Quadril', thigh: 'Coxa', height: 'Altura', foot: 'Pé', length: 'Comprimento' };
   const BODY_KEYS = ['bust', 'waist', 'hip'];
   const COL = { g: '#34c38f', y: '#f5a623', r: '#e5484d' };
   const lbl = (k) => (k === 'bust' && S.gender === 'M' ? 'Tórax' : LBL[k] || k);
 
   const S = {
-    screen: 'table', charts: [], gender: 'F', h: '', w: '', age: '', pref: 0,
+    screen: 'table', charts: [], ci: 0, sizes: {}, gender: 'F', h: '', w: '', age: '', pref: 0,
     adj: { bust: 0, waist: 0, hip: 0 }, base: {}, size: null, view: null, err: ''
   };
 
@@ -40,11 +48,10 @@
     return m ? m.content : '';
   };
 
-  const BEACON_EVENTS = ['result', 'select_size'];
   function track(ev, data) {
     const p = Object.assign({ event: 'sll_medidas_' + ev, store_id: cfg.storeId, anon_id: anonId, product_ref: productRef() }, data || {});
     (window.dataLayer = window.dataLayer || []).push(p);
-    if (BEACON_EVENTS.indexOf(ev) > -1 && cfg.apiBase && cfg.storeId && navigator.sendBeacon) {
+    if (cfg.apiBase && cfg.storeId && navigator.sendBeacon) {
       try { navigator.sendBeacon(cfg.apiBase + '/sizeadvisor-track', new Blob([JSON.stringify(p)], { type: 'text/plain' })); } catch (e) {}
     }
   }
@@ -55,17 +62,31 @@
     if (cfg.charts) S.charts = cfg.charts;
     else if (cfg.chart) S.charts = [cfg.chart];
     else if (cfg.apiBase && cfg.storeId) {
-      const u = cfg.apiBase + '/sizeadvisor-chart?store_id=' + encodeURIComponent(cfg.storeId) + '&url=' + encodeURIComponent(location.href);
+      const u = cfg.apiBase + '/sizeadvisor-chart?store_id=' + encodeURIComponent(cfg.storeId) + '&product=' + encodeURIComponent(productRef());
       const r = await fetch(u);
       const j = await r.json();
-      S.charts = j.charts || (j.chart ? [j.chart] : (j.rows && j.rows.length ? [j] : []));
+      S.charts = j.charts || (j.chart ? [j.chart] : []);
     }
     if (S.charts.length) {
       const c = chart();
       S.view = c.rows[0].size;
     }
   }
-  const chart = () => S.charts.find((c) => c.gender === S.gender) || S.charts.find((c) => c.gender === 'U') || S.charts[0];
+  const ORDER = { blusa: 0, calca: 1 };
+  const list = () => {
+    const a = S.charts.filter((c) => c.gender === S.gender);
+    const u = S.charts.filter((c) => c.gender === 'U');
+    const l = a.length ? a : (u.length ? u : S.charts);
+    return l.slice().sort((x, y) => (ORDER[x.category] ?? 9) - (ORDER[y.category] ?? 9));
+  };
+  const chart = () => list()[S.ci] || list()[0];
+  const tabName = (c) => ({ blusa: 'Blusa', calca: 'Calça' }[c.category] || c.name);
+  const tabs = () => list().length > 1
+    ? `<div class="row" style="justify-content:center">${list().map((c, i) => `<button class="chip ${i === S.ci ? 'on' : ''}" data-act="tab" data-v="${i}">${esc(tabName(c))}</button>`).join('')}</div>`
+    : '';
+  const sizesByName = () => { const o = {}; list().forEach((c, i) => { o[c.category || c.name] = S.sizes[i]; }); return o; };
+  const rng = (m) => (m[0] === m[1] ? m[0] : m[0] + ' - ' + m[1]) + ' cm';
+  const eqv = (r) => r.equiv || r.size_equiv || '';
   const rowKeys = (row) => Object.keys(row.measures).filter((k) => row.measures[k]);
 
   /* ---------- cálculo ---------- */
@@ -95,7 +116,7 @@
     }, 0);
   }
   const rowOf = (size) => chart().rows.find((r) => r.size === size);
-  const bestSize = () => chart().rows.slice().sort((a, b) => score(a) - score(b))[0].size;
+  const bestSize = (c = chart()) => c.rows.slice().sort((a, b) => score(a) - score(b))[0].size;
 
   /* ---------- UI ---------- */
   const host = document.createElement('div');
@@ -138,7 +159,7 @@
   @media(max-width:700px){.grid{grid-template-columns:1fr}.l{padding:14px}.l img{max-height:200px}.r{padding:20px}}
   </style><div class="ov" part="ov"><div class="card" role="dialog" aria-modal="true" aria-label="Tabela de medidas"><button class="x" data-act="close" aria-label="Fechar">×</button><div id="v"></div><div class="by">Powered by SLL Medidas</div></div></div>`;
   root.querySelector('.card').style.setProperty('--c', cfg.color);
-  const ov = root.querySelector('.ov'), V = root.querySelector('#v');
+  const ov = root.querySelector('.ov'), V = root.getElementById ? root.getElementById('v') : root.querySelector('#v');
 
   const chips = (cur, sel) => chart().rows.map((r) => `<button class="chip ${r.size === cur ? 'on' : ''}" data-act="${sel}" data-v="${esc(r.size)}">${esc(r.size)}${sel === 'pick' && r.size === bestSize() ? '<i>✓</i>' : ''}</button>`).join('');
   const imgBox = () => { const s = productImg(); return s ? `<img src="${esc(s)}" alt="">` : '<div style="height:260px;width:200px;background:#ddd;border-radius:8px"></div>'; };
@@ -172,9 +193,10 @@
     table() {
       const r = rowOf(S.view) || chart().rows[0];
       return `<div class="grid"><div class="l"><b style="color:#222">Tabela de tamanhos</b>${imgBox()}</div><div class="r">
+        ${tabs()}
         <p style="text-align:center">Selecione um tamanho e verifique as medidas</p>
         <div class="row" style="justify-content:center">${chips(r.size, 'view')}</div>
-        <div>${rowKeys(r).map((k) => `<div class="tr"><span>${lbl(k)}</span><span>${r.measures[k][0]} - ${r.measures[k][1]} cm</span></div>`).join('')}</div>
+        <div>${eqv(r) ? `<div class="tr"><span>Numeração</span><span>${esc(eqv(r))}</span></div>` : ''}${rowKeys(r).map((k) => `<div class="tr"><span>${lbl(k)}</span><span>${rng(r.measures[k])}</span></div>`).join('')}</div>
         <button class="btn" data-act="toform">Provador Virtual</button></div></div>`;
     },
     form() {
@@ -200,16 +222,19 @@
     },
     result() {
       const best = bestSize(), row = rowOf(S.size), sc = rowKeys(row).filter((k) => BODY_KEYS.includes(k));
+      const ex = rowKeys(row).filter((k) => !BODY_KEYS.includes(k)).map((k) => lbl(k) + ' ' + rng(row.measures[k])).join(' · ');
       const sts = sc.map((k) => [k, status(k, row)]);
       const bad = sts.some(([, s]) => s.c === 'r');
       const tag = S.size === best ? 'MELHOR OPÇÃO' : bad ? 'NÃO RECOMENDADO' : 'TAMBÉM SERVE';
       return `<div class="grid"><div class="l">${imgBox()}</div><div class="r">
-        <div class="tag">${tag}</div>
+        ${tabs()}
+        <div class="tag">${tag}${list().length > 1 ? ' · ' + esc(tabName(chart()).toUpperCase()) : ''}</div>
         <div class="row" style="gap:18px;align-items:flex-start"><div><div class="big">${esc(S.size)}</div><button class="btn s" style="margin-top:8px" data-act="tobody">Editar medidas</button></div><div id="bd">${bodySvg(row)}</div>
         <div style="display:flex;flex-direction:column;gap:10px">${sts.map(([k, s]) => `<div style="font-size:13px"><b>${lbl(k)} (${val(k)} cm)</b><br><span class="pill ${s.c}1">${s.t}</span></div>`).join('')}</div></div>
+        ${ex ? `<p style="text-align:center;font-size:12px">Medidas da peça: ${ex}</p>` : ''}
         <p style="text-align:center;font-size:12px">Prove também os tamanhos:</p>
         <div class="row" style="justify-content:center">${chips(S.size, 'pick')}</div>
-        <div class="foot"><button class="btn g" data-act="close">Fechar</button><button class="btn" data-act="select">Selecionar tamanho ${esc(S.size)}</button></div></div></div>`;
+        <div class="foot"><button class="btn g" data-act="close">Fechar</button><button class="btn" data-act="select">Selecionar tamanho ${esc(S.size)}${list().length > 1 ? ' (' + esc(tabName(chart())) + ')' : ''}</button></div></div></div>`;
     }
   };
 
@@ -220,13 +245,13 @@
   const go = (s) => { S.screen = s; render(); };
 
   /* ---------- ações ---------- */
-  function pickOnPage(size) {
+  function pickOnPage(size, all) {
     let ok = false;
     if (cfg.sizeSelector) {
       const el = [...document.querySelectorAll(cfg.sizeSelector)].find((e) => e.textContent.trim().toUpperCase() === size.toUpperCase());
       if (el) { el.click(); ok = true; }
     }
-    document.dispatchEvent(new CustomEvent('sll:size-selected', { detail: { size, applied: ok } }));
+    document.dispatchEvent(new CustomEvent('sll:size-selected', { detail: { size, applied: ok, sizes: all || {} } }));
     return ok;
   }
 
@@ -235,7 +260,13 @@
     view(t) { S.view = t.dataset.v; render(); },
     toform() { S.err = ''; go('form'); },
     totable() { go('table'); },
-    gender(t) { readForm(); S.gender = t.dataset.v; S.view = chart().rows[0].size; render(); },
+    gender(t) { readForm(); S.gender = t.dataset.v; S.ci = 0; S.sizes = {}; S.view = chart().rows[0].size; render(); },
+    tab(t) {
+      S.ci = +t.dataset.v;
+      if (S.screen === 'result') S.size = S.sizes[S.ci] || bestSize();
+      else S.view = chart().rows[0].size;
+      render();
+    },
     pref(t) { readForm(); S.pref = +t.dataset.v; render(); },
     tobody() { if (!S.base.bust) { if (!validate()) return; estimate(); } go('body'); },
     adj(t) {
@@ -246,20 +277,18 @@
       go('loading');
       store.set('sll_medidas_profile', { gender: S.gender, h: S.h, w: S.w, age: S.age, pref: S.pref });
       setTimeout(() => {
-        S.size = bestSize(); go('result');
-        track('result', { recommended_size: S.size, gender: S.gender, height_cm: +S.h, weight_kg: +S.w, age: +S.age, fit_pref: S.pref });
+        S.sizes = {};
+        list().forEach((c, i) => { S.sizes[i] = bestSize(c); });
+        S.ci = 0; S.size = S.sizes[0]; go('result');
+        track('result', { recommended_size: S.size, recommended_sizes: sizesByName(), gender: S.gender, height_cm: +S.h, weight_kg: +S.w, age: +S.age, fit_pref: S.pref });
       }, 1100);
     },
-    pick(t) { S.size = t.dataset.v; render(); track('try_size', { size: S.size }); },
-    select() {
-      const ok = pickOnPage(S.size);
-      track('select_size', { selected_size: S.size, recommended_size: bestSize(), gender: S.gender, height_cm: +S.h, weight_kg: +S.w, age: +S.age, fit_pref: S.pref, applied: ok });
-      actions.close();
-    }
+    pick(t) { S.size = t.dataset.v; S.sizes[S.ci] = S.size; render(); track('try_size', { size: S.size }); },
+    select() { const ok = pickOnPage(S.size, sizesByName()); track('select_size', { size: S.size, sizes: sizesByName(), applied: ok }); actions.close(); }
   };
 
   function readForm() {
-    const g = (id) => { const e = root.getElementById(id); return e ? e.value : null; };
+    const g = (id) => { const e = root.getElementById ? root.getElementById(id) : root.querySelector('#' + id); return e ? e.value : null; };
     const h = g('f-h'), w = g('f-w'), a = g('f-age');
     if (h !== null) { S.h = h; S.w = w; S.age = a; }
   }
@@ -279,7 +308,7 @@
     const t = e.target.closest('[data-act]');
     if (!t) return;
     const a = t.dataset.act;
-    if (a === 'tobody' && S.screen === 'form') { if (!validate()) return; estimate(); }
+    if (a === 'tobody') { if (S.screen === 'form') { if (!validate()) return; estimate(); S.base = S.base; } }
     if (actions[a]) actions[a](t);
   });
   root.addEventListener('input', (e) => {
@@ -297,7 +326,7 @@
     const p = store.get('sll_medidas_profile');
     if (p) { S.gender = p.gender || 'F'; S.h = p.h; S.w = p.w; S.age = p.age; S.pref = p.pref || 0; }
     try { await loadCharts(); } catch (e) { S.charts = []; }
-    S.screen = 'table'; S.base = {};
+    S.screen = 'table'; S.base = {}; S.ci = 0; S.sizes = {};
     if (S.charts.length) S.view = chart().rows[0].size;
     document.body.appendChild(host);
     render();
