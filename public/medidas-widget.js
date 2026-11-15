@@ -85,7 +85,7 @@ window.SLL_MEDIDAS = {
   };
   const chart = () => list()[S.ci] || list()[0];
   const tabName = (c) => ({ blusa: 'Blusa', calca: 'Calça' }[c.category] || c.name);
-  const tabs = () => list().length > 1
+  const tabs = () => list().length > 1 && !(S.screen === 'table' && isCombined())
     ? `<div class="row" style="justify-content:center">${list().map((c, i) => `<button class="chip ${i === S.ci ? 'on' : ''}" data-act="tab" data-v="${i}">${esc(tabName(c))}</button>`).join('')}</div>`
     : '';
   const sizesByName = () => { const o = {}; list().forEach((c, i) => { o[c.category || c.name] = S.sizes[i]; }); return o; };
@@ -135,6 +135,10 @@ window.SLL_MEDIDAS = {
   .grid{display:grid;grid-template-columns:1fr 1fr;min-height:480px}
   .l{padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f6f6f6;gap:10px}
   .l img{max-width:100%;max-height:420px;border-radius:8px;object-fit:cover}
+  .l.pz{padding:0;gap:0;justify-content:flex-start;align-items:stretch}
+  .ph{position:relative;flex:1;min-height:300px}
+  .l .ph img{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;border-radius:0}
+  .hd{font-size:12px;font-weight:700;letter-spacing:.04em;color:#444;margin-top:8px}
   .r{padding:36px 32px;display:flex;flex-direction:column;gap:14px;justify-content:center}
   h2{margin:0;font-size:22px;color:#444}
   p{margin:0;font-size:14px;color:#666}
@@ -160,13 +164,30 @@ window.SLL_MEDIDAS = {
   .sp{width:44px;height:44px;border:3px solid #ddd;border-top-color:#111;border-radius:50%;animation:s 1s linear infinite}
   @keyframes s{to{transform:rotate(360deg)}}
   .by{font-size:11px;color:#999;text-align:center;padding:8px}
-  @media(max-width:700px){.grid{grid-template-columns:1fr}.l{padding:14px}.l img{max-height:200px}.r{padding:20px}}
+  @media(max-width:700px){.grid{grid-template-columns:1fr}.l{padding:14px}.l img{max-height:200px}.l.pz{padding:0}.ph{min-height:220px}.r{padding:20px}}
   </style><div class="ov" part="ov"><div class="card" role="dialog" aria-modal="true" aria-label="Tabela de medidas"><button class="x" data-act="close" aria-label="Fechar">×</button><div id="v"></div><div class="by">Powered by SLL Medidas</div></div></div>`;
   root.querySelector('.card').style.setProperty('--c', cfg.color);
   const ov = root.querySelector('.ov'), V = root.getElementById ? root.getElementById('v') : root.querySelector('#v');
 
   const chips = (cur, sel) => chart().rows.map((r) => `<button class="chip ${r.size === cur ? 'on' : ''}" data-act="${sel}" data-v="${esc(r.size)}">${esc(r.size)}${sel === 'pick' && r.size === bestSize() ? '<i>✓</i>' : ''}</button>`).join('');
-  const imgBox = () => { const s = productImg(); return s ? `<img src="${esc(s)}" alt="">` : '<div style="height:260px;width:200px;background:#ddd;border-radius:8px"></div>'; };
+  const imgBox = () => {
+    const st = S.settings || {};
+    if (st.modal_image_url) return `<div class="ph"><img src="${esc(st.modal_image_url)}" alt="" style="object-fit:${esc(st.modal_image_fit || 'cover')};object-position:${esc(st.modal_image_position || 'center')}"></div>`;
+    const s = productImg();
+    return s ? `<img src="${esc(s)}" alt="">` : '<div style="height:260px;width:200px;background:#ddd;border-radius:8px"></div>';
+  };
+  const ttl = () => (S.settings && S.settings.show_modal_title)
+    ? `<b style="color:#222;text-align:center;padding:${S.settings.modal_image_url ? '14px' : '0'}">Tabela de tamanhos</b>` : '';
+  const isCombined = () => list().length > 1 && ((S.settings && S.settings.set_layout) || 'combined') === 'combined';
+  const rowsHtml = (r) => (eqv(r) ? `<div class="tr"><span>Numeração</span><span>${esc(eqv(r))}</span></div>` : '')
+    + rowKeys(r).map((k) => `<div class="tr"><span>${lbl(k)}</span><span>${rng(r.measures[k])}</span></div>`).join('');
+  const tableBody = (r) => {
+    if (!isCombined()) return `<div>${rowsHtml(r)}</div>`;
+    return '<div>' + list().map((c) => {
+      const cr = c.rows.find((x) => x.size === r.size);
+      return cr ? `<div class="hd">${esc(tabName(c).toUpperCase())}</div>${rowsHtml(cr)}` : '';
+    }).join('') + '</div>';
+  };
 
   function smooth(p) {
     let d = '';
@@ -196,11 +217,11 @@ window.SLL_MEDIDAS = {
   const screens = {
     table() {
       const r = rowOf(S.view) || chart().rows[0];
-      return `<div class="grid"><div class="l"><b style="color:#222">Tabela de tamanhos</b>${imgBox()}</div><div class="r">
+      return `<div class="grid"><div class="l">${ttl()}${imgBox()}</div><div class="r">
         ${tabs()}
         <p style="text-align:center">Selecione um tamanho e verifique as medidas</p>
         <div class="row" style="justify-content:center">${chips(r.size, 'view')}</div>
-        <div>${eqv(r) ? `<div class="tr"><span>Numeração</span><span>${esc(eqv(r))}</span></div>` : ''}${rowKeys(r).map((k) => `<div class="tr"><span>${lbl(k)}</span><span>${rng(r.measures[k])}</span></div>`).join('')}</div>
+        ${tableBody(r)}
         <button class="btn" data-act="toform">Provador Virtual</button></div></div>`;
     },
     form() {
@@ -244,7 +265,9 @@ window.SLL_MEDIDAS = {
 
   function render() {
     if (!S.charts.length) { V.innerHTML = '<div class="r"><h2>Tabela de medidas indisponível</h2><p>Este produto ainda não possui tabela cadastrada.</p></div>'; return; }
-    V.innerHTML = screens[S.screen]();
+    let h = screens[S.screen]();
+    if (S.settings && S.settings.modal_image_url && h.includes('class="ph"')) h = h.replace('<div class="l">', '<div class="l pz">');
+    V.innerHTML = h;
   }
   const go = (s) => { S.screen = s; render(); };
 
@@ -371,8 +394,10 @@ window.SLL_MEDIDAS = {
         if (!ref) return;
         if (ref.tagName === 'SELECT' && ref.parentElement && /custom-select/.test(ref.parentElement.className)) ref = ref.parentElement;
         const b = document.createElement('button');
-        b.id = 'sll-medidas-btn'; b.type = 'button'; b.textContent = cfg.buttonText;
-        b.style.cssText = 'display:block;margin:10px 0;padding:12px 20px;border:1px solid #111;background:#fff;color:#111;cursor:pointer;font-weight:600;border-radius:4px';
+        const st = S.settings || {};
+        b.id = 'sll-medidas-btn'; b.type = 'button'; b.textContent = st.button_text || cfg.buttonText;
+        const bg = st.bg_color || '#fff', rd = st.radius != null ? st.radius : 4;
+        b.style.cssText = 'display:block;margin:10px 0;padding:12px 20px;cursor:pointer;font-weight:600;' + (st.full_width ? 'width:100%;' : '') + 'background:' + bg + ';color:' + (st.text_color || '#111') + ';border:1px solid ' + (st.border_color || st.bg_color || '#111') + ';border-radius:' + rd + 'px';
         b.onclick = open;
         ref.insertAdjacentElement(pos === 'after' ? 'afterend' : 'beforebegin', b);
         track('button_shown');
