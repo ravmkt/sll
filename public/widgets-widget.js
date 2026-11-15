@@ -737,6 +737,22 @@ function buildBenefits(conf) {
     if (r === 'url_contains' && v) return keys.concat([v]);
     return keys;
   }
+  var hiddenNative = {};
+  function hideNative(w, host) {
+    var d = (w && w.design) || {};
+    if (!d.hide_native) return;
+    var sel = String(d.native_selector || '').trim() || 'section.product-reviews';
+    if (hiddenNative[sel]) return;
+    var nodes;
+    try { nodes = document.querySelectorAll(sel); } catch (e) { return; }
+    for (var i = 0; i < nodes.length; i++) { if (nodes[i].contains(host)) return; }
+    hiddenNative[sel] = true;
+    var st = document.createElement('style');
+    st.setAttribute('data-sll-hide-native', '');
+    st.textContent = sel + '{display:none!important}';
+    document.head.appendChild(st);
+  }
+
   function initReviews() {
     if (!STORE_ID) return;
     rpc('reviews_public_config', { p_store_id: STORE_ID }).then(function (ws) {
@@ -755,7 +771,7 @@ function buildBenefits(conf) {
         }).then(function (d) {
           if (!d || !d.reviews || !d.reviews.length) return;
           var host = window.SLLReviews.render(w, d);
-          if (host) resolveAnchor(w, function (pl) { mount({ ruler: { placement: pl }, onPlaced: function (h, t) { if (window.SLLReviews && window.SLLReviews.fit) window.SLLReviews.fit(h, t, w, pl.position); } }, function () { return host; }); });
+          if (host) resolveAnchor(w, function (pl) { mount({ ruler: { placement: pl }, onPlaced: function (h, t) { if (window.SLLReviews && window.SLLReviews.fit) window.SLLReviews.fit(h, t, w, pl.position); hideNative(w, h); } }, function () { return host; }); });
         }).catch(function () {});
       });
     }).catch(function () {});

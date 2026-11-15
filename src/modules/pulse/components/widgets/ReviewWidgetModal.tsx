@@ -194,6 +194,21 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
                         )}
                       </div>
                     )}
+                    {scope === 'product' && (
+                      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
+                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                          <input type="checkbox" checked={design.hide_native} onChange={(e) => setD('hide_native', e.target.checked)} /> Ocultar avaliações nativas da loja
+                        </label>
+                        <p className="text-xs text-slate-500">
+                          Esconde o bloco de avaliações da plataforma só quando o review do SLL aparecer na página. Atenção: o botão "Avaliar produto" do bloco nativo também some.
+                        </p>
+                        {design.hide_native && (
+                          <label className="block"><span className={lbl}>Seletor do bloco nativo</span>
+                            <input className={inp + ' font-mono'} value={design.native_selector} placeholder="section.product-reviews (padrão Yampi)"
+                              onChange={(e) => setD('native_selector', e.target.value)} /></label>
+                        )}
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-2">
                       {TOGGLES.map(([k, l]) => (
                     <label key={k} className="flex items-center gap-2 text-xs font-semibold text-slate-600">

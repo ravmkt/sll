@@ -27,6 +27,7 @@ export interface ReviewDesign {
   width_mode: 'auto' | 'full' | 'custom'; align: 'left' | 'center' | 'right'; padding: number; margin_x: number;
   carousel: boolean; arrows: boolean; dots: boolean; drag: boolean; autoplay: boolean; interval: number;
   per_view_desktop: number; per_view_mobile: number; loop: boolean;
+  hide_native: boolean; native_selector: string;
 }
 
 export interface ReviewWidget {
@@ -49,6 +50,7 @@ export const DEFAULT_DESIGN: ReviewDesign = {
   width_mode: 'auto', align: 'center', padding: 16, margin_x: 0,
   carousel: true, arrows: true, dots: true, drag: true, autoplay: false, interval: 5,
   per_view_desktop: 3, per_view_mobile: 1, loop: true,
+  hide_native: false, native_selector: '',
 };
 
 export interface ReviewTemplate { id: string; label: string; desc: string; defaults: Partial<ReviewDesign>; }
