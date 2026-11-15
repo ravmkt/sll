@@ -3,7 +3,7 @@
   if (window.__SLL_LOADER_INITIALIZED__) return;
   window.__SLL_LOADER_INITIALIZED__ = true;
 
-  var LOADER_VERSION = "1.3.0";
+  var LOADER_VERSION = "1.4.0";
   var SUPABASE_URL = "https://flivmllysdhaydhogmhg.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_fYM4F5uRs_8DbYF7ozy0hA_eA_Z5XUz";
 
@@ -50,6 +50,7 @@
     reviews: "reviews-widget.js",
     radar: "radar-widget.js",
     tryon: "tryon-widget.js",
+    medidas: "medidas-widget.js",
         widgets: "widgets-widget.js",
     pulse: "widgets-widget.js"
   };
@@ -122,6 +123,12 @@
   }
 
   function injectModule(scriptName) {
+    if (scriptName === "medidas-widget.js") {
+      var mc = window.SLL_MEDIDAS = window.SLL_MEDIDAS || {};
+      mc.storeId = storeId;
+      mc.apiBase = mc.apiBase || (SUPABASE_URL + "/functions/v1");
+      mc.openTexts = mc.openTexts || ["tabela de medidas", "tabela de tamanhos", "descubra seu tamanho"];
+    }
     if (scriptName === "tryon-widget.js" && !window.__sllTryonCfg) {
       window.__sllTryonCfg = true;
       return loadTryon();
