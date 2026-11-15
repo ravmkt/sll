@@ -24,6 +24,9 @@ export interface ReviewDesign {
   title_color: string; card_bg: string; border: string; radius: number; font: string; max_width: number;
   margin_y: number; columns: number; show_avatar: boolean; show_stars: boolean; show_date: boolean;
   show_source: boolean; show_verified: boolean; show_media: boolean; show_summary: boolean;
+  width_mode: 'auto' | 'full' | 'custom'; align: 'left' | 'center' | 'right'; padding: number; margin_x: number;
+  carousel: boolean; arrows: boolean; dots: boolean; drag: boolean; autoplay: boolean; interval: number;
+  per_view_desktop: number; per_view_mobile: number; loop: boolean;
 }
 
 export interface ReviewWidget {
@@ -43,6 +46,9 @@ export const DEFAULT_DESIGN: ReviewDesign = {
   radius: 12, font: 'inherit', max_width: 0, margin_y: 16, columns: 3,
   show_avatar: true, show_stars: true, show_date: true, show_source: true, show_verified: true,
   show_media: true, show_summary: true,
+  width_mode: 'auto', align: 'center', padding: 16, margin_x: 0,
+  carousel: true, arrows: true, dots: true, drag: true, autoplay: false, interval: 5,
+  per_view_desktop: 3, per_view_mobile: 1, loop: true,
 };
 
 export interface ReviewTemplate { id: string; label: string; desc: string; defaults: Partial<ReviewDesign>; }
@@ -50,7 +56,7 @@ export interface ReviewTemplate { id: string; label: string; desc: string; defau
 export const TEMPLATES: ReviewTemplate[] = [
   { id: 'cards_photo', label: 'Cards com fotos', desc: 'Carrossel deslizante, avatar, estrelas e fotos do cliente.', defaults: {} },
   { id: 'cards_clean', label: 'Cards limpos', desc: 'Grade simples, só estrelas e texto.',
-    defaults: { show_avatar: false, show_media: false, show_summary: false } },
+    defaults: { show_avatar: false, show_media: false, show_summary: false, carousel: false } },
   { id: 'spotlight', label: 'Depoimento destaque', desc: 'Um depoimento grande por vez, com setas.',
     defaults: { show_media: false, show_summary: false } },
   { id: 'photo_wall', label: 'Mural de fotos', desc: 'Grade de fotos e vídeos dos clientes.',
@@ -58,7 +64,7 @@ export const TEMPLATES: ReviewTemplate[] = [
   { id: 'summary_list', label: 'Lista com resumo', desc: 'Nota média e barras de 5★ a 1★ ao lado da lista.', defaults: {} },
   { id: 'badge', label: 'Selo compacto', desc: 'Só nota média e total de avaliações.', defaults: { show_title: false } },
   { id: 'text_only', label: 'Texto puro', desc: 'Citações sem estrelas, estilo editorial.',
-    defaults: { show_stars: false, show_avatar: false, show_media: false, show_verified: false, show_summary: false } },
+    defaults: { show_stars: false, show_avatar: false, show_media: false, show_verified: false, show_summary: false, carousel: false } },
   { id: 'ml_style', label: 'Estilo Mercado Livre', desc: 'Nota grande, barras, miniaturas e "compra verificada".',
     defaults: { accent: '#3483FA', star_color: '#3483FA', title: 'Opiniões sobre o produto', title_color: '#333333',
       text: '#333333', border: '#EEEEEE', radius: 6, show_avatar: false, columns: 1 } },

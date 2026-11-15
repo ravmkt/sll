@@ -594,7 +594,8 @@ function buildBenefits(conf) {
       var t; try { t = document.querySelector(p.selector); } catch (e) { return true; }
       if (!t) return false;
       place(t, host, p.position);
-      return true;
+          if (conf.onPlaced) { try { conf.onPlaced(host, t); } catch (e) {} }
+          return true;
     }
     tryPlace();
     var started = Date.now();
@@ -624,7 +625,7 @@ function buildBenefits(conf) {
     var base = cs ? cs.src.replace(/[^\/]*$/, '') : '';
     rvLoader = new Promise(function (res, rej) {
       var el = document.createElement('script');
-      el.src = base + 'reviews-render.js';
+      el.src = base + 'reviews-render.js' + (cs && /\?.*$/.test(cs.src) ? cs.src.match(/\?.*$/)[0] : '');
       el.onload = function () { res(); };
       el.onerror = function () { rvLoader = null; rej(new Error('reviews-render')); };
       document.head.appendChild(el);
@@ -754,7 +755,7 @@ function buildBenefits(conf) {
         }).then(function (d) {
           if (!d || !d.reviews || !d.reviews.length) return;
           var host = window.SLLReviews.render(w, d);
-          if (host) resolveAnchor(w, function (pl) { mount({ ruler: { placement: pl } }, function () { return host; }); });
+          if (host) resolveAnchor(w, function (pl) { mount({ ruler: { placement: pl }, onPlaced: function (h, t) { if (window.SLLReviews && window.SLLReviews.fit) window.SLLReviews.fit(h, t, w, pl.position); } }, function () { return host; }); });
         }).catch(function () {});
       });
     }).catch(function () {});

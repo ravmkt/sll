@@ -21,6 +21,7 @@ const TOGGLES: [keyof ReviewDesign, string][] = [
   ['show_date', 'Data'], ['show_source', 'Origem (Google)'], ['show_verified', 'Compra verificada'], ['show_media', 'Fotos e vídeos'],
 ];
 const GRID_TPL = ['cards_clean', 'text_only', 'photo_wall'];
+const CAROUSEL_TPL = ['cards_photo', 'cards_clean', 'text_only'];
 const PAGE_RULES: [PageRule, string][] = [
   ['auto', 'Automático (página do próprio produto)'], ['home', 'Somente na Home'], ['all_pages', 'Todas as páginas'],
   ['url_contains', 'URL contém'], ['url_not_contains', 'URL não contém'], ['url_not_equals', 'URL diferente'],
@@ -127,8 +128,6 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
                     <input type="range" min={0} max={32} value={design.radius} onChange={(e) => setD('radius', Number(e.target.value))} className="w-full" /></label>
                   <label><span className={lbl}>Margem vertical: {design.margin_y}px</span>
                     <input type="range" min={0} max={80} value={design.margin_y} onChange={(e) => setD('margin_y', Number(e.target.value))} className="w-full" /></label>
-                  <label><span className={lbl}>Largura máx. (0 = total)</span>
-                    <input type="number" min={0} className={inp} value={design.max_width} onChange={(e) => setD('max_width', Number(e.target.value) || 0)} /></label>
                   {GRID_TPL.includes(template) && (
                     <label><span className={lbl}>Colunas</span>
                       <select className={inp} value={design.columns} onChange={(e) => setD('columns', Number(e.target.value))}>
@@ -136,8 +135,67 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
                       </select></label>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {TOGGLES.map(([k, l]) => (
+                    <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
+                      <span className={lbl}>Largura na loja</span>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([['auto', 'Automática'], ['full', 'Tela toda'], ['custom', 'Personalizada']] as [ReviewDesign['width_mode'], string][]).map(([v, l]) => (
+                          <button key={v} type="button" onClick={() => setD('width_mode', v)}
+                            className={'rounded-lg border px-2 py-2 text-xs font-semibold ' + (design.width_mode === v ? 'border-[#0094EB] bg-sky-50 text-[#0094EB]' : 'border-slate-200 text-slate-600')}>{l}</button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        {design.width_mode === 'auto' && 'Segue a largura do bloco da loja onde o review é inserido (alinhado ao tema).'}
+                        {design.width_mode === 'full' && 'Ocupa a largura inteira da tela.'}
+                        {design.width_mode === 'custom' && 'Você define a largura máxima e o alinhamento.'}
+                      </p>
+                      {design.width_mode === 'custom' && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <label><span className={lbl}>Largura máx. (px)</span>
+                            <input type="number" min={200} className={inp} value={design.max_width || ''} placeholder="1100"
+                              onChange={(e) => setD('max_width', Number(e.target.value) || 0)} /></label>
+                          <label><span className={lbl}>Alinhamento</span>
+                            <select className={inp} value={design.align} onChange={(e) => setD('align', e.target.value as ReviewDesign['align'])}>
+                              <option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option>
+                            </select></label>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-3">
+                        <label><span className={lbl}>Espaço interno: {design.padding}px</span>
+                          <input type="range" min={0} max={48} value={design.padding} onChange={(e) => setD('padding', Number(e.target.value))} className="w-full" /></label>
+                        <label><span className={lbl}>Margem lateral: {design.margin_x}px</span>
+                          <input type="range" min={0} max={80} value={design.margin_x} onChange={(e) => setD('margin_x', Number(e.target.value))} className="w-full" /></label>
+                      </div>
+                    </div>
+                    {CAROUSEL_TPL.includes(template) && (
+                      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
+                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                          <input type="checkbox" checked={design.carousel} onChange={(e) => setD('carousel', e.target.checked)} /> Exibir como carrossel
+                        </label>
+                        {design.carousel && (
+                          <>
+                            <div className="grid grid-cols-2 gap-2">
+                              {([['arrows', 'Setas'], ['dots', 'Pontos'], ['drag', 'Arrastar (mouse e dedo)'], ['loop', 'Loop (volta ao início)'], ['autoplay', 'Passar automático']] as [keyof ReviewDesign, string][]).map(([k, l]) => (
+                                <label key={k} className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                                  <input type="checkbox" checked={Boolean(design[k])} onChange={(e) => setD(k, e.target.checked as never)} /> {l}
+                                </label>
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                              {design.autoplay && (
+                                <label><span className={lbl}>Intervalo (s)</span>
+                                  <input type="number" min={1} max={30} className={inp} value={design.interval} onChange={(e) => setD('interval', Math.max(1, Number(e.target.value) || 5))} /></label>
+                              )}
+                              <label><span className={lbl}>Itens (desktop)</span>
+                                <input type="number" min={1} max={6} step={0.5} className={inp} value={design.per_view_desktop} onChange={(e) => setD('per_view_desktop', Math.max(1, Number(e.target.value) || 1))} /></label>
+                              <label><span className={lbl}>Itens (mobile)</span>
+                                <input type="number" min={1} max={3} step={0.1} className={inp} value={design.per_view_mobile} onChange={(e) => setD('per_view_mobile', Math.max(1, Number(e.target.value) || 1))} /></label>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2">
+                      {TOGGLES.map(([k, l]) => (
                     <label key={k} className="flex items-center gap-2 text-xs font-semibold text-slate-600">
                       <input type="checkbox" checked={Boolean(design[k])} onChange={(e) => setD(k, e.target.checked as never)} /> {l}
                     </label>
