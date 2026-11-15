@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { ArrowDown, ArrowUp, ImagePlus, Monitor, Smartphone, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, ImagePlus, Monitor, Smartphone, Trash2, X } from 'lucide-react';
 import WidgetPlacementPicker, { type Placement } from './WidgetPlacementPicker';
 import { ColorField as Color } from './RulerConfigControls';
 import CarouselPreview from './CarouselPreview';
@@ -81,6 +81,7 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  const [asNew, setAsNew] = useState(false);
 
   const setD = (p: Partial<CarouselDesign>) => setDs((s) => ({ ...s, ...p }));
   const setItem = (i: number, p: Partial<CarouselItem>) => setItems((l) => l.map((x, k) => (k === i ? { ...x, ...p } : x)));
@@ -132,7 +133,7 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
     setSaving(true); setErr('');
     try {
       await infoCardsService(ctx.supabase).save(ctx.storeId, {
-        id: initial?.id ?? null, name: name.trim(), active, title, tiers: filled, footer: '', placement, style_id: null,
+        id: asNew ? null : (initial?.id ?? null), name: name.trim(), active, title, tiers: filled, footer: '', placement, style_id: null,
         kind: 'carousel', icon_position: 'left', icon_size: 28, icon_color: null, icon_bg: 'none', icon_bg_color: null, design: ds,
       });
       onSaved();
@@ -141,13 +142,20 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
     } finally { setSaving(false); }
   }
 
+  function duplicate() {
+    setAsNew(true);
+    setName(name.trim() + ' (cópia)');
+    setActive(false);
+    setErr('');
+  }
+
   const btnSel = (on: boolean) => `flex-1 rounded-xl border px-3 py-2 text-sm font-bold ${on ? 'border-[#0094EB] bg-sky-50 text-[#0094EB]' : 'border-slate-200 text-slate-600'}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4">
       <div className="my-4 w-full max-w-[1200px] rounded-2xl bg-slate-50 shadow-xl">
         <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-slate-200 bg-white px-6 py-4">
-          <h2 className="text-lg font-extrabold text-slate-900">{initial ? 'Editar carrossel' : 'Novo carrossel'}</h2>
+          <h2 className="text-lg font-extrabold text-slate-900">{asNew ? 'Novo carrossel (cópia)' : initial ? 'Editar carrossel' : 'Novo carrossel'}</h2>
           <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
         </div>
 
@@ -346,7 +354,12 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
           </div>
           <div className="flex items-center gap-3">
             {err && <span className="text-sm font-semibold text-red-600">{err}</span>}
-            <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Cancelar</button>
+            {initial && !asNew && (
+                  <button type="button" onClick={duplicate} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
+                    <Copy className="h-4 w-4" /> Duplicar
+                  </button>
+                )}
+                <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Cancelar</button>
             <button type="button" onClick={save} disabled={saving || busy} className="rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
