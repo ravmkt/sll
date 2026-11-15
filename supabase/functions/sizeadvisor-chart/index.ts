@@ -15,6 +15,22 @@ const ORDER: Record<string, number> = { blusa: 1, calca: 2 };
 
 type Row = { size: string; equiv: string | null; measures: Record<string, number[]> };
 
+const rank = (k: string) => {
+  const s = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (/bust|busto|peito|chest/.test(s)) return 1;
+  if (/cintur|waist/.test(s)) return 2;
+  if (/quadril|hip/.test(s)) return 3;
+  if (/compr|length/.test(s)) return 4;
+  if (/manga|sleeve/.test(s)) return 5;
+  return 9;
+};
+const sortMeasures = (r: Row): Row => ({
+  ...r,
+  measures: Object.fromEntries(
+    Object.entries(r.measures).sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0])),
+  ),
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const u = new URL(req.url);
@@ -65,13 +81,13 @@ Deno.serve(async (req) => {
       name: c.name,
       gender: c.gender ?? "F",
       category: c.category,
-      rows: [...(byChart.get(c.id)?.values() ?? [])],
+      rows: [...(byChart.get(c.id)?.values() ?? [])].map(sortMeasures),
     }))
     .sort((a, b) => (ORDER[a.category] ?? 9) - (ORDER[b.category] ?? 9));
 
   const { data: settings } = await db
     .from("widget_settings")
-    .select("button_text,bg_color,text_color,border_color,radius,full_width,position,anchor_selector,modal_image_url,modal_image_fit,modal_image_position,show_modal_title,set_layout")
+    .select("button_text,bg_color,text_color,border_color,radius,full_width,position,anchor_selector,modal_image_url,modal_image_fit,modal_image_position,show_modal_title,set_layout,modal_config")
     .eq("store_id", storeId)
     .maybeSingle();
   return json({ gender: out[0]?.gender ?? "F", rows: out[0]?.rows ?? [], charts: out, settings: settings ?? {} });
