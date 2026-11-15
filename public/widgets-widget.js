@@ -753,6 +753,18 @@ function buildBenefits(conf) {
     document.head.appendChild(st);
   }
 
+    function submitReview(w, wk, p) {
+    var ref = null;
+    if (w.scope === 'product' && wk && wk.length) {
+      ref = wk.slice().sort(function (a, b) { return b.length - a.length; })[0];
+    }
+    var og = document.querySelector('meta[property="og:title"]');
+    var nm = String((og && og.content) || document.title || '').trim().slice(0, 200);
+    return rpc('review_submit', { p_store_id: STORE_ID, p_data: {
+      product_ref: ref, product_name: nm, author_name: p.name, author_email: p.email,
+      rating: p.rating, title: p.title, body: p.body } });
+  }
+
   function initReviews() {
     if (!STORE_ID) return;
     rpc('reviews_public_config', { p_store_id: STORE_ID }).then(function (ws) {
@@ -769,8 +781,9 @@ function buildBenefits(conf) {
             p_store_id: STORE_ID, p_keys: wk,
             p_min_rating: w.min_rating, p_sources: w.sources, p_limit: w.max_items });
         }).then(function (d) {
-          if (!d || !d.reviews || !d.reviews.length) return;
-          var host = window.SLLReviews.render(w, d);
+          if (!d || !d.reviews) return;
+              if (!d.reviews.length && !(w.design && w.design.allow_submit)) return;
+          var host = window.SLLReviews.render(w, d, (w.design && w.design.allow_submit) ? { submit: function (p) { return submitReview(w, wk, p); } } : null);
           if (host) resolveAnchor(w, function (pl) { mount({ ruler: { placement: pl }, onPlaced: function (h, t) { if (window.SLLReviews && window.SLLReviews.fit) window.SLLReviews.fit(h, t, w, pl.position); hideNative(w, h); } }, function () { return host; }); });
         }).catch(function () {});
       });

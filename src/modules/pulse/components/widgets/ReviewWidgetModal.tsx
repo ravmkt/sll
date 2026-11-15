@@ -200,7 +200,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
                           <input type="checkbox" checked={design.hide_native} onChange={(e) => setD('hide_native', e.target.checked)} /> Ocultar avaliações nativas da loja
                         </label>
                         <p className="text-xs text-slate-500">
-                          Esconde o bloco de avaliações da plataforma só quando o review do SLL aparecer na página. Atenção: o botão "Avaliar produto" do bloco nativo também some.
+                          Esconde o bloco de avaliações da plataforma só quando o review do SLL aparecer na página. {design.allow_submit ? 'Com o envio do SLL ligado, os clientes avaliam pelo formulário do SLL.' : 'Atenção: o botão "Avaliar produto" do bloco nativo também some.'}
                         </p>
                         {design.hide_native && (
                           <label className="block"><span className={lbl}>Seletor do bloco nativo</span>
@@ -209,6 +209,19 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
                         )}
                       </div>
                     )}
+                    <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
+                      <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                        <input type="checkbox" checked={Boolean(design.allow_submit)} onChange={(e) => setD('allow_submit', e.target.checked)} /> Permitir envio de avaliações pelos clientes
+                      </label>
+                      <p className="text-xs text-slate-500">
+                        Mostra um botão que abre o formulário (nota, nome, e-mail, título e texto). As avaliações chegam como Pendente e só aparecem na loja depois de aprovadas. Sem avaliações aprovadas, o botão aparece mesmo assim.
+                      </p>
+                      {design.allow_submit && (
+                        <label className="block"><span className={lbl}>Texto do botão</span>
+                          <input className={inp} maxLength={40} value={design.submit_label ?? ''} placeholder="Escrever avaliação"
+                            onChange={(e) => setD('submit_label', e.target.value)} /></label>
+                      )}
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       {TOGGLES.map(([k, l]) => (
                     <label key={k} className="flex items-center gap-2 text-xs font-semibold text-slate-600">

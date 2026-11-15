@@ -28,6 +28,7 @@ export interface ReviewDesign {
   carousel: boolean; arrows: boolean; dots: boolean; drag: boolean; autoplay: boolean; interval: number;
   per_view_desktop: number; per_view_mobile: number; loop: boolean;
   hide_native: boolean; native_selector: string;
+  allow_submit: boolean; submit_label: string;
 }
 
 export interface ReviewWidget {
@@ -51,6 +52,7 @@ export const DEFAULT_DESIGN: ReviewDesign = {
   carousel: true, arrows: true, dots: true, drag: true, autoplay: false, interval: 5,
   per_view_desktop: 3, per_view_mobile: 1, loop: true,
   hide_native: false, native_selector: '',
+  allow_submit: false, submit_label: 'Escrever avaliação',
 };
 
 export interface ReviewTemplate { id: string; label: string; desc: string; defaults: Partial<ReviewDesign>; }

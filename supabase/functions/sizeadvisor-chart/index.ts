@@ -1,46 +1,36 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+﻿import { createClient } from "npm:@supabase/supabase-js@2";
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "@supabase/functions-js/edge-runtime.d.ts";
-import { withSupabase } from "@supabase/server";
-
-console.log("Hello from Functions!");
-
-// This endpoint uses 'publishable' | 'secret' access, apiKey is required.
-// Use publishable for Client-facing, key-validated endpoints
-// Use secret for Server-to-server, internal calls
-export default {
-  fetch: withSupabase({ auth: ["publishable", "secret"] }, async (req, ctx) => {
-    // Called by another service with a secret key
-    // ctx.supabaseAdmin bypasses RLS — use for privileged operations
-    /*
-    if (ctx.authMode === "secret") {
-      const { user_id } = await req.json();
-      const { data } = await ctx.supabaseAdmin.auth.admin.getUserById(user_id);
-
-      return Response.json({
-        email: data?.user?.email,
-      });
-    }
-    */
-
-    const { name } = await req.json();
-
-    return Response.json({
-      message: `Hello ${name}!`,
-    });
-  }),
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "content-type, authorization, apikey",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
+const json = (b: unknown, s = 200) =>
+  new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=60" } });
 
-/* To invoke locally:
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  const u = new URL(req.url);
+  const storeId = u.searchParams.get("store_id") ?? "";
+  const pageUrl = (u.searchParams.get("url") ?? "").toLowerCase();
+  if (!/^[0-9a-f-]{36}$/i.test(storeId)) return json({ error: "store_id invalido" }, 400);
 
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
+  const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { db: { schema: "sizeadvisor" } });
 
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/sizeadvisor-chart' \
-    --header 'apiKey: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' \
-    --data '{"name":"Functions"}'
+  const { data: assigns, error: e1 } = await db.from("chart_assignments").select("chart_id,match_type,match_value").eq("store_id", storeId);
+  if (e1) return json({ error: e1.message }, 500);
 
-*/
+  const hit = (assigns ?? []).find((a) => a.match_type === "url_pattern" && pageUrl.includes(String(a.match_value).toLowerCase()));
+  if (!hit) return json({ gender: null, rows: [] });
+
+  const { data: chart } = await db.from("size_charts").select("gender").eq("id", hit.chart_id).single();
+  const { data: rows, error: e2 } = await db.from("size_chart_rows").select("size_label,measure_key,min_cm,max_cm,sort_order").eq("chart_id", hit.chart_id).order("sort_order");
+  if (e2) return json({ error: e2.message }, 500);
+
+  const map = new Map<string, { size: string; measures: Record<string, number[]> }>();
+  for (const r of rows ?? []) {
+    if (!map.has(r.size_label)) map.set(r.size_label, { size: r.size_label, measures: {} });
+    map.get(r.size_label)!.measures[r.measure_key] = [Number(r.min_cm), Number(r.max_cm)];
+  }
+  return json({ gender: chart?.gender ?? "F", rows: [...map.values()] });
+});
