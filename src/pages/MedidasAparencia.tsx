@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 type Cfg = {
   modal_image_url: string | null;
@@ -171,14 +171,14 @@ export default function MedidasAparencia({ storeId: propStoreId }: { storeId?: s
           <p className="text-sm font-medium text-gray-700 mb-2">Prévia do modal</p>
           <div className="grid grid-cols-2 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden" style={{ minHeight: 440 }}>
             <div className="relative bg-gray-100">
-              {c.modal_image_url ? (
-                <img src={c.modal_image_url} alt="Foto do modal"
-                  className="absolute inset-0 w-full h-full"
-                  style={{ objectFit: c.modal_image_fit, objectPosition: c.modal_image_position }} />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">
-                  Sem foto
-                </div>
+              <img src={c.modal_image_url || "/assets/mock/prod-bazer.jpg"} alt="Foto do modal"
+                className="absolute inset-0 w-full h-full"
+                style={{ objectFit: c.modal_image_fit, objectPosition: c.modal_image_position }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              {!c.modal_image_url && (
+                <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-[10px] text-white">
+                  foto de exemplo
+                </span>
               )}
             </div>
 
