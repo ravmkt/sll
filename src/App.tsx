@@ -34,6 +34,7 @@ import { GlobalTrialBanner } from '@/components/layout/GlobalTrialBanner';
 import TrialExpiredModal from '@/components/layout/TrialExpiredModal';
 import AdminMasterPage from '@/pages/admin/AdminMasterPage';
 import DashboardShell from '@/components/layout/DashboardShell';
+import MedidasBotao from "@/pages/MedidasBotao";
 const LandingHub = lazy(() => import("@/pages/LandingHub"));
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
@@ -390,6 +391,7 @@ function AppRoutes() {
         <Route path="/dashboard/modules/builder/templates" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderTemplatesPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/:id" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout editor><BuilderEditorPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/tryon" element={user ? (<SubscriptionGate><ModuleGate moduleKey="tryon"><TryOnModule /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
+        <Route path="/medidas/botao" element={<MedidasBotao />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes></DashboardShell></>
     </Suspense>
