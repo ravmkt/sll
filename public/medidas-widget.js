@@ -17,6 +17,7 @@ window.SLL_MEDIDAS = {
 
   const cfg = Object.assign({
     storeId: null, apiBase: null, openSelectors: [], openTexts: [], injectAfter: null,
+    anchorSelector: null, anchorPosition: 'before', buttonText: 'Descubra seu tamanho',
     sizeSelector: null, productRef: null, image: null, chart: null, charts: null, color: '#111'
   }, window.SLL_MEDIDAS || {});
 
@@ -27,7 +28,7 @@ window.SLL_MEDIDAS = {
 
   const S = {
     screen: 'table', charts: [], ci: 0, sizes: {}, gender: 'F', h: '', w: '', age: '', pref: 0,
-    adj: { bust: 0, waist: 0, hip: 0 }, base: {}, size: null, view: null, err: ''
+    adj: { bust: 0, waist: 0, hip: 0 }, base: {}, size: null, view: null, err: '', settings: {}
   };
 
   /* ---------- util ---------- */
@@ -57,6 +58,8 @@ window.SLL_MEDIDAS = {
   }
 
   /* ---------- dados ---------- */
+  let loaded = null;
+  const ensureData = () => loaded || (loaded = loadCharts().catch((e) => { loaded = null; throw e; }));
   async function loadCharts() {
     if (S.charts.length) return;
     if (cfg.charts) S.charts = cfg.charts;
@@ -66,6 +69,7 @@ window.SLL_MEDIDAS = {
       const r = await fetch(u);
       const j = await r.json();
       S.charts = j.charts || (j.chart ? [j.chart] : []);
+      S.settings = j.settings || j.widget_settings || {};
     }
     if (S.charts.length) {
       const c = chart();
@@ -325,7 +329,7 @@ window.SLL_MEDIDAS = {
   async function open() {
     const p = store.get('sll_medidas_profile');
     if (p) { S.gender = p.gender || 'F'; S.h = p.h; S.w = p.w; S.age = p.age; S.pref = p.pref || 0; }
-    try { await loadCharts(); } catch (e) { S.charts = []; }
+    try { await ensureData(); } catch (e) { S.charts = []; }
     S.screen = 'table'; S.base = {}; S.ci = 0; S.sizes = {};
     if (S.charts.length) S.view = chart().rows[0].size;
     document.body.appendChild(host);
@@ -349,16 +353,39 @@ window.SLL_MEDIDAS = {
         if (t) { e.preventDefault(); e.stopPropagation(); open(); }
       }, true);
     }
-    if (cfg.injectAfter) {
-      const ref = document.querySelector(cfg.injectAfter);
-      if (ref && !document.getElementById('sll-medidas-btn')) {
+    setupAnchor();
+  }
+
+  function setupAnchor() {
+    ensureData().catch(() => {}).then(() => {
+      if (!S.charts.length) return;
+      const fromCfg = cfg.anchorSelector || (S.settings && S.settings.anchor_selector) || null;
+      const sel = fromCfg || cfg.injectAfter;
+      if (!sel) return;
+      const pos = fromCfg ? ((S.settings && S.settings.anchor_position) || cfg.anchorPosition || 'before') : 'after';
+
+      const place = () => {
+        if (document.getElementById('sll-medidas-btn')) return;
+        let ref = null;
+        try { ref = document.querySelector(sel); } catch (e) { return; }
+        if (!ref) return;
+        if (ref.tagName === 'SELECT' && ref.parentElement && /custom-select/.test(ref.parentElement.className)) ref = ref.parentElement;
         const b = document.createElement('button');
-        b.id = 'sll-medidas-btn'; b.type = 'button'; b.textContent = 'Descubra seu tamanho';
-        b.style.cssText = 'margin:10px 0;padding:12px 20px;border:1px solid #111;background:#fff;cursor:pointer;font-weight:600;border-radius:4px';
+        b.id = 'sll-medidas-btn'; b.type = 'button'; b.textContent = cfg.buttonText;
+        b.style.cssText = 'display:block;margin:10px 0;padding:12px 20px;border:1px solid #111;background:#fff;color:#111;cursor:pointer;font-weight:600;border-radius:4px';
         b.onclick = open;
-        ref.insertAdjacentElement('afterend', b);
-      }
-    }
+        ref.insertAdjacentElement(pos === 'after' ? 'afterend' : 'beforebegin', b);
+        track('button_shown');
+      };
+
+      let raf = 0;
+      const mo = new MutationObserver(() => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; place(); });
+      });
+      mo.observe(document.documentElement, { childList: true, subtree: true });
+      place();
+    });
   }
 
   window.SLLMedidas = { open, close: actions.close };
