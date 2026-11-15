@@ -1,17 +1,19 @@
 ﻿import { useState } from 'react';
-import { BadgeCheck, GalleryHorizontal, PanelTop, Palette } from 'lucide-react';
+import { BadgeCheck, GalleryHorizontal, PanelTop, Palette, Star } from 'lucide-react';
 import WidgetsInfoCardsPage from './WidgetsInfoCardsPage';
 import WidgetsBenefitsPage from './WidgetsBenefitsPage';
 import WidgetsCarouselPage from './WidgetsCarouselPage';
+import WidgetsReviewsPage from './WidgetsReviewsPage';
 import WidgetsAppearancePage from './WidgetsAppearancePage';
 import type { WidgetsCtx } from '../../types/widgets';
 
-type Sub = 'cards' | 'benefits' | 'carousel' | 'appearance';
+type Sub = 'cards' | 'benefits' | 'carousel' | 'reviews' | 'appearance';
 
 const SUBS: { id: Sub; label: string; icon: typeof PanelTop }[] = [
   { id: 'cards', label: 'Card informativo', icon: PanelTop },
   { id: 'benefits', label: 'Barra de benefícios', icon: BadgeCheck },
   { id: 'carousel', label: 'Carrossel', icon: GalleryHorizontal },
+  { id: 'reviews', label: 'Reviews', icon: Star },
   { id: 'appearance', label: 'Aparência', icon: Palette },
 ];
 
@@ -36,6 +38,7 @@ export default function WidgetsModule({ ctx }: { ctx: WidgetsCtx }) {
       {sub === 'cards' && <WidgetsInfoCardsPage ctx={ctx} />}
       {sub === 'benefits' && <WidgetsBenefitsPage ctx={ctx} />}
       {sub === 'carousel' && <WidgetsCarouselPage ctx={ctx} />}
+      {sub === 'reviews' && <WidgetsReviewsPage ctx={ctx} />}
       {sub === 'appearance' && <WidgetsAppearancePage ctx={ctx} />}
     </div>
   );

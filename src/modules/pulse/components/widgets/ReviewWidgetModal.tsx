@@ -1,0 +1,191 @@
+﻿import { useMemo, useState } from 'react';
+import { Loader2, Palette, X } from 'lucide-react';
+import WidgetPlacementPicker, { type Placement } from './WidgetPlacementPicker';
+import ReviewsPreview from './ReviewsPreview';
+import { reviewsService } from '../../services/reviewsService';
+import { TEMPLATES, templateDesign, type ReviewDesign, type ReviewScope, type ReviewSource, type ReviewWidget } from '../../types/reviews';
+import { CARD_FONTS, type WidgetsCtx } from '../../types/widgets';
+
+const inp = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[#0094EB]';
+const lbl = 'mb-1 block text-[10px] font-bold uppercase text-slate-400';
+
+const SRC: { v: ReviewSource; label: string }[] = [
+  { v: 'manual', label: 'Criadas por mim' }, { v: 'store', label: 'Coletadas na loja' }, { v: 'google', label: 'Google' },
+];
+const COLORS: [keyof ReviewDesign, string][] = [
+  ['accent', 'Destaque'], ['star_color', 'Estrelas'], ['bg', 'Fundo'], ['text', 'Texto'],
+  ['title_color', 'Títulos'], ['card_bg', 'Fundo dos cards'], ['border', 'Bordas'],
+];
+const TOGGLES: [keyof ReviewDesign, string][] = [
+  ['show_title', 'Título'], ['show_summary', 'Resumo da nota'], ['show_stars', 'Estrelas'], ['show_avatar', 'Avatar'],
+  ['show_date', 'Data'], ['show_source', 'Origem (Google)'], ['show_verified', 'Compra verificada'], ['show_media', 'Fotos e vídeos'],
+];
+const GRID_TPL = ['cards_clean', 'text_only', 'photo_wall'];
+
+interface Props { ctx: WidgetsCtx; initial: ReviewWidget | null; defaultName: string; onClose: () => void; onSaved: () => void; }
+
+export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, onSaved }: Props) {
+  const svc = useMemo(() => reviewsService(ctx.supabase), [ctx.supabase]);
+  const [name, setName] = useState(initial?.name ?? defaultName);
+  const [active, setActive] = useState(initial?.active ?? false);
+  const [scope, setScope] = useState<ReviewScope>(initial?.scope ?? 'product');
+  const [template, setTemplate] = useState(initial?.template ?? 'cards_photo');
+  const [minRating, setMinRating] = useState(initial?.min_rating ?? 1);
+  const [maxItems, setMaxItems] = useState(initial?.max_items ?? 12);
+  const [sources, setSources] = useState<ReviewSource[]>(initial?.sources ?? ['manual', 'store', 'google']);
+  const [placement, setPlacement] = useState<Placement>(initial?.placement ?? { selector: '', position: 'after' });
+  const [design, setDesign] = useState<ReviewDesign>(() => ({ ...templateDesign(initial?.template ?? 'cards_photo'), ...(initial?.design ?? {}) }));
+  const [showApp, setShowApp] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const setD = <K extends keyof ReviewDesign>(k: K, v: ReviewDesign[K]) => setDesign((d) => ({ ...d, [k]: v }));
+  const pickTemplate = (id: string) => { setTemplate(id); setDesign(templateDesign(id)); };
+  const toggleSrc = (s: ReviewSource) => setSources((p) => (p.includes(s) ? p.filter((x) => x !== s) : [...p, s]));
+
+  async function save() {
+    if (!sources.length) { setError('Escolha ao menos uma origem de avaliações.'); return; }
+    if (active && !placement.selector.trim()) { setError('Defina o elemento da loja antes de ativar.'); return; }
+    setBusy(true); setError('');
+    try {
+      await svc.widgetSave(ctx.storeId, {
+        id: initial?.id ?? null, name: name.trim() || defaultName, active, scope, template,
+        min_rating: minRating, sources, max_items: maxItems, placement, design,
+      });
+      onSaved();
+    } catch (e) { setError(e instanceof Error ? e.message : 'Erro ao salvar.'); setBusy(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="flex h-[92vh] w-full max-w-[1180px] flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <h2 className="text-lg font-extrabold text-slate-900">{initial ? 'Editar widget de reviews' : 'Novo widget de reviews'}</h2>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="grid min-h-0 flex-1 lg:grid-cols-[440px_minmax(0,1fr)]">
+          <div className="space-y-5 overflow-y-auto p-6">
+            <label className="block"><span className={lbl}>Nome</span>
+              <input className={inp} value={name} onChange={(e) => setName(e.target.value)} /></label>
+
+            <div>
+              <span className={lbl}>Onde aparece</span>
+              <div className="grid grid-cols-2 gap-2">
+                {([['product', 'Página de produto'], ['storefront', 'Vitrine (home e outras)']] as [ReviewScope, string][]).map(([v, l]) => (
+                  <button key={v} type="button" onClick={() => setScope(v)}
+                    className={`rounded-xl border px-3 py-2.5 text-sm font-semibold ${scope === v ? 'border-[#0094EB] bg-sky-50 text-[#0094EB]' : 'border-slate-200 text-slate-600'}`}>{l}</button>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                {scope === 'product' ? 'Mostra só as avaliações do produto da página.' : 'Mostra as melhores avaliações da loja toda.'}
+              </p>
+            </div>
+
+            <div>
+              <span className={lbl}>Modelo</span>
+              <div className="grid grid-cols-2 gap-2">
+                {TEMPLATES.map((t) => (
+                  <button key={t.id} type="button" onClick={() => pickTemplate(t.id)}
+                    className={`rounded-xl border p-3 text-left ${template === t.id ? 'border-[#0094EB] bg-sky-50' : 'border-slate-200'}`}>
+                    <div className="text-sm font-bold text-slate-900">{t.label}</div>
+                    <div className="mt-0.5 text-[11px] leading-tight text-slate-500">{t.desc}</div>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-slate-400">Trocar o modelo restaura o visual padrão dele.</p>
+            </div>
+
+            <button type="button" onClick={() => setShowApp((v) => !v)}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#0094EB] px-4 py-2.5 text-sm font-bold text-[#0094EB]">
+              <Palette className="h-4 w-4" /> Aparência {showApp ? '▲' : '▼'}
+            </button>
+            {showApp && (
+              <div className="space-y-4 rounded-xl bg-slate-50 p-4">
+                <label className="block"><span className={lbl}>Título</span>
+                  <input className={inp} value={design.title} onChange={(e) => setD('title', e.target.value)} /></label>
+                <div className="grid grid-cols-2 gap-3">
+                  {COLORS.map(([k, l]) => (
+                    <label key={k} className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      <input type="color" value={String(design[k])} onChange={(e) => setD(k, e.target.value as never)}
+                        className="h-8 w-10 cursor-pointer rounded border border-slate-200" /> {l}
+                    </label>
+                  ))}
+                </div>
+                <label className="block"><span className={lbl}>Fonte</span>
+                  <select className={inp} value={design.font} onChange={(e) => setD('font', e.target.value)}>
+                    {CARD_FONTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select></label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label><span className={lbl}>Arredondamento: {design.radius}px</span>
+                    <input type="range" min={0} max={32} value={design.radius} onChange={(e) => setD('radius', Number(e.target.value))} className="w-full" /></label>
+                  <label><span className={lbl}>Margem vertical: {design.margin_y}px</span>
+                    <input type="range" min={0} max={80} value={design.margin_y} onChange={(e) => setD('margin_y', Number(e.target.value))} className="w-full" /></label>
+                  <label><span className={lbl}>Largura máx. (0 = total)</span>
+                    <input type="number" min={0} className={inp} value={design.max_width} onChange={(e) => setD('max_width', Number(e.target.value) || 0)} /></label>
+                  {GRID_TPL.includes(template) && (
+                    <label><span className={lbl}>Colunas</span>
+                      <select className={inp} value={design.columns} onChange={(e) => setD('columns', Number(e.target.value))}>
+                        {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+                      </select></label>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {TOGGLES.map(([k, l]) => (
+                    <label key={k} className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      <input type="checkbox" checked={Boolean(design[k])} onChange={(e) => setD(k, e.target.checked as never)} /> {l}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <span className={lbl}>Quais avaliações mostrar</span>
+              <div className="flex flex-wrap gap-3">
+                {SRC.map((s) => (
+                  <label key={s.v} className="flex items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" checked={sources.includes(s.v)} onChange={() => toggleSrc(s.v)} /> {s.label}
+                  </label>
+                ))}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <label><span className={lbl}>Nota mínima</span>
+                  <select className={inp} value={minRating} onChange={(e) => setMinRating(Number(e.target.value))}>
+                    {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}★ ou mais</option>)}
+                  </select></label>
+                <label><span className={lbl}>Máximo de itens</span>
+                  <input type="number" min={1} max={50} className={inp} value={maxItems}
+                    onChange={(e) => setMaxItems(Math.min(50, Math.max(1, Number(e.target.value) || 1)))} /></label>
+              </div>
+            </div>
+
+            <div>
+              <span className={lbl}>Posição na loja</span>
+              <WidgetPlacementPicker supabase={ctx.supabase} storeId={ctx.storeId} storeUrl={ctx.storeUrl}
+                value={placement} onChange={setPlacement} />
+            </div>
+
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Ativo na loja
+            </label>
+          </div>
+
+          <div className="overflow-y-auto bg-slate-100 p-6">
+            <div className="mb-2 text-[10px] font-bold uppercase text-slate-400">Preview (exemplos)</div>
+            <div className="rounded-xl bg-white p-3">
+              <ReviewsPreview template={template} design={design} />
+            </div>
+          </div>
+        </div>
+        {error && <div className="mx-6 mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
+        <div className="flex justify-end gap-2 border-t border-slate-100 px-6 py-4">
+          <button type="button" onClick={onClose} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
+          <button type="button" disabled={busy} onClick={save}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
