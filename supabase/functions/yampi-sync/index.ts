@@ -294,6 +294,48 @@ async function syncStore(storeId: string, onlyProduct?: string) {
   }
 }
 
+/* SLL-REVIEW-REQUEST: agenda convite de avaliacao a partir do pedido pago */
+async function recordReviewRequest(storeId: string, raw: string) {
+  try {
+    const evt = JSON.parse(raw);
+    if (String(evt?.event ?? '') !== 'order.paid') return;
+    const o = evt?.resource ?? evt?.data ?? {};
+    const orderId = String(o.id ?? o.number ?? '');
+    if (!orderId) return;
+    const c = o.customer?.data ?? o.customer ?? {};
+    const rawItems = o.items?.data ?? o.items ?? [];
+    const list: any[] = Array.isArray(rawItems) ? rawItems : [];
+    const items = list.map((i) => {
+      const sku = i?.sku?.data ?? i?.sku ?? {};
+      const img = sku?.image ?? sku?.images?.data?.[0]?.thumb ?? i?.image ?? null;
+      return {
+        product_id: String(i?.product_id ?? sku?.product_id ?? ''),
+        sku_id: String(i?.sku_id ?? sku?.id ?? ''),
+        name: String(sku?.title ?? i?.name ?? i?.title ?? ''),
+        image: typeof img === 'string' ? img : null,
+      };
+    }).filter((x) => x.product_id || x.name);
+    const ph = c?.phone ?? {};
+    const phone = String(typeof ph === 'object' ? (ph.full_number ?? `${ph.area_code ?? ''}${ph.number ?? ''}`) : ph).replace(/\D/g, '');
+    const email = String(c?.email ?? '').trim().toLowerCase();
+    console.log('review-req', JSON.stringify({ order: orderId, cust: Object.keys(c).join(','), item: list[0] ? Object.keys(list[0]).join(',') : null, items: items.length, email: !!email, phone: !!phone }));
+    if (!email && !phone) return;
+    const { data: st } = await admin.from('review_invite_settings').select('days_after').eq('store_id', storeId).maybeSingle();
+    const days = Number(st?.days_after ?? 15);
+    const { error } = await admin.from('review_requests').upsert({
+      store_id: storeId,
+      order_id: orderId,
+      customer_name: String(c?.name ?? '').trim() || null,
+      customer_email: email || null,
+      customer_phone: phone || null,
+      items,
+      due_at: new Date(Date.now() + days * 86400000).toISOString(),
+    }, { onConflict: 'store_id,order_id', ignoreDuplicates: true });
+    if (error) console.error('review-req: erro ao gravar', error.message);
+  } catch (e) {
+    console.error('review-req: falha', e instanceof Error ? e.message : String(e));
+  }
+}
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
@@ -309,6 +351,7 @@ Deno.serve(async (req) => {
       const hookAt = new Date().toISOString();
       await admin.from('yampi_connections').update({ dirty_at: hookAt, webhook_last_at: hookAt, ...(kind ? { webhook_status: 'ok' } : {}) }).eq('store_id', c.store_id);
       await recordLiveSale(c.store_id, raw);
+          await recordReviewRequest(c.store_id, raw);
       EdgeRuntime.waitUntil(syncStore(c.store_id).catch(() => null));
       return json({ ok: true });
     }
