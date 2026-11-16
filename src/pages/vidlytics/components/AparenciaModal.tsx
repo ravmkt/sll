@@ -582,15 +582,19 @@ const ModalPlayerPreview = ({ playerConfig, primaryColor, isMobile = false }: { 
           </div>
         )}
         {showProduct && (
-          <div className="relative z-20 px-3 pb-3">
-            <div className="w-full flex items-center gap-2 overflow-hidden box-border pointer-events-none" style={{ backgroundColor: pc.product_card_bg || '#FFFFFF', border: `${Number(pc.product_card_border_width ?? 1)}px solid ${pc.product_card_border_color || '#E2E8F0'}`, borderRadius: `${Number(pc.product_card_border_radius ?? 12)}px`, padding: '8px' }}>
-              <div className="w-10 h-10 rounded bg-slate-100 shrink-0 overflow-hidden border border-slate-100">
-                <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=80&q=80" alt="Produto" className="w-full h-full object-cover" />
+          <div className="relative z-20 px-3 pb-3 space-y-2">
+            <div className="w-full flex items-stretch overflow-hidden box-border pointer-events-none" style={{ backgroundColor: pc.product_card_bg || '#FFFFFF', border: `${Number(pc.product_card_border_width ?? 1)}px solid ${pc.product_card_border_color || '#E2E8F0'}`, borderRadius: `${Number(pc.product_card_border_radius ?? 12)}px`, minHeight: '76px' }}>
+              <div className="relative shrink-0 bg-slate-200" style={{ width: '88px' }}>
+                <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=240&q=80" alt="Produto" className="absolute inset-0 w-full h-full object-cover block" />
               </div>
-              <div className="flex-1 min-w-0 text-left">
+              <div className="flex-1 min-w-0 text-left flex flex-col justify-center" style={{ padding: '8px 12px 8px 10px' }}>
                 <p style={{ fontSize: `${Number(pc.product_card_name_size ?? 11)}px`, color: pc.product_card_name_color || '#0F172A' }} className="font-bold truncate">Calça Confort</p>
                 <p style={{ fontSize: `${Number(pc.product_card_price_size ?? 12)}px`, color: pc.product_card_price_color || primaryColor || '#0094EB' }} className="font-black">R$ 149,95</p>
               </div>
+            </div>
+            <div className="flex gap-2 pointer-events-none">
+              <div className="flex-1 flex items-center justify-center text-[11px] font-bold" style={{ height: '36px', borderRadius: '12px', background: (pc as any).product_card_button_bg || primaryColor || '#0094EB', color: (pc as any).product_card_button_color || '#FFFFFF' }}>Ver produto</div>
+              <div className="flex-1 flex items-center justify-center text-[11px] font-bold" style={{ height: '36px', borderRadius: '12px', background: (pc as any).product_card_whatsapp_bg || '#25D366', color: (pc as any).product_card_whatsapp_color || '#FFFFFF' }}>WhatsApp</div>
             </div>
           </div>
         )}
@@ -919,6 +923,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_name_color: getC('modal_product_card_name_color') || '#0F172A',
     product_card_price_size: getC('modal_product_card_price_size') ?? 12,
     product_card_price_color: getC('modal_product_card_price_color') || formData?.primary_color || '#0094EB',
+    product_card_button_bg: getC('modal_product_card_button_bg') || formData?.primary_color || '#0094EB',
+    product_card_button_color: getC('modal_product_card_button_color') || '#FFFFFF',
+    product_card_whatsapp_bg: getC('modal_product_card_whatsapp_bg') || '#25D366',
+    product_card_whatsapp_color: getC('modal_product_card_whatsapp_color') || '#FFFFFF',
   };
 
   // ──────────────────── PERSISTÊNCIA REAL NO BANCO ────────────────────
@@ -1782,6 +1790,18 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             </FormField>
                             <FormField label="Cor da Borda">
                               <ColorInput value={getC('modal_product_card_border_color') || '#E2E8F0'} onChange={(v: string) => setC('modal_product_card_border_color', v)} />
+                            </FormField>
+                            <FormField label="Botão Ver produto (fundo)">
+                              <ColorInput value={getC('modal_product_card_button_bg') || '#0094EB'} onChange={(v: string) => setC('modal_product_card_button_bg', v)} />
+                            </FormField>
+                            <FormField label="Botão Ver produto (texto)">
+                              <ColorInput value={getC('modal_product_card_button_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_product_card_button_color', v)} />
+                            </FormField>
+                            <FormField label="Botão WhatsApp (fundo)">
+                              <ColorInput value={getC('modal_product_card_whatsapp_bg') || '#25D366'} onChange={(v: string) => setC('modal_product_card_whatsapp_bg', v)} />
+                            </FormField>
+                            <FormField label="Botão WhatsApp (texto)">
+                              <ColorInput value={getC('modal_product_card_whatsapp_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_product_card_whatsapp_color', v)} />
                             </FormField>
                             <FormField label="Largura Borda (px)">
                               <input type="number" min="0" value={getC('modal_product_card_border_width') ?? 1} onChange={e => setC('modal_product_card_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
