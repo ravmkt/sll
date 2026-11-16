@@ -550,7 +550,7 @@ const ModalPlayerPreview = ({ playerConfig, primaryColor, isMobile = false }: { 
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/40 pointer-events-none" />
 
         <div className="relative z-20 flex items-center justify-between p-3 text-white">
-          <span className="flex-1 min-w-0 pr-2 truncate text-left" style={{ fontSize: `${Number(pc.title_font_size ?? 14)}px`, fontWeight: pc.title_bold === false ? 'normal' : 'bold' }}>{showTitle ? (pc.title_text ?? 'Título do vídeo') : ''}</span>
+          <span className="flex-1 min-w-0 pr-2 truncate text-left" style={{ fontSize: `${Number(pc.title_font_size ?? 14)}px`, fontWeight: pc.title_bold === false ? 'normal' : 'bold', color: (pc as any).title_color || '#FFFFFF' }}>{showTitle ? (pc.title_text ?? 'Título do vídeo') : ''}</span>
           <X size={14} className="cursor-pointer" />
         </div>
 
@@ -930,6 +930,13 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     progress_color: getC('modal_progress_color') || '#FFFFFF',
     product_card_show_whatsapp: getC('modal_product_card_show_whatsapp') ?? true,
     exit_survey_enabled: getC('modal_exit_survey_enabled') ?? true,
+    title_color: getC('modal_title_color') || '#FFFFFF',
+    info_card_font_size: getC('modal_info_card_font_size') ?? 12,
+    info_card_bold: getC('modal_info_card_bold') ?? true,
+    product_card_old_price_size: getC('modal_product_card_old_price_size') ?? 10,
+    product_card_old_price_color: getC('modal_product_card_old_price_color') || '#94A3B8',
+    product_card_show_cta: getC('modal_product_card_show_cta') ?? true,
+    product_card_button_border_color: getC('modal_product_card_button_border_color') || '',
   };
 
   // ──────────────────── PERSISTÊNCIA REAL NO BANCO ────────────────────
@@ -1713,11 +1720,18 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 {/* ABA PLAYER (MODAL) */}
                 {activeTab === 'player' && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <Accordion title="1. Bordas" isOpen={openAccordion === '1. Bordas' || openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Bordas')}>
+                    <Accordion title="1. Barras e Bordas" isOpen={openAccordion === '1. Barras e Bordas' || openAccordion === '1. Layout & Dimensões'} onClick={() => toggleAccordion('1. Barras e Bordas')}>
                       <div className="grid grid-cols-2 gap-4">
-                        <FormField label="Cor da Borda" className="col-span-2">
-                          <ColorInput value={getC('modal_border_color') || '#0094EB'} onChange={(v: string) => setC('modal_border_color', v)} />
-                        </FormField>
+                        <div className="col-span-2">
+                          <FormField label="Barras de progresso (topo)">
+                            <ColorInput value={getC('modal_progress_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_progress_color', v)} />
+                          </FormField>
+                        </div>
+                        <div className="col-span-2">
+                          <FormField label="Cor da Borda">
+                            <ColorInput value={getC('modal_border_color') || '#0094EB'} onChange={(v: string) => setC('modal_border_color', v)} />
+                          </FormField>
+                        </div>
                         <FormField label="Largura Borda (px)">
                           <input type="number" min="0" max="10" value={getC('modal_border_width') ?? 2} onChange={e => setC('modal_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
                         </FormField>
@@ -1735,18 +1749,24 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             <FormField label="Texto do título">
                               <input type="text" value={getC('modal_title_text') ?? 'Título do vídeo'} onChange={e => setC('modal_title_text', e.target.value)} className={inputClass} />
                             </FormField>
+                            <FormField label="Cor do título">
+                              <ColorInput value={getC('modal_title_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_title_color', v)} />
+                            </FormField>
                             <FormField label="Tamanho da fonte (px)">
                               <input type="number" min="8" max="48" value={getC('modal_title_font_size') ?? 14} onChange={e => setC('modal_title_font_size', parseInt(e.target.value) || 14)} className={inputClass} />
                             </FormField>
                             <CheckboxField label="Título em negrito" checked={getC('modal_title_bold') ?? true} onChange={(v: boolean) => setC('modal_title_bold', v)} />
                           </div>
                         )}
+
+                        <hr className="border-slate-200 dark:border-slate-700 my-3" />
+
                         <CheckboxField label="Exibir botão Like (Curtir)" checked={getC('modal_show_like_button') !== false} onChange={(v: boolean) => setC('modal_show_like_button', v)} />
                         <CheckboxField label="Exibir botão de Comentários" checked={getC('modal_show_comment_button') !== false} onChange={(v: boolean) => setC('modal_show_comment_button', v)} />
                         <CheckboxField label="Exibir botão de Compartilhar" checked={getC('modal_show_share_button') !== false} onChange={(v: boolean) => setC('modal_show_share_button', v)} />
-                        <div className="space-y-1 pt-3">
+                        <div className="space-y-1 py-3">
                           <label className="text-sm font-medium">
-                            {'Escurecimento do fundo do player: '}{Number(getC('modal_overlay_opacity') || 90)}%
+                            {'Escurecimento do fundo: '}{Number(getC('modal_overlay_opacity') || 90)}%
                           </label>
                           <input
                             type="range"
@@ -1759,6 +1779,9 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           />
                         </div>
                         <CheckboxField label={'Abrir o v\u00eddeo com \u00e1udio ligado'} checked={getC('modal_start_with_sound') === true} onChange={(v: boolean) => setC('modal_start_with_sound', v)} />
+
+                        <hr className="border-slate-200 dark:border-slate-700 my-3" />
+
                         <CheckboxField label={'Card informativo'} checked={getC('modal_info_card_enabled') === true} onChange={(v: boolean) => setC('modal_info_card_enabled', v)} />
                         {getC('modal_info_card_enabled') === true && (
                           <div className="p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 space-y-3">
@@ -1768,14 +1791,16 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             <FormField label={'Link (opcional)'}>
                               <input type="text" placeholder="https://chat.whatsapp.com/..." value={getC('modal_info_card_link') || ''} onChange={e => setC('modal_info_card_link', e.target.value)} className={inputClass} />
                             </FormField>
-                            <div className="grid grid-cols-2 gap-3">
-                              <FormField label={'Cor do card'}>
-                                <ColorInput value={getC('modal_info_card_bg') || '#0094EB'} onChange={(v: string) => setC('modal_info_card_bg', v)} />
-                              </FormField>
-                              <FormField label={'Cor da fonte'}>
-                                <ColorInput value={getC('modal_info_card_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_info_card_color', v)} />
-                              </FormField>
-                            </div>
+                            <FormField label={'Cor do card'}>
+                              <ColorInput value={getC('modal_info_card_bg') || '#0094EB'} onChange={(v: string) => setC('modal_info_card_bg', v)} />
+                            </FormField>
+                            <FormField label={'Tamanho da fonte (px)'}>
+                              <input type="number" min="8" max="32" value={getC('modal_info_card_font_size') ?? 12} onChange={e => setC('modal_info_card_font_size', parseInt(e.target.value) || 12)} className={inputClass} />
+                            </FormField>
+                            <FormField label={'Cor da fonte'}>
+                              <ColorInput value={getC('modal_info_card_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_info_card_color', v)} />
+                            </FormField>
+                            <CheckboxField label={'Título em negrito'} checked={getC('modal_info_card_bold') ?? true} onChange={(v: boolean) => setC('modal_info_card_bold', v)} />
                             <CheckboxField label={'Glow (brilho atr\u00e1s do card)'} checked={getC('modal_info_card_glow') === true} onChange={(v: boolean) => setC('modal_info_card_glow', v)} />
                             <CheckboxField label={'Anima\u00e7\u00e3o (card pulsando)'} checked={getC('modal_info_card_anim') === true} onChange={(v: boolean) => setC('modal_info_card_anim', v)} />
                           </div>
@@ -1785,72 +1810,100 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
 
                     <Accordion title="3. Card de Produto" isOpen={openAccordion === '3. Card de Produto'} onClick={() => toggleAccordion('3. Card de Produto')}>
                       <div className="flex flex-col">
-                        <CheckboxField label="Exibir card de produto" checked={getC('modal_show_product') !== false} onChange={(v: boolean) => setC('modal_show_product', v)} />
+                        <CheckboxField label="Exibir card do produto" checked={getC('modal_show_product') !== false} onChange={(v: boolean) => setC('modal_show_product', v)} />
                         {getC('modal_show_product') !== false && (
-                          <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 grid grid-cols-2 gap-3">
+                          <div className="p-4 mb-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/40 space-y-3">
                             <FormField label="Cor do Fundo">
                               <ColorInput value={getC('modal_product_card_bg') || '#FFFFFF'} onChange={(v: string) => setC('modal_product_card_bg', v)} />
                             </FormField>
+                            <div className="space-y-1">
+                              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                {'Opacidade: '}{Number(getC('modal_product_card_opacity') ?? 100)}%{' (100% = sólido)'}
+                              </label>
+                              <input type="range" min={0} max={100} step={5} className="w-full" value={Number(getC('modal_product_card_opacity') ?? 100)} onChange={(e) => setC('modal_product_card_opacity', Number(e.target.value))} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <FormField label="Raio Borda (px)">
+                                <input type="number" min="0" value={getC('modal_product_card_border_radius') ?? 12} onChange={e => setC('modal_product_card_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
+                              </FormField>
+                              <FormField label="Espessura da Borda (px)">
+                                <input type="number" min="0" value={getC('modal_product_card_border_width') ?? 1} onChange={e => setC('modal_product_card_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
+                              </FormField>
+                            </div>
                             <FormField label="Cor da Borda">
                               <ColorInput value={getC('modal_product_card_border_color') || '#E2E8F0'} onChange={(v: string) => setC('modal_product_card_border_color', v)} />
                             </FormField>
-                            <FormField label="Botão principal (fundo)">
-                              <ColorInput value={getC('modal_product_card_button_bg') || '#0094EB'} onChange={(v: string) => setC('modal_product_card_button_bg', v)} />
-                            </FormField>
-                            <FormField label="Botão principal (texto)">
-                              <ColorInput value={getC('modal_product_card_button_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_product_card_button_color', v)} />
-                            </FormField>
-                            <FormField label="Opacidade do card (100% = sólido)">
-                              <div className="flex items-center gap-3">
-                                <input type="range" min={0} max={100} step={5} value={Number(getC('modal_product_card_opacity') ?? 100)} onChange={(e) => setC('modal_product_card_opacity', Number(e.target.value))} className="flex-1" />
-                                <span className="text-xs font-bold w-10 text-right">{Number(getC('modal_product_card_opacity') ?? 100)}%</span>
-                              </div>
-                            </FormField>
-                            <FormField label="Botão Adicionar ao carrinho">
-                              <label className="flex items-center gap-2 text-xs font-semibold">
-                                <input type="checkbox" checked={getC('modal_product_card_show_cart') !== false} onChange={(e) => setC('modal_product_card_show_cart', e.target.checked)} /> Exibir
-                              </label>
-                            </FormField>
-                            <FormField label="Barras de progresso (topo)">
-                              <ColorInput value={getC('modal_progress_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_progress_color', v)} />
-                            </FormField>
-                            <FormField label="Botão WhatsApp (bolinha no card)">
-                              <label className="flex items-center gap-2 text-xs font-semibold">
-                                <input type="checkbox" checked={getC('modal_product_card_show_whatsapp') !== false} onChange={(e) => setC('modal_product_card_show_whatsapp', e.target.checked)} /> Exibir
-                              </label>
-                            </FormField>
-                            <FormField label="Pesquisa de opinião ao sair">
-                              <label className="flex items-center gap-2 text-xs font-semibold">
-                                <input type="checkbox" checked={getC('modal_exit_survey_enabled') !== false} onChange={(e) => setC('modal_exit_survey_enabled', e.target.checked)} /> Ativada
-                              </label>
-                            </FormField>
-                            <FormField label="Botão WhatsApp (fundo)">
-                              <ColorInput value={getC('modal_product_card_whatsapp_bg') || '#25D366'} onChange={(v: string) => setC('modal_product_card_whatsapp_bg', v)} />
-                            </FormField>
-                            <FormField label="Botão WhatsApp (texto)">
-                              <ColorInput value={getC('modal_product_card_whatsapp_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_product_card_whatsapp_color', v)} />
-                            </FormField>
-                            <FormField label="Largura Borda (px)">
-                              <input type="number" min="0" value={getC('modal_product_card_border_width') ?? 1} onChange={e => setC('modal_product_card_border_width', parseInt(e.target.value) || 0)} className={inputClass} />
-                            </FormField>
-                            <FormField label="Raio Borda (px)">
-                              <input type="number" min="0" value={getC('modal_product_card_border_radius') ?? 12} onChange={e => setC('modal_product_card_border_radius', parseInt(e.target.value) || 0)} className={inputClass} />
-                            </FormField>
-                            <FormField label="Tamanho Título (px)">
-                              <input type="number" min="8" value={getC('modal_product_card_name_size') ?? 11} onChange={e => setC('modal_product_card_name_size', parseInt(e.target.value) || 11)} className={inputClass} />
-                            </FormField>
+
+                            <hr className="border-slate-200 dark:border-slate-700 my-3" />
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <FormField label="Tamanho Título (px)">
+                                <input type="number" min="8" value={getC('modal_product_card_name_size') ?? 11} onChange={e => setC('modal_product_card_name_size', parseInt(e.target.value) || 11)} className={inputClass} />
+                              </FormField>
+                              <FormField label="Tamanho Preço (px)">
+                                <input type="number" min="8" value={getC('modal_product_card_price_size') ?? 12} onChange={e => setC('modal_product_card_price_size', parseInt(e.target.value) || 12)} className={inputClass} />
+                              </FormField>
+                            </div>
                             <FormField label="Cor Título">
                               <ColorInput value={getC('modal_product_card_name_color') || '#0F172A'} onChange={(v: string) => setC('modal_product_card_name_color', v)} />
-                            </FormField>
-                            <FormField label="Tamanho Preço (px)">
-                              <input type="number" min="8" value={getC('modal_product_card_price_size') ?? 12} onChange={e => setC('modal_product_card_price_size', parseInt(e.target.value) || 12)} className={inputClass} />
                             </FormField>
                             <FormField label="Cor Preço">
                               <ColorInput value={getC('modal_product_card_price_color') || '#0094EB'} onChange={(v: string) => setC('modal_product_card_price_color', v)} />
                             </FormField>
+                            <FormField label="Tamanho Preço Riscado (px)">
+                              <input type="number" min="6" value={getC('modal_product_card_old_price_size') ?? 10} onChange={e => setC('modal_product_card_old_price_size', parseInt(e.target.value) || 10)} className={inputClass} />
+                            </FormField>
+                            <FormField label="Cor Preço Riscado">
+                              <ColorInput value={getC('modal_product_card_old_price_color') || '#94A3B8'} onChange={(v: string) => setC('modal_product_card_old_price_color', v)} />
+                            </FormField>
+
+                            <hr className="border-slate-200 dark:border-slate-700 my-3" />
+
+                            <CheckboxField label="Exibir Botão CTA" checked={getC('modal_product_card_show_cta') !== false} onChange={(v: boolean) => setC('modal_product_card_show_cta', v)} />
+                            {getC('modal_product_card_show_cta') !== false && (
+                              <div className="space-y-3">
+                                <FormField label="Ação do botão">
+                                  <select
+                                    value={getC('modal_product_card_show_cart') !== false ? 'cart' : 'view'}
+                                    onChange={e => setC('modal_product_card_show_cart', e.target.value === 'cart')}
+                                    className={inputClass}
+                                  >
+                                    <option value="view">Ver produto</option>
+                                    <option value="cart">Adicionar ao carrinho</option>
+                                  </select>
+                                </FormField>
+                                <FormField label="Cor do botão">
+                                  <ColorInput value={getC('modal_product_card_button_bg') || '#0094EB'} onChange={(v: string) => setC('modal_product_card_button_bg', v)} />
+                                </FormField>
+                                <FormField label="Cor da borda">
+                                  <ColorInput value={getC('modal_product_card_button_border_color') || getC('modal_product_card_button_bg') || '#0094EB'} onChange={(v: string) => setC('modal_product_card_button_border_color', v)} />
+                                </FormField>
+                                <FormField label="Cor do texto">
+                                  <ColorInput value={getC('modal_product_card_button_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_product_card_button_color', v)} />
+                                </FormField>
+                              </div>
+                            )}
+
+                            <hr className="border-slate-200 dark:border-slate-700 my-3" />
+
+                            <CheckboxField label="Comprar pelo WhatsApp" checked={getC('modal_product_card_show_whatsapp') !== false} onChange={(v: boolean) => setC('modal_product_card_show_whatsapp', v)} />
+                            {getC('modal_product_card_show_whatsapp') !== false && (
+                              <div className="grid grid-cols-2 gap-3">
+                                <FormField label="WhatsApp (fundo)">
+                                  <ColorInput value={getC('modal_product_card_whatsapp_bg') || '#25D366'} onChange={(v: string) => setC('modal_product_card_whatsapp_bg', v)} />
+                                </FormField>
+                                <FormField label="WhatsApp (ícone)">
+                                  <ColorInput value={getC('modal_product_card_whatsapp_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_product_card_whatsapp_color', v)} />
+                                </FormField>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
+                    </Accordion>
+
+                    <Accordion title="4. Pesquisa" isOpen={openAccordion === '4. Pesquisa'} onClick={() => toggleAccordion('4. Pesquisa')}>
+                      <CheckboxField label="Exibir pesquisa ao sair" checked={getC('modal_exit_survey_enabled') !== false} onChange={(v: boolean) => setC('modal_exit_survey_enabled', v)} />
                     </Accordion>
                   </div>
                 )}

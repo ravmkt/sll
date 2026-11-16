@@ -1899,6 +1899,13 @@ product_card_price_size: toNumber(rcv('product_card_price_size', '12'), 12),
     progress_color: sanitizeCssValue(rcv('progress_color', '#FFFFFF'), '#FFFFFF', 'color'),
     product_card_show_whatsapp: toBoolean(rcv('product_card_show_whatsapp', true), true),
     exit_survey_enabled: toBoolean(rcv('exit_survey_enabled', true), true),
+    title_color: sanitizeCssValue(rcv('title_color', '#FFFFFF'), '#FFFFFF', 'color'),
+    info_card_font_size: toNumber(rcv('info_card_font_size', '12'), 12),
+    info_card_bold: toBoolean(rcv('info_card_bold', true), true),
+    product_card_old_price_size: toNumber(rcv('product_card_old_price_size', '10'), 10),
+    product_card_old_price_color: sanitizeCssValue(rcv('product_card_old_price_color', '#94A3B8'), '#94A3B8', 'color'),
+    product_card_show_cta: toBoolean(rcv('product_card_show_cta', true), true),
+    product_card_button_border_color: (function () { var c = String(rcv('product_card_button_border_color', '') || ''); return /^#[0-9a-f]{3,8}$/i.test(c) ? c : ''; })(),
     product_card_whatsapp_color: sanitizeCssValue(rcv('product_card_whatsapp_color', '#FFFFFF'), '#FFFFFF', 'color')
   };
 }
@@ -4329,6 +4336,9 @@ if (hasSupabase) {
       }
       if (btnBg) viewBtn.style.setProperty('background', btnBg, 'important');
       if (btnFg) viewBtn.style.setProperty('color', btnFg, 'important');
+      var btnBd = vlPick(cfg, 'product_card_button_border_color', '');
+      if (btnBd) viewBtn.style.setProperty('border', '1px solid ' + btnBd, 'important');
+      if (!vlOn(vlPick(cfg, 'product_card_show_cta', true))) viewBtn.style.setProperty('display', 'none', 'important');
     }
 
     // WhatsApp: liga/desliga e vira bolinha dentro do card
