@@ -146,6 +146,10 @@ function ensureModalStylesInLightDOM(appearance) {
       o.glow = (gl === true || gl === 'true' || gl === 1 || gl === '1');
       var an = readConfigValue(a, 'modal_config', 'info_card_anim', 'modal_info_card_anim', false);
       o.anim = (an === true || an === 'true' || an === 1 || an === '1');
+      var ifs = readConfigValue(a, 'modal_config', 'info_card_font_size', 'modal_info_card_font_size', '');
+      if (ifs !== '' && ifs !== null && !isNaN(Number(ifs)) && Number(ifs) > 0) o.fontSize = Number(ifs);
+      var ibd = readConfigValue(a, 'modal_config', 'info_card_bold', 'modal_info_card_bold', null);
+      if (ibd !== null && ibd !== undefined && ibd !== '') o.bold = (ibd === true || ibd === 'true' || ibd === 1 || ibd === '1');
     } catch (e) { /* noop */ }
     return o;
   }
@@ -175,6 +179,8 @@ function ensureModalStylesInLightDOM(appearance) {
     el.style.cssText = 'position:absolute;left:12px;right:12px;bottom:12px;z-index:70;padding:10px 14px;border-radius:12px;text-align:center;font-size:14px;font-weight:600;line-height:1.3;text-decoration:none;box-sizing:border-box;box-shadow:0 4px 14px rgba(0,0,0,.35);' + (href ? 'cursor:pointer;' : '');
     el.style.background = c.bg;
     el.style.color = c.color;
+    if (c.fontSize) el.style.setProperty('font-size', c.fontSize + 'px', 'important');
+    if (c.bold !== undefined) el.style.setProperty('font-weight', c.bold ? '700' : '400', 'important');
     if (c.glow) { el.style.setProperty('box-shadow', '0 0 22px 6px ' + c.bg + ', 0 4px 14px rgba(0,0,0,.35)', 'important'); }
     if (c.anim) {
       var _rt = host.getRootNode ? host.getRootNode() : document;
@@ -4281,6 +4287,10 @@ if (hasSupabase) {
     } catch (e) { return {}; }
   }
 
+  /* sll-cta2 */
+  function vlCartMode(cfg) {
+    return vlOn(vlPick(cfg, 'product_card_show_cart', true));
+  }
   function vlEnhanceCard(prodCard, pd, cfg, videoId) {
     if (!prodCard || !pd) return;
     if (!cfg || !Object.keys(cfg).length) cfg = vlCurrentCfg();
@@ -4317,9 +4327,15 @@ if (hasSupabase) {
 
     // Botao principal: Adicionar ao carrinho (troca o "Ver produto")
     var info = vlPriceInfo(pd);
+    var __old = q('.vl-product-price-old');
+    if (__old) {
+      var __os = Number(vlPick(cfg, 'product_card_old_price_size', 0)); if (__os > 0) __old.style.setProperty('font-size', __os + 'px', 'important');
+      var __oc = vlPick(cfg, 'product_card_old_price_color', null); if (__oc) { __old.style.setProperty('color', __oc, 'important'); __old.style.setProperty('opacity', '1', 'important'); }
+      __old.style.setProperty('text-decoration', 'line-through', 'important');
+    }
     var viewBtn = q('.vl-product-btn');
     if (viewBtn) {
-      if (vlOn(vlPick(cfg, 'product_card_show_cart', true)) && info.cur && !viewBtn.getAttribute('data-vl-cart')) {
+      if (vlCartMode(cfg) && info.cur && !viewBtn.getAttribute('data-vl-cart')) {
         var nb = viewBtn.cloneNode(false);
         nb.removeAttribute('href'); nb.removeAttribute('onclick'); nb.removeAttribute('target');
         nb.setAttribute('data-vl-cart', '1');
@@ -4336,6 +4352,8 @@ if (hasSupabase) {
       }
       if (btnBg) viewBtn.style.setProperty('background', btnBg, 'important');
       if (btnFg) viewBtn.style.setProperty('color', btnFg, 'important');
+      var __bc = vlPick(cfg, 'product_card_button_border_color', null); if (__bc) viewBtn.style.setProperty('border', '1px solid ' + __bc, 'important');
+      if (!vlOn(vlPick(cfg, 'product_card_show_cta', true))) viewBtn.style.setProperty('display', 'none', 'important');
       var btnBd = vlPick(cfg, 'product_card_button_border_color', '');
       if (btnBd) viewBtn.style.setProperty('border', '1px solid ' + btnBd, 'important');
       if (!vlOn(vlPick(cfg, 'product_card_show_cta', true))) viewBtn.style.setProperty('display', 'none', 'important');
