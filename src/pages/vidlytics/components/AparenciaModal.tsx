@@ -583,7 +583,7 @@ const ModalPlayerPreview = ({ playerConfig, primaryColor, isMobile = false }: { 
         )}
         {showProduct && (
           <div className="relative z-20 px-3 pb-3 space-y-2">
-            <div className="w-full flex items-stretch overflow-hidden box-border pointer-events-none" style={{ backgroundColor: pc.product_card_bg || '#FFFFFF', border: `${Number(pc.product_card_border_width ?? 1)}px solid ${pc.product_card_border_color || '#E2E8F0'}`, borderRadius: `${Number(pc.product_card_border_radius ?? 12)}px`, minHeight: '76px' }}>
+            <div className="relative w-full flex items-stretch overflow-hidden box-border pointer-events-none" style={{ backgroundColor: `color-mix(in srgb, ${pc.product_card_bg || '#FFFFFF'} ${Number((pc as any).product_card_opacity ?? 100)}%, transparent)`, border: `${Number(pc.product_card_border_width ?? 1)}px solid ${pc.product_card_border_color || '#E2E8F0'}`, borderRadius: `${Number(pc.product_card_border_radius ?? 12)}px`, minHeight: '76px' }}>
               <div className="relative shrink-0 bg-slate-200" style={{ width: '88px' }}>
                 <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=240&q=80" alt="Produto" className="absolute inset-0 w-full h-full object-cover block" />
               </div>
@@ -592,10 +592,7 @@ const ModalPlayerPreview = ({ playerConfig, primaryColor, isMobile = false }: { 
                 <p style={{ fontSize: `${Number(pc.product_card_price_size ?? 12)}px`, color: pc.product_card_price_color || primaryColor || '#0094EB' }} className="font-black">R$ 149,95</p>
               </div>
             </div>
-            <div className="flex gap-2 pointer-events-none">
-              <div className="flex-1 flex items-center justify-center text-[11px] font-bold" style={{ height: '36px', borderRadius: '12px', background: (pc as any).product_card_button_bg || primaryColor || '#0094EB', color: (pc as any).product_card_button_color || '#FFFFFF' }}>Ver produto</div>
-              <div className="flex-1 flex items-center justify-center text-[11px] font-bold" style={{ height: '36px', borderRadius: '12px', background: (pc as any).product_card_whatsapp_bg || '#25D366', color: (pc as any).product_card_whatsapp_color || '#FFFFFF' }}>WhatsApp</div>
-            </div>
+            <div className="flex items-center justify-center text-[11px] font-bold pointer-events-none" style={{ height: '36px', borderRadius: '12px', background: (pc as any).product_card_button_bg || primaryColor || '#0094EB', color: (pc as any).product_card_button_color || '#FFFFFF' }}>{(pc as any).product_card_show_cart === false ? 'Ver produto' : 'Adicionar ao carrinho'}</div>
           </div>
         )}
       </div>
@@ -931,6 +928,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_compact: getC('modal_product_card_compact') ?? true,
     product_card_show_cart: getC('modal_product_card_show_cart') ?? true,
     progress_color: getC('modal_progress_color') || '#FFFFFF',
+    product_card_show_whatsapp: getC('modal_product_card_show_whatsapp') ?? true,
     exit_survey_enabled: getC('modal_exit_survey_enabled') ?? true,
   };
 
@@ -1820,6 +1818,11 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             </FormField>
                             <FormField label="Barras de progresso (topo)">
                               <ColorInput value={getC('modal_progress_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_progress_color', v)} />
+                            </FormField>
+                            <FormField label="Botão WhatsApp (bolinha no card)">
+                              <label className="flex items-center gap-2 text-xs font-semibold">
+                                <input type="checkbox" checked={getC('modal_product_card_show_whatsapp') !== false} onChange={(e) => setC('modal_product_card_show_whatsapp', e.target.checked)} /> Exibir
+                              </label>
                             </FormField>
                             <FormField label="Pesquisa de opinião ao sair">
                               <label className="flex items-center gap-2 text-xs font-semibold">

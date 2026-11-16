@@ -1895,6 +1895,7 @@ product_card_price_size: toNumber(rcv('product_card_price_size', '12'), 12),
     product_card_compact: toBoolean(rcv('product_card_compact', true), true),
     product_card_show_cart: toBoolean(rcv('product_card_show_cart', true), true),
     progress_color: sanitizeCssValue(rcv('progress_color', '#FFFFFF'), '#FFFFFF', 'color'),
+    product_card_show_whatsapp: toBoolean(rcv('product_card_show_whatsapp', true), true),
     exit_survey_enabled: toBoolean(rcv('exit_survey_enabled', true), true),
     product_card_whatsapp_color: sanitizeCssValue(rcv('product_card_whatsapp_color', '#FFFFFF'), '#FFFFFF', 'color')
   };
@@ -4243,63 +4244,110 @@ if (hasSupabase) {
         value: Math.round(info.cur * qty * 100) / 100, product_url: pd.product_url || pd.url || null, video_id: videoId || null
       };
       vlTrack('sll_add_to_cart', data, videoId, 'add_to_cart');
-      try { if (window.SLLCart && typeof window.SLLCart.add === 'function') window.SLLCart.add(data); } catch (err) { /* noop */ }
+      var handled = false;
+      try { if (window.SLLCart && typeof window.SLLCart.add === 'function') handled = window.SLLCart.add(data) !== false; } catch (err) { handled = false; }
+      if (!handled && data.product_url) {
+        addBtn.textContent = 'Abrindo o produto...';
+        setTimeout(function () { window.location.href = data.product_url; }, 350);
+        return;
+      }
       addBtn.textContent = 'Adicionado ✓';
       setTimeout(close, 900);
     });
   }
 
+  function vlPick(cfg, k, def) {
+    var v = cfg ? cfg[k] : undefined;
+    if (v == null || v === '') v = cfg ? cfg['modal_' + k] : undefined;
+    if ((v == null || v === '') && cfg && cfg.modal_config) v = cfg.modal_config[k];
+    return (v == null || v === '') ? def : v;
+  }
+  function vlOn(v) { return !(v === false || v === 'false' || v === 0 || v === '0'); }
+  function vlCurrentCfg() {
+    try {
+      var st = currentStories[currentStoryIndex];
+      return normalizeModalAppearanceConfig(getStoryAppearance(st) || currentAppearance) || {};
+    } catch (e) { return {}; }
+  }
+
   function vlEnhanceCard(prodCard, pd, cfg, videoId) {
     if (!prodCard || !pd) return;
-    cfg = cfg || {};
-    var scope = (prodCard.closest && prodCard.closest('.vl-modal')) || prodCard.parentNode || document;
-    var actions = scope.querySelector('.vl-product-actions');
+    if (!cfg || !Object.keys(cfg).length) cfg = vlCurrentCfg();
+    window.__sllCardCfg = cfg;
 
-    var op = Number(cfg.product_card_opacity); if (isNaN(op)) op = 100;
+    var q = function (sel) {
+      var n = prodCard;
+      for (var i = 0; i < 5 && n; i++) {
+        n = n.parentNode;
+        if (n && n.querySelector) { var r = n.querySelector(sel); if (r) return r; }
+      }
+      return null;
+    };
+    var host = (prodCard.closest && prodCard.closest('.vl-modal')) || (typeof overlay !== 'undefined' && overlay) || document.body;
+
+    var btnBg = vlPick(cfg, 'product_card_button_bg', null);
+    var btnFg = vlPick(cfg, 'product_card_button_color', null);
+    var waBg = vlPick(cfg, 'product_card_whatsapp_bg', '#25D366');
+    var waFg = vlPick(cfg, 'product_card_whatsapp_color', '#FFFFFF');
+    var colors = { product_card_button_bg: btnBg || '#111111', product_card_button_color: btnFg || '#FFFFFF' };
+
+    // Transparencia do card
+    var op = Number(vlPick(cfg, 'product_card_opacity', 100)); if (isNaN(op)) op = 100;
     op = Math.max(0, Math.min(100, op));
-    prodCard.style.setProperty('background-color', vlRgba(cfg.product_card_bg || '#FFFFFF', op / 100), 'important');
+    prodCard.style.setProperty('background-color', vlRgba(vlPick(cfg, 'product_card_bg', '#FFFFFF'), op / 100), 'important');
     if (op < 100) {
       prodCard.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
       prodCard.style.setProperty('-webkit-backdrop-filter', 'blur(10px)', 'important');
-    }
-
-    var compact = cfg.product_card_compact !== false;
-    var w = 'calc(100% - 68px)';
-    var narrow = function (el) {
-      el.style.setProperty('width', w, 'important');
-      el.style.setProperty('max-width', w, 'important');
-      el.style.setProperty('margin-right', 'auto', 'important');
-    };
-    if (compact) {
-      narrow(prodCard);
-      if (actions && !prodCard.contains(actions)) narrow(actions);
-    }
-
-    if (cfg.product_card_show_cart !== false && !scope.querySelector('.vl-cart-btn')) {
-      var info = vlPriceInfo(pd);
-      if (!info.cur) return;
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'vl-cart-btn';
-      btn.style.cssText = 'all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:8px;flex:1 1 100%;width:100%;cursor:pointer;height:42px;border-radius:12px;font-weight:700;font-size:13px;'
-        + 'background:' + (cfg.product_card_button_bg || '#111111') + ';color:' + (cfg.product_card_button_color || '#FFFFFF') + ';';
-      btn.innerHTML = '<span>Adicionar ao carrinho</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>';
-      btn.addEventListener('click', function (e) {
-        e.stopPropagation(); e.preventDefault();
-        vlTrack('sll_cart_open', { product_id: pd.id || null, video_id: videoId || null }, videoId, null);
-        vlOpenCartSheet(pd, cfg, scope, videoId);
+      Array.prototype.forEach.call(prodCard.children, function (c) {
+        if (c.tagName === 'IMG' || c.querySelector('img') || c.getAttribute('data-vl-wa')) return;
+        c.style.setProperty('background', 'transparent', 'important');
       });
-      if (actions) {
-        actions.style.setProperty('flex-wrap', 'wrap', 'important');
-        actions.insertBefore(btn, actions.firstChild);
-      } else if (prodCard.parentNode) {
-        if (compact) narrow(btn);
-        btn.style.marginTop = '8px';
-        prodCard.parentNode.insertBefore(btn, prodCard.nextSibling);
+    }
+
+    // Botao principal: Adicionar ao carrinho (troca o "Ver produto")
+    var info = vlPriceInfo(pd);
+    var viewBtn = q('.vl-product-btn');
+    if (viewBtn) {
+      if (vlOn(vlPick(cfg, 'product_card_show_cart', true)) && info.cur && !viewBtn.getAttribute('data-vl-cart')) {
+        var nb = viewBtn.cloneNode(false);
+        nb.removeAttribute('href'); nb.removeAttribute('onclick'); nb.removeAttribute('target');
+        nb.setAttribute('data-vl-cart', '1');
+        nb.className = viewBtn.className + ' vl-cart-btn';
+        nb.style.cursor = 'pointer';
+        nb.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;flex-shrink:0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg><span>Adicionar ao carrinho</span>';
+        viewBtn.parentNode.replaceChild(nb, viewBtn);
+        viewBtn = nb;
+        nb.addEventListener('click', function (e) {
+          e.stopPropagation(); e.preventDefault();
+          vlTrack('sll_cart_open', { product_id: pd.id || null, video_id: videoId || null }, videoId, null);
+          vlOpenCartSheet(pd, colors, host, videoId);
+        });
+      }
+      if (btnBg) viewBtn.style.setProperty('background', btnBg, 'important');
+      if (btnFg) viewBtn.style.setProperty('color', btnFg, 'important');
+    }
+
+    // WhatsApp: liga/desliga e vira bolinha dentro do card
+    var wa = q('.vl-product-whatsapp-btn');
+    if (wa) {
+      if (!vlOn(vlPick(cfg, 'product_card_show_whatsapp', true))) {
+        wa.style.setProperty('display', 'none', 'important');
+      } else if (!wa.getAttribute('data-vl-wa')) {
+        wa.setAttribute('data-vl-wa', '1');
+        wa.classList.add('vl-wa-bubble');
+        wa.setAttribute('aria-label', 'WhatsApp');
+        wa.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
+        prodCard.style.setProperty('position', 'relative', 'important');
+        prodCard.appendChild(wa);
+        var s = function (k, v) { wa.style.setProperty(k, v, 'important'); };
+        s('position', 'absolute'); s('right', '8px'); s('bottom', '8px');
+        s('width', '30px'); s('height', '30px'); s('min-width', '30px'); s('padding', '0');
+        s('border-radius', '50%'); s('display', 'flex'); s('align-items', 'center'); s('justify-content', 'center');
+        s('box-sizing', 'border-box'); s('cursor', 'pointer'); s('z-index', '3'); s('flex', 'none');
+        s('background', waBg); s('color', waFg); s('text-decoration', 'none');
       }
     }
   }
-
   var VL_SURVEY_OPTS = [
     ['incredible', 'A experiência foi incrível'], ['met', 'Atendeu às expectativas'],
     ['better', 'Poderia ser melhor'], ['photos', 'Prefiro ver somente fotos']
@@ -4732,7 +4780,7 @@ if (showVerProduto) {
       }
       prodInfo.appendChild(pPrice);
     }
-    try { vlEnhanceCard(prodCard, productData, appearanceConfig, (typeof video !== 'undefined' && video) ? video.id : null); } catch (e) { /* noop */ }
+    try { (function (pi, pdx, vid) { var run = function () { try { vlEnhanceCard((pi.closest && pi.closest('.vl-product-card')) || pi.parentNode, pdx, (typeof appearanceConfig !== 'undefined' ? appearanceConfig : null), vid); } catch (e) { console.warn('[SLL card]', e); } }; setTimeout(run, 60); setTimeout(run, 500); })(prodInfo, productData, (typeof video !== 'undefined' && video) ? video.id : null); } catch (e) { console.warn('[SLL card]', e); }
     prodCard.appendChild(prodInfo);
 
     footer.appendChild(prodCard);
