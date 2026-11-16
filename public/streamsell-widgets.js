@@ -1,3 +1,4 @@
+if(!window.__sllUrlMatch){window.__sllUrlMatch=function(h,p){h=String(h||'');p=String(p||'');if(!p)return false;if(p.indexOf('*')===-1)return h.indexOf(p)!==-1;try{return new RegExp(p.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*'),'i').test(h)}catch(e){return false}}}
 (function() {
   'use strict';
 
@@ -155,7 +156,7 @@ return fetchJson(path).then(function (rows) {
     var targetType = live.promo_target_type || 'all';
     var targetValue = live.promo_target_value || '';
     if (targetType === 'home' && path_ !== '/' && path_ !== '') return null;
-    if (targetType === 'url_contains' && targetValue && path_.indexOf(targetValue) === -1) return null;
+    if (targetType === 'url_contains' && targetValue && !window.__sllUrlMatch(path_, targetValue)) return null;
     if (targetType === 'url_not_contains' && targetValue && path_.indexOf(targetValue) !== -1) return null;
 
     return live;

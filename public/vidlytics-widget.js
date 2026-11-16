@@ -1,3 +1,4 @@
+if(!window.__sllUrlMatch){window.__sllUrlMatch=function(h,p){h=String(h||'');p=String(p||'');if(!p)return false;if(p.indexOf('*')===-1)return h.indexOf(p)!==-1;try{return new RegExp(p.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*'),'i').test(h)}catch(e){return false}}}
 (function () {
   var WIDGET_VERSION = '2026.10.08-2';
 
@@ -726,7 +727,7 @@ return fetchJson(path).then(function (rows) {
     var targetType = live.promo_target_type || 'all';
     var targetValue = live.promo_target_value || '';
     if (targetType === 'home' && path_ !== '/' && path_ !== '') return null;
-    if (targetType === 'url_contains' && targetValue && path_.indexOf(targetValue) === -1) return null;
+    if (targetType === 'url_contains' && targetValue && !window.__sllUrlMatch(path_, targetValue)) return null;
     if (targetType === 'url_not_contains' && targetValue && path_.indexOf(targetValue) !== -1) return null;
 
     return live;
@@ -1927,7 +1928,7 @@ product_card_price_size: toNumber(rcv('product_card_price_size', '12'), 12),
     if (rule === 'all_pages') return true;
     if (rule === 'home') return /^\/(index(\.html?)?)?$/i.test(path);
     if (!value) return true;
-    if (rule === 'url_contains') return href.indexOf(value) !== -1;
+    if (rule === 'url_contains') return window.__sllUrlMatch(href, value);
     if (rule === 'url_not_contains') return href.indexOf(value) === -1;
     if (rule === 'url_not_equals') {
       return path.replace(/\/$/, '') !== value.replace(/\/$/, '') && href.replace(/\/$/, '') !== value.replace(/\/$/, '');

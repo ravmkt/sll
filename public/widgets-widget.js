@@ -1,3 +1,4 @@
+if(!window.__sllUrlMatch){window.__sllUrlMatch=function(h,p){h=String(h||'');p=String(p||'');if(!p)return false;if(p.indexOf('*')===-1)return h.indexOf(p)!==-1;try{return new RegExp(p.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*'),'i').test(h)}catch(e){return false}}}
 (function () {
   'use strict';
   if (window.__SLL_WIDGETS__) return;
@@ -726,7 +727,7 @@ function buildBenefits(conf) {
     var v = String((pl && pl.rule_value) || '').trim().toLowerCase();
     var p = location.pathname.toLowerCase();
     if (r === 'home') return p === '/' || p === '';
-    if (r === 'url_contains') return !!v && p.indexOf(v) !== -1;
+    if (r === 'url_contains') return !!v && window.__sllUrlMatch(p, v);
     if (r === 'url_not_contains') return !v || p.indexOf(v) === -1;
     if (r === 'url_not_equals') return p.replace(/^\/+|\/+$/g, '') !== v.replace(/^\/+|\/+$/g, '');
     return true;
