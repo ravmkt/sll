@@ -45,6 +45,7 @@ interface VidVideo {
   product_id?: string;
   model_id?: string;
   story_title?: string;
+  folder_id?: string | null;
   created_at: string;
   updated_at?: string;
 }
@@ -64,6 +65,7 @@ interface BibliotecaTabProps {
 
 const GB_BYTES = 1024 * 1024 * 1024;
 const BUCKET_NAME = "videos";
+const MAX_FILE_BYTES = 30 * 1024 * 1024;
 
 const vidlyticsDb = (supabase as any).schema 
   ? (supabase as any).schema("vidlytics") 
@@ -192,7 +194,7 @@ const downloadMedia = async (v: VidVideo): Promise<void> => {
 };
 export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialStoreId }) => {
   const [storeId, setStoreId] = useState<string>(initialStoreId || "");
-  const [videos, setVideos] = useState<VidVideo[]>([]);
+  const [allVideos, setVideos] = useState<VidVideo[]>([]);
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -251,6 +253,68 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState<boolean>(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState<boolean>(false);
+
+  // Pastas
+  const [folders, setFolders] = useState<{ id: string; name: string }[]>([]);
+  const [activeFolder, setActiveFolder] = useState<string>("ALL");
+  const [newFolderName, setNewFolderName] = useState<string>("");
+  const [uploadProgress, setUploadProgress] = useState<string>("");
+  const activeFolderId = activeFolder !== "ALL" && activeFolder !== "NONE" ? activeFolder : null;
+
+  const videos = useMemo(
+    () =>
+      allVideos.filter((v) =>
+        activeFolder === "ALL" ? true : activeFolder === "NONE" ? !v.folder_id : v.folder_id === activeFolder
+      ),
+    [allVideos, activeFolder]
+  );
+
+  const loadFolders = async () => {
+    if (!storeId) return;
+    const { data } = await vidlyticsDb.from("vid_folders").select("id,name").eq("store_id", storeId).order("name", { ascending: true });
+    setFolders(data || []);
+  };
+  useEffect(() => { loadFolders(); }, [storeId]);
+
+  const createFolder = async () => {
+    const name = newFolderName.trim();
+    if (!name || !storeId) return;
+    const { data, error } = await vidlyticsDb.from("vid_folders").insert([{ store_id: storeId, name }]).select("id,name").single();
+    if (error) {
+      setErrorMsg(error.code === "23505" ? "Já existe uma pasta com esse nome." : error.message);
+      return;
+    }
+    setFolders((p) => [...p, data].sort((a, b) => a.name.localeCompare(b.name)));
+    setNewFolderName("");
+    setActiveFolder(data.id);
+    setSuccessMsg(`Pasta "${name}" criada.`);
+  };
+
+  const deleteFolder = async (f: { id: string; name: string }) => {
+    if (!window.confirm(`Excluir a pasta "${f.name}"? Os arquivos NÃO serão apagados, apenas ficarão sem pasta.`)) return;
+    const { error } = await vidlyticsDb.from("vid_folders").delete().eq("id", f.id);
+    if (error) { setErrorMsg(error.message); return; }
+    setFolders((p) => p.filter((x) => x.id !== f.id));
+    setVideos((p) => p.map((v) => (v.folder_id === f.id ? { ...v, folder_id: null } : v)));
+    if (activeFolder === f.id) setActiveFolder("ALL");
+  };
+
+  const moveSelected = async (folderId: string) => {
+    const ids = videos.filter((v) => selectedIds.has(v.id)).map((v) => v.id);
+    if (ids.length === 0) return;
+    const target = folderId === "NONE" ? null : folderId;
+    try {
+      for (let i = 0; i < ids.length; i += 100) {
+        const { error } = await vidlyticsDb.from("vid_videos").update({ folder_id: target }).in("id", ids.slice(i, i + 100));
+        if (error) throw new Error(error.message);
+      }
+      setVideos((p) => p.map((v) => (ids.includes(v.id) ? { ...v, folder_id: target } : v)));
+      setSelectedIds(new Set());
+      setSuccessMsg(`${ids.length} ${ids.length === 1 ? "arquivo movido" : "arquivos movidos"} com sucesso!`);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erro ao mover arquivos.");
+    }
+  };
 
   // Resolver store_id
   useEffect(() => {
@@ -349,15 +413,15 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   };
 
   const totalBytesUsed = useMemo(() => {
-    return videos.reduce((acc, item) => acc + (Number(item.file_size_bytes) || 0), 0);
-  }, [videos]);
+    return allVideos.reduce((acc, item) => acc + (Number(item.file_size_bytes) || 0), 0);
+  }, [allVideos]);
 
   const usedMB = (totalBytesUsed / (1024 * 1024)).toFixed(1);
   const [storageQuota, setStorageQuota] = useState<QuotaState | null>(null);
   useEffect(() => {
     if (!storeId) return;
     checkQuota(storeId, "storage").then(setStorageQuota).catch(() => setStorageQuota(null));
-  }, [storeId, videos]);
+  }, [storeId, allVideos]);
   const { guard, blocked, showBlocked, close } = useQuotaGuard(storeId);
   const limitBytes = storageQuota?.limit ?? null;
   const limitLabel = !storageQuota
@@ -367,96 +431,107 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       : "Ilimitado";
   const percentUsed = (limitBytes ? Math.min(100, (totalBytesUsed / limitBytes) * 100) : 0).toFixed(1);
 
-  // Upload Direto da Biblioteca com Extração de Thumbnail Automática
+  // Upload multiplo (ate 30 MB por arquivo) com validacao de cota do lote
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (files.length === 0) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      setErrorMsg("O arquivo excede o limite máximo permitido de 50 MB.");
+    const tooBig = files.filter((f) => f.size > MAX_FILE_BYTES);
+    if (tooBig.length > 0) {
+      setErrorMsg(`Limite de 30 MB por arquivo. Excedem: ${tooBig.map((f) => f.name).join(", ")}`);
       return;
     }
 
-    try {
-      const isMediaVideo = !file.type.startsWith("image/");
-        if (!(await guard("storage", file.size)) || (isMediaVideo && !(await guard("videos", 1)))) {
-          if (fileInputRef.current) fileInputRef.current.value = "";
-          return;
-        }
-        setIsUploading(true);
-      setErrorMsg(null);
-      setSuccessMsg(null);
+    const batchBytes = files.reduce((a, f) => a + f.size, 0);
+    const videoCount = files.filter((f) => !f.type.startsWith("image/")).length;
+    if (!(await guard("storage", batchBytes))) return;
+    if (videoCount > 0 && !(await guard("videos", videoCount))) return;
 
-      const targetStoreId = storeId || "00000000-0000-0000-0000-000000000000";
-      const fileExt = file.name.split(".").pop();
-      const uniqueId = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      const fileName = `${targetStoreId}/${uniqueId}.${fileExt}`;
+    setIsUploading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
 
-      // 1. Upload do Arquivo Principal
-      const { data: uploadData, error: uploadErr } = await supabase.storage
-        .from(BUCKET_NAME)
-        .upload(fileName, file, { cacheControl: "3600", upsert: true });
+    const targetStoreId = storeId || "00000000-0000-0000-0000-000000000000";
+    let ok = 0;
+    const failed: string[] = [];
+    let quotaKind: string | null = null;
 
-      if (uploadErr) throw new Error(uploadErr.message);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadProgress(`${i + 1}/${files.length}`);
+      const uploaded: string[] = [];
+      try {
+        const fileExt = file.name.split(".").pop();
+        const uniqueId = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        const fileName = `${targetStoreId}/${uniqueId}.${fileExt}`;
 
-      const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(uploadData.path);
-      const publicUrl = urlData.publicUrl;
+        const { data: uploadData, error: uploadErr } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(fileName, file, { cacheControl: "3600", upsert: true });
+        if (uploadErr) throw new Error(uploadErr.message);
+        uploaded.push(uploadData.path);
 
-      let finalThumbnailUrl = publicUrl;
-      let totalBytes = file.size;
-      const isVideo = file.type.startsWith("video/") || ["mp4", "mov", "webm"].includes((fileExt || "").toLowerCase());
+        const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(uploadData.path);
+        const publicUrl = urlData.publicUrl;
 
-      // 2. Se for vídeo, gerar o primeiro frame via Canvas e subir para o Storage
-      if (isVideo) {
-        try {
-          const thumbBlob = await captureVideoThumbnail(file);
-          const thumbFileName = `${targetStoreId}/thumbnails/${uniqueId}_thumb.jpg`;
+        let finalThumbnailUrl = publicUrl;
+        let totalBytes = file.size;
+        const isVideo = file.type.startsWith("video/") || ["mp4", "mov", "webm"].includes((fileExt || "").toLowerCase());
 
-          const { data: thumbData, error: thumbErr } = await supabase.storage
-            .from(BUCKET_NAME)
-            .upload(thumbFileName, thumbBlob, {
-              contentType: "image/jpeg",
-              upsert: true
-            });
-
-          if (!thumbErr && thumbData) {
-            const { data: thumbUrlObj } = supabase.storage.from(BUCKET_NAME).getPublicUrl(thumbData.path);
-            finalThumbnailUrl = thumbUrlObj.publicUrl;
-            totalBytes += thumbBlob.size;
+        if (isVideo) {
+          try {
+            const thumbBlob = await captureVideoThumbnail(file);
+            const thumbFileName = `${targetStoreId}/thumbnails/${uniqueId}_thumb.jpg`;
+            const { data: thumbData, error: thumbErr } = await supabase.storage
+              .from(BUCKET_NAME)
+              .upload(thumbFileName, thumbBlob, { contentType: "image/jpeg", upsert: true });
+            if (!thumbErr && thumbData) {
+              uploaded.push(thumbData.path);
+              const { data: thumbUrlObj } = supabase.storage.from(BUCKET_NAME).getPublicUrl(thumbData.path);
+              finalThumbnailUrl = thumbUrlObj.publicUrl;
+              totalBytes += thumbBlob.size;
+            }
+          } catch (thumbGenErr) {
+            console.warn("[BibliotecaTab] Não foi possível extrair thumbnail automática:", thumbGenErr);
           }
-        } catch (thumbGenErr) {
-          console.warn("[BibliotecaTab] Não foi possível extrair thumbnail automática:", thumbGenErr);
         }
-      }
 
-      // 3. Salva no banco de dados (schema vidlytics)
-      const payload: any = {
-        store_id: storeId || null,
-        title: file.name,
-        video_url: publicUrl,
-        thumbnail_url: finalThumbnailUrl,
-        status: "active",
-        active: true,
-        file_size_bytes: totalBytes,
-        video_source_type: isVideo ? "upload" : "image"
-      };
+        const payload: any = {
+          store_id: storeId || null,
+          title: file.name,
+          video_url: publicUrl,
+          thumbnail_url: finalThumbnailUrl,
+          status: "active",
+          active: true,
+          file_size_bytes: totalBytes,
+          video_source_type: isVideo ? "upload" : "image"
+        };
+        if (activeFolderId) payload.folder_id = activeFolderId;
 
-      const { error: insertErr } = await vidlyticsDb.from("vid_videos").insert([payload]);
-      if (insertErr) {
+        const { error: insertErr } = await vidlyticsDb.from("vid_videos").insert([payload]);
+        if (insertErr) {
           const qk = quotaErrorKind(insertErr);
-          if (qk) { showBlocked(qk as any); return; }
+          if (qk) { quotaKind = qk as string; throw new Error("Cota excedida"); }
           throw new Error(insertErr.message);
         }
-
-      setSuccessMsg("Mídia e capa processadas com sucesso!");
-      await fetchVideos();
-    } catch (err: any) {
-      console.error("[BibliotecaTab] Falha no upload:", err);
-      setErrorMsg(`Falha no upload: ${err.message}`);
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+        ok++;
+      } catch (err: any) {
+        console.error("[BibliotecaTab] Falha no upload:", file.name, err);
+        if (uploaded.length > 0) {
+          await supabase.storage.from(BUCKET_NAME).remove(uploaded);
+        }
+        failed.push(file.name);
+        if (quotaKind) break;
+      }
     }
+
+    setIsUploading(false);
+    setUploadProgress("");
+    if (ok > 0) setSuccessMsg(`${ok} ${ok === 1 ? "mídia enviada" : "mídias enviadas"} com sucesso!`);
+    if (failed.length > 0 && !quotaKind) setErrorMsg(`Falha ao enviar: ${failed.join(", ")}`);
+    await fetchVideos();
+    if (quotaKind) showBlocked(quotaKind as any);
   };
 
   // Cadastrar URL Externa (YouTube Shorts, YouTube Normal ou MP4 externo)
@@ -493,6 +568,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         video_source_type: sourceType
       };
 
+      if (activeFolderId) payload.folder_id = activeFolderId;
       if (externalProduct) payload.product_id = externalProduct;
       if (externalModel) payload.model_id = externalModel;
 
@@ -619,6 +695,12 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
     if (file.size > 30 * 1024 * 1024) {
       alert("O arquivo de vídeo deve ter no máximo 30 MB.");
+      return;
+    }
+
+    const diffBytes = Math.max(0, file.size - (Number(editingVideo?.file_size_bytes) || 0));
+    if (diffBytes > 0 && !(await guard("storage", diffBytes))) {
+      e.target.value = "";
       return;
     }
 
@@ -1095,6 +1177,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             type="file"
             accept="video/mp4,video/quicktime,video/webm,image/*"
             className="hidden"
+            multiple
             onChange={handleFileUpload}
           />
 
@@ -1109,7 +1192,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             ) : (
               <UploadCloud className="w-4 h-4 flex-shrink-0" />
             )}
-            {isUploading ? "ENVIANDO..." : "FAZER UPLOAD"}
+            {isUploading ? `ENVIANDO ${uploadProgress}` : "FAZER UPLOAD"}
           </button>
         </div>
       </div>
@@ -1147,6 +1230,85 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         </div>
       </div>
 
+      {/* Pastas */}
+      <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-sm space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {[{ id: "ALL", name: "Todas" }, { id: "NONE", name: "Sem pasta" }, ...folders].map((f) => {
+            const real = f.id !== "ALL" && f.id !== "NONE";
+            const count =
+              f.id === "ALL"
+                ? allVideos.length
+                : f.id === "NONE"
+                ? allVideos.filter((v) => !v.folder_id).length
+                : allVideos.filter((v) => v.folder_id === f.id).length;
+            const on = activeFolder === f.id;
+            return (
+              <span
+                key={f.id}
+                onClick={() => { setActiveFolder(f.id); setSelectedIds(new Set()); }}
+                className={`inline-flex items-center gap-1.5 pl-3.5 pr-2 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition ${
+                  on ? "bg-[#0088ff] text-white shadow-sm" : "bg-slate-100/70 text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {f.name}
+                <span className="opacity-70">{count}</span>
+                {real ? (
+                  <button
+                    type="button"
+                    title="Excluir pasta"
+                    onClick={(ev) => { ev.stopPropagation(); deleteFolder(f); }}
+                    className="p-0.5 opacity-70 hover:opacity-100 cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                ) : (
+                  <span className="w-1" />
+                )}
+              </span>
+            );
+          })}
+
+          <form
+            onSubmit={(ev) => { ev.preventDefault(); createFolder(); }}
+            className="inline-flex items-center gap-1.5 ml-auto"
+          >
+            <input
+              value={newFolderName}
+              onChange={(ev) => setNewFolderName(ev.target.value)}
+              maxLength={60}
+              placeholder="Nova pasta (ex.: Óculos)"
+              className="w-48 px-3 py-1.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+            />
+            <button
+              type="submit"
+              disabled={!newFolderName.trim()}
+              className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold disabled:opacity-40 cursor-pointer"
+            >
+              CRIAR
+            </button>
+          </form>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] text-slate-400">
+            Novos uploads vão para: <b className="text-slate-600">{activeFolderId ? folders.find((f) => f.id === activeFolderId)?.name : "Sem pasta"}</b>
+            {" "}· máx. 30 MB por arquivo · você pode selecionar vários arquivos de uma vez
+          </p>
+          {selectedCount > 0 && (
+            <select
+              value=""
+              onChange={(ev) => { if (ev.target.value) moveSelected(ev.target.value); }}
+              className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold cursor-pointer"
+            >
+              <option value="">Mover {selectedCount} selecionado(s) para…</option>
+              <option value="NONE">Sem pasta</option>
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      </div>
       {/* Busca e Abas Filtros */}
       <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full md:w-[480px]">
