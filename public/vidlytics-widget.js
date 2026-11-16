@@ -1889,7 +1889,9 @@ title_bold: toBoolean(rcv('title_bold', wsv('title_bold', true)), true),
 product_card_price_size: toNumber(rcv('product_card_price_size', '12'), 12),
     product_card_price_color: sanitizeCssValue(rcv('product_card_price_color', getPrimaryColor(appearance)), getPrimaryColor(appearance), 'color'),
     product_card_button_bg: sanitizeCssValue(rcv('product_card_button_bg', getPrimaryColor(appearance)), getPrimaryColor(appearance), 'color'),
-    product_card_button_color: sanitizeCssValue(rcv('product_card_button_color', '#FFFFFF'), '#FFFFFF', 'color')
+    product_card_button_color: sanitizeCssValue(rcv('product_card_button_color', '#FFFFFF'), '#FFFFFF', 'color'),
+    product_card_whatsapp_bg: sanitizeCssValue(rcv('product_card_whatsapp_bg', '#25D366'), '#25D366', 'color'),
+    product_card_whatsapp_color: sanitizeCssValue(rcv('product_card_whatsapp_color', '#FFFFFF'), '#FFFFFF', 'color')
   };
 }
 
@@ -2652,8 +2654,8 @@ function applyHostPosition(host, appearance) {
       + '.vl-product-actions{display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;box-sizing:border-box!important;pointer-events:auto!important;}'
       + '.vl-product-btn{all:unset!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;box-sizing:border-box!important;flex:1 1 0px!important;min-width:0!important;height:42px!important;border-radius:12px!important;padding:0 12px!important;background:' + modalConfig.product_card_button_bg + '!important;color:' + modalConfig.product_card_button_color + '!important;font-size:13px!important;font-weight:700!important;cursor:pointer!important;text-decoration:none!important;text-align:center!important;pointer-events:auto!important;white-space:nowrap!important;transition:opacity .2s!important;}'
       + '.vl-product-btn:hover{opacity:.9!important;}'
-      + '.vl-product-whatsapp-btn{all:unset!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;box-sizing:border-box!important;flex:1 1 0px!important;min-width:0!important;height:42px!important;border-radius:12px!important;padding:0 12px!important;background:#25d366!important;color:#fff!important;font-size:13px!important;font-weight:700!important;cursor:pointer!important;text-decoration:none!important;text-align:center!important;pointer-events:auto!important;white-space:nowrap!important;transition:background .2s!important;}'
-      + '.vl-product-whatsapp-btn:hover{background:#1ebe5d!important;color:#fff!important;}'
+      + '.vl-product-whatsapp-btn{all:unset!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;box-sizing:border-box!important;flex:1 1 0px!important;min-width:0!important;height:42px!important;border-radius:12px!important;padding:0 12px!important;background:' + modalConfig.product_card_whatsapp_bg + '!important;color:' + modalConfig.product_card_whatsapp_color + '!important;font-size:13px!important;font-weight:700!important;cursor:pointer!important;text-decoration:none!important;text-align:center!important;pointer-events:auto!important;white-space:nowrap!important;transition:background .2s!important;}'
+      + '.vl-product-whatsapp-btn:hover{opacity:.9!important;}'
       + '.vl-product-whatsapp-btn:focus{outline:2px solid #128c7e!important;outline-offset:2px!important;}'
       + '@keyframes vlSlideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}'
       + '.vl-comments-panel-full textarea:focus,.vl-comments-panel-full input:focus{outline:none!important;box-shadow:0 0 0 3px rgba(0,148,235,.15)!important;}'
@@ -4571,6 +4573,18 @@ if (showVerProduto) {
 
     footer.appendChild(prodActions);
     container.appendChild(footer);
+    if (typeof social !== 'undefined' && social) {
+      social.style.setProperty('top', 'auto', 'important');
+      social.style.setProperty('transform', 'none', 'important');
+      var placeSocial = function () {
+        var fh = footer.offsetHeight;
+        if (fh) social.style.setProperty('bottom', Math.max(fh - 40 + 12, 16) + 'px', 'important');
+      };
+      placeSocial();
+      setTimeout(placeSocial, 60);
+      setTimeout(placeSocial, 500);
+      if (window.ResizeObserver) { try { new ResizeObserver(placeSocial).observe(footer); } catch (e) {} }
+    }
   }
 }
 
