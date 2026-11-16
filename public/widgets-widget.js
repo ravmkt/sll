@@ -582,6 +582,7 @@ function buildBenefits(conf) {
 
   function place(target, host, pos) {
     var where = { before: 'beforebegin', after: 'afterend', prepend: 'afterbegin', append: 'beforeend' }[pos] || 'beforebegin';
+    if (target.closest && target.closest('[class*="image-ratio"]')) return;
     target.insertAdjacentElement(where, host);
   }
 

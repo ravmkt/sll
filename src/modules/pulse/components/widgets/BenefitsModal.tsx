@@ -1,6 +1,7 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { ArrowDown, ArrowUp, Monitor, Plus, Smartphone, Trash2, X } from 'lucide-react';
 import WidgetPlacementPicker, { type Placement } from './WidgetPlacementPicker';
+import PageRuleField, { ruleNeedsValue } from './PageRuleField';
 import BenefitsBarPreview from './BenefitsBarPreview';
 import { ColorField as Color } from './RulerConfigControls';
 import IconPicker from './IconPicker';
@@ -61,6 +62,7 @@ export default function BenefitsModal({ ctx, initial, defaultName, onClose, onSa
     if (!name.trim()) { setErr('Dê um nome à barra de benefícios.'); return; }
     if (filled.some((i) => !validLink(i.link))) { setErr('Links devem começar com http://, https:// ou /.'); return; }
     if (active && !placement.selector.trim()) { setErr('Selecione o elemento da loja antes de ativar.'); return; }
+    if (active && ruleNeedsValue(placement)) { setErr('Informe o texto da URL da regra de página.'); return; }
     if (active && filled.length === 0) { setErr('Adicione ao menos um benefício antes de ativar.'); return; }
     setSaving(true); setErr('');
     try {
@@ -177,7 +179,8 @@ export default function BenefitsModal({ ctx, initial, defaultName, onClose, onSa
 
             <section className={sec}>
               <h3 className={h3}>5. Posição na loja</h3>
-              <WidgetPlacementPicker supabase={ctx.supabase} storeId={ctx.storeId} storeUrl={ctx.storeUrl} value={placement} onChange={setPlacement} />
+              <WidgetPlacementPicker supabase={ctx.supabase} storeId={ctx.storeId} storeUrl={ctx.storeUrl} value={placement} onChange={(p) => setPlacement((cur) => ({ ...cur, ...p }))} />
+          <PageRuleField value={placement} onChange={setPlacement} />
             </section>
           </div>
 
