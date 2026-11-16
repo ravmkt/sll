@@ -2176,8 +2176,18 @@ function readStoreSettings() {
     return supabaseFetch('rpc/get_store_settings_public', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ p_store_id: storeId }) })
       .then(function (response) { if (!response.ok) return {}; return response.json(); })
       .then(function (data) {
-        if (Array.isArray(data) && data.length > 0) return data[0];
-        return {};
+        var base = (Array.isArray(data) && data.length > 0) ? data[0] : {};
+        return supabaseFetch('rpc/get_store_yampi_public', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ p_store_id: storeId }) })
+          .then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (y) {
+            var row = Array.isArray(y) ? y[0] : y;
+            if (row) {
+              base.yampi_store_token = row.yampi_store_token || '';
+              base.yampi_alias = row.yampi_alias || '';
+            }
+            return base;
+          })
+          .catch(function () { return base; });
       })
       .catch(function () { return {}; })
             .then(function (store) {
@@ -4967,7 +4977,13 @@ if (showVerProduto) {
       var waPhone = storeWhatsappNumber.replace(/\D/g, '');
       var waTemplate = storeWhatsappMessageTemplate || 'Olá! Tenho interesse nesse produto que vi no vídeo: {{story_title}}';
       var waProductName = productData.name || (story ? story.title : '') || '';
-      var waFinalMsg = waTemplate.replace('{{story_title}}', waProductName);
+      var waProductUrl = (productData && (productData.product_url || productData.url || productData.link || productData.permalink || productData.external_url)) || '';
+      var waFinalMsg = waTemplate
+        .replace(/\{\{\s*story_title\s*\}\}/g, waProductName)
+        .replace(/\{\{\s*product_url\s*\}\}/g, waProductUrl);
+      if (waProductUrl && !/\{\{\s*product_url\s*\}\}/.test(waTemplate)) {
+        waFinalMsg += '\n' + waProductUrl;
+      }
 
       // Ícone Oficial do WhatsApp com telefone recortado visível
       var waIconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.63C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.04 20.15C10.56 20.15 9.11 19.76 7.85 19.01L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.81 13.47 3.81 11.91C3.81 7.37 7.5 3.68 12.04 3.68C14.25 3.68 16.31 4.54 17.86 6.1C19.42 7.66 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15ZM16.56 14.37C16.31 14.25 15.09 13.65 14.86 13.57C14.64 13.48 14.47 13.44 14.31 13.69C14.14 13.94 13.66 14.5 13.51 14.67C13.37 14.84 13.22 14.86 12.97 14.74C12.72 14.61 11.92 14.35 10.97 13.5C10.23 12.84 9.73 12.03 9.58 11.78C9.44 11.53 9.57 11.39 9.69 11.27C9.8 11.16 9.94 10.98 10.06 10.83C10.19 10.69 10.23 10.58 10.31 10.42C10.39 10.25 10.35 10.11 10.29 9.98C10.23 9.86 9.73 8.63 9.53 8.13C9.32 7.64 9.12 7.71 8.96 7.7C8.82 7.69 8.65 7.69 8.48 7.69C8.32 7.69 8.05 7.75 7.82 8C7.6 8.25 6.96 8.85 6.96 10.07C6.96 11.29 7.85 12.46 7.97 12.63C8.1 12.79 9.71 15.28 12.18 16.35C12.77 16.6 13.23 16.76 13.59 16.87C14.18 17.06 14.72 17.03 15.15 16.97C15.63 16.9 16.62 16.37 16.83 15.79C17.03 15.21 17.03 14.71 16.97 14.61C16.91 14.51 16.81 14.49 16.56 14.37Z" fill="white"/></svg>';
