@@ -1,6 +1,7 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { ArrowDown, ArrowUp, Copy, ImagePlus, Monitor, Smartphone, Trash2, X } from 'lucide-react';
 import WidgetPlacementPicker, { type Placement } from './WidgetPlacementPicker';
+import PageRuleField from './PageRuleField';
 import { ColorField as Color } from './RulerConfigControls';
 import CarouselPreview from './CarouselPreview';
 import { infoCardsService } from '../../services/infoCardsService';
@@ -321,7 +322,8 @@ export default function CarouselModal({ ctx, initial, defaultName, onClose, onSa
                 </section>
                 <section className={sec}>
               <h3 className={h3}>5. Posição na loja</h3>
-              <WidgetPlacementPicker supabase={ctx.supabase} storeId={ctx.storeId} storeUrl={ctx.storeUrl} value={placement} onChange={setPlacement} />
+              <WidgetPlacementPicker supabase={ctx.supabase} storeId={ctx.storeId} storeUrl={ctx.storeUrl} value={placement} onChange={(p) => setPlacement({ ...placement, ...p })} />
+              <PageRuleField value={placement} onChange={setPlacement} />
             </section>
           </div>
 

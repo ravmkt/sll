@@ -3,6 +3,7 @@ import { Monitor, Plus, Smartphone, Trash2, X } from 'lucide-react';
 import RulerPreview from './RulerPreview';
 import RulerCardsEditor from './RulerCardsEditor';
 import WidgetPlacementPicker, { type Placement } from './WidgetPlacementPicker';
+import PageRuleField from './PageRuleField';
 import { infoCardsService } from '../../services/infoCardsService';
 import type { InfoCard } from '../../types/infoCards';
 import { SAMPLE_CONTENT, mergeConfig, type Tier, type WidgetStyle, type WidgetsCtx } from '../../types/widgets';
@@ -106,7 +107,8 @@ export default function InfoCardModal({ ctx, initial, defaultName, styles, onClo
             <section className="rounded-2xl border border-slate-200 bg-white p-5">
               <h3 className="mb-4 text-sm font-extrabold uppercase text-slate-800">2. Posição na loja</h3>
               <WidgetPlacementPicker supabase={ctx.supabase} storeId={ctx.storeId} storeUrl={ctx.storeUrl}
-                value={placement} onChange={setPlacement} />
+                value={placement} onChange={(p) => setPlacement({ ...placement, ...p })} />
+              <PageRuleField value={placement} onChange={setPlacement} />
             </section>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5">
