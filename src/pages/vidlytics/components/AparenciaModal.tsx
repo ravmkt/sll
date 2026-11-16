@@ -922,11 +922,16 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
     product_card_name_size: getC('modal_product_card_name_size') ?? 11,
     product_card_name_color: getC('modal_product_card_name_color') || '#0F172A',
     product_card_price_size: getC('modal_product_card_price_size') ?? 12,
-    product_card_price_color: getC('modal_product_card_price_color') || formData?.primary_color || '#0094EB',
-    product_card_button_bg: getC('modal_product_card_button_bg') || formData?.primary_color || '#0094EB',
+    product_card_price_color: getC('modal_product_card_price_color') || '#111111',
+    product_card_button_bg: getC('modal_product_card_button_bg') || '#0094EB',
     product_card_button_color: getC('modal_product_card_button_color') || '#FFFFFF',
     product_card_whatsapp_bg: getC('modal_product_card_whatsapp_bg') || '#25D366',
     product_card_whatsapp_color: getC('modal_product_card_whatsapp_color') || '#FFFFFF',
+    product_card_opacity: getC('modal_product_card_opacity') ?? 100,
+    product_card_compact: getC('modal_product_card_compact') ?? true,
+    product_card_show_cart: getC('modal_product_card_show_cart') ?? true,
+    progress_color: getC('modal_progress_color') || '#FFFFFF',
+    exit_survey_enabled: getC('modal_exit_survey_enabled') ?? true,
   };
 
   // ──────────────────── PERSISTÊNCIA REAL NO BANCO ────────────────────
@@ -1796,6 +1801,30 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             </FormField>
                             <FormField label="Botão Ver produto (texto)">
                               <ColorInput value={getC('modal_product_card_button_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_product_card_button_color', v)} />
+                            </FormField>
+                            <FormField label="Opacidade do card (100% = sólido)">
+                              <div className="flex items-center gap-3">
+                                <input type="range" min={0} max={100} step={5} value={Number(getC('modal_product_card_opacity') ?? 100)} onChange={(e) => setC('modal_product_card_opacity', Number(e.target.value))} className="flex-1" />
+                                <span className="text-xs font-bold w-10 text-right">{Number(getC('modal_product_card_opacity') ?? 100)}%</span>
+                              </div>
+                            </FormField>
+                            <FormField label="Card compacto (libera os ícones laterais)">
+                              <label className="flex items-center gap-2 text-xs font-semibold">
+                                <input type="checkbox" checked={getC('modal_product_card_compact') !== false} onChange={(e) => setC('modal_product_card_compact', e.target.checked)} /> Ativado
+                              </label>
+                            </FormField>
+                            <FormField label="Botão Adicionar ao carrinho">
+                              <label className="flex items-center gap-2 text-xs font-semibold">
+                                <input type="checkbox" checked={getC('modal_product_card_show_cart') !== false} onChange={(e) => setC('modal_product_card_show_cart', e.target.checked)} /> Exibir
+                              </label>
+                            </FormField>
+                            <FormField label="Barras de progresso (topo)">
+                              <ColorInput value={getC('modal_progress_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_progress_color', v)} />
+                            </FormField>
+                            <FormField label="Pesquisa de opinião ao sair">
+                              <label className="flex items-center gap-2 text-xs font-semibold">
+                                <input type="checkbox" checked={getC('modal_exit_survey_enabled') !== false} onChange={(e) => setC('modal_exit_survey_enabled', e.target.checked)} /> Ativada
+                              </label>
                             </FormField>
                             <FormField label="Botão WhatsApp (fundo)">
                               <ColorInput value={getC('modal_product_card_whatsapp_bg') || '#25D366'} onChange={(v: string) => setC('modal_product_card_whatsapp_bg', v)} />
