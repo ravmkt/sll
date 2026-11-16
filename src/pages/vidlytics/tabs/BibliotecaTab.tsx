@@ -192,6 +192,213 @@ const downloadMedia = async (v: VidVideo): Promise<void> => {
     direct();
   }
 };
+type ProductOpt = { id: string; label: string; image?: string; price?: number | null };
+
+const toProductOpt = (p: any): ProductOpt => ({
+  id: String(p.id),
+  label: p.name || p.title || "Produto sem nome",
+  image: p.thumbnail || p.image_url || p.image || undefined,
+  price: p.price != null && p.price !== "" ? Number(p.price) : null
+});
+
+const brl = (n?: number | null) =>
+  n == null || Number.isNaN(n) ? "" : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+// Lembra qual filtro funcionou (a coluna sku pode não existir em todas as bases)
+let productFilterIdx = 0;
+
+const ProductThumb: React.FC<{ src?: string }> = ({ src }) =>
+  src ? (
+    <img src={src} alt="" className="w-9 h-9 rounded-lg object-cover border border-slate-200 flex-shrink-0" />
+  ) : (
+    <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex-shrink-0" />
+  );
+
+const ProductSearchSelect: React.FC<{
+  storeId: string;
+  value: string;
+  onChange: (id: string) => void;
+  seed?: ProductItem[];
+}> = ({ storeId, value, onChange, seed = [] }) => {
+  const [selected, setSelected] = useState<ProductOpt | null>(null);
+  const [changing, setChanging] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ProductOpt[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [active, setActive] = useState(0);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const reqRef = useRef(0);
+
+  // Resolve o produto já vinculado (mesmo que esteja fora da lista carregada)
+  useEffect(() => {
+    if (!value) { setSelected(null); return; }
+    if (selected?.id === String(value)) return;
+    const local = seed.find((p) => String(p.id) === String(value));
+    if (local) { setSelected(toProductOpt(local)); return; }
+    let cancelled = false;
+    (supabase as any)
+      .from("products")
+      .select("*")
+      .eq("id", value)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (!cancelled) setSelected(data ? toProductOpt(data) : { id: String(value), label: "Produto não encontrado" });
+      });
+    return () => { cancelled = true; };
+  }, [value, seed]);
+
+  const runSearch = async (raw: string) => {
+    const reqId = ++reqRef.current;
+    setLoading(true);
+    const q = raw.replace(/[,()%*\\]/g, " ").trim();
+    const filters = q
+      ? [
+          `name.ilike.%${q}%,title.ilike.%${q}%,sku.ilike.%${q}%`,
+          `name.ilike.%${q}%,title.ilike.%${q}%`,
+          `name.ilike.%${q}%`,
+          `title.ilike.%${q}%`
+        ]
+      : [""];
+    let rows: any[] | null = null;
+    for (let i = q ? productFilterIdx : 0; i < filters.length; i++) {
+      let qb = (supabase as any).from("products").select("*").eq("store_id", storeId).limit(20);
+      if (q) qb = qb.or(filters[i]);
+      const { data, error } = await qb;
+      if (!error) {
+        rows = data || [];
+        if (q) productFilterIdx = i;
+        break;
+      }
+    }
+    if (reqId !== reqRef.current) return;
+    setResults((rows || []).map(toProductOpt));
+    setActive(0);
+    setLoading(false);
+  };
+
+  // Busca no servidor com debounce de 300 ms
+  useEffect(() => {
+    if (!open || !storeId) return;
+    const timer = setTimeout(() => runSearch(query), query ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [query, open, storeId]);
+
+  // Fecha ao clicar fora
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const choose = (o: ProductOpt) => {
+    setSelected(o);
+    onChange(o.id);
+    setOpen(false);
+    setChanging(false);
+    setQuery("");
+  };
+
+  const clear = () => {
+    setSelected(null);
+    onChange("");
+    setChanging(false);
+    setQuery("");
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive((a) => Math.min(a + 1, Math.max(results.length - 1, 0))); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
+    else if (e.key === "Enter") { e.preventDefault(); if (open && results[active]) choose(results[active]); }
+    else if (e.key === "Escape") { setOpen(false); }
+  };
+
+  return (
+    <div ref={boxRef} className="space-y-2">
+      {selected && !changing ? (
+        <div className="flex items-center gap-3 px-3 py-2.5 bg-sky-50/60 border border-sky-100 rounded-2xl">
+          <ProductThumb src={selected.image} />
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-bold text-slate-800 truncate">{selected.label}</div>
+            {selected.price != null && <div className="text-[11px] font-semibold text-slate-500">{brl(selected.price)}</div>}
+          </div>
+          <button
+            type="button"
+            onClick={() => { setChanging(true); setOpen(true); }}
+            className="text-[11px] font-bold text-[#0088ff] hover:underline cursor-pointer"
+          >
+            TROCAR
+          </button>
+          <button
+            type="button"
+            onClick={clear}
+            title="Desvincular produto"
+            className="p-1 text-slate-400 hover:text-red-600 transition cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+              onFocus={() => setOpen(true)}
+              onKeyDown={onKeyDown}
+              placeholder="Buscar produto por nome ou SKU..."
+              className="w-full pl-11 pr-10 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] placeholder:text-slate-400"
+            />
+            {loading && <RefreshCw className="w-4 h-4 text-slate-400 animate-spin absolute right-4 top-1/2 -translate-y-1/2" />}
+          </div>
+
+          {open && (
+            <div className="max-h-60 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-sm">
+              {!loading && results.length === 0 ? (
+                <div className="px-4 py-5 text-center text-xs text-slate-400">Nenhum produto encontrado.</div>
+              ) : (
+                results.map((o, i) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onMouseEnter={() => setActive(i)}
+                    onClick={() => choose(o)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 text-left cursor-pointer border-b border-slate-100 last:border-b-0 ${
+                      i === active ? "bg-sky-50" : "bg-white"
+                    }`}
+                  >
+                    <ProductThumb src={o.image} />
+                    <span className="flex-1 min-w-0 text-sm font-semibold text-slate-700 truncate">{o.label}</span>
+                    {o.price != null && <span className="text-[11px] font-bold text-slate-500 flex-shrink-0">{brl(o.price)}</span>}
+                  </button>
+                ))
+              )}
+              {results.length >= 20 && (
+                <div className="px-4 py-2 text-[10px] text-slate-400 bg-slate-50 border-t border-slate-100">
+                  Mostrando 20 resultados. Digite para refinar a busca.
+                </div>
+              )}
+            </div>
+          )}
+
+          {selected && changing && (
+            <button
+              type="button"
+              onClick={() => { setChanging(false); setOpen(false); setQuery(""); }}
+              className="text-[11px] font-bold text-slate-500 hover:underline cursor-pointer"
+            >
+              Cancelar
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
 export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialStoreId }) => {
   const [storeId, setStoreId] = useState<string>(initialStoreId || "");
   const [allVideos, setVideos] = useState<VidVideo[]>([]);
@@ -365,6 +572,37 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     fetchProducts();
   }, [storeId]);
 
+  // Garante que produtos vinculados fora dos 100 primeiros apareçam na tabela
+  useEffect(() => {
+    if (!storeId || allVideos.length === 0) return;
+    const known = new Set(products.map((p) => String(p.id)));
+    const missing = Array.from(
+      new Set(
+        allVideos
+          .map((v) => v.product_id)
+          .filter((id): id is string => !!id && !known.has(String(id)))
+      )
+    );
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const extra: ProductItem[] = [];
+      for (let i = 0; i < missing.length; i += 100) {
+        const { data } = await (supabase as any)
+          .from("products")
+          .select("*")
+          .eq("store_id", storeId)
+          .in("id", missing.slice(i, i + 100));
+        if (data) extra.push(...(data as ProductItem[]));
+      }
+      if (cancelled || extra.length === 0) return;
+      setProducts((prev) => {
+        const have = new Set(prev.map((p) => String(p.id)));
+        return [...prev, ...extra.filter((p) => !have.has(String(p.id)))];
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [allVideos, storeId, products]);
   // Carregar Mídias
   const fetchVideos = async () => {
     setLoading(true);
@@ -1022,18 +1260,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             <label className="block text-[11px] font-extrabold text-slate-400 mb-2 uppercase tracking-wider">
               PRODUTO VINCULADO (OPCIONAL)
             </label>
-            <select
-              value={editProductId}
-              onChange={(e) => setEditProductId(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
-            >
-              <option value="">Nenhum produto vinculado</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name || p.title} {p.price ? `- R$ ${Number(p.price).toFixed(2)}` : ""}
-                </option>
-              ))}
-            </select>
+            <ProductSearchSelect storeId={storeId} value={editProductId} onChange={setEditProductId} seed={products} />
           </div>
 
           {/* MODELO/MEDIDA VINCULADO (OPCIONAL) */}
@@ -1703,18 +1930,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Vincular a um Produto (Opcional)
                 </label>
-                <select
-                  value={externalProduct}
-                  onChange={(e) => setExternalProduct(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] text-slate-700"
-                >
-                  <option value="">Sem produto vinculado</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name || p.title}
-                    </option>
-                  ))}
-                </select>
+                <ProductSearchSelect storeId={storeId} value={externalProduct} onChange={setExternalProduct} seed={products} />
               </div>
 
               <div>
