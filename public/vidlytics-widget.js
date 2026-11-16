@@ -4248,40 +4248,81 @@ if (hasSupabase) {
       return { id: s.id, label: label, ok: stock == null || Number(stock) > 0 };
     }).filter(function (v) { return v.id && v.label; });
   }
-  function vlYVariants(pd, c) {
-    var pid = pd.external_id;
-    if (!pid) return Promise.resolve([]);
-    if (vlYCache[pid]) return vlYCache[pid];
-    var urls = [
-      'https://api.dooki.com.br/v2/' + c.alias + '/public/catalog/products/' + pid + '?include=skus',
-      'https://api.dooki.com.br/v2/' + c.alias + '/catalog/products/' + pid + '?include=skus'
-    ];
-    var i = 0;
-    function next() {
-      if (i >= urls.length) return Promise.resolve([]);
-      return fetch(urls[i++], { credentials: 'omit', headers: { 'Accept': 'application/json' } })
-        .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
-        .then(vlYParse)
-        .then(function (list) { return list.length ? list : next(); })
-        .catch(next);
+  function vlYBalanced(txt, start) {
+    var depth = 0, inStr = false, esc = false;
+    for (var k = start; k < txt.length; k++) {
+      var ch = txt.charAt(k);
+      if (inStr) {
+        if (esc) esc = false;
+        else if (ch === '\\') esc = true;
+        else if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"') inStr = true;
+      else if (ch === '[' || ch === '{') depth++;
+      else if (ch === ']' || ch === '}') { depth--; if (depth === 0) return txt.slice(start, k + 1); }
     }
-    vlYCache[pid] = next();
-    return vlYCache[pid];
+    return '';
+  }
+  function vlYExtractSkus(html) {
+    var rx = /"skus"\s*:\s*\{\s*"data"\s*:\s*\[/;
+    var texts = [html, html.replace(/\\"/g, '"').replace(/\\\//g, '/')];
+    for (var i = 0; i < texts.length; i++) {
+      var m = rx.exec(texts[i]);
+      if (!m) continue;
+      var raw = vlYBalanced(texts[i], m.index + m[0].length - 1);
+      if (!raw) continue;
+      try { return JSON.parse(raw); } catch (e) { /* tenta o proximo */ }
+    }
+    return [];
+  }
+  function vlYVariants(pd, c) {
+    var url = pd.product_url || pd.url || '';
+    if (!url) return Promise.resolve([]);
+    if (vlYCache[url]) return vlYCache[url];
+    vlYCache[url] = fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'text/html' } })
+      .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); })
+      .then(function (html) { return vlYParse({ skus: vlYExtractSkus(html) }); })
+      .catch(function () { return []; });
+    return vlYCache[url];
   }
   function vlYAdd(c, optionId, qty) {
-    return fetch(c.host + '/cart/items', {
-      method: 'POST',
-      credentials: 'omit',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ store_token: c.token, cart_token: c.cartToken, product_option_id: optionId, quantity: qty })
-    }).then(function (r) {
+    var q = '?store_token=' + encodeURIComponent(c.token)
+      + '&cart_token=' + encodeURIComponent(c.cartToken)
+      + '&metadata[source_platform]=store_v2';
+    var cust = {}; cust[optionId] = {};
+    var body = JSON.stringify({
+      store_token: c.token,
+      cart_token: c.cartToken,
+      product_option_id: [optionId],
+      quantity: [qty],
+      customization: cust,
+      item_metadata: [],
+      has_recomm: false,
+      skipShipment: true,
+      metadata: { source_platform: 'store_v2' }
+    });
+    function send(cred) {
+      return fetch(c.host + '/cart/items' + q, {
+        method: 'POST',
+        credentials: cred,
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: body
+      });
+    }
+    return send('include').catch(function () { return send('omit'); }).then(function (r) {
       return r.json().then(function (j) {
         if (!r.ok) throw new Error('yampi ' + r.status);
+        j = j || {};
+        var cart = j.cart || (j.data && j.data.cart) || {};
+        if (!cart.url) {
+          cart.url = c.host + '/cart?store_token=' + encodeURIComponent(c.token) + '&cart_token=' + encodeURIComponent(c.cartToken);
+        }
+        j.cart = cart;
         return j;
       });
     });
   }
-
   function vlOpenCartSheet(pd, cfg, host, videoId) {
     var inner = host.querySelector(':scope > div:not(.vl-comments-panel-full):not(.vl-sizing-panel-full)') || host;
     var prev = inner.querySelector('.vl-cart-sheet-wrap'); if (prev) prev.remove();
