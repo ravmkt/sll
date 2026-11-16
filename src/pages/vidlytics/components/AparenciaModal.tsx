@@ -1794,10 +1794,10 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                             <FormField label="Cor da Borda">
                               <ColorInput value={getC('modal_product_card_border_color') || '#E2E8F0'} onChange={(v: string) => setC('modal_product_card_border_color', v)} />
                             </FormField>
-                            <FormField label="Botão Ver produto (fundo)">
+                            <FormField label="Botão principal (fundo)">
                               <ColorInput value={getC('modal_product_card_button_bg') || '#0094EB'} onChange={(v: string) => setC('modal_product_card_button_bg', v)} />
                             </FormField>
-                            <FormField label="Botão Ver produto (texto)">
+                            <FormField label="Botão principal (texto)">
                               <ColorInput value={getC('modal_product_card_button_color') || '#FFFFFF'} onChange={(v: string) => setC('modal_product_card_button_color', v)} />
                             </FormField>
                             <FormField label="Opacidade do card (100% = sólido)">
@@ -1805,11 +1805,6 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                                 <input type="range" min={0} max={100} step={5} value={Number(getC('modal_product_card_opacity') ?? 100)} onChange={(e) => setC('modal_product_card_opacity', Number(e.target.value))} className="flex-1" />
                                 <span className="text-xs font-bold w-10 text-right">{Number(getC('modal_product_card_opacity') ?? 100)}%</span>
                               </div>
-                            </FormField>
-                            <FormField label="Card compacto (libera os ícones laterais)">
-                              <label className="flex items-center gap-2 text-xs font-semibold">
-                                <input type="checkbox" checked={getC('modal_product_card_compact') !== false} onChange={(e) => setC('modal_product_card_compact', e.target.checked)} /> Ativado
-                              </label>
                             </FormField>
                             <FormField label="Botão Adicionar ao carrinho">
                               <label className="flex items-center gap-2 text-xs font-semibold">
