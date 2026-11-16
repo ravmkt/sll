@@ -613,7 +613,7 @@ function buildBenefits(conf) {
     rpc('widgets_public_config', { p_store_id: STORE_ID }).then(function (conf) {
       if (!conf) return;
           var list = conf.cards || (conf.ruler ? [conf.ruler] : []);
-          list.forEach(function (c) { mount({ ruler: c, style: c.style || conf.style }, c.kind === 'benefits' ? buildBenefits : (c.kind === 'carousel' ? buildCarousel : null)); });
+          list.forEach(function (c) { if (c.placement && typeof ruleOk === 'function' && !ruleOk(c.placement)) return; mount({ ruler: c, style: c.style || conf.style }, c.kind === 'benefits' ? buildBenefits : (c.kind === 'carousel' ? buildCarousel : null)); });
     }).catch(function () {});
   }
 
