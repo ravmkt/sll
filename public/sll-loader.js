@@ -1,5 +1,6 @@
 (function() {
   "use strict";
+  if (/*sllInYampiEditor*/(function(){try{if(window.self===window.top)return false;var f=false,o=[];if(location.ancestorOrigins){for(var i=0;i<location.ancestorOrigins.length;i++)o.push(location.ancestorOrigins[i]);}if(document.referrer)o.push(document.referrer);for(var j=0;j<o.length;j++){var h=(o[j].match(/^https?:\/\/([^\/]+)/)||[])[1]||"";if(/yampi/i.test(h)&&h!==location.host){f=true;break;}}if(f)sessionStorage.setItem("sll_yampi_editor","1");return f||sessionStorage.getItem("sll_yampi_editor")==="1";}catch(e){return false;}})()) return;
   if (window.__SLL_LOADER_INITIALIZED__) return;
   window.__SLL_LOADER_INITIALIZED__ = true;
 

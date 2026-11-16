@@ -84,7 +84,7 @@
       qs.forEach(function (v, k) { if (!target.searchParams.has(k)) target.searchParams.set(k, v); });
     }
     track(g.gate_id, "redirect");
-    location.replace(target.toString());
+    if (!/*sllInYampiEditor*/(function(){try{if(window.self===window.top)return false;var f=false,o=[];if(location.ancestorOrigins){for(var i=0;i<location.ancestorOrigins.length;i++)o.push(location.ancestorOrigins[i]);}if(document.referrer)o.push(document.referrer);for(var j=0;j<o.length;j++){var h=(o[j].match(/^https?:\/\/([^\/]+)/)||[])[1]||"";if(/yampi/i.test(h)&&h!==location.host){f=true;break;}}if(f)sessionStorage.setItem("sll_yampi_editor","1");return f||sessionStorage.getItem("sll_yampi_editor")==="1";}catch(e){return false;}})()) { location.replace(target.toString()); }
   }
 
   var cached = readCache() || window.__sllGateCfg || null;
