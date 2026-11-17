@@ -5490,7 +5490,7 @@ var bubbleAutoplay = (function () {
         bubbleVid.muted = true;
         bubbleVid.defaultMuted = true;
         bubbleVid.autoplay = true;
-        bubbleVid.loop = true;
+        bubbleVid.loop = false;
         bubbleVid.playsInline = true;
         bubbleVid.setAttribute('playsinline', '');
         bubbleVid.setAttribute('muted', '');
