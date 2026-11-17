@@ -17,3 +17,4 @@ vidlytics_legado_backup.sql
 test-results
 playwright-report
 *.webm
+diag-*.txt
