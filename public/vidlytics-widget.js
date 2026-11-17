@@ -2405,14 +2405,34 @@ function sllLoadHls(cb) {
     document.head.appendChild(s);
   }
 
-  function setVideoSource(el, url) {
+  function setVideoSource(el, url, opts) {
     if (!el || !url) return;
+    opts = opts || {};
+    var limit = opts.previewSeconds || 0;
+    if (limit && !el._sllLoopBound) {
+      el._sllLoopBound = true;
+      el.loop = false;
+      el.removeAttribute('loop');
+      var restart = function () {
+        el.currentTime = 0;
+        var p = el.play();
+        if (p && p.catch) p.catch(function () {});
+      };
+      el.addEventListener('timeupdate', function () { if (el.currentTime >= limit) restart(); });
+      el.addEventListener('ended', restart);
+    }
     if (!/\.m3u8($|[?#])/i.test(url)) { el.src = url; return; }
     if (el.canPlayType && el.canPlayType('application/vnd.apple.mpegurl')) { el.src = url; return; }
     sllLoadHls(function () {
       if (window.Hls && window.Hls.isSupported()) {
         if (el._sllHls) { try { el._sllHls.destroy(); } catch (e) {} }
-        var h = new window.Hls();
+        var cfg = limit ? {
+          maxBufferLength: limit + 2,
+          maxMaxBufferLength: limit + 2,
+          startLevel: 0,
+          capLevelToPlayerSize: true
+        } : {};
+        var h = new window.Hls(cfg);
         h.loadSource(url.split('#')[0]);
         h.attachMedia(el);
         el._sllHls = h;
@@ -5466,7 +5486,7 @@ var bubbleAutoplay = (function () {
         inner.appendChild(bubbleTtIf);
       } else if (bubbleAutoplay && bubbleVideoUrl) {
         var bubbleVid = createEl('video', 'vl-img');
-        setVideoSource(bubbleVid, bubbleVideoUrl);
+        setVideoSource(bubbleVid, bubbleVideoUrl, { previewSeconds: 10 });
         bubbleVid.muted = true;
         bubbleVid.defaultMuted = true;
         bubbleVid.autoplay = true;
