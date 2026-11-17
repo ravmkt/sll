@@ -70,7 +70,7 @@ const GB_BYTES = 1024 * 1024 * 1024;
 const vidGuid = (s?: string | null) =>
   (String(s || "").match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i) || [""])[0].toLowerCase();
 
-const HoverPreview: React.FC<{ src: string; poster?: string }> = ({ src, poster }) => {
+const HlsHover: React.FC<{ src: string; poster?: string }> = ({ src, poster }) => {
   const ref = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const v = ref.current;
@@ -92,9 +92,24 @@ const HoverPreview: React.FC<{ src: string; poster?: string }> = ({ src, poster 
     }
     return () => { dead = true; if (hls) hls.destroy(); };
   }, [src]);
+  return <video ref={ref} poster={poster} muted loop playsInline className="w-full h-full object-contain" />;
+};
+
+const HoverPreview: React.FC<{ src: string; poster?: string }> = ({ src, poster }) => {
+  const [webpFailed, setWebpFailed] = useState(false);
+  const base = (String(src || "").match(/^(https?:\/\/[^/]+\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\//i) || [])[1];
   return (
     <div className="absolute inset-0 bg-black pointer-events-none">
-      <video ref={ref} poster={poster} muted loop playsInline className="w-full h-full object-contain" />
+      {base && !webpFailed ? (
+        <img
+          src={`${base}/preview.webp`}
+          alt=""
+          className="w-full h-full object-contain"
+          onError={() => setWebpFailed(true)}
+        />
+      ) : (
+        <HlsHover src={src} poster={poster} />
+      )}
     </div>
   );
 };
