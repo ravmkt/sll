@@ -2396,8 +2396,36 @@ whatsapp_enabled: store.whatsapp_enabled !== false,
     });
   }
 
-function getVideoUrl(video) {
+function sllLoadHls(cb) {
+    if (window.Hls) { cb(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js';
+    s.onload = cb;
+    s.onerror = cb;
+    document.head.appendChild(s);
+  }
+
+  function setVideoSource(el, url) {
+    if (!el || !url) return;
+    if (!/\.m3u8($|\?)/i.test(url)) { el.src = url; return; }
+    if (el.canPlayType && el.canPlayType('application/vnd.apple.mpegurl')) { el.src = url; return; }
+    sllLoadHls(function () {
+      if (window.Hls && window.Hls.isSupported()) {
+        if (el._sllHls) { try { el._sllHls.destroy(); } catch (e) {} }
+        var h = new window.Hls();
+        h.loadSource(url);
+        h.attachMedia(el);
+        el._sllHls = h;
+      } else {
+        el.src = url;
+      }
+    });
+  }
+
+  function getVideoUrl(video) {
     if (!video) return '';
+    var _hls = video.hls_url || video.hlsUrl;
+    if (_hls && /^https?:\/\//i.test(String(_hls))) return String(_hls).trim();
     var rawUrl = firstDefined(
       video.video_url, video.videoUrl, video.url, video.source_url,
       video.sourceUrl, video.file_url, video.fileUrl, video.video, video.src, ''
@@ -2414,7 +2442,7 @@ function getVideoUrl(video) {
 
   function isDirectVideoUrl(url) {
     if (!url) return false;
-    return VIDEO_FILE_REGEX.test(url) || url.indexOf('/storage/v1/object/') !== -1;
+    return VIDEO_FILE_REGEX.test(url) || /\.m3u8($|\?)/i.test(url) || url.indexOf('/storage/v1/object/') !== -1;
   }
 
   function primeVideoFrame(vidEl) {
