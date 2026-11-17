@@ -5235,6 +5235,17 @@ function __vlLiftOverlay() {
   } catch (e) { /* noop */ }
 }
 
+function vlOpenFrom(item) {
+  var list = item.srcStories, sIdx = item.storyIndex, vIdx = item.videoIndex, k = -1;
+  if (list && list !== currentStories) {
+    for (var i = 0; i < currentStories.length; i++) {
+      if (item.storyId != null && String(currentStories[i].id) === String(item.storyId)) { k = i; break; }
+    }
+    if (k >= 0) sIdx = k; else currentStories = list;
+  }
+  try { console.log('[vl-idx]', { storyId: item.storyId, sIdx: sIdx, vIdx: vIdx, mesmaLista: list === currentStories, total: currentStories.length }); } catch (e) {}
+  openStoryModal(sIdx, vIdx);
+}
 function openStoryModal(storyIndex, videoIndex) {
   __vlLiftOverlay();
   setTimeout(__vlLiftOverlay, 0);
@@ -5930,7 +5941,7 @@ function cloneItemDeeply(original, index, isClone) {
           return;
         }
         if (e.target.closest && e.target.closest('.vidlytics-dc-product-card')) return;
-        openStoryModal(item.storyIndex, item.videoIndex);
+        vlOpenFrom(item);
       });
 
       if (cfg.showProduct) {
@@ -7346,8 +7357,7 @@ function renderGridWidget(container, stories, appearance) {
     videos.forEach(function (video, videoIdx) {
       allVideos.push({
         story: story,
-        storyIndex: storyIdx,
-        video: video,
+        storyIndex: storyIdx, srcStories: stories, storyId: story.id, video: video,
         videoIndex: videoIdx
       });
     });
@@ -7585,7 +7595,7 @@ img.style.cssText = 'width:100%;height:100%;object-fit:' + cfg.objectFit + ';dis
 
     card.addEventListener('click', function (e) {
       e.preventDefault();
-      openStoryModal(item.storyIndex, item.videoIndex);
+      vlOpenFrom(item);
       sendAnalyticsEvent('video_view', item.video ? item.video.id : null, null);
     });
 
@@ -7828,7 +7838,7 @@ if (displayMode === 'dynamic_carousel') {
         videos: [video],       // mantém compat com firstVideo = item.videos[0]
         storyIndex: sIdx,
         videoIndex: vIdx,
-        id: story.id + '_' + vIdx,
+        id: story.id + '_' + vIdx, storyId: story.id, srcStories: stories,
         product_id: video.product_id || video.productId || null
       }));
     });
