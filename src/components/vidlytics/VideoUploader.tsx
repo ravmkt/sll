@@ -1,16 +1,7 @@
 import { useRef, useState } from "react";
-import * as tus from "tus-js-client";
-import { supabase } from "@/lib/supabase";
+import { uploadVideoToBunny } from "@/services/vidlytics/bunnyUpload";
 
 type Props = { storeId: string; onDone?: (videoId: string) => void };
-
-const ERRORS: Record<string, string> = {
-  video_limit_reached: "Limite de vídeos do plano atingido.",
-  storage_limit_reached: "Limite de armazenamento do plano atingido.",
-  plan_not_found: "Plano não encontrado.",
-  forbidden: "Sem permissão para esta loja.",
-  unauthorized: "Sessão expirada. Faça login novamente.",
-};
 
 export default function VideoUploader({ storeId, onDone }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -23,37 +14,14 @@ export default function VideoUploader({ storeId, onDone }: Props) {
     setProgress(0);
     setBusy(true);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("video-upload-init", {
-        body: { store_id: storeId, title: file.name.replace(/\.[^.]+$/, "") },
-      });
-      if (fnError || !data?.video_id) {
-        let code = "";
-        try {
-          code = (await (fnError as any)?.context?.json())?.error ?? "";
-        } catch {}
-        throw new Error(ERRORS[code] ?? code ?? fnError?.message ?? "Falha ao iniciar upload.");
-      }
-
-      const upload = new tus.Upload(file, {
-        endpoint: data.endpoint,
-        retryDelays: [0, 3000, 5000, 10000, 20000],
-        headers: data.headers,
-        metadata: { filetype: file.type, title: file.name },
-        onError: (err) => {
-          setError(err.message);
-          setBusy(false);
-        },
-        onProgress: (sent, total) => setProgress(Math.round((sent / total) * 100)),
-        onSuccess: () => {
-          setBusy(false);
-          setProgress(100);
-          onDone?.(data.video_id);
-        },
-      });
-      upload.start();
+      const videoId = await uploadVideoToBunny(storeId, file, setProgress);
+      setProgress(100);
+      onDone?.(videoId);
     } catch (e: any) {
-      setError(e.message || "Erro inesperado.");
+      setError(e?.message || "Erro inesperado.");
+    } finally {
       setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
     }
   }
 
