@@ -5243,7 +5243,6 @@ function vlOpenFrom(item) {
     }
     if (k >= 0) sIdx = k; else currentStories = list;
   }
-  try { console.log('[vl-idx]', { storyId: item.storyId, sIdx: sIdx, vIdx: vIdx, mesmaLista: list === currentStories, total: currentStories.length }); } catch (e) {}
   openStoryModal(sIdx, vIdx);
 }
 function openStoryModal(storyIndex, videoIndex) {
