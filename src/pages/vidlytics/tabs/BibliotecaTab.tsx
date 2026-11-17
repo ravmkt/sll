@@ -23,7 +23,7 @@ import {
   Link2,
   ArrowLeft,
   AlertTriangle,
-  Save
+  Save, List, LayoutGrid, MoreHorizontal
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
@@ -66,6 +66,27 @@ interface BibliotecaTabProps {
 }
 
 const GB_BYTES = 1024 * 1024 * 1024;
+
+const fmtDuration = (s?: number | null) => {
+  const n = Math.round(Number(s) || 0);
+  if (!n) return "—";
+  const m = Math.floor(n / 60);
+  const r = n % 60;
+  return m ? `${m}min ${String(r).padStart(2, "0")}s` : `${r}s`;
+};
+
+const fmtMB = (b?: number | null) => {
+  const n = Number(b) || 0;
+  if (!n) return "—";
+  return n >= GB_BYTES ? `${(n / GB_BYTES).toFixed(2)} GB` : `${(n / 1048576).toFixed(2)} MB`;
+};
+
+const statusInfo = (st?: string) => {
+  if (st === "failed") return { label: "FALHOU", cls: "bg-rose-50 text-rose-600 border-rose-100" };
+  if (st && ["processing", "uploading", "queued", "transcoding"].includes(st))
+    return { label: "PROCESSANDO", cls: "bg-amber-50 text-amber-600 border-amber-100" };
+  return { label: "DISPONÍVEL", cls: "bg-emerald-50 text-emerald-600 border-emerald-100" };
+};
 const BUCKET_NAME = "videos";
 const MAX_FILE_BYTES = 30 * 1024 * 1024;
 
@@ -412,6 +433,25 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   // Filtros
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState<"TODOS" | "VIDEOS" | "IMAGENS">("TODOS");
+  const [viewMode, setViewMode] = useState<"list" | "grid">(() => {
+    try { return localStorage.getItem("vid_biblioteca_view") === "grid" ? "grid" : "list"; } catch { return "list"; }
+  });
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [viewsMap, setViewsMap] = useState<Record<string, number>>({});
+  useEffect(() => {
+    try { localStorage.setItem("vid_biblioteca_view", viewMode); } catch {}
+  }, [viewMode]);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data, error } = await (supabase as any).from("daily_video_metrics").select("video_id, views_count");
+      if (!alive || error || !data) return;
+      const m: Record<string, number> = {};
+      for (const r of data as any[]) if (r.video_id) m[r.video_id] = (m[r.video_id] || 0) + (Number(r.views_count) || 0);
+      setViewsMap(m);
+    })();
+    return () => { alive = false; };
+  }, [videos.length]);
 
   // Visualização e Subpáginas
   const [previewMedia, setPreviewMedia] = useState<VidVideo | null>(null);
@@ -1602,223 +1642,293 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       </div>
 
       {/* Tabela de Mídias */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
             {filteredVideos.length} MÍDIAS LISTADAS
-                <label className="ml-4 inline-flex items-center gap-2 cursor-pointer normal-case font-semibold">
-                  <input type="checkbox" checked={isAllSelected()} onChange={toggleSelectAll} className="h-4 w-4 cursor-pointer accent-[#0094eb]" />
-                  Selecionar todos
-                </label>
-                {selectedCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setBulkDeleteOpen(true)}
-                    className="ml-3 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1 text-xs font-bold normal-case text-white hover:bg-rose-700 cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Excluir selecionados ({selectedCount})
-                  </button>
-                )}
+            <label className="ml-4 inline-flex items-center gap-2 cursor-pointer normal-case font-semibold">
+              <input type="checkbox" checked={isAllSelected()} onChange={toggleSelectAll} className="h-4 w-4 cursor-pointer accent-[#0094eb]" />
+              Selecionar todos
+            </label>
+            {selectedCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setBulkDeleteOpen(true)}
+                className="ml-3 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1 text-xs font-bold normal-case text-white hover:bg-rose-700 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Excluir selecionados ({selectedCount})
+              </button>
+            )}
           </span>
-          <button
-            onClick={fetchVideos}
-            disabled={loading}
-            className="text-xs text-[#0088ff] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            Atualizar
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={fetchVideos}
+              disabled={loading}
+              className="text-xs text-[#0088ff] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              Atualizar
+            </button>
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+              <button
+                type="button"
+                title="Grade"
+                onClick={() => setViewMode("grid")}
+                className={`p-1.5 rounded-lg cursor-pointer transition ${viewMode === "grid" ? "bg-white text-[#0088ff] shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                title="Lista"
+                onClick={() => setViewMode("list")}
+                className={`p-1.5 rounded-lg cursor-pointer transition ${viewMode === "list" ? "bg-white text-[#0088ff] shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        {loading ? (
-          <div className="py-20 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin text-[#0088ff] mx-auto mb-2" />
-            <p className="text-sm text-slate-500">Carregando mídias...</p>
-          </div>
-        ) : filteredVideos.length === 0 ? (
-          <div className="py-20 text-center p-6">
-            <UploadCloud className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-700">Nenhuma mídia encontrada</h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-              Faça upload ou adicione mídias por URL externa para começar.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/60 border-b border-slate-100 text-slate-400 font-extrabold uppercase tracking-wider">
-                <tr>
-                  <th className="py-3 pl-6 pr-0 w-8"><input type="checkbox" checked={isAllSelected()} onChange={toggleSelectAll} className="h-4 w-4 cursor-pointer accent-[#0094eb]" /></th>
-                  <th className="py-3.5 px-6">MÍDIA</th>
-                  <th className="py-3.5 px-6">NOME DO ARQUIVO</th>
-                  <th className="py-3.5 px-6">PRODUTO</th>
-                  <th className="py-3.5 px-6">STORY VINCULADO</th>
-                  <th className="py-3.5 px-6">TAMANHO</th>
-                  <th className="py-3.5 px-6">STATUS</th>
-                  <th className="py-3.5 px-6 text-right">AÇÕES</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredVideos.map((video) => {
-                  const isImg = isImageFile(video.video_url);
-                  const ytId = extractYouTubeId(video.video_url);
-                  const matchedProduct = products.find((p) => p.id === video.product_id);
+        {(() => {
+          if (loading) {
+            return (
+              <div className="py-20 text-center">
+                <RefreshCw className="w-8 h-8 animate-spin text-[#0088ff] mx-auto mb-2" />
+                <p className="text-sm text-slate-500">Carregando mídias...</p>
+              </div>
+            );
+          }
+          if (filteredVideos.length === 0) {
+            return (
+              <div className="py-20 text-center p-6">
+                <UploadCloud className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-slate-700">Nenhuma mídia encontrada</h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                  Faça upload ou adicione mídias por URL externa para começar.
+                </p>
+              </div>
+            );
+          }
 
-                  // Definir a thumb correta
-                  let thumbSrc = video.thumbnail_url;
-                  if (!thumbSrc && ytId) {
-                    thumbSrc = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-                  }
+          const meta = (v: any) => {
+            const isImg = isImageFile(v.video_url);
+            const ytId = extractYouTubeId(v.video_url);
+            const thumb: string =
+              v.thumbnail_url || v.thumb_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : "") || (isImg ? v.video_url : "");
+            const type = ytId
+              ? "YOUTUBE SHORTS"
+              : isImg
+              ? "IMAGEM (HOSPEDADA)"
+              : v.video_source_type === "external"
+              ? "VÍDEO (URL EXTERNA)"
+              : v.video_source_type === "tiktok"
+              ? "TIKTOK"
+              : v.video_source_type === "instagram" || /\/ig_\d+\.mp4/.test(String(v.video_url || ""))
+              ? "INSTAGRAM"
+              : "VÍDEO MP4 (HOSPEDADO)";
+            return {
+              isImg,
+              thumb,
+              type,
+              views: viewsMap[v.id] ?? 0,
+              dur: fmtDuration(v.duration_seconds),
+              size: fmtMB(v.size_bytes ?? v.file_size_bytes),
+              st: statusInfo(v.status),
+              product: products.find((p) => p.id === v.product_id),
+            };
+          };
 
-                  return (
-                    <tr key={video.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-3.5 pl-6 pr-0 w-8">
-                        <input type="checkbox" checked={selectedIds.has(video.id)} onChange={() => toggleSelect(video.id)} className="h-4 w-4 cursor-pointer accent-[#0094eb]" />
-                      </td>
-                      {/* Thumbnail Mídia */}
-                      <td className="py-3.5 px-6">
-                        <div className="w-12 h-12 rounded-xl bg-slate-900 overflow-hidden relative flex items-center justify-center border border-slate-200/60 flex-shrink-0">
-                          {thumbSrc ? (
-                            <img
-                              src={thumbSrc}
-                              alt={video.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : isImg ? (
-                            <img
-                              src={video.video_url}
-                              alt={video.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                              <Play className="w-4 h-4 text-white" />
+          const renderThumb = (v: any, m: any, cls: string) => (
+            <div className={`${cls} bg-slate-900 overflow-hidden relative flex items-center justify-center flex-shrink-0`}>
+              {m.thumb ? (
+                <img src={m.thumb} alt={v.title} loading="lazy" className="w-full h-full object-cover" />
+              ) : (
+                <Play className="w-4 h-4 text-white" />
+              )}
+              {!m.isImg && m.thumb && (
+                <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
+                  <Play className="w-3.5 h-3.5 text-white fill-white" />
+                </div>
+              )}
+            </div>
+          );
+
+          if (viewMode === "list") {
+            return (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50/60 border-b border-slate-100 text-slate-400 font-extrabold uppercase tracking-wider">
+                    <tr>
+                      <th className="py-3 pl-6 pr-0 w-8"><input type="checkbox" checked={isAllSelected()} onChange={toggleSelectAll} className="h-4 w-4 cursor-pointer accent-[#0094eb]" /></th>
+                      <th className="py-3.5 px-4">NOME DO ARQUIVO</th>
+                      <th className="py-3.5 px-4">PRODUTO</th>
+                      <th className="py-3.5 px-4">STORY VINCULADO</th>
+                      <th className="py-3.5 px-4">DURAÇÃO</th>
+                      <th className="py-3.5 px-4">TAMANHO</th>
+                      <th className="py-3.5 px-4">VIEWS</th>
+                      <th className="py-3.5 px-4">STATUS</th>
+                      <th className="py-3.5 px-6 text-right">AÇÕES</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredVideos.map((video) => {
+                      const m = meta(video);
+                      return (
+                        <tr key={video.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3 pl-6 pr-0 w-8">
+                            <input type="checkbox" checked={selectedIds.has(video.id)} onChange={() => toggleSelect(video.id)} className="h-4 w-4 cursor-pointer accent-[#0094eb]" />
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              {renderThumb(video, m, "w-16 h-10 rounded-lg border border-slate-200/60")}
+                              <div className="min-w-0">
+                                <div className="font-bold text-slate-800 text-[13px] line-clamp-1 max-w-[280px]" title={video.title}>{video.title}</div>
+                                <div className="text-[10px] font-bold text-[#0088ff] uppercase tracking-wider mt-0.5">{m.type}</div>
+                              </div>
                             </div>
-                          )}
-
-                          {!isImg && (
-                            <div className="absolute inset-0 bg-black/25 flex items-center justify-center pointer-events-none">
-                              <Play className="w-3.5 h-3.5 text-white fill-white" />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Nome do Arquivo */}
-                      <td className="py-3.5 px-6">
-                        <div className="font-bold text-slate-800 text-[13px] line-clamp-1 max-w-[280px]" title={video.title}>
-                          {video.title}
-                        </div>
-                        <div className="text-[10px] font-bold text-[#0088ff] uppercase tracking-wider mt-0.5">
-                          {ytId
-                            ? "YOUTUBE SHORTS"
-                            : isImg
-                            ? "IMAGEM (HOSPEDADA)"
-                            : video.video_source_type === "external"
-                            ? "VÍDEO (URL EXTERNA)"
-                            : video.video_source_type === "tiktok" ? "TIKTOK" : (video.video_source_type === "instagram" || /\/ig_\d+\.mp4/.test(String(video.video_url || ""))) ? "INSTAGRAM" : "VÍDEO MP4 (HOSPEDADO)"}
-                        </div>
-                      </td>
-
-                      {/* Produto Vinculado */}
-                      <td className="py-3.5 px-6">
-                        {matchedProduct ? (
-                          <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full text-slate-700 text-xs font-medium max-w-[180px]">
-                            {matchedProduct.thumbnail || matchedProduct.image_url ? (
-                              <img
-                                src={matchedProduct.thumbnail || matchedProduct.image_url}
-                                alt=""
-                                className="w-4 h-4 rounded-full object-cover"
-                              />
-                            ) : null}
-                            <span className="truncate">{matchedProduct.name || matchedProduct.title}</span>
-                          </div>
-                        ) : (
-                          <span className="inline-block px-3 py-1 bg-slate-100 rounded-full text-slate-400 text-[11px] font-medium">
-                            Sem produto
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Story Vinculado */}
-                      <td className="py-3.5 px-6">
-                        {video.story_title ? (
-                          <span className="inline-block px-3 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-full text-[11px] font-bold uppercase">
-                            {video.story_title}
-                          </span>
-                        ) : (
-                          <span className="text-slate-300 font-bold text-sm">—</span>
-                        )}
-                      </td>
-
-                      {/* Tamanho */}
-                      <td className="py-3.5 px-6 font-semibold text-slate-600 text-xs">
-                        {formatFileSize(video.file_size_bytes)}
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-3.5 px-6">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[11px] font-bold">
-                          <CheckCircle className="w-3.5 h-3.5" />
-                          DISPONÍVEL
-                        </span>
-                      </td>
-
-                      {/* Ações */}
-                      <td className="py-3.5 px-6 text-right">
-                        <div className="inline-flex items-center gap-2 text-slate-400">
-                          <button
-                            onClick={() => openEditPage(video)}
-                            className="p-1 hover:text-slate-700 transition cursor-pointer"
-                            title="Editar"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setPreviewMedia(video)}
-                            className="p-1 hover:text-slate-700 transition cursor-pointer"
-                            title="Visualizar"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          {video.video_url && (
-                            isExternalMedia(video) ? (
-                                  <a
-                                    href={video.video_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="p-1 hover:text-slate-700 transition"
-                                    title="Abrir link"
-                                  >
+                          </td>
+                          <td className="py-3 px-4">
+                            {m.product ? (
+                              <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full text-slate-700 text-xs font-medium max-w-[180px]">
+                                {m.product.thumbnail || m.product.image_url ? (
+                                  <img src={m.product.thumbnail || m.product.image_url} alt="" className="w-4 h-4 rounded-full object-cover" />
+                                ) : null}
+                                <span className="truncate">{m.product.name || m.product.title}</span>
+                              </div>
+                            ) : (
+                              <span className="inline-block px-3 py-1 bg-slate-100 rounded-full text-slate-400 text-[11px] font-medium">Sem produto</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            {video.story_title ? (
+                              <span className="inline-block px-3 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-full text-[11px] font-bold uppercase">{video.story_title}</span>
+                            ) : (
+                              <span className="text-slate-300 font-bold text-sm">—</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 font-semibold text-slate-600">{m.dur}</td>
+                          <td className="py-3 px-4 font-semibold text-slate-600">{m.size}</td>
+                          <td className="py-3 px-4 font-semibold text-slate-600">{m.views.toLocaleString("pt-BR")}</td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 border rounded-full text-[11px] font-bold ${m.st.cls}`}>
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              {m.st.label}
+                            </span>
+                          </td>
+                          <td className="py-3 px-6 text-right">
+                            <div className="inline-flex items-center gap-2 text-slate-400">
+                              <button onClick={() => openEditPage(video)} className="p-1 hover:text-slate-700 transition cursor-pointer" title="Editar">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => setPreviewMedia(video)} className="p-1 hover:text-slate-700 transition cursor-pointer" title="Visualizar">
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              {video.video_url && (
+                                isExternalMedia(video) ? (
+                                  <a href={video.video_url} target="_blank" rel="noreferrer" className="p-1 hover:text-slate-700 transition" title="Abrir link">
                                     <Download className="w-4 h-4" />
                                   </a>
                                 ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => downloadMedia(video)}
-                                    className="p-1 hover:text-slate-700 transition cursor-pointer"
-                                    title="Baixar arquivo"
-                                  >
+                                  <button type="button" onClick={() => downloadMedia(video)} className="p-1 hover:text-slate-700 transition cursor-pointer" title="Baixar arquivo">
                                     <Download className="w-4 h-4" />
                                   </button>
                                 )
-                          )}
-                          <button
-                            onClick={() => openDeleteModal(video)}
-                            className="p-1 hover:text-red-600 transition cursor-pointer"
-                            title="Excluir"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                              )}
+                              <button onClick={() => openDeleteModal(video)} className="p-1 hover:text-red-600 transition cursor-pointer" title="Excluir">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          }
+
+          return (
+            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredVideos.map((video) => {
+                const m = meta(video);
+                const open = menuOpenId === video.id;
+                const menuItem = "w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer text-left";
+                return (
+                  <div key={video.id} className={`relative bg-white border rounded-2xl shadow-sm ${selectedIds.has(video.id) ? "border-[#0094eb] ring-2 ring-sky-100" : "border-slate-200/80"}`}>
+                    <div className="relative">
+                      {renderThumb(video, m, "w-full aspect-video rounded-t-2xl")}
+                      <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                        <span className="bg-white/90 rounded-md p-1 flex">
+                          <input type="checkbox" checked={selectedIds.has(video.id)} onChange={() => toggleSelect(video.id)} className="h-3.5 w-3.5 cursor-pointer accent-[#0094eb]" />
+                        </span>
+                        <span className="bg-white/90 text-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                          {m.views.toLocaleString("pt-BR")} views
+                        </span>
+                      </div>
+                      <div className="absolute top-2 right-2">
+                        <button
+                          type="button"
+                          onClick={() => setMenuOpenId(open ? null : video.id)}
+                          className="bg-white/90 hover:bg-white rounded-full w-7 h-7 flex items-center justify-center text-slate-600 cursor-pointer"
+                          title="Ações"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                        {open && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
+                            <div className="absolute right-0 top-9 z-20 w-40 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                              <button className={menuItem} onClick={() => { setMenuOpenId(null); openEditPage(video); }}>
+                                <Edit2 className="w-3.5 h-3.5" /> Editar
+                              </button>
+                              <button className={menuItem} onClick={() => { setMenuOpenId(null); setPreviewMedia(video); }}>
+                                <Eye className="w-3.5 h-3.5" /> Visualizar
+                              </button>
+                              {video.video_url && (
+                                isExternalMedia(video) ? (
+                                  <a href={video.video_url} target="_blank" rel="noreferrer" className={menuItem} onClick={() => setMenuOpenId(null)}>
+                                    <Download className="w-3.5 h-3.5" /> Abrir link
+                                  </a>
+                                ) : (
+                                  <button className={menuItem} onClick={() => { setMenuOpenId(null); downloadMedia(video); }}>
+                                    <Download className="w-3.5 h-3.5" /> Baixar
+                                  </button>
+                                )
+                              )}
+                              <button className={`${menuItem} text-red-600 hover:bg-red-50`} onClick={() => { setMenuOpenId(null); openDeleteModal(video); }}>
+                                <Trash2 className="w-3.5 h-3.5" /> Excluir
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      <div className="font-bold text-[13px] text-[#0b5fc4] line-clamp-2 min-h-[2.5rem]" title={video.title}>{video.title}</div>
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                        <span>{m.dur}</span>
+                        <span>{m.size}</span>
+                        <span className={`px-2 py-0.5 border rounded-full text-[10px] font-bold ${m.st.cls}`}>{m.st.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="inline-block px-2.5 py-0.5 bg-slate-100 rounded-full text-slate-500 text-[10px] font-medium max-w-full truncate">
+                          {m.product ? (m.product.name || m.product.title) : "Sem produto"}
+                        </span>
+                        {video.story_title && (
+                          <span className="inline-block px-2.5 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-full text-[10px] font-bold uppercase max-w-full truncate">
+                            {video.story_title}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ========================================================= */}
