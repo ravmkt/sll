@@ -25,8 +25,8 @@ Deno.serve(async (req) => {
     const { store_id, title } = await req.json();
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const { data: store } = await admin.from("stores").select("id, plan, owner_id").eq("id", store_id).single();
-    if (!store || store.owner_id !== user.id) return json({ error: "forbidden" }, 403);
+    const { data: store } = await admin.from("stores").select("id, plan, owner_user_id").eq("id", store_id).single();
+    if (!store || store.owner_user_id !== user.id) return json({ error: "forbidden" }, 403);
 
     const { data: limits } = await admin.from("plan_limits").select("*").eq("plan", store.plan ?? "basic").single();
     if (!limits) return json({ error: "plan_not_found" }, 400);
@@ -64,3 +64,4 @@ Deno.serve(async (req) => {
     return json({ error: String(e) }, 500);
   }
 });
+

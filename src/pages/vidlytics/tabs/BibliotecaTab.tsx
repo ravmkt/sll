@@ -1,3 +1,5 @@
+import { uploadVideoToBunny } from "@/services/vidlytics/bunnyUpload";
+import HlsPlayer from "@/components/vidlytics/HlsPlayer";
 import PageTour from '@/components/tour/PageTour';
 import TourTagger from '@/tours/TourTagger';
 import { BIBLIOTECA_TOUR, BIBLIOTECA_TAGS } from '@/tours/vidlyticsTabsTours';
@@ -447,6 +449,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       .then(({ data }: any) => setSizingModels(data || []));
   }, [storeId]);
   const [editStatus, setEditStatus] = useState<string>("active");
+  const [editHlsUrl, setEditHlsUrl] = useState<string>("");
   const [editStoryTitle, setEditStoryTitle] = useState<string>("");
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
 
@@ -620,7 +623,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         console.error("[BibliotecaTab] Erro ao buscar vídeos:", error);
         setErrorMsg(error.message);
       } else {
-        setVideos(data || []);
+        setVideos((data || []).map((v: any) => ({ ...v, video_url: v.video_url || v.hls_url || "", thumbnail_url: v.thumbnail_url || v.thumb_url || "" })));
       }
     } catch (err: any) {
       console.error("[BibliotecaTab] Catch fetchVideos:", err);
@@ -675,9 +678,9 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (files.length === 0) return;
 
-    const tooBig = files.filter((f) => f.size > MAX_FILE_BYTES);
+    const tooBig = files.filter((f) => f.type.startsWith("image/") && f.size > MAX_FILE_BYTES);
     if (tooBig.length > 0) {
-      setErrorMsg(`Limite de 30 MB por arquivo. Excedem: ${tooBig.map((f) => f.name).join(", ")}`);
+      setErrorMsg(`Limite de 30 MB por imagem. Excedem: ${tooBig.map((f) => f.name).join(", ")}`);
       return;
     }
 
@@ -699,7 +702,13 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       const file = files[i];
       setUploadProgress(`${i + 1}/${files.length}`);
       const uploaded: string[] = [];
-      try {
+          try {
+            if (file.type.startsWith("video/") && storeId) {
+              const videoId = await uploadVideoToBunny(storeId, file, (pct) => setUploadProgress(`${i + 1}/${files.length} · ${pct}%`));
+              if (activeFolderId) await vidlyticsDb.from("vid_videos").update({ folder_id: activeFolderId }).eq("id", videoId);
+              ok++;
+              continue;
+            }
         const fileExt = file.name.split(".").pop();
         const uniqueId = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
         const fileName = `${targetStoreId}/${uniqueId}.${fileExt}`;
@@ -759,7 +768,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         if (uploaded.length > 0) {
           await supabase.storage.from(BUCKET_NAME).remove(uploaded);
         }
-        failed.push(file.name);
+        failed.push(file.name + (err?.message ? ` (${err.message})` : ""));
         if (quotaKind) break;
       }
     }
@@ -912,7 +921,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     setEditingVideo(video);
     setEditTitle(video.title || "");
     setEditSourceType(video.video_source_type || "upload");
-    setEditVideoUrl(video.video_url || "");
+    setEditVideoUrl(video.video_url || ""); setEditHlsUrl((video as any).hls_url || "");
     setEditFileSize(null);
 
     const ytId = extractYouTubeId(video.video_url);
@@ -953,7 +962,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
       const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
       setEditVideoUrl(urlData.publicUrl);
-      setEditSourceType("upload");
+      setEditSourceType("upload"); setEditHlsUrl("");
       setEditFileSize(file.size);
 
       // Gerar nova thumb
@@ -1182,12 +1191,11 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                     allowFullScreen
                   />
                 ) : (
-                  <video
-                    src={editVideoUrl}
-                    poster={editThumbnailUrl}
-                    controls
-                    className="w-full h-full object-cover"
-                  />
+                  editHlsUrl ? (
+                      <HlsPlayer src={editHlsUrl} poster={editThumbnailUrl} className="w-full h-full object-cover" />
+                    ) : (
+                      <video src={editVideoUrl} poster={editThumbnailUrl} controls className="w-full h-full object-cover" />
+                    )
                 )}
               </div>
             </div>
@@ -1850,14 +1858,11 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                     allowFullScreen
                   />
                 ) : (
-                  <video
-                    src={previewMedia.video_url}
-                    poster={previewMedia.thumbnail_url}
-                    controls
-                    autoPlay
-                    playsInline
-                    className="w-full h-full object-cover"
-                  />
+                  (previewMedia as any).hls_url ? (
+                      <HlsPlayer src={(previewMedia as any).hls_url} poster={previewMedia.thumbnail_url} autoPlay className="w-full h-full object-cover" />
+                    ) : (
+                      <video src={previewMedia.video_url} poster={previewMedia.thumbnail_url} controls autoPlay playsInline className="w-full h-full object-cover" />
+                    )
                 )}
               </div>
 
@@ -1991,3 +1996,4 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 };
 
 export default BibliotecaTab;
+
