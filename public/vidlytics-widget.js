@@ -1,6 +1,6 @@
 if(!window.__sllUrlMatch){window.__sllUrlMatch=function(h,p){h=String(h||'');p=String(p||'');if(!p)return false;if(p.indexOf('*')===-1)return h.indexOf(p)!==-1;try{return new RegExp(p.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*'),'i').test(h)}catch(e){return false}}}
 (function () {
-  var WIDGET_VERSION = '2026.10.08-2';
+  var WIDGET_VERSION = '2026.11.17-1';
 
   console.info(
     '%cVidlytics Widget carregado — versão ' + WIDGET_VERSION,
