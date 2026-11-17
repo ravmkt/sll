@@ -437,6 +437,32 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     try { return localStorage.getItem("vid_biblioteca_view") === "grid" ? "grid" : "list"; } catch { return "list"; }
   });
   const [viewsMap, setViewsMap] = useState<Record<string, number>>({});
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [storyMap, setStoryMap] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: st } = await vidlyticsDb.from("vid_stories").select("id, title");
+      const titles: Record<string, string> = {};
+      for (const s of ((st as any[]) || [])) titles[s.id] = s.title;
+      let links: any[] | null = null;
+      for (const tbl of ["vid_story_videos", "story_videos"]) {
+        const { data, error } = await vidlyticsDb.from(tbl).select("story_id, video_id");
+        if (!error && data && data.length) { links = data as any[]; break; }
+      }
+      if (!alive || !links) return;
+      const acc: Record<string, string[]> = {};
+      for (const l of links) {
+        const title = titles[l.story_id];
+        if (!l.video_id || !title) continue;
+        (acc[l.video_id] = acc[l.video_id] || []).includes(title) || acc[l.video_id].push(title);
+      }
+      const out: Record<string, string> = {};
+      for (const k of Object.keys(acc)) out[k] = acc[k].join(", ");
+      setStoryMap(out);
+    })();
+    return () => { alive = false; };
+  }, []);
   useEffect(() => {
     try { localStorage.setItem("vid_biblioteca_view", viewMode); } catch {}
   }, [viewMode]);
@@ -1731,6 +1757,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
               thumb,
               type,
               views: viewsMap[v.id] ?? 0,
+              story: storyMap[v.id] || v.story_title || "",
               dur: fmtDuration(v.duration_seconds),
               size: fmtMB(v.size_bytes ?? v.file_size_bytes),
               st: statusInfo(v.status),
@@ -1800,8 +1827,8 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                             )}
                           </td>
                           <td className="py-3 px-4">
-                            {video.story_title ? (
-                              <span className="inline-block px-3 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-full text-[11px] font-bold uppercase">{video.story_title}</span>
+                            {m.story ? (
+                              <span className="inline-block px-3 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-full text-[11px] font-bold uppercase">{m.story}</span>
                             ) : (
                               <span className="text-slate-300 font-bold text-sm">—</span>
                             )}
@@ -1860,8 +1887,20 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 const act = "p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer";
                 return (
                   <div key={video.id} className={`bg-white border rounded-2xl shadow-sm overflow-hidden ${sel ? "border-[#0094eb] ring-2 ring-sky-100" : "border-slate-200/80"}`}>
-                    <div className="relative cursor-pointer" title="Visualizar" onClick={() => setPreviewMedia(video)}>
+                    <div className="relative cursor-pointer" title="Visualizar" onMouseEnter={() => setHoverId(video.id)} onMouseLeave={() => setHoverId(null)} onClick={() => setPreviewMedia(video)}>
                       {renderThumb(video, m, "w-full aspect-video")}
+                      {hoverId === video.id && !m.isImg && video.video_url && !extractYouTubeId(video.video_url) && video.video_source_type !== "tiktok" && (
+                        <div
+                          className="absolute inset-0 bg-black pointer-events-none"
+                          ref={(el) => { const v = el?.querySelector("video"); if (v) { v.muted = true; v.loop = true; } }}
+                        >
+                          {(video as any).hls_url || /\.m3u8/i.test(video.video_url) ? (
+                            <HlsPlayer src={(video as any).hls_url || video.video_url} poster={video.thumbnail_url} autoPlay className="w-full h-full object-cover" />
+                          ) : (
+                            <video src={video.video_url} poster={video.thumbnail_url} muted loop autoPlay playsInline preload="none" className="w-full h-full object-cover" />
+                          )}
+                        </div>
+                      )}
                       <div className="absolute top-2 left-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                         <span className="bg-white/90 rounded-md p-1 flex">
                           <input type="checkbox" checked={sel} onChange={() => toggleSelect(video.id)} className="h-3.5 w-3.5 cursor-pointer accent-[#0094eb]" />
@@ -1880,9 +1919,9 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                         <span className="inline-block px-2.5 py-0.5 bg-slate-100 rounded-full text-slate-500 text-[10px] font-medium max-w-full truncate" title={m.product ? (m.product.name || m.product.title) : "Sem produto"}>
                           {m.product ? (m.product.name || m.product.title) : "Sem produto"}
                         </span>
-                        {video.story_title ? (
-                          <span className="inline-block px-2.5 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-full text-[10px] font-bold uppercase max-w-full truncate" title={video.story_title}>
-                            {video.story_title}
+                        {m.story ? (
+                          <span className="inline-block px-2.5 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-full text-[10px] font-bold uppercase max-w-full truncate" title={m.story}>
+                            {m.story}
                           </span>
                         ) : (
                           <span className="inline-block px-2.5 py-0.5 bg-slate-50 rounded-full text-slate-300 text-[10px] font-medium">Sem story</span>
