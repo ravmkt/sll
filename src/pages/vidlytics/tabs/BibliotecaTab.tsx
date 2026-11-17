@@ -726,7 +726,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           try {
             if (file.type.startsWith("video/") && storeId) {
               const videoId = await uploadVideoToBunny(storeId, file, (pct) => setUploadProgress(`${i + 1}/${files.length} · ${pct}%`));
-              if (activeFolderId) await vidlyticsDb.from("vid_videos").update({ folder_id: activeFolderId }).eq("id", videoId);
+              if (activeFolderId) await vidlyticsDb.from("vid_videos").update({ folder_id: activeFolderId }).eq("bunny_video_id", videoId);
               ok++;
               continue;
             }
@@ -957,7 +957,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   };
 
   // Upload de novo vídeo na página de edição
-  const handleEditVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target) { alert("Para trocar o video, envie um novo na biblioteca e exclua o antigo."); e.target.value = ""; return; }
     const file = e.target.files?.[0];
     if (!file) return;
 

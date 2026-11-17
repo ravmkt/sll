@@ -16,12 +16,16 @@ Deno.serve(async (req) => {
       headers: { AccessKey: Deno.env.get("BUNNY_API_KEY")! },
     });
     const v = r.ok ? await r.json() : {};
+    const hls = `https://${host}/${VideoGuid}/playlist.m3u8`;
+    const thumb = `https://${host}/${VideoGuid}/thumbnail.jpg`;
     await vid.from("vid_videos").update({
       status: "ready",
-          updated_at: new Date().toISOString(),
-      hls_url: `https://${host}/${VideoGuid}/playlist.m3u8`,
+      updated_at: new Date().toISOString(),
+      hls_url: hls,
+      video_url: hls,
       preview_url: `https://${host}/${VideoGuid}/preview.webp`,
-      thumb_url: `https://${host}/${VideoGuid}/thumbnail.jpg`,
+      thumb_url: thumb,
+      thumbnail_url: thumb,
       duration_seconds: Math.round(v.length ?? 0),
       size_bytes: v.storageSize ?? 0,
     }).eq("bunny_video_id", VideoGuid);
