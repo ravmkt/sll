@@ -67,6 +67,38 @@ interface BibliotecaTabProps {
 
 const GB_BYTES = 1024 * 1024 * 1024;
 
+const vidGuid = (s?: string | null) =>
+  (String(s || "").match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i) || [""])[0].toLowerCase();
+
+const HoverPreview: React.FC<{ src: string; poster?: string }> = ({ src, poster }) => {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    v.muted = true;
+    let hls: any = null;
+    let dead = false;
+    if (/\.m3u8/i.test(src) && !v.canPlayType("application/vnd.apple.mpegurl")) {
+      import("hls.js").then(({ default: Hls }) => {
+        if (dead || !Hls.isSupported()) return;
+        hls = new Hls();
+        hls.loadSource(src);
+        hls.attachMedia(v);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => { v.play().catch(() => {}); });
+      }).catch(() => {});
+    } else {
+      v.src = src;
+      v.play().catch(() => {});
+    }
+    return () => { dead = true; if (hls) hls.destroy(); };
+  }, [src]);
+  return (
+    <div className="absolute inset-0 bg-black pointer-events-none">
+      <video ref={ref} poster={poster} muted loop playsInline className="w-full h-full object-contain" />
+    </div>
+  );
+};
+
 const fmtDuration = (s?: number | null) => {
   const n = Math.round(Number(s) || 0);
   if (!n) return "—";
@@ -442,21 +474,24 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data: st } = await vidlyticsDb.from("vid_stories").select("id, title");
+      const { data: st } = await vidlyticsDb.from("vid_stories").select("id, title, config");
       const titles: Record<string, string> = {};
-      for (const s of ((st as any[]) || [])) titles[s.id] = s.title;
-      let links: any[] | null = null;
-      for (const tbl of ["vid_story_videos", "story_videos"]) {
-        const { data, error } = await vidlyticsDb.from(tbl).select("story_id, video_id");
-        if (!error && data && data.length) { links = data as any[]; break; }
-      }
-      if (!alive || !links) return;
       const acc: Record<string, string[]> = {};
-      for (const l of links) {
-        const title = titles[l.story_id];
-        if (!l.video_id || !title) continue;
-        (acc[l.video_id] = acc[l.video_id] || []).includes(title) || acc[l.video_id].push(title);
+      const add = (url: any, title?: string) => {
+        const k = vidGuid(url) || String(url || "");
+        if (!k || !title) return;
+        const a = (acc[k] = acc[k] || []);
+        if (!a.includes(title)) a.push(title);
+      };
+      for (const s of ((st as any[]) || [])) {
+        titles[s.id] = s.title;
+        let cfg: any = s.config;
+        if (typeof cfg === "string") { try { cfg = JSON.parse(cfg); } catch { cfg = {}; } }
+        for (const u of ((cfg && (cfg.videoUrls || cfg.video_ids)) || [])) add(u, s.title);
       }
+      const { data: links } = await vidlyticsDb.from("vid_story_videos").select("story_id, video_url");
+      for (const l of ((links as any[]) || [])) add(l.video_url, titles[l.story_id]);
+      if (!alive) return;
       const out: Record<string, string> = {};
       for (const k of Object.keys(acc)) out[k] = acc[k].join(", ");
       setStoryMap(out);
@@ -1757,7 +1792,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
               thumb,
               type,
               views: viewsMap[v.id] ?? 0,
-              story: storyMap[v.id] || v.story_title || "",
+              story: storyMap[vidGuid(v.hls_url)] || storyMap[vidGuid(v.video_url)] || storyMap[vidGuid(v.thumbnail_url)] || storyMap[String(v.video_url || "")] || storyMap[v.id] || v.story_title || "",
               dur: fmtDuration(v.duration_seconds),
               size: fmtMB(v.size_bytes ?? v.file_size_bytes),
               st: statusInfo(v.status),
@@ -1890,16 +1925,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                     <div className="relative cursor-pointer" title="Visualizar" onMouseEnter={() => setHoverId(video.id)} onMouseLeave={() => setHoverId(null)} onClick={() => setPreviewMedia(video)}>
                       {renderThumb(video, m, "w-full aspect-video")}
                       {hoverId === video.id && !m.isImg && video.video_url && !extractYouTubeId(video.video_url) && video.video_source_type !== "tiktok" && (
-                        <div
-                          className="absolute inset-0 bg-black pointer-events-none"
-                          ref={(el) => { const v = el?.querySelector("video"); if (v) { v.muted = true; v.loop = true; } }}
-                        >
-                          {(video as any).hls_url || /\.m3u8/i.test(video.video_url) ? (
-                            <HlsPlayer src={(video as any).hls_url || video.video_url} poster={video.thumbnail_url} autoPlay className="w-full h-full object-cover" />
-                          ) : (
-                            <video src={video.video_url} poster={video.thumbnail_url} muted loop autoPlay playsInline preload="none" className="w-full h-full object-cover" />
-                          )}
-                        </div>
+                        <HoverPreview src={(video as any).hls_url || video.video_url} poster={video.thumbnail_url} />
                       )}
                       <div className="absolute top-2 left-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                         <span className="bg-white/90 rounded-md p-1 flex">
