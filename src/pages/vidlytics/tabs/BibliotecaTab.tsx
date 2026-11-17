@@ -451,7 +451,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       setViewsMap(m);
     })();
     return () => { alive = false; };
-  }, [videos.length]);
+  }, []);
 
   // Visualização e Subpáginas
   const [previewMedia, setPreviewMedia] = useState<VidVideo | null>(null);
