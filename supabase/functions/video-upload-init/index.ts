@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     const { store_id, title } = await req.json();
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const { data: store } = await admin.from("stores").select("id, plan, owner_user_id").eq("id", store_id).single();
+    const { data: store } = await admin.from("stores").select("id, plan, owner_user_id, is_lifetime").eq("id", store_id).single();
     if (!store || store.owner_user_id !== user.id) return json({ error: "forbidden" }, 403);
 
     const { data: limits } = await admin.from("plan_limits").select("*").eq("plan", store.plan ?? "basic").single();
@@ -35,8 +35,8 @@ Deno.serve(async (req) => {
     const { data: rows } = await vid.from("vid_videos").select("size_bytes").eq("store_id", store_id);
     const count = rows?.length ?? 0;
     const used = (rows ?? []).reduce((a, r) => a + Number(r.size_bytes ?? 0), 0);
-    if (count >= limits.max_videos) return json({ error: "video_limit_reached" }, 403);
-    if (used >= Number(limits.max_storage_gb) * 1024 ** 3) return json({ error: "storage_limit_reached" }, 403);
+    if (!store.is_lifetime && count >= limits.max_videos) return json({ error: "video_limit_reached" }, 403);
+    if (!store.is_lifetime && used >= Number(limits.max_storage_gb) * 1024 ** 3) return json({ error: "storage_limit_reached" }, 403);
 
     const libId = Deno.env.get("BUNNY_LIBRARY_ID")!;
     const apiKey = Deno.env.get("BUNNY_API_KEY")!;
@@ -64,4 +64,5 @@ Deno.serve(async (req) => {
     return json({ error: String(e) }, 500);
   }
 });
+
 

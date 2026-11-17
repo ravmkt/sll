@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   const vid = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!).schema("vidlytics");
 
   if (Status === 5) {
-    await vid.from("vid_videos").update({ status: "failed" }).eq("bunny_video_id", VideoGuid);
+    await vid.from("vid_videos").update({ status: "failed", updated_at: new Date().toISOString() }).eq("bunny_video_id", VideoGuid);
   } else if (Status === 3 || Status === 4) {
     const r = await fetch(`https://video.bunnycdn.com/library/${libId}/videos/${VideoGuid}`, {
       headers: { AccessKey: Deno.env.get("BUNNY_API_KEY")! },
@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     const v = r.ok ? await r.json() : {};
     await vid.from("vid_videos").update({
       status: "ready",
+          updated_at: new Date().toISOString(),
       hls_url: `https://${host}/${VideoGuid}/playlist.m3u8`,
       preview_url: `https://${host}/${VideoGuid}/preview.webp`,
       thumb_url: `https://${host}/${VideoGuid}/thumbnail.jpg`,
