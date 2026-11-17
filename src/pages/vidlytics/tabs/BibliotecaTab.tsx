@@ -639,6 +639,27 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
     }
   }, [storeId]);
 
+  // Atualiza a lista enquanto houver vídeo em processamento no Bunny
+  useEffect(() => {
+    if (!storeId) return;
+    const pending = allVideos.some((v) => v.status === "processing" || v.status === "uploading");
+    if (!pending) return;
+    const timer = setInterval(async () => {
+      const { data } = await vidlyticsDb
+        .from("vid_videos")
+        .select("*")
+        .eq("store_id", storeId)
+        .order("created_at", { ascending: false });
+      if (data) {
+        setVideos(data.map((v: any) => ({
+          ...v,
+          video_url: v.video_url || v.hls_url || "",
+          thumbnail_url: v.thumbnail_url || v.thumb_url || ""
+        })));
+      }
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [allVideos, storeId]);
   // Helpers
   const formatFileSize = (bytes?: number) => {
     if (!bytes || bytes === 0) return "—";
