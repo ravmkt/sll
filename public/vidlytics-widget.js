@@ -1,6 +1,6 @@
 if(!window.__sllUrlMatch){window.__sllUrlMatch=function(h,p){h=String(h||'');p=String(p||'');if(!p)return false;if(p.indexOf('*')===-1)return h.indexOf(p)!==-1;try{return new RegExp(p.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*'),'i').test(h)}catch(e){return false}}}
 (function () {
-  var WIDGET_VERSION = '2026.11.17-1';
+  var WIDGET_VERSION = '2026.11.17-3';
 
   console.info(
     '%cVidlytics Widget carregado — versão ' + WIDGET_VERSION,
@@ -5895,13 +5895,13 @@ function cloneItemDeeply(original, index, isClone) {
 
       var firstVideo = (item.videos && item.videos[0]) || {};
       var video = document.createElement('video');
-      var _dcUrl = firstVideo.hls_url || firstVideo.video_url || firstVideo.videoUrl || item.video_url || item.videoUrl || item.url || ''; var _dcYt = extractYouTubeId(_dcUrl); var _dcTT = /tiktok\.com\/(player|embed)/i.test(_dcUrl); if (_dcYt) { video.setAttribute('data-yt-id', _dcYt); } else if (!_dcTT) { setVideoSource(video, _dcUrl); }
+      var _dcUrl = firstVideo.hls_url || firstVideo.video_url || firstVideo.videoUrl || item.video_url || item.videoUrl || item.url || ''; var _dcYt = extractYouTubeId(_dcUrl); var _dcTT = /tiktok\.com\/(player|embed)/i.test(_dcUrl); if (_dcYt) { video.setAttribute('data-yt-id', _dcYt); } else if (!_dcTT) { setVideoSource(video, _dcUrl, { previewSeconds: 10 }); }
       var posterUrl = firstVideo.thumbnail_url || firstVideo.thumbnailUrl || item.thumbnail_url || item.thumbnailUrl || item.thumb || ''; if (!posterUrl && _dcYt) { posterUrl = getYouTubeThumbnail(_dcUrl); }
       if (posterUrl) {
         video.poster = posterUrl;
       }
       video.muted = true;
-      video.loop = true;
+      video.loop = false;
       video.playsInline = true;
       video.setAttribute('webkit-playsinline', 'true');
       Object.assign(video.style, {
