@@ -4674,7 +4674,7 @@ if (closingVideo) {
     if (overlay) overlay.className = 'vl-overlay';
     if (modalContent) {
       var oldVid = modalContent.querySelector('video');
-      if (oldVid) { oldVid.pause(); oldVid.removeAttribute('src'); oldVid.load(); }
+      modalContent.querySelectorAll('video').forEach(function (v) { try { v.pause(); if (v._sllHls) { v._sllHls.destroy(); v._sllHls = null; } if (v._sllIo) { v._sllIo.disconnect(); v._sllIo = null; } v.removeAttribute('src'); v.load(); } catch (e) {} }); modalContent.querySelectorAll('iframe').forEach(function (fr) { try { fr.src = 'about:blank'; } catch (e) {} });
       modalContent.innerHTML = '';
     }
     isUserMuted = true; // Reseta para o padrão seguro no próximo clique de abertura
