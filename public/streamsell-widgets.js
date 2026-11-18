@@ -602,7 +602,7 @@ function renderLiveWidget(live) {
     var showMedia = function () {
       if (pm && window.SLL && window.SLL.promoMedia) {
         var cfgX = (typeof currentCfg !== 'undefined' && currentCfg) ? currentCfg : {};
-        var ctaLbl = (typeof ctaText !== 'undefined' && ctaText) ? ctaText : (live.promo_cta_text || 'Participe');
+        var ctaLbl = cfgX.modalCtaText || ((typeof ctaText !== 'undefined' && ctaText) ? ctaText : (live.promo_cta_text || 'Participe'));
         window.SLL.promoMedia(pm, live.promo_media_type, live.title, {
           scheduledAt: live.scheduled_at || '',
           showCTA: cfgX.showCTA !== false,

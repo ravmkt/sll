@@ -31,6 +31,7 @@ export interface BaseWidgetSettings {
   showCloseButton: boolean;
   showCTA: boolean;
   ctaText: string;
+  modalCtaText?: string;
   ctaBgColor: string;
   ctaTextColor: string;
   ctaBorderRadius: string;
