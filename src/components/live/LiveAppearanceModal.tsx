@@ -983,6 +983,13 @@ export default function LiveAppearanceModal({ isOpen, onClose, onSave, isSaving,
             setOpenSubItem={setOpenSubItem}
           >
             <Input value={config.ctaText} onChange={(e) => updateFn("ctaText", e.target.value)} placeholder="Texto CTA" className="h-7 rounded-md text-[12px]" />
+
+            {isDivulgacao && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Texto do botão no modal</label>
+                <Input value={config.modalCtaText || ""} onChange={(e) => updateFn("modalCtaText", e.target.value)} placeholder="Vazio = usa o texto do CTA" className="h-7 rounded-md text-[12px]" />
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <ColorInput label="Fundo" value={config.ctaBgColor} onChange={(v) => updateFn("ctaBgColor", v)} />
               <ColorInput label="Texto" value={config.ctaTextColor} onChange={(v) => updateFn("ctaTextColor", v)} />
