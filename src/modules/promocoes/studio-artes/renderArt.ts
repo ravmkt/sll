@@ -483,6 +483,8 @@ export async function renderArt(p: ArtInput, o: ArtStyle): Promise<Blob> {
   if (tpl.key === 'blackfriday') blackfriday(ctx, p, o, img);
   else if (tpl.key === 'vitrine-podio') drawVitrine(ctx, p, o, img, bgImg);
   else if (isSeasonal(tpl.key)) { await loadSeasonalFonts(); drawSeasonal(ctx, p, o, img); }
+  else if (tpl.key === 'vitrine-podio') drawVitrine(ctx, p, o, img, bgImg);
+  else if (isSeasonal(tpl.key)) { await loadSeasonalFonts(); drawSeasonal(ctx, p, o, img); }
   else if (look) gen(ctx, p, o, img, look, bgImg);
   else classico(ctx, p, o, img);
 
