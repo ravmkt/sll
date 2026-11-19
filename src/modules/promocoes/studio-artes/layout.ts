@@ -32,7 +32,7 @@ export function bfLayout(W: number, H: number): BFLayout {
       mode: 'side',
       u,
       orange: { x: 0, y: 0, w: W * 0.5, h: H * 0.76 },
-      photo: { x: 0, y: H * 0.04, w: W * 0.58, h: H * 0.94 },
+      photo: { x: 0, y: H * 0.04, w: W * 0.58, h: H * 0.96 },
       text: { cx: W * 0.775, mw: W * 0.42, top: H * 0.06 },
       ctaY: H * 0.82,
       siteY: H * 0.9,
@@ -43,14 +43,14 @@ export function bfLayout(W: number, H: number): BFLayout {
     mode: 'side',
     u,
     orange: { x: 0, y: 0, w: W * 0.5, h: H * 0.76 },
-    photo: { x: 0, y: H * 0.05, w: W * 0.6, h: H * 0.93 },
+    photo: { x: 0, y: H * 0.05, w: W * 0.6, h: H * 0.95 },
     text: { cx: W * 0.77, mw: W * 0.44, top: H * 0.06 },
     ctaY: H * 0.82,
     siteY: H * 0.88,
   };
 }
 
-/** Encaixa a foto na area (contain), alinhada na base. scale/offsets permitem ajuste fino. */
+/** Encaixa a foto na area (contain), sempre alinhada na base. scale/offsets permitem ajuste fino. */
 export function fitPhoto(iw: number, ih: number, r: Rect, scale = 1, ox = 0, oy = 0): Rect {
   const k = Math.min(r.w / iw, r.h / ih) * scale;
   const w = iw * k;

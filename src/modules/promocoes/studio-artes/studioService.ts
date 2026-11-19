@@ -118,3 +118,12 @@ export async function deleteCampaign(campaignId: string) {
   const { error } = await sb.from('promo_campaigns').delete().eq('id', campaignId);
   if (error) throw error;
 }
+export async function patchCampaignStyle(campaignId: string, patch: Record<string, unknown>) {
+  const { data, error } = await sb.from('promo_campaigns').select('style').eq('id', campaignId).single();
+  if (error) throw error;
+  const { error: e } = await sb
+    .from('promo_campaigns')
+    .update({ style: { ...((data?.style as Record<string, unknown>) ?? {}), ...patch }, updated_at: new Date().toISOString() })
+    .eq('id', campaignId);
+  if (e) throw e;
+}

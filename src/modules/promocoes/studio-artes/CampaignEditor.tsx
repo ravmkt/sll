@@ -1,19 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import { toast } from 'sonner';
-import { AlertCircle, ArrowLeft, Download, Loader2, Search } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, ChevronLeft, ChevronRight, Download, Loader2, Search } from 'lucide-react';
 import type { CatalogProduct } from '@/services/productsService';
-import { CampaignRow, StudioStore, getCampaignItems, saveCampaign, updateCampaign } from './studioService';
+import { CampaignRow, StudioStore, getCampaignItems, patchCampaignStyle, saveCampaign, updateCampaign } from './studioService';
 import { renderArt } from './renderArt';
 import { TEMPLATES, templateByKey, styleForChannel } from './templates';
 import {
-  brl, promoFromPct, pctFromPromo, CHANNELS, CHANNEL_GROUPS, FormatKey, VARIABLES,
+  brl, promoFromPct, pctFromPromo, CHANNELS, CHANNEL_GROUPS, channelByKey, FormatKey, VARIABLES,
   DEFAULT_MESSAGE, renderMessage, cleanSite, waLink, fmtDate,
 } from './lib';
 import { CARD, LABEL, INP, NUM, COLOR, BTN_PRIMARY, BTN_SECONDARY } from './ui';
 import ChannelPreviews, { type PreviewItem } from './ChannelPreviews';
 import CaptionVariants from './CaptionVariants';
 import { captionFor, type CaptionOverrides } from './captionHelpers';
+import { DEF_ADJ, adjKey, type PhotoAdj, type PhotoAdjustMap } from './photoAdjust';
 
 interface Row { product: CatalogProduct; selected: boolean; pct: number; promo: number }
 interface Props {
@@ -48,9 +49,36 @@ export default function CampaignEditor({ store, products, mode, campaign, onBack
   const [accent, setAccent] = useState(st.accent ?? tpl0.accent);
   const [channels, setChannels] = useState<string[]>(campaign?.channels?.length ? campaign.channels : ['instagram_feed']);
   const [captionOv, setCaptionOv] = useState<CaptionOverrides>(((campaign?.style ?? {}) as Record<string, any>).captions ?? {});
-  const [photoScale, setPhotoScale] = useState<number>(Number(((campaign?.style ?? {}) as Record<string, any>).photoScale ?? 1));
-  const [photoX, setPhotoX] = useState<number>(Number(((campaign?.style ?? {}) as Record<string, any>).photoX ?? 0));
-  const [photoY, setPhotoY] = useState<number>(Number(((campaign?.style ?? {}) as Record<string, any>).photoY ?? 0));
+const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}`;
+  const [adjust, setAdjust] = useState<PhotoAdjustMap>(() => {
+    const saved = (((campaign?.style ?? {}) as Record<string, any>).photoAdjust ?? {}) as PhotoAdjustMap;
+    try {
+      const d = localStorage.getItem(draftKey);
+      if (d) return { ...saved, ...(JSON.parse(d) as PhotoAdjustMap) };
+    } catch { /* ignora */ }
+    return saved;
+  });
+  const [pvIdx, setPvIdx] = useState(0);
+  const [pvChannel, setPvChannel] = useState('');
+  const [saveState, setSaveState] = useState<'' | 'saving' | 'saved'>('');
+  const getAdj = (pid: string, ch: string): PhotoAdj => adjust[adjKey(pid, ch)] ?? DEF_ADJ;
+  const setAdj = (pid: string, ch: string, p: Partial<PhotoAdj>) =>
+    setAdjust((m) => ({ ...m, [adjKey(pid, ch)]: { ...(m[adjKey(pid, ch)] ?? DEF_ADJ), ...p } }));
+
+  const adjMounted = useRef(false);
+  useEffect(() => {
+    try { localStorage.setItem(draftKey, JSON.stringify(adjust)); } catch { /* ignora */ }
+    if (!adjMounted.current) { adjMounted.current = true; return; }
+    if (mode !== 'edit' || !campaign) { setSaveState('saved'); return; }
+    setSaveState('saving');
+    const t = setTimeout(() => {
+      patchCampaignStyle(campaign.id, { photoAdjust: adjust })
+        .then(() => setSaveState('saved'))
+        .catch(() => setSaveState(''));
+    }, 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adjust]);
   const [message, setMessage] = useState(campaign?.message_template || DEFAULT_MESSAGE);
   const [images, setImages] = useState<Record<string, string>>({});
   const [previewing, setPreviewing] = useState(false);
@@ -99,7 +127,7 @@ export default function CampaignEditor({ store, products, mode, campaign, onBack
   const art = (r: Row, channelKey: string) =>
     renderArt(
       { name: r.product.name, image_url: r.product.image_url as string, original: r.product.price as number, promo: r.promo, pct: r.pct },
-      styleForChannel({ title: name, subtitle, site, bgFrom, bgTo, accent, template, kicker, cta, photoScale, photoOffsetX: photoX, photoOffsetY: photoY }, channelKey),
+      styleForChannel({ title: name, subtitle, site, bgFrom, bgTo, accent, template, kicker, cta, photoScale: getAdj(r.product.id, channelKey).s, photoOffsetX: getAdj(r.product.id, channelKey).x, photoOffsetY: getAdj(r.product.id, channelKey).y }, channelKey),
     );
 
   const vars = (r: Row) => ({
@@ -114,39 +142,35 @@ export default function CampaignEditor({ store, products, mode, campaign, onBack
     link_produto: r.product.product_url || '',
   });
 
-  // preview ao vivo (debounce) - todos os canais marcados
-  const pvRow = selected[0];
-  const pvKey = JSON.stringify([pvRow?.product.id, pvRow?.pct, pvRow?.promo, name, subtitle, kicker, cta, bgFrom, bgTo, accent, template, channels, site, photoScale, photoX, photoY]);
+  // preview ao vivo (debounce) - produto e canal ativos
+  const pvCount = selected.length;
+  const pvPos = Math.min(pvIdx, Math.max(pvCount - 1, 0));
+  const pvRow = selected[pvPos];
+  const activeCh = channels.includes(pvChannel) ? pvChannel : channels[0];
+  const pvAdj = pvRow && activeCh ? getAdj(pvRow.product.id, activeCh) : DEF_ADJ;
+  const pvKey = JSON.stringify([pvRow?.product.id, pvRow?.pct, pvRow?.promo, name, subtitle, kicker, cta, bgFrom, bgTo, accent, template, activeCh, site, pvAdj]);
 
   useEffect(() => {
-    if (!pvRow) { setImages({}); setPreviewing(false); return; }
+    if (!pvRow || !activeCh) { setImages({}); setPreviewing(false); return; }
     let cancelled = false;
     const t = setTimeout(async () => {
       setPreviewing(true);
       try {
-        const next: Record<string, string> = {};
-        for (const ch of channels) {
-          const blob = await art(pvRow, ch);
-          next[ch] = URL.createObjectURL(blob);
-        }
-        if (cancelled) { Object.values(next).forEach((u) => URL.revokeObjectURL(u)); return; }
-        setImages((old) => { Object.values(old).forEach((u) => URL.revokeObjectURL(u)); return next; });
+        const url = URL.createObjectURL(await art(pvRow, activeCh));
+        if (cancelled) { URL.revokeObjectURL(url); return; }
+        setImages((old) => { Object.values(old).forEach((u) => URL.revokeObjectURL(u)); return { [activeCh]: url }; });
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
       } finally {
         if (!cancelled) setPreviewing(false);
       }
-    }, 600);
+    }, 300);
     return () => { cancelled = true; clearTimeout(t); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pvKey]);
 
-  const previewItems: PreviewItem[] = pvRow
-    ? channels.filter((k) => images[k]).map((k) => ({
-        channelKey: k,
-        imageUrl: images[k],
-        caption: renderMessage(captionFor(k, message, captionOv), vars(pvRow)),
-      }))
+  const previewItems: PreviewItem[] = pvRow && activeCh && images[activeCh]
+    ? [{ channelKey: activeCh, imageUrl: images[activeCh], caption: renderMessage(captionFor(activeCh, message, captionOv), vars(pvRow)) }]
     : [];
 
   const generate = async () => {
@@ -181,7 +205,7 @@ export default function CampaignEditor({ store, products, mode, campaign, onBack
         ends_at: endsAt || null,
         format: 'feed' as FormatKey,
         message_template: message,
-        style: { bgFrom, bgTo, accent, subtitle, kicker, cta, photoScale, photoX, photoY, captions: captionOv },
+        style: { bgFrom, bgTo, accent, subtitle, kicker, cta, photoAdjust: adjust, captions: captionOv },
         channels,
         template_key: template,
         art_mode: 'template',
@@ -199,7 +223,8 @@ export default function CampaignEditor({ store, products, mode, campaign, onBack
       a.href = URL.createObjectURL(out);
       a.download = `artes-${slug(name)}.zip`;
       a.click();
-      toast.success(`${total} artes geradas e campanha salva`);
+      try { localStorage.removeItem(draftKey); } catch { /* ignora */ }
+          toast.success(`${total} artes geradas e campanha salva`);
       onBack();
     } catch (e) {
       setError((e as Error).message);
@@ -273,28 +298,7 @@ export default function CampaignEditor({ store, products, mode, campaign, onBack
             </div>
           </section>
 
-              {template === 'blackfriday' && (
               <section className={CARD}>
-                <div className="mb-1 flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-800">Foto do produto</h3>
-                  <button type="button" className={BTN_SECONDARY} onClick={() => { setPhotoScale(1); setPhotoX(0); setPhotoY(0); }}>Restaurar</button>
-                </div>
-                <p className="mb-3 text-xs text-slate-500">Ajuste fino dentro da área do template. A área base muda sozinha para cada formato de canal.</p>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <label className={LABEL}>Tamanho ({Math.round(photoScale * 100)}%)
-                    <input type="range" min={0.6} max={1.5} step={0.05} value={photoScale} onChange={(e) => setPhotoScale(Number(e.target.value))} className="mt-2 w-full accent-[#0094eb]" />
-                  </label>
-                  <label className={LABEL}>Horizontal
-                    <input type="range" min={-0.3} max={0.3} step={0.01} value={photoX} onChange={(e) => setPhotoX(Number(e.target.value))} className="mt-2 w-full accent-[#0094eb]" />
-                  </label>
-                  <label className={LABEL}>Vertical
-                    <input type="range" min={-0.3} max={0.3} step={0.01} value={photoY} onChange={(e) => setPhotoY(Number(e.target.value))} className="mt-2 w-full accent-[#0094eb]" />
-                  </label>
-                </div>
-              </section>
-              )}
-
-          <section className={CARD}>
             <h3 className="mb-1 text-sm font-bold text-slate-800">Canais</h3>
             <p className="mb-3 text-xs text-slate-500">Cada produto gera uma arte no tamanho de cada canal marcado (uma pasta por canal no ZIP).</p>
             <div className="grid gap-4 md:grid-cols-2">
@@ -374,19 +378,63 @@ export default function CampaignEditor({ store, products, mode, campaign, onBack
 
         <aside className="space-y-4 self-start lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
           <section className={CARD}>
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <h3 className="text-sm font-bold text-slate-800">Prévias por canal</h3>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h3 className="text-sm font-bold text-slate-800">Prévia</h3>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              {saveState === 'saving' && (<><Loader2 size={12} className="animate-spin" /> Salvando...</>)}
+              {saveState === 'saved' && (<span className="flex items-center gap-1 text-emerald-600"><Check size={12} /> Ajustes salvos</span>)}
               {previewing && <Loader2 size={16} className="animate-spin text-[#0094eb]" />}
             </div>
-            {!pvRow ? (
-              <p className="rounded-xl bg-slate-100 p-6 text-center text-xs text-slate-500">Selecione um produto para ver as artes.</p>
-            ) : (
+          </div>
+          {!pvRow || !activeCh ? (
+            <p className="rounded-xl bg-slate-100 p-6 text-center text-xs text-slate-500">Selecione um produto e um canal para ver a arte.</p>
+          ) : (
+            <>
+              {channels.length > 1 && (
+                <div className="mb-3 flex flex-wrap gap-1.5">
+                  {channels.map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setPvChannel(k)}
+                      className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${k === activeCh ? 'border-[#0094eb] bg-sky-50 text-[#0094eb]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      {channelByKey(k)?.label ?? k}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="mb-3 flex items-center gap-2">
+                <button type="button" className={BTN_SECONDARY} disabled={pvPos === 0} onClick={() => setPvIdx(pvPos - 1)} aria-label="Produto anterior"><ChevronLeft size={16} /></button>
+                <p className="min-w-0 flex-1 truncate text-center text-xs font-semibold text-slate-600">{pvPos + 1}/{pvCount} · {pvRow.product.name}</p>
+                <button type="button" className={BTN_SECONDARY} disabled={pvPos >= pvCount - 1} onClick={() => setPvIdx(pvPos + 1)} aria-label="Próximo produto"><ChevronRight size={16} /></button>
+              </div>
+
               <div className="[&>div]:!grid-cols-1">
                 <ChannelPreviews items={previewItems} />
               </div>
-            )}
-            {pvRow && <p className="mt-2 truncate text-xs text-slate-500">Produto: {pvRow.product.name}</p>}
-          </section>
+
+              {template === 'blackfriday' && (
+                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-slate-700">Foto deste produto neste canal</p>
+                    <button type="button" className={BTN_SECONDARY} onClick={() => setAdj(pvRow.product.id, activeCh, { s: 1, x: 0, y: 0 })}>Restaurar</button>
+                  </div>
+                  <label className={LABEL}>Tamanho ({Math.round(pvAdj.s * 100)}%)
+                    <input type="range" min={0.6} max={1.5} step={0.05} value={pvAdj.s} onChange={(e) => setAdj(pvRow.product.id, activeCh, { s: Number(e.target.value) })} className="mt-2 w-full accent-[#0094eb]" />
+                  </label>
+                  <label className={LABEL}>Horizontal
+                    <input type="range" min={-0.3} max={0.3} step={0.01} value={pvAdj.x} onChange={(e) => setAdj(pvRow.product.id, activeCh, { x: Number(e.target.value) })} className="mt-2 w-full accent-[#0094eb]" />
+                  </label>
+                  <label className={LABEL}>Vertical
+                    <input type="range" min={-0.3} max={0.3} step={0.01} value={pvAdj.y} onChange={(e) => setAdj(pvRow.product.id, activeCh, { y: Number(e.target.value) })} className="mt-2 w-full accent-[#0094eb]" />
+                  </label>
+                </div>
+              )}
+            </>
+          )}
+        </section>
 
           <section className={CARD}>
             <button className={`${BTN_PRIMARY} w-full justify-center`} disabled={!selected.length || !channels.length || busy} onClick={generate}>
