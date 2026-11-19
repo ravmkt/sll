@@ -1,4 +1,4 @@
-import { channelByKey } from './lib';
+﻿import { channelByKey } from './lib';
 import type { ArtStyle } from './renderArt';
 
 export interface ArtTemplate {
@@ -111,6 +111,38 @@ export const TEMPLATES: ArtTemplate[] = [
     bgFrom: '#f5f5f5', bgTo: '#f5f5f5', accent: '#111111',
     kicker: 'OFERTA', subtitle: 'OFERTA',
     group: 'Fundo em c\u00f3digo', bgType: 'code', cutout: true,
+  },
+  {
+    key: 'natal',
+    label: 'Natal',
+    description: 'Fundo vermelho e verde com neve caindo e destaque dourado.',
+    bgFrom: '#b3122b', bgTo: '#0f5132', accent: '#ffd54a',
+    kicker: 'Ofertas de Natal', subtitle: 'Ofertas de Natal',
+    group: 'Temas sazonais', bgType: 'code', cutout: true,
+  },
+  {
+    key: 'dia-das-maes',
+    label: 'Dia das M\u00e3es',
+    description: 'Rosa suave com cora\u00e7\u00f5es e chamada manuscrita.',
+    bgFrom: '#fde4ec', bgTo: '#f8bbd0', accent: '#c2185b',
+    kicker: 'Para a melhor m\u00e3e do mundo', subtitle: 'Para a melhor m\u00e3e do mundo',
+    group: 'Temas sazonais', bgType: 'code', cutout: true,
+  },
+  {
+    key: 'liquidacao',
+    label: 'Liquida\u00e7\u00e3o',
+    description: 'Amarelo vibrante com raios e selo de desconto em vermelho.',
+    bgFrom: '#ffe600', bgTo: '#ffb300', accent: '#e11d2e',
+    kicker: 'Tudo com desconto', subtitle: 'Tudo com desconto',
+    group: 'Temas sazonais', bgType: 'code', cutout: true,
+  },
+  {
+    key: 'black-friday-ouro',
+    label: 'Black Friday Ouro',
+    description: 'Fundo preto com brilhos e moldura dourada.',
+    bgFrom: '#0a0a0a', bgTo: '#1f1808', accent: '#f5c542',
+    kicker: 'A maior e melhor', subtitle: 'A maior e melhor',
+    group: 'Temas sazonais', bgType: 'code', cutout: true,
   },
 ];
 
