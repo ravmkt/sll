@@ -14,7 +14,7 @@ const BASE = Deno.env.get('SUPABASE_URL')!;
 const SELF = `${BASE}/functions/v1/yampi-sync`;
 const API = 'https://api.dooki.com.br/v2';
 const EVENTS = ['product.inventory.updated', 'product.updated', 'order.paid'];
-const COLS = 'store_id,alias,user_token,user_secret,webhook_secret,webhook_status,webhook_hmac_key';
+const COLS = 'store_id,alias,user_token,user_secret,webhook_secret,webhook_status,webhook_hmac_key,gestor_master';
 const admin = createClient(BASE, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
 /* SLL-LIVE-SALE: grava venda atribuida a uma live (utm_source=stream_sell, utm_campaign=<id da live>) */
@@ -58,7 +58,7 @@ async function recordLiveSale(storeId: string, raw: string) {
   }
 }
 
-type Conn = { store_id: string; alias: string; user_token: string; user_secret: string; webhook_secret: string; webhook_status: string | null; webhook_hmac_key: string | null };
+type Conn = { store_id: string; alias: string; user_token: string; user_secret: string; webhook_secret: string; webhook_status: string | null; webhook_hmac_key: string | null; gestor_master: boolean | null };
 
 async function yampi(c: Conn, path: string, init: RequestInit = {}) {
   const r = await fetch(`${API}/${encodeURIComponent(c.alias)}/${path}`, {
@@ -192,7 +192,7 @@ async function syncStore(storeId: string, onlyProduct?: string) {
   if (!c) return null;
   const s = { products: 0, variants_updated: 0, variants_added: 0, prices_updated: 0, not_found: 0, failed: 0 };
   try {
-    const remote = await fetchRemote(c, storeId, onlyProduct);
+    const master = c.gestor_master === true; const remote = await fetchRemote(c, storeId, onlyProduct);
         const toks: { ext: string; token: string; url: string; stock: number }[] = [];
         for (const y of remote.values()) {
           for (const k of (y.skus?.data ?? [])) {
@@ -212,7 +212,7 @@ async function syncStore(storeId: string, onlyProduct?: string) {
       const y = remote.get(String(p.external_id));
       if (!y) { s.not_found++; continue; }
       const desc = cleanDesc(y.texts?.data?.description);
-      if (desc && !String(p.short_description ?? '').trim()) {
+      if (!master && desc && !String(p.short_description ?? '').trim()) {
         jobs.push(async () => {
           const { error } = await admin.from('products').update({ short_description: desc }).eq('id', p.id);
           if (error) s.failed++;
@@ -234,7 +234,7 @@ async function syncStore(storeId: string, onlyProduct?: string) {
         if (price > 0) prices.push(price);
         const v = local.find((x) => String(x.external_id) === ext);
         if (v) {
-          if (!(v.sync_hold_until && new Date(v.sync_hold_until).getTime() > Date.now()) && (Number(v.price) !== price || Number(v.sale_price ?? 0) !== Number(sale ?? 0) || Number(v.stock) !== stock)) {
+          if (!master && !(v.sync_hold_until && new Date(v.sync_hold_until).getTime() > Date.now()) && (Number(v.price) !== price || Number(v.sale_price ?? 0) !== Number(sale ?? 0) || Number(v.stock) !== stock)) {
             jobs.push(async () => {
               const { error } = await admin.from('product_variants').update({ price, sale_price: sale, stock, updated_at: now }).eq('id', v.id);
               if (error) s.failed++; else s.variants_updated++;
@@ -243,7 +243,7 @@ async function syncStore(storeId: string, onlyProduct?: string) {
           return;
         }
         const sku = String(k.sku || '').trim();
-        if (!sku) return;
+        if (!sku || master) return;
         jobs.push(async () => {
           const { error } = await admin.from('product_variants').insert({
             store_id: storeId, product_id: p.id, external_id: ext, sku, title: k.title || '',
@@ -255,14 +255,14 @@ async function syncStore(storeId: string, onlyProduct?: string) {
         });
       });
       for (const v of local) {
-        if (!seen.has(String(v.external_id)) && Number(v.stock) !== 0) {
+        if (!master && !seen.has(String(v.external_id)) && Number(v.stock) !== 0) {
           jobs.push(async () => {
             const { error } = await admin.from('product_variants').update({ stock: 0, updated_at: now }).eq('id', v.id);
             if (error) s.failed++; else s.variants_updated++;
           });
         }
       }
-      if (prices.length) {
+      if (!master && prices.length) {
         const min = Math.min(...prices);
         if (Number(p.price) !== min) {
           jobs.push(async () => {
@@ -274,7 +274,7 @@ async function syncStore(storeId: string, onlyProduct?: string) {
     }
     for (let i = 0; i < jobs.length; i += 10) await Promise.all(jobs.slice(i, i + 10).map((j) => j()));
         for (let n = 0; n < toks.length; n += 500) {
-          const { error } = await admin.rpc('yampi_apply_tokens', { p_store: storeId, p_items: toks.slice(n, n + 500) });
+          const { error } = await admin.rpc('yampi_apply_tokens', { p_store: storeId, p_items: toks.slice(n, n + 500), p_keep_stock: master });
           if (error) s.failed++;
         }
     let mark = admin.from('products').update({ last_synced_at: now }).eq('store_id', storeId).eq('source_platform', 'yampi');
@@ -339,7 +339,7 @@ async function recordReviewRequest(storeId: string, raw: string) {
 async function recordWebhookEvent(storeId: string, raw: string) {
   try {
     let evt: any = null;
-    try { evt = JSON.parse(raw); } catch { /* corpo nao JSON */ }
+    try { evt = JSON.parse(raw); } catch { /* corpo nao JSON */ } if (evt && !String(evt.event ?? '').startsWith('order.')) return;
     const { error } = await admin.rpc('gestor_log_webhook', {
       p_store: storeId,
       p_source: 'yampi',
