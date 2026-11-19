@@ -395,7 +395,7 @@ function AppRoutes() {
         <Route path="/dashboard/modules/builder/templates" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderTemplatesPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/:id" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout editor><BuilderEditorPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/tryon" element={user ? (<SubscriptionGate><ModuleGate moduleKey="tryon"><TryOnModule /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
-        <Route path="/dashboard/modules/promocoes/studio-artes" element={user ? (<SubscriptionGate><Suspense fallback={null}><StudioArtesPage /></Suspense></SubscriptionGate>) : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/promocoes/studio-artes" element={user ? (<SubscriptionGate><ModuleGate moduleKey="promocoes"><Suspense fallback={null}><StudioArtesPage /></Suspense></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
         <Route path="/medidas/botao" element={<MedidasBotao />} />
         <Route path="/medidas/aparencia" element={<MedidasAparencia />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />

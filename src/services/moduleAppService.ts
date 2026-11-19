@@ -2,9 +2,9 @@ import { supabase } from '@/lib/supabase';
 
 const sb: any = supabase;
 
-export type AppModuleKey = 'vidlytics' | 'stream_sell' | 'pulse' | 'radar' | 'builder';
+export type AppModuleKey = 'vidlytics' | 'stream_sell' | 'pulse' | 'radar' | 'builder' | 'promocoes';
 
-const TABLE_MODULES: AppModuleKey[] = ['pulse', 'radar', 'builder'];
+const TABLE_MODULES: AppModuleKey[] = ['pulse', 'radar', 'builder', 'promocoes'];
 
 export async function getModuleAppEnabled(storeId: string, moduleKey: AppModuleKey): Promise<boolean> {
   const { data, error } = await sb.rpc('get_module_app_enabled', { p_store_id: storeId, p_module: moduleKey });
