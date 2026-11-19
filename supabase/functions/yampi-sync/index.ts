@@ -339,7 +339,7 @@ async function recordReviewRequest(storeId: string, raw: string) {
 async function recordWebhookEvent(storeId: string, raw: string) {
   try {
     let evt: any = null;
-    try { evt = JSON.parse(raw); } catch { /* corpo nao JSON */ } if (evt && !String(evt.event ?? '').startsWith('order.')) return;
+    try { evt = JSON.parse(raw); } catch { /* corpo nao JSON */ } if (evt && String(evt.event ?? '').startsWith('product.')) return;
     const { error } = await admin.rpc('gestor_log_webhook', {
       p_store: storeId,
       p_source: 'yampi',
