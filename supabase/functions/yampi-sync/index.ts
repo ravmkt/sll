@@ -336,6 +336,21 @@ async function recordReviewRequest(storeId: string, raw: string) {
     console.error('review-req: falha', e instanceof Error ? e.message : String(e));
   }
 }
+async function recordWebhookEvent(storeId: string, raw: string) {
+  try {
+    let evt: any = null;
+    try { evt = JSON.parse(raw); } catch { /* corpo nao JSON */ }
+    const { error } = await admin.rpc('gestor_log_webhook', {
+      p_store: storeId,
+      p_source: 'yampi',
+      p_event: String(evt?.event ?? 'unknown'),
+      p_payload: evt ?? { raw: raw.slice(0, 20000) },
+    });
+    if (error) console.error('webhook-event: erro', error.message);
+  } catch (e) {
+    console.error('webhook-event: falha', e instanceof Error ? e.message : String(e));
+  }
+}
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
@@ -352,6 +367,7 @@ Deno.serve(async (req) => {
       await admin.from('yampi_connections').update({ dirty_at: hookAt, webhook_last_at: hookAt, ...(kind ? { webhook_status: 'ok' } : {}) }).eq('store_id', c.store_id);
       await recordLiveSale(c.store_id, raw);
           await recordReviewRequest(c.store_id, raw);
+          await recordWebhookEvent(c.store_id, raw);
       EdgeRuntime.waitUntil(syncStore(c.store_id).catch(() => null));
       return json({ ok: true });
     }
