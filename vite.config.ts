@@ -21,27 +21,16 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            // Core do React e Router
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-              return 'vendor-react';
-            }
-            // Supabase client e auth
-            if (id.includes('@supabase')) {
-              return 'vendor-supabase';
-            }
-            // Ícones e UI utilitários
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            // Gráficos (se houver recharts / chart.js / d3)
-            if (id.includes('recharts') || id.includes('d3')) {
-              return 'vendor-charts';
-            }
-            // Outros pacotes de terceiros
-            return 'vendor-libs';
-          }
-        },
+            if (!id.includes('node_modules')) return;
+
+            // Libs pesadas e raras: sem chunk manual, vao para o chunk de quem as importa
+            if (/node_modules\/(@imgly|onnxruntime-[^/]+|xlsx|jszip)\//.test(id)) return;
+
+            if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) return 'vendor-react';
+            if (/node_modules\/@supabase\//.test(id)) return 'vendor-supabase';
+            if (/node_modules\/lucide-react\//.test(id)) return 'vendor-icons';
+            if (/node_modules\/(recharts|d3-[^/]+|victory-vendor)\//.test(id)) return 'vendor-charts';
+          },
       },
     },
   },
