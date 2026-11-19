@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import { toast } from 'sonner';
 import { AlertCircle, ArrowLeft, Check, ChevronLeft, ChevronRight, Download, Loader2, Search } from 'lucide-react';
@@ -63,6 +63,7 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
     return saved;
   });
   const [pvIdx, setPvIdx] = useState(0);
+  const [showMock, setShowMock] = useState(false);
   const [pvChannel, setPvChannel] = useState('');
   const [saveState, setSaveState] = useState<'' | 'saving' | 'saved'>('');
   const getAdj = (pid: string, ch: string): PhotoAdj => adjust[adjKey(pid, ch)] ?? DEF_ADJ;
@@ -414,7 +415,7 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
           </section>
         </div>
 
-        <aside className="space-y-4 self-start lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+        <aside className="space-y-4 self-start lg:sticky lg:top-2 lg:max-h-[calc(100vh-1rem)] lg:overflow-y-auto">
           <section className={CARD}>
           <div className="mb-3 flex items-center justify-between gap-2">
             <h3 className="text-sm font-bold text-slate-800">Prévia</h3>
@@ -450,7 +451,16 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
               </div>
 
               <div className="[&>div]:!grid-cols-1">
-                <ChannelPreviews items={previewItems} />
+                <>
+                      <button type="button" className="mb-2 text-xs font-semibold text-[#0094eb] hover:underline" onClick={() => setShowMock((v) => !v)}>
+                        {showMock ? 'Ver só a arte' : 'Ver simulação da rede'}
+                      </button>
+                      {showMock ? (
+                        <ChannelPreviews items={previewItems} />
+                      ) : previewItems[0] ? (
+                        <img src={previewItems[0].imageUrl} alt="Prévia" className="mx-auto max-h-[50vh] w-auto max-w-full rounded-xl border border-slate-200 object-contain" />
+                      ) : null}
+                    </>
               </div>
 
               {usesCutout && (
