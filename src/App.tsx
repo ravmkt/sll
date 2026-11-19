@@ -1,4 +1,4 @@
-import AvaliarPage from './modules/pulse/pages/public/AvaliarPage';
+﻿import AvaliarPage from './modules/pulse/pages/public/AvaliarPage';
 import StreamSellLanding from '@/pages/landing/StreamSellLanding';
 import BuilderListPage from '@/modules/builder/pages/BuilderListPage';
 import BuilderOverviewPage from '@/modules/builder/pages/BuilderOverviewPage';
@@ -42,6 +42,8 @@ const LandingHub = lazy(() => import("@/pages/LandingHub"));
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const StudioArtesPage = lazy(() => import('@/modules/promocoes/studio-artes/StudioArtesPage'));
+import PromocoesLayout from '@/modules/promocoes/components/PromocoesLayout';
+import PromocoesSoon from '@/modules/promocoes/components/PromocoesSoon';
 const TryOnPage = lazy(() => import('./pages/TryOn/TryOnPage'));
 const TryOnModule = lazy(() => import('./pages/TryOn/TryOnModule'));
 const BillingSuccess = lazy(() => import('./pages/checkout/BillingSuccess'));
@@ -395,7 +397,8 @@ function AppRoutes() {
         <Route path="/dashboard/modules/builder/templates" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderTemplatesPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/:id" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout editor><BuilderEditorPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/tryon" element={user ? (<SubscriptionGate><ModuleGate moduleKey="tryon"><TryOnModule /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
-        <Route path="/dashboard/modules/promocoes/studio-artes" element={user ? (<SubscriptionGate><ModuleGate moduleKey="promocoes"><Suspense fallback={null}><StudioArtesPage /></Suspense></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/promocoes" element={user ? (<SubscriptionGate><ModuleGate moduleKey="promocoes"><PromocoesLayout>{(tab) => (tab === 'studio' ? <Suspense fallback={null}><StudioArtesPage /></Suspense> : <PromocoesSoon />)}</PromocoesLayout></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/promocoes/studio-artes" element={<Navigate to="/dashboard/modules/promocoes" replace />} />
         <Route path="/medidas/botao" element={<MedidasBotao />} />
         <Route path="/medidas/aparencia" element={<MedidasAparencia />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
