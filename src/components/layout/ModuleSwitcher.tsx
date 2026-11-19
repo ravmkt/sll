@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Check, ChevronDown, Gamepad2, Layers, LayoutDashboard, LayoutTemplate, Radio, Boxes, Radar as RadarIcon, Megaphone } from 'lucide-react';
@@ -18,7 +18,7 @@ const SWITCHER_MODULES: Item[] = [
   { key: 'gate', name: 'Pulse', category: 'Páginas & Domínio Próprio', path: '/dashboard/modules/pulse', icon: LayoutTemplate, logo: '/assets/pulse-logo-ico.png' },
   { key: 'medidas', name: 'Medidas', category: 'Tabela de Medidas', path: '/dashboard/modules/medidas', icon: LayoutTemplate },
   { key: 'radar', name: 'Radar', category: 'Inteligência de Mercado', path: '/dashboard/modules/radar', icon: RadarIcon, logo: '/assets/radar-logo-ico.png' },
-  { key: 'promocoes', name: 'Promo\u00e7\u00f5es', category: 'Campanhas & Artes', path: '/dashboard/modules/promocoes', icon: Megaphone },
+  { key: 'promocoes', name: 'Promo\u00e7\u00f5es', category: 'Campanhas & Artes', path: '/dashboard/modules/promocoes', icon: Megaphone, logo: '/assets/promocoes-logo-ico.png' },
   { key: 'gamification', name: 'Gamificação', category: 'Engajamento & Prêmios', path: '/dashboard/modules/gamificacao', icon: Gamepad2, soon: true },
 ];
 
