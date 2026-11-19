@@ -31,22 +31,16 @@ export default function PromocoesLayout({
         <PromocoesSidebar activeTab={tab} onTabChange={setTab} isCollapsed={collapsed} onToggle={toggle} />
         <div className="flex min-w-0 flex-1 flex-col">
           <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 p-6">
-            {tab !== 'studio' && (
-              <header className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#0094eb]">
-                  <Icon size={24} />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-xl font-bold text-slate-900">{current.label}</h1>
-                  <p className="text-sm text-slate-500">{current.description}</p>
-                </div>
-              </header>
-            )}
-            {tab === 'studio' ? (
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">{children(tab)}</section>
-            ) : (
-              children(tab)
-            )}
+            <header className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#0094eb]">
+                <Icon size={24} />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold text-slate-900">{current.label}</h1>
+                <p className="text-sm text-slate-500">{current.description}</p>
+              </div>
+            </header>
+            {children(tab)}
           </main>
           <AppFooter />
         </div>
