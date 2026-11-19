@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, Loader2, Package, Pencil, Search, SlidersHorizontal } from 'lucide-react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useLoja } from '@/contexts/LojaContext';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -193,7 +192,7 @@ export default function GestorPage() {
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -352,6 +351,6 @@ export default function GestorPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 }
