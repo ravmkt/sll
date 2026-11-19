@@ -41,6 +41,7 @@ const LandingHub = lazy(() => import("@/pages/LandingHub"));
 
 // Carregamento sob demanda (Code-Splitting via React.lazy)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const StudioArtesPage = lazy(() => import('@/modules/promocoes/studio-artes/StudioArtesPage'));
 const TryOnPage = lazy(() => import('./pages/TryOn/TryOnPage'));
 const TryOnModule = lazy(() => import('./pages/TryOn/TryOnModule'));
 const BillingSuccess = lazy(() => import('./pages/checkout/BillingSuccess'));
@@ -394,6 +395,7 @@ function AppRoutes() {
         <Route path="/dashboard/modules/builder/templates" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout><BuilderTemplatesPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/builder/:id" element={user ? <ModuleGate moduleKey="builder"><BuilderLayout editor><BuilderEditorPage /></BuilderLayout></ModuleGate> : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/tryon" element={user ? (<SubscriptionGate><ModuleGate moduleKey="tryon"><TryOnModule /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/promocoes/studio-artes" element={user ? (<SubscriptionGate><Suspense fallback={null}><StudioArtesPage /></Suspense></SubscriptionGate>) : <Navigate to="/auth" replace />} />
         <Route path="/medidas/botao" element={<MedidasBotao />} />
         <Route path="/medidas/aparencia" element={<MedidasAparencia />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
