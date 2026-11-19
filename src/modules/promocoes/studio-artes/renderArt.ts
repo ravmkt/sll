@@ -1,3 +1,4 @@
+import { getCutout } from './cutout';
 export type ArtInput = { name: string; image_url: string; original: number; promo: number; pct: number };
 export type ArtStyle = {
   title: string;
@@ -11,6 +12,7 @@ export type ArtStyle = {
   template?: string;
   kicker?: string;
   cta?: string;
+  cutout?: boolean;
 };
 
 const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -193,7 +195,7 @@ export async function renderArt(p: ArtInput, o: ArtStyle): Promise<Blob> {
   canvas.width = o.w;
   canvas.height = o.h;
   const ctx = canvas.getContext('2d')!;
-  const img = await loadImg(p.image_url);
+  const img = o.template === 'blackfriday' && o.cutout !== false ? await getCutout(p.image_url).catch(() => loadImg(p.image_url)) : await loadImg(p.image_url);
 
   if (o.template === 'blackfriday') blackfriday(ctx, p, o, img);
   else classico(ctx, p, o, img);
