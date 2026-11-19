@@ -1,6 +1,6 @@
 import { Copy, Undo2 } from 'lucide-react';
 import { channelByKey } from './lib';
-import { bioVersion, type CaptionOverrides } from './captionVariants';
+import { bioVersion, type CaptionOverrides } from './captionHelpers';
 
 interface Props {
   base: string;
