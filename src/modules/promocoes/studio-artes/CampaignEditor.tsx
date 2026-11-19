@@ -6,7 +6,8 @@ import type { CatalogProduct } from '@/services/productsService';
 import { CampaignRow, StudioStore, getCampaignItems, patchCampaignStyle, saveCampaign, updateCampaign } from './studioService';
 import { renderArt } from './renderArt';
 import { prefetchCutout } from './cutout';
-import { TEMPLATES, templateByKey, styleForChannel } from './templates';
+import { templateByKey, styleForChannel } from './templates';
+import TemplatePicker, { TemplateThumb, tplMeta } from './TemplatePicker';
 import {
   brl, promoFromPct, pctFromPromo, CHANNELS, CHANNEL_GROUPS, channelByKey, FormatKey, VARIABLES,
   DEFAULT_MESSAGE, renderMessage, cleanSite, waLink, fmtDate,
@@ -42,6 +43,7 @@ export default function CampaignEditor({ store, products, mode, campaign, onBack
   const [name, setName] = useState(mode === 'reuse' && campaign ? `${campaign.name} (cópia)` : campaign?.name ?? 'BLACK WEEK');
   const [endsAt, setEndsAt] = useState(campaign?.ends_at ? campaign.ends_at.slice(0, 10) : '');
   const [template, setTemplate] = useState(tpl0.key);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [subtitle, setSubtitle] = useState(st.subtitle ?? tpl0.subtitle);
   const [kicker, setKicker] = useState(st.kicker ?? tpl0.kicker);
   const [cta, setCta] = useState(st.cta ?? 'COMPRE AGORA');
@@ -131,8 +133,12 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
   }, [rows, search]);
 
   const selected = rows.filter((r) => r.selected);
+  const tplCur = templateByKey(template);
+  const meta = tplMeta(tplCur);
+  const usesCutout = template === 'blackfriday' || meta.cutout;
+  const isImageBg = meta.bgType === 'image';
   useEffect(() => {
-    if (template !== 'blackfriday') return;
+    if (!usesCutout) return;
     selected.slice(0, 2).forEach((r) => prefetchCutout(r.product.image_url as string));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected.map((r) => r.product.id).slice(0, 2).join(','), template]);
@@ -288,29 +294,31 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
 
           <section className={CARD}>
             <h3 className="mb-4 text-sm font-bold text-slate-800">Template e cores</h3>
-            <div className="grid gap-3 md:grid-cols-2">
-              {TEMPLATES.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => pickTemplate(t.key)}
-                  className={`rounded-xl border p-4 text-left transition ${template === t.key ? 'border-[#0094eb] bg-sky-50 ring-2 ring-[#0094eb]/20' : 'border-slate-200 hover:bg-slate-50'}`}
-                >
-                  <div className="mb-2 flex gap-1">
-                    <span className="h-4 w-8 rounded" style={{ background: `linear-gradient(90deg,${t.bgFrom},${t.bgTo})` }} />
-                    <span className="h-4 w-4 rounded" style={{ background: t.accent }} />
+            <div className="flex items-center gap-4 rounded-xl border border-slate-200 p-3">
+                  <TemplateThumb t={tplCur} className="h-28 w-[88px] shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-800">{tplCur.label}</p>
+                    <p className="text-xs text-slate-500">{tplCur.description}</p>
                   </div>
-                  <p className="text-sm font-semibold text-slate-800">{t.label}</p>
-                  <p className="text-xs text-slate-500">{t.description}</p>
-                </button>
-              ))}
-            </div>
+                  <button type="button" className={BTN_SECONDARY} onClick={() => setPickerOpen(true)}>Trocar template</button>
+                </div>
+                {pickerOpen && (
+                  <TemplatePicker
+                    current={template}
+                    onPick={(k) => { pickTemplate(k); setPickerOpen(false); }}
+                    onClose={() => setPickerOpen(false)}
+                  />
+                )}
             <div className="mt-4 grid gap-4 md:grid-cols-5">
-              <label className={LABEL}>Fundo 1<input type="color" value={bgFrom} onChange={(e) => setBgFrom(e.target.value)} className={COLOR} /></label>
+              {!isImageBg && (
+                    <>
+                      <label className={LABEL}>Fundo 1<input type="color" value={bgFrom} onChange={(e) => setBgFrom(e.target.value)} className={COLOR} /></label>
               <label className={LABEL}>Fundo 2<input type="color" value={bgTo} onChange={(e) => setBgTo(e.target.value)} className={COLOR} /></label>
+                    </>
+                  )}
               <label className={LABEL}>Destaque<input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className={COLOR} /></label>
-              {template === 'blackfriday' && (
-                <>
+              {template !== 'classico' && (
+                    <>
                   <label className={LABEL}>Texto superior<input className={INP} value={kicker} onChange={(e) => setKicker(e.target.value)} /></label>
                   <label className={LABEL}>Botão<input className={INP} value={cta} onChange={(e) => setCta(e.target.value)} /></label>
                 </>
@@ -435,8 +443,8 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
                 <ChannelPreviews items={previewItems} />
               </div>
 
-              {template === 'blackfriday' && (
-                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+              {usesCutout && (
+                    <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-bold text-slate-700">Foto deste produto neste canal</p>
                     <button type="button" className={BTN_SECONDARY} onClick={() => setAdj(pvRow.product.id, activeCh, { s: 1, x: 0, y: 0 })}>Restaurar</button>
