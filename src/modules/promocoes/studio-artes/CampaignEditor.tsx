@@ -44,6 +44,7 @@ export default function CampaignEditor({ store, products, mode, campaign, onBack
   const [endsAt, setEndsAt] = useState(campaign?.ends_at ? campaign.ends_at.slice(0, 10) : '');
   const [template, setTemplate] = useState(tpl0.key);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [tplChosen, setTplChosen] = useState(mode !== 'new');
   const [subtitle, setSubtitle] = useState(st.subtitle ?? tpl0.subtitle);
   const [kicker, setKicker] = useState(st.kicker ?? tpl0.kicker);
   const [cta, setCta] = useState(st.cta ?? 'COMPRE AGORA');
@@ -294,37 +295,46 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
 
           <section className={CARD}>
             <h3 className="mb-4 text-sm font-bold text-slate-800">Template e cores</h3>
-            <div className="flex items-center gap-4 rounded-xl border border-slate-200 p-3">
-                  <TemplateThumb t={tplCur} className="h-28 w-[88px] shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-800">{tplCur.label}</p>
-                    <p className="text-xs text-slate-500">{tplCur.description}</p>
+                {!tplChosen ? (
+                  <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-10 text-center">
+                    <p className="text-sm text-slate-500">Nenhum template escolhido.</p>
+                    <button type="button" className={BTN_PRIMARY} onClick={() => setPickerOpen(true)}>Escolher template</button>
                   </div>
-                  <button type="button" className={BTN_SECONDARY} onClick={() => setPickerOpen(true)}>Trocar template</button>
-                </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-4 rounded-xl border border-slate-200 p-3">
+                      <TemplateThumb t={tplCur} className="h-28 w-[88px] shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-slate-800">{tplCur.label}</p>
+                        <p className="text-xs text-slate-500">{tplCur.description}</p>
+                      </div>
+                      <button type="button" className={BTN_SECONDARY} onClick={() => setPickerOpen(true)}>Trocar template</button>
+                    </div>
+                    <div className="mt-4 grid gap-4 md:grid-cols-5">
+                      {!isImageBg && (
+                        <>
+                          <label className={LABEL}>Fundo 1<input type="color" value={bgFrom} onChange={(e) => setBgFrom(e.target.value)} className={COLOR} /></label>
+                          <label className={LABEL}>Fundo 2<input type="color" value={bgTo} onChange={(e) => setBgTo(e.target.value)} className={COLOR} /></label>
+                        </>
+                      )}
+                      <label className={LABEL}>Destaque<input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className={COLOR} /></label>
+                      {template !== 'classico' && (
+                        <>
+                          <label className={LABEL}>Texto superior<input className={INP} value={kicker} onChange={(e) => setKicker(e.target.value)} /></label>
+                          <label className={LABEL}>Botão<input className={INP} value={cta} onChange={(e) => setCta(e.target.value)} /></label>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
                 {pickerOpen && (
                   <TemplatePicker
-                    current={template}
-                    onPick={(k) => { pickTemplate(k); setPickerOpen(false); }}
+                    current={tplChosen ? template : ''}
+                    onPick={(k) => { pickTemplate(k); setTplChosen(true); setPickerOpen(false); }}
                     onClose={() => setPickerOpen(false)}
                   />
                 )}
-            <div className="mt-4 grid gap-4 md:grid-cols-5">
-              {!isImageBg && (
-                    <>
-                      <label className={LABEL}>Fundo 1<input type="color" value={bgFrom} onChange={(e) => setBgFrom(e.target.value)} className={COLOR} /></label>
-              <label className={LABEL}>Fundo 2<input type="color" value={bgTo} onChange={(e) => setBgTo(e.target.value)} className={COLOR} /></label>
-                    </>
-                  )}
-              <label className={LABEL}>Destaque<input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className={COLOR} /></label>
-              {template !== 'classico' && (
-                    <>
-                  <label className={LABEL}>Texto superior<input className={INP} value={kicker} onChange={(e) => setKicker(e.target.value)} /></label>
-                  <label className={LABEL}>Botão<input className={INP} value={cta} onChange={(e) => setCta(e.target.value)} /></label>
-                </>
-              )}
-            </div>
-          </section>
+              </section>
 
               <section className={CARD}>
             <h3 className="mb-1 text-sm font-bold text-slate-800">Canais</h3>
@@ -465,12 +475,13 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
         </section>
 
           <section className={CARD}>
-            <button className={`${BTN_PRIMARY} w-full justify-center`} disabled={!selected.length || !channels.length || busy} onClick={generate}>
+            <button className={`${BTN_PRIMARY} w-full justify-center`} disabled={!tplChosen || !selected.length || !channels.length || busy} onClick={generate}>
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
               Gerar {selected.length * channels.length} artes (ZIP)
             </button>
             <p className="mt-2 text-xs text-slate-500">{selected.length} produto(s) x {channels.length} canal(is). {mode === 'edit' ? 'A campanha será atualizada.' : 'A campanha será salva.'}</p>
-            {progress && <p className="mt-2 text-sm text-slate-600">{progress}</p>}
+            {!tplChosen && <p className="mt-2 text-xs font-semibold text-amber-600">Escolha um template para gerar as artes.</p>}
+                {progress && <p className="mt-2 text-sm text-slate-600">{progress}</p>}
           </section>
         </aside>
       </div>
