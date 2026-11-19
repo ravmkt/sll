@@ -67,3 +67,8 @@ export function getCutout(src: string): Promise<HTMLImageElement> {
   cache.set(src, p);
   return p;
 }
+
+/** Inicia o recorte em segundo plano (cache por URL), sem esperar. */
+export function prefetchCutout(src: string): void {
+  void getCutout(src).catch(() => undefined);
+}

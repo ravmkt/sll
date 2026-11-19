@@ -5,6 +5,7 @@ import { AlertCircle, ArrowLeft, Check, ChevronLeft, ChevronRight, Download, Loa
 import type { CatalogProduct } from '@/services/productsService';
 import { CampaignRow, StudioStore, getCampaignItems, patchCampaignStyle, saveCampaign, updateCampaign } from './studioService';
 import { renderArt } from './renderArt';
+import { prefetchCutout } from './cutout';
 import { TEMPLATES, templateByKey, styleForChannel } from './templates';
 import {
   brl, promoFromPct, pctFromPromo, CHANNELS, CHANNEL_GROUPS, channelByKey, FormatKey, VARIABLES,
@@ -130,6 +131,11 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
   }, [rows, search]);
 
   const selected = rows.filter((r) => r.selected);
+  useEffect(() => {
+    if (template !== 'blackfriday') return;
+    selected.slice(0, 2).forEach((r) => prefetchCutout(r.product.image_url as string));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected.map((r) => r.product.id).slice(0, 2).join(','), template]);
   const allFilteredSelected = filtered.length > 0 && filtered.every((f) => rows.find((r) => r.product.id === f.product.id)?.selected);
   const patch = (id: string, p: Partial<Row>) => setRows((rs) => rs.map((r) => (r.product.id === id ? { ...r, ...p } : r)));
   const setPct = (r: Row, pct: number) => patch(r.product.id, { pct, promo: promoFromPct(r.product.price as number, pct) });
