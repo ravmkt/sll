@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Package, Pencil, Search, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText, Loader2, Package, Pencil, Search, SlidersHorizontal, Tags } from 'lucide-react';
+import VariantDetailsDialog from '../components/VariantDetailsDialog';
+import ProductClassifyDialog from '../components/ProductClassifyDialog';
 import { useLoja } from '@/contexts/LojaContext';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -64,6 +66,8 @@ export default function GestorPage() {
   const [mNote, setMNote] = useState('');
   const [moving, setMoving] = useState(false);
   const [history, setHistory] = useState<Movement[]>([]);
+  const [detailsFor, setDetailsFor] = useState<{ id: string; label: string } | null>(null);
+  const [classifyFor, setClassifyFor] = useState<GProduct | null>(null);
 
   const reload = useCallback(async () => {
     if (!storeId) {
@@ -233,7 +237,8 @@ export default function GestorPage() {
                       <p className="font-semibold">{brl(p.price)}</p>
                       <Badge variant={total > 0 ? 'secondary' : 'destructive'}>{total} un.</Badge>
                     </div>
-                    <Button size="icon" variant="ghost" onClick={() => openEdit(p)} aria-label="Editar"><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => setClassifyFor(p)} aria-label="Categoria e marca" title="Categoria e marca"><Tags className="h-4 w-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(p)} aria-label="Editar"><Pencil className="h-4 w-4" /></Button>
                   </div>
 
                   {isOpen && (
@@ -261,7 +266,10 @@ export default function GestorPage() {
                                 <td className="py-2 text-right">{brl(v.sale_price ?? v.price)}</td>
                                 <td className="py-2 text-right font-semibold">{v.stock}</td>
                                 <td className="py-2 text-right">
-                                  <Button size="sm" variant="outline" onClick={() => openStock(p, v)}>
+                                  <Button size="sm" variant="ghost" className="mr-1" onClick={() => setDetailsFor({ id: v.id, label: p.name + ' - ' + (v.title || v.sku) })}>
+                                        <FileText className="mr-1 h-3.5 w-3.5" /> Dados
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={() => openStock(p, v)}>
                                     <SlidersHorizontal className="mr-1 h-3.5 w-3.5" /> Estoque
                                   </Button>
                                 </td>
@@ -279,7 +287,18 @@ export default function GestorPage() {
         )}
       </div>
 
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+      <VariantDetailsDialog
+            variantId={detailsFor?.id ?? null}
+            label={detailsFor?.label ?? ''}
+            onClose={() => setDetailsFor(null)}
+          />
+          <ProductClassifyDialog
+            productId={classifyFor?.id ?? null}
+            productName={classifyFor?.name ?? ''}
+            onClose={() => setClassifyFor(null)}
+          />
+
+          <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="bg-white text-slate-900 [&_input]:bg-white [&_input]:text-slate-900 [&_textarea]:bg-white [&_textarea]:text-slate-900 [&_label]:text-slate-700">
           <DialogHeader><DialogTitle>{editing?.name}</DialogTitle></DialogHeader>
           <div className="space-y-3">
