@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import { toast } from 'sonner';
 import { AlertCircle, ArrowLeft, Check, ChevronLeft, ChevronRight, Download, Loader2, Search } from 'lucide-react';
@@ -484,7 +484,7 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
           )}
         </section>
 
-          <section className={CARD}>
+          <section className={`${CARD} sticky bottom-0 z-10 shadow-[0_-4px_14px_rgba(15,23,42,0.10)]`}>
             <button className={`${BTN_PRIMARY} w-full justify-center`} disabled={!tplChosen || !selected.length || !channels.length || busy} onClick={generate}>
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
               Gerar {selected.length * channels.length} artes (ZIP)

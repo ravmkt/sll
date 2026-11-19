@@ -60,7 +60,7 @@ export const TEMPLATES: ArtTemplate[] = [
     key: 'vitrine-podio',
     label: 'Vitrine P\u00f3dio',
     description: 'Produto sobre p\u00f3dio, visual de vitrine premium.',
-    bgFrom: '#111111', bgTo: '#2a2a2a', accent: '#ffb300',
+    bgFrom: '#111111', bgTo: '#2a2a2a', accent: '#b8860b',
     kicker: 'DESTAQUE DA SEMANA', subtitle: 'DESTAQUE DA SEMANA',
     group: 'Fundo de imagem', bgType: 'image', images: img('vitrine-podio'), cutout: true,
   },

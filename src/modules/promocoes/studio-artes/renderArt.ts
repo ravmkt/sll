@@ -217,12 +217,13 @@ interface Look {
   pos: Pos;
   groundShadow: boolean;
   photoShadow: boolean;
+  podium?: { feed: number; story: number };
 }
 
 // Ajuste aqui cores de texto, fontes e posicao da foto de cada template.
 const LOOKS: Record<string, Look> = {
   'editorial-pincel': { bg: 'image', ink: '#2b2118', sub: '#6b5b4b', badgeInk: '#ffffff', head: 'Playfair Display', headWeight: 900, headItalic: false, body: 'Poppins', bodyWeight: 600, upper: false, script: false, pos: 'left', groundShadow: true, photoShadow: false },
-  'vitrine-podio': { bg: 'image', ink: '#ffffff', sub: '#d0d0d0', badgeInk: '#111111', head: 'Montserrat', headWeight: 900, headItalic: true, body: 'Poppins', bodyWeight: 600, upper: true, script: false, pos: 'center', groundShadow: false, photoShadow: true },
+  'vitrine-podio': { bg: 'image', ink: '#2b2b2b', sub: '#6b6b6b', badgeInk: '#ffffff', head: 'Montserrat', headWeight: 900, headItalic: true, body: 'Poppins', bodyWeight: 600, upper: true, script: false, pos: 'center', groundShadow: true, photoShadow: false, podium: { feed: 0.66, story: 0.68 } },
   'palco-holofote': { bg: 'image', ink: '#ffffff', sub: '#c9c9e0', badgeInk: '#ffffff', head: 'Montserrat', headWeight: 900, headItalic: true, body: 'Poppins', bodyWeight: 600, upper: true, script: false, pos: 'center', groundShadow: false, photoShadow: true },
   'holofote-minimal': { bg: 'image', ink: '#ffffff', sub: '#bdbdbd', badgeInk: '#0b0b0b', head: 'Poppins', headWeight: 800, headItalic: false, body: 'Poppins', bodyWeight: 400, upper: true, script: false, pos: 'center', groundShadow: false, photoShadow: true },
   'novidade-diagonal': { bg: 'image', ink: '#1b1b1b', sub: '#555555', badgeInk: '#ffffff', head: 'Poppins', headWeight: 800, headItalic: false, body: 'Poppins', bodyWeight: 600, upper: true, script: true, pos: 'right', groundShadow: true, photoShadow: false },
@@ -242,10 +243,10 @@ interface GL {
   siteY: number;
 }
 
-function gLayout(W: number, H: number, pos: Pos): GL {
+function gLayout(W: number, H: number, pos: Pos, forceStack = false): GL {
   const ratio = H / W;
   const u = Math.min(W / 1080, H / 1350);
-  const stack = ratio > 1.5 || (pos === 'center' && ratio >= 1.15);
+  const stack = ratio > 1.5 || (pos === 'center' && ratio >= 1.15) || forceStack;
   if (stack) {
     const story = ratio > 1.5;
     return {
@@ -314,7 +315,19 @@ function drawBg(ctx: CanvasRenderingContext2D, W: number, H: number, u: number, 
 
 function gen(ctx: CanvasRenderingContext2D, p: ArtInput, o: ArtStyle, img: HTMLImageElement, look: Look, bgImg: HTMLImageElement | null) {
   const { w: W, h: H } = o;
-  const L = gLayout(W, H, look.pos);
+  let L = gLayout(W, H, look.pos, !!look.podium);
+  if (look.podium) {
+    const f = H / W > 1.5 ? look.podium.story : look.podium.feed;
+    let base = H * f;
+    if (bgImg) {
+      const k = Math.max(W / bgImg.width, H / bgImg.height);
+      const dh = bgImg.height * k;
+      base = (H - dh) / 2 + f * dh;
+    }
+    base += 10 * L.u;
+    const top = H * 0.2;
+    L = { ...L, photo: { x: W * 0.14, y: top, w: W * 0.72, h: Math.max(base - top, H * 0.2) } };
+  }
   const u = L.u;
   const T = (s: string) => (look.upper ? s.toUpperCase() : s);
   const head = (s: number) => `${look.headItalic ? 'italic ' : ''}${look.headWeight} ${s * u}px "${look.head}", Arial, sans-serif`;
@@ -392,7 +405,7 @@ function gen(ctx: CanvasRenderingContext2D, p: ArtInput, o: ArtStyle, img: HTMLI
       ctx.fillText('OFF', bx, by + 46 * u, r * 1.6);
     }
 
-    y = L.photo.y + L.photo.h + 70 * u;
+    y = L.photo.y + L.photo.h + (look.podium ? 50 : 70) * u;
     ctx.fillStyle = look.ink;
     ctx.font = body(46);
     wrap(ctx, T(p.name), mw, 2).forEach((l) => { ctx.fillText(l, cx, y, mw); y += 56 * u; });
