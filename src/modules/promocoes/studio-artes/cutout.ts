@@ -1,4 +1,4 @@
-import { removeBackground } from '@imgly/background-removal';
+import { removeBackgroundFast } from './fastCutout';
 
 const cache = new Map<string, Promise<HTMLImageElement>>();
 
@@ -60,7 +60,7 @@ export function getCutout(src: string): Promise<HTMLImageElement> {
   if (hit) return hit;
   const p = (async () => {
     const blob = await fetchBlob(src);
-    const out = await removeBackground(blob, { output: { format: 'image/png' } });
+    const out = await removeBackgroundFast(blob, { output: { format: 'image/png' } });
     return trim(await loadUrl(URL.createObjectURL(out)));
   })();
   p.catch(() => cache.delete(src));

@@ -80,6 +80,20 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adjust]);
   const [message, setMessage] = useState(campaign?.message_template || DEFAULT_MESSAGE);
+  const msgRef = useRef<HTMLTextAreaElement>(null);
+  const insertVar = (v: string) => {
+    const tag = `{{${v}}}`;
+    const el = msgRef.current;
+    if (!el) { setMessage((m) => m + tag); return; }
+    const start = el.selectionStart ?? message.length;
+    const end = el.selectionEnd ?? start;
+    setMessage(message.slice(0, start) + tag + message.slice(end));
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + tag.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
   const [images, setImages] = useState<Record<string, string>>({});
   const [previewing, setPreviewing] = useState(false);
   const [progress, setProgress] = useState('');
@@ -318,11 +332,11 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
 
           <section className={CARD}>
             <h3 className="mb-1 text-sm font-bold text-slate-800">Mensagem</h3>
-            <p className="mb-3 text-xs text-slate-500">Clique em um campo para inseri-lo no fim da mensagem.</p>
-            <textarea className={`${INP} mt-0 h-36 font-mono`} value={message} onChange={(e) => setMessage(e.target.value)} />
+            <p className="mb-3 text-xs text-slate-500">Clique em um campo para inseri-lo na posicao do cursor.</p>
+            <textarea ref={msgRef} className={`${INP} mt-0 h-36 font-mono`} value={message} onChange={(e) => setMessage(e.target.value)} />
             <div className="mt-3 flex flex-wrap gap-1.5">
               {VARIABLES.map((v) => (
-                <button key={v} type="button" className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 transition hover:border-[#0094eb] hover:text-[#0094eb]" onClick={() => setMessage((m) => `${m}{{${v}}}`)}>{`{{${v}}}`}</button>
+                <button key={v} type="button" className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 transition hover:border-[#0094eb] hover:text-[#0094eb]" onMouseDown={(e) => e.preventDefault()} onClick={() => insertVar(v)}>{`{{${v}}}`}</button>
               ))}
               <button type="button" className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100" onClick={() => setMessage(DEFAULT_MESSAGE)}>Restaurar modelo</button>
             </div>
