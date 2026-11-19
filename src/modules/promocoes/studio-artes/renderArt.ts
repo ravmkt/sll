@@ -1,3 +1,4 @@
+import { bfLayout, fitPhoto } from './layout';
 import { getCutout } from './cutout';
 export type ArtInput = { name: string; image_url: string; original: number; promo: number; pct: number };
 export type ArtStyle = {
@@ -12,6 +13,9 @@ export type ArtStyle = {
   template?: string;
   kicker?: string;
   cta?: string;
+  photoScale?: number;
+  photoOffsetX?: number;
+  photoOffsetY?: number;
   cutout?: boolean;
 };
 
@@ -114,23 +118,23 @@ function classico(ctx: CanvasRenderingContext2D, p: ArtInput, o: ArtStyle, img: 
 
 function blackfriday(ctx: CanvasRenderingContext2D, p: ArtInput, o: ArtStyle, img: HTMLImageElement) {
   const { w: W, h: H } = o;
-  const u = Math.min(W / 1080, H / 1350);
+  const L = bfLayout(W, H);
+  const u = L.u;
   const font = (size: number) => `italic 900 ${size * u}px "Arial Black", Arial, sans-serif`;
 
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = o.accent;
-  ctx.fillRect(0, 0, W * 0.46, H * 0.74);
+  ctx.fillRect(L.orange.x, L.orange.y, L.orange.w, L.orange.h);
 
-  const bx = W * 0.01, bw = W * 0.52, by = H * 0.06, bh = H * 0.88;
-  const k = Math.min(bw / img.width, bh / img.height);
-  const dw = img.width * k, dh = img.height * k;
-  ctx.drawImage(img, bx + (bw - dw) / 2, by + bh - dh, dw, dh);
+  const ph = fitPhoto(img.width, img.height, L.photo, o.photoScale ?? 1, o.photoOffsetX ?? 0, o.photoOffsetY ?? 0);
+  ctx.drawImage(img, ph.x, ph.y, ph.w, ph.h);
 
-  const cx = W * 0.755, mw = W * 0.43;
+  const cx = L.text.cx;
+  const mw = L.text.mw;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  let y = H * 0.06;
+  let y = L.text.top;
 
   ctx.fillStyle = '#fff';
   ctx.font = font(34);
@@ -144,7 +148,7 @@ function blackfriday(ctx: CanvasRenderingContext2D, p: ArtInput, o: ArtStyle, im
   y += 95 * u;
   ctx.fillStyle = '#fff';
   ctx.font = font(66);
-  const lines = wrap(ctx, p.name.toUpperCase(), mw, 3);
+  const lines = wrap(ctx, p.name.toUpperCase(), mw, L.mode === 'stack' ? 2 : 3);
   lines.forEach((l) => { ctx.fillText(l, cx, y, mw); y += 72 * u; });
 
   if (p.pct > 0) {
@@ -172,7 +176,7 @@ function blackfriday(ctx: CanvasRenderingContext2D, p: ArtInput, o: ArtStyle, im
   ctx.fillText(`Por ${brl(p.promo)}`, cx, y, mw);
 
   const cta = (o.cta || 'COMPRE AGORA').toUpperCase();
-  const cy = H * 0.82;
+  const cy = L.ctaY;
   ctx.font = font(34);
   const cw = Math.min(ctx.measureText(cta).width + 60 * u, mw);
   const chh = 64 * u;
@@ -187,7 +191,7 @@ function blackfriday(ctx: CanvasRenderingContext2D, p: ArtInput, o: ArtStyle, im
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#fff';
   ctx.font = font(34);
-  ctx.fillText(o.site, cx, H * 0.88, mw);
+  ctx.fillText(o.site, cx, L.siteY, mw);
 }
 
 export async function renderArt(p: ArtInput, o: ArtStyle): Promise<Blob> {
