@@ -9,7 +9,7 @@ const ITEMS = [
   { to: BASE, label: 'Visão geral', icon: LayoutDashboard, end: true },
   { to: `${BASE}/produtos`, label: 'Produtos e estoque', icon: Package, end: false },
   { to: `${BASE}/fornecedores`, label: 'Fornecedores', icon: Truck, end: false },
-  { to: ${BASE}/categorias, label: 'Categorias e marcas', icon: Tags, end: false },
+  { to: `${BASE}/categorias`, label: 'Categorias e marcas', icon: Tags, end: false },
 ];
 
 const linkCls = ({ isActive }: { isActive: boolean }) =>
