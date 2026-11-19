@@ -1,0 +1,371 @@
+import { useEffect, useMemo, useState } from 'react';
+import JSZip from 'jszip';
+import { toast } from 'sonner';
+import { AlertCircle, ArrowLeft, Download, Loader2, Search } from 'lucide-react';
+import type { CatalogProduct } from '@/services/productsService';
+import { CampaignRow, StudioStore, getCampaignItems, saveCampaign, updateCampaign } from './studioService';
+import { renderArt } from './renderArt';
+import { TEMPLATES, templateByKey, styleForChannel } from './templates';
+import {
+  brl, promoFromPct, pctFromPromo, CHANNELS, CHANNEL_GROUPS, FormatKey, VARIABLES,
+  DEFAULT_MESSAGE, renderMessage, cleanSite, waLink, fmtDate,
+} from './lib';
+import { CARD, LABEL, INP, NUM, COLOR, BTN_PRIMARY, BTN_SECONDARY } from './ui';
+
+interface Row { product: CatalogProduct; selected: boolean; pct: number; promo: number }
+interface Props {
+  store: StudioStore;
+  products: CatalogProduct[];
+  mode: 'new' | 'edit' | 'reuse';
+  campaign?: CampaignRow;
+  onBack: () => void;
+}
+
+const slug = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w]+/g, '-').slice(0, 40);
+
+export default function CampaignEditor({ store, products, mode, campaign, onBack }: Props) {
+  const st = (campaign?.style ?? {}) as Record<string, string>;
+  const tpl0 = templateByKey(campaign?.template_key ?? 'classico');
+
+  const [rows, setRows] = useState<Row[]>(() =>
+    products
+      .filter((p) => p.active !== false && (p.price ?? 0) > 0 && !!p.image_url)
+      .map((p) => ({ product: p, selected: false, pct: 0, promo: p.price as number })),
+  );
+  const [search, setSearch] = useState('');
+  const [globalPct, setGlobalPct] = useState(14);
+  const [name, setName] = useState(mode === 'reuse' && campaign ? `${campaign.name} (cópia)` : campaign?.name ?? 'BLACK WEEK');
+  const [endsAt, setEndsAt] = useState(campaign?.ends_at ? campaign.ends_at.slice(0, 10) : '');
+  const [template, setTemplate] = useState(tpl0.key);
+  const [subtitle, setSubtitle] = useState(st.subtitle ?? tpl0.subtitle);
+  const [kicker, setKicker] = useState(st.kicker ?? tpl0.kicker);
+  const [cta, setCta] = useState(st.cta ?? 'COMPRE AGORA');
+  const [bgFrom, setBgFrom] = useState(st.bgFrom ?? tpl0.bgFrom);
+  const [bgTo, setBgTo] = useState(st.bgTo ?? tpl0.bgTo);
+  const [accent, setAccent] = useState(st.accent ?? tpl0.accent);
+  const [channels, setChannels] = useState<string[]>(campaign?.channels?.length ? campaign.channels : ['instagram_feed']);
+  const [previewChannel, setPreviewChannel] = useState('');
+  const [message, setMessage] = useState(campaign?.message_template || DEFAULT_MESSAGE);
+  const [preview, setPreview] = useState('');
+  const [previewing, setPreviewing] = useState(false);
+  const [progress, setProgress] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const site = cleanSite(store.store_url || store.url);
+
+  // carrega itens da campanha ao editar/reaproveitar
+  useEffect(() => {
+    if (!campaign) return;
+    getCampaignItems(campaign.id)
+      .then((items) => {
+        const m = new Map(items.map((i) => [i.product_id, i]));
+        setRows((rs) => rs.map((r) => {
+          const it = m.get(r.product.id);
+          return it ? { ...r, selected: true, pct: Number(it.discount_pct), promo: Number(it.promo_price) } : r;
+        }));
+      })
+      .catch((e) => setError((e as Error).message));
+  }, [campaign]);
+
+  const pickTemplate = (k: string) => {
+    const t = templateByKey(k);
+    setTemplate(t.key);
+    setBgFrom(t.bgFrom); setBgTo(t.bgTo); setAccent(t.accent);
+    setKicker(t.kicker); setSubtitle(t.subtitle);
+  };
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const l = q ? rows.filter((r) => r.product.name.toLowerCase().includes(q) || (r.product.sku || '').toLowerCase().includes(q)) : rows;
+    return l.slice(0, 300);
+  }, [rows, search]);
+
+  const selected = rows.filter((r) => r.selected);
+  const allFilteredSelected = filtered.length > 0 && filtered.every((f) => rows.find((r) => r.product.id === f.product.id)?.selected);
+  const patch = (id: string, p: Partial<Row>) => setRows((rs) => rs.map((r) => (r.product.id === id ? { ...r, ...p } : r)));
+  const setPct = (r: Row, pct: number) => patch(r.product.id, { pct, promo: promoFromPct(r.product.price as number, pct) });
+  const setPromo = (r: Row, promo: number) => patch(r.product.id, { promo, pct: Math.max(0, pctFromPromo(r.product.price as number, promo)) });
+  const applyGlobal = () => setRows((rs) => rs.map((r) => (r.selected ? { ...r, pct: globalPct, promo: promoFromPct(r.product.price as number, globalPct) } : r)));
+  const toggleAll = (v: boolean) => setRows((rs) => rs.map((r) => (filtered.some((f) => f.product.id === r.product.id) ? { ...r, selected: v } : r)));
+  const toggleChannel = (k: string) => setChannels((c) => (c.includes(k) ? c.filter((x) => x !== k) : [...c, k]));
+
+  const art = (r: Row, channelKey: string) =>
+    renderArt(
+      { name: r.product.name, image_url: r.product.image_url as string, original: r.product.price as number, promo: r.promo, pct: r.pct },
+      styleForChannel({ title: name, subtitle, site, bgFrom, bgTo, accent, template, kicker, cta }, channelKey),
+    );
+
+  const vars = (r: Row) => ({
+    produto: r.product.name,
+    preco_de: brl(r.product.price as number),
+    preco_por: brl(r.promo),
+    desconto: `${Math.round(r.pct)}%`,
+    campanha: name,
+    data_fim: fmtDate(endsAt),
+    site,
+    whatsapp: waLink(store.store_whatsapp || store.whatsapp),
+    link_produto: r.product.product_url || '',
+  });
+
+  // preview ao vivo (debounce)
+  const pvChannel = channels.includes(previewChannel) ? previewChannel : channels[0] ?? 'instagram_feed';
+  const pvRow = selected[0];
+  const pvKey = JSON.stringify([pvRow?.product.id, pvRow?.pct, pvRow?.promo, name, subtitle, kicker, cta, bgFrom, bgTo, accent, template, pvChannel, site]);
+
+  useEffect(() => {
+    if (!pvRow) { setPreview(''); setPreviewing(false); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setPreviewing(true);
+      try {
+        const blob = await art(pvRow, pvChannel);
+        if (!cancelled) setPreview((old) => { if (old) URL.revokeObjectURL(old); return URL.createObjectURL(blob); });
+      } catch (e) {
+        if (!cancelled) setError((e as Error).message);
+      } finally {
+        if (!cancelled) setPreviewing(false);
+      }
+    }, 600);
+    return () => { cancelled = true; clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pvKey]);
+
+  const generate = async () => {
+    if (!selected.length || !channels.length) return;
+    setBusy(true);
+    setError('');
+    try {
+      const zip = new JSZip();
+      let captions = '';
+      const total = selected.length * channels.length;
+      let n = 0;
+      for (let i = 0; i < selected.length; i++) {
+        const r = selected[i];
+        const file = `${String(i + 1).padStart(3, '0')}-${slug(r.product.name)}`;
+        for (const ch of channels) {
+          n++;
+          setProgress(`Gerando ${n}/${total}...`);
+          try {
+            zip.file(`${ch}/${file}.png`, await art(r, ch));
+          } catch (e) {
+            captions += `=== ERRO: ${r.product.name} em ${ch} (${(e as Error).message}) ===\n\n`;
+          }
+        }
+        captions += `=== ${file} ===\n${renderMessage(message, vars(r))}\n\n`;
+      }
+      zip.file('legendas.txt', captions);
+
+      setProgress('Salvando campanha...');
+      const payload = {
+        name,
+        ends_at: endsAt || null,
+        format: 'feed' as FormatKey,
+        message_template: message,
+        style: { bgFrom, bgTo, accent, subtitle, kicker, cta },
+        channels,
+        template_key: template,
+        art_mode: 'template',
+        ...(mode === 'reuse' && campaign ? { source_campaign_id: campaign.id } : {}),
+      };
+      const items = selected.map((r) => ({
+        product_id: r.product.id, original_price: r.product.price as number,
+        discount_pct: r.pct, promo_price: r.promo,
+      }));
+      if (mode === 'edit' && campaign) await updateCampaign(campaign.id, store.id, payload, items);
+      else await saveCampaign(store.id, payload, items);
+
+      const out = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(out);
+      a.download = `artes-${slug(name)}.zip`;
+      a.click();
+      toast.success(`${total} artes geradas e campanha salva`);
+      onBack();
+    } catch (e) {
+      setError((e as Error).message);
+      setProgress('');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const title = mode === 'edit' ? 'Editar campanha' : mode === 'reuse' ? 'Reaproveitar campanha' : 'Nova arte';
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <button className={BTN_SECONDARY} onClick={onBack} disabled={busy}><ArrowLeft size={16} /> Voltar</button>
+        <h2 className="text-lg font-bold text-slate-800">{title}</h2>
+      </div>
+
+      {error && (
+        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <AlertCircle size={18} className="mt-0.5 shrink-0" /> <span>{error}</span>
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+        <div className="min-w-0 space-y-6">
+          <section className={CARD}>
+            <h3 className="mb-4 text-sm font-bold text-slate-800">Campanha</h3>
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className={LABEL}>Nome da campanha
+                <input className={INP} value={name} onChange={(e) => setName(e.target.value)} />
+              </label>
+              <label className={LABEL}>Subtítulo / chamada
+                <input className={INP} value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
+              </label>
+              <label className={LABEL}>Termina em
+                <input type="date" className={INP} value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />
+              </label>
+            </div>
+          </section>
+
+          <section className={CARD}>
+            <h3 className="mb-4 text-sm font-bold text-slate-800">Template e cores</h3>
+            <div className="grid gap-3 md:grid-cols-2">
+              {TEMPLATES.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => pickTemplate(t.key)}
+                  className={`rounded-xl border p-4 text-left transition ${template === t.key ? 'border-[#0094eb] bg-sky-50 ring-2 ring-[#0094eb]/20' : 'border-slate-200 hover:bg-slate-50'}`}
+                >
+                  <div className="mb-2 flex gap-1">
+                    <span className="h-4 w-8 rounded" style={{ background: `linear-gradient(90deg,${t.bgFrom},${t.bgTo})` }} />
+                    <span className="h-4 w-4 rounded" style={{ background: t.accent }} />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-800">{t.label}</p>
+                  <p className="text-xs text-slate-500">{t.description}</p>
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-5">
+              <label className={LABEL}>Fundo 1<input type="color" value={bgFrom} onChange={(e) => setBgFrom(e.target.value)} className={COLOR} /></label>
+              <label className={LABEL}>Fundo 2<input type="color" value={bgTo} onChange={(e) => setBgTo(e.target.value)} className={COLOR} /></label>
+              <label className={LABEL}>Destaque<input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className={COLOR} /></label>
+              {template === 'blackfriday' && (
+                <>
+                  <label className={LABEL}>Texto superior<input className={INP} value={kicker} onChange={(e) => setKicker(e.target.value)} /></label>
+                  <label className={LABEL}>Botão<input className={INP} value={cta} onChange={(e) => setCta(e.target.value)} /></label>
+                </>
+              )}
+            </div>
+          </section>
+
+          <section className={CARD}>
+            <h3 className="mb-1 text-sm font-bold text-slate-800">Canais</h3>
+            <p className="mb-3 text-xs text-slate-500">Cada produto gera uma arte no tamanho de cada canal marcado (uma pasta por canal no ZIP).</p>
+            <div className="grid gap-4 md:grid-cols-2">
+              {CHANNEL_GROUPS.map((g) => (
+                <div key={g}>
+                  <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">{g}</p>
+                  {CHANNELS.filter((c) => c.group === g).map((c) => (
+                    <label key={c.key} className="flex cursor-pointer items-center gap-2 py-1 text-sm text-slate-700">
+                      <input type="checkbox" className="h-4 w-4 accent-[#0094eb]" checked={channels.includes(c.key)} onChange={() => toggleChannel(c.key)} />
+                      {c.label} <span className="text-xs text-slate-400">{c.w}x{c.h}</span>
+                    </label>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className={CARD}>
+            <h3 className="mb-1 text-sm font-bold text-slate-800">Mensagem</h3>
+            <p className="mb-3 text-xs text-slate-500">Clique em um campo para inseri-lo no fim da mensagem.</p>
+            <textarea className={`${INP} mt-0 h-36 font-mono`} value={message} onChange={(e) => setMessage(e.target.value)} />
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {VARIABLES.map((v) => (
+                <button key={v} type="button" className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 transition hover:border-[#0094eb] hover:text-[#0094eb]" onClick={() => setMessage((m) => `${m}{{${v}}}`)}>{`{{${v}}}`}</button>
+              ))}
+              <button type="button" className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100" onClick={() => setMessage(DEFAULT_MESSAGE)}>Restaurar modelo</button>
+            </div>
+            {selected[0] && <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-xs text-slate-700">{renderMessage(message, vars(selected[0]))}</pre>}
+          </section>
+
+          <section className={CARD}>
+            <h3 className="mb-4 text-sm font-bold text-slate-800">Produtos</h3>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input className="w-64 rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20" placeholder="Buscar produto ou SKU" value={search} onChange={(e) => setSearch(e.target.value)} />
+              </div>
+              <span className="ml-2 text-sm text-slate-600">Aplicar</span>
+              <input type="number" min={0} max={90} className={`${NUM} w-20`} value={globalPct} onChange={(e) => setGlobalPct(Number(e.target.value))} />
+              <span className="text-sm text-slate-600">% nos selecionados</span>
+              <button className={BTN_SECONDARY} onClick={applyGlobal} disabled={!selected.length}>Aplicar</button>
+              <span className="ml-auto rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-[#0094eb]">{selected.length} selecionado(s) de {rows.length}</span>
+            </div>
+            <div className="max-h-[480px] overflow-auto rounded-xl border border-slate-200">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 z-10 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="w-10 p-3"><input type="checkbox" checked={allFilteredSelected} onChange={(e) => toggleAll(e.target.checked)} className="h-4 w-4 accent-[#0094eb]" /></th>
+                    <th className="p-3 text-left font-semibold">Produto</th>
+                    <th className="p-3 text-right font-semibold">Preço</th>
+                    <th className="p-3 text-right font-semibold">Desconto %</th>
+                    <th className="p-3 text-right font-semibold">Preço promo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((r) => (
+                    <tr key={r.product.id} className={`border-t border-slate-100 transition ${r.selected ? 'bg-sky-50/60' : 'hover:bg-slate-50'}`}>
+                      <td className="p-3"><input type="checkbox" checked={r.selected} onChange={(e) => patch(r.product.id, { selected: e.target.checked })} className="h-4 w-4 accent-[#0094eb]" /></td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-3">
+                          <img src={r.product.image_url as string} alt="" className="h-10 w-10 shrink-0 rounded-md bg-slate-100 object-contain" loading="lazy" />
+                          <span className="line-clamp-2 text-slate-800">{r.product.name}</span>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap p-3 text-right text-slate-600">{brl(r.product.price as number)}</td>
+                      <td className="p-3 text-right"><input type="number" min={0} max={95} step="0.5" className={`${NUM} w-20`} value={r.pct} onChange={(e) => setPct(r, Number(e.target.value))} /></td>
+                      <td className="p-3 text-right"><input type="number" min={0} step="0.01" className={`${NUM} w-28`} value={r.promo} onChange={(e) => setPromo(r, Number(e.target.value))} /></td>
+                    </tr>
+                  ))}
+                  {filtered.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-500">Nenhum produto encontrado.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <aside className="space-y-4 self-start lg:sticky lg:top-4">
+          <section className={CARD}>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-bold text-slate-800">Prévia ao vivo</h3>
+              {channels.length > 1 && (
+                <select className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs" value={pvChannel} onChange={(e) => setPreviewChannel(e.target.value)}>
+                  {channels.map((k) => <option key={k} value={k}>{CHANNELS.find((c) => c.key === k)?.label}</option>)}
+                </select>
+              )}
+            </div>
+            <div className="relative flex min-h-[260px] items-center justify-center rounded-xl bg-slate-100">
+              {!pvRow ? (
+                <p className="p-6 text-center text-xs text-slate-500">Selecione um produto para ver a arte.</p>
+              ) : (
+                preview && <img src={preview} alt="Prévia" className="max-h-[70vh] w-full rounded-xl object-contain" />
+              )}
+              {previewing && (
+                <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-xl bg-white/70 text-xs font-semibold text-slate-600">
+                  <Loader2 size={16} className="animate-spin text-[#0094eb]" /> Atualizando...
+                </div>
+              )}
+            </div>
+            {pvRow && <p className="mt-2 truncate text-xs text-slate-500">Produto: {pvRow.product.name}</p>}
+          </section>
+
+          <section className={CARD}>
+            <button className={`${BTN_PRIMARY} w-full justify-center`} disabled={!selected.length || !channels.length || busy} onClick={generate}>
+              {busy ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              Gerar {selected.length * channels.length} artes (ZIP)
+            </button>
+            <p className="mt-2 text-xs text-slate-500">{selected.length} produto(s) x {channels.length} canal(is). {mode === 'edit' ? 'A campanha será atualizada.' : 'A campanha será salva.'}</p>
+            {progress && <p className="mt-2 text-sm text-slate-600">{progress}</p>}
+          </section>
+        </aside>
+      </div>
+    </div>
+  );
+}
