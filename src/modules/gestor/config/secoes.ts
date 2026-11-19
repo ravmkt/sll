@@ -78,3 +78,35 @@ export const SECOES: Record<string, Secao> = {
     features: ['Dados da empresa', 'Depósitos e estoque mínimo', 'Papéis e permissões', 'Numeração de pedidos'],
   },
 };
+
+// Seções do grupo Financeiro (uma por item do menu)
+SECOES['contas-a-pagar'] = {
+  title: 'Contas a pagar',
+  icon: Wallet,
+  description: 'Despesas fixas e variáveis e compras de fornecedores.',
+  features: ['Lançamento com vencimento e recorrência', 'Anexo de boletos e notas', 'Vínculo com fornecedor', 'Baixa e conciliação'],
+};
+SECOES['contas-a-receber'] = {
+  title: 'Contas a receber',
+  icon: Wallet,
+  description: 'Recebíveis gerados automaticamente a partir dos pedidos pagos.',
+  features: ['Taxa e prazo por meio de pagamento e canal', 'Previsão de repasse', 'Conciliação com o gateway', 'Baixa manual'],
+};
+SECOES['comissoes'] = {
+  title: 'Comissões',
+  icon: Wallet,
+  description: 'Comissão por vendedor sobre pedidos pagos.',
+  features: ['Regra por vendedor', 'Fechamento por período', 'Geração de conta a pagar', 'Extrato por vendedor'],
+};
+SECOES['controle-de-caixa'] = {
+  title: 'Controle de caixa',
+  icon: Wallet,
+  description: 'Entradas, saídas e saldo por conta (banco, gateway e caixa do PDV).',
+  features: ['Fluxo de caixa previsto × realizado', 'Abertura e fechamento de caixa', 'Transferência entre contas', 'Conciliação manual'],
+};
+SECOES['contabilidade'] = {
+  title: 'Contabilidade',
+  icon: Wallet,
+  description: 'Espaço do contador, com acesso somente leitura.',
+  features: ['Convite e revogação de acesso', 'Relatórios de vendas, financeiro e DRE', 'Download em lote de XMLs', 'Log de acessos'],
+};

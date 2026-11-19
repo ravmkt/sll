@@ -24,36 +24,46 @@ const GROUPS: Group[] = [
     items: [
       { label: 'Produtos', to: `${BASE}/produtos` },
       { label: 'Categorias e marcas', to: `${BASE}/categorias` },
-      { label: 'Clientes' },
+      { label: 'Clientes', to: `${BASE}/clientes` },
       { label: 'Fornecedores', to: `${BASE}/fornecedores` },
-      { label: 'Vendedores' },
+      { label: 'Vendedores', to: `${BASE}/vendedores` },
     ],
   },
   {
     key: 'vendas', label: 'Vendas', icon: ShoppingCart,
     items: [
       { label: 'Pedidos de vendas', to: `${BASE}/pedidos` },
-      { label: 'Notas Fiscais' },
-      { label: 'Propostas Comerciais' },
+          { label: 'Venda manual', to: `${BASE}/venda-manual` },
+      { label: 'Notas Fiscais', to: `${BASE}/notas-fiscais` },
+      { label: 'Propostas Comerciais', to: `${BASE}/propostas` },
     ],
   },
   {
     key: 'logistica', label: 'Logística', icon: Truck,
-    items: [{ label: 'Expedição' }, { label: 'Logística reversa' }],
+    items: [
+          { label: 'Expedição', to: `${BASE}/expedicao` },
+          { label: 'Logística reversa', to: `${BASE}/logistica-reversa` },
+        ],
   },
   {
     key: 'financeiro', label: 'Financeiro', icon: Wallet,
     items: [
-      { label: 'Contas a pagar' },
-      { label: 'Contas a receber' },
-      { label: 'Comissões' },
-      { label: 'Controle de caixa' },
-      { label: 'Contabilidade' },
+      { label: 'Contas a pagar', to: `${BASE}/contas-a-pagar` },
+      { label: 'Contas a receber', to: `${BASE}/contas-a-receber` },
+      { label: 'Comissões', to: `${BASE}/comissoes` },
+      { label: 'Controle de caixa', to: `${BASE}/controle-de-caixa` },
+      { label: 'Contabilidade', to: `${BASE}/contabilidade` },
     ],
   },
-  { key: 'relatorios', label: 'Relatórios', icon: TrendingUp },
-  { key: 'config', label: 'Configurações', icon: Settings, items: [{ label: 'Empresa' }] },
-  { key: 'integracoes', label: 'Integrações', icon: Plug },
+  { key: 'relatorios', label: 'Relatórios', icon: TrendingUp, to: `${BASE}/relatorios` },
+  { key: 'config', label: 'Configurações', icon: Settings, items: [{ label: 'Empresa', to: `${BASE}/configuracoes` }] },
+  {
+    key: 'integracoes', label: 'Integrações', icon: Plug,
+    items: [
+      { label: 'Plataformas e canais', to: `${BASE}/integracoes` },
+      { label: 'WhatsApp', to: `${BASE}/whatsapp` },
+    ],
+  },
 ];
 
 const Soon = () => (
