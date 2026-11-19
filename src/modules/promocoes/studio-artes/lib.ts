@@ -46,3 +46,22 @@ export function fmtDate(iso: string) {
   const [y, m, d] = iso.split('-');
   return `${d}/${m}/${y}`;
 }
+
+export type ChannelGroup = 'WhatsApp' | 'Instagram' | 'Facebook' | 'TikTok' | 'Outros';
+export interface Channel { key: string; group: ChannelGroup; label: string; w: number; h: number }
+
+export const CHANNELS: Channel[] = [
+  { key: 'whatsapp_status', group: 'WhatsApp', label: 'WhatsApp - Status', w: 1080, h: 1920 },
+  { key: 'whatsapp_grupo', group: 'WhatsApp', label: 'WhatsApp - Grupo / Conversa', w: 1080, h: 1350 },
+  { key: 'instagram_feed', group: 'Instagram', label: 'Instagram - Feed', w: 1080, h: 1350 },
+  { key: 'instagram_story', group: 'Instagram', label: 'Instagram - Stories', w: 1080, h: 1920 },
+  { key: 'instagram_reels', group: 'Instagram', label: 'Instagram - Capa de Reels', w: 1080, h: 1920 },
+  { key: 'facebook_feed', group: 'Facebook', label: 'Facebook - Feed', w: 1080, h: 1080 },
+  { key: 'facebook_story', group: 'Facebook', label: 'Facebook - Stories', w: 1080, h: 1920 },
+  { key: 'tiktok', group: 'TikTok', label: 'TikTok - Capa', w: 1080, h: 1920 },
+  { key: 'pinterest', group: 'Outros', label: 'Pinterest - Pin', w: 1000, h: 1500 },
+  { key: 'quadrado', group: 'Outros', label: 'Quadrado generico', w: 1080, h: 1080 },
+];
+
+export const CHANNEL_GROUPS: ChannelGroup[] = ['WhatsApp', 'Instagram', 'Facebook', 'TikTok', 'Outros'];
+export const channelByKey = (k: string) => CHANNELS.find((c) => c.key === k);
