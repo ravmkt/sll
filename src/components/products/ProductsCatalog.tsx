@@ -311,12 +311,12 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
                     <tr key={p.id} className={cn('transition-colors', selected.has(p.id) ? 'bg-[#0094eb]/5' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}>
                       <td className="px-4 py-3 text-center"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleOne(p.id)} className="h-4 w-4 cursor-pointer" /></td>
                       <td className="px-4 py-3">
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#111524]">
+                        <div role="button" tabIndex={0} title="Editar produto" onClick={() => { setEditing(p); setFormOpen(true); }} className="mx-auto flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#111524] hover:border-[#0094eb] transition">
                           {p.image_url ? <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <Package size={18} className="text-slate-400" />}
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="max-w-xs truncate text-sm font-semibold text-slate-800 dark:text-white" title={p.name}>{p.name}</p>
+                        <p onClick={() => { setEditing(p); setFormOpen(true); }} className="max-w-xs cursor-pointer truncate text-sm font-semibold text-slate-800 hover:text-[#0094eb] dark:text-white" title={p.name}>{p.name}</p>
                         {p.sku && <p className="text-[11px] text-slate-400">SKU {p.sku}</p>}
                       </td>
                       <td className="px-4 py-3 text-center">
