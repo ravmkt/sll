@@ -16,6 +16,8 @@ import { Modal, inputCls, primaryBtn } from '@/components/products/Modal';
 import { selectOnFocus } from '@/components/products/selectOnFocus';
 import { pushStockToYampi } from '../services/gestor';
 import HistoryDialog from '../components/HistoryDialog';
+import SyncChannelModal from '../components/SyncChannelModal';
+import { RefreshCw } from 'lucide-react';
 import StockImportModal, { IMPORT_MAX_MB, IMPORT_MAX_ROWS } from '../components/StockImportModal';
 import { useGestorAccess } from '../hooks/useGestorAccess';
 
@@ -93,6 +95,7 @@ export default function StockPage() {
   const [imp, setImp] = useState<ImpRow[] | null>(null);
   const [impIgnored, setImpIgnored] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [syncOpen, setSyncOpen] = useState(false);
   const [impOpen, setImpOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [impResult, setImpResult] = useState<ImpResult | null>(null);
@@ -383,13 +386,14 @@ export default function StockPage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Estoque</h1>
-          <p className="text-sm text-slate-500">Edite os saldos direto na lista ou em lote por planilha. Cada alteração entra no histórico como ajuste.</p>
+          
         </div>
         <div className="flex flex-wrap gap-2">
           <>{allow('estoque','exportar') && (<button type="button" onClick={() => void exportXlsx()} className={btn}><Download size={15} className="text-[#0094eb]" /> Baixar planilha</button>)}</>
           <>{allow('estoque','editar') && (<button type="button" onClick={() => setImpOpen(true)} className={btn}><Upload size={15} className="text-[#0094eb]" /> Importar planilha</button>)}</>
           {impOpen && <StockImportModal onClose={() => setImpOpen(false)} onPick={async (file) => { setImpOpen(false); await onFile(file); }} />}
           <button type="button" onClick={() => setHistoryOpen(true)} className={btn}><History size={15} className="text-[#0094eb]" /> Histórico de movimentações</button>
+          <button type="button" onClick={() => setSyncOpen(true)} className={btn}><RefreshCw size={15} className="text-[#0094eb]" /> Sincronizar canais</button>
         </div>
       </div>
 
@@ -516,6 +520,7 @@ export default function StockPage() {
       </div>
 
       <HistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} />
+      {syncOpen && storeId && <SyncChannelModal storeId={storeId} onClose={() => setSyncOpen(false)} />}
 
       {pending.length > 0 && (
         <div className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-xl dark:border-slate-700 dark:bg-[#1a1f2c]">
