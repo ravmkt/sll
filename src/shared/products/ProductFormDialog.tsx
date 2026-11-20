@@ -17,6 +17,7 @@ import TaxTab from './tabs/TaxTab';
 import CustomFieldsTab from './tabs/CustomFieldsTab';
 import KitTab from './tabs/KitTab';
 import VariationsTab from './tabs/VariationsTab';
+import CatalogoTab from './tabs/CatalogoTab';
 
 interface Props {
   open: boolean;
@@ -54,7 +55,7 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
 
   const format = draft.product.format;
   const available = [
-    'geral', 'precos', 'midia', 'dimensoes', 'estoque', 'fornecedores', 'tributacao', 'extras',
+    'geral', 'catalogo', 'precos', 'midia', 'dimensoes', 'estoque', 'fornecedores', 'tributacao', 'extras',
     ...(format === 'variation' ? ['variacoes'] : []),
     ...(format === 'kit' ? ['composicao'] : []),
   ];
@@ -88,6 +89,7 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
           <Tabs value={current} onValueChange={setTab}>
             <TabsList className="flex h-auto flex-wrap justify-start gap-1">
               <TabsTrigger value="geral">Geral</TabsTrigger>
+              <TabsTrigger value="catalogo">Catálogo</TabsTrigger>
               <TabsTrigger value="precos">Preços</TabsTrigger>
               <TabsTrigger value="midia">Descrição e mídia</TabsTrigger>
               <TabsTrigger value="dimensoes">Dimensões</TabsTrigger>
@@ -101,6 +103,9 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
 
             <TabsContent value="geral" className="pt-4">
               <GeralTab product={draft.product} onChange={patchProduct} />
+            </TabsContent>
+            <TabsContent value="catalogo" className="pt-4">
+              <CatalogoTab storeId={storeId} product={draft.product} onChange={patchProduct} />
             </TabsContent>
             <TabsContent value="precos" className="pt-4">
               <PrecosTab
