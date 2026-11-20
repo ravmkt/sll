@@ -25,7 +25,7 @@ const SCROLL_CSS = `
 export default function HistoryDialog({ open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90vh] w-full max-w-6xl flex-col gap-0 overflow-hidden rounded-[40px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-[#1a1f2c] dark:text-slate-100">
+      <DialogContent className="flex h-[90vh] w-full max-w-6xl flex-col gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-[#1a1f2c] dark:text-slate-100">
         <style>{SCROLL_CSS}</style>
         <div className="sll-hist-scroll min-h-0 flex-1 overflow-y-auto px-8 pb-8 pt-7">
           <DialogHeader className="mb-5">
