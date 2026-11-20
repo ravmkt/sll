@@ -115,3 +115,24 @@ export async function pushStockToYampi(storeId: string, sku: string, stock: numb
     return 'erro';
   }
 }
+export type PushResult = { status: 'ok' | 'skip' | 'erro' | 'divergente'; message: string };
+
+export async function pushStockChecked(storeId: string, sku: string, stock: number): Promise<PushResult> {
+  try {
+    const { data, error } = await supabase.functions.invoke('yampi-sync', {
+      body: { action: 'push', store_id: storeId, sku, stock },
+    });
+    if (error) {
+      let msg = '';
+      try { msg = String((await (error as any).context.json())?.error || ''); } catch { /* sem corpo */ }
+      if (/external_id|conectada/i.test(msg)) return { status: 'skip', message: 'SKU ainda nao existe na Yampi.' };
+      return { status: 'erro', message: msg || error.message };
+    }
+    const got = Number((data as any)?.after?.total_in_stock);
+    if (!Number.isFinite(got)) return { status: 'erro', message: 'A Yampi nao confirmou o saldo.' };
+    if (got !== stock) return { status: 'divergente', message: `Enviado ${stock}, a Yampi mostra ${got}.` };
+    return { status: 'ok', message: `Confirmado: ${got}` };
+  } catch (e) {
+    return { status: 'erro', message: e instanceof Error ? e.message : String(e) };
+  }
+}
