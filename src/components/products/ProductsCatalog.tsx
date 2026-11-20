@@ -1,8 +1,12 @@
 import PageTour from '@/components/tour/PageTour';
 import { produtosTour } from '@/tours/produtosTour';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import type { ElementType } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, ChevronDown, ChevronUp, Edit3, Loader2, Package, Plus, RefreshCw, Search, Tag, Trash2, Upload } from 'lucide-react';
+import {
+  BadgeCheck, BookOpen, Ban, ChevronDown, ChevronRight, ChevronUp, Edit3, Link2, List, ListTree, Loader2,
+  Package, PackageX, Plus, RefreshCw, Search, Tag, Trash2, Upload, Bookmark,
+} from 'lucide-react';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog';
 import { useLoja } from '@/contexts/LojaContext';
 import { cn } from '@/lib/utils';
@@ -17,21 +21,55 @@ import {
   listLinkedProductIds,
 } from '@/services/productsService';
 import ProductFormDialog from '@/shared/products/ProductFormDialog';
-import ProductMetricCards from '@/components/products/ProductMetricCards';
 import CategoriesModal from '@/components/products/CategoriesModal';
+import BrandsModal from '@/components/products/BrandsModal';
 import ImportModal from '@/components/products/ImportModal';
+import StockEditDialog from '@/components/products/StockEditDialog';
 import { inputCls } from '@/components/products/Modal';
-import ProductVariantsModal from '@/components/products/ProductVariants';
 import { listStock } from '@/services/productVariantsService';
 import { syncYampi } from '@/services/yampiSyncService';
+import { hasRealVariants, listVariantsByProduct, variantLabel } from '@/components/products/variantsData';
+import type { VariantRow } from '@/components/products/variantsData';
 
 type SortKey = 'name' | 'price' | 'category' | 'origin' | 'active' | 'stock';
 type StockFilter = 'all' | 'with' | 'without' | 'nocontrol';
+type ViewMode = 'parents' | 'expanded';
 
+const VIEW_KEY = 'sll_products_view';
 const ORIGIN: Record<string, string> = { manual: 'Manual', xml: 'XML', planilha: 'Planilha', yampi: 'Yampi' };
 const brl = (n: number | null) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const selectCls = cn(inputCls, '!w-auto !py-2.5 cursor-pointer');
 const GESTOR_BASE = '/dashboard/modules/gestor';
+
+const TONES = {
+  slate: { box: 'bg-slate-100 text-slate-500 dark:bg-slate-800', ring: 'border-slate-400' },
+  emerald: { box: 'bg-emerald-50 text-emerald-500 dark:bg-emerald-950/30', ring: 'border-emerald-400' },
+  rose: { box: 'bg-rose-50 text-rose-500 dark:bg-rose-950/30', ring: 'border-rose-400' },
+  sky: { box: 'bg-sky-50 text-[#0094eb] dark:bg-sky-950/30', ring: 'border-[#0094eb]' },
+  amber: { box: 'bg-amber-50 text-amber-500 dark:bg-amber-950/30', ring: 'border-amber-400' },
+} as const;
+
+function MetricCard({ icon: Icon, label, value, tone, active, loading, onClick }: {
+  icon: ElementType; label: string; value: number; tone: keyof typeof TONES; active: boolean; loading: boolean; onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="Clique para filtrar a lista"
+      className={cn(
+        'flex cursor-pointer items-center gap-4 rounded-2xl border bg-white p-5 text-left transition hover:shadow-md dark:bg-[#1a1f2c]',
+        active ? cn('border-2', TONES[tone].ring) : 'border-slate-200 dark:border-slate-800',
+      )}
+    >
+      <span className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-xl', TONES[tone].box)}><Icon size={22} /></span>
+      <span>
+        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</span>
+        <span className="block text-2xl font-bold text-slate-800 dark:text-white">{loading ? '—' : value}</span>
+      </span>
+    </button>
+  );
+}
 
 export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gestor' }) {
   const isGestor = mode === 'gestor';
@@ -45,35 +83,45 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
   const [fStatus, setFStatus] = useState('all');
   const [fOrigin, setFOrigin] = useState('all');
   const [fStock, setFStock] = useState<StockFilter>('all');
+  const [fLinked, setFLinked] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [asc, setAsc] = useState(true);
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
+  const [view, setView] = useState<ViewMode>(() => {
+    try { return localStorage.getItem(VIEW_KEY) === 'expanded' ? 'expanded' : 'parents'; } catch { return 'parents'; }
+  });
+  const [toggled, setToggled] = useState<Set<string>>(new Set());
+
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogProduct | null>(null);
   const [catsOpen, setCatsOpen] = useState(false);
+  const [brandsOpen, setBrandsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [del, setDel] = useState<{ ids: string[]; label: string } | null>(null);
   const [stock, setStock] = useState<Map<string, number>>(new Map());
+  const [variants, setVariants] = useState<Map<string, VariantRow[]>>(new Map());
   const [linked, setLinked] = useState<Set<string>>(new Set());
-  const [varProduct, setVarProduct] = useState<CatalogProduct | null>(null);
+  const [stockProduct, setStockProduct] = useState<CatalogProduct | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
     try {
-      const [p, c, st, lk] = await Promise.all([
+      const [p, c, st, lk, vs] = await Promise.all([
         listProducts(storeId),
         listCategories(storeId),
         listStock(storeId).catch(() => new Map<string, number>()),
         listLinkedProductIds(storeId).catch(() => new Set<string>()),
+        listVariantsByProduct(storeId).catch(() => new Map<string, VariantRow[]>()),
       ]);
       setProducts(p);
       setCategories(c);
       setStock(st);
       setLinked(lk);
+      setVariants(vs);
     } catch (e) {
       console.error('Erro ao carregar produtos:', e);
       showError('Erro ao carregar produtos.');
@@ -83,12 +131,33 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
   }, [storeId]);
 
   useEffect(() => { if (!lojaLoading) reload(); }, [lojaLoading, reload]);
-  useEffect(() => { setPage(1); }, [search, fCat, fStatus, fOrigin, fStock, pageSize]);
+  useEffect(() => { setPage(1); }, [search, fCat, fStatus, fOrigin, fStock, fLinked, pageSize]);
+
+  const changeView = (v: ViewMode) => {
+    setView(v);
+    setToggled(new Set());
+    try { localStorage.setItem(VIEW_KEY, v); } catch { /* ignora */ }
+  };
+  const isOpen = (id: string) => (view === 'expanded') !== toggled.has(id);
+  const toggleRow = (id: string) =>
+    setToggled((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
   const metrics = useMemo(() => {
     const active = products.filter((p) => !!p.active).length;
-    return { total: products.length, active, inactive: products.length - active, linked: products.filter((p) => linked.has(p.id)).length };
-  }, [products, linked]);
+    return {
+      total: products.length,
+      active,
+      inactive: products.length - active,
+      linked: products.filter((p) => linked.has(p.id)).length,
+      nostock: products.filter((p) => stock.has(p.id) && (stock.get(p.id) || 0) <= 0).length,
+    };
+  }, [products, linked, stock]);
+
+  const isTotalOn = fStatus === 'all' && fStock === 'all' && !fLinked;
+  const cardTotal = () => { setFStatus('all'); setFStock('all'); setFLinked(false); };
+  const cardStatus = (s: 'active' | 'inactive') => { setFLinked(false); setFStock('all'); setFStatus(fStatus === s ? 'all' : s); };
+  const cardLinked = () => { setFStatus('all'); setFStock('all'); setFLinked(!fLinked); };
+  const cardNoStock = () => { setFStatus('all'); setFLinked(false); setFStock(fStock === 'without' ? 'all' : 'without'); };
 
   const categoryNames = useMemo(
     () => Array.from(new Set([...categories.map((c) => c.name), ...products.map((p) => p.category || '').filter(Boolean)])).sort((a, b) => a.localeCompare(b, 'pt-BR')),
@@ -106,10 +175,12 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
     };
     const list = products.filter(
       (p) =>
-        (!q || p.name.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q)) &&
+        (!q || p.name.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q) ||
+          (variants.get(p.id) ?? []).some((v) => v.sku.toLowerCase().includes(q))) &&
         (fCat === 'all' || p.category === fCat) &&
         (fStatus === 'all' || (fStatus === 'active' ? !!p.active : !p.active)) &&
         (fOrigin === 'all' || p.origin === fOrigin) &&
+        (!fLinked || linked.has(p.id)) &&
         stockOk(p)
     );
     if (!sortKey) return list;
@@ -126,7 +197,7 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
       const r = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'pt-BR');
       return asc ? r : -r;
     });
-  }, [products, search, fCat, fStatus, fOrigin, fStock, stock, sortKey, asc]);
+  }, [products, variants, search, fCat, fStatus, fOrigin, fStock, fLinked, linked, stock, sortKey, asc]);
 
   const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const safePage = Math.min(page, pages);
@@ -185,6 +256,8 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
     }
   };
 
+  const openEdit = (p: CatalogProduct) => { setEditing(p); setFormOpen(true); };
+
   const Th = ({ k, label, cls }: { k: SortKey; label: string; cls?: string }) => (
     <th onClick={() => sortBy(k)} className={cn('cursor-pointer select-none px-4 py-3', cls)}>
       <span className="inline-flex items-center gap-1">
@@ -194,7 +267,30 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
     </th>
   );
 
+  const stockBtn = (p: CatalogProduct, n: number) => (
+    <button
+      type="button"
+      onClick={() => setStockProduct(p)}
+      title="Editar estoque"
+      className={cn('cursor-pointer rounded-lg px-2.5 py-1 font-mono text-xs font-bold', n > 0 ? 'bg-slate-100 text-slate-700 dark:bg-[#111524] dark:text-white' : 'bg-rose-50 text-rose-600')}
+    >
+      {n}
+    </button>
+  );
+
+  const viewBtn = (v: ViewMode, Icon: ElementType, title: string) => (
+    <button
+      type="button"
+      title={title}
+      onClick={() => changeView(v)}
+      className={cn('cursor-pointer rounded-lg p-1.5 transition', view === v ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700')}
+    >
+      <Icon size={16} />
+    </button>
+  );
+
   const btnGhost = 'inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-[#0094eb] transition cursor-pointer';
+  const mLoading = loading || lojaLoading;
 
   return (
     <>
@@ -203,18 +299,19 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
           <div>
             {!isGestor && <PageTour tourKey="produtos" steps={produtosTour} />}
             <h1 className="text-2xl font-bold tracking-tight">{isGestor ? 'Produtos' : 'Catálogo de Produtos'}</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {isGestor
-                ? 'Fonte única do SLL: o que você altera aqui alimenta o catálogo do Hub e os outros módulos.'
-                : 'Base central de produtos, compartilhada com todos os seus módulos SLL.'}
-            </p>
+            {!isGestor && (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Base central de produtos, compartilhada com todos os seus módulos SLL.</p>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" data-tour="prod-novo" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] hover:bg-[#007bc4] px-4 py-2.5 text-sm font-semibold text-white transition cursor-pointer">
+            <button type="button" data-tour="prod-novo" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007bc4]">
               <Plus size={16} /> Novo produto
             </button>
             <button type="button" data-tour="prod-categorias" onClick={() => setCatsOpen(true)} className={btnGhost}>
               <Tag size={15} className="text-[#0094eb]" /> Categorias
+            </button>
+            <button type="button" onClick={() => setBrandsOpen(true)} className={btnGhost}>
+              <Bookmark size={15} className="text-[#0094eb]" /> Marcas
             </button>
             <button type="button" data-tour="prod-importar" onClick={() => setImportOpen(true)} className={btnGhost}>
               <Upload size={15} className="text-[#0094eb]" /> Importar produtos
@@ -227,7 +324,13 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
           </div>
         </div>
 
-        <ProductMetricCards {...metrics} loading={loading || lojaLoading} />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <MetricCard icon={Package} label="Total de produtos" value={metrics.total} tone="slate" active={isTotalOn} loading={mLoading} onClick={cardTotal} />
+          <MetricCard icon={BadgeCheck} label="Ativos" value={metrics.active} tone="emerald" active={fStatus === 'active'} loading={mLoading} onClick={() => cardStatus('active')} />
+          <MetricCard icon={Ban} label="Inativos" value={metrics.inactive} tone="rose" active={fStatus === 'inactive'} loading={mLoading} onClick={() => cardStatus('inactive')} />
+          <MetricCard icon={Link2} label="Vinculados a vídeo" value={metrics.linked} tone="sky" active={fLinked} loading={mLoading} onClick={cardLinked} />
+          <MetricCard icon={PackageX} label="Sem estoque" value={metrics.nostock} tone="amber" active={fStock === 'without'} loading={mLoading} onClick={cardNoStock} />
+        </div>
 
         <div data-tour="prod-lista" className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] p-5">
           <div className="flex flex-col gap-3 lg:flex-row">
@@ -264,6 +367,7 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
           <div className="flex flex-col items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-[#111524] p-3 sm:flex-row">
             <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
               <span>{sorted.length} {sorted.length === 1 ? 'produto encontrado' : 'produtos encontrados'}</span>
+              {fLinked && <span className="rounded-full bg-sky-100 px-3 py-0.5 text-[#0094eb]">Vinculados a vídeo</span>}
               {selected.size > 0 && <span className="rounded-full bg-[#0094eb]/10 px-3 py-0.5 text-[#0094eb]">{selected.size} selecionados</span>}
               {selected.size > 0 && !allFiltered && (
                 <button type="button" onClick={() => setSelected(new Set(sorted.map((p) => p.id)))} className="text-[#0094eb] underline cursor-pointer">Selecionar todos os {sorted.length}</button>
@@ -275,6 +379,10 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
                   <Trash2 size={14} /> Excluir {selected.size}
                 </button>
               )}
+              <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+                {viewBtn('parents', List, 'Só produtos (variações recolhidas)')}
+                {viewBtn('expanded', ListTree, 'Produtos com variações expandidas')}
+              </div>
               <label className="flex items-center gap-2 text-xs text-slate-400">
                 Itens por página
                 <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))} className={cn(inputCls, '!w-auto !py-1 !text-xs cursor-pointer')}>
@@ -286,7 +394,7 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
             </div>
           </div>
 
-          {loading || lojaLoading ? (
+          {mLoading ? (
             <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[#0094eb]" /></div>
           ) : !storeId ? (
             <p className="py-12 text-center text-sm text-slate-500">Nenhuma loja vinculada à sua conta.</p>
@@ -307,51 +415,81 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {pageItems.map((p) => (
-                    <tr key={p.id} className={cn('transition-colors', selected.has(p.id) ? 'bg-[#0094eb]/5' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}>
-                      <td className="px-4 py-3 text-center"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleOne(p.id)} className="h-4 w-4 cursor-pointer" /></td>
-                      <td className="px-4 py-3">
-                        <div role="button" tabIndex={0} title="Editar produto" onClick={() => { setEditing(p); setFormOpen(true); }} className="mx-auto flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#111524] hover:border-[#0094eb] transition">
-                          {p.image_url ? <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <Package size={18} className="text-slate-400" />}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p onClick={() => { setEditing(p); setFormOpen(true); }} className="max-w-xs cursor-pointer truncate text-sm font-semibold text-slate-800 hover:text-[#0094eb] dark:text-white" title={p.name}>{p.name}</p>
-                        {p.sku && <p className="text-[11px] text-slate-400">SKU {p.sku}</p>}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {stock.has(p.id) ? (
-                          <button type="button" onClick={() => setVarProduct(p)} title="Ver variações e estoque" className={cn('cursor-pointer rounded-lg px-2.5 py-1 font-mono text-xs font-bold', (stock.get(p.id) || 0) > 0 ? 'bg-slate-100 dark:bg-[#111524] text-slate-700 dark:text-white' : 'bg-rose-50 text-rose-600')}>{stock.get(p.id)}</button>
-                        ) : <span className="text-xs text-slate-300">—</span>}
-                      </td>
-                      <td className="px-4 py-3 text-center font-mono text-xs font-bold text-slate-800 dark:text-white">{brl(p.price)}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="inline-flex max-w-[140px] items-center gap-1 truncate rounded-lg bg-slate-100 dark:bg-[#111524] px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                          <Tag size={11} className="shrink-0 text-[#0094eb]" />
-                          <span className="truncate">{p.category || 'Sem categoria'}</span>
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="rounded-full border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">{ORIGIN[p.origin || ''] ?? (p.origin || '—')}</span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button type="button" onClick={() => toggleStatus(p)} className={cn('h-7 w-[100px] rounded-lg border text-[10px] font-bold uppercase cursor-pointer transition', p.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800/40 dark:bg-rose-950/30 dark:text-rose-400')}>
-                          {p.active ? 'Ativo' : 'Desativado'}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          {p.origin === 'yampi' && (
-                            <button type="button" onClick={() => syncOne(p)} disabled={syncingId === p.id} title="Sincronizar este produto" className="mr-1 cursor-pointer text-slate-400 hover:text-[#0094eb] disabled:opacity-50">
-                              {syncingId === p.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                  {pageItems.map((p) => {
+                    const vs = variants.get(p.id);
+                    const expandable = hasRealVariants(vs);
+                    const open = expandable && isOpen(p.id);
+                    return (
+                      <Fragment key={p.id}>
+                        <tr className={cn('transition-colors', selected.has(p.id) ? 'bg-[#0094eb]/5' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}>
+                          <td className="px-4 py-3 text-center"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleOne(p.id)} className="h-4 w-4 cursor-pointer" /></td>
+                          <td className="px-4 py-3">
+                            <div role="button" tabIndex={0} title="Editar produto" onClick={() => openEdit(p)} className="mx-auto flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#111524] hover:border-[#0094eb] transition">
+                              {p.image_url ? <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <Package size={18} className="text-slate-400" />}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              {expandable ? (
+                                <button type="button" onClick={() => toggleRow(p.id)} title={open ? 'Recolher variações' : `Ver ${vs!.length} variações`} className="cursor-pointer rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800">
+                                  {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                </button>
+                              ) : <span className="inline-block w-5" />}
+                              <div className="min-w-0">
+                                <p onClick={() => openEdit(p)} className="max-w-xs cursor-pointer truncate text-sm font-semibold text-slate-800 hover:text-[#0094eb] dark:text-white" title={p.name}>{p.name}</p>
+                                {p.sku && <p className="text-[11px] text-slate-400">SKU {p.sku}</p>}
+                              </div>
+                              {expandable && <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800">{vs!.length} var.</span>}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {stock.has(p.id) ? stockBtn(p, stock.get(p.id) || 0) : <span className="text-xs text-slate-300">—</span>}
+                          </td>
+                          <td className="px-4 py-3 text-center font-mono text-xs font-bold text-slate-800 dark:text-white">{brl(p.price)}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="inline-flex max-w-[140px] items-center gap-1 truncate rounded-lg bg-slate-100 dark:bg-[#111524] px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                              <Tag size={11} className="shrink-0 text-[#0094eb]" />
+                              <span className="truncate">{p.category || 'Sem categoria'}</span>
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="rounded-full border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">{ORIGIN[p.origin || ''] ?? (p.origin || '—')}</span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button type="button" onClick={() => toggleStatus(p)} className={cn('h-7 w-[100px] rounded-lg border text-[10px] font-bold uppercase cursor-pointer transition', p.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800/40 dark:bg-rose-950/30 dark:text-rose-400')}>
+                              {p.active ? 'Ativo' : 'Desativado'}
                             </button>
-                          )}
-                          <button type="button" title="Editar" onClick={() => { setEditing(p); setFormOpen(true); }} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>
-                          <button type="button" title="Excluir" onClick={() => setDel({ ids: [p.id], label: `"${p.name}"` })} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/40 cursor-pointer"><Trash2 size={15} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              {p.origin === 'yampi' && (
+                                <button type="button" onClick={() => syncOne(p)} disabled={syncingId === p.id} title="Sincronizar este produto" className="mr-1 cursor-pointer text-slate-400 hover:text-[#0094eb] disabled:opacity-50">
+                                  {syncingId === p.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                                </button>
+                              )}
+                              <button type="button" title="Editar" onClick={() => openEdit(p)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>
+                              <button type="button" title="Excluir" onClick={() => setDel({ ids: [p.id], label: `"${p.name}"` })} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/40 cursor-pointer"><Trash2 size={15} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                        {open && vs!.map((v) => (
+                          <tr key={v.id} className="bg-slate-50/70 dark:bg-white/[0.02]">
+                            <td />
+                            <td />
+                            <td className="py-2 pl-12 pr-4">
+                              <div className="border-l-2 border-slate-200 pl-3 dark:border-slate-700">
+                                <p className="max-w-xs truncate text-xs font-semibold text-slate-700 dark:text-slate-200" title={variantLabel(v)}>{variantLabel(v)}</p>
+                                <p className="text-[10px] text-slate-400">SKU {v.sku}</p>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-center">{stockBtn(p, v.stock)}</td>
+                            <td className="px-4 py-2 text-center font-mono text-xs text-slate-600 dark:text-slate-300">{v.price != null ? brl(v.price) : '—'}</td>
+                            <td colSpan={4} />
+                          </tr>
+                        ))}
+                      </Fragment>
+                    );
+                  })}
                   {pageItems.length === 0 && (
                     <tr>
                       <td colSpan={9} className="px-6 py-16 text-center">
@@ -384,6 +522,9 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
       {catsOpen && storeId && (
         <CategoriesModal storeId={storeId} categories={categories} onChanged={reload} onClose={() => setCatsOpen(false)} />
       )}
+      {brandsOpen && storeId && (
+        <BrandsModal storeId={storeId} onClose={() => setBrandsOpen(false)} />
+      )}
       {importOpen && storeId && (
         <ImportModal storeId={storeId} onImported={reload} onClose={() => setImportOpen(false)} />
       )}
@@ -394,7 +535,16 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
         onConfirm={confirmDelete}
         onCancel={() => setDel(null)}
       />
-      {varProduct && <ProductVariantsModal product={varProduct} storeId={storeId || ''} onChanged={reload} onClose={() => setVarProduct(null)} />}
+      {stockProduct && storeId && (
+        <StockEditDialog
+          key={stockProduct.id}
+          storeId={storeId}
+          product={{ id: stockProduct.id, name: stockProduct.name, origin: stockProduct.origin }}
+          variants={variants.get(stockProduct.id) ?? []}
+          onSaved={reload}
+          onClose={() => setStockProduct(null)}
+        />
+      )}
     </>
   );
 }

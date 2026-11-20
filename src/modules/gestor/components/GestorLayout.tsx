@@ -23,7 +23,6 @@ const GROUPS: Group[] = [
     key: 'cadastros', label: 'Cadastros', icon: FolderOpen,
     items: [
       { label: 'Produtos', to: `${BASE}/produtos` },
-      { label: 'Categorias e marcas', to: `${BASE}/categorias` },
       { label: 'Clientes', to: `${BASE}/clientes` },
       { label: 'Fornecedores', to: `${BASE}/fornecedores` },
       { label: 'Vendedores', to: `${BASE}/vendedores` },
