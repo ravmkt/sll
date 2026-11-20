@@ -45,7 +45,7 @@ const iso = (d: Date) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-const field = 'h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#0094eb]';
+const field = 'h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-800 shadow-sm outline-none transition-colors focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/15';
 
 export default function StockHistoryPanel() {
   const { storeId, loading: lojaLoading } = useLoja();
@@ -102,7 +102,7 @@ export default function StockHistoryPanel() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
         <div className="relative min-w-[16rem] flex-1">
-          <Search size={16} className="absolute left-3 top-3 text-slate-400" />
+          <Search size={16} className="absolute left-3.5 top-3.5 text-slate-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -114,11 +114,11 @@ export default function StockHistoryPanel() {
           <option value="">Todos os tipos</option>
           {Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <label className="text-xs font-semibold text-slate-500">
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           De
           <input type="date" value={from} max={to} onChange={(e) => { setFrom(e.target.value); setPage(0); }} className={cn(field, 'mt-1 block')} />
         </label>
-        <label className="text-xs font-semibold text-slate-500">
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           Até
           <input type="date" value={to} min={from} onChange={(e) => { setTo(e.target.value); setPage(0); }} className={cn(field, 'mt-1 block')} />
         </label>
@@ -127,9 +127,9 @@ export default function StockHistoryPanel() {
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-[#0094eb]" /></div>
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border p-10 text-center text-sm text-slate-500">Nenhuma movimentação no período.</div>
+        <div className="rounded-2xl border border-slate-200 p-10 text-center text-sm text-slate-500">Nenhuma movimentação no período.</div>
       ) : (
-        <div className="overflow-hidden rounded-lg border">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
           <table className="w-full table-fixed text-left text-xs">
             <colgroup>
               <col className="w-[13%]" />
@@ -153,7 +153,7 @@ export default function StockHistoryPanel() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {rows.map((r) => (
-                <tr key={r.id} className="align-top">
+                <tr key={r.id} className="align-top transition-colors hover:bg-slate-50/70">
                   <td className="px-3 py-2 text-slate-500">{fmt(r.created_at)}</td>
                   <td className="break-words px-3 py-2">
                     <p className="font-semibold text-slate-800">{r.product_name || '-'}</p>
@@ -178,8 +178,8 @@ export default function StockHistoryPanel() {
 
       <div className="flex items-center justify-end gap-2 text-xs text-slate-500">
         <span>{total} movimentação(ões) · Página {page + 1} de {pages}</span>
-        <button type="button" disabled={page === 0} onClick={() => setPage((p) => p - 1)} aria-label="Anterior" className="cursor-pointer rounded-md border p-1.5 disabled:opacity-40"><ChevronLeft size={16} /></button>
-        <button type="button" disabled={page + 1 >= pages} onClick={() => setPage((p) => p + 1)} aria-label="Próxima" className="cursor-pointer rounded-md border p-1.5 disabled:opacity-40"><ChevronRight size={16} /></button>
+        <button type="button" disabled={page === 0} onClick={() => setPage((p) => p - 1)} aria-label="Anterior" className="cursor-pointer rounded-xl border border-slate-200 p-2 hover:bg-slate-50 disabled:opacity-40"><ChevronLeft size={16} /></button>
+        <button type="button" disabled={page + 1 >= pages} onClick={() => setPage((p) => p + 1)} aria-label="Próxima" className="cursor-pointer rounded-xl border border-slate-200 p-2 hover:bg-slate-50 disabled:opacity-40"><ChevronRight size={16} /></button>
       </div>
     </div>
   );
