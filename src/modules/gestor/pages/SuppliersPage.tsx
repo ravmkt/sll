@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { Supplier, SupplierForm, listSuppliers, saveSupplier } from '../services/cadastros';
+import { useGestorAccess } from '../hooks/useGestorAccess';
 
 const EMPTY: SupplierForm = {
   name: '', document: '', email: '', phone: '', contact_name: '',
@@ -15,6 +16,7 @@ const EMPTY: SupplierForm = {
 };
 
 export default function SuppliersPage() {
+  const { can: allow } = useGestorAccess();
   const { storeId, loading: lojaLoading } = useLoja();
   const [rows, setRows] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +75,7 @@ export default function SuppliersPage() {
           <h1 className="text-2xl font-bold">Fornecedores</h1>
           <p className="text-sm text-muted-foreground">Cadastro usado na reposição e nas compras.</p>
         </div>
-        <Button onClick={openNew}><Plus className="mr-1 h-4 w-4" /> Novo fornecedor</Button>
+        <>{allow('fornecedores','criar') && (<Button onClick={openNew}><Plus className="mr-1 h-4 w-4" /> Novo fornecedor</Button>)}</>
       </div>
 
       {loading ? (
@@ -94,7 +96,7 @@ export default function SuppliersPage() {
                 {s.lead_time_days != null ? `${s.lead_time_days} dia(s)` : ''}
               </div>
               <Badge variant={s.active ? 'secondary' : 'outline'}>{s.active ? 'Ativo' : 'Inativo'}</Badge>
-              <Button size="icon" variant="ghost" onClick={() => openEdit(s)} aria-label="Editar"><Pencil className="h-4 w-4" /></Button>
+              <>{allow('fornecedores','editar') && (<Button size="icon" variant="ghost" onClick={() => openEdit(s)} aria-label="Editar"><Pencil className="h-4 w-4" /></Button>)}</>
             </li>
           ))}
         </ul>

@@ -3,6 +3,7 @@ import { Plus, Search } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import CustomerDialog from '../components/CustomerDialog';
 import { PAGE_SIZE, brl, fmtDate, listCustomers, maskDoc, type CustomerRow, type SortKey } from '../services/clientes';
+import { useGestorAccess } from '../hooks/useGestorAccess';
 
 const SORTS: { value: SortKey; label: string }[] = [
   { value: 'total_spent', label: 'Maior total gasto' },
@@ -12,6 +13,7 @@ const SORTS: { value: SortKey; label: string }[] = [
 ];
 
 export default function CustomersPage() {
+  const { can: allow } = useGestorAccess();
   const ctx: any = useLoja();
   const storeId: string | null = ctx?.loja?.id ?? ctx?.store?.id ?? ctx?.storeId ?? ctx?.lojaId ?? null;
 
@@ -54,9 +56,9 @@ export default function CustomersPage() {
           <h1 className="text-xl font-semibold text-slate-900">Clientes</h1>
           <p className="text-sm text-slate-500">{total} cliente(s). Total gasto considera so pedidos pagos e nao cancelados.</p>
         </div>
-        <button type="button" onClick={() => open(null)} className="inline-flex items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#007bc4]">
+        <>{allow('clientes','criar') && (<button type="button" onClick={() => open(null)} className="inline-flex items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#007bc4]">
           <Plus size={16} /> Novo cliente
-        </button>
+        </button>)}</>
       </div>
 
       <div className="flex flex-wrap gap-2">

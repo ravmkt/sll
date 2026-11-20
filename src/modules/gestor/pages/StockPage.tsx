@@ -17,6 +17,7 @@ import { selectOnFocus } from '@/components/products/selectOnFocus';
 import { pushStockToYampi } from '../services/gestor';
 import HistoryDialog from '../components/HistoryDialog';
 import StockImportModal, { IMPORT_MAX_MB, IMPORT_MAX_ROWS } from '../components/StockImportModal';
+import { useGestorAccess } from '../hooks/useGestorAccess';
 
 const sb: any = supabase;
 const PAGE = 25;
@@ -60,11 +61,13 @@ function nextOnEnter(e: KeyboardEvent<HTMLInputElement>) {
 }
 
 function StockInput({ value, dirty, onChange }: { value: string; dirty: boolean; onChange: (v: string) => void }) {
+  const { can: allowInput } = useGestorAccess();
   return (
     <input
       data-stock
       inputMode="numeric"
       value={value}
+      readOnly={!allowInput('estoque', 'editar')}
       onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))}
       {...selectOnFocus}
       onKeyDown={nextOnEnter}
@@ -77,6 +80,7 @@ function StockInput({ value, dirty, onChange }: { value: string; dirty: boolean;
 }
 
 export default function StockPage() {
+  const { can: allow } = useGestorAccess();
   const { storeId, loading: lojaLoading } = useLoja();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -382,8 +386,8 @@ export default function StockPage() {
           <p className="text-sm text-slate-500">Edite os saldos direto na lista ou em lote por planilha. Cada alteração entra no histórico como ajuste.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => void exportXlsx()} className={btn}><Download size={15} className="text-[#0094eb]" /> Baixar planilha</button>
-          <button type="button" onClick={() => setImpOpen(true)} className={btn}><Upload size={15} className="text-[#0094eb]" /> Importar planilha</button>
+          <>{allow('estoque','exportar') && (<button type="button" onClick={() => void exportXlsx()} className={btn}><Download size={15} className="text-[#0094eb]" /> Baixar planilha</button>)}</>
+          <>{allow('estoque','editar') && (<button type="button" onClick={() => setImpOpen(true)} className={btn}><Upload size={15} className="text-[#0094eb]" /> Importar planilha</button>)}</>
           {impOpen && <StockImportModal onClose={() => setImpOpen(false)} onPick={async (file) => { setImpOpen(false); await onFile(file); }} />}
           <button type="button" onClick={() => setHistoryOpen(true)} className={btn}><History size={15} className="text-[#0094eb]" /> Histórico de movimentações</button>
         </div>
@@ -474,9 +478,9 @@ export default function StockPage() {
                             <div className="inline-flex items-center gap-1.5">
                               <StockInput value={valOf(v)} dirty={isDirty(v)} onChange={(raw) => setVal(v, raw)} />
                               {i === 0 && it.variants.length > 1 ? (
-                                <button type="button" title="Aplicar este valor em todas as variações" onClick={() => replicate(it)} className="cursor-pointer rounded-lg border border-[#0094eb]/30 bg-[#0094eb]/10 p-2 text-[#0094eb] hover:bg-[#0094eb]/20">
+                                <>{allow('estoque','editar') && (<button type="button" title="Aplicar este valor em todas as variações" onClick={() => replicate(it)} className="cursor-pointer rounded-lg border border-[#0094eb]/30 bg-[#0094eb]/10 p-2 text-[#0094eb] hover:bg-[#0094eb]/20">
                                   <ArrowDown size={14} />
-                                </button>
+                                </button>)}</>
                               ) : <span className="inline-block w-[34px]" />}
                             </div>
                           </td>

@@ -10,6 +10,7 @@ import { brl, fmtDate } from '../services/pedidos';
 import {
   EXP_PAGE_SIZE, ExpRow, Stage, advanceOrders, buildPickingHtml, cityUf, isPickup, listExpedicao,
 } from '../services/expedicao';
+import { useGestorAccess } from '../hooks/useGestorAccess';
 
 const STAGES: { key: Stage; label: string }[] = [
   { key: 'pending', label: 'A separar' },
@@ -19,6 +20,7 @@ const STAGES: { key: Stage; label: string }[] = [
 ];
 
 export default function ExpedicaoPage() {
+  const { can: allow } = useGestorAccess();
   const { storeId, loading: lojaLoading } = useLoja();
   const [stage, setStage] = useState<Stage>('pending');
   const [search, setSearch] = useState('');
@@ -122,9 +124,9 @@ export default function ExpedicaoPage() {
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pedido, cliente, SKU ou rastreio" className="pl-9" />
         </div>
         {bulk && (
-          <Button size="sm" variant="outline" disabled={busy || selected.size === 0} onClick={() => advance(bulk.to)}>
+          <>{allow('expedicao','editar') && (<Button size="sm" variant="outline" disabled={busy || selected.size === 0} onClick={() => advance(bulk.to)}>
             {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{bulk.label} ({selected.size})
-          </Button>
+          </Button>)}</>
         )}
         {(stage === 'pending' || stage === 'separating') && (
           <Button size="sm" variant="outline" disabled={rows.length === 0} onClick={print}>
@@ -182,9 +184,9 @@ export default function ExpedicaoPage() {
                     <td className="p-3 text-right font-semibold">{brl(r.total)}</td>
                     <td className="p-3 text-right">
                       {stage !== 'delivered' && (
-                        <Button size="sm" variant={stage === 'shipped' ? 'ghost' : 'default'} onClick={() => setDispatchRow(r)}>
+                        <>{allow('expedicao','editar') && (<Button size="sm" variant={stage === 'shipped' ? 'ghost' : 'default'} onClick={() => setDispatchRow(r)}>
                           <Truck className="mr-1.5 h-4 w-4" />{stage === 'shipped' ? 'Editar envio' : 'Enviar'}
-                        </Button>
+                        </Button>)}</>
                       )}
                     </td>
                   </tr>

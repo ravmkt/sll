@@ -20,6 +20,7 @@ import {
   pick,
   setFulfillment,
 } from '../services/pedidos';
+import { useGestorAccess } from '../hooks/useGestorAccess';
 
 interface Props {
   storeId: string;
@@ -31,6 +32,7 @@ interface Props {
 const STEPS = ['pending', 'separating', 'shipped', 'delivered'];
 
 export default function OrderDetailDialog({ storeId, orderId, onClose, onChanged }: Props) {
+  const { can: allow } = useGestorAccess();
   const [data, setData] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -169,7 +171,7 @@ export default function OrderDetailDialog({ storeId, orderId, onClose, onChanged
             </section>
 
             {!canceled && (
-              <section className="space-y-3 rounded-md border p-3">
+              <>{allow('pedidos','editar') && (<section className="space-y-3 rounded-md border p-3">
                 <p className="font-medium">Expedição</p>
                 <div className="flex flex-wrap gap-2">
                   {STEPS.map((s) => (
@@ -193,11 +195,11 @@ export default function OrderDetailDialog({ storeId, orderId, onClose, onChanged
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">Rastreio e observação são gravados ao clicar em um dos status acima.</p>
-              </section>
+              </section>)}</>
             )}
 
             {!canceled && (
-              <section className="rounded-md border border-rose-200 p-3">
+              <>{allow('pedidos','excluir') && (<section className="rounded-md border border-rose-200 p-3">
                 {!cancelOpen ? (
                   <Button variant="outline" className="text-rose-600" onClick={() => setCancelOpen(true)}>Cancelar pedido</Button>
                 ) : (
@@ -215,7 +217,7 @@ export default function OrderDetailDialog({ storeId, orderId, onClose, onChanged
                     </div>
                   </div>
                 )}
-              </section>
+              </section>)}</>
             )}
           </div>
         )}

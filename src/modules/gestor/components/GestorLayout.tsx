@@ -10,6 +10,8 @@ import { AppFooter } from '@/components/layout/AppFooter';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 import { useAuth } from '@/contexts/AuthContext';
 import ForcePasswordChange from './ForcePasswordChange';
+import AccessGuard from './AccessGuard';
+import { GestorAccessProvider, useGestorAccess } from '../hooks/useGestorAccess';
 
 const BASE = '/dashboard/modules/gestor';
 const KEY = 'sll_gestor_sidebar_collapsed';
@@ -71,9 +73,10 @@ const Soon = () => (
   <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-400">em breve</span>
 );
 
-export default function GestorLayout() {
+function GestorLayoutInner() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { canPath } = useGestorAccess();
   const { signOut } = useAuth() as { signOut: () => Promise<unknown> | void };
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -101,6 +104,10 @@ export default function GestorLayout() {
   const rowOn = 'bg-[#0094eb] font-medium text-white shadow-md shadow-[#0094eb]/20';
   const rowOff = 'text-slate-600 hover:bg-slate-100 hover:text-[#0094eb]';
   const rowSoon = 'cursor-not-allowed text-slate-400';
+
+  const visibleGroups = GROUPS
+    .map((g) => (g.items ? { ...g, items: g.items.filter((i) => !i.to || canPath(i.to)) } : g))
+    .filter((g) => (g.items ? g.items.length > 0 : !g.to || canPath(g.to)));
 
   const renderGroup = (g: Group) => {
     const Icon = g.icon;
@@ -233,7 +240,7 @@ export default function GestorLayout() {
           </div>
 
           <nav className="flex min-h-0 flex-col overflow-y-auto px-4 py-5 [&::-webkit-scrollbar]:hidden">
-            <div className="flex flex-col gap-1">{GROUPS.map(renderGroup)}</div>
+            <div className="flex flex-col gap-1">{visibleGroups.map(renderGroup)}</div>
           </nav>
 
           <div className="mt-auto pb-4"><SidebarTourSlot isExpanded={isExpanded} /></div>
@@ -266,11 +273,19 @@ export default function GestorLayout() {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">
-            <Outlet />
+            <AccessGuard><Outlet /></AccessGuard>
           </main>
           <AppFooter />
         </div>
       </div>
     </div>
+  );
+}
+
+export default function GestorLayout() {
+  return (
+    <GestorAccessProvider>
+      <GestorLayoutInner />
+    </GestorAccessProvider>
   );
 }

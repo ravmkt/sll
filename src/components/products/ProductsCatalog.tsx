@@ -71,7 +71,10 @@ function MetricCard({ icon: Icon, label, value, tone, active, loading, onClick }
   );
 }
 
-export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gestor' }) {
+type CatalogPerms = { create: boolean; edit: boolean; remove: boolean; stock: boolean; importar: boolean };
+const ALL_PERMS: CatalogPerms = { create: true, edit: true, remove: true, stock: true, importar: true };
+
+export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { mode?: 'hub' | 'gestor'; perms?: CatalogPerms }) {
   const isGestor = mode === 'gestor';
   const { storeId, loading: lojaLoading } = useLoja();
   const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -256,7 +259,7 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
     }
   };
 
-  const openEdit = (p: CatalogProduct) => { setEditing(p); setFormOpen(true); };
+  const openEdit = (p: CatalogProduct) => { if (!perms.edit) return; setEditing(p); setFormOpen(true); };
 
   const Th = ({ k, label, cls }: { k: SortKey; label: string; cls?: string }) => (
     <th onClick={() => sortBy(k)} className={cn('cursor-pointer select-none px-4 py-3', cls)}>
@@ -270,7 +273,7 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
   const stockBtn = (p: CatalogProduct, n: number) => (
     <button
       type="button"
-      onClick={() => setStockProduct(p)}
+      onClick={() => { if (perms.stock) setStockProduct(p); }}
       title="Editar estoque"
       className={cn('cursor-pointer rounded-lg px-2.5 py-1 font-mono text-xs font-bold', n > 0 ? 'bg-slate-100 text-slate-700 dark:bg-[#111524] dark:text-white' : 'bg-rose-50 text-rose-600')}
     >
@@ -304,18 +307,18 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" data-tour="prod-novo" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007bc4]">
+            <>{perms.create && (<button type="button" data-tour="prod-novo" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007bc4]">
               <Plus size={16} /> Novo produto
-            </button>
-            <button type="button" data-tour="prod-categorias" onClick={() => setCatsOpen(true)} className={btnGhost}>
+            </button>)}</>
+            <>{perms.edit && (<button type="button" data-tour="prod-categorias" onClick={() => setCatsOpen(true)} className={btnGhost}>
               <Tag size={15} className="text-[#0094eb]" /> Categorias
-            </button>
-            <button type="button" onClick={() => setBrandsOpen(true)} className={btnGhost}>
+            </button>)}</>
+            <>{perms.edit && (<button type="button" onClick={() => setBrandsOpen(true)} className={btnGhost}>
               <Bookmark size={15} className="text-[#0094eb]" /> Marcas
-            </button>
-            <button type="button" data-tour="prod-importar" onClick={() => setImportOpen(true)} className={btnGhost}>
+            </button>)}</>
+            <>{perms.importar && (<button type="button" data-tour="prod-importar" onClick={() => setImportOpen(true)} className={btnGhost}>
               <Upload size={15} className="text-[#0094eb]" /> Importar produtos
-            </button>
+            </button>)}</>
             {isGestor && (
               <Link to={`${GESTOR_BASE}/estoque`} className={btnGhost}>
                 <BookOpen size={15} className="text-[#0094eb]" /> Estoque
@@ -375,9 +378,9 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
             </div>
             <div className="flex items-center gap-3">
               {selected.size > 0 && (
-                <button type="button" onClick={() => setDel({ ids: Array.from(selected), label: `${selected.size} ${selected.size === 1 ? 'produto' : 'produtos'}` })} className="inline-flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-500/20 cursor-pointer">
+                <>{perms.remove && (<button type="button" onClick={() => setDel({ ids: Array.from(selected), label: `${selected.size} ${selected.size === 1 ? 'produto' : 'produtos'}` })} className="inline-flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-500/20 cursor-pointer">
                   <Trash2 size={14} /> Excluir {selected.size}
-                </button>
+                </button>)}</>
               )}
               <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
                 {viewBtn('parents', List, 'Só produtos (variações recolhidas)')}
@@ -456,19 +459,19 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
                             <span className="rounded-full border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">{ORIGIN[p.origin || ''] ?? (p.origin || '—')}</span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <button type="button" onClick={() => toggleStatus(p)} className={cn('h-7 w-[100px] rounded-lg border text-[10px] font-bold uppercase cursor-pointer transition', p.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800/40 dark:bg-rose-950/30 dark:text-rose-400')}>
+                            <button type="button" onClick={() => toggleStatus(p)} disabled={!perms.edit} className={cn('h-7 w-[100px] rounded-lg border text-[10px] font-bold uppercase cursor-pointer transition', p.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800/40 dark:bg-rose-950/30 dark:text-rose-400')}>
                               {p.active ? 'Ativo' : 'Desativado'}
                             </button>
                           </td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
                               {p.origin === 'yampi' && (
-                                <button type="button" onClick={() => syncOne(p)} disabled={syncingId === p.id} title="Sincronizar este produto" className="mr-1 cursor-pointer text-slate-400 hover:text-[#0094eb] disabled:opacity-50">
+                                <>{perms.edit && (<button type="button" onClick={() => syncOne(p)} disabled={syncingId === p.id} title="Sincronizar este produto" className="mr-1 cursor-pointer text-slate-400 hover:text-[#0094eb] disabled:opacity-50">
                                   {syncingId === p.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                                </button>
+                                </button>)}</>
                               )}
-                              <button type="button" title="Editar" onClick={() => openEdit(p)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>
-                              <button type="button" title="Excluir" onClick={() => setDel({ ids: [p.id], label: `"${p.name}"` })} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/40 cursor-pointer"><Trash2 size={15} /></button>
+                              <>{perms.edit && (<button type="button" title="Editar" onClick={() => openEdit(p)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>)}</>
+                              <>{perms.remove && (<button type="button" title="Excluir" onClick={() => setDel({ ids: [p.id], label: `"${p.name}"` })} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/40 cursor-pointer"><Trash2 size={15} /></button>)}</>
                             </div>
                           </td>
                         </tr>

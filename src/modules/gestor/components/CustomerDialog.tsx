@@ -4,6 +4,7 @@ import {
   brl, fmtDate, getCustomer, getCustomerOrders, getCustomerProducts, saveCustomer,
   type CustomerFull, type CustomerOrder, type CustomerProduct,
 } from '../services/clientes';
+import { useGestorAccess } from '../hooks/useGestorAccess';
 
 type Form = Omit<CustomerFull, 'id' | 'source_platform' | 'tags'> & { tagsText: string };
 
@@ -17,6 +18,7 @@ const inputCls = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm ou
 type Props = { storeId: string; customerId: string | null; open: boolean; onClose: () => void; onSaved: () => void };
 
 export default function CustomerDialog({ storeId, customerId, open, onClose, onSaved }: Props) {
+  const { can: allow } = useGestorAccess();
   const [cust, setCust] = useState<CustomerFull | null>(null);
   const [products, setProducts] = useState<CustomerProduct[]>([]);
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
@@ -112,7 +114,7 @@ export default function CustomerDialog({ storeId, customerId, open, onClose, onS
         ) : cust ? (
           <div className="space-y-5 text-sm">
             <div className="flex justify-end">
-              <button type="button" onClick={() => setEditing(true)} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50">Editar</button>
+              <>{allow('clientes','editar') && (<button type="button" onClick={() => setEditing(true)} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50">Editar</button>)}</>
             </div>
             <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
               <div><dt className="text-xs text-slate-500">E-mail</dt><dd>{cust.email ?? '-'}</dd></div>

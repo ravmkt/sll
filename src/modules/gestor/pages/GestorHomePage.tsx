@@ -5,8 +5,10 @@ import { useLoja } from '@/contexts/LojaContext';
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import { LowStockRow, listLowStock } from '../services/cadastros';
+import { useGestorAccess } from '../hooks/useGestorAccess';
 
 export default function GestorHomePage() {
+  const { can: allow } = useGestorAccess();
   const { storeId, loading: lojaLoading } = useLoja();
   const [rows, setRows] = useState<LowStockRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ export default function GestorHomePage() {
         <p className="text-sm text-muted-foreground">Visão geral da operação.</p>
       </div>
 
-      <section className="rounded-lg border bg-white">
+      <>{allow('estoque','ver') && (<section className="rounded-lg border bg-white">
         <header className="flex items-center gap-2 border-b p-3">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <h2 className="text-sm font-semibold">Estoque crítico</h2>
@@ -63,7 +65,7 @@ export default function GestorHomePage() {
           Define-se o mínimo por variação. Sem mínimo (0), só aparecem variações zeradas.{' '}
           <Link to="/dashboard/modules/gestor/produtos" className="underline">Ir para Produtos</Link>
         </footer>
-      </section>
+      </section>)}</>
     </div>
   );
 }

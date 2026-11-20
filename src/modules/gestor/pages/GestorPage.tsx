@@ -23,6 +23,7 @@ import {
   stockHistory,
   updateGestorProduct,
 } from '../services/gestor';
+import { useGestorAccess } from '../hooks/useGestorAccess';
 
 const brl = (n: number | null | undefined) =>
   Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -47,6 +48,7 @@ const MOVE_OPTIONS: { value: MoveType; label: string }[] = [
 const selectCls = 'h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900';
 
 export default function GestorPage() {
+  const { can: allow } = useGestorAccess();
   const { storeId, loading: lojaLoading } = useLoja();
   const [products, setProducts] = useState<GProduct[]>([]);
   const [stock, setStock] = useState<Map<string, number>>(new Map());
@@ -237,8 +239,8 @@ export default function GestorPage() {
                       <p className="font-semibold">{brl(p.price)}</p>
                       <Badge variant={total > 0 ? 'secondary' : 'destructive'}>{total} un.</Badge>
                     </div>
-                    <Button size="icon" variant="ghost" onClick={() => setClassifyFor(p)} aria-label="Categoria e marca" title="Categoria e marca"><Tags className="h-4 w-4" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(p)} aria-label="Editar"><Pencil className="h-4 w-4" /></Button>
+                    <>{allow('produtos','editar') && (<Button size="icon" variant="ghost" onClick={() => setClassifyFor(p)} aria-label="Categoria e marca" title="Categoria e marca"><Tags className="h-4 w-4" /></Button>)}</>
+                        <>{allow('produtos','editar') && (<Button size="icon" variant="ghost" onClick={() => openEdit(p)} aria-label="Editar"><Pencil className="h-4 w-4" /></Button>)}</>
                   </div>
 
                   {isOpen && (
@@ -266,12 +268,12 @@ export default function GestorPage() {
                                 <td className="py-2 text-right">{brl(v.sale_price ?? v.price)}</td>
                                 <td className="py-2 text-right font-semibold">{v.stock}</td>
                                 <td className="py-2 text-right">
-                                  <Button size="sm" variant="ghost" className="mr-1" onClick={() => setDetailsFor({ id: v.id, label: p.name + ' - ' + (v.title || v.sku) })}>
+                                  <>{allow('produtos','editar') && (<Button size="sm" variant="ghost" className="mr-1" onClick={() => setDetailsFor({ id: v.id, label: p.name + ' - ' + (v.title || v.sku) })}>
                                         <FileText className="mr-1 h-3.5 w-3.5" /> Dados
-                                      </Button>
-                                      <Button size="sm" variant="outline" onClick={() => openStock(p, v)}>
+                                      </Button>)}</>
+                                      <>{allow('estoque','editar') && (<Button size="sm" variant="outline" onClick={() => openStock(p, v)}>
                                     <SlidersHorizontal className="mr-1 h-3.5 w-3.5" /> Estoque
-                                  </Button>
+                                  </Button>)}</>
                                 </td>
                               </tr>
                             ))}

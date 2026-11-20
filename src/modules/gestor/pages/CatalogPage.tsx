@@ -7,12 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { Brand, Category, flattenTree, listBrands, listCategories, saveBrand, saveCategory } from '../services/catalogo';
+import { useGestorAccess } from '../hooks/useGestorAccess';
 
 type Edit = { kind: 'category' | 'brand'; id: string | null; name: string; parent: string; active: boolean };
 
 const SELECT = 'h-9 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900';
 
 export default function CatalogPage() {
+  const { can: allow } = useGestorAccess();
   const { storeId, loading: lojaLoading } = useLoja();
   const [cats, setCats] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -72,7 +74,7 @@ export default function CatalogPage() {
           <section className="rounded-lg border bg-white">
             <header className="flex items-center justify-between border-b p-3">
               <h2 className="text-sm font-semibold">Categorias <span className="text-muted-foreground">({cats.length})</span></h2>
-              <Button size="sm" onClick={newCat}><Plus className="mr-1 h-4 w-4" /> Nova</Button>
+              <>{allow('produtos','criar') && (<Button size="sm" onClick={newCat}><Plus className="mr-1 h-4 w-4" /> Nova</Button>)}</>
             </header>
             {tree.length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">Nenhuma categoria cadastrada.</p>
@@ -83,10 +85,10 @@ export default function CatalogPage() {
                     <span className="min-w-0 flex-1 truncate text-sm">{cat.name}</span>
                     <span className="text-xs text-muted-foreground">{cat.products} prod.</span>
                     {!cat.active && <Badge variant="outline">Inativa</Badge>}
-                    <Button size="icon" variant="ghost" aria-label="Editar"
+                    <>{allow('produtos','editar') && (<Button size="icon" variant="ghost" aria-label="Editar"
                       onClick={() => setEdit({ kind: 'category', id: cat.id, name: cat.name, parent: cat.parent_id || '', active: cat.active })}>
                       <Pencil className="h-4 w-4" />
-                    </Button>
+                    </Button>)}</>
                   </li>
                 ))}
               </ul>
@@ -96,7 +98,7 @@ export default function CatalogPage() {
           <section className="rounded-lg border bg-white">
             <header className="flex items-center justify-between border-b p-3">
               <h2 className="text-sm font-semibold">Marcas <span className="text-muted-foreground">({brands.length})</span></h2>
-              <Button size="sm" onClick={newBrand}><Plus className="mr-1 h-4 w-4" /> Nova</Button>
+              <>{allow('produtos','criar') && (<Button size="sm" onClick={newBrand}><Plus className="mr-1 h-4 w-4" /> Nova</Button>)}</>
             </header>
             {brands.length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">Nenhuma marca cadastrada.</p>
@@ -107,10 +109,10 @@ export default function CatalogPage() {
                     <span className="min-w-0 flex-1 truncate text-sm">{b.name}</span>
                     <span className="text-xs text-muted-foreground">{b.products} prod.</span>
                     {!b.active && <Badge variant="outline">Inativa</Badge>}
-                    <Button size="icon" variant="ghost" aria-label="Editar"
+                    <>{allow('produtos','editar') && (<Button size="icon" variant="ghost" aria-label="Editar"
                       onClick={() => setEdit({ kind: 'brand', id: b.id, name: b.name, parent: '', active: b.active })}>
                       <Pencil className="h-4 w-4" />
-                    </Button>
+                    </Button>)}</>
                   </li>
                 ))}
               </ul>
