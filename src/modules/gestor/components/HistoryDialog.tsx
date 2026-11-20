@@ -16,7 +16,7 @@ export default function HistoryDialog({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         style={{ fontFamily }}
-        className="flex max-h-[90vh] w-full max-w-6xl flex-col gap-4 overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 sm:rounded-3xl"
+        className="flex max-h-[90vh] w-full max-w-6xl flex-col gap-4 overflow-y-auto sll-scroll !rounded-[36px] border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 sm:!rounded-[36px]"
       >
         <DialogHeader>
           <DialogTitle className="text-xl font-extrabold tracking-tight text-slate-900">Histórico de movimentações</DialogTitle>
