@@ -8,7 +8,7 @@ import { listVariantsByProduct } from '@/components/products/variantsData';
 import type { VariantRow } from '@/components/products/variantsData';
 import { Modal, inputCls, primaryBtn } from '@/components/products/Modal';
 import { pushStockToYampi } from '../services/gestor';
-import { CHANNEL_META } from '../services/estoqueCanais';
+import { CHANNEL_META } from '../services/canais';
 import { listChannelLinks } from '../services/vinculos';
 
 // Canais com integracao pronta. Para ligar um novo: incluir a key aqui e tratar em syncOne().
