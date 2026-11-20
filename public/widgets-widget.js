@@ -130,9 +130,16 @@ function buildCards(a, tiers) {
     var bc = t.border_color || (hl ? a.hl_border_color : a.card_border_color);
     var bg = t.bg_color || (hl ? a.hl_bg_color : a.card_bg_color);
     var gc = a.hl_glow_color || bc; var gm = /^#[0-9a-f]{6}$/i.test(gc) ? gc + '99' : gc;
-    var c = mk('div', 'box-sizing:border-box;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;' +
+    var lk = (typeof t.link === 'string' && /^(https?:\/\/|\/(?!\/))/i.test(t.link.trim())) ? t.link.trim() : '';
+    var c = mk(lk ? 'a' : 'div', (lk ? 'text-decoration:none;color:inherit;cursor:pointer;' : '') + 'box-sizing:border-box;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;' +
       'padding:' + a.card_padding + 'px;border-radius:' + a.card_radius + 'px;border:' + a.card_border_width + 'px solid ' + bc + ';background:' + bg +
       (hl && a.hl_glow ? ';box-shadow:0 0 0 1px ' + gc + ',0 0 ' + (+a.hl_glow_size || 22) + 'px ' + gm : ''));
+    if (lk) {
+      c.href = lk; c.rel = 'noopener noreferrer'; c.draggable = false;
+      var px = 0;
+      c.addEventListener('pointerdown', function (e) { px = e.clientX; });
+      c.addEventListener('click', function (e) { if (Math.abs(e.clientX - px) > 8) e.preventDefault(); });
+    }
     var L = (t.lines && t.lines.length) ? t.lines : [{ text: t.label || '' }, { text: t.value || '' }, { text: '' }];
     for (var i = 0; i < 3; i++) {
       var ln = L[i];

@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Plus, Star, Trash2 } from 'lucide-react';
 import EmojiPicker from '../../../builder/components/EmojiPicker';
 import type { CardLine, Tier } from '../../types/widgets';
+import { isSafeUrl } from '@/lib/safe-link';
 
 const PH = ['Ex.: Leve 3 pe\u00e7as', 'Ex.: 10% OFF', 'Ex.: + Frete gr\u00e1tis'];
 const inp = 'w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm';
@@ -48,7 +49,10 @@ export default function RulerCardsEditor({ tiers, onChange }: { tiers: Tier[]; o
                 <EmojiPicker compact onPick={(e) => setLine(i, j, l.text + e)} />
               </div>
             ))}
-            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-slate-600">
+            <input className={inp} type="url" inputMode="url" placeholder="Link do card inteiro (https://... ou /pagina) - opcional"
+                  value={t.link ?? ''} onChange={(e) => upd(i, { link: e.target.value.trim() || undefined })} />
+                {t.link && !isSafeUrl(t.link) && <p className="text-xs text-red-500">Use http(s):// ou /caminho</p>}
+                <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-slate-600">
               <label className="flex items-center gap-1">Borda
                 <input type="color" value={t.border_color || '#000000'} onChange={(e) => upd(i, { border_color: e.target.value })} />
                 {t.border_color && <button type="button" className="underline" onClick={() => upd(i, { border_color: undefined })}>limpar</button>}

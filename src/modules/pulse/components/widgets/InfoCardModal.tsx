@@ -5,6 +5,7 @@ import RulerCardsEditor from './RulerCardsEditor';
 import WidgetPlacementPicker, { type Placement } from './WidgetPlacementPicker';
 import PageRuleField from './PageRuleField';
 import { infoCardsService } from '../../services/infoCardsService';
+import { isSafeUrl } from '@/lib/safe-link';
 import type { InfoCard } from '../../types/infoCards';
 import { SAMPLE_CONTENT, mergeConfig, type Tier, type WidgetStyle, type WidgetsCtx } from '../../types/widgets';
 
@@ -45,6 +46,7 @@ export default function InfoCardModal({ ctx, initial, defaultName, styles, onClo
 
   async function save() {
     const clean = tiers.filter(hasText);
+    if (clean.some((t) => t.link && !isSafeUrl(t.link))) { setErr('Link invalido: use http(s):// ou /caminho.'); return; }
     if (!name.trim()) { setErr('Dê um nome ao card informativo.'); return; }
     if (active && !placement.selector.trim()) { setErr('Selecione o elemento da loja antes de ativar.'); return; }
     if (active && clean.length === 0) { setErr('Adicione ao menos um card/faixa antes de ativar.'); return; }

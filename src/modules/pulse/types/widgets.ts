@@ -12,7 +12,7 @@ export interface WidgetsCtx {
 export interface CardLine { text: string; color?: string; size?: number; }
 export interface Tier {
   label: string; value: string;
-  lines?: CardLine[]; highlight?: boolean; border_color?: string; bg_color?: string;
+  lines?: CardLine[]; link?: string; highlight?: boolean; border_color?: string; bg_color?: string;
 }
 export interface RulerContent { title: string; tiers: Tier[]; footer: string; }
 
