@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -16,6 +16,7 @@ import type { VariantRow } from '@/components/products/variantsData';
 import { Modal, inputCls, primaryBtn } from '@/components/products/Modal';
 import { selectOnFocus } from '@/components/products/selectOnFocus';
 import { pushStockToYampi } from '../services/gestor';
+import StockImportModal, { IMPORT_MAX_MB, IMPORT_MAX_ROWS } from '../components/StockImportModal';
 
 const sb: any = supabase;
 const BASE = '/dashboard/modules/gestor';
@@ -79,7 +80,7 @@ export default function StockPage() {
   const [saving, setSaving] = useState(false);
   const [imp, setImp] = useState<ImpRow[] | null>(null);
   const [impIgnored, setImpIgnored] = useState(0);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [impOpen, setImpOpen] = useState(false);
 
   const reload = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
@@ -231,17 +232,16 @@ export default function StockPage() {
   };
 
   const onFile = async (file: File | undefined) => {
-    if (fileRef.current) fileRef.current.value = '';
     if (!file) return;
     if (!/\.(xlsx|xls|csv)$/i.test(file.name)) { showError('Use um arquivo .xlsx, .xls ou .csv.'); return; }
-    if (file.size > 5 * 1024 * 1024) { showError('Arquivo muito grande (máximo de 5 MB).'); return; }
+    if (file.size > IMPORT_MAX_MB * 1024 * 1024) { showError(`Arquivo muito grande (máximo de ${IMPORT_MAX_MB} MB).`); return; }
     try {
       const XLSX = await import('xlsx');
       const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
       const sheetName = wb.SheetNames.includes('Estoque') ? 'Estoque' : wb.SheetNames[0];
       const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[sheetName], { defval: '', raw: true });
       if (raw.length === 0) { showError('A planilha está vazia.'); return; }
-      if (raw.length > 20000) { showError('A planilha tem linhas demais (máximo de 20.000).'); return; }
+      if (raw.length > IMPORT_MAX_ROWS) { showError(`A planilha tem linhas demais (máximo de ${IMPORT_MAX_ROWS.toLocaleString('pt-BR')}).`); return; }
 
       const keys = Object.keys(raw[0]);
       const skuKey = keys.find((k) => norm(k) === 'sku');
@@ -305,8 +305,8 @@ export default function StockPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => void exportXlsx()} className={btn}><Download size={15} className="text-[#0094eb]" /> Baixar planilha</button>
-          <button type="button" onClick={() => fileRef.current?.click()} className={btn}><Upload size={15} className="text-[#0094eb]" /> Importar planilha</button>
-          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
+          <button type="button" onClick={() => setImpOpen(true)} className={btn}><Upload size={15} className="text-[#0094eb]" /> Importar planilha</button>
+          {impOpen && <StockImportModal onClose={() => setImpOpen(false)} onPick={async (file) => { setImpOpen(false); await onFile(file); }} />}
           <Link to={`${BASE}/estoque/historico`} className={btn}><History size={15} className="text-[#0094eb]" /> Histórico de movimentações</Link>
         </div>
       </div>
