@@ -5,6 +5,7 @@ import { showError, showSuccess } from '@/utils/toast';
 import { pushStockToYampi } from '@/modules/gestor/services/gestor';
 import { Modal, errMsg, inputCls, primaryBtn } from './Modal';
 import { variantLabel, type VariantRow } from './variantsData';
+import { selectOnFocus } from './selectOnFocus';
 
 const sb: any = supabase;
 
@@ -26,7 +27,7 @@ export default function StockEditDialog({ storeId, product, variants, onSaved, o
   const save = async () => {
     for (const v of changed) {
       const n = Number(vals[v.id]);
-      if (!Number.isInteger(n) || n < 0) { showError(`Estoque inválido em ${variantLabel(v)}. Use inteiro, zero ou maior.`); return; }
+      if (vals[v.id] === '' || !Number.isInteger(n) || n < 0) { showError(`Estoque inválido em ${variantLabel(v)}. Use inteiro, zero ou maior.`); return; }
     }
     setBusy(true);
     let ok = 0;
@@ -76,6 +77,7 @@ export default function StockEditDialog({ storeId, product, variants, onSaved, o
                 <input
                   type="number" min={0} step={1} value={vals[v.id] ?? ''}
                   onChange={(e) => setVals((p) => ({ ...p, [v.id]: e.target.value }))}
+                  {...selectOnFocus}
                   className={inputCls + ' !w-24 text-center font-mono'}
                 />
               </div>

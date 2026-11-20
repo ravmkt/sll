@@ -318,7 +318,7 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
             </button>
             {isGestor && (
               <Link to={`${GESTOR_BASE}/estoque`} className={btnGhost}>
-                <BookOpen size={15} className="text-[#0094eb]" /> Livro de estoque
+                <BookOpen size={15} className="text-[#0094eb]" /> Estoque
               </Link>
             )}
           </div>
