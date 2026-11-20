@@ -15,6 +15,7 @@ import type { VariantRow } from '@/components/products/variantsData';
 import { Modal, inputCls, primaryBtn } from '@/components/products/Modal';
 import { selectOnFocus } from '@/components/products/selectOnFocus';
 import { pushStockToYampi } from '../services/gestor';
+import { listChannelLinks } from '../services/vinculos';
 import HistoryDialog from '../components/HistoryDialog';
 import SyncChannelModal from '../components/SyncChannelModal';
 import ChannelsModal from '../components/ChannelsModal';
@@ -107,6 +108,25 @@ export default function StockPage() {
   const [transferFor, setTransferFor] = useState<{ id: string; label: string; sku: string } | null>(null);
   const [avail, setAvail] = useState<Availability>(EMPTY_AVAIL);
   const [whCount, setWhCount] = useState(1);
+  const [links, setLinks] = useState<Map<string, Set<string>>>(new Map());
+  const isLinked = (pid: string, ch: string) => links.get(pid)?.has(ch) ?? false;
+
+  const refreshLinks = useCallback(async () => {
+    if (!storeId) return;
+    try {
+      const m = new Map<string, Set<string>>();
+      for (const l of await listChannelLinks(storeId)) {
+        const s = m.get(l.product_id) ?? new Set<string>();
+        s.add(l.channel);
+        m.set(l.product_id, s);
+      }
+      setLinks(m);
+    } catch (e) {
+      console.warn('[Gestor] vinculos de canal indisponiveis', e);
+    }
+  }, [storeId]);
+
+  useEffect(() => { void refreshLinks(); }, [refreshLinks, items]);
 
   const refreshAvail = useCallback(async () => {
     if (!storeId) return;
@@ -224,7 +244,7 @@ export default function StockPage() {
         });
         if (error) { failed.push(`${v.sku}: ${error.message}`); continue; }
         done.add(v.id);
-        if (it.product.origin === 'yampi') {
+        if (isLinked(it.product.id, 'yampi')) {
           try {
             const r: unknown = await pushStockToYampi(storeId, v.sku, Number(balance ?? edits[v.id]));
             if (r === 'erro') pushFailed++;
@@ -353,7 +373,7 @@ export default function StockPage() {
               p_variant: hit.v.id, p_type: 'adjustment', p_qty: delta, p_note: 'Importação de planilha',
             });
             if (error) throw new Error(error.message);
-            if (hit.it.product.origin === 'yampi') {
+            if (isLinked(hit.it.product.id, 'yampi')) {
               try {
                 const res: unknown = await pushStockToYampi(storeId, hit.v.sku, Number(balance ?? next));
                 if (res === 'erro') pushFailed++;

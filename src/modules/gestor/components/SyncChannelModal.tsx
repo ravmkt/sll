@@ -8,19 +8,23 @@ import { listVariantsByProduct } from '@/components/products/variantsData';
 import type { VariantRow } from '@/components/products/variantsData';
 import { Modal, inputCls, primaryBtn } from '@/components/products/Modal';
 import { pushStockToYampi } from '../services/gestor';
+import { CHANNEL_META } from '../services/estoqueCanais';
+import { listChannelLinks } from '../services/vinculos';
 
-// Para ativar um canal novo: enabled: true + tratar a key em syncOne()
-const CHANNELS = [
-  { key: 'yampi', label: 'Yampi (e-commerce)', enabled: true },
-  { key: 'nuvemshop', label: 'Nuvemshop (em breve)', enabled: false },
-  { key: 'social', label: 'Redes sociais (em breve)', enabled: false },
-];
+// Canais com integracao pronta. Para ligar um novo: incluir a key aqui e tratar em syncOne().
+const INTEGRATED = new Set(['yampi']);
+const CHANNELS = Object.keys(CHANNEL_META).map((key) => ({
+  key,
+  label: CHANNEL_META[key].label + (INTEGRATED.has(key) ? '' : ' (em breve)'),
+  enabled: INTEGRATED.has(key),
+}));
 
 type Props = { storeId: string; onClose: () => void };
 
 export default function SyncChannelModal({ storeId, onClose }: Props) {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [variants, setVariants] = useState<Map<string, VariantRow[]>>(new Map());
+  const [linkMap, setLinkMap] = useState<Map<string, boolean>>(new Map());
   const [loading, setLoading] = useState(true);
   const [channel, setChannel] = useState('yampi');
   const [search, setSearch] = useState('');
@@ -28,8 +32,12 @@ export default function SyncChannelModal({ storeId, onClose }: Props) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    Promise.all([listProducts(storeId), listVariantsByProduct(storeId)])
-      .then(([p, v]) => { setProducts(p); setVariants(v); })
+    Promise.all([listProducts(storeId), listVariantsByProduct(storeId), listChannelLinks(storeId)])
+      .then(([p, v, l]) => {
+        setProducts(p);
+        setVariants(v);
+        setLinkMap(new Map(l.map((x) => [`${x.product_id}|${x.channel}`, x.published])));
+      })
       .catch(() => showError('Erro ao carregar produtos.'))
       .finally(() => setLoading(false));
   }, [storeId]);
@@ -37,9 +45,9 @@ export default function SyncChannelModal({ storeId, onClose }: Props) {
   const eligible = useMemo(() => {
     const q = search.trim().toLowerCase();
     return products.filter((p) =>
-      p.origin === channel && (variants.get(p.id)?.length ?? 0) > 0 &&
+      linkMap.has(`${p.id}|${channel}`) && (variants.get(p.id)?.length ?? 0) > 0 &&
       (!q || p.name.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q)));
-  }, [products, variants, channel, search]);
+  }, [products, variants, linkMap, channel, search]);
 
   const allPicked = eligible.length > 0 && eligible.every((p) => picked.has(p.id));
   const toggle = (id: string) => setPicked((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
@@ -49,28 +57,33 @@ export default function SyncChannelModal({ storeId, onClose }: Props) {
     return n;
   });
 
-  const syncOne = async (key: string, sku: string, stock: number) => {
-    if (key === 'yampi') return (await pushStockToYampi(storeId, sku, stock)) !== 'erro';
-    return false;
+  const syncOne = async (key: string, sku: string, stock: number): Promise<'ok' | 'skip' | 'erro'> => {
+    if (key === 'yampi') return pushStockToYampi(storeId, sku, stock);
+    return 'erro';
   };
 
   const run = async () => {
-    const jobs = products.filter((p) => picked.has(p.id) && p.origin === channel)
+    const ids = new Set(eligible.map((p) => p.id));
+    const jobs = products.filter((p) => picked.has(p.id) && ids.has(p.id))
       .flatMap((p) => (variants.get(p.id) ?? []).map((v) => ({ sku: v.sku, stock: v.stock })));
     if (!jobs.length) return;
     setBusy(true);
-    let ok = 0, fail = 0, i = 0;
+    let ok = 0, skip = 0, fail = 0, i = 0;
     const worker = async () => {
       while (i < jobs.length) {
         const j = jobs[i++];
-        try { (await syncOne(channel, j.sku, j.stock)) ? ok++ : fail++; } catch { fail++; }
+        try {
+          const r = await syncOne(channel, j.sku, j.stock);
+          if (r === 'ok') ok++; else if (r === 'skip') skip++; else fail++;
+        } catch { fail++; }
       }
     };
     await Promise.all([worker(), worker(), worker(), worker()]);
     setBusy(false);
     if (ok) showSuccess(`${ok} variação(ões) sincronizada(s).`);
+    if (skip) showError(`${skip} variação(ões) ainda não existem no canal. Publique o produto no canal primeiro.`);
     if (fail) showError(`${fail} falha(s) no envio.`);
-    if (!fail) onClose();
+    if (!fail && !skip) onClose();
   };
 
   return (
@@ -100,16 +113,19 @@ export default function SyncChannelModal({ storeId, onClose }: Props) {
                   <label className="flex cursor-pointer items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5">
                     <input type="checkbox" checked={picked.has(p.id)} onChange={() => toggle(p.id)} className="h-4 w-4 cursor-pointer" />
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold">{p.name}</span>
+                    {!linkMap.get(`${p.id}|${channel}`) && (
+                      <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">não publicado</span>
+                    )}
                     <span className="font-mono text-xs text-slate-500">{(variants.get(p.id) ?? []).reduce((s, v) => s + v.stock, 0)} un.</span>
                   </label>
                 </li>
               ))}
-              {eligible.length === 0 && <li className="px-4 py-8 text-center text-sm text-slate-400">Nenhum produto vinculado a este canal.</li>}
+              {eligible.length === 0 && <li className="px-4 py-8 text-center text-sm text-slate-400">Nenhum produto vinculado a este canal. Vincule na lista de produtos.</li>}
             </ul>
           </div>
         )}
 
-        <p className="text-[11px] text-slate-400">Envia o saldo já salvo (depósito do e-commerce). Alterações pendentes na tela devem ser salvas antes.</p>
+        <p className="text-[11px] text-slate-400">Envia o saldo já salvo (depósito do e-commerce). Alterações pendentes na tela devem ser salvas antes. Produtos "não publicados" só recebem estoque depois de existirem no canal.</p>
         <div className="flex justify-end gap-2">
           <button type="button" disabled={busy} onClick={onClose} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-slate-700">Cancelar</button>
           <button type="button" disabled={busy || picked.size === 0} onClick={() => void run()} className={primaryBtn + ' disabled:opacity-50'}>
