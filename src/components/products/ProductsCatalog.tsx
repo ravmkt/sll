@@ -16,7 +16,7 @@ import {
   setProductActive,
   listLinkedProductIds,
 } from '@/services/productsService';
-import ProductFormModal from '@/components/products/ProductFormModal';
+import ProductFormDialog from '@/shared/products/ProductFormDialog';
 import ProductMetricCards from '@/components/products/ProductMetricCards';
 import CategoriesModal from '@/components/products/CategoriesModal';
 import ImportModal from '@/components/products/ImportModal';
@@ -378,8 +378,8 @@ export default function ProductsCatalog({ mode = 'hub' }: { mode?: 'hub' | 'gest
         </div>
       </div>
 
-      {formOpen && storeId && (
-        <ProductFormModal storeId={storeId} product={editing} categories={categoryNames} onClose={() => setFormOpen(false)} onSaved={reload} />
+      {storeId && (
+        <ProductFormDialog open={formOpen} onOpenChange={setFormOpen} storeId={storeId} productId={editing?.id ?? null} onSaved={() => void reload()} />
       )}
       {catsOpen && storeId && (
         <CategoriesModal storeId={storeId} categories={categories} onChanged={reload} onClose={() => setCatsOpen(false)} />
