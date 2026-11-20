@@ -1,4 +1,4 @@
-﻿import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 const sb: any = supabase;
 
@@ -21,7 +21,7 @@ export async function listActiveChannels(storeId: string): Promise<ChannelKey[]>
   if (error) throw error;
   const out: ChannelKey[] = [];
   for (const r of (data || []) as Record<string, unknown>[]) {
-    const key = r.channel ?? r.key;
+    const key = String(r.channel ?? r.key ?? '').replace('mercadolivre', 'mercado_livre');
     const on = r.enabled ?? r.active ?? r.is_active;
     if (isKey(key) && on !== false && !out.includes(key)) out.push(key);
   }

@@ -16,6 +16,9 @@ import { Modal, inputCls, primaryBtn } from '@/components/products/Modal';
 import { selectOnFocus } from '@/components/products/selectOnFocus';
 import { pushStockToYampi } from '../services/gestor';
 import { listChannelLinks } from '../services/vinculos';
+import { CHANNEL_META, listActiveChannels } from '../services/canais';
+import type { ChannelKey } from '../services/canais';
+import ChannelIcon from '../components/ChannelIcon';
 import HistoryDialog from '../components/HistoryDialog';
 import SyncChannelModal from '../components/SyncChannelModal';
 import type { SyncJob } from '../components/SyncChannelModal';
@@ -113,6 +116,23 @@ export default function StockPage() {
   const [whCount, setWhCount] = useState(1);
   const [links, setLinks] = useState<Map<string, Set<string>>>(new Map());
   const isLinked = (pid: string, ch: string) => links.get(pid)?.has(ch) ?? false;
+  const hasCh = (pid: string, ch: string) => {
+    const s = links.get(pid);
+    return !!s && (s.has(ch) || s.has(ch.replace('_', '')));
+  };
+  const [activeCh, setActiveCh] = useState<ChannelKey[]>([]);
+  const [chFilter, setChFilter] = useState<string>('all');
+
+  const refreshActive = useCallback(async () => {
+    if (!storeId) return;
+    try {
+      setActiveCh(await listActiveChannels(storeId));
+    } catch (e) {
+      console.warn('[Gestor] canais ativos indisponiveis', e);
+    }
+  }, [storeId]);
+
+  useEffect(() => { void refreshActive(); }, [refreshActive]);
 
   const refreshLinks = useCallback(async () => {
     if (!storeId) return;
@@ -166,7 +186,7 @@ export default function StockPage() {
   }, [storeId]);
 
   useEffect(() => { if (!lojaLoading) void reload(); }, [lojaLoading, reload]);
-  useEffect(() => { setPage(1); }, [search, filter]);
+  useEffect(() => { setPage(1); }, [search, filter, chFilter]);
 
   const dirtyCount = Object.keys(edits).length;
   useEffect(() => {
@@ -209,12 +229,15 @@ export default function StockPage() {
           it.variants.some((v) => v.sku.toLowerCase().includes(q) || variantLabel(v).toLowerCase().includes(q));
         if (!hit) return false;
       }
-      if (filter === 'with') return total > 0;
+      if (chFilter === 'none') {
+          if (activeCh.some((c) => hasCh(it.product.id, c))) return false;
+        } else if (chFilter !== 'all' && !hasCh(it.product.id, chFilter)) return false;
+        if (filter === 'with') return total > 0;
       if (filter === 'without') return total <= 0;
       if (filter === 'changed') return it.variants.some((v) => edits[v.id] !== undefined);
       return true;
     });
-  }, [items, search, filter, edits]);
+  }, [items, search, filter, edits, chFilter, activeCh, links]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
   const safePage = Math.min(page, pages);
@@ -474,9 +497,14 @@ export default function StockPage() {
               <option value="without">Sem estoque</option>
               <option value="changed">Só alterados</option>
             </select>
-            <button type="button" onClick={expandAll} className={btn}><ChevronsUpDown size={15} /> Expandir tudo</button>
+            <select value={chFilter} onChange={(e) => setChFilter(e.target.value)} className={selCls}>
+                  <option value="all">Todos os canais</option>
+                  {activeCh.map((c) => <option key={c} value={c}>{CHANNEL_META[c].label}</option>)}
+                  <option value="none">Sem canal vinculado</option>
+                </select>
+                <button type="button" onClick={expandAll} className={btn}><ChevronsUpDown size={15} /> Expandir tudo</button>
             <button type="button" onClick={collapseAll} className={btn}><ChevronsDownUp size={15} /> Recolher tudo</button>
-                <button type="button" onClick={toggleAllSel} className={btn}>{allSel ? 'Limpar seleção' : 'Selecionar todos'}</button>
+                <button type="button" onClick={toggleAllSel} className={btn}>{allSel ? 'Limpar seleção' : Selecionar todos (+''+)}</button>
           </div>
         </div>
 
@@ -489,13 +517,20 @@ export default function StockPage() {
             <table className="w-full min-w-[720px] text-left">
               <thead>
                 <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-slate-800">
-                  <th className="px-4 py-3">Produto / variação</th>
+                  <th className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block w-5" />
+                          <input type="checkbox" checked={allSel} onChange={toggleAllSel} title={`Selecionar todos os ${filtered.length} produtos do filtro`} className="h-4 w-4 shrink-0 cursor-pointer" />
+                          <span>Produto / variação</span>
+                        </div>
+                      </th>
                   <th className="px-4 py-3">SKU</th>
                   <th className="px-4 py-3 text-center">Atual</th>
                       {showTotal && <th className="px-4 py-3 text-center" title="Soma de todos os depósitos ativos">Total físico</th>}
                       {showCh && <th className="px-4 py-3 text-center" title="O que cada canal exibe, já com teto e reserva">Disponível por canal</th>}
                   <th className="px-4 py-3 text-center">Novo saldo</th>
-                  <th className="w-16 px-4 py-3" />
+                  <th className="px-4 py-3 text-center" title="Canais ativos em que o produto está vinculado">Canais</th>
+                      <th className="w-16 px-4 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -531,7 +566,13 @@ export default function StockPage() {
                             <span className={cn('font-mono text-sm font-bold', total !== cur ? 'text-amber-600' : 'text-slate-400')}>{total}</span>
                           )}
                         </td>
-                        <td className="px-4 py-2.5 text-right">
+                        <td className="px-4 py-2.5">
+                              <div className="flex flex-wrap items-center justify-center gap-1">
+                                {activeCh.filter((c) => hasCh(it.product.id, c)).map((c) => <ChannelIcon key={c} channel={c} className="h-5 w-5 text-[10px]" />)}
+                                {!activeCh.some((c) => hasCh(it.product.id, c)) && <span className="text-xs text-slate-300">—</span>}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5 text-right">
                           {allow('estoque','editar') && (
                                 <button type="button" title="Sincronizar este produto com o canal" onClick={() => syncIds([it.product.id])} className="mr-1 cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800">
                                   <RefreshCw size={15} />
@@ -565,7 +606,7 @@ export default function StockPage() {
                               ) : <span className="inline-block w-[34px]" />}
                             </div>
                           </td>
-                          <td />
+                          <td /><td />
                         </tr>
                       ))}
                     </Fragment>
@@ -573,7 +614,7 @@ export default function StockPage() {
                 })}
                 {pageItems.length === 0 && (
                   <tr>
-                    <td colSpan={5 + (showTotal ? 1 : 0) + (showCh ? 1 : 0)} className="px-6 py-16 text-center">
+                    <td colSpan={6 + (showTotal ? 1 : 0) + (showCh ? 1 : 0)} className="px-6 py-16 text-center">
                       <Package size={40} className="mx-auto mb-3 text-slate-300" />
                       <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nenhum produto encontrado</p>
                       <p className="mt-1 text-xs text-slate-400">Produtos sem variação cadastrada não aparecem aqui.</p>
@@ -605,7 +646,7 @@ export default function StockPage() {
               <button type="button" onClick={syncSelected} className={primaryBtn}>Sincronizar {sel.size}</button>
             </div>
           )}
-      {channelsOpen && storeId && <ChannelsModal storeId={storeId} onClose={() => setChannelsOpen(false)} onChanged={() => void refreshAvail()} />}
+      {channelsOpen && storeId && <ChannelsModal storeId={storeId} onClose={() => setChannelsOpen(false)} onChanged={() => { void refreshAvail(); void refreshActive(); }} />}
       {transferFor && <TransferDialog variant={transferFor} onClose={() => setTransferFor(null)} onDone={() => void reload()} />}
 
       {pending.length > 0 && (
