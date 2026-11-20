@@ -78,7 +78,7 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto bg-white text-slate-900 dark:bg-[#1a1f2c] dark:text-slate-100">
         <DialogHeader>
           <DialogTitle>{productId ? 'Editar produto' : 'Novo produto'}</DialogTitle>
         </DialogHeader>
