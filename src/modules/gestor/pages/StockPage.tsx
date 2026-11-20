@@ -504,7 +504,7 @@ export default function StockPage() {
                 </select>
                 <button type="button" onClick={expandAll} className={btn}><ChevronsUpDown size={15} /> Expandir tudo</button>
             <button type="button" onClick={collapseAll} className={btn}><ChevronsDownUp size={15} /> Recolher tudo</button>
-                <button type="button" onClick={toggleAllSel} className={btn}>{allSel ? 'Limpar seleção' : Selecionar todos (+''+)}</button>
+                <button type="button" onClick={toggleAllSel} className={btn}>{allSel ? 'Limpar seleção' : 'Selecionar todos'}</button>
           </div>
         </div>
 
