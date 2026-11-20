@@ -9,6 +9,7 @@ import { TopBar } from '@/components/layout/TopBar';
 import { AppFooter } from '@/components/layout/AppFooter';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 import { useAuth } from '@/contexts/AuthContext';
+import ForcePasswordChange from './ForcePasswordChange';
 
 const BASE = '/dashboard/modules/gestor';
 const KEY = 'sll_gestor_sidebar_collapsed';
@@ -194,6 +195,7 @@ export default function GestorLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800" style={{ paddingTop: 'calc(var(--trial-h, 0px) + var(--notice-h, 0px))' }}>
+      <ForcePasswordChange />
       <TopBar />
       <div className="flex flex-1">
         <aside
