@@ -1,6 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { Link } from 'react-router-dom';
 import {
   ArrowDown, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Download, History, Loader2,
   Package, Save, Search, Undo2, Upload,
@@ -16,10 +15,10 @@ import type { VariantRow } from '@/components/products/variantsData';
 import { Modal, inputCls, primaryBtn } from '@/components/products/Modal';
 import { selectOnFocus } from '@/components/products/selectOnFocus';
 import { pushStockToYampi } from '../services/gestor';
+import HistoryDialog from '../components/HistoryDialog';
 import StockImportModal, { IMPORT_MAX_MB, IMPORT_MAX_ROWS } from '../components/StockImportModal';
 
 const sb: any = supabase;
-const BASE = '/dashboard/modules/gestor';
 const PAGE = 25;
 
 type Item = { product: CatalogProduct; variants: VariantRow[]; multi: boolean };
@@ -80,6 +79,7 @@ export default function StockPage() {
   const [saving, setSaving] = useState(false);
   const [imp, setImp] = useState<ImpRow[] | null>(null);
   const [impIgnored, setImpIgnored] = useState(0);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [impOpen, setImpOpen] = useState(false);
 
   const reload = useCallback(async () => {
@@ -307,7 +307,7 @@ export default function StockPage() {
           <button type="button" onClick={() => void exportXlsx()} className={btn}><Download size={15} className="text-[#0094eb]" /> Baixar planilha</button>
           <button type="button" onClick={() => setImpOpen(true)} className={btn}><Upload size={15} className="text-[#0094eb]" /> Importar planilha</button>
           {impOpen && <StockImportModal onClose={() => setImpOpen(false)} onPick={async (file) => { setImpOpen(false); await onFile(file); }} />}
-          <Link to={`${BASE}/estoque/historico`} className={btn}><History size={15} className="text-[#0094eb]" /> Histórico de movimentações</Link>
+          <button type="button" onClick={() => setHistoryOpen(true)} className={btn}><History size={15} className="text-[#0094eb]" /> Histórico de movimentações</button>
         </div>
       </div>
 
@@ -432,6 +432,8 @@ export default function StockPage() {
           </div>
         )}
       </div>
+
+      <HistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} />
 
       {pending.length > 0 && (
         <div className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-xl dark:border-slate-700 dark:bg-[#1a1f2c]">
