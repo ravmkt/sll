@@ -7,9 +7,16 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { emptyProduct, getProductFull, saveProduct, validateDraft } from './productService';
 import type { ProductDraft, ProductRow } from './types';
-import DescricaoMidiaTab from './tabs/DescricaoMidiaTab';
 import GeralTab from './tabs/GeralTab';
 import PrecosTab from './tabs/PrecosTab';
+import DescricaoMidiaTab from './tabs/DescricaoMidiaTab';
+import DimensoesTab from './tabs/DimensoesTab';
+import EstoqueTab from './tabs/EstoqueTab';
+import FornecedoresTab from './tabs/FornecedoresTab';
+import TaxTab from './tabs/TaxTab';
+import CustomFieldsTab from './tabs/CustomFieldsTab';
+import KitTab from './tabs/KitTab';
+import VariationsTab from './tabs/VariationsTab';
 
 interface Props {
   open: boolean;
@@ -28,10 +35,12 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [tab, setTab] = useState('geral');
 
   useEffect(() => {
     if (!open) return;
     setErrors([]);
+    setTab('geral');
     if (!productId) { setDraft(blankDraft()); return; }
     setLoading(true);
     getProductFull(storeId, productId)
@@ -42,6 +51,14 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
 
   const patchProduct = (patch: Partial<ProductRow>) =>
     setDraft((d) => ({ ...d, product: { ...d.product, ...patch } }));
+
+  const format = draft.product.format;
+  const available = [
+    'geral', 'precos', 'midia', 'dimensoes', 'estoque', 'fornecedores', 'tributacao', 'extras',
+    ...(format === 'variation' ? ['variacoes'] : []),
+    ...(format === 'kit' ? ['composicao'] : []),
+  ];
+  const current = available.includes(tab) ? tab : 'geral';
 
   const handleSave = async () => {
     const problems = validateDraft(draft);
@@ -60,7 +77,7 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{productId ? 'Editar produto' : 'Novo produto'}</DialogTitle>
         </DialogHeader>
@@ -68,12 +85,20 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
         {loading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin" /></div>
         ) : (
-          <Tabs defaultValue="geral">
-            <TabsList>
+          <Tabs value={current} onValueChange={setTab}>
+            <TabsList className="flex h-auto flex-wrap justify-start gap-1">
               <TabsTrigger value="geral">Geral</TabsTrigger>
               <TabsTrigger value="precos">Preços</TabsTrigger>
               <TabsTrigger value="midia">Descrição e mídia</TabsTrigger>
+              <TabsTrigger value="dimensoes">Dimensões</TabsTrigger>
+              <TabsTrigger value="estoque">Estoque</TabsTrigger>
+              <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
+              <TabsTrigger value="tributacao">Tributação</TabsTrigger>
+              <TabsTrigger value="extras">Campos extras</TabsTrigger>
+              {format === 'variation' && <TabsTrigger value="variacoes">Variações</TabsTrigger>}
+              {format === 'kit' && <TabsTrigger value="composicao">Composição</TabsTrigger>}
             </TabsList>
+
             <TabsContent value="geral" className="pt-4">
               <GeralTab product={draft.product} onChange={patchProduct} />
             </TabsContent>
@@ -89,6 +114,40 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
             <TabsContent value="midia" className="pt-4">
               <DescricaoMidiaTab product={draft.product} onChange={patchProduct} />
             </TabsContent>
+            <TabsContent value="dimensoes" className="pt-4">
+              <DimensoesTab product={draft.product} onChange={patchProduct} />
+            </TabsContent>
+            <TabsContent value="estoque" className="pt-4">
+              <EstoqueTab product={draft.product} onChange={patchProduct} />
+            </TabsContent>
+            <TabsContent value="fornecedores" className="pt-4">
+              <FornecedoresTab
+                storeId={storeId}
+                suppliers={draft.suppliers}
+                onChange={(suppliers) => setDraft((d) => ({ ...d, suppliers }))}
+              />
+            </TabsContent>
+            <TabsContent value="tributacao" className="pt-4">
+              <TaxTab product={draft.product} onChange={patchProduct} />
+            </TabsContent>
+            <TabsContent value="extras" className="pt-4">
+              <CustomFieldsTab storeId={storeId} product={draft.product} onChange={patchProduct} />
+            </TabsContent>
+            {format === 'variation' && (
+              <TabsContent value="variacoes" className="pt-4">
+                <VariationsTab storeId={storeId} productId={productId} product={draft.product} />
+              </TabsContent>
+            )}
+            {format === 'kit' && (
+              <TabsContent value="composicao" className="pt-4">
+                <KitTab
+                  storeId={storeId}
+                  productId={productId ?? undefined}
+                  items={draft.kitItems}
+                  onChange={(kitItems) => setDraft((d) => ({ ...d, kitItems }))}
+                />
+              </TabsContent>
+            )}
           </Tabs>
         )}
 
