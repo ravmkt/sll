@@ -55,7 +55,7 @@ export default function GeralTab({ storeId, product, onChange }: Props) {
 
       <div className="space-y-1.5 md:col-span-2">
         <Label htmlFor="p-sku">SKU (código)</Label>
-        <Input id="p-sku" value={product.sku ?? ''} onChange={(e) => onChange({ sku: e.target.value })} />
+        <Input id="p-sku" value={product.sku ?? ''} onChange={(e) => onChange({ sku: e.target.value.toLowerCase() })} />
       </div>
 
       <div className="space-y-1.5 md:col-span-2">

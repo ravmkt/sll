@@ -452,28 +452,40 @@ export default function StockPage() {
               <strong>{impCount('change')}</strong> vão alterar · {impCount('same')} sem mudança · {impCount('notfound') + impCount('invalid') + impCount('dup')} com problema
               {impIgnored > 0 && <> · {impIgnored} linha(s) sem novo saldo ignoradas</>}
             </p>
-            <div className="max-h-[50vh] overflow-auto rounded-xl border border-slate-200 dark:border-slate-800">
-              <table className="w-full text-left text-xs">
-                <thead className="sticky top-0 bg-slate-50 dark:bg-[#111524]">
-                  <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    <th className="px-3 py-2">Linha</th><th className="px-3 py-2">SKU</th><th className="px-3 py-2">Produto</th>
-                    <th className="px-3 py-2 text-center">Atual</th><th className="px-3 py-2 text-center">Novo</th><th className="px-3 py-2">Situação</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {imp.map((r) => (
-                    <tr key={r.line}>
-                      <td className="px-3 py-1.5 text-slate-400">{r.line}</td>
-                      <td className="px-3 py-1.5 font-mono">{r.sku}</td>
-                      <td className="max-w-[16rem] truncate px-3 py-1.5">{r.label}</td>
-                      <td className="px-3 py-1.5 text-center font-mono">{r.current ?? '—'}</td>
-                      <td className="px-3 py-1.5 text-center font-mono font-bold">{r.next ?? '—'}</td>
-                      <td className={cn('px-3 py-1.5 font-semibold', r.status === 'change' ? 'text-emerald-600' : r.status === 'same' ? 'text-slate-400' : 'text-rose-500')}>{STATUS_LABEL[r.status]}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <div className="max-h-[50vh] overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 dark:border-slate-800">
+                  <table className="w-full table-fixed text-left text-xs">
+                    <colgroup>
+                      <col className="w-10" />
+                      <col className="w-[24%]" />
+                      <col />
+                      <col className="w-12" />
+                      <col className="w-12" />
+                      <col className="w-[22%]" />
+                    </colgroup>
+                    <thead className="sticky top-0 bg-slate-50 dark:bg-[#111524]">
+                      <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <th className="px-2 py-2">Lin.</th>
+                        <th className="px-2 py-2">SKU</th>
+                        <th className="px-2 py-2">Produto</th>
+                        <th className="px-1 py-2 text-center">Atual</th>
+                        <th className="px-1 py-2 text-center">Novo</th>
+                        <th className="px-2 py-2">Situação</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {imp.map((r) => (
+                        <tr key={r.line} className="align-top">
+                          <td className="px-2 py-1.5 text-slate-400">{r.line}</td>
+                          <td className="break-all px-2 py-1.5 font-mono">{r.sku}</td>
+                          <td className="break-words px-2 py-1.5">{r.label}</td>
+                          <td className="px-1 py-1.5 text-center font-mono">{r.current ?? '—'}</td>
+                          <td className="px-1 py-1.5 text-center font-mono font-bold">{r.next ?? '—'}</td>
+                          <td className={cn('break-words px-2 py-1.5 font-semibold', r.status === 'change' ? 'text-emerald-600' : r.status === 'same' ? 'text-slate-400' : 'text-rose-500')}>{STATUS_LABEL[r.status]}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
             <p className="text-[11px] text-slate-400">Confirmar só carrega os valores na tela. Nada é gravado até você clicar em Salvar tudo.</p>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setImp(null)} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-slate-700">Cancelar</button>

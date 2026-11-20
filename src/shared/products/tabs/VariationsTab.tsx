@@ -17,7 +17,7 @@ interface NewRow { key: string; option_name: string; option_value: string; sku: 
 const CARD = 'rounded-2xl border border-slate-200 p-5 dark:border-slate-800';
 const TITLE = 'mb-3 text-[11px] font-bold uppercase tracking-wider text-slate-500';
 const TH = 'px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400';
-const slug = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const slug = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
 export default function VariationsTab({ storeId, productId, product }: Props) {
   const [existing, setExisting] = useState<Existing[]>([]);
