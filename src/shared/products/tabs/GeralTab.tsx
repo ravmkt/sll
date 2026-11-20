@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { isValidGtin } from '../productService';
 import type { ProductFormat, ProductRow } from '../types';
-import { numStr, selectClass, toNum } from './fieldUtils';
+import { selectCls } from './uiHelpers';
 
 interface Props {
   product: ProductRow;
@@ -35,12 +35,7 @@ export default function GeralTab({ product, onChange }: Props) {
 
       <div className="space-y-1.5 md:col-span-2">
         <Label htmlFor="p-format">Formato</Label>
-        <select
-          id="p-format"
-          className={selectClass}
-          value={product.format}
-          onChange={(e) => onChange({ format: e.target.value as ProductFormat })}
-        >
+        <select id="p-format" className={selectCls} value={product.format} onChange={(e) => onChange({ format: e.target.value as ProductFormat })}>
           <option value="simple">Simples</option>
           <option value="variation">Com variações</option>
           <option value="kit">Kit / Composição</option>
@@ -49,12 +44,7 @@ export default function GeralTab({ product, onChange }: Props) {
 
       <div className="space-y-1.5 md:col-span-2">
         <Label htmlFor="p-unit">Unidade *</Label>
-        <select
-          id="p-unit"
-          className={selectClass}
-          value={product.unit}
-          onChange={(e) => onChange({ unit: e.target.value })}
-        >
+        <select id="p-unit" className={selectCls} value={product.unit} onChange={(e) => onChange({ unit: e.target.value })}>
           {!UNITS.includes(product.unit) && <option value={product.unit}>{product.unit}</option>}
           {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
         </select>
@@ -63,9 +53,7 @@ export default function GeralTab({ product, onChange }: Props) {
       <div className="space-y-1.5 md:col-span-3">
         <Label htmlFor="p-gtin">GTIN / EAN</Label>
         <Input
-          id="p-gtin"
-          inputMode="numeric"
-          value={product.gtin ?? ''}
+          id="p-gtin" inputMode="numeric" value={product.gtin ?? ''}
           onChange={(e) => onChange({ gtin: e.target.value })}
           className={gtinInvalid ? 'border-destructive' : ''}
         />
@@ -74,47 +62,17 @@ export default function GeralTab({ product, onChange }: Props) {
 
       <div className="space-y-1.5 md:col-span-3">
         <Label htmlFor="p-validity">Validade</Label>
-        <Input
-          id="p-validity"
-          type="date"
-          value={product.validity_date ?? ''}
-          onChange={(e) => onChange({ validity_date: e.target.value || null })}
-        />
+        <Input id="p-validity" type="date" value={product.validity_date ?? ''} onChange={(e) => onChange({ validity_date: e.target.value || null })} />
       </div>
 
       <div className="space-y-1.5 md:col-span-6">
         <Label htmlFor="p-tags">Tags (separadas por vírgula)</Label>
-        <Input
-          id="p-tags"
-          value={tagsText}
-          onChange={(e) => setTagsText(e.target.value)}
-          onBlur={commitTags}
-          placeholder="verão, promoção, lançamento"
-        />
+        <Input id="p-tags" value={tagsText} onChange={(e) => setTagsText(e.target.value)} onBlur={commitTags} placeholder="verão, promoção, lançamento" />
         {product.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-1">
-            {product.tags.map((t) => (
-              <span key={t} className="rounded-full bg-muted px-2 py-0.5 text-xs">{t}</span>
-            ))}
+            {product.tags.map((t) => <span key={t} className="rounded-full bg-muted px-2 py-0.5 text-xs">{t}</span>)}
           </div>
         )}
-      </div>
-
-      <div className="space-y-1.5 md:col-span-3">
-        <Label htmlFor="p-min">Estoque mínimo</Label>
-        <Input
-          id="p-min" inputMode="decimal"
-          value={numStr(product.min_stock)}
-          onChange={(e) => onChange({ min_stock: toNum(e.target.value) })}
-        />
-      </div>
-      <div className="space-y-1.5 md:col-span-3">
-        <Label htmlFor="p-max">Estoque máximo</Label>
-        <Input
-          id="p-max" inputMode="decimal"
-          value={numStr(product.max_stock)}
-          onChange={(e) => onChange({ max_stock: toNum(e.target.value) })}
-        />
       </div>
     </div>
   );
