@@ -45,7 +45,12 @@ const iso = (d: Date) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-const field = 'h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-800 shadow-sm outline-none transition-colors focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/15';
+// Mesmo padrao dos campos do AparenciaModal
+const field =
+  'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 transition-shadow focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#0094eb] dark:border-slate-700 dark:bg-slate-800 dark:text-white';
+const label = 'mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300';
+const pageBtn =
+  'cursor-pointer rounded-xl border border-slate-200 p-2 text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800';
 
 export default function StockHistoryPanel() {
   const { storeId, loading: lojaLoading } = useLoja();
@@ -100,36 +105,46 @@ export default function StockHistoryPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="relative min-w-[16rem] flex-1">
-          <Search size={16} className="absolute left-3.5 top-3.5 text-slate-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por produto, variação ou SKU..."
-            className={cn(field, 'w-full pl-10')}
-          />
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[16rem] flex-1">
+            <span className={label}>Buscar</span>
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Produto, variação ou SKU..."
+                className={cn(field, 'pl-9')}
+              />
+            </div>
+          </div>
+          <div>
+            <span className={label}>Tipo</span>
+            <select value={type} onChange={(e) => { setType(e.target.value); setPage(0); }} className={cn(field, 'cursor-pointer')}>
+              <option value="">Todos os tipos</option>
+              {Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </div>
+          <div>
+            <span className={label}>De</span>
+            <input type="date" value={from} max={to} onChange={(e) => { setFrom(e.target.value); setPage(0); }} className={field} />
+          </div>
+          <div>
+            <span className={label}>Até</span>
+            <input type="date" value={to} min={from} onChange={(e) => { setTo(e.target.value); setPage(0); }} className={field} />
+          </div>
         </div>
-        <select value={type} onChange={(e) => { setType(e.target.value); setPage(0); }} className={cn(field, 'cursor-pointer')}>
-          <option value="">Todos os tipos</option>
-          {Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
-        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-          De
-          <input type="date" value={from} max={to} onChange={(e) => { setFrom(e.target.value); setPage(0); }} className={cn(field, 'mt-1 block')} />
-        </label>
-        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-          Até
-          <input type="date" value={to} min={from} onChange={(e) => { setTo(e.target.value); setPage(0); }} className={cn(field, 'mt-1 block')} />
-        </label>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-[#0094eb]" /></div>
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 p-10 text-center text-sm text-slate-500">Nenhuma movimentação no período.</div>
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm font-medium text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
+          Nenhuma movimentação no período.
+        </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
           <table className="w-full table-fixed text-left text-xs">
             <colgroup>
               <col className="w-[13%]" />
@@ -140,35 +155,35 @@ export default function StockHistoryPanel() {
               <col className="w-[12%]" />
               <col className="w-[14%]" />
             </colgroup>
-            <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800">
               <tr>
-                <th className="px-3 py-2">Data</th>
-                <th className="px-3 py-2">Produto</th>
-                <th className="px-3 py-2">Tipo</th>
-                <th className="px-3 py-2 text-right">Qtd</th>
-                <th className="px-3 py-2 text-right">Saldo</th>
-                <th className="px-3 py-2">Origem</th>
-                <th className="px-3 py-2">Usuário</th>
+                <th className="px-3 py-2.5">Data</th>
+                <th className="px-3 py-2.5">Produto</th>
+                <th className="px-3 py-2.5">Tipo</th>
+                <th className="px-3 py-2.5 text-right">Qtd</th>
+                <th className="px-3 py-2.5 text-right">Saldo</th>
+                <th className="px-3 py-2.5">Origem</th>
+                <th className="px-3 py-2.5">Usuário</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {rows.map((r) => (
-                <tr key={r.id} className="align-top transition-colors hover:bg-slate-50/70">
-                  <td className="px-3 py-2 text-slate-500">{fmt(r.created_at)}</td>
-                  <td className="break-words px-3 py-2">
-                    <p className="font-semibold text-slate-800">{r.product_name || '-'}</p>
+                <tr key={r.id} className="align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
+                  <td className="px-3 py-2.5 text-slate-500">{fmt(r.created_at)}</td>
+                  <td className="break-words px-3 py-2.5">
+                    <p className="font-bold text-slate-800 dark:text-white">{r.product_name || '-'}</p>
                     <p className="text-[11px] text-slate-400">
                       {[r.variant_title && r.variant_title !== r.product_name ? r.variant_title : null, r.sku].filter(Boolean).join(' · ')}
                     </p>
                     {r.note && <p className="mt-0.5 text-[11px] italic text-slate-500">{r.note}</p>}
                   </td>
-                  <td className="px-3 py-2">{TYPE_LABEL[r.type] || r.type}</td>
-                  <td className={cn('px-3 py-2 text-right font-mono font-bold', r.qty > 0 ? 'text-emerald-600' : r.qty < 0 ? 'text-rose-600' : 'text-slate-400')}>
+                  <td className="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{TYPE_LABEL[r.type] || r.type}</td>
+                  <td className={cn('px-3 py-2.5 text-right font-mono font-bold', r.qty > 0 ? 'text-emerald-600' : r.qty < 0 ? 'text-rose-600' : 'text-slate-400')}>
                     {r.qty > 0 ? `+${r.qty}` : r.qty}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono">{r.balance_after}</td>
-                  <td className="break-words px-3 py-2 text-slate-500">{CHANNEL_LABEL[r.channel || ''] || r.channel || '-'}</td>
-                  <td className="break-words px-3 py-2 text-slate-500">{r.user_name || '-'}</td>
+                  <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-700 dark:text-slate-300">{r.balance_after}</td>
+                  <td className="break-words px-3 py-2.5 text-slate-500">{CHANNEL_LABEL[r.channel || ''] || r.channel || '-'}</td>
+                  <td className="break-words px-3 py-2.5 text-slate-500">{r.user_name || '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -176,10 +191,10 @@ export default function StockHistoryPanel() {
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-2 text-xs text-slate-500">
+      <div className="flex items-center justify-end gap-2 text-xs font-medium text-slate-500">
         <span>{total} movimentação(ões) · Página {page + 1} de {pages}</span>
-        <button type="button" disabled={page === 0} onClick={() => setPage((p) => p - 1)} aria-label="Anterior" className="cursor-pointer rounded-xl border border-slate-200 p-2 hover:bg-slate-50 disabled:opacity-40"><ChevronLeft size={16} /></button>
-        <button type="button" disabled={page + 1 >= pages} onClick={() => setPage((p) => p + 1)} aria-label="Próxima" className="cursor-pointer rounded-xl border border-slate-200 p-2 hover:bg-slate-50 disabled:opacity-40"><ChevronRight size={16} /></button>
+        <button type="button" disabled={page === 0} onClick={() => setPage((p) => p - 1)} aria-label="Anterior" className={pageBtn}><ChevronLeft size={16} /></button>
+        <button type="button" disabled={page + 1 >= pages} onClick={() => setPage((p) => p + 1)} aria-label="Próxima" className={pageBtn}><ChevronRight size={16} /></button>
       </div>
     </div>
   );
