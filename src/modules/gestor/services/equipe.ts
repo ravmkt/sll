@@ -81,3 +81,41 @@ export async function callMemberFn<T = Record<string, unknown>>(
   }
   return data as T;
 }
+export interface MemberAccess {
+  role: string;
+  scope: TeamScope;
+  active: boolean;
+  must_change_password: boolean;
+  permissions: TeamPermissions;
+}
+
+export async function getMyAccess(storeId: string): Promise<MemberAccess | null> {
+  const { data, error } = await supabase.rpc("gestor_my_access", { p_store: storeId });
+  if (error) throw new Error(error.message);
+  return (data as MemberAccess | null) ?? null;
+}
+
+export interface MemberUpdate {
+  role: TeamRole;
+  display_name: string;
+  phone: string;
+  commission_pct: number | null;
+  scope: TeamScope;
+  permissions: TeamPermissions;
+  active: boolean;
+}
+
+export async function saveMember(storeId: string, userId: string, f: MemberUpdate): Promise<void> {
+  const { error } = await supabase.rpc("gestor_member_update", {
+    p_store: storeId,
+    p_user: userId,
+    p_role: f.role,
+    p_display_name: f.display_name,
+    p_phone: f.phone,
+    p_commission: f.commission_pct,
+    p_scope: f.scope,
+    p_permissions: f.permissions,
+    p_active: f.active,
+  });
+  if (error) throw new Error(error.message);
+}

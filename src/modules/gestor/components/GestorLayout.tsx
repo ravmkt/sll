@@ -56,7 +56,7 @@ const GROUPS: Group[] = [
     ],
   },
   { key: 'relatorios', label: 'Relatórios', icon: TrendingUp, to: `${BASE}/relatorios` },
-  { key: 'config', label: 'Configurações', icon: Settings, items: [{ label: 'Empresa', to: `${BASE}/configuracoes` }] },
+  { key: 'config', label: 'Configurações', icon: Settings, items: [{ label: 'Empresa', to: `${BASE}/configuracoes` }, { label: 'Equipe e permissões', to: `${BASE}/equipe` }] },
   {
     key: 'integracoes', label: 'Integrações', icon: Plug,
     items: [

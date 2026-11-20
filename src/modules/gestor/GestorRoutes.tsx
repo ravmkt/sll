@@ -10,6 +10,7 @@ import CustomersPage from './pages/CustomersPage';
 import { secaoRoutes } from './pages/secaoRoutes';
 import StockPage from './pages/StockPage';
 import ExpedicaoPage from './pages/ExpedicaoPage';
+import TeamPage from './pages/TeamPage';
 
 export default function GestorRoutes() {
   return (
@@ -24,6 +25,7 @@ export default function GestorRoutes() {
         <Route path="expedicao" element={<ExpedicaoPage />} />
         <Route path="estoque" element={<StockPage />} />
         <Route path="estoque/historico" element={<GestorPage />} />
+            <Route path="equipe" element={<TeamPage />} />
         {secaoRoutes}
         <Route path="*" element={<Navigate to="/dashboard/modules/gestor" replace />} />
       </Route>
