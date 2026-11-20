@@ -26,6 +26,15 @@ type Filter = 'all' | 'with' | 'without' | 'changed';
 type ImpStatus = 'change' | 'same' | 'notfound' | 'invalid' | 'dup';
 type ImpRow = { line: number; sku: string; label: string; current: number | null; next: number | null; variantId: string | null; status: ImpStatus };
 
+type FailRow = { line: number; sku: string; label: string; next: number | null; reason: string };
+type ImpResult = { saved: number; same: number; ignored: number; pushFailed: number; failed: FailRow[] };
+
+const REASON: Record<string, string> = {
+  notfound: 'SKU não encontrado no cadastro. Confira se o SKU está igual ao do produto.',
+  invalid: 'Valor inválido em "Novo saldo". Use número inteiro, 0 ou maior.',
+  dup: 'SKU repetido na planilha. Só a primeira linha com esse SKU é considerada.',
+};
+
 const STATUS_LABEL: Record<ImpStatus, string> = {
   change: 'Vai alterar',
   same: 'Sem mudança',
@@ -81,6 +90,9 @@ export default function StockPage() {
   const [impIgnored, setImpIgnored] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [impOpen, setImpOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [impResult, setImpResult] = useState<ImpResult | null>(null);
+  const [showFailed, setShowFailed] = useState(false);
 
   const reload = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
@@ -276,16 +288,82 @@ export default function StockPage() {
     }
   };
 
-  const applyImport = () => {
-    if (!imp) return;
-    const changes = imp.filter((r) => r.status === 'change' && r.variantId && r.next !== null);
-    setEdits((prev) => {
-      const n = { ...prev };
-      for (const r of changes) n[r.variantId as string] = String(r.next);
-      return n;
-    });
-    showSuccess(`${changes.length} alteração(ões) carregada(s). Confira e clique em Salvar tudo.`);
+  const applyImport = async () => {
+    if (!imp || !storeId || importing) return;
+    const todo = imp.filter((r) => r.status === 'change' && r.variantId && r.next !== null);
+    const sameCount = imp.filter((r) => r.status === 'same').length;
+    const byId = new Map<string, { it: Item; v: VariantRow }>();
+    for (const it of items) for (const v of it.variants) byId.set(v.id, { it, v });
+
+    const failed: FailRow[] = imp
+      .filter((r) => r.status === 'notfound' || r.status === 'invalid' || r.status === 'dup')
+      .map((r) => ({ line: r.line, sku: r.sku, label: r.label, next: r.next, reason: REASON[r.status] }));
+    const saved = new Set<string>();
+    let pushFailed = 0;
+    let idx = 0;
+    setImporting(true);
+
+    const worker = async () => {
+      while (idx < todo.length) {
+        const r = todo[idx++];
+        const hit = byId.get(r.variantId as string);
+        const next = r.next as number;
+        if (!hit) {
+          failed.push({ line: r.line, sku: r.sku, label: r.label, next, reason: 'Variação não encontrada na tela. Atualize a página e importe de novo.' });
+          continue;
+        }
+        try {
+          const delta = next - hit.v.stock;
+          if (delta !== 0) {
+            try {
+              await sb.from('product_variants').update({ sync_hold_until: new Date(Date.now() + 60000).toISOString() }).eq('id', hit.v.id);
+            } catch { /* sem trava de eco: segue */ }
+            const { data: balance, error } = await sb.rpc('gestor_stock_move', {
+              p_variant: hit.v.id, p_type: 'adjustment', p_qty: delta, p_note: 'Importação de planilha',
+            });
+            if (error) throw new Error(error.message);
+            if (hit.it.product.origin === 'yampi') {
+              try {
+                const res: unknown = await pushStockToYampi(storeId, hit.v.sku, Number(balance ?? next));
+                if (res === 'erro') pushFailed++;
+              } catch { pushFailed++; }
+            }
+          }
+          saved.add(hit.v.id);
+        } catch (e) {
+          failed.push({ line: r.line, sku: r.sku, label: r.label, next, reason: (e as Error).message || 'Erro ao gravar no banco.' });
+        }
+      }
+    };
+
+    try {
+      await Promise.all([worker(), worker(), worker(), worker()]);
+    } finally {
+      setEdits((prev) => { const n = { ...prev }; saved.forEach((id) => delete n[id]); return n; });
+      await reload();
+      setImporting(false);
+    }
+    failed.sort((a, b) => a.line - b.line);
     setImp(null);
+    setShowFailed(false);
+    setImpResult({ saved: saved.size, same: sameCount, ignored: impIgnored, pushFailed, failed });
+  };
+
+  const exportFailed = async () => {
+    if (!impResult) return;
+    try {
+      const XLSX = await import('xlsx');
+      const rows: (string | number | null)[][] = [['SKU', 'Produto', 'Novo saldo', 'Linha original', 'Erro']];
+      for (const r of impResult.failed) rows.push([r.sku, r.label === '-' ? '' : r.label, r.next, r.line, r.reason]);
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{ wch: 26 }, { wch: 46 }, { wch: 13 }, { wch: 14 }, { wch: 70 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Estoque');
+      XLSX.writeFile(wb, `estoque-nao-carregados-${new Date().toISOString().slice(0, 10)}.xlsx`, { compression: true });
+    } catch (e) {
+      console.error(e);
+      showError('Não foi possível gerar a planilha.');
+    }
   };
 
   const expandAll = () => setOpen(new Set(filtered.filter((i) => i.multi).map((i) => i.product.id)));
@@ -446,13 +524,13 @@ export default function StockPage() {
       )}
 
       {imp && (
-        <Modal title="Prévia da importação" onClose={() => setImp(null)}>
-          <div className="space-y-4 p-6">
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              <strong>{impCount('change')}</strong> vão alterar · {impCount('same')} sem mudança · {impCount('notfound') + impCount('invalid') + impCount('dup')} com problema
-              {impIgnored > 0 && <> · {impIgnored} linha(s) sem novo saldo ignoradas</>}
-            </p>
-            <div className="max-h-[50vh] overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 dark:border-slate-800">
+            <Modal title="Prévia da importação" onClose={() => { if (!importing) setImp(null); }}>
+              <div className="space-y-4 p-6">
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  <strong>{impCount('change')}</strong> vão alterar · {impCount('same')} sem mudança · {impCount('notfound') + impCount('invalid') + impCount('dup')} com problema
+                  {impIgnored > 0 && <> · {impIgnored} linha(s) sem novo saldo ignoradas</>}
+                </p>
+                <div className="max-h-[50vh] overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 dark:border-slate-800">
                   <table className="w-full table-fixed text-left text-xs">
                     <colgroup>
                       <col className="w-10" />
@@ -486,14 +564,97 @@ export default function StockPage() {
                     </tbody>
                   </table>
                 </div>
-            <p className="text-[11px] text-slate-400">Confirmar só carrega os valores na tela. Nada é gravado até você clicar em Salvar tudo.</p>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setImp(null)} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-slate-700">Cancelar</button>
-              <button type="button" disabled={impCount('change') === 0} onClick={applyImport} className={primaryBtn + ' disabled:opacity-50'}>Carregar {impCount('change')} alteração(ões)</button>
+                <p className="text-[11px] text-slate-400">Ao clicar em Carregar, os saldos válidos são gravados na hora e entram no histórico como ajuste.</p>
+                <div className="flex justify-end gap-2">
+                  <button type="button" disabled={importing} onClick={() => setImp(null)} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold disabled:opacity-50 dark:border-slate-700">Cancelar</button>
+                  <button type="button" disabled={importing || impCount('change') === 0} onClick={() => void applyImport()} className={primaryBtn + ' disabled:opacity-50'}>
+                    {importing && <Loader2 size={15} className="mr-2 inline animate-spin" />}
+                    {importing ? 'Salvando...' : `Carregar e salvar ${impCount('change')}`}
+                  </button>
+                </div>
+              </div>
+            </Modal>
+          )}
+
+          {impResult && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={() => setImpResult(null)}>
+              <div
+                role="dialog"
+                aria-modal="true"
+                onClick={(e) => e.stopPropagation()}
+                className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#1a1f2c]"
+              >
+                <div className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+                  <h2 className="text-lg font-bold">Resultado da importação</h2>
+                </div>
+                <div className="space-y-4 overflow-y-auto p-6">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-emerald-50 p-4 text-center dark:bg-emerald-950/30">
+                      <p className="text-3xl font-extrabold text-emerald-600">{impResult.saved}</p>
+                      <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">carregado(s) com sucesso</p>
+                    </div>
+                    <div className={cn('rounded-xl p-4 text-center', impResult.failed.length ? 'bg-rose-50 dark:bg-rose-950/30' : 'bg-slate-50 dark:bg-[#111524]')}>
+                      <p className={cn('text-3xl font-extrabold', impResult.failed.length ? 'text-rose-600' : 'text-slate-400')}>{impResult.failed.length}</p>
+                      <p className={cn('text-xs font-semibold', impResult.failed.length ? 'text-rose-700 dark:text-rose-400' : 'text-slate-400')}>não carregado(s)</p>
+                    </div>
+                  </div>
+                  {(impResult.same > 0 || impResult.ignored > 0 || impResult.pushFailed > 0) && (
+                    <ul className="space-y-1 text-xs text-slate-500">
+                      {impResult.same > 0 && <li>{impResult.same} linha(s) já estavam com esse saldo (sem mudança).</li>}
+                      {impResult.ignored > 0 && <li>{impResult.ignored} linha(s) sem "Novo saldo" foram ignoradas.</li>}
+                      {impResult.pushFailed > 0 && <li className="font-semibold text-amber-600">O saldo foi salvo no ERP, mas o envio à Yampi falhou em {impResult.pushFailed} item(ns).</li>}
+                    </ul>
+                  )}
+                  {impResult.failed.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => setShowFailed((v) => !v)} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:border-[#0094eb] dark:border-slate-700">
+                          {showFailed ? 'Ocultar lista' : `Ver os ${impResult.failed.length} não carregados`}
+                        </button>
+                        <button type="button" onClick={() => void exportFailed()} className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:border-[#0094eb] dark:border-slate-700">
+                          <Download size={15} className="text-[#0094eb]" /> Baixar lista com erros
+                        </button>
+                      </div>
+                      {showFailed && (
+                        <div className="max-h-[40vh] overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 dark:border-slate-800">
+                          <table className="w-full table-fixed text-left text-xs">
+                            <colgroup>
+                              <col className="w-10" />
+                              <col className="w-[26%]" />
+                              <col />
+                            </colgroup>
+                            <thead className="sticky top-0 bg-slate-50 dark:bg-[#111524]">
+                              <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                <th className="px-2 py-2">Lin.</th>
+                                <th className="px-2 py-2">SKU / Produto</th>
+                                <th className="px-2 py-2">Erro</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                              {impResult.failed.map((r, i) => (
+                                <tr key={`${r.line}-${i}`} className="align-top">
+                                  <td className="px-2 py-1.5 text-slate-400">{r.line}</td>
+                                  <td className="break-all px-2 py-1.5">
+                                    <span className="font-mono">{r.sku}</span>
+                                    {r.label !== '-' && <span className="block break-words text-[10px] text-slate-400">{r.label}</span>}
+                                  </td>
+                                  <td className="break-words px-2 py-1.5 font-semibold text-rose-500">{r.reason}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                      <p className="text-[11px] text-slate-400">A planilha de erros usa as mesmas colunas (SKU e Novo saldo). Corrija e importe de novo.</p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-end border-t border-slate-100 px-6 py-4 dark:border-slate-800">
+                  <button type="button" onClick={() => setImpResult(null)} className={primaryBtn}>Fechar</button>
+                </div>
+              </div>
             </div>
-          </div>
-        </Modal>
-      )}
+          )}
     </div>
   );
 }
