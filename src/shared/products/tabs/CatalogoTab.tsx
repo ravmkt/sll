@@ -210,7 +210,7 @@ export default function CatalogoTab({ storeId, product, onChange }: Props) {
         ) : (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
             {gallery.map((u, i) => (
-              <div key={u + i} className="group relative overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+              <div key={u + i} className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
                 <img src={u} alt="" className="aspect-[4/5] w-full object-cover" />
                 {i === 0 && <span className="absolute left-1 top-1 rounded bg-[#0094eb] px-1.5 py-0.5 text-[10px] font-bold text-white">Principal</span>}
                 <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 p-1 opacity-0 transition group-hover:opacity-100">

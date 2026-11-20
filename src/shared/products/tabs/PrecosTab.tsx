@@ -58,7 +58,7 @@ export default function PrecosTab({ storeId, product, prices, onProduct, onPrice
         </Field>
         <div className="flex flex-col justify-end pb-1 text-xs text-slate-500">
           {sale != null && cost != null && margin != null
-            ? <span>Lucro <strong>{brl(sale - cost)}</strong> · margem <strong>{margin.toFixed(1)}%</strong></span>
+            ? <span>Lucro bruto <strong>{brl(sale - cost)}</strong> · margem <strong>{margin.toFixed(1)}%</strong></span>
             : <span>Informe venda e custo para ver a margem.</span>}
         </div>
       </div>
@@ -80,7 +80,7 @@ export default function PrecosTab({ storeId, product, prices, onProduct, onPrice
               <span className="col-span-5 truncate text-sm">{l.name}</span>
               <div className="col-span-4"><DecimalInput value={price} onChange={(v) => setPrice(l.id, v)} placeholder="0,00" /></div>
               <span className="col-span-3 text-xs text-muted-foreground">
-                {price != null && cost != null && m != null ? `Lucro ${brl(price - cost)} · ${m.toFixed(1)}%` : '—'}
+                {price != null && cost != null && m != null ? `Lucro bruto ${brl(price - cost)} · ${m.toFixed(1)}%` : '—'}
               </span>
             </div>
           );
