@@ -425,7 +425,7 @@ export default function StockPage() {
   const toggleOpen = (id: string) => setOpen((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
   const btn = 'inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#0094eb] dark:border-slate-700 dark:bg-[#1a1f2c] dark:text-slate-200';
-  const sel = cn(inputCls, '!w-auto !py-2.5 cursor-pointer');
+  const selCls = cn(inputCls, '!w-auto !py-2.5 cursor-pointer');
   const toggleSel = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
       const allSel = filtered.length > 0 && filtered.every((i) => sel.has(i.product.id));
       const toggleAllSel = () => setSel(allSel ? new Set() : new Set(filtered.map((i) => i.product.id)));
@@ -468,7 +468,7 @@ export default function StockPage() {
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por produto, variação ou SKU..." className={cn(inputCls, 'pl-10')} />
           </div>
           <div className="flex flex-wrap gap-2">
-            <select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} className={sel}>
+            <select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} className={selCls}>
               <option value="all">Todos</option>
               <option value="with">Com estoque</option>
               <option value="without">Sem estoque</option>
