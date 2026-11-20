@@ -1,97 +1,99 @@
 import { useState } from 'react';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Modal, inputCls, primaryBtn } from '@/components/products/Modal';
-import { pushStockChecked } from '../services/gestor';
-import type { PushResult } from '../services/gestor';
+import { pushStockConfirmed } from '../services/syncConfirm';
+import type { SyncOutcome } from '../services/syncConfirm';
 
 export type SyncJob = { sku: string; stock: number; label: string };
+type Row = SyncOutcome & { label: string };
 
+// Para ativar um canal novo: enabled: true + tratar a key em sendOne()
 const CHANNELS = [
   { key: 'yampi', label: 'Yampi (e-commerce)', enabled: true },
   { key: 'nuvemshop', label: 'Nuvemshop (em breve)', enabled: false },
   { key: 'social', label: 'Redes sociais (em breve)', enabled: false },
 ];
 
-type Props = { storeId: string; jobs?: SyncJob[]; onClose: () => void; onDone?: () => void };
-type Out = { job: SyncJob; r: PushResult };
+type Props = { storeId: string; jobs: SyncJob[]; onClose: () => void };
 
-export default function SyncChannelModal({ storeId, jobs = [], onClose, onDone }: Props) {
+export default function SyncChannelModal({ storeId, jobs, onClose }: Props) {
   const [channel, setChannel] = useState('yampi');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(0);
-  const [results, setResults] = useState<Out[] | null>(null);
+  const [rows, setRows] = useState<Row[] | null>(null);
+
+  const sendOne = (key: string, j: SyncJob): Promise<SyncOutcome> => {
+    if (key === 'yampi') return pushStockConfirmed(storeId, j.sku, j.stock);
+    return Promise.resolve({ sku: j.sku, sent: j.stock, remote: null, result: 'error', message: 'Canal ainda não integrado.' });
+  };
 
   const run = async () => {
-    if (!jobs.length) return;
     setBusy(true);
     setDone(0);
-    const out: Out[] = [];
+    const out: Row[] = [];
     let i = 0;
     const worker = async () => {
       while (i < jobs.length) {
-        const job = jobs[i++];
-        const r = channel === 'yampi'
-          ? await pushStockChecked(storeId, job.sku, job.stock)
-          : { status: 'erro', message: 'Canal ainda nao integrado.' } as PushResult;
-        out.push({ job, r });
+        const j = jobs[i++];
+        const r = await sendOne(channel, j);
+        out.push({ ...r, label: j.label });
         setDone((d) => d + 1);
       }
     };
-    await Promise.all([worker(), worker(), worker()]);
-    setResults(out);
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    setRows(out);
     setBusy(false);
-    onDone?.();
   };
 
-  const count = (s: PushResult['status']) => (results ?? []).filter((x) => x.r.status === s).length;
-  const problems = (results ?? []).filter((x) => x.r.status !== 'ok');
+  const count = (k: string) => (rows ?? []).filter((r) => r.result === k).length;
+  const problems = (rows ?? []).filter((r) => r.result !== 'confirmed');
 
   return (
     <Modal title="Sincronizar estoque com canal" onClose={() => { if (!busy) onClose(); }}>
       <div className="space-y-4 p-6">
-        {!results && (
+        {!rows ? (
           <>
-            <select value={channel} onChange={(e) => setChannel(e.target.value)} disabled={busy} className={cn(inputCls, 'cursor-pointer')}>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              <strong>{jobs.length}</strong> variação(ões) serão enviadas com o saldo já salvo no ERP.
+            </p>
+            <select value={channel} disabled={busy} onChange={(e) => setChannel(e.target.value)} className={cn(inputCls, 'cursor-pointer')}>
               {CHANNELS.map((c) => <option key={c.key} value={c.key} disabled={!c.enabled}>{c.label}</option>)}
             </select>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              {jobs.length
-                ? <>Enviar o saldo de <strong>{jobs.length}</strong> variação(ões) selecionada(s) e conferir na Yampi.</>
-                : 'Nenhum item selecionado. Marque os produtos na tela de Estoque.'}
-            </p>
-            {busy && <p className="text-xs font-semibold text-[#0094eb]">Enviando {done} de {jobs.length}...</p>}
+            <p className="text-[11px] text-slate-400">Cada envio é conferido: o app lê o saldo de volta no canal e só marca como confirmado se for igual.</p>
           </>
-        )}
-
-        {results && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-emerald-50 p-4 text-center dark:bg-emerald-950/30">
-                <CheckCircle2 size={20} className="mx-auto mb-1 text-emerald-600" />
-                <p className="text-2xl font-extrabold text-emerald-600">{count('ok')}</p>
-                <p className="text-xs font-semibold text-emerald-700">confirmado(s) na Yampi</p>
-              </div>
-              <div className={cn('rounded-xl p-4 text-center', problems.length ? 'bg-rose-50 dark:bg-rose-950/30' : 'bg-slate-50 dark:bg-[#111524]')}>
-                <p className={cn('mt-6 text-2xl font-extrabold', problems.length ? 'text-rose-600' : 'text-slate-400')}>{problems.length}</p>
-                <p className="text-xs font-semibold text-slate-500">com problema</p>
-              </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              {([['confirmed', 'confirmado', 'text-emerald-600'], ['diverged', 'divergente', 'text-amber-600'], ['skip', 'sem vínculo', 'text-slate-500'], ['error', 'erro', 'text-rose-600']] as const).map(([k, l, c]) => (
+                <div key={k} className="rounded-xl bg-slate-50 p-3 dark:bg-[#111524]">
+                  <p className={cn('text-2xl font-extrabold', c)}>{count(k)}</p>
+                  <p className="text-[11px] font-semibold text-slate-500">{l}</p>
+                </div>
+              ))}
             </div>
             {problems.length > 0 && (
-              <ul className="max-h-[30vh] space-y-1 overflow-y-auto rounded-xl border border-slate-200 p-3 text-xs dark:border-slate-800">
-                {problems.map((x, i) => (
-                  <li key={i}><span className="font-mono font-bold">{x.job.sku}</span> <span className="text-slate-400">{x.job.label}</span><br /><span className="font-semibold text-rose-500">{x.r.message}</span></li>
-                ))}
-              </ul>
+              <div className="max-h-[35vh] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                <ul className="divide-y divide-slate-100 text-xs dark:divide-slate-800">
+                  {problems.slice(0, 100).map((r) => (
+                    <li key={r.sku} className="px-3 py-2">
+                      <p className="font-semibold">{r.label} <span className="font-mono text-slate-400">{r.sku}</span></p>
+                      <p className={cn(r.result === 'diverged' ? 'text-amber-600' : r.result === 'skip' ? 'text-slate-500' : 'text-rose-500')}>{r.message}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
-          </div>
+          </>
         )}
-
         <div className="flex justify-end gap-2">
-          <button type="button" disabled={busy} onClick={onClose} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-slate-700">{results ? 'Fechar' : 'Cancelar'}</button>
-          {!results && (
+          <button type="button" disabled={busy} onClick={onClose} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold disabled:opacity-50 dark:border-slate-700">
+            {rows ? 'Fechar' : 'Cancelar'}
+          </button>
+          {!rows && (
             <button type="button" disabled={busy || jobs.length === 0} onClick={() => void run()} className={primaryBtn + ' disabled:opacity-50'}>
-              {busy && <Loader2 size={15} className="mr-2 inline animate-spin" />}Sincronizar {jobs.length || ''}
+              {busy && <Loader2 size={15} className="mr-2 inline animate-spin" />}
+              {busy ? `Enviando ${done}/${jobs.length}...` : 'Sincronizar'}
             </button>
           )}
         </div>

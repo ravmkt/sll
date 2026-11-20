@@ -18,6 +18,7 @@ import { pushStockToYampi } from '../services/gestor';
 import { listChannelLinks } from '../services/vinculos';
 import HistoryDialog from '../components/HistoryDialog';
 import SyncChannelModal from '../components/SyncChannelModal';
+import type { SyncJob } from '../components/SyncChannelModal';
 import ChannelsModal from '../components/ChannelsModal';
 import TransferDialog from '../components/TransferDialog';
 import { ChannelsCell, TotalCell } from '../components/ChannelChips';
@@ -104,6 +105,8 @@ export default function StockPage() {
   const [impIgnored, setImpIgnored] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
+  const [syncJobs, setSyncJobs] = useState<SyncJob[]>([]);
+  const [sel, setSel] = useState<Set<string>>(new Set());
   const [channelsOpen, setChannelsOpen] = useState(false);
   const [transferFor, setTransferFor] = useState<{ id: string; label: string; sku: string } | null>(null);
   const [avail, setAvail] = useState<Availability>(EMPTY_AVAIL);
@@ -423,7 +426,20 @@ export default function StockPage() {
 
   const btn = 'inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#0094eb] dark:border-slate-700 dark:bg-[#1a1f2c] dark:text-slate-200';
   const sel = cn(inputCls, '!w-auto !py-2.5 cursor-pointer');
-  const showTotal = whCount > 1;
+  const toggleSel = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+      const allSel = filtered.length > 0 && filtered.every((i) => sel.has(i.product.id));
+      const toggleAllSel = () => setSel(allSel ? new Set() : new Set(filtered.map((i) => i.product.id)));
+      const syncIds = (ids: string[]) => {
+        if (pending.length > 0) { showError('Salve ou descarte as alterações pendentes antes de sincronizar.'); return; }
+        const pick = new Set(ids);
+        const jobs: SyncJob[] = items.filter((i) => pick.has(i.product.id)).flatMap((i) =>
+          i.variants.map((v) => ({ sku: v.sku, stock: v.stock, label: i.multi ? `${i.product.name} · ${variantLabel(v)}` : i.product.name })));
+        if (!jobs.length) { showError('Selecione ao menos um produto na lista.'); return; }
+        setSyncJobs(jobs);
+        setSyncOpen(true);
+      };
+      const syncSelected = () => syncIds(Array.from(sel));
+      const showTotal = whCount > 1;
   const showCh = avail.channels.length > 0;
   const canTransfer = showTotal && allow('estoque', 'editar');
   const impCount = (s: ImpStatus) => (imp ?? []).filter((r) => r.status === s).length;
@@ -440,7 +456,7 @@ export default function StockPage() {
           <>{allow('estoque','editar') && (<button type="button" onClick={() => setImpOpen(true)} className={btn}><Upload size={15} className="text-[#0094eb]" /> Importar planilha</button>)}</>
           {impOpen && <StockImportModal onClose={() => setImpOpen(false)} onPick={async (file) => { setImpOpen(false); await onFile(file); }} />}
           <button type="button" onClick={() => setHistoryOpen(true)} className={btn}><History size={15} className="text-[#0094eb]" /> Histórico de movimentações</button>
-          <button type="button" onClick={() => setSyncOpen(true)} className={btn}><RefreshCw size={15} className="text-[#0094eb]" /> Sincronizar canais</button>
+          <button type="button" onClick={() => syncSelected()} className={btn}><RefreshCw size={15} className="text-[#0094eb]" /> Sincronizar canais</button>
               <button type="button" onClick={() => setChannelsOpen(true)} className={btn}><Settings2 size={15} className="text-[#0094eb]" /> Canais e depósitos</button>
         </div>
       </div>
@@ -460,6 +476,7 @@ export default function StockPage() {
             </select>
             <button type="button" onClick={expandAll} className={btn}><ChevronsUpDown size={15} /> Expandir tudo</button>
             <button type="button" onClick={collapseAll} className={btn}><ChevronsDownUp size={15} /> Recolher tudo</button>
+                <button type="button" onClick={toggleAllSel} className={btn}>{allSel ? 'Limpar seleção' : 'Selecionar todos'}</button>
           </div>
         </div>
 
@@ -498,7 +515,8 @@ export default function StockPage() {
                                 {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                               </button>
                             ) : <span className="inline-block w-5" />}
-                            <p className="max-w-sm truncate text-sm font-semibold text-slate-800 dark:text-white" title={it.product.name}>{it.product.name}</p>
+                            <input type="checkbox" checked={sel.has(it.product.id)} onChange={() => toggleSel(it.product.id)} title="Selecionar para sincronizar" className="h-4 w-4 shrink-0 cursor-pointer" />
+                                <p className="max-w-sm truncate text-sm font-semibold text-slate-800 dark:text-white" title={it.product.name}>{it.product.name}</p>
                             {it.multi && <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800">{it.variants.length} var.</span>}
                           </div>
                         </td>
@@ -514,7 +532,12 @@ export default function StockPage() {
                           )}
                         </td>
                         <td className="px-4 py-2.5 text-right">
-                          {changed && (
+                          {allow('estoque','editar') && (
+                                <button type="button" title="Sincronizar este produto com o canal" onClick={() => syncIds([it.product.id])} className="mr-1 cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800">
+                                  <RefreshCw size={15} />
+                                </button>
+                              )}
+                              {changed && (
                             <button type="button" title="Desfazer alterações deste produto" onClick={() => undoItem(it)} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-rose-500 dark:hover:bg-slate-800">
                               <Undo2 size={15} />
                             </button>
@@ -574,7 +597,14 @@ export default function StockPage() {
       </div>
 
       <HistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} />
-      {syncOpen && storeId && <SyncChannelModal storeId={storeId} onClose={() => setSyncOpen(false)} />}
+      {syncOpen && storeId && <SyncChannelModal storeId={storeId} jobs={syncJobs} onClose={() => setSyncOpen(false)} />}
+          {sel.size > 0 && (
+            <div className={cn('fixed left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-xl dark:border-slate-700 dark:bg-[#1a1f2c]', pending.length > 0 ? 'bottom-24' : 'bottom-4')}>
+              <span className="text-sm font-semibold">{sel.size} selecionado(s)</span>
+              <button type="button" onClick={() => setSel(new Set())} className="cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold dark:border-slate-700">Limpar</button>
+              <button type="button" onClick={syncSelected} className={primaryBtn}>Sincronizar {sel.size}</button>
+            </div>
+          )}
       {channelsOpen && storeId && <ChannelsModal storeId={storeId} onClose={() => setChannelsOpen(false)} onChanged={() => void refreshAvail()} />}
       {transferFor && <TransferDialog variant={transferFor} onClose={() => setTransferFor(null)} onDone={() => void reload()} />}
 
