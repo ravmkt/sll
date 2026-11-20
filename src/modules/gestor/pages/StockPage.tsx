@@ -17,6 +17,13 @@ import { selectOnFocus } from '@/components/products/selectOnFocus';
 import { pushStockToYampi } from '../services/gestor';
 import HistoryDialog from '../components/HistoryDialog';
 import SyncChannelModal from '../components/SyncChannelModal';
+import ChannelsModal from '../components/ChannelsModal';
+import TransferDialog from '../components/TransferDialog';
+import { ChannelsCell, TotalCell } from '../components/ChannelChips';
+import { EMPTY_AVAIL, loadAvailability } from '../services/estoqueCanais';
+import type { Availability } from '../services/estoqueCanais';
+import { listWarehouses } from '@/shared/products/lookups';
+import { Settings2 } from 'lucide-react';
 import { RefreshCw } from 'lucide-react';
 import StockImportModal, { IMPORT_MAX_MB, IMPORT_MAX_ROWS } from '../components/StockImportModal';
 import { useGestorAccess } from '../hooks/useGestorAccess';
@@ -96,6 +103,23 @@ export default function StockPage() {
   const [impIgnored, setImpIgnored] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
+  const [channelsOpen, setChannelsOpen] = useState(false);
+  const [transferFor, setTransferFor] = useState<{ id: string; label: string; sku: string } | null>(null);
+  const [avail, setAvail] = useState<Availability>(EMPTY_AVAIL);
+  const [whCount, setWhCount] = useState(1);
+
+  const refreshAvail = useCallback(async () => {
+    if (!storeId) return;
+    try {
+      const [a, w] = await Promise.all([loadAvailability(storeId), listWarehouses(storeId)]);
+      setAvail(a);
+      setWhCount(w.filter((x) => x.active).length);
+    } catch (e) {
+      console.warn('[Gestor] disponibilidade por canal indisponivel', e);
+    }
+  }, [storeId]);
+
+  useEffect(() => { void refreshAvail(); }, [refreshAvail, items]);
   const [impOpen, setImpOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [impResult, setImpResult] = useState<ImpResult | null>(null);
@@ -379,6 +403,9 @@ export default function StockPage() {
 
   const btn = 'inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#0094eb] dark:border-slate-700 dark:bg-[#1a1f2c] dark:text-slate-200';
   const sel = cn(inputCls, '!w-auto !py-2.5 cursor-pointer');
+  const showTotal = whCount > 1;
+  const showCh = avail.channels.length > 0;
+  const canTransfer = showTotal && allow('estoque', 'editar');
   const impCount = (s: ImpStatus) => (imp ?? []).filter((r) => r.status === s).length;
 
   return (
@@ -394,6 +421,7 @@ export default function StockPage() {
           {impOpen && <StockImportModal onClose={() => setImpOpen(false)} onPick={async (file) => { setImpOpen(false); await onFile(file); }} />}
           <button type="button" onClick={() => setHistoryOpen(true)} className={btn}><History size={15} className="text-[#0094eb]" /> Histórico de movimentações</button>
           <button type="button" onClick={() => setSyncOpen(true)} className={btn}><RefreshCw size={15} className="text-[#0094eb]" /> Sincronizar canais</button>
+              <button type="button" onClick={() => setChannelsOpen(true)} className={btn}><Settings2 size={15} className="text-[#0094eb]" /> Canais e depósitos</button>
         </div>
       </div>
 
@@ -427,6 +455,8 @@ export default function StockPage() {
                   <th className="px-4 py-3">Produto / variação</th>
                   <th className="px-4 py-3">SKU</th>
                   <th className="px-4 py-3 text-center">Atual</th>
+                      {showTotal && <th className="px-4 py-3 text-center" title="Soma de todos os depósitos ativos">Total físico</th>}
+                      {showCh && <th className="px-4 py-3 text-center" title="O que cada canal exibe, já com teto e reserva">Disponível por canal</th>}
                   <th className="px-4 py-3 text-center">Novo saldo</th>
                   <th className="w-16 px-4 py-3" />
                 </tr>
@@ -454,6 +484,8 @@ export default function StockPage() {
                         </td>
                         <td className="px-4 py-2.5 text-xs text-slate-500">{single ? single.sku : it.product.sku || '—'}</td>
                         <td className="px-4 py-2.5 text-center font-mono text-sm">{cur}</td>
+                            {showTotal && <TotalCell ids={it.variants.map((x) => x.id)} avail={avail} onTransfer={canTransfer && single ? () => setTransferFor({ id: single.id, label: it.product.name, sku: single.sku }) : undefined} />}
+                            {showCh && <ChannelsCell ids={it.variants.map((x) => x.id)} avail={avail} />}
                         <td className="px-4 py-2.5 text-center">
                           {single ? (
                             <StockInput value={valOf(single)} dirty={isDirty(single)} onChange={(raw) => setVal(single, raw)} />
@@ -478,6 +510,8 @@ export default function StockPage() {
                           </td>
                           <td className="px-4 py-2 text-[11px] text-slate-500">{v.sku}</td>
                           <td className="px-4 py-2 text-center font-mono text-xs">{v.stock}</td>
+                              {showTotal && <TotalCell compact ids={[v.id]} avail={avail} onTransfer={canTransfer ? () => setTransferFor({ id: v.id, label: `${it.product.name} · ${variantLabel(v)}`, sku: v.sku }) : undefined} />}
+                              {showCh && <ChannelsCell compact ids={[v.id]} avail={avail} />}
                           <td className="px-4 py-2 text-center">
                             <div className="inline-flex items-center gap-1.5">
                               <StockInput value={valOf(v)} dirty={isDirty(v)} onChange={(raw) => setVal(v, raw)} />
@@ -496,7 +530,7 @@ export default function StockPage() {
                 })}
                 {pageItems.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-16 text-center">
+                    <td colSpan={5 + (showTotal ? 1 : 0) + (showCh ? 1 : 0)} className="px-6 py-16 text-center">
                       <Package size={40} className="mx-auto mb-3 text-slate-300" />
                       <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nenhum produto encontrado</p>
                       <p className="mt-1 text-xs text-slate-400">Produtos sem variação cadastrada não aparecem aqui.</p>
@@ -521,6 +555,8 @@ export default function StockPage() {
 
       <HistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} />
       {syncOpen && storeId && <SyncChannelModal storeId={storeId} onClose={() => setSyncOpen(false)} />}
+      {channelsOpen && storeId && <ChannelsModal storeId={storeId} onClose={() => setChannelsOpen(false)} onChanged={() => void refreshAvail()} />}
+      {transferFor && <TransferDialog variant={transferFor} onClose={() => setTransferFor(null)} onDone={() => void reload()} />}
 
       {pending.length > 0 && (
         <div className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-xl dark:border-slate-700 dark:bg-[#1a1f2c]">
