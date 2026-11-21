@@ -137,3 +137,66 @@
   border-color: var(--sll-b-card-bd) !important;
 }
 /* SLL-BORDAS-DARK:END */
+
+/* SLL:TYPO:START (bloco gerenciado: edite aqui, nao nas telas) */
+:root {
+  /* Fonte */
+  --sll-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Tamanhos */
+  --sll-fs-title: 1.5rem;      /* 24px  titulo de pagina */
+  --sll-fs-section: 1.125rem;  /* 18px  titulo de secao/modal */
+  --sll-fs-card: 0.9375rem;    /* 15px  titulo de card */
+  --sll-fs-body: 0.875rem;     /* 14px  texto padrao */
+  --sll-fs-label: 0.75rem;     /* 12px  label de campo */
+  --sll-fs-caption: 0.75rem;   /* 12px  legenda/ajuda */
+  --sll-fs-th: 0.6875rem;      /* 11px  cabecalho de tabela e rotulo de KPI */
+  --sll-fs-kpi: 1.5rem;        /* 24px  numero de KPI */
+
+  /* Pesos */
+  --sll-fw-regular: 400;
+  --sll-fw-medium: 500;
+  --sll-fw-semibold: 600;
+  --sll-fw-bold: 700;
+
+  /* Altura de linha e espacamento de letras */
+  --sll-lh-tight: 1.2;
+  --sll-lh-normal: 1.5;
+  --sll-tracking-title: -0.025em;
+  --sll-tracking-caps: 0.05em;
+
+  /* Espacamento e posicao */
+  --sll-space-page-x: 1.5rem;     /* margem lateral da pagina */
+  --sll-space-page-y: 1.5rem;     /* margem superior/inferior */
+  --sll-space-header-gap: 0.25rem;/* titulo -> subtitulo */
+  --sll-space-header-bottom: 1rem;/* cabecalho -> proximo bloco */
+  --sll-space-section: 1.25rem;   /* entre blocos/cards */
+  --sll-space-field: 0.375rem;    /* label -> campo */
+  --sll-space-card-pad: 1rem;     /* padding interno de card */
+
+  /* Controles (botao, campo, aba) */
+  --sll-control-h: 2.5rem;
+  --sll-control-h-sm: 2rem;
+  --sll-control-fs: 0.875rem;
+  --sll-control-fw: 600;
+}
+
+@layer components {
+  .sll-title { font-family: var(--sll-font-sans); font-size: var(--sll-fs-title); font-weight: var(--sll-fw-bold); line-height: var(--sll-lh-tight); letter-spacing: var(--sll-tracking-title); color: var(--sll-text); text-align: left; margin: 0; }
+  .sll-subtitle { font-size: var(--sll-fs-body); font-weight: var(--sll-fw-regular); line-height: var(--sll-lh-normal); color: var(--sll-text-muted); margin: var(--sll-space-header-gap) 0 0; }
+  .sll-section-title { font-size: var(--sll-fs-section); font-weight: var(--sll-fw-semibold); line-height: var(--sll-lh-tight); color: var(--sll-text); margin: 0; }
+  .sll-card-title { font-size: var(--sll-fs-card); font-weight: var(--sll-fw-semibold); line-height: var(--sll-lh-tight); color: var(--sll-text); margin: 0; }
+  .sll-body { font-size: var(--sll-fs-body); font-weight: var(--sll-fw-regular); line-height: var(--sll-lh-normal); color: var(--sll-text); }
+  .sll-body-muted { font-size: var(--sll-fs-body); line-height: var(--sll-lh-normal); color: var(--sll-text-muted); }
+  .sll-label { display: block; font-size: var(--sll-fs-label); font-weight: var(--sll-fw-semibold); line-height: var(--sll-lh-tight); color: var(--sll-text); margin-bottom: var(--sll-space-field); }
+  .sll-caption { font-size: var(--sll-fs-caption); line-height: var(--sll-lh-normal); color: var(--sll-text-muted); }
+  .sll-th { font-size: var(--sll-fs-th); font-weight: var(--sll-fw-semibold); text-transform: uppercase; letter-spacing: var(--sll-tracking-caps); color: var(--sll-text-muted); text-align: left; }
+  .sll-kpi-label { font-size: var(--sll-fs-th); font-weight: var(--sll-fw-semibold); text-transform: uppercase; letter-spacing: var(--sll-tracking-caps); color: var(--sll-text-muted); }
+  .sll-kpi-value { font-size: var(--sll-fs-kpi); font-weight: var(--sll-fw-bold); line-height: var(--sll-lh-tight); color: var(--sll-text); }
+  .sll-link { color: var(--sll-b-brand); font-weight: var(--sll-fw-medium); text-decoration: none; }
+  .sll-link:hover { color: var(--sll-b-brand-hover); text-decoration: underline; }
+  .sll-page { padding: var(--sll-space-page-y) var(--sll-space-page-x); }
+  .sll-page-header { margin-bottom: var(--sll-space-header-bottom); text-align: left; }
+  .sll-stack { display: flex; flex-direction: column; gap: var(--sll-space-section); }
+}
+/* SLL:TYPO:END */
