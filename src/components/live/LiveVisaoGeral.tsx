@@ -545,7 +545,7 @@ export function LiveVisaoGeral(_props: { onCreateLive?: (occ: CommercialDateOccu
 
           <div className="flex h-full flex-col justify-between space-y-4 rounded-2xl border border-[#DC2626]/60 bg-white p-5 shadow-sm transition-all hover:border-[#DC2626]">
             <div className="flex items-center justify-between">
-              <img src="/assets/clube-sll-logo-wide-transp.png" alt="Clube SLL" className="shrink-0 object-contain object-left h-8 w-auto" />
+              <img src="/assets/clube-sll-logo-wide-transp.png" alt="Clube SLL" className="shrink-0 object-contain object-left h-7 w-auto" />
               <Share2 className="h-4 w-4 text-slate-400" />
             </div>
             <p className="text-xs leading-relaxed text-slate-500">
