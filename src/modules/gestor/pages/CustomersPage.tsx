@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Download, Loader2, Plus } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { SllField, SllFilterBar, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllPager, SllTable } from '@/components/sll/SllTable';
 import type { SllColumn } from '@/components/sll/SllTable';
-import { sllBtnPrimary } from '@/components/sll/SllModal';
+import { sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
+import { exportCustomers } from '../services/clientes-export';
 import CustomerDialog from '../components/CustomerDialog';
 import { PAGE_SIZE, brl, fmtDate, listCustomers, maskDoc } from '../services/clientes';
 import type { CustomerRow, SortKey } from '../services/clientes';
@@ -66,6 +67,16 @@ export default function CustomersPage() {
   const [err, setErr] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const canExport = allow('clientes', 'editar');
+
+  const doExport = async () => {
+    if (!storeId) return;
+    setExporting(true); setErr('');
+    try { await exportCustomers({ storeId, search: debounced, tag, sort }); }
+    catch (e: any) { setErr(e?.message ?? 'Erro ao exportar'); }
+    finally { setExporting(false); }
+  };
 
   useEffect(() => {
     const t = setTimeout(() => { setDebounced(search); setPage(0); }, 350);
@@ -94,9 +105,16 @@ export default function CustomersPage() {
           <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
           <p className="text-sm text-slate-500">O total gasto considera só pedidos pagos e não cancelados.</p>
         </div>
-        {allow('clientes', 'criar') && (
+        <div className="flex items-center gap-2">
+              {canExport && (
+                <button type="button" disabled={exporting} onClick={() => void doExport()} className={sllBtnGhost}>
+                  {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} {exporting ? 'Exportando...' : 'Exportar'}
+                </button>
+              )}
+              {allow('clientes', 'criar') && (
           <button type="button" onClick={() => open(null)} className={sllBtnPrimary}><Plus size={16} /> Novo cliente</button>
         )}
+            </div>
       </div>
 
       <SllFilterBar>
