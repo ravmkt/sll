@@ -21,10 +21,16 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
   const [editName, setEditName] = useState('');
   const [linkOpen, setLinkOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [tags, setTags] = useState<Record<string, string>>({});
+  const [editTag, setEditTag] = useState('');
 
   const load = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
-    try { setCats(await listCategories(storeId)); }
+    try {
+      setCats(await listCategories(storeId));
+      const { data } = await sb.from('product_categories').select('id, customer_tag').eq('store_id', storeId);
+      setTags(Object.fromEntries(((data || []) as any[]).map((r) => [r.id, r.customer_tag || ''])));
+    }
     catch (e) { showError((e as Error).message); }
     finally { setLoading(false); }
   }, [storeId]);
@@ -47,7 +53,13 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
 
   const rename = async (c: Category) => {
     if (!editName.trim()) return;
-    if (await save(c.id, editName, parentOf(c), c.active)) setEditId(null);
+    if (!(await save(c.id, editName, parentOf(c), c.active))) return;
+    if (storeId && (tags[c.id] || '') !== editTag.trim()) {
+      const { error } = await sb.rpc('gestor_category_set_tag', { p_store: storeId, p_category: c.id, p_tag: editTag });
+      if (error) { showError(error.message); return; }
+      await load();
+    }
+    setEditId(null);
   };
 
   return (
@@ -73,10 +85,14 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
             <div key={cat.id} style={{ marginLeft: depth * 24 }} className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 dark:border-slate-800 dark:bg-[#111524]">
               <Tag size={14} className="shrink-0 text-[color:var(--sll-b-brand)]" />
               {editId === cat.id ? (
-                <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void rename(cat); if (e.key === 'Escape') setEditId(null); }} className={inputCls + ' !py-1.5'} />
+                <>
+                      <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void rename(cat); if (e.key === 'Escape') setEditId(null); }} className={inputCls + ' !py-1.5'} />
+                      <input value={editTag} onChange={(e) => setEditTag(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void rename(cat); if (e.key === 'Escape') setEditId(null); }} placeholder="Tag do cliente (opcional)" title="Clientes que comprarem desta categoria recebem esta tag" className={inputCls + ' !py-1.5 !w-56 shrink-0'} />
+                    </>
               ) : (
                 <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${cat.active ? 'text-slate-700 dark:text-white' : 'text-slate-400 line-through'}`}>
                   {cat.name}
+                      {tags[cat.id] && <span className="ml-2 rounded-full bg-[color:var(--sll-b-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--sll-b-brand)]">{tags[cat.id]}</span>}
                   {typeof (cat as any).products === 'number' && <span className="ml-1 text-[11px] font-normal text-slate-400">({(cat as any).products})</span>}
                 </span>
               )}
@@ -85,7 +101,7 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
                   {editId === cat.id ? (
                     <button type="button" disabled={busy} onClick={() => void rename(cat)} className="cursor-pointer rounded-lg p-1.5 text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]"><Check size={15} /></button>
                   ) : (
-                    <button type="button" onClick={() => { setEditId(cat.id); setEditName(cat.name); }} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><Edit3 size={15} /></button>
+                    <button type="button" onClick={() => { setEditId(cat.id); setEditName(cat.name); setEditTag(tags[cat.id] || ''); }} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><Edit3 size={15} /></button>
                   )}
                   <button type="button" disabled={busy} onClick={() => void save(cat.id, cat.name, parentOf(cat), !cat.active)} className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase ${cat.active ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
                     {cat.active ? 'Ativa' : 'Inativa'}
