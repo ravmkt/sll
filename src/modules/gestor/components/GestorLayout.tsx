@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Briefcase, ChevronDown, FolderOpen, LayoutDashboard, LogOut, PanelLeftClose,
+  ArrowLeft, ChevronDown, FolderOpen, LayoutDashboard, LogOut, PanelLeftClose,
   PanelLeftOpen, Plug, Settings, ShoppingCart, TrendingUp, Truck, Wallet,
 } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
@@ -211,12 +211,11 @@ function GestorLayoutInner() {
           }`}
         >
           <div className="flex h-24 flex-col items-center justify-center border-b border-slate-200 p-4">
-            <div className="flex items-center gap-2">
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0094eb] text-white shadow-md shadow-[#0094eb]/20">
-                <Briefcase size={22} />
-              </span>
-              {isExpanded && <span className="text-xl font-bold tracking-tight text-slate-800">Gestor</span>}
-            </div>
+            {isExpanded ? (
+              <img src="/assets/gestor-logo-wide.png" alt="Gestor" className="h-14 w-auto max-w-full object-contain" />
+            ) : (
+              <img src="/assets/gestor-logo-ico.png" alt="Gestor" className="h-11 w-11 object-contain" />
+            )}
           </div>
 
           <div className="px-4 pt-3">
