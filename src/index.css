@@ -112,3 +112,14 @@ body{background-color:var(--sll-b-bg-50);color:var(--sll-b-tx-700)}
 .dark .text-sky-900,.dark .text-blue-900{color:var(--sll-b-brand-ink)}
 
 .dark img[src$="sll-hub-logo-wide-transp.png"]{content:url(/assets/sll-hub-logo-wide-dark.png)}
+/* SLL-CARD-BORDER-V1: todas as bordas de cards/containers no dark usam o token. Campos (input/select/textarea/button) ficam de fora. */
+.dark :is(
+  .border-slate-200,.border-slate-300,.border-slate-600,.border-slate-700,
+  .border-gray-200,.border-gray-300,.border-gray-600,.border-gray-700,
+  .border-zinc-700,.border-neutral-700,
+  .border-white\/10,.border-white\/20,.border-white\/30,
+  .dark\:border-slate-600,.dark\:border-slate-700,.dark\:border-gray-700,
+  .dark\:border-white\/10,.dark\:border-white\/20,.dark\:border-white\/30
+):not(input):not(select):not(textarea):not(button){
+  border-color: var(--sll-b-card-bd);
+}

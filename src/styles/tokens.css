@@ -90,3 +90,6 @@
   --sll-b-input-border:#334155;
   --sll-b-placeholder:#64748b;
 }
+/* SLL-CARD-BORDER-V1: borda padrao dos cards. Dark = mesma do Gestor/Produtos. */
+:root{ --sll-b-card-bd:#e2e8f0; }
+.dark{ --sll-b-card-bd:#1e293b; }
