@@ -189,7 +189,7 @@ export default function BuilderOverviewPage() {
 
         <div className="flex h-full flex-col justify-between space-y-4 rounded-2xl border border-[#fd8539]/60 bg-white p-5 shadow-sm transition-all hover:border-[#fd8539]">
           <div className="flex items-center justify-between">
-            <img src="/assets/clube-sll-logo-wide-transp.png" alt="Clube SLL" className="shrink-0 object-contain object-left w-auto max-w-none shrink-0" style={{ height: 28, width: 'auto' }} />
+            <img src="/assets/clube-sll-logo-wide-transp.png" alt="Clube SLL" className="shrink-0 object-contain object-left shrink-0 w-auto max-w-none shrink-0" style={{ height: 44, width: 'auto' }} />
             <Share2 className="h-4 w-4 text-slate-400" />
           </div>
           <p className="text-xs leading-relaxed text-slate-500">Receba comissões e benefícios ao indicar o Builder para outros lojistas.</p>

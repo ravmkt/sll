@@ -645,7 +645,7 @@ export default function VisaoGeralTab() {
 
           <div data-tour="vg-indique" className="bg-white rounded-2xl border border-[#fd8539]/60 p-5 shadow-sm h-full flex flex-col justify-between hover:border-[#fd8539] transition-all space-y-4">
           <div className="flex items-center justify-between">
-            <img src="/assets/clube-sll-logo-wide-transp.png" alt="Clube SLL" className="shrink-0 object-contain object-left w-auto max-w-none shrink-0" style={{ height: 28, width: 'auto' }} />
+            <img src="/assets/clube-sll-logo-wide-transp.png" alt="Clube SLL" className="shrink-0 object-contain object-left shrink-0 w-auto max-w-none shrink-0" style={{ height: 44, width: 'auto' }} />
             <Share2 className="w-4 h-4 text-slate-400" />
           </div>
 
