@@ -1228,7 +1228,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             className={VID_BTN_PRIMARY}
           >
             <Save className="w-4 h-4" />
-            {isSavingEdit ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
+            {isSavingEdit ? "Salvando..." : "SALVAR ALTERAÇÕES"}
           </button>
         </div>
 
@@ -1463,7 +1463,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             className={VID_BTN_PRIMARY}
           >
             <Save className="w-4 h-4" />
-            {isSavingEdit ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
+            {isSavingEdit ? "Salvando..." : "SALVAR ALTERAÇÕES"}
           </button>
         </div>
       </div>
@@ -1514,21 +1514,21 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         <div data-tour="bi-acoes" className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full xl:w-auto xl:flex-shrink-0">
           <button
             type="button"
-            className={`${VID_BTN_SECONDARY} w-full xl:w-[140px] whitespace-nowrap`}
+            className={`${VID_BTN_SECONDARY} whitespace-nowrap`}
             onClick={async () => { if (await guard("videos", 1)) setInstagramOpen(true); }}
           >
             <IconInstagram className="w-4 h-4 flex-shrink-0" />
-            INSTAGRAM
+            Instagram
           </button>
 
           <>
 <button
             type="button"
-            className={`${VID_BTN_SECONDARY} w-full xl:w-[140px] whitespace-nowrap`}
+            className={`${VID_BTN_SECONDARY} whitespace-nowrap`}
             onClick={async () => { if (await guard("videos", 1)) setTiktokOpen(true); }}
           >
             <IconTikTok className="w-4 h-4 flex-shrink-0 text-slate-900" />
-            TIKTOK
+            TikTok
           </button>
 <QuotaUpgradeModal state={blocked} onClose={close} onManage={close} />
 {tiktokOpen && (<TikTokImportModal storeId={storeId} onClose={() => { setTiktokOpen(false); fetchVideos(); }} />)}
@@ -1538,10 +1538,10 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           <button
             type="button"
             onClick={() => setIsUrlModalOpen(true)}
-            className={`${VID_BTN_SECONDARY} w-full xl:w-[140px] whitespace-nowrap`}
+            className={`${VID_BTN_SECONDARY} whitespace-nowrap`}
           >
             <Globe className="w-4 h-4 flex-shrink-0 text-sky-500" />
-            URL EXTERNA
+            URL externa
           </button>
 
           <input
@@ -1557,14 +1557,14 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             type="button"
             disabled={isUploading}
             onClick={() => fileInputRef.current?.click()}
-            className={`${VID_BTN_PRIMARY} w-full xl:w-[160px] whitespace-nowrap`}
+            className={`${VID_BTN_PRIMARY} whitespace-nowrap`}
           >
             {isUploading ? (
               <RefreshCw className="w-4 h-4 flex-shrink-0 animate-spin" />
             ) : (
               <UploadCloud className="w-4 h-4 flex-shrink-0" />
             )}
-            {isUploading ? `ENVIANDO ${uploadProgress}` : "FAZER UPLOAD"}
+            {isUploading ? `Enviando ${uploadProgress}` : "Fazer upload"}
           </button>
         </div>
       </div>
@@ -2072,7 +2072,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 onClick={() => setPreviewMedia(null)}
                 className={`${VID_BTN_PRIMARY} w-full`}
               >
-                FECHAR
+                Fechar
               </button>
             </div>
           </div>
@@ -2167,7 +2167,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                   disabled={isSavingExternal}
                   className={VID_BTN_PRIMARY}
                 >
-                  {isSavingExternal ? "SALVANDO..." : "CADASTRAR MÍDIA"}
+                  {isSavingExternal ? "Salvando..." : "Cadastrar mídia"}
                 </button>
               </div>
             </form>
