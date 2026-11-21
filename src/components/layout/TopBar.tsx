@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLoja } from '@/contexts/LojaContext';
 import { MasterButton } from '@/components/admin/MasterButton';
 import { ModuleSwitcher } from '@/components/layout/ModuleSwitcher';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const sb: any = supabase;
 
@@ -50,7 +51,7 @@ export function TopBar({ actions }: { actions?: ReactNode; [k: string]: unknown 
   const item = 'flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100';
 
   return (
-    <header className="sticky top-[var(--trial-h,0px)] z-40 flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
+    <header className="sticky top-[var(--trial-h,0px)] z-40 flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6 dark:border-slate-800 dark:bg-slate-900">
       <Link to="/dashboard" aria-label="Ir para o início" className="flex min-w-0 items-center gap-2.5">
         {logo && !logoFailed ? (
           <img src={logo} alt={storeName} className="h-9 w-9 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-0.5" onError={() => setLogoFailed(true)} />
@@ -63,7 +64,8 @@ export function TopBar({ actions }: { actions?: ReactNode; [k: string]: unknown 
       <div className="flex items-center gap-2">
         <MasterButton />
         {actions}
-        <div className="flex items-center gap-2"><ClearCacheButton /><ModuleSwitcher /></div>
+        <div className="flex items-center gap-2"><ThemeToggle />
+          <ClearCacheButton /><ModuleSwitcher /></div>
 
         <div ref={ref} className="relative">
           <button

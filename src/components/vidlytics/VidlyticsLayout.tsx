@@ -74,7 +74,7 @@ export const VidlyticsLayout: React.FC<VidlyticsLayoutProps> = ({
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col">
       {/* 1. TOP BAR GLOBAL DO SLL */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm dark:bg-slate-900 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           {/* Lado Esquerdo: Logo SLL + Breadcrumb */}
