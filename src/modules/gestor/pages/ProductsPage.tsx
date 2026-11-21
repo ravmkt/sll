@@ -2,7 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Boxes, Package, Tag } from 'lucide-react';
 import type { ElementType } from 'react';
 import ProductsCatalog from '@/components/products/ProductsCatalog';
-import PageHeader from '@/components/layout/PageHeader';
+import { SllPageHeader } from '@/components/sll/SllPageHeader';
 import { cn } from '@/lib/utils';
 import { useGestorAccess } from '../hooks/useGestorAccess';
 import StockPage from './StockPage';
@@ -34,7 +34,7 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={head.icon} title={head.title} subtitle={head.subtitle} />
+      <SllPageHeader className="mb-0" title={head.title} subtitle={head.subtitle} />
 
       <div className="flex flex-wrap gap-2">
         {visible.map((t) => {
