@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { showError } from '@/utils/toast';
 import { getSocialIntegration, type SocialIntegration } from '@/services/socialIntegrationsService';
 import { fetchInstagramVideos, importInstagramVideo, type InstagramVideo } from '@/services/instagramMediaService';
+import { VID_BTN_PRIMARY } from './buttonStyles';
 
 function VideosPanel({ storeId }: { storeId: string }) {
   const [videos, setVideos] = useState<InstagramVideo[]>([]);
@@ -126,7 +127,7 @@ export default function InstagramImportModal({ storeId, onClose }: { storeId: st
                 {integration ? 'Sessão do Instagram expirada.' : 'Instagram não conectado.'}
               </p>
               <p className="mt-1 text-xs text-slate-500">Conecte sua conta em Integrações para importar vídeos.</p>
-              <Link to="/dashboard/integracao" onClick={onClose} className="mt-4 inline-block rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white">
+              <Link to="/dashboard/integracao" onClick={onClose} className={VID_BTN_PRIMARY}>
                 Ir para Integrações
               </Link>
             </div>

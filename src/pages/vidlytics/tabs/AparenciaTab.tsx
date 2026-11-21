@@ -8,6 +8,7 @@ import AparenciaModal from '../components/AparenciaModal';
 import { useAppearanceLogic } from "../../../hooks/vidlytics/useAppearanceLogic";
 import ConfirmDeleteModal from '../../../components/common/ConfirmDeleteModal';
 import { TemplatesCarousel } from '@/components/vidlytics/appearance/TemplatesCarousel';
+import { VID_BTN_PRIMARY } from '../../../components/vidlytics/buttonStyles';
 
 const StyleRow: React.FC<{
   app: any;
@@ -137,7 +138,7 @@ const AparenciaTab: React.FC = () => {
               </div>
               <button
                 data-tour="ap-novo" onClick={openNewStyle}
-                className="flex items-center gap-2 bg-[#0094eb] hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm text-sm"
+                className={VID_BTN_PRIMARY}
               >
                 <Plus size={16} />
                 Criar Novo Estilo

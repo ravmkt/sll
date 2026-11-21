@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
+import { VID_BTN_PRIMARY } from './buttonStyles';
 
 type Row = { max_second: number; completed: boolean; sessions: number };
 type ClickRow = { kind: string; sec: number | null; qty: number; revenue: number };
@@ -334,7 +335,7 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="rounded-xl bg-sky-500 px-6 py-2 text-sm font-bold text-white shadow-sm hover:bg-sky-600"
+            className={VID_BTN_PRIMARY}
           >
             Sair
           </button>

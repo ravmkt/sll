@@ -9,6 +9,7 @@ import {
   createAppearance,
   updateAppearance
 } from '../../services/vidlytics/VidlyticsDatabaseService';
+import { VID_BTN_PRIMARY } from './buttonStyles';
 
 interface AparenciaModalProps {
   isOpen: boolean;
@@ -201,7 +202,7 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
             <button
               onClick={handleSave}
               disabled={localSaving}
-              className="px-5 py-2 bg-[#0094eb] hover:bg-blue-600 text-white text-sm font-bold rounded-xl transition-colors flex items-center gap-2 shadow-md shadow-blue-500/20 disabled:opacity-50"
+              className={VID_BTN_PRIMARY}
             >
               {localSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               {initialStyle ? 'Salvar Alterações' : 'Criar Estilo'}

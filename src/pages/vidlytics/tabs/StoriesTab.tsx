@@ -1,4 +1,4 @@
-﻿import PageTour from '@/components/tour/PageTour';
+import PageTour from '@/components/tour/PageTour';
 import { STORIES_TOUR } from '@/tours/vidlyticsTabsTours';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Eye, Pencil, Trash2, Send, TrendingUp, TrendingDown, Info } from 'lucide-react';
@@ -6,6 +6,7 @@ import { useLoja } from '../../../contexts/LojaContext';
 import { VidlyticsDatabaseService } from '../../../services/vidlytics/VidlyticsDatabaseService';
 import StoryDetailsView from '../components/StoryDetailsView';
 import ConfirmDeleteModal from '../../../components/common/ConfirmDeleteModal';
+import { VID_BTN_PRIMARY } from '../../../components/vidlytics/buttonStyles';
 
 interface StoryRow {
   id: string;
@@ -185,7 +186,7 @@ export default function StoriesTab() {
         </div>
         <button
           data-tour="st-novo" onClick={handleNewStory}
-          className="flex items-center gap-2 rounded-xl bg-[#0094EB] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#0080cb] transition"
+          className={VID_BTN_PRIMARY}
         >
           <Plus size={18} />
           Novo Story

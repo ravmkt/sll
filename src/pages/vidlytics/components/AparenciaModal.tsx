@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
+import { VID_BTN_PRIMARY } from '../../../components/vidlytics/buttonStyles';
 
 interface AparenciaModalProps {
   isOpen: boolean;
@@ -1045,7 +1046,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 <button type="button" onClick={() => setShowNameModal(false)} className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer">
                   Cancelar
                 </button>
-                <button type="button" disabled={!modalInputName.trim() || localSaving} onClick={() => executeSave(modalInputName.trim(), true)} className="flex items-center gap-1.5 px-5 py-2 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold shadow-md disabled:opacity-50 cursor-pointer">
+                <button type="button" disabled={!modalInputName.trim() || localSaving} onClick={() => executeSave(modalInputName.trim(), true)} className={VID_BTN_PRIMARY}>
                   {localSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   Salvar
                 </button>
@@ -2086,7 +2087,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
               <button
                 type="button"
                 onClick={confirmSyncFromMobile}
-                className="flex-1 px-5 py-3 rounded-xl text-sm font-extrabold text-white bg-[#0094eb] hover:bg-[#0082d0] shadow-lg shadow-[#0094eb]/30 cursor-pointer transition-colors"
+                className={VID_BTN_PRIMARY}
               >
                 Sincronizar
               </button>

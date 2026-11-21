@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Lightbulb, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
+import { VID_BTN_PRIMARY } from './buttonStyles';
 
 type CommercialDate = {
   id: string;
@@ -253,7 +254,7 @@ export default function ProximasDatasComerciais() {
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                className="w-full py-2.5 rounded-xl bg-[#0094eb] hover:bg-[#0082d0] text-white text-xs font-bold transition-colors"
+                className={`${VID_BTN_PRIMARY} w-full`}
               >
                 Entendi
               </button>

@@ -11,6 +11,7 @@ import {
 } from '@/types/vidlytics';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 import { useLoja } from '@/contexts/LojaContext';
+import { VID_BTN_PRIMARY } from '../../../components/vidlytics/buttonStyles';
 
 interface NewStoryModalProps {
   isOpen: boolean;
@@ -523,7 +524,7 @@ export default function NewStoryModal({
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className={VID_BTN_PRIMARY}
           >
             {isSaving ? 'Salvando...' : 'Salvar Story'}
           </button>

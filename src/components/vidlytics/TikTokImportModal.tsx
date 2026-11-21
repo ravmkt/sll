@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2, X } from 'lucide-react';
 import TikTokVideosPanel from '@/components/configuracoes/TikTokVideosPanel';
 import { getSocialIntegration, type SocialIntegration } from '@/services/socialIntegrationsService';
+import { VID_BTN_PRIMARY } from './buttonStyles';
 
 export default function TikTokImportModal({ storeId, onClose }: { storeId: string; onClose: () => void }) {
   const [integration, setIntegration] = useState<SocialIntegration | null>(null);
@@ -38,7 +39,7 @@ export default function TikTokImportModal({ storeId, onClose }: { storeId: strin
             <div className="py-10 text-center">
               <p className="text-sm font-bold text-slate-700 dark:text-slate-200">TikTok não conectado.</p>
               <p className="mt-1 text-xs text-slate-500">Conecte sua conta em Configurações para importar vídeos.</p>
-              <Link to="/dashboard/settings" onClick={onClose} className="mt-4 inline-block rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white">
+              <Link to="/dashboard/settings" onClick={onClose} className={VID_BTN_PRIMARY}>
                 Ir para Configurações
               </Link>
             </div>

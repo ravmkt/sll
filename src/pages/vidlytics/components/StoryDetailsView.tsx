@@ -33,6 +33,7 @@ import {
 import { useLoja } from '@/contexts/LojaContext';
 import { VidlyticsDatabaseService } from '@/services/vidlytics/VidlyticsDatabaseService';
 import { DEFAULT_APPEARANCES } from '@/data/defaultAppearances';
+import { VID_BTN_PRIMARY } from '../../../components/vidlytics/buttonStyles';
 
 type PageRuleCondition = 'home' | 'all_pages' | 'url_contains' | 'url_not_contains' | 'url_not_equals';
 type DisplayPosition = 'beforebegin' | 'afterend';
@@ -407,7 +408,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-2 rounded-xl bg-[#0094EB] px-6 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-100 transition hover:bg-[#0080cb] disabled:opacity-50"
+            className={VID_BTN_PRIMARY}
           >
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Salvar Alterações
@@ -552,7 +553,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
           <button
             type="button"
             onClick={() => setIsGalleryOpen(true)}
-            className="rounded-xl bg-[#0094EB] px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white shadow-xs hover:bg-[#0080cb]"
+            className={VID_BTN_PRIMARY}
           >
             + ADICIONAR VÍDEOS
           </button>
@@ -625,7 +626,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
             <button
               type="button"
               onClick={() => setIsGalleryOpen(true)}
-              className="mt-4 rounded-xl bg-[#0094EB] px-5 py-2 text-[10px] font-black uppercase tracking-wider text-white shadow-xs hover:bg-[#0080cb]"
+              className={VID_BTN_PRIMARY}
             >
               + ADICIONAR VÍDEOS
             </button>
@@ -651,7 +652,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
           <button
             type="button"
             onClick={handleAddPageLocation}
-            className="flex items-center gap-1.5 rounded-xl bg-[#0094EB] px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-xs hover:bg-[#0080cb]"
+            className={VID_BTN_PRIMARY}
           >
             <Plus size={14} /> Adicionar Página
           </button>
@@ -789,7 +790,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 rounded-xl bg-[#0094EB] px-8 py-3 text-sm font-black uppercase tracking-wider text-white shadow-lg shadow-blue-100 hover:bg-[#0080cb] disabled:opacity-60"
+          className={VID_BTN_PRIMARY}
         >
           {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           Salvar Alterações
@@ -873,7 +874,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
               <button
                 type="button"
                 onClick={() => setIsGalleryOpen(false)}
-                className="rounded-xl bg-[#0094EB] px-5 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-[#0080cb]"
+                className={VID_BTN_PRIMARY}
               >
                 Concluir ({selectedVideoIds.length} selecionados)
               </button>

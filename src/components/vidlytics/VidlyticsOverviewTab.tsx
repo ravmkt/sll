@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { VidlyticsDatabaseService } from '@/services/VidlyticsDatabaseService';
 import { sllDb } from '@/services/SLLDatabaseService';
 import { supabase } from '@/lib/supabase';
+import { VID_BTN_PRIMARY } from './buttonStyles';
 
 interface OverviewTabProps {
   storeId: string;
@@ -593,7 +594,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
           <button
             type="button"
             onClick={handleCopyReferral}
-            className="w-full bg-[#0094eb] hover:bg-[#0082d1] dark:bg-[#fd8539] dark:hover:bg-[#e06e25] text-white font-black py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className={`${VID_BTN_PRIMARY} w-full`}
           >
             {copiedReferral ? (
               <>

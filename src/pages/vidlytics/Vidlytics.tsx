@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit2, Trash2, Star, Loader2, Sparkles, AlertTriangle, X 
 } from 'lucide-react';
@@ -9,6 +9,7 @@ import {
   getAppearances,
   deleteAppearance
 } from '../../services/vidlytics/VidlyticsDatabaseService';
+import { VID_BTN_PRIMARY } from '../../components/vidlytics/buttonStyles';
 
 export default function Vidlytics() {
   const { storeId: activeStoreId, store } = useLoja();
@@ -84,7 +85,7 @@ export default function Vidlytics() {
 
         <button
           onClick={handleOpenCreateModal}
-          className="px-4 py-2.5 bg-[#0094eb] hover:bg-blue-600 text-white font-medium text-sm rounded-xl transition-all shadow-md flex items-center gap-2"
+          className={VID_BTN_PRIMARY}
         >
           <Plus size={18} />
           Criar Novo Estilo
