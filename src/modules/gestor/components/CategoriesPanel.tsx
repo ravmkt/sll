@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Edit3, Loader2, Plus, Tag } from 'lucide-react';
+import { Check, Edit3, Link2, Loader2, Plus, Tag } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { inputCls } from '@/components/products/Modal';
 import { flattenTree, listCategories } from '../services/catalogo';
 import type { Category } from '../services/catalogo';
+import CategoryChannelsDialog from './CategoryChannelsDialog';
 
 const sb: any = supabase;
 const parentOf = (c: Category) => ((c as any).parent_id ?? (c as any).parent ?? null) as string | null;
@@ -19,6 +20,7 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
   const [parent, setParent] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [linkOpen, setLinkOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
@@ -64,6 +66,9 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
           <button type="button" disabled={busy} onClick={() => void add()} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#007bc4] disabled:opacity-50">
             <Plus size={16} /> Criar
           </button>
+          <button type="button" onClick={() => setLinkOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold hover:border-[#0094eb] dark:border-slate-700">
+            <Link2 size={16} className="text-[#0094eb]" /> Vincular canais
+          </button>
         </div>
       )}
 
@@ -99,6 +104,10 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
             </div>
           ))}
         </div>
+      )}
+
+      {linkOpen && storeId && (
+        <CategoryChannelsDialog storeId={storeId} onChanged={() => void load()} onClose={() => setLinkOpen(false)} />
       )}
     </div>
   );
