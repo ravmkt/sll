@@ -43,7 +43,7 @@ export default function PermissionMatrix({ value, onChange, disabled }: Props) {
                 <td key={a.key} className="px-2 py-1.5 text-center">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 cursor-pointer accent-[#0094eb] disabled:cursor-not-allowed"
+                    className="h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)] disabled:cursor-not-allowed"
                     checked={(value[area.key] ?? []).includes(a.key)}
                     onChange={() => toggle(area.key, a.key)}
                     disabled={disabled}

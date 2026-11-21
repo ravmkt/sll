@@ -42,7 +42,7 @@ const TONES = {
   slate: { box: 'bg-slate-100 text-slate-500 dark:bg-slate-800', ring: 'border-slate-400' },
   emerald: { box: 'bg-emerald-50 text-emerald-500 dark:bg-emerald-950/30', ring: 'border-emerald-400' },
   rose: { box: 'bg-rose-50 text-rose-500 dark:bg-rose-950/30', ring: 'border-rose-400' },
-  sky: { box: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] dark:bg-sky-950/30', ring: 'border-[color:var(--sll-b-brand)]' },
+  sky: { box: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] dark:bg-[color:var(--sll-b-brand-soft)]', ring: 'border-[color:var(--sll-b-brand)]' },
   amber: { box: 'bg-amber-50 text-amber-500 dark:bg-amber-950/30', ring: 'border-amber-400' },
 } as const;
 

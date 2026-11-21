@@ -255,7 +255,7 @@ export default function TeamPage() {
             )}
             {editing && (
               <label className="col-span-2 flex cursor-pointer items-center gap-2 text-sm">
-                <input type="checkbox" className="h-4 w-4 accent-[#0094eb]" checked={form.active} onChange={(e) => set('active', e.target.checked)} />
+                <input type="checkbox" className="h-4 w-4 accent-[color:var(--sll-b-brand)]" checked={form.active} onChange={(e) => set('active', e.target.checked)} />
                 Usuário ativo (desmarque para bloquear o acesso)
               </label>
             )}

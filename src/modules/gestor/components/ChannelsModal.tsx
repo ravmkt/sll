@@ -58,7 +58,7 @@ function RuleCard({ storeId, rule, warehouses, sample, canEdit, onSaved }: {
       <div className="flex items-center justify-between">
         <p className="text-sm font-bold">{meta.label}</p>
         <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold">
-          <input type="checkbox" disabled={!canEdit} checked={d.active} onChange={(e) => setD((p) => ({ ...p, active: e.target.checked }))} className="h-4 w-4 cursor-pointer accent-[#0094eb]" />
+          <input type="checkbox" disabled={!canEdit} checked={d.active} onChange={(e) => setD((p) => ({ ...p, active: e.target.checked }))} className="h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]" />
           Canal ativo
         </label>
       </div>
@@ -86,14 +86,14 @@ function RuleCard({ storeId, rule, warehouses, sample, canEdit, onSaved }: {
       <div className="space-y-1.5">
         <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Depósitos que alimentam este canal</p>
         <label className="flex cursor-pointer items-center gap-2 text-xs">
-          <input type="checkbox" disabled={!canEdit} checked={d.all} onChange={(e) => setD((p) => ({ ...p, all: e.target.checked }))} className="h-4 w-4 cursor-pointer accent-[#0094eb]" />
+          <input type="checkbox" disabled={!canEdit} checked={d.all} onChange={(e) => setD((p) => ({ ...p, all: e.target.checked }))} className="h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]" />
           Todos os depósitos ativos (inclui os que você criar depois)
         </label>
         {!d.all && (
           <div className="flex flex-wrap gap-3 pl-6">
             {warehouses.map((w) => (
               <label key={w.id} className="flex cursor-pointer items-center gap-1.5 text-xs">
-                <input type="checkbox" disabled={!canEdit} checked={d.whs.includes(w.id)} onChange={() => toggleWh(w.id)} className="h-4 w-4 cursor-pointer accent-[#0094eb]" />
+                <input type="checkbox" disabled={!canEdit} checked={d.whs.includes(w.id)} onChange={() => toggleWh(w.id)} className="h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]" />
                 {w.name}
               </label>
             ))}
