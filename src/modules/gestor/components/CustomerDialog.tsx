@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import type { ReactNode } from 'react';
+import { Loader2 } from 'lucide-react';
+import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
+import { SllField, sllFieldCls } from '@/components/sll/SllFilterBar';
+import { SllTable } from '@/components/sll/SllTable';
+import type { SllColumn } from '@/components/sll/SllTable';
 import {
   brl, fmtDate, getCustomer, getCustomerOrders, getCustomerProducts, saveCustomer,
-  type CustomerFull, type CustomerOrder, type CustomerProduct,
 } from '../services/clientes';
+import type { CustomerFull, CustomerOrder, CustomerProduct } from '../services/clientes';
 import { useGestorAccess } from '../hooks/useGestorAccess';
 
 type Form = Omit<CustomerFull, 'id' | 'source_platform' | 'tags'> & { tagsText: string };
@@ -13,7 +18,54 @@ const EMPTY: Form = {
   district: '', city: '', state: '', tagsText: '', notes: '', accepts_marketing: false, accepts_whatsapp: false,
 };
 
-const inputCls = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[color:var(--sll-b-brand)]';
+const toForm = (c: CustomerFull): Form => ({
+  name: c.name, email: c.email ?? '', phone: c.phone ?? '', document: c.document ?? '', birth_date: c.birth_date ?? '',
+  zip: c.zip ?? '', street: c.street ?? '', number: c.number ?? '', complement: c.complement ?? '', district: c.district ?? '',
+  city: c.city ?? '', state: c.state ?? '', tagsText: (c.tags ?? []).join(', '), notes: c.notes ?? '',
+  accepts_marketing: c.accepts_marketing, accepts_whatsapp: c.accepts_whatsapp,
+});
+
+function Card({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
+      <h3 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function Info({ label, children, wide }: { label: string; children: ReactNode; wide?: boolean }) {
+  return (
+    <div className={wide ? 'sm:col-span-2' : ''}>
+      <dt className="text-[11px] font-bold text-slate-400">{label}</dt>
+      <dd className="text-sm text-slate-800 dark:text-slate-100">{children}</dd>
+    </div>
+  );
+}
+
+const PRODUCT_COLS: SllColumn<CustomerProduct>[] = [
+  {
+    key: 'p', header: 'Produto',
+    render: (p) => (
+      <>
+        <span className="font-bold text-slate-800 dark:text-white">{p.name}</span>
+        {p.sku && <span className="ml-1 text-[11px] text-slate-400">{p.sku}</span>}
+      </>
+    ),
+  },
+  { key: 'q', header: 'Qtd', align: 'right', render: (p) => <span className="font-mono">{p.qty}</span> },
+  { key: 'o', header: 'Pedidos', align: 'right', render: (p) => <span className="font-mono">{p.orders_count}</span> },
+  { key: 't', header: 'Total', align: 'right', render: (p) => <span className="font-mono font-bold">{brl(p.total)}</span> },
+  { key: 'u', header: 'Última', render: (p) => <span className="text-slate-500">{fmtDate(p.last_purchase_at)}</span> },
+];
+
+const ORDER_COLS: SllColumn<CustomerOrder>[] = [
+  { key: 'n', header: 'Pedido', render: (o) => <span className="font-bold">#{o.number ?? '-'}</span> },
+  { key: 'd', header: 'Data', render: (o) => <span className="text-slate-500">{fmtDate(o.created_at)}</span> },
+  { key: 's', header: 'Status', render: (o) => <span>{o.canceled_at ? 'cancelado' : o.status ?? '-'}</span> },
+  { key: 'pg', header: 'Pagamento', render: (o) => <span className="text-slate-500">{o.payment_status ?? '-'}</span> },
+  { key: 't', header: 'Total', align: 'right', render: (o) => <span className="font-mono font-bold">{brl(o.total)}</span> },
+];
 
 type Props = { storeId: string; customerId: string | null; open: boolean; onClose: () => void; onSaved: () => void };
 
@@ -27,18 +79,12 @@ export default function CustomerDialog({ storeId, customerId, open, onClose, onS
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  const toForm = (c: CustomerFull): Form => ({
-    name: c.name, email: c.email ?? '', phone: c.phone ?? '', document: c.document ?? '', birth_date: c.birth_date ?? '',
-    zip: c.zip ?? '', street: c.street ?? '', number: c.number ?? '', complement: c.complement ?? '', district: c.district ?? '',
-    city: c.city ?? '', state: c.state ?? '', tagsText: (c.tags ?? []).join(', '), notes: c.notes ?? '',
-    accepts_marketing: c.accepts_marketing, accepts_whatsapp: c.accepts_whatsapp,
-  });
-
   useEffect(() => {
     if (!open) return;
     setErr('');
     if (!customerId) { setCust(null); setProducts([]); setOrders([]); setForm(EMPTY); setEditing(true); return; }
     setEditing(false);
+    setCust(null);
     (async () => {
       try {
         const [c, p, o] = await Promise.all([getCustomer(customerId), getCustomerProducts(customerId), getCustomerOrders(customerId)]);
@@ -61,109 +107,105 @@ export default function CustomerDialog({ storeId, customerId, open, onClose, onS
     finally { setBusy(false); }
   };
 
-  const field = (label: string, k: keyof Form, type = 'text', cls = '') => (
-    <label className={'block text-xs font-medium text-slate-600 ' + cls}>
-      {label}
-      <input type={type} className={inputCls + ' mt-1 font-normal'} value={String(form[k] ?? '')} onChange={(e) => set(k, e.target.value)} />
-    </label>
+  const input = (label: string, k: keyof Form, type = 'text', cls = '') => (
+    <SllField label={label} className={cls}>
+      <input type={type} className={sllFieldCls} value={String(form[k] ?? '')} onChange={(e) => set(k, e.target.value)} />
+    </SllField>
   );
 
-  const addr = cust ? [cust.street, cust.number, cust.complement, cust.district, cust.city && cust.state ? cust.city + '/' + cust.state : cust.city, cust.zip].filter(Boolean).join(', ') : '';
+  const addr = cust
+    ? [cust.street, cust.number, cust.complement, cust.district, cust.city && cust.state ? cust.city + '/' + cust.state : cust.city, cust.zip].filter(Boolean).join(', ')
+    : '';
+
+  const title = customerId ? (editing ? 'Editar cliente' : cust?.name ?? 'Cliente') : 'Novo cliente';
+  const check = 'h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]';
+
+  const footer = editing ? (
+    <>
+      <button type="button" disabled={busy} onClick={() => (customerId ? setEditing(false) : onClose())} className={sllBtnGhost}>Cancelar</button>
+      <button type="button" disabled={busy} onClick={() => void submit()} className={sllBtnPrimary}>
+        {busy && <Loader2 size={15} className="animate-spin" />}{busy ? 'Salvando...' : 'Salvar'}
+      </button>
+    </>
+  ) : (
+    <>
+      <button type="button" onClick={onClose} className={sllBtnGhost}>Fechar</button>
+      {cust && allow('clientes', 'editar') && (
+        <button type="button" onClick={() => setEditing(true)} className={sllBtnPrimary}>Editar</button>
+      )}
+    </>
+  );
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{customerId ? (editing ? 'Editar cliente' : cust?.name ?? 'Cliente') : 'Novo cliente'}</DialogTitle>
-        </DialogHeader>
-
-        {err && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
+    <SllModal open={open} onOpenChange={(v) => { if (!v) onClose(); }} title={title} size="lg" footer={footer}>
+      <div className="space-y-4">
+        {err && <p className="rounded-xl bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700">{err}</p>}
 
         {editing ? (
-          <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {field('Nome *', 'name', 'text', 'sm:col-span-2')}
-              {field('E-mail', 'email', 'email')}
-              {field('Telefone / WhatsApp', 'phone')}
-              {field('CPF / CNPJ', 'document')}
-              {field('Nascimento', 'birth_date', 'date')}
-              {field('CEP', 'zip')}
-              {field('Rua', 'street')}
-              {field('Numero', 'number')}
-              {field('Complemento', 'complement')}
-              {field('Bairro', 'district')}
-              {field('Cidade', 'city')}
-              {field('UF', 'state')}
-              {field('Tags (separadas por virgula)', 'tagsText', 'text', 'sm:col-span-2')}
-              <label className="block text-xs font-medium text-slate-600 sm:col-span-2">
-                Observacoes
-                <textarea className={inputCls + ' mt-1 font-normal'} rows={3} value={form.notes ?? ''} onChange={(e) => set('notes', e.target.value)} />
-              </label>
-            </div>
-            <div className="flex flex-col gap-2 rounded-md border border-slate-200 p-3 text-sm">
-              <label className="flex items-center gap-2"><input type="checkbox" checked={form.accepts_marketing} onChange={(e) => set('accepts_marketing', e.target.checked)} /> Aceita e-mail marketing</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={form.accepts_whatsapp} onChange={(e) => set('accepts_whatsapp', e.target.checked)} /> Aceita contato por WhatsApp</label>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => (customerId ? setEditing(false) : onClose())} className="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50">Cancelar</button>
-              <button type="button" disabled={busy} onClick={submit} className="rounded-md bg-[color:var(--sll-b-brand)] px-4 py-2 text-sm font-medium text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-60">
-                {busy ? 'Salvando...' : 'Salvar'}
-              </button>
-            </div>
-          </div>
+          <>
+            <Card title="Dados">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {input('Nome *', 'name', 'text', 'sm:col-span-2')}
+                {input('E-mail', 'email', 'email')}
+                {input('Telefone / WhatsApp', 'phone')}
+                {input('CPF / CNPJ', 'document')}
+                {input('Nascimento', 'birth_date', 'date')}
+              </div>
+            </Card>
+            <Card title="Endereço">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {input('CEP', 'zip')}
+                {input('Rua', 'street')}
+                {input('Número', 'number')}
+                {input('Complemento', 'complement')}
+                {input('Bairro', 'district')}
+                {input('Cidade', 'city')}
+                {input('UF', 'state')}
+              </div>
+            </Card>
+            <Card title="Classificação">
+              <div className="grid gap-3">
+                {input('Tags (separadas por vírgula)', 'tagsText')}
+                <SllField label="Observações">
+                  <textarea className={sllFieldCls} rows={3} value={form.notes ?? ''} onChange={(e) => set('notes', e.target.value)} />
+                </SllField>
+              </div>
+            </Card>
+            <Card title="Consentimento">
+              <div className="flex flex-col gap-2 text-sm">
+                <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" className={check} checked={form.accepts_marketing} onChange={(e) => set('accepts_marketing', e.target.checked)} /> Aceita e-mail marketing</label>
+                <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" className={check} checked={form.accepts_whatsapp} onChange={(e) => set('accepts_whatsapp', e.target.checked)} /> Aceita contato por WhatsApp</label>
+              </div>
+            </Card>
+          </>
         ) : cust ? (
-          <div className="space-y-5 text-sm">
-            <div className="flex justify-end">
-              <>{allow('clientes','editar') && (<button type="button" onClick={() => setEditing(true)} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50">Editar</button>)}</>
+          <>
+            <Card title="Dados do cliente">
+              <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                <Info label="E-mail">{cust.email ?? '-'}</Info>
+                <Info label="Telefone">{cust.phone ?? '-'}</Info>
+                <Info label="CPF / CNPJ">{cust.document ?? '-'}</Info>
+                <Info label="Nascimento">{fmtDate(cust.birth_date)}</Info>
+                <Info label="Endereço cadastral" wide>{addr || '-'}</Info>
+                <Info label="Origem">{cust.source_platform ?? '-'}</Info>
+                <Info label="Consentimento">{[cust.accepts_marketing && 'E-mail', cust.accepts_whatsapp && 'WhatsApp'].filter(Boolean).join(' + ') || 'Nenhum'}</Info>
+                <Info label="Tags" wide>{cust.tags?.length ? cust.tags.join(', ') : '-'}</Info>
+                {cust.notes && <Info label="Observações" wide><span className="whitespace-pre-wrap">{cust.notes}</span></Info>}
+              </dl>
+            </Card>
+            <div>
+              <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">O que ele compra</h3>
+              <SllTable columns={PRODUCT_COLS} rows={products} rowKey={(p) => (p.sku ?? '') + p.name} empty="Nenhuma compra paga ainda." minWidth="32rem" />
             </div>
-            <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
-              <div><dt className="text-xs text-slate-500">E-mail</dt><dd>{cust.email ?? '-'}</dd></div>
-              <div><dt className="text-xs text-slate-500">Telefone</dt><dd>{cust.phone ?? '-'}</dd></div>
-              <div><dt className="text-xs text-slate-500">CPF / CNPJ</dt><dd>{cust.document ?? '-'}</dd></div>
-              <div><dt className="text-xs text-slate-500">Nascimento</dt><dd>{fmtDate(cust.birth_date)}</dd></div>
-              <div className="sm:col-span-2"><dt className="text-xs text-slate-500">Endereco cadastral</dt><dd>{addr || '-'}</dd></div>
-              <div><dt className="text-xs text-slate-500">Origem</dt><dd>{cust.source_platform ?? '-'}</dd></div>
-              <div><dt className="text-xs text-slate-500">Consentimento</dt><dd>{[cust.accepts_marketing && 'E-mail', cust.accepts_whatsapp && 'WhatsApp'].filter(Boolean).join(' + ') || 'Nenhum'}</dd></div>
-              <div className="sm:col-span-2"><dt className="text-xs text-slate-500">Tags</dt><dd>{cust.tags?.length ? cust.tags.join(', ') : '-'}</dd></div>
-              {cust.notes && <div className="sm:col-span-2"><dt className="text-xs text-slate-500">Observacoes</dt><dd className="whitespace-pre-wrap">{cust.notes}</dd></div>}
-            </dl>
-
-            <section>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">O que ele compra</h3>
-              {products.length === 0 ? <p className="text-slate-500">Nenhuma compra paga ainda.</p> : (
-                <table className="w-full text-left">
-                  <thead className="text-xs text-slate-500"><tr><th className="py-1">Produto</th><th>Qtd</th><th>Pedidos</th><th>Total</th><th>Ultima</th></tr></thead>
-                  <tbody>
-                    {products.map((p, i) => (
-                      <tr key={(p.sku ?? '') + i} className="border-t border-slate-100">
-                        <td className="py-1.5">{p.name}{p.sku && <span className="ml-1 text-xs text-slate-400">{p.sku}</span>}</td>
-                        <td>{p.qty}</td><td>{p.orders_count}</td><td>{brl(p.total)}</td><td>{fmtDate(p.last_purchase_at)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </section>
-
-            <section>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Pedidos</h3>
-              {orders.length === 0 ? <p className="text-slate-500">Sem pedidos.</p> : (
-                <table className="w-full text-left">
-                  <thead className="text-xs text-slate-500"><tr><th className="py-1">Pedido</th><th>Data</th><th>Status</th><th>Pagamento</th><th>Total</th></tr></thead>
-                  <tbody>
-                    {orders.map((o) => (
-                      <tr key={o.id} className="border-t border-slate-100">
-                        <td className="py-1.5">#{o.number ?? '-'}</td><td>{fmtDate(o.created_at)}</td>
-                        <td>{o.canceled_at ? 'cancelado' : o.status ?? '-'}</td><td>{o.payment_status ?? '-'}</td><td>{brl(o.total)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </section>
-          </div>
-        ) : !err ? <p className="text-sm text-slate-500">Carregando...</p> : null}
-      </DialogContent>
-    </Dialog>
+            <div>
+              <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">Pedidos</h3>
+              <SllTable columns={ORDER_COLS} rows={orders} rowKey={(o) => o.id} empty="Sem pedidos." minWidth="32rem" />
+            </div>
+          </>
+        ) : !err ? (
+          <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[color:var(--sll-b-brand)]" /></div>
+        ) : null}
+      </div>
+    </SllModal>
   );
 }
