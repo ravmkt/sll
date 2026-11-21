@@ -32,6 +32,7 @@ import { useQuotaGuard } from "@/hooks/useQuotaGuard";
 import QuotaUpgradeModal from "@/components/QuotaUpgradeModal";
 import TikTokImportModal from "@/components/vidlytics/TikTokImportModal";
 import InstagramImportModal from "@/components/vidlytics/InstagramImportModal";
+import { VID_BTN_PRIMARY, VID_BTN_SECONDARY } from "@/components/vidlytics/buttonStyles";
 
 interface VidVideo {
   id: string;
@@ -1224,7 +1225,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           <button
             onClick={handleSavePageEdit}
             disabled={isSavingEdit}
-            className="px-6 py-2.5 bg-[#0088ff] hover:bg-[#0077e6] text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm shadow-sky-200 transition disabled:opacity-50 cursor-pointer"
+            className={VID_BTN_PRIMARY}
           >
             <Save className="w-4 h-4" />
             {isSavingEdit ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
@@ -1459,7 +1460,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           <button
             onClick={handleSavePageEdit}
             disabled={isSavingEdit}
-            className="px-7 py-3 bg-[#0088ff] hover:bg-[#0077e6] text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm shadow-sky-200 transition disabled:opacity-50 cursor-pointer"
+            className={VID_BTN_PRIMARY}
           >
             <Save className="w-4 h-4" />
             {isSavingEdit ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
@@ -1513,7 +1514,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
         <div data-tour="bi-acoes" className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full xl:w-auto xl:flex-shrink-0">
           <button
             type="button"
-            className="h-10 w-full xl:w-[140px] px-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 hover:border-slate-300 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition whitespace-nowrap cursor-pointer"
+            className={`${VID_BTN_SECONDARY} w-full xl:w-[140px] whitespace-nowrap`}
             onClick={async () => { if (await guard("videos", 1)) setInstagramOpen(true); }}
           >
             <IconInstagram className="w-4 h-4 flex-shrink-0" />
@@ -1523,7 +1524,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           <>
 <button
             type="button"
-            className="h-10 w-full xl:w-[140px] px-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 hover:border-slate-300 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition whitespace-nowrap cursor-pointer"
+            className={`${VID_BTN_SECONDARY} w-full xl:w-[140px] whitespace-nowrap`}
             onClick={async () => { if (await guard("videos", 1)) setTiktokOpen(true); }}
           >
             <IconTikTok className="w-4 h-4 flex-shrink-0 text-slate-900" />
@@ -1537,7 +1538,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           <button
             type="button"
             onClick={() => setIsUrlModalOpen(true)}
-            className="h-10 w-full xl:w-[140px] px-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 hover:border-slate-300 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition whitespace-nowrap cursor-pointer"
+            className={`${VID_BTN_SECONDARY} w-full xl:w-[140px] whitespace-nowrap`}
           >
             <Globe className="w-4 h-4 flex-shrink-0 text-sky-500" />
             URL EXTERNA
@@ -1556,7 +1557,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             type="button"
             disabled={isUploading}
             onClick={() => fileInputRef.current?.click()}
-            className="h-10 w-full xl:w-[160px] px-3 bg-[#0088ff] hover:bg-[#0077e6] text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm shadow-sky-200 transition whitespace-nowrap disabled:opacity-50 cursor-pointer"
+            className={`${VID_BTN_PRIMARY} w-full xl:w-[160px] whitespace-nowrap`}
           >
             {isUploading ? (
               <RefreshCw className="w-4 h-4 flex-shrink-0 animate-spin" />
@@ -2069,7 +2070,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
 
               <button
                 onClick={() => setPreviewMedia(null)}
-                className="w-full py-3.5 bg-[#0088ff] hover:bg-[#0077e6] text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-sm shadow-sky-200 transition cursor-pointer"
+                className={`${VID_BTN_PRIMARY} w-full`}
               >
                 FECHAR
               </button>
@@ -2164,7 +2165,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 <button
                   type="submit"
                   disabled={isSavingExternal}
-                  className="px-6 py-2.5 bg-[#0088ff] hover:bg-[#0077e6] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition disabled:opacity-50 cursor-pointer shadow-sm shadow-sky-200"
+                  className={VID_BTN_PRIMARY}
                 >
                   {isSavingExternal ? "SALVANDO..." : "CADASTRAR MÍDIA"}
                 </button>
