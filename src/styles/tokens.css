@@ -1,0 +1,36 @@
+/* SLL - TOKENS VISUAIS. Unica fonte de verdade de cores, raios e logos.
+   Modulos NUNCA usam hex ou azul/sky do Tailwind: usam estas variaveis. */
+:root {
+  --sll-bg: #f8fafc;
+  --sll-surface: #ffffff;
+  --sll-surface-2: #f1f5f9;
+  --sll-border: #e2e8f0;
+  --sll-text: #0f172a;
+  --sll-text-muted: #64748b;
+  --sll-primary: #0094eb;
+  --sll-primary-hover: #0082d0;
+  --sll-primary-soft: rgba(0, 148, 235, 0.1);
+  --sll-on-primary: #ffffff;
+  --sll-accent: #fd8539;
+  --sll-success: #16a34a;
+  --sll-warning: #f59e0b;
+  --sll-danger: #dc2626;
+  --sll-radius: 16px;
+  --sll-logo-h: 30px;
+}
+.dark {
+  --sll-bg: #020617;
+  --sll-surface: #0f172a;
+  --sll-surface-2: #1e293b;
+  --sll-border: #1e293b;
+  --sll-text: #f8fafc;
+  --sll-text-muted: #94a3b8;
+  --sll-primary: #fd8539;
+  --sll-primary-hover: #ea7424;
+  --sll-primary-soft: rgba(253, 133, 57, 0.15);
+  --sll-on-primary: #ffffff;
+  --sll-accent: #fd8539;
+  --sll-success: #22c55e;
+  --sll-warning: #fbbf24;
+  --sll-danger: #f87171;
+}
