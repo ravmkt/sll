@@ -63,8 +63,8 @@
 }
 .sll-tour .driver-popover-footer button:hover { background: #f8fafc; }
 .sll-tour .driver-popover-next-btn {
-  border-color: #0094eb !important;
-  background: #0094eb !important;
+  border-color: var(--sll-b-brand) !important;
+  background: var(--sll-b-brand) !important;
   color: #ffffff !important;
 }
 .sll-tour .driver-popover-next-btn:hover { background: #007fcc !important; }

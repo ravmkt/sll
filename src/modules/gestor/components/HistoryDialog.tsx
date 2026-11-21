@@ -5,8 +5,8 @@ import StockHistoryPanel from './StockHistoryPanel';
 type Props = { open: boolean; onOpenChange: (open: boolean) => void };
 
 // Cor da barra de rolagem (troque aqui se quiser outra, ex.: '#16a34a' para verde)
-const SCROLL_COLOR = '#0094eb';
-const SCROLL_COLOR_HOVER = '#0082cf';
+const SCROLL_COLOR = 'var(--sll-b-brand)';
+const SCROLL_COLOR_HOVER = 'var(--sll-b-brand-hover)';
 
 const SCROLL_CSS = `
 .sll-hist-scroll::-webkit-scrollbar { width: 14px; height: 14px; }
