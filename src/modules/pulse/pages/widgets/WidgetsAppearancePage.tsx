@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Palette, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import RulerPreview from '../../components/widgets/RulerPreview';
 import RulerStyleEditorModal, { type EditorInitial } from '../../components/widgets/RulerStyleEditorModal';
 import { widgetsService, type StyleInput } from '../../services/widgetsService';
@@ -46,7 +46,6 @@ export default function WidgetsAppearancePage({ ctx }: { ctx: WidgetsCtx }) {
   return (
     <div className="mx-auto max-w-[1200px] px-6 py-8">
       <div className="flex items-center gap-2">
-        <Palette className="h-6 w-6 text-[#0094EB]" />
         <h1 className="text-2xl font-extrabold text-slate-900">Aparência</h1>
       </div>
       <p className="mt-1 text-sm text-slate-500">Gerencie os estilos visuais dos seus widgets.</p>

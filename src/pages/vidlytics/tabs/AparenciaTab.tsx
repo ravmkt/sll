@@ -3,7 +3,7 @@ import TourTagger from '@/tours/TourTagger';
 import PageTour from '@/components/tour/PageTour';
 import { APARENCIA_TOUR } from '@/tours/vidlyticsTabsTours';
 import React, { useState } from 'react';
-import { Plus, Palette, Star, Pencil, Trash2, Eye } from 'lucide-react';
+import { Plus, Star, Pencil, Trash2, Eye } from 'lucide-react';
 import AparenciaModal from '../components/AparenciaModal';
 import { useAppearanceLogic } from "../../../hooks/vidlytics/useAppearanceLogic";
 import ConfirmDeleteModal from '../../../components/common/ConfirmDeleteModal';
@@ -118,7 +118,6 @@ const AparenciaTab: React.FC = () => {
       <div data-tour="aparencia-cabecalho" className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <Palette className="text-[#0094eb]" size={28} />
             Aparência
           </h2>
           <p className="text-slate-500 mt-1">Gerencie os estilos visuais dos seus widgets.</p>
