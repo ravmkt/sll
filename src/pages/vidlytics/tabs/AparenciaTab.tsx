@@ -117,10 +117,8 @@ const AparenciaTab: React.FC = () => {
         <TourTagger rules={APARENCIA_TAGS} />
       <div data-tour="aparencia-cabecalho" className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            Aparência
-          </h2>
-          <p className="text-slate-500 mt-1">Gerencie os estilos visuais dos seus widgets.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Aparência</h1>
+          <p className="text-sm text-slate-500">Gerencie os estilos visuais dos seus widgets.</p>
         </div>
       </div>
 
