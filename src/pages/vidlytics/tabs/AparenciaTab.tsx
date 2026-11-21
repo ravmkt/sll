@@ -112,7 +112,7 @@ const AparenciaTab: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-6">
       <PageTour tourKey="vidlytics-aparencia" steps={APARENCIA_TOUR} />
         <TourTagger rules={APARENCIA_TAGS} />
       <div data-tour="aparencia-cabecalho" className="flex justify-between items-center">
