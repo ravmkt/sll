@@ -38,3 +38,10 @@ export async function autoMapChannel(storeId: string, channel: string): Promise<
   if (error) throw new Error(error.message);
   return Number(data || 0);
 }
+export async function saveCategory(storeId: string, name: string, parentId: string | null): Promise<string> {
+  const { data, error } = await sb.rpc('gestor_category_save', {
+    p_store: storeId, p_name: name, p_id: null, p_parent: parentId, p_active: true,
+  });
+  if (error) throw new Error(error.message);
+  return data as string;
+}
