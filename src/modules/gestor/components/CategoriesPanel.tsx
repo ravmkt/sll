@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Edit3, Link2, Loader2, Plus, Tag } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
-import { showError, showSuccess } from '@/utils/toast';
+import { showError } from '@/utils/toast';
 import { inputCls } from '@/components/products/Modal';
 import { flattenTree, listCategories } from '../services/catalogo';
 import type { Category } from '../services/catalogo';
 import CategoryChannelsDialog from './CategoryChannelsDialog';
+import CreateCategoryModal from './CreateCategoryModal';
 
 const sb: any = supabase;
 const parentOf = (c: Category) => ((c as any).parent_id ?? (c as any).parent ?? null) as string | null;
@@ -16,11 +17,10 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
   const [cats, setCats] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [name, setName] = useState('');
-  const [parent, setParent] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [linkOpen, setLinkOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
@@ -45,10 +45,6 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
     finally { setBusy(false); }
   };
 
-  const add = async () => {
-    if (!name.trim()) return;
-    if (await save(null, name, parent || null, true)) { setName(''); showSuccess('Categoria criada.'); }
-  };
   const rename = async (c: Category) => {
     if (!editName.trim()) return;
     if (await save(c.id, editName, parentOf(c), c.active)) setEditId(null);
@@ -57,14 +53,9 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
   return (
     <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-[#1a1f2c]">
       {canEdit && (
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void add()} placeholder="Nova categoria..." className={inputCls} />
-          <select value={parent} onChange={(e) => setParent(e.target.value)} className={inputCls + ' sm:!w-64 cursor-pointer'}>
-            <option value="">Sem categoria pai</option>
-            {tree.map(({ cat, depth }) => <option key={cat.id} value={cat.id}>{`${'— '.repeat(depth)}${cat.name}`}</option>)}
-          </select>
-          <button type="button" disabled={busy} onClick={() => void add()} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#007bc4] disabled:opacity-50">
-            <Plus size={16} /> Criar
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => setCreateOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#007bc4]">
+            <Plus size={16} /> Criar categoria
           </button>
           <button type="button" onClick={() => setLinkOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold hover:border-[#0094eb] dark:border-slate-700">
             <Link2 size={16} className="text-[#0094eb]" /> Vincular canais
@@ -106,6 +97,9 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
         </div>
       )}
 
+      {createOpen && storeId && (
+        <CreateCategoryModal storeId={storeId} onCreated={() => void load()} onClose={() => setCreateOpen(false)} />
+      )}
       {linkOpen && storeId && (
         <CategoryChannelsDialog storeId={storeId} onChanged={() => void load()} onClose={() => setLinkOpen(false)} />
       )}
