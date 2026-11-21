@@ -323,7 +323,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
           <MetricCard icon={PackageX} label="Sem estoque" value={metrics.nostock} tone="amber" active={fStock === 'without'} loading={mLoading} onClick={cardNoStock} />
         </div>
 
-        <div data-tour="prod-lista" className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] p-5">
+        <div data-tour="prod-lista" className="space-y-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f2c] p-5">
           <div className="flex flex-col gap-3 lg:flex-row">
             <div className="relative flex-1">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

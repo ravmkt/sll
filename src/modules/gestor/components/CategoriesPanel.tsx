@@ -51,7 +51,7 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
   };
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-[#1a1f2c]">
+    <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-[#1a1f2c]">
       {canEdit && (
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => setCreateOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#007bc4]">
