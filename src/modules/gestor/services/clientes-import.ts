@@ -1,3 +1,5 @@
+import { reportCustomerImport } from './clientesDiag';
+import type { SkippedCustomer } from './clientesDiag';
 import { supabase } from '@/lib/supabase';
 
 const sb: any = supabase;
@@ -294,14 +296,19 @@ export async function importPlatformHistory(
     }
       if (!r.stopped) {
         let cp = 1;
+        let created = 0, existing = 0;
+        const skipped: SkippedCustomer[] = [];
         for (let guard = 0; guard < 50; guard++) {
           const d = await invoke({ action: 'import_customers', store_id: storeId, from_page: cp, pages: 2 });
+          created += d.created || 0;
+          existing += d.existing || 0;
+          skipped.push(...((d.skipped || []) as SkippedCustomer[]));
           r.failed += d.failed;
           for (const m of (d.errors || []) as string[]) {
             const i = m.indexOf(': ');
             r.errors.push(i > 0 ? { ref: `Cliente ${m.slice(0, i)}`, msg: m.slice(i + 2) } : { ref: 'Cliente', msg: m });
           }
-          if (d.done) break;
+          if (d.done) { reportCustomerImport(created, existing, skipped); break; }
           if (shouldStop()) { r.stopped = true; break; }
           cp = d.next_page;
         }

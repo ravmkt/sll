@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       const first = Math.max(1, Number(from_page) || 1);
       let next = first;
       let totalPages = first + span;
-      const res = { processed: 0, created: 0, existing: 0, failed: 0, errors: [] as string[] };
+      const res = { processed: 0, created: 0, existing: 0, failed: 0, errors: [] as string[], skipped: [] as any[] };
       const digits = (v: unknown) => String(v ?? '').replace(/\D/g, '');
       const phoneOf = (v: any): string => {
         if (v == null) return '';
@@ -123,7 +123,14 @@ Deno.serve(async (req) => {
             const { data } = await admin.from('customers').select('id').eq('store_id', store_id).eq('email', email).limit(1);
             exists = !!data?.length;
           }
-          if (exists) { res.existing++; continue; }
+          if (exists) {
+            res.existing++;
+            const parts = [doc ? `document.eq.${doc}` : '', email ? `email.eq.${email}` : ''].filter(Boolean);
+            const { data: hit } = await admin.from('customers').select('id,name,email,document').eq('store_id', store_id).or(parts.join(',')).limit(1);
+            const g = hit?.[0];
+            res.skipped.push({ y_id: cu.id ?? null, name, email: email || null, doc: doc || null, g_id: g?.id ?? null, g_name: g?.name ?? null, g_email: g?.email ?? null, g_doc: g?.document ?? null });
+            continue;
+          }
 
           const birthRaw = String(cu.birthday ?? cu.birth_date ?? '');
           const birth = /^\d{4}-\d{2}-\d{2}/.test(birthRaw) ? birthRaw.slice(0, 10) : null;
