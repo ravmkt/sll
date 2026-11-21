@@ -54,7 +54,7 @@ export function TopBar({ actions }: { actions?: ReactNode; [k: string]: unknown 
     <header className="sticky top-[var(--trial-h,0px)] z-40 flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6 dark:border-slate-800 dark:bg-slate-900">
       <Link to="/dashboard" aria-label="Ir para o início" className="flex min-w-0 items-center gap-2.5">
         {logo && !logoFailed ? (
-          <img src={logo} alt={storeName} className="h-9 w-9 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-0.5" onError={() => setLogoFailed(true)} />
+          <img src={logo} alt={storeName} className="h-9 w-9 shrink-0 rounded-lg object-contain" onError={() => setLogoFailed(true)} />
         ) : (
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#0094eb] text-xs font-black text-white">{initials(storeName)}</span>
         )}

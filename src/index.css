@@ -57,3 +57,78 @@ F:\RODRIGO VICENTE\DYAD\sll-hub\src\index.css
 @supports not selector(::-webkit-scrollbar) {
   .sll-scroll { scrollbar-width: thin; scrollbar-color: #0094eb transparent; }
 }
+
+/* === SLL DARK LAYER (inicio) === */
+:root.dark { color-scheme: dark; }
+
+:where(.dark) {
+  /* Fundos */
+  .min-h-screen.bg-slate-50:not([class*="dark:bg-"]) { background-color: #020617; }
+  .bg-white:not([class*="dark:bg-"]) { background-color: #0f172a; }
+  .bg-slate-50:not([class*="dark:bg-"]),
+  .bg-slate-100:not([class*="dark:bg-"]) { background-color: #1e293b; }
+  .bg-slate-50\/50:not([class*="dark:bg-"]),
+  .bg-slate-50\/40:not([class*="dark:bg-"]) { background-color: rgba(30, 41, 59, 0.5); }
+  .bg-emerald-50:not([class*="dark:bg-"]) { background-color: rgba(16, 185, 129, 0.15); }
+  .bg-red-50:not([class*="dark:bg-"]) { background-color: rgba(239, 68, 68, 0.15); }
+  .bg-amber-50:not([class*="dark:bg-"]) { background-color: rgba(245, 158, 11, 0.15); }
+  .from-white, .from-slate-50 { --tw-gradient-from: #0f172a; }
+  .to-white, .to-slate-50 { --tw-gradient-to: #0f172a; }
+
+  /* Azul vira laranja: fundos */
+  .bg-blue-50:not([class*="dark:bg-"]),
+  .bg-sky-50:not([class*="dark:bg-"]),
+  .bg-\[\#0094eb\]\/10:not([class*="dark:bg-"]) { background-color: rgba(253, 133, 57, 0.15); }
+  .bg-\[\#0094eb\]:not([class*="dark:bg-"]),
+  .bg-\[\#0088ff\]:not([class*="dark:bg-"]) { background-color: #fd8539; }
+
+  /* Textos */
+  .text-slate-900:not([class*="dark:text-"]),
+  .text-slate-800:not([class*="dark:text-"]) { color: #f8fafc; }
+  .text-slate-700:not([class*="dark:text-"]) { color: #cbd5e1; }
+  .text-slate-600:not([class*="dark:text-"]),
+  .text-slate-500:not([class*="dark:text-"]),
+  .text-gray-600:not([class*="dark:text-"]) { color: #94a3b8; }
+  .text-slate-400:not([class*="dark:text-"]),
+  .text-gray-400:not([class*="dark:text-"]) { color: #64748b; }
+  .text-emerald-600:not([class*="dark:text-"]) { color: #34d399; }
+  .text-red-600:not([class*="dark:text-"]) { color: #f87171; }
+
+  /* Azul vira laranja: textos */
+  .text-\[\#0094eb\]:not([class*="dark:text-"]),
+  .text-\[\#0088ff\]:not([class*="dark:text-"]),
+  .text-blue-600:not([class*="dark:text-"]),
+  .text-sky-600:not([class*="dark:text-"]),
+  .text-sky-900:not([class*="dark:text-"]) { color: #fd8539; }
+
+  /* Bordas */
+  .border-slate-200:not([class*="dark:border-"]),
+  .border-slate-200\/80:not([class*="dark:border-"]),
+  .border-slate-100:not([class*="dark:border-"]),
+  .border-gray-200:not([class*="dark:border-"]) { border-color: #1e293b; }
+  .border-slate-300:not([class*="dark:border-"]),
+  .border-gray-300:not([class*="dark:border-"]) { border-color: #334155; }
+  .border-sky-100:not([class*="dark:border-"]),
+  .border-sky-200:not([class*="dark:border-"]),
+  .border-sky-200\/70:not([class*="dark:border-"]) { border-color: rgba(253, 133, 57, 0.3); }
+  .border-\[\#0094eb\]:not([class*="dark:border-"]) { border-color: #fd8539; }
+  .divide-slate-100 > :not(:last-child),
+  .divide-slate-200 > :not(:last-child) { border-color: #1e293b; }
+
+  /* Hover */
+  .hover\:bg-slate-50:hover:not([class*="dark:hover:bg-"]),
+  .hover\:bg-slate-100:hover:not([class*="dark:hover:bg-"]),
+  .hover\:bg-slate-200:hover:not([class*="dark:hover:bg-"]) { background-color: #334155; }
+  .hover\:bg-sky-50:hover:not([class*="dark:hover:bg-"]),
+  .hover\:bg-blue-50:hover:not([class*="dark:hover:bg-"]),
+  .hover\:bg-\[\#0094eb\]\/10:hover:not([class*="dark:hover:bg-"]) { background-color: rgba(253, 133, 57, 0.15); }
+  .hover\:bg-\[\#0082d0\]:hover:not([class*="dark:hover:bg-"]),
+  .hover\:bg-\[\#0077e6\]:hover:not([class*="dark:hover:bg-"]),
+  .hover\:bg-\[\#007bc4\]:hover:not([class*="dark:hover:bg-"]) { background-color: #ea7424; }
+  .hover\:text-\[\#0094eb\]:hover:not([class*="dark:hover:text-"]),
+  .hover\:text-blue-600:hover:not([class*="dark:hover:text-"]) { color: #fd8539; }
+  .group:hover .group-hover\:text-\[\#0094eb\] { color: #fd8539; }
+  .hover\:border-\[\#0094eb\]:hover { border-color: #fd8539; }
+  .focus\:border-\[\#0094eb\]:focus { border-color: #fd8539; }
+}
+/* === SLL DARK LAYER (fim) === */

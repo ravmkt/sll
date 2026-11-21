@@ -38,7 +38,7 @@ export default function ThemeToggle() {
       <Sun className="absolute left-[7px] top-[7px] h-3.5 w-3.5 text-slate-400 dark:text-white" />
       <Moon className="absolute right-[7px] top-[7px] h-3.5 w-3.5 text-slate-400 dark:text-white" />
       <span
-        className={`absolute left-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform ${
+        className={`absolute left-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform dark:bg-white ${
           dark ? 'translate-x-7' : 'translate-x-0'
         }`}
       >
