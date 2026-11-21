@@ -39,11 +39,11 @@ const brl = (n: number | null) => Number(n || 0).toLocaleString('pt-BR', { style
 const selectCls = cn(inputCls, '!w-auto !py-2.5 cursor-pointer');
 
 const TONES = {
-  slate: { box: 'bg-slate-100 text-slate-500 dark:bg-slate-800', ring: 'border-slate-400' },
-  emerald: { box: 'bg-emerald-50 text-emerald-500 dark:bg-emerald-950/30', ring: 'border-emerald-400' },
-  rose: { box: 'bg-rose-50 text-rose-500 dark:bg-rose-950/30', ring: 'border-rose-400' },
-  sky: { box: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] dark:bg-[color:var(--sll-b-brand-soft)]', ring: 'border-[color:var(--sll-b-brand)]' },
-  amber: { box: 'bg-amber-50 text-amber-500 dark:bg-amber-950/30', ring: 'border-amber-400' },
+  slate: { box: 'bg-slate-100 text-slate-500 dark:bg-slate-800' },
+  emerald: { box: 'bg-emerald-50 text-emerald-500 dark:bg-emerald-950/30' },
+  rose: { box: 'bg-rose-50 text-rose-500 dark:bg-rose-950/30' },
+  sky: { box: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] dark:bg-[color:var(--sll-b-brand-soft)]' },
+  amber: { box: 'bg-amber-50 text-amber-500 dark:bg-amber-950/30' },
 } as const;
 
 function MetricCard({ icon: Icon, label, value, tone, active, loading, onClick }: {
@@ -56,7 +56,7 @@ function MetricCard({ icon: Icon, label, value, tone, active, loading, onClick }
       title="Clique para filtrar a lista"
       className={cn(
         'flex cursor-pointer items-center gap-4 rounded-2xl border bg-white p-5 text-left transition hover:shadow-md dark:bg-[#1a1f2c]',
-        active ? cn('border-2', TONES[tone].ring) : 'border-slate-200 dark:border-slate-800',
+        active ? 'border-2 border-[color:var(--sll-b-brand)]' : 'border-slate-200 dark:border-slate-800',
       )}
     >
       <span className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-xl', TONES[tone].box)}><Icon size={22} /></span>
