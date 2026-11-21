@@ -210,13 +210,13 @@ export default function StoriesTab() {
             <button
               key={status}
               onClick={() => setStatusFiltro(status)}
-              className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                 statusFiltro === status
-                  ? 'bg-slate-900 text-white'
+                  ? status === 'ATIVO' ? 'bg-emerald-500 text-white shadow-sm' : status === 'INATIVO' ? 'bg-red-500 text-white shadow-sm' : 'bg-[#0094eb] text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              {status}
+              {status === 'TODOS' ? 'Todos' : status === 'ATIVO' ? 'Ativo' : 'Inativo'}
             </button>
           ))}
         </div>
