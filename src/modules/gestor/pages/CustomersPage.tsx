@@ -7,6 +7,7 @@ import type { SllColumn } from '@/components/sll/SllTable';
 import { sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
 import { exportCustomers } from '../services/clientes-export';
 import CustomerDialog from '../components/CustomerDialog';
+import YampiHistoryImport from '../components/YampiHistoryImport';
 import { PAGE_SIZE, brl, fmtDate, listCustomers, maskDoc } from '../services/clientes';
 import type { CustomerRow, SortKey } from '../services/clientes';
 import { useGestorAccess } from '../hooks/useGestorAccess';
@@ -116,6 +117,8 @@ export default function CustomersPage() {
         )}
             </div>
       </div>
+
+      {storeId && allow('clientes', 'editar') && <YampiHistoryImport storeId={storeId} onDone={() => void load()} />}
 
       <SllFilterBar>
         <SllSearch value={search} onChange={setSearch} placeholder="Nome, e-mail, telefone ou documento..." />
