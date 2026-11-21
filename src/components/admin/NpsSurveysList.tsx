@@ -70,7 +70,7 @@ export default function NpsSurveysList() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-sm font-bold text-slate-100">Pesquisas NPS</h4>
         <button type="button" onClick={() => setEditing({ s: null })}
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#0094eb] px-3 py-2 text-xs font-black text-white hover:bg-[#0082d1]">
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[color:var(--sll-b-brand)] px-3 py-2 text-xs font-black text-white hover:bg-[#0082d1]">
           <Plus className="h-4 w-4" /> Nova pesquisa
         </button>
       </div>

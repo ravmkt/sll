@@ -28,7 +28,7 @@ function Row({ label, url }: { label: string; url: string | null }) {
           <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-md bg-white/10 px-2.5 py-1.5 text-xs font-bold text-slate-100 hover:bg-white/20">
             <ExternalLink size={13} /> Abrir
           </a>
-          <button type="button" onClick={copy} className="flex cursor-pointer items-center gap-1 rounded-md bg-[#0094eb] px-2.5 py-1.5 text-xs font-bold text-white hover:bg-[#007fcc]">
+          <button type="button" onClick={copy} className="flex cursor-pointer items-center gap-1 rounded-md bg-[color:var(--sll-b-brand)] px-2.5 py-1.5 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]">
             <Copy size={13} /> Copiar link
           </button>
         </div>

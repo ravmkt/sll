@@ -39,7 +39,7 @@ const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 
 const brl = (n: number) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString('pt-BR') : '—');
-const inputCls = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[#0094eb]';
+const inputCls = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[color:var(--sll-b-brand)]';
 const labelCls = 'mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500';
 
 export default function SaquesTab() {
@@ -212,7 +212,7 @@ export default function SaquesTab() {
               <input type="number" min={0} step="0.01" value={cfg.first_payment_bonus} onChange={(e) => setCfg({ ...cfg, first_payment_bonus: Number(e.target.value) })} className={inputCls} />
             </div>
             <div className="flex items-end">
-              <button type="button" disabled={savingCfg} onClick={saveCfg} className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-bold text-white hover:bg-[#007fcc] disabled:opacity-60">
+              <button type="button" disabled={savingCfg} onClick={saveCfg} className="w-full cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-60">
                 {savingCfg ? 'Salvando...' : 'Salvar regras'}
               </button>
             </div>
@@ -228,7 +228,7 @@ export default function SaquesTab() {
             type="button"
             onClick={() => setFilter(f.key)}
             className={`cursor-pointer rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors ${
-              filter === f.key ? 'bg-[#0094eb] text-white' : 'bg-white/5 text-slate-400 hover:text-white'
+              filter === f.key ? 'bg-[color:var(--sll-b-brand)] text-white' : 'bg-white/5 text-slate-400 hover:text-white'
             }`}
           >
             {f.label}
@@ -283,13 +283,13 @@ export default function SaquesTab() {
                   {r.processed_at && <p className="mt-1 text-xs text-slate-500">{fmt(r.processed_at)}</p>}
                   {r.admin_notes && <p className="mt-1 max-w-[220px] text-xs text-slate-400">{r.admin_notes}</p>}
                   {r.proof_url && (
-                    <button type="button" onClick={() => openProof(r.proof_url as string)} className="mt-1 block cursor-pointer text-xs text-[#0094eb] hover:underline">Ver comprovante</button>
+                    <button type="button" onClick={() => openProof(r.proof_url as string)} className="mt-1 block cursor-pointer text-xs text-[color:var(--sll-b-brand)] hover:underline">Ver comprovante</button>
                   )}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
                     {r.status === 'pending' && (
-                      <button type="button" onClick={() => openModal(r, 'approve')} className="cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#007fcc]">Aprovar</button>
+                      <button type="button" onClick={() => openModal(r, 'approve')} className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-3 py-1.5 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]">Aprovar</button>
                     )}
                     {(r.status === 'pending' || r.status === 'approved') && (
                       <button type="button" onClick={() => openModal(r, 'pay')} className="cursor-pointer rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-500">Pagar</button>
@@ -321,7 +321,7 @@ export default function SaquesTab() {
                   type="file"
                   accept="application/pdf,image/png,image/jpeg,image/webp"
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  className="block w-full text-sm text-slate-300 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-[#0094eb] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white"
+                  className="block w-full text-sm text-slate-300 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-[color:var(--sll-b-brand)] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white"
                 />
                 {file && <p className="mt-1 text-xs text-slate-500">{file.name}</p>}
               </div>
@@ -340,7 +340,7 @@ export default function SaquesTab() {
 
             <div className="flex justify-end gap-2">
               <button type="button" disabled={busy} onClick={() => setModal(null)} className="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:text-white">Cancelar</button>
-              <button type="button" disabled={busy} onClick={submit} className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-bold text-white hover:bg-[#007fcc] disabled:opacity-60">
+              <button type="button" disabled={busy} onClick={submit} className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-60">
                 {busy ? 'Processando...' : 'Confirmar'}
               </button>
             </div>

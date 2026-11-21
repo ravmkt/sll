@@ -56,7 +56,7 @@ export function TopBar({ actions }: { actions?: ReactNode; [k: string]: unknown 
         {logo && !logoFailed ? (
           <img src={logo} alt={storeName} className="h-9 w-9 shrink-0 rounded-lg object-contain" onError={() => setLogoFailed(true)} />
         ) : (
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#0094eb] text-xs font-black text-white">{initials(storeName)}</span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color:var(--sll-b-brand)] text-xs font-black text-white">{initials(storeName)}</span>
         )}
         <span className="truncate text-sm font-bold text-slate-800">{storeName}</span>
       </Link>

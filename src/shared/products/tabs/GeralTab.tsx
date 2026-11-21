@@ -101,7 +101,7 @@ export default function GeralTab({ storeId, product, onChange }: Props) {
         {product.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-1">
             {product.tags.map((t) => (
-              <span key={t} className="inline-flex items-center gap-1 rounded-full bg-[#0094eb] px-3 py-1 text-xs font-bold text-white">
+              <span key={t} className="inline-flex items-center gap-1 rounded-full bg-[color:var(--sll-b-brand)] px-3 py-1 text-xs font-bold text-white">
                 {t}
                 <button type="button" onClick={() => removeTag(t)} className="cursor-pointer opacity-80 hover:opacity-100" title="Remover"><X size={12} /></button>
               </span>
@@ -115,7 +115,7 @@ export default function GeralTab({ storeId, product, onChange }: Props) {
               {suggestions.map((t) => (
                 <button
                   key={t} type="button" onClick={() => onChange({ tags: [...product.tags, t] })}
-                  className="cursor-pointer rounded-full bg-[#0094eb]/10 px-3 py-1 text-xs font-semibold text-[#0094eb] transition hover:bg-[#0094eb]/20"
+                  className="cursor-pointer rounded-full bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[color:var(--sll-b-brand)] transition hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]"
                 >
                   {t}
                 </button>

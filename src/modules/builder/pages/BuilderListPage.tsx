@@ -49,8 +49,8 @@ export default function BuilderListPage() {
     <div className="space-y-6 font-sans text-slate-800">
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0094eb]/10">
-            <LayoutTemplate className="h-7 w-7 text-[#0094eb]" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]">
+            <LayoutTemplate className="h-7 w-7 text-[color:var(--sll-b-brand)]" />
           </div>
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Landing Pages e Páginas de Produto</h1>
@@ -60,7 +60,7 @@ export default function BuilderListPage() {
         <div className="flex gap-2">
           <button
             onClick={() => handleCreate('landing')}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#0083d1]"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#0083d1]"
           >
             <Plus className="h-4 w-4" /> Nova Landing
           </button>
@@ -84,8 +84,8 @@ export default function BuilderListPage() {
             className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
           >
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10">
-                {p.type === 'landing' ? <LayoutTemplate className="h-5 w-5 text-[#0094eb]" /> : <Package className="h-5 w-5 text-[#0094eb]" />}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]">
+                {p.type === 'landing' ? <LayoutTemplate className="h-5 w-5 text-[color:var(--sll-b-brand)]" /> : <Package className="h-5 w-5 text-[color:var(--sll-b-brand)]" />}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">

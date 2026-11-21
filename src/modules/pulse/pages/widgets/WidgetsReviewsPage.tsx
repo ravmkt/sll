@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Pencil, Plus, Star, Trash2, X } from 'lucide-react';
 import ReviewModal from '../../components/widgets/ReviewModal';
 import ReviewWidgetModal from '../../components/widgets/ReviewWidgetModal';
@@ -60,13 +60,13 @@ export default function WidgetsReviewsPage({ ctx }: { ctx: WidgetsCtx }) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <Star className="h-6 w-6 text-[#0094EB]" />
+            <Star className="h-6 w-6 text-[color:var(--sll-b-brand)]" />
             <h1 className="text-2xl font-extrabold text-slate-900">Reviews</h1>
           </div>
           <p className="mt-1 text-sm text-slate-500">Avaliações de clientes na página de produto e na vitrine da loja.</p>
         </div>
         <button type="button" onClick={() => (tab === 'widgets' ? setEditW('new') : setEditR('new'))}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white">
+          className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white">
           <Plus className="h-4 w-4" /> {tab === 'widgets' ? 'Criar widget' : 'Nova avaliação'}
         </button>
       </div>
@@ -108,7 +108,7 @@ export default function WidgetsReviewsPage({ ctx }: { ctx: WidgetsCtx }) {
                 </button>
               </span>
               <span className="flex justify-end gap-3 text-slate-400">
-                <button type="button" title="Editar" onClick={() => setEditW(w)} className="hover:text-[#0094EB]"><Pencil className="h-4 w-4" /></button>
+                <button type="button" title="Editar" onClick={() => setEditW(w)} className="hover:text-[color:var(--sll-b-brand)]"><Pencil className="h-4 w-4" /></button>
                 <button type="button" title="Excluir" onClick={() => removeW(w)} className="hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
               </span>
             </div>
@@ -143,7 +143,7 @@ export default function WidgetsReviewsPage({ ctx }: { ctx: WidgetsCtx }) {
                 {r.status !== 'rejected' && (
                   <button type="button" title="Rejeitar" onClick={() => void run(() => svc.setStatus(ctx.storeId, r.id, 'rejected'))} className="hover:text-amber-500"><X className="h-4 w-4" /></button>
                 )}
-                <button type="button" title="Editar" onClick={() => setEditR(r)} className="hover:text-[#0094EB]"><Pencil className="h-4 w-4" /></button>
+                <button type="button" title="Editar" onClick={() => setEditR(r)} className="hover:text-[color:var(--sll-b-brand)]"><Pencil className="h-4 w-4" /></button>
                 <button type="button" title="Excluir" onClick={() => removeR(r)} className="hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
               </span>
             </div>

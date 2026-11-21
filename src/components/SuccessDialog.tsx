@@ -34,7 +34,7 @@ const SuccessDialog: React.FC<SuccessDialogProps> = ({
       <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm animate-fade-in" />
       
       {/* Card de Sucesso Centralizado */}
-      <div className="relative w-full max-w-xs bg-white dark:bg-[#111524] rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 p-8 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200 transition-colors duration-300">
+      <div className="relative w-full max-w-xs bg-white dark:bg-[#111524] rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] p-8 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200 transition-colors duration-300">
         <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-inner">
           <CheckCircle2 className="w-10 h-10 text-emerald-500" />
         </div>

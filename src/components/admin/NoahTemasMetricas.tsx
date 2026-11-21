@@ -90,7 +90,7 @@ export default function NoahTemasMetricas() {
                     <b>{nf(t.qtd)} ({total > 0 ? Math.round((Number(t.qtd) / total) * 100) : 0}%)</b>
                   </div>
                   <div className="h-2 rounded-full bg-slate-800">
-                    <div className="h-2 rounded-full bg-[#0094eb]" style={{ width: `${Math.max(3, (Number(t.qtd) / maxTema) * 100)}%` }} />
+                    <div className="h-2 rounded-full bg-[color:var(--sll-b-brand)]" style={{ width: `${Math.max(3, (Number(t.qtd) / maxTema) * 100)}%` }} />
                   </div>
                 </div>
               ))}

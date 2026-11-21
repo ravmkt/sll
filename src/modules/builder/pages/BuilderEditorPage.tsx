@@ -51,7 +51,7 @@ function PaletteTile({ item }: { item: PaletteItem }) {
       {...attributes}
       onClick={() => add(item.type, undefined, item.cols)}
       title={`${item.label} — clique ou arraste`}
-      className={`flex cursor-grab flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-3 text-[11px] font-semibold text-slate-600 transition-colors hover:border-[#0094eb] hover:text-[#0094eb] ${isDragging ? 'opacity-40' : ''}`}
+      className={`flex cursor-grab flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-3 text-[11px] font-semibold text-slate-600 transition-colors hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)] ${isDragging ? 'opacity-40' : ''}`}
     >
       <Icon className="h-5 w-5" />
       <span className="leading-tight">{item.label}</span>
@@ -64,7 +64,7 @@ function ColumnDrop({ parentId, index, items }: { parentId: string; index: numbe
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[96px] min-w-0 rounded-lg border-2 border-dashed p-1 transition-colors ${isOver ? 'border-[#0094eb] bg-[#0094eb]/5' : 'border-slate-300'}`}
+      className={`min-h-[96px] min-w-0 rounded-lg border-2 border-dashed p-1 transition-colors ${isOver ? 'border-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)]' : 'border-slate-300'}`}
     >
       <SortableContext items={items.map((b) => b.id)} strategy={verticalListSortingStrategy}>
         {items.map((b) => (
@@ -113,7 +113,7 @@ function CanvasBlock({ block }: { block: Block }) {
         e.stopPropagation();
         select(block.id);
       }}
-      className={`group/b relative ${selected ? 'ring-2 ring-[#0094eb]' : 'hover:ring-1 hover:ring-slate-300'}`}
+      className={`group/b relative ${selected ? 'ring-2 ring-[color:var(--sll-b-brand)]' : 'hover:ring-1 hover:ring-slate-300'}`}
     >
       <div className={`absolute right-2 top-2 z-20 gap-1 ${selected ? 'flex' : 'hidden group-hover/b:flex'}`}>
         <button
@@ -129,7 +129,7 @@ function CanvasBlock({ block }: { block: Block }) {
           type="button"
           title="Duplicar"
           onClick={(e) => { e.stopPropagation(); duplicate(block.id); }}
-          className="rounded-md bg-[#0094eb] p-1.5 text-white"
+          className="rounded-md bg-[color:var(--sll-b-brand)] p-1.5 text-white"
         >
           <Copy className="h-3.5 w-3.5" />
         </button>
@@ -215,7 +215,7 @@ function PropertiesPanel() {
               type="button"
               onClick={() => setCols(block.id, c)}
               className={`rounded-lg border py-2 text-sm font-bold transition-colors ${
-                n === c ? 'border-[#0094eb] bg-[#0094eb] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0094eb]'
+                n === c ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand)] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[color:var(--sll-b-brand)]'
               }`}
             >
               {c}
@@ -239,11 +239,11 @@ function PropertiesPanel() {
             type="button"
             title={hidden ? 'Mostrar bloco' : 'Ocultar bloco'}
             onClick={() => update(block.id, 'hidden', hidden ? '' : '1')}
-            className={`rounded-lg border p-1.5 ${hidden ? 'border-[#0094eb] text-[#0094eb]' : 'border-slate-200 text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]'}`}
+            className={`rounded-lg border p-1.5 ${hidden ? 'border-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 text-slate-600 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]'}`}
           >
             {hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
-          <button type="button" title="Duplicar" onClick={() => duplicate(block.id)} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]">
+          <button type="button" title="Duplicar" onClick={() => duplicate(block.id)} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]">
             <Copy className="h-4 w-4" />
           </button>
           <button type="button" title="Excluir" onClick={() => remove(block.id)} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:border-red-500 hover:text-red-600">
@@ -261,7 +261,7 @@ function PropertiesPanel() {
           <button
             type="button"
             onClick={() => setPick(true)}
-            className="w-full rounded-xl bg-[#0094eb] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#007bc4]"
+            className="w-full rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]"
           >
             Escolher produto da loja
           </button>
@@ -373,18 +373,18 @@ export default function BuilderEditorPage() {
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
-        <Link to="/dashboard/modules/builder/paginas" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-[#0094eb]">
+        <Link to="/dashboard/modules/builder/paginas" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-[color:var(--sll-b-brand)]">
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="flex-1 rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-800 outline-none focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20"
+          className="flex-1 rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]"
         />
         <span className="text-sm text-slate-500">{status}</span>
-        <button type="button" onClick={() => useBuilder.getState().select(null)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]">{'Config. da p\u00e1gina'}</button>
+        <button type="button" onClick={() => useBuilder.getState().select(null)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]">{'Config. da p\u00e1gina'}</button>
             <PublishBar id={id!} title={title} />
-        <button type="button" onClick={handleSave} className="rounded-xl bg-[#0094eb] px-4 py-2 text-sm font-bold text-white hover:bg-[#007bc4]">
+        <button type="button" onClick={handleSave} className="rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]">
           Salvar
         </button>
       </header>
@@ -421,7 +421,7 @@ export default function BuilderEditorPage() {
             </div>          </div>
         <DragOverlay dropAnimation={null}>
           {overlay && (
-            <div className="rounded-xl border border-[#0094eb] bg-white px-4 py-2 text-xs font-bold text-[#0094eb] shadow-xl">
+            <div className="rounded-xl border border-[color:var(--sll-b-brand)] bg-white px-4 py-2 text-xs font-bold text-[color:var(--sll-b-brand)] shadow-xl">
               {overlay}
             </div>
           )}

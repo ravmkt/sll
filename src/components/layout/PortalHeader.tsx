@@ -54,7 +54,7 @@ export default function PortalHeader() {
         {logo && !imgFailed ? (
           <img src={logo} alt={storeName} className="h-14 w-14 shrink-0 rounded-2xl border border-slate-200 bg-white object-contain p-1" onError={() => setImgFailed(true)} />
         ) : (
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0094eb] to-[#0073c7] text-lg font-black text-white shadow-sm">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[color:var(--sll-b-brand)] to-[#0073c7] text-lg font-black text-white shadow-sm">
             {initials(storeName)}
           </div>
         )}

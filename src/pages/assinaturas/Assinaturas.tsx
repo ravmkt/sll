@@ -55,7 +55,7 @@ export default function Assinaturas() {
     return (
       <DashboardLayout>
         <div className="flex min-h-[50vh] items-center justify-center">
-          <div className="w-8 h-8 border-4 border-[#0094eb]/20 border-t-[#0094eb] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] border-t-[#0094eb] rounded-full animate-spin" />
         </div>
       </DashboardLayout>
     );
@@ -79,7 +79,7 @@ export default function Assinaturas() {
           </div>
           <Link
             to="/dashboard/planos"
-            className="inline-flex items-center gap-2 rounded-2xl bg-[#0091ff] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg hover:bg-[#0070f3] transition"
+            className="inline-flex items-center gap-2 rounded-2xl bg-[color:var(--sll-b-brand)] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg hover:bg-[color:var(--sll-b-brand-hover)] transition"
           >
             <PlusCircle size={16} />
             {"Assinar novo m\u00f3dulo"}
@@ -89,7 +89,7 @@ export default function Assinaturas() {
         {subscriptions.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center">
             <p className="text-sm font-bold text-slate-500">{"Voc\u00ea ainda n\u00e3o tem nenhuma assinatura ativa."}</p>
-            <Link to="/dashboard/planos" className="mt-3 inline-block text-sm font-black text-[#0091ff] hover:underline">
+            <Link to="/dashboard/planos" className="mt-3 inline-block text-sm font-black text-[color:var(--sll-b-brand)] hover:underline">
               {"Ver m\u00f3dulos dispon\u00edveis \u2192"}
             </Link>
           </div>

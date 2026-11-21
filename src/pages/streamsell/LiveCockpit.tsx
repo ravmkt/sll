@@ -413,9 +413,9 @@ export default function LiveEstudio() {
               const question = !m.is_from_store && QUESTION.test(m.message);
               return (
                 <div key={m.id} className={`group relative max-w-[92%] rounded-xl px-3 py-2 text-[13px] break-words ${
-                  m.is_from_store ? 'ml-auto bg-sky-600 text-white' : question ? 'bg-amber-50 border border-amber-300 text-slate-800' : 'bg-slate-100 text-slate-800'
+                  m.is_from_store ? 'ml-auto bg-[color:var(--sll-b-brand)] text-white' : question ? 'bg-amber-50 border border-amber-300 text-slate-800' : 'bg-slate-100 text-slate-800'
                 }`}>
-                  <b className={`block text-[10px] ${m.is_from_store ? 'text-sky-100' : 'text-slate-500'}`}>{m.author_name || 'Visitante'}{question ? ' \u00b7 d\u00favida' : ''}</b>
+                  <b className={`block text-[10px] ${m.is_from_store ? 'text-[color:var(--sll-b-brand)]' : 'text-slate-500'}`}>{m.author_name || 'Visitante'}{question ? ' \u00b7 d\u00favida' : ''}</b>
                   {m.message.split('[[cadastro]]').join(' (link de cadastro)')}
                   <span className="absolute -top-2 right-1 hidden group-hover:flex gap-1 rounded-md bg-white border border-slate-200 shadow px-1 py-0.5">
                     <button type="button" title="Fixar no topo" onClick={() => setPinId(m.id)} className="text-slate-500 hover:text-amber-600"><Pin className="w-3.5 h-3.5" /></button>
@@ -468,7 +468,7 @@ export default function LiveEstudio() {
           </div>
           <form onSubmit={send} className="flex gap-2 pt-2">
             <input value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder="Responder como loja..." className={`${input} flex-1 !py-2 !text-sm`} />
-            <button type="submit" disabled={sending || !text.trim()} className="px-4 rounded-lg bg-sky-600 text-white disabled:opacity-60">
+            <button type="submit" disabled={sending || !text.trim()} className="px-4 rounded-lg bg-[color:var(--sll-b-brand)] text-white disabled:opacity-60">
               {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>
           </form>

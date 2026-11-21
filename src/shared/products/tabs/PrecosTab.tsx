@@ -115,8 +115,8 @@ export default function PrecosTab({ storeId, product, prices, onProduct, onPrice
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
       </section>
 
-      <div className="flex items-start gap-3 rounded-2xl border border-dashed border-[#0094eb]/40 bg-[#0094eb]/5 p-4">
-        <Sparkles size={18} className="mt-0.5 shrink-0 text-[#0094eb]" />
+      <div className="flex items-start gap-3 rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--sll-b-brand)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)] p-4">
+        <Sparkles size={18} className="mt-0.5 shrink-0 text-[color:var(--sll-b-brand)]" />
         <p className="text-xs text-slate-600 dark:text-slate-300">
           <strong>Precificação inteligente (módulo Precifica):</strong> sugestão de preço com custos, taxas, impostos e concorrência. Em breve.
         </p>

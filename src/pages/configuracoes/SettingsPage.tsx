@@ -281,16 +281,16 @@ const SettingsPage: React.FC = () => {
     return (
       <DashboardLayout>
         <div className="flex h-[200px] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#0094eb]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[color:var(--sll-b-brand)]" />
         </div>
       </DashboardLayout>
     );
   }
 
-  const inputCls = 'w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0094eb]';
+  const inputCls = 'w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111524] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[color:var(--sll-b-brand)]';
   const labelCls = 'text-[10px] font-black uppercase tracking-widest text-slate-400';
   const cardCls = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1f35]/80 shadow-sm p-6 space-y-5 h-full';
-  const saveBtnCls = 'bg-[#0094eb] hover:bg-[#0082cf] text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0';
+  const saveBtnCls = 'bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0';
   const previewMessage = (form.whatsapp_message_template || '').replace(/\{\{\s*story_title\s*\}\}/g, 'Vestido Floral Midi');
 
   const Switch = ({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) => (
@@ -300,7 +300,7 @@ const SettingsPage: React.FC = () => {
       aria-checked={on}
       aria-label={label}
       onClick={onToggle}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer ${on ? 'bg-[#0094eb]' : 'bg-slate-300 dark:bg-slate-700'}`}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer ${on ? 'bg-[color:var(--sll-b-brand)]' : 'bg-slate-300 dark:bg-slate-700'}`}
     >
       <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
     </button>
@@ -368,7 +368,7 @@ const SettingsPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => sllLogoInputRef.current?.click()}
-                      className="px-4 py-2 rounded-xl bg-[#0094eb] hover:bg-[#0082cf] text-white text-xs font-black cursor-pointer"
+                      className="px-4 py-2 rounded-xl bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white text-xs font-black cursor-pointer"
                     >
                       {logoPreview ? 'Trocar logo' : 'Enviar logo'}
                     </button>

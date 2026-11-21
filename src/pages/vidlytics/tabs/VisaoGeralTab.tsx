@@ -111,8 +111,8 @@ function Delta({ cur, prev }: { cur: number; prev: number }) {
 function CardTitle({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="w-8 h-8 rounded-lg bg-[#0094eb]/10 flex items-center justify-center shrink-0">
-        <Icon className="w-4 h-4 text-[#0094eb]" />
+      <div className="w-8 h-8 rounded-lg bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] flex items-center justify-center shrink-0">
+        <Icon className="w-4 h-4 text-[color:var(--sll-b-brand)]" />
       </div>
       <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">{children}</h3>
     </div>
@@ -419,7 +419,7 @@ export default function VisaoGeralTab() {
                   type="button"
                   onClick={() => setPeriodo(p.key)}
                   className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                    periodo === p.key ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-500 hover:text-[#0094eb]'
+                    periodo === p.key ? 'bg-[color:var(--sll-b-brand)] text-white shadow-sm' : 'text-slate-500 hover:text-[color:var(--sll-b-brand)]'
                   }`}
                 >
                   {p.label}
@@ -469,15 +469,15 @@ export default function VisaoGeralTab() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase text-slate-400">Faturamento Indicações</span>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-[#0094eb]">
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]">
                   Comissões
                 </span>
               </div>
               <p className="text-2xl font-black text-slate-800">{formatCurrency(affiliateSummary?.available_balance || 0)}</p>
-              <button type="button" onClick={(e) => { e.stopPropagation(); navigate('/dashboard/afiliados'); }} className="mt-1 inline-flex items-center px-3 py-1 rounded-lg bg-[#0094eb] hover:bg-[#007acc] text-white text-[11px] font-bold transition-colors cursor-pointer">Acessar o Clube SLL</button>
+              <button type="button" onClick={(e) => { e.stopPropagation(); navigate('/dashboard/afiliados'); }} className="mt-1 inline-flex items-center px-3 py-1 rounded-lg bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white text-[11px] font-bold transition-colors cursor-pointer">Acessar o Clube SLL</button>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-              <DollarSign className="w-6 h-6 text-[#0094eb]" />
+            <div className="w-12 h-12 rounded-2xl bg-[color:var(--sll-b-brand-soft)] border border-[color:var(--sll-b-brand-border)] flex items-center justify-center flex-shrink-0">
+              <DollarSign className="w-6 h-6 text-[color:var(--sll-b-brand)]" />
             </div>
           </div>
 
@@ -496,7 +496,7 @@ export default function VisaoGeralTab() {
           <div data-card-tip="Visualizações dos seus vídeos no mês atual em relação à cota do seu plano." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[11px] font-bold uppercase">Visualizações</span>
-              <Eye className="w-4 h-4 text-[#0094eb]" />
+              <Eye className="w-4 h-4 text-[color:var(--sll-b-brand)]" />
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-black text-slate-800">{fmtInt(playsUsed)}</span>
@@ -512,7 +512,7 @@ export default function VisaoGeralTab() {
           <div data-card-tip="Espaço ocupado pelos vídeos hospedados na sua conta em relação ao limite do plano." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[11px] font-bold uppercase">Armazenamento</span>
-              <HardDrive className="w-4 h-4 text-[#0094eb]" />
+              <HardDrive className="w-4 h-4 text-[color:var(--sll-b-brand)]" />
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-black text-slate-800">{fmtBytes(storageBytes ?? 0)}</span>
@@ -528,7 +528,7 @@ export default function VisaoGeralTab() {
           <div data-card-tip="Páginas diferentes da sua loja com vídeo exibido nos últimos 90 dias, em relação ao limite de páginas do seu plano." className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[11px] font-bold uppercase">Páginas com Vídeos</span>
-              <FileText className="w-4 h-4 text-[#0094eb]" />
+              <FileText className="w-4 h-4 text-[color:var(--sll-b-brand)]" />
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-black text-slate-800">{fmtInt(pageCount ?? 0)}</span>
@@ -544,7 +544,7 @@ export default function VisaoGeralTab() {
           <div data-card-tip="Situação da sua assinatura e data da próxima renovação." className={cycle?.status === 'Em atraso' ? "bg-white rounded-2xl border border-red-300 p-5 shadow-sm hover:border-red-400 transition-all space-y-3" : "bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:border-slate-300 transition-all space-y-3"}>
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[11px] font-bold uppercase">Ciclo da Conta</span>
-              <Clock className="w-4 h-4 text-[#0094eb]" />
+              <Clock className="w-4 h-4 text-[color:var(--sll-b-brand)]" />
             </div>
             <div>
               <span className="text-[10px] text-slate-400 uppercase font-bold block">Status</span>
@@ -567,7 +567,7 @@ export default function VisaoGeralTab() {
             <div data-tour="vg-desempenho" className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle icon={Activity}>Desempenho dos vídeos</CardTitle>
-                <button type="button" onClick={() => goTab('resultados', 'videos')} className="text-[11px] font-semibold text-[#0094eb] hover:underline cursor-pointer whitespace-nowrap">
+                <button type="button" onClick={() => goTab('resultados', 'videos')} className="text-[11px] font-semibold text-[color:var(--sll-b-brand)] hover:underline cursor-pointer whitespace-nowrap">
                   Ver mais métricas →
                 </button>
               </div>
@@ -591,7 +591,7 @@ export default function VisaoGeralTab() {
 
               <div data-tour="vg-top" className="space-y-2 border-t border-slate-100 pt-4">
                 <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  <Trophy className="w-4 h-4 text-[#0094eb]" /> Vídeos mais assistidos
+                  <Trophy className="w-4 h-4 text-[color:var(--sll-b-brand)]" /> Vídeos mais assistidos
                 </p>
                 {top3.length === 0 ? (
                   <p className="text-xs text-slate-500">{perfLoading ? 'Carregando...' : 'Nenhuma visualização no período selecionado.'}</p>
@@ -636,7 +636,7 @@ export default function VisaoGeralTab() {
               <button
                 type="button"
                 onClick={() => navigate('/dashboard/insights-noah')}
-                className="self-end text-xs font-bold text-[#0094eb] hover:underline cursor-pointer"
+                className="self-end text-xs font-bold text-[color:var(--sll-b-brand)] hover:underline cursor-pointer"
               >
                 Ver mais dicas →
               </button>

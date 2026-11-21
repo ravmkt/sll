@@ -11,7 +11,7 @@ import { brl } from '@/components/planos/planosShared';
 
 const sb: any = supabase;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const IN = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-[#0094eb]';
+const IN = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-[color:var(--sll-b-brand)]';
 const LB = 'mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500';
 const BASE_CYCLES: { key: Cycle; label: string }[] = [
   { key: 'monthly', label: 'Mensal' },
@@ -248,19 +248,19 @@ export default function CheckoutPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-slate-50 p-6 text-center">
         <p className="text-sm font-semibold text-slate-700">Plano não encontrado ou indisponível.</p>
-        <Link to="/dashboard/planos" className="rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-bold text-white">Ver planos</Link>
+        <Link to="/dashboard/planos" className="rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white">Ver planos</Link>
       </div>
     );
   }
 
   const card1 = 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm';
-  const tab = (on: boolean) => `flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 px-3 py-2.5 text-sm font-bold transition-colors ${on ? 'border-[#0094eb] bg-[#0094eb]/5 text-[#0094eb]' : 'border-slate-200 text-slate-600 hover:border-slate-300'}`;
+  const tab = (on: boolean) => `flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 px-3 py-2.5 text-sm font-bold transition-colors ${on ? 'border-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 text-slate-600 hover:border-slate-300'}`;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
       <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-8">
         <Link to="/dashboard"><img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="h-8 w-auto object-contain" /></Link>
-        <Link to="/dashboard/planos" className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#0094eb]"><ArrowLeft size={14} /> Voltar aos planos</Link>
+        <Link to="/dashboard/planos" className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[color:var(--sll-b-brand)]"><ArrowLeft size={14} /> Voltar aos planos</Link>
       </header>
 
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[1.4fr_1fr]">
@@ -302,7 +302,7 @@ export default function CheckoutPage() {
             <section className={`${card1} space-y-4 text-center`}>
               <h2 className="text-lg font-black">Pague com Pix para ativar</h2>
               <img src={`data:image/png;base64,${pix.image}`} alt="QR Code Pix" className="mx-auto h-52 w-52" />
-              <button type="button" onClick={copyPix} className="mx-auto flex cursor-pointer items-center gap-2 rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-bold text-white"><Copy size={15} /> Copiar código Pix</button>
+              <button type="button" onClick={copyPix} className="mx-auto flex cursor-pointer items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white"><Copy size={15} /> Copiar código Pix</button>
               <p className="flex items-center justify-center gap-2 text-xs text-slate-500"><Loader2 size={13} className="animate-spin" /> Aguardando a confirmação do pagamento. Esta tela atualiza sozinha.</p>
             </section>
           ) : (
@@ -374,7 +374,7 @@ export default function CheckoutPage() {
             <div className="flex shrink-0 gap-1">
               {mods.map((m) => m.logo_url
                 ? <img key={m.slug} src={m.logo_url} alt={m.name} className="h-9 w-9 rounded-lg object-contain" />
-                : <span key={m.slug} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0094eb]/10 text-sm font-black text-[#0094eb]">{m.name.charAt(0)}</span>)}
+                : <span key={m.slug} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-sm font-black text-[color:var(--sll-b-brand)]">{m.name.charAt(0)}</span>)}
             </div>
             <p className="min-w-0 flex-1 text-sm font-bold leading-tight">{plan.plan_name}</p>
             <p className="text-sm font-black">{brl(planCents)}</p>

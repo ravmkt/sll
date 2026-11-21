@@ -38,7 +38,7 @@ export default function BillingSuccess() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
       <div className="w-full max-w-md space-y-4 rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        {done ? <CheckCircle2 className="mx-auto h-14 w-14 text-emerald-500" /> : <Loader2 className="mx-auto h-12 w-12 animate-spin text-[#0094eb]" />}
+        {done ? <CheckCircle2 className="mx-auto h-14 w-14 text-emerald-500" /> : <Loader2 className="mx-auto h-12 w-12 animate-spin text-[color:var(--sll-b-brand)]" />}
         <h1 className="text-2xl font-black text-slate-900">{done ? 'Pagamento confirmado!' : 'Confirmando seu pagamento...'}</h1>
         <p className="text-sm text-slate-600">
           {done

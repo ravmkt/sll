@@ -73,7 +73,7 @@ export default function CategoryChannelsDialog({ storeId, onChanged, onClose }: 
     <Modal title="Vincular categorias dos canais" onClose={onClose}>
       <div className="space-y-4 p-6">
         {loading ? (
-          <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+          <div className="flex justify-center py-10"><Loader2 className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
         ) : rows.length === 0 ? (
           <p className="py-8 text-center text-sm text-slate-400">Nenhum produto de canal com categoria. Importe produtos da Yampi primeiro.</p>
         ) : (
@@ -82,13 +82,13 @@ export default function CategoryChannelsDialog({ storeId, onChanged, onClose }: 
               {channels.map((c) => (
                 <button
                   key={c} type="button" onClick={() => setChannel(c)}
-                  className={`cursor-pointer rounded-xl border px-4 py-2 text-sm font-semibold ${c === channel ? 'border-[#0094eb] bg-[#0094eb]/10 text-[#0094eb]' : 'border-slate-200 dark:border-slate-700'}`}
+                  className={`cursor-pointer rounded-xl border px-4 py-2 text-sm font-semibold ${c === channel ? 'border-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 dark:border-slate-700'}`}
                 >
                   {channelLabel(c)}
                 </button>
               ))}
-              <button type="button" disabled={busy !== null} onClick={() => void auto()} className="ml-auto inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:border-[#0094eb] disabled:opacity-50 dark:border-slate-700">
-                {busy === 'auto' ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} className="text-[#0094eb]" />}
+              <button type="button" disabled={busy !== null} onClick={() => void auto()} className="ml-auto inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:border-[color:var(--sll-b-brand)] disabled:opacity-50 dark:border-slate-700">
+                {busy === 'auto' ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} className="text-[color:var(--sll-b-brand)]" />}
                 Vincular pelo nome
               </button>
             </div>
@@ -124,7 +124,7 @@ export default function CategoryChannelsDialog({ storeId, onChanged, onClose }: 
                             <option value={NEW}>+ Criar "{r.external_name}" no Gestor</option>
                             {tree.map(({ cat, depth }) => <option key={cat.id} value={cat.id}>{`${'— '.repeat(depth)}${cat.name}`}</option>)}
                           </select>
-                          {busy === r.channel + r.external_name && <Loader2 size={14} className="shrink-0 animate-spin text-[#0094eb]" />}
+                          {busy === r.channel + r.external_name && <Loader2 size={14} className="shrink-0 animate-spin text-[color:var(--sll-b-brand)]" />}
                         </div>
                       </td>
                     </tr>

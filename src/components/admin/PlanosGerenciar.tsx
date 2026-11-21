@@ -164,7 +164,7 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
           {title} <span className="ml-1 font-normal text-slate-500">({sorted.length} {sorted.length === 1 ? 'plano' : 'planos'})</span>
         </h2>
         <button type="button" disabled={!anyDirty || busy !== null} onClick={saveAll}
-          className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">
+          className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">
           Salvar todos
         </button>
       </div>
@@ -254,7 +254,7 @@ export default function PlanosGerenciar({ title, plans, subs, showAnchor, subtit
 
                 <div className="flex gap-2">
                   <button type="button" disabled={!dirty(p) || busy === p.id} onClick={() => saveOne(p)}
-                    className="flex-1 cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">
+                    className="flex-1 cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">
                     {busy === p.id ? 'Salvando…' : 'Salvar'}
                   </button>
                   <button type="button" onClick={() => onEdit(p)} className="cursor-pointer rounded-lg bg-white/5 px-3 py-1.5 text-[13px] font-semibold text-slate-200 hover:bg-white/10">

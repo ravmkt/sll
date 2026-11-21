@@ -54,24 +54,24 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
     <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-[#1a1f2c]">
       {canEdit && (
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => setCreateOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#007bc4]">
+          <button type="button" onClick={() => setCreateOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--sll-b-brand-hover)]">
             <Plus size={16} /> Criar categoria
           </button>
-          <button type="button" onClick={() => setLinkOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold hover:border-[#0094eb] dark:border-slate-700">
-            <Link2 size={16} className="text-[#0094eb]" /> Vincular canais
+          <button type="button" onClick={() => setLinkOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold hover:border-[color:var(--sll-b-brand)] dark:border-slate-700">
+            <Link2 size={16} className="text-[color:var(--sll-b-brand)]" /> Vincular canais
           </button>
         </div>
       )}
 
       {loading || lojaLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
       ) : tree.length === 0 ? (
         <p className="py-10 text-center text-sm text-slate-400">Nenhuma categoria cadastrada.</p>
       ) : (
         <div className="space-y-2">
           {tree.map(({ cat, depth }) => (
             <div key={cat.id} style={{ marginLeft: depth * 24 }} className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 dark:border-slate-800 dark:bg-[#111524]">
-              <Tag size={14} className="shrink-0 text-[#0094eb]" />
+              <Tag size={14} className="shrink-0 text-[color:var(--sll-b-brand)]" />
               {editId === cat.id ? (
                 <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void rename(cat); if (e.key === 'Escape') setEditId(null); }} className={inputCls + ' !py-1.5'} />
               ) : (
@@ -83,11 +83,11 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
               {canEdit && (
                 <div className="ml-auto flex shrink-0 items-center gap-1">
                   {editId === cat.id ? (
-                    <button type="button" disabled={busy} onClick={() => void rename(cat)} className="cursor-pointer rounded-lg p-1.5 text-[#0094eb] hover:bg-[#0094eb]/10"><Check size={15} /></button>
+                    <button type="button" disabled={busy} onClick={() => void rename(cat)} className="cursor-pointer rounded-lg p-1.5 text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]"><Check size={15} /></button>
                   ) : (
                     <button type="button" onClick={() => { setEditId(cat.id); setEditName(cat.name); }} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><Edit3 size={15} /></button>
                   )}
-                  <button type="button" disabled={busy} onClick={() => void save(cat.id, cat.name, parentOf(cat), !cat.active)} className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase ${cat.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
+                  <button type="button" disabled={busy} onClick={() => void save(cat.id, cat.name, parentOf(cat), !cat.active)} className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase ${cat.active ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
                     {cat.active ? 'Ativa' : 'Inativa'}
                   </button>
                 </div>

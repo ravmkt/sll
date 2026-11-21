@@ -236,7 +236,7 @@ function AddonRow({ a, onSaved }: { a: PlanAddon; onSaved: () => void }) {
       <td className="w-32 px-3 py-2"><input value={price} onChange={(e) => setPrice(e.target.value)} className={INPUT} /></td>
       <td className="px-3 py-2"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /></td>
       <td className="px-3 py-2 text-right">
-        <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">{busy ? '…' : 'Salvar'}</button>
+        <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-3 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">{busy ? '…' : 'Salvar'}</button>
       </td>
     </tr>
   );
@@ -380,7 +380,7 @@ export default function PrecosTab({ initialModule }: { initialModule: string | n
         <div className="inline-flex rounded-lg border border-slate-700 bg-[#0b0e1a] p-0.5">
           {TABS.map((t) => (
             <button key={t.id} type="button" onClick={() => { setSub(t.id); setFilter(''); setComboSel(''); }}
-              className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${sub === t.id ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}>
+              className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${sub === t.id ? 'bg-[color:var(--sll-b-brand)] text-white' : 'text-slate-400 hover:text-white'}`}>
               {t.label}
             </button>
           ))}

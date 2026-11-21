@@ -346,7 +346,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#0094EB]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[color:var(--sll-b-brand)]" />
       </div>
     );
   }
@@ -419,7 +419,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
       {/* ── CARD 1: DESIGN E FORMATO ── */}
       <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-xs">
         <div className="mb-6 flex items-center gap-2.5 border-b border-slate-100 pb-4">
-          <Layout className="text-[#0094EB]" size={18} />
+          <Layout className="text-[color:var(--sll-b-brand)]" size={18} />
           <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
             DESIGN E FORMATO
           </h3>
@@ -436,7 +436,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
               value={formData.title}
               onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
               placeholder="Ex: Lançamentos"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-xs font-bold text-slate-800 outline-none transition focus:border-[#0094EB] focus:bg-white"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-xs font-bold text-slate-800 outline-none transition focus:border-[color:var(--sll-b-brand)] focus:bg-white"
             />
           </div>
 
@@ -466,7 +466,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                       isDisabled
                         ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300 opacity-60'
                         : isSelected
-                        ? 'border-[#0094EB] bg-blue-50/30 text-[#0094EB]'
+                        ? 'border-[color:var(--sll-b-brand)] bg-blue-50/30 text-[color:var(--sll-b-brand)]'
                         : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200'
                     }`}
                   >
@@ -493,7 +493,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
             <select
               value={formData.scroll_direction}
               onChange={(e) => setFormData((prev) => ({ ...prev, scroll_direction: e.target.value }))}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)]"
             >
               <option value="horizontal">Horizontal</option>
               <option value="vertical">Vertical</option>
@@ -508,7 +508,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
             <select
               value={formData.appearance_id}
               onChange={(e) => setFormData((prev) => ({ ...prev, appearance_id: e.target.value }))}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)]"
             >
               <option value="">Padrão do Sistema</option>
 
@@ -538,7 +538,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
       <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-xs">
         <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2.5">
-            <Layers className="text-[#0094EB]" size={18} />
+            <Layers className="text-[color:var(--sll-b-brand)]" size={18} />
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
                 CONTEÚDO SELECIONADO
@@ -576,8 +576,8 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                   onDrop={(e) => handleDrop(e, index)}
                   className={`group relative aspect-[9/16] cursor-grab overflow-hidden rounded-2xl border-2 transition active:cursor-grabbing ${
                     isDragging
-                      ? 'scale-105 border-[#0094EB] opacity-70 shadow-2xl'
-                      : 'border-[#0094EB] shadow-md shadow-blue-50'
+                      ? 'scale-105 border-[color:var(--sll-b-brand)] opacity-70 shadow-2xl'
+                      : 'border-[color:var(--sll-b-brand)] shadow-md shadow-blue-50'
                   }`}
                 >
                   {poster ? (
@@ -593,7 +593,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                   )}
 
                   {/* Badge de numeração */}
-                  <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-[#0094EB] px-2 py-0.5 text-[9px] font-black text-white shadow">
+                  <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-[color:var(--sll-b-brand)] px-2 py-0.5 text-[9px] font-black text-white shadow">
                     <GripVertical size={10} />
                     {index + 1}
                   </div>
@@ -638,7 +638,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
       <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-xs">
         <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2.5">
-            <Globe className="text-[#0094EB]" size={18} />
+            <Globe className="text-[color:var(--sll-b-brand)]" size={18} />
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
                 PÁGINAS E LOCAIS DE EXIBIÇÃO
@@ -699,7 +699,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                           condition_type: e.target.value as PageRuleCondition,
                         })
                       }
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)]"
                     >
                       {PAGE_RULE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -722,7 +722,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                           handleUpdatePageLocation(item.id, { value: e.target.value })
                         }
                         placeholder="/colecao, /produto ou trecho"
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)]"
                       />
                     </div>
                   )}
@@ -741,12 +741,12 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                           handleUpdatePageLocation(item.id, { selector: e.target.value })
                         }
                         placeholder=".breadcrumbs, #main-content..."
-                        className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
+                        className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)]"
                       />
                       <button
                         type="button"
                         onClick={() => handleInspectStore(item)}
-                        className="flex items-center gap-1 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-black text-[#0094EB] hover:bg-blue-50 transition"
+                        className="flex items-center gap-1 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-black text-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-soft)] transition"
                       >
                         🎯 Selecionar
                       </button>
@@ -767,7 +767,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                           position: e.target.value as DisplayPosition,
                         })
                       }
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#0094EB]"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)]"
                     >
                       {POSITION_OPTIONS.map((pos) => (
                         <option key={pos.value} value={pos.value}>
@@ -826,7 +826,7 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
                         onClick={() => handleToggleVideo(vid.id)}
                         className={`group relative aspect-[9/16] overflow-hidden rounded-xl border-2 text-left transition ${
                           isSelected
-                            ? 'border-[#0094EB] ring-2 ring-[#0094EB]/30'
+                            ? 'border-[color:var(--sll-b-brand)] ring-2 ring-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)]'
                             : 'border-slate-200 hover:border-slate-300'
                         }`}
                       >
@@ -844,11 +844,11 @@ export default function StoryDetailsView({ storyId, onBack, onSaved }: StoryDeta
 
                         <div
                           className={`absolute inset-0 flex items-center justify-center transition ${
-                            isSelected ? 'bg-[#0094EB]/20' : 'bg-transparent group-hover:bg-black/10'
+                            isSelected ? 'bg-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]' : 'bg-transparent group-hover:bg-black/10'
                           }`}
                         >
                           {isSelected && (
-                            <div className="rounded-full bg-[#0094EB] p-1 text-white shadow">
+                            <div className="rounded-full bg-[color:var(--sll-b-brand)] p-1 text-white shadow">
                               <CheckCircle2 size={16} />
                             </div>
                           )}

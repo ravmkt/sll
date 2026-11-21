@@ -48,14 +48,14 @@ export default function TrialSettingsCard() {
             max={90}
             value={days}
             onChange={(e) => setDays(e.target.value)}
-            className="w-32 rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[#0094eb]"
+            className="w-32 rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[color:var(--sll-b-brand)]"
           />
         </div>
         <button
           type="button"
           disabled={saving || !days}
           onClick={save}
-          className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#0082cf] disabled:opacity-50"
+          className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-50"
         >
           {saving ? 'Salvando...' : 'Salvar'}
         </button>

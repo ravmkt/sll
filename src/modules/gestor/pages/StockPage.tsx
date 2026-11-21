@@ -86,7 +86,7 @@ function StockInput({ value, dirty, onChange }: { value: string; dirty: boolean;
       {...selectOnFocus}
       onKeyDown={nextOnEnter}
       className={cn(
-        'h-9 w-24 rounded-lg border bg-white px-2 text-center font-mono text-sm outline-none focus:border-[#0094eb] dark:bg-[#111524]',
+        'h-9 w-24 rounded-lg border bg-white px-2 text-center font-mono text-sm outline-none focus:border-[color:var(--sll-b-brand)] dark:bg-[#111524]',
         value === '' ? 'border-rose-400' : dirty ? 'border-amber-400' : 'border-slate-200 dark:border-slate-700',
       )}
     />
@@ -447,7 +447,7 @@ export default function StockPage() {
   const collapseAll = () => setOpen(new Set());
   const toggleOpen = (id: string) => setOpen((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
-  const btn = 'inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#0094eb] dark:border-slate-700 dark:bg-[#1a1f2c] dark:text-slate-200';
+  const btn = 'inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[color:var(--sll-b-brand)] dark:border-slate-700 dark:bg-[#1a1f2c] dark:text-slate-200';
   const selCls = cn(inputCls, '!w-auto !py-2.5 cursor-pointer');
   const toggleSel = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
       const allSel = filtered.length > 0 && filtered.every((i) => sel.has(i.product.id));
@@ -475,12 +475,12 @@ export default function StockPage() {
           
         </div>
         <div className="flex flex-wrap gap-2">
-          <>{allow('estoque','exportar') && (<button type="button" onClick={() => void exportXlsx()} className={btn}><Download size={15} className="text-[#0094eb]" /> Baixar planilha</button>)}</>
-          <>{allow('estoque','editar') && (<button type="button" onClick={() => setImpOpen(true)} className={btn}><Upload size={15} className="text-[#0094eb]" /> Importar planilha</button>)}</>
+          <>{allow('estoque','exportar') && (<button type="button" onClick={() => void exportXlsx()} className={btn}><Download size={15} className="text-[color:var(--sll-b-brand)]" /> Baixar planilha</button>)}</>
+          <>{allow('estoque','editar') && (<button type="button" onClick={() => setImpOpen(true)} className={btn}><Upload size={15} className="text-[color:var(--sll-b-brand)]" /> Importar planilha</button>)}</>
           {impOpen && <StockImportModal onClose={() => setImpOpen(false)} onPick={async (file) => { setImpOpen(false); await onFile(file); }} />}
-          <button type="button" onClick={() => setHistoryOpen(true)} className={btn}><History size={15} className="text-[#0094eb]" /> Histórico de movimentações</button>
-          <button type="button" onClick={() => syncSelected()} className={btn}><RefreshCw size={15} className="text-[#0094eb]" /> Sincronizar canais</button>
-              <button type="button" onClick={() => setChannelsOpen(true)} className={btn}><Settings2 size={15} className="text-[#0094eb]" /> Canais e depósitos</button>
+          <button type="button" onClick={() => setHistoryOpen(true)} className={btn}><History size={15} className="text-[color:var(--sll-b-brand)]" /> Histórico de movimentações</button>
+          <button type="button" onClick={() => syncSelected()} className={btn}><RefreshCw size={15} className="text-[color:var(--sll-b-brand)]" /> Sincronizar canais</button>
+              <button type="button" onClick={() => setChannelsOpen(true)} className={btn}><Settings2 size={15} className="text-[color:var(--sll-b-brand)]" /> Canais e depósitos</button>
         </div>
       </div>
 
@@ -509,7 +509,7 @@ export default function StockPage() {
         </div>
 
         {loading || lojaLoading ? (
-          <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+          <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
         ) : !storeId ? (
           <p className="py-12 text-center text-sm text-slate-500">Nenhuma loja vinculada à sua conta.</p>
         ) : (
@@ -546,7 +546,7 @@ export default function StockPage() {
                         <td className="px-4 py-2.5">
                           <div className="flex items-center gap-2">
                             {it.multi ? (
-                              <button type="button" onClick={() => toggleOpen(it.product.id)} title={isOpen ? 'Recolher variações' : 'Ver variações'} className="cursor-pointer rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800">
+                              <button type="button" onClick={() => toggleOpen(it.product.id)} title={isOpen ? 'Recolher variações' : 'Ver variações'} className="cursor-pointer rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800">
                                 {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                               </button>
                             ) : <span className="inline-block w-5" />}
@@ -574,7 +574,7 @@ export default function StockPage() {
                             </td>
                             <td className="px-4 py-2.5 text-right">
                           {allow('estoque','editar') && (
-                                <button type="button" title="Sincronizar este produto com o canal" onClick={() => syncIds([it.product.id])} className="mr-1 cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800">
+                                <button type="button" title="Sincronizar este produto com o canal" onClick={() => syncIds([it.product.id])} className="mr-1 cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800">
                                   <RefreshCw size={15} />
                                 </button>
                               )}
@@ -600,7 +600,7 @@ export default function StockPage() {
                             <div className="inline-flex items-center gap-1.5">
                               <StockInput value={valOf(v)} dirty={isDirty(v)} onChange={(raw) => setVal(v, raw)} />
                               {i === 0 && it.variants.length > 1 ? (
-                                <>{allow('estoque','editar') && (<button type="button" title="Aplicar este valor em todas as variações" onClick={() => replicate(it)} className="cursor-pointer rounded-lg border border-[#0094eb]/30 bg-[#0094eb]/10 p-2 text-[#0094eb] hover:bg-[#0094eb]/20">
+                                <>{allow('estoque','editar') && (<button type="button" title="Aplicar este valor em todas as variações" onClick={() => replicate(it)} className="cursor-pointer rounded-lg border border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] p-2 text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]">
                                   <ArrowDown size={14} />
                                 </button>)}</>
                               ) : <span className="inline-block w-[34px]" />}
@@ -744,11 +744,11 @@ export default function StockPage() {
                   {impResult.failed.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex flex-wrap gap-2">
-                        <button type="button" onClick={() => setShowFailed((v) => !v)} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:border-[#0094eb] dark:border-slate-700">
+                        <button type="button" onClick={() => setShowFailed((v) => !v)} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:border-[color:var(--sll-b-brand)] dark:border-slate-700">
                           {showFailed ? 'Ocultar lista' : `Ver os ${impResult.failed.length} não carregados`}
                         </button>
-                        <button type="button" onClick={() => void exportFailed()} className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:border-[#0094eb] dark:border-slate-700">
-                          <Download size={15} className="text-[#0094eb]" /> Baixar lista com erros
+                        <button type="button" onClick={() => void exportFailed()} className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:border-[color:var(--sll-b-brand)] dark:border-slate-700">
+                          <Download size={15} className="text-[color:var(--sll-b-brand)]" /> Baixar lista com erros
                         </button>
                       </div>
                       {showFailed && (

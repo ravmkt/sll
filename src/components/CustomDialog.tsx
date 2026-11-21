@@ -35,7 +35,7 @@ const CustomDialog: React.FC<CustomDialogProps> = ({
     success: <CheckCircle2 className="w-10 h-10 text-[#10B981]" />,
     error: <XCircle className="w-10 h-10 text-[#EF4444]" />,
     warning: <AlertTriangle className="w-10 h-10 text-[#F59E0B]" />,
-    confirm: <HelpCircle className="w-10 h-10 text-[#0091ff]" />,
+    confirm: <HelpCircle className="w-10 h-10 text-[color:var(--sll-b-brand)]" />,
     form: null
   };
 
@@ -49,16 +49,16 @@ const CustomDialog: React.FC<CustomDialogProps> = ({
       
       {/* Card do Modal Compacto */}
       <div className={cn(
-        "relative w-full bg-white dark:bg-[#111524] border border-slate-200 dark:border-[#ff7a29]/30 rounded-2xl shadow-2xl flex flex-col animate-fade-in overflow-hidden z-[100000] transition-colors duration-300",
+        "relative w-full bg-white dark:bg-[#111524] border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] rounded-2xl shadow-2xl flex flex-col animate-fade-in overflow-hidden z-[100000] transition-colors duration-300",
         maxWidth
       )} style={{ maxHeight: '92vh' }}>
         
         {/* Header Fixo Menor */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-[#ff7a29]/20 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] shrink-0">
           <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">{title}</h3>
           <button
             onClick={onCancel}
-            className="p-1.5 rounded-xl text-slate-400 dark:text-slate-500 hover:text-[#0091ff] dark:hover:text-[#ff7a29] hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+            className="p-1.5 rounded-xl text-slate-400 dark:text-slate-500 hover:text-[color:var(--sll-b-brand)] dark:hover:text-[color:var(--sll-b-brand)] hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -76,12 +76,12 @@ const CustomDialog: React.FC<CustomDialogProps> = ({
         </div>
 
         {/* Footer Otimizado */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-[#ff7a29]/20 flex flex-col sm:flex-row gap-2 bg-slate-50/50 dark:bg-[#1a1f35]/50 shrink-0">
+        <div className="px-6 py-4 border-t border-slate-100 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] flex flex-col sm:flex-row gap-2 bg-slate-50/50 dark:bg-[#1a1f35]/50 shrink-0">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 py-2.5 px-4 rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1a1f35] font-black text-xs transition-all"
+              className="flex-1 py-2.5 px-4 rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1a1f35] font-black text-xs transition-all"
             >
               {cancelText}
             </button>
@@ -93,7 +93,7 @@ const CustomDialog: React.FC<CustomDialogProps> = ({
               className={cn(
                 "flex-1 py-2.5 px-4 rounded-2xl font-black text-xs text-white shadow-md transition-all active:scale-95",
                 type === 'error' ? 'bg-[#EF4444]' :
-                type === 'warning' ? 'bg-[#F59E0B]' : 'bg-[#0091ff] dark:bg-[#ff7a29]'
+                type === 'warning' ? 'bg-[#F59E0B]' : 'bg-[color:var(--sll-b-brand)] dark:bg-[color:var(--sll-b-brand)]'
               )}
             >
               {confirmText}

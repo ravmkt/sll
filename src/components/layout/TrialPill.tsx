@@ -23,7 +23,7 @@ export function TrialPill() {
       className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
         urgent
           ? 'border-[#fd8539]/50 bg-[#fd8539]/10 text-[#c2571a] hover:bg-[#fd8539]/20'
-          : 'border-[#0094eb]/30 bg-[#0094eb]/5 text-[#0073c7] hover:bg-[#0094eb]/10'
+          : 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)] text-[#0073c7] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]'
       }`}
     >
       <Clock className="h-3.5 w-3.5 shrink-0" />

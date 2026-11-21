@@ -41,7 +41,7 @@ export function MasterLayout({ tab, onTab, children }: { tab: MasterTab; onTab: 
                 type="button"
                 onClick={() => onTab(it.id)}
                 className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-[15px] transition-colors ${
-                  on ? 'bg-[#0094eb] font-semibold text-white shadow-md shadow-[#0094eb]/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  on ? 'bg-[color:var(--sll-b-brand)] font-semibold text-white shadow-md shadow-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]' : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 <Icon size={18} className="shrink-0 text-[#fd8539]" />

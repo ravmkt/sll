@@ -26,7 +26,7 @@ export function StoreBrand() {
           className="w-9 h-9 rounded-xl object-cover border border-slate-200 bg-white shrink-0"
         />
       ) : (
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0094eb] to-[#fd8539] text-white text-xs font-bold flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[color:var(--sll-b-brand)] to-[#fd8539] text-white text-xs font-bold flex items-center justify-center shrink-0">
           {initials || 'L'}
         </div>
       )}

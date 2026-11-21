@@ -41,10 +41,10 @@ const SHELL = [
 ].join(' ');
 const TRIGGER = [
   'w-full justify-start gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2.5 text-[11px] font-bold uppercase tracking-wide text-slate-600 shadow-none dark:bg-[#111524] dark:text-slate-300',
-  'data-[state=active]:bg-[#0094eb] data-[state=active]:text-white data-[state=active]:shadow-md',
-  'dark:data-[state=active]:bg-[#0094eb] dark:data-[state=active]:text-white',
+  'data-[state=active]:bg-[color:var(--sll-b-brand)] data-[state=active]:text-white data-[state=active]:shadow-md',
+  'dark:data-[state=active]:bg-[color:var(--sll-b-brand)] dark:data-[state=active]:text-white',
 ].join(' ');
-const BTN = 'rounded-xl bg-[#0094eb] px-5 font-bold uppercase tracking-wide text-white hover:bg-[#007bc4]';
+const BTN = 'rounded-xl bg-[color:var(--sll-b-brand)] px-5 font-bold uppercase tracking-wide text-white hover:bg-[color:var(--sll-b-brand-hover)]';
 const BTN_OUT = 'rounded-xl font-bold uppercase tracking-wide';
 
 const TAB_META: Record<string, { label: string; icon: LucideIcon }> = {

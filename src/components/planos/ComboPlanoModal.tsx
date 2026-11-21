@@ -87,7 +87,7 @@ export default function ComboPlanoModal({
                   {m.logo_url ? (
                     <img src={m.logo_url} alt={m.name} className="h-16 w-16 rounded-2xl bg-white object-contain p-1.5 shadow-sm" />
                   ) : (
-                    <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0091ff]/10 text-xl font-black text-[#0091ff]">{m.name.charAt(0).toUpperCase()}</span>
+                    <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-xl font-black text-[color:var(--sll-b-brand)]">{m.name.charAt(0).toUpperCase()}</span>
                   )}
                   <span className="text-[11px] font-bold leading-tight text-slate-700">{m.name}</span>
                 </div>

@@ -34,7 +34,7 @@ export default function CaptionVariants({ base, channels, overrides, onChange }:
           <div key={key} className="rounded-xl border border-slate-200 p-3">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="text-sm font-semibold text-slate-800">{ch?.label ?? key}</span>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${custom ? 'bg-sky-50 text-[#0094eb]' : 'bg-slate-100 text-slate-500'}`}>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${custom ? 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'bg-slate-100 text-slate-500'}`}>
                 {custom ? 'Personalizada' : 'Padrão'}
               </span>
               <div className="ml-auto flex gap-2">
@@ -52,7 +52,7 @@ export default function CaptionVariants({ base, channels, overrides, onChange }:
             </div>
             {custom && (
               <textarea
-                className="h-32 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-800 outline-none focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20"
+                className="h-32 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]"
                 value={overrides[key]}
                 onChange={(e) => set(key, e.target.value)}
               />

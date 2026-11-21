@@ -47,7 +47,7 @@ const iso = (d: Date) => {
 
 // Mesmo padrao dos campos do AparenciaModal
 const field =
-  'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 transition-shadow focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#0094eb] dark:border-slate-700 dark:bg-slate-800 dark:text-white';
+  'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 transition-shadow focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[color:var(--sll-b-brand)] dark:border-slate-700 dark:bg-slate-800 dark:text-white';
 const label = 'mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300';
 const pageBtn =
   'cursor-pointer rounded-xl border border-slate-200 p-2 text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800';
@@ -138,7 +138,7 @@ export default function StockHistoryPanel() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-[#0094eb]" /></div>
+        <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-[color:var(--sll-b-brand)]" /></div>
       ) : rows.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm font-medium text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
           Nenhuma movimentação no período.

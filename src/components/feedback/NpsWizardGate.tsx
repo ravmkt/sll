@@ -10,10 +10,10 @@ import { logNpsEvent } from '@/services/admin/npsSurveys';
 
 const INVITE_KEY = 'sll_nps_invite_shown';
 const SCROLL = 'overflow-y-auto overscroll-contain [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300';
-const INPUT = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#0094eb]';
+const INPUT = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)]';
 const chip = (on: boolean) =>
   `flex cursor-pointer items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm font-semibold transition ${
-    on ? 'border-[#0094eb] bg-[#0094eb]/10 text-[#0094eb]' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+    on ? 'border-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
   }`;
 
 type Ans = { value: number | string | string[]; other?: string };
@@ -112,7 +112,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
         <div className="grid grid-cols-6 gap-3 py-2">
           {Array.from({ length: 11 }, (_, n) => (
             <button key={n} type="button" onClick={() => setValue(qq.id, { value: n })}
-              className={`h-12 cursor-pointer rounded-xl border-2 text-base font-black transition ${cur?.value === n ? 'border-[#0094eb] bg-[#0094eb] text-white shadow-md' : 'border-slate-200 bg-white text-slate-700 hover:border-[#0094eb] hover:text-[#0094eb]'}`}>
+              className={`h-12 cursor-pointer rounded-xl border-2 text-base font-black transition ${cur?.value === n ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand)] text-white shadow-md' : 'border-slate-200 bg-white text-slate-700 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]'}`}>
               {n}
             </button>
           ))}
@@ -164,11 +164,11 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
       `}</style>
 
       {showCard && (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-[#0094eb]/30 bg-white p-5 text-center shadow-sm">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white p-5 text-center shadow-sm">
           <img src="/assets/noah-pergunta2.png" alt="Noah" className="nps-float h-32 w-auto object-contain" />
           <p className="text-lg font-black leading-snug text-slate-900">{survey.invite_title}</p>
           <p className="text-xs text-slate-500">{survey.invite_text || `Sua opinião vale ouro! São ${qs.length} perguntas rápidas.`}</p>
-          <button type="button" onClick={startWizard} className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2.5 text-sm font-black text-white shadow hover:bg-[#0082d1]">Responder</button>
+          <button type="button" onClick={startWizard} className="w-full cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-black text-white shadow hover:bg-[#0082d1]">Responder</button>
           <button type="button" onClick={dismiss} className="cursor-pointer text-xs font-bold text-slate-400 hover:text-slate-600">Agora não</button>
         </div>
       )}
@@ -185,7 +185,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
             {survey.invite_text && <p className="mt-1 text-sm text-slate-600">{survey.invite_text}</p>}
             <div className="mt-3 flex justify-end gap-2">
               <button type="button" onClick={closeInvite} className="cursor-pointer rounded-lg px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50">Depois</button>
-              <button type="button" onClick={startWizard} className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-black text-white hover:bg-[#0082d1]">Responder</button>
+              <button type="button" onClick={startWizard} className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-sm font-black text-white hover:bg-[#0082d1]">Responder</button>
             </div>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
               <p className="text-lg font-black text-slate-900">Obrigado pela sua opinião!</p>
               <p className="text-xs text-slate-600">Sua resposta chegou ao time e ajuda a melhorar o SLL Hub.</p>
               <button type="button" onClick={() => { setOpen(false); setShow(false); }}
-                className="mt-1 w-full cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2.5 text-sm font-black text-white hover:bg-[#0082d1]">Fechar</button>
+                className="mt-1 w-full cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-black text-white hover:bg-[#0082d1]">Fechar</button>
             </div>
           ) : (<>
             <DialogHeader>
@@ -218,12 +218,12 @@ export default function NpsWizardGate({ showCard = true }: { showCard?: boolean 
                 className="cursor-pointer rounded-lg px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-50 disabled:opacity-40">Voltar</button>
               {!last ? (
                 <button type="button" disabled={!canNext} onClick={() => setStep((s) => s + 1)}
-                  className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-sm font-bold text-white disabled:opacity-40">
+                  className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-5 py-2 text-sm font-bold text-white disabled:opacity-40">
                   {!q?.required && !answered(q, a) ? 'Pular' : 'Continuar'}
                 </button>
               ) : (
                 <button type="button" disabled={busy || !canNext} onClick={send}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-5 py-2 text-sm font-bold text-white disabled:opacity-60">
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[color:var(--sll-b-brand)] px-5 py-2 text-sm font-bold text-white disabled:opacity-60">
                   {busy && <Loader2 className="h-4 w-4 animate-spin" />} Enviar
                 </button>
               )}

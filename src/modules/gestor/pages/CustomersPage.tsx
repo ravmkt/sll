@@ -56,7 +56,7 @@ export default function CustomersPage() {
           <h1 className="text-xl font-semibold text-slate-900">Clientes</h1>
           <p className="text-sm text-slate-500">{total} cliente(s). Total gasto considera so pedidos pagos e nao cancelados.</p>
         </div>
-        <>{allow('clientes','criar') && (<button type="button" onClick={() => open(null)} className="inline-flex items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#007bc4]">
+        <>{allow('clientes','criar') && (<button type="button" onClick={() => open(null)} className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-sm font-medium text-white hover:bg-[color:var(--sll-b-brand-hover)]">
           <Plus size={16} /> Novo cliente
         </button>)}</>
       </div>
@@ -65,12 +65,12 @@ export default function CustomersPage() {
         <div className="relative min-w-[16rem] flex-1">
           <Search size={16} className="absolute left-3 top-2.5 text-slate-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, e-mail, telefone ou documento"
-            className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#0094eb]" />
+            className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-[color:var(--sll-b-brand)]" />
         </div>
         <input value={tag} onChange={(e) => { setTag(e.target.value); setPage(0); }} placeholder="Filtrar por tag"
-          className="w-40 rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0094eb]" />
+          className="w-40 rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[color:var(--sll-b-brand)]" />
         <select value={sort} onChange={(e) => { setSort(e.target.value as SortKey); setPage(0); }}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0094eb]">
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[color:var(--sll-b-brand)]">
           {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
       </div>

@@ -30,7 +30,7 @@ export default function ProductsPage() {
           {data && data.items.length === 0 && <Card><EmptyState title="Nenhum produto encontrado" /></Card>}
           <div className="space-y-2">
             {data?.items.map((p) => (
-              <button key={p.id} type="button" onClick={() => setSel(p)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${sel?.id === p.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'}`}>
+              <button key={p.id} type="button" onClick={() => setSel(p)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${sel?.id === p.id ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)]' : 'border-slate-200 bg-white'}`}>
                 {p.image ? <img src={p.image} alt="" className="h-10 w-10 rounded-lg object-cover" /> : <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100"><Package className="h-5 w-5 text-slate-400" /></div>}
                 <div className="min-w-0"><div className="truncate text-sm font-medium">{p.name}</div><div className="text-xs text-slate-400">{p.sku ?? 'Sem SKU'}</div></div>
               </button>
@@ -58,8 +58,8 @@ export default function ProductsPage() {
                   <div className="min-h-24 whitespace-pre-line rounded-lg border bg-slate-50 p-3 text-sm">{sel.description ?? 'Sem descrição'}</div>
                 </div>
                 <div>
-                  <div className="mb-1 text-xs font-medium uppercase text-blue-600">Sugestão da IA</div>
-                  <div className="flex min-h-24 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-slate-500">Nenhuma sugestão gerada</div>
+                  <div className="mb-1 text-xs font-medium uppercase text-[color:var(--sll-b-brand)]">Sugestão da IA</div>
+                  <div className="flex min-h-24 items-center justify-center rounded-lg border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] p-3 text-sm text-slate-500">Nenhuma sugestão gerada</div>
                 </div>
               </div>
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-slate-600"><b>Por quê:</b> a explicação de cada mudança aparecerá aqui.</div>

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Loader2, Palette, X } from 'lucide-react';
 import WidgetPlacementPicker, { type Placement, type PageRule } from './WidgetPlacementPicker';
 import ReviewsPreview from './ReviewsPreview';
@@ -6,7 +6,7 @@ import { reviewsService } from '../../services/reviewsService';
 import { TEMPLATES, templateDesign, type ReviewDesign, type ReviewScope, type ReviewSource, type ReviewWidget } from '../../types/reviews';
 import { CARD_FONTS, type WidgetsCtx } from '../../types/widgets';
 
-const inp = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[#0094EB]';
+const inp = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]';
 const lbl = 'mb-1 block text-[10px] font-bold uppercase text-slate-400';
 
 const SRC: { v: ReviewSource; label: string }[] = [
@@ -81,7 +81,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
               <div className="grid grid-cols-2 gap-2">
                 {([['product', 'Página de produto'], ['storefront', 'Vitrine (home e outras)']] as [ReviewScope, string][]).map(([v, l]) => (
                   <button key={v} type="button" onClick={() => setScope(v)}
-                    className={`rounded-xl border px-3 py-2.5 text-sm font-semibold ${scope === v ? 'border-[#0094EB] bg-sky-50 text-[#0094EB]' : 'border-slate-200 text-slate-600'}`}>{l}</button>
+                    className={`rounded-xl border px-3 py-2.5 text-sm font-semibold ${scope === v ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 text-slate-600'}`}>{l}</button>
                 ))}
               </div>
               <p className="mt-1 text-xs text-slate-500">
@@ -94,7 +94,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
               <div className="grid grid-cols-2 gap-2">
                 {TEMPLATES.map((t) => (
                   <button key={t.id} type="button" onClick={() => pickTemplate(t.id)}
-                    className={`rounded-xl border p-3 text-left ${template === t.id ? 'border-[#0094EB] bg-sky-50' : 'border-slate-200'}`}>
+                    className={`rounded-xl border p-3 text-left ${template === t.id ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)]' : 'border-slate-200'}`}>
                     <div className="text-sm font-bold text-slate-900">{t.label}</div>
                     <div className="mt-0.5 text-[11px] leading-tight text-slate-500">{t.desc}</div>
                   </button>
@@ -104,7 +104,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
             </div>
 
             <button type="button" onClick={() => setShowApp((v) => !v)}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#0094EB] px-4 py-2.5 text-sm font-bold text-[#0094EB]">
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[color:var(--sll-b-brand)] px-4 py-2.5 text-sm font-bold text-[color:var(--sll-b-brand)]">
               <Palette className="h-4 w-4" /> Aparência {showApp ? '▲' : '▼'}
             </button>
             {showApp && (
@@ -140,7 +140,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
                       <div className="grid grid-cols-3 gap-2">
                         {([['auto', 'Automática'], ['full', 'Tela toda'], ['custom', 'Personalizada']] as [ReviewDesign['width_mode'], string][]).map(([v, l]) => (
                           <button key={v} type="button" onClick={() => setD('width_mode', v)}
-                            className={'rounded-lg border px-2 py-2 text-xs font-semibold ' + (design.width_mode === v ? 'border-[#0094EB] bg-sky-50 text-[#0094EB]' : 'border-slate-200 text-slate-600')}>{l}</button>
+                            className={'rounded-lg border px-2 py-2 text-xs font-semibold ' + (design.width_mode === v ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 text-slate-600')}>{l}</button>
                         ))}
                       </div>
                       <p className="text-xs text-slate-500">
@@ -303,7 +303,7 @@ export default function ReviewWidgetModal({ ctx, initial, defaultName, onClose, 
         <div className="flex justify-end gap-2 border-t border-slate-100 px-6 py-4">
           <button type="button" onClick={onClose} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
           <button type="button" disabled={busy} onClick={save}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+            className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
             {busy && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
           </button>
         </div>

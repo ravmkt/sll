@@ -80,12 +80,12 @@ export default function TemplatePicker({ current, onPick, onClose }: Props) {
                     key={t.key}
                     type="button"
                     onClick={() => onPick(t.key)}
-                    className={`rounded-xl border p-2 text-left transition ${current === t.key ? 'border-[#0094eb] bg-sky-50 ring-2 ring-[#0094eb]/20' : 'border-slate-200 hover:bg-slate-50'}`}
+                    className={`rounded-xl border p-2 text-left transition ${current === t.key ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] ring-2 ring-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]' : 'border-slate-200 hover:bg-slate-50'}`}
                   >
                     <TemplateThumb t={t} className="aspect-[4/5] w-full" />
                     <div className="mt-2 flex items-center gap-1">
                       <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{t.label}</p>
-                      {current === t.key && <Check size={14} className="shrink-0 text-[#0094eb]" />}
+                      {current === t.key && <Check size={14} className="shrink-0 text-[color:var(--sll-b-brand)]" />}
                     </div>
                     <p className="line-clamp-2 text-xs text-slate-500">{t.description}</p>
                   </button>

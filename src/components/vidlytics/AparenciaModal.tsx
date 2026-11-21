@@ -17,7 +17,7 @@ interface AparenciaModalProps {
   initialStyle?: any | null;
 }
 
-const inputClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
+const inputClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--sll-b-brand)] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
 
 export default function AparenciaModal({ isOpen, onClose, initialStyle }: AparenciaModalProps) {
   const { storeId: activeStoreId, store } = useLoja();
@@ -119,7 +119,7 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   active
-                    ? 'border-[#0094eb] text-[#0094eb]'
+                    ? 'border-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)]'
                     : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
@@ -180,7 +180,7 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
             <button
               onClick={() => setPreviewDevice('desktop')}
               className={`p-2 rounded-lg border text-xs flex items-center gap-1.5 font-medium transition-colors ${
-                previewDevice === 'desktop' ? 'border-[#0094eb] text-[#0094eb] bg-blue-50 dark:bg-blue-950/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                previewDevice === 'desktop' ? 'border-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] dark:bg-blue-950/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
               }`}
             >
               <Monitor size={14} /> Desktop
@@ -188,7 +188,7 @@ export default function AparenciaModal({ isOpen, onClose, initialStyle }: Aparen
             <button
               onClick={() => setPreviewDevice('mobile')}
               className={`p-2 rounded-lg border text-xs flex items-center gap-1.5 font-medium transition-colors ${
-                previewDevice === 'mobile' ? 'border-[#0094eb] text-[#0094eb] bg-blue-50 dark:bg-blue-950/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                previewDevice === 'mobile' ? 'border-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] dark:bg-blue-950/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
               }`}
             >
               <Smartphone size={14} /> Mobile

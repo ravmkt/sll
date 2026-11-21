@@ -25,7 +25,7 @@ export default function SidebarTourSlot({ isExpanded }: { isExpanded: boolean })
           type="button"
           onClick={() => window.dispatchEvent(new Event('sll:tour-start'))}
           title="Ver tour desta p&aacute;gina"
-          className={`inline-flex cursor-pointer items-center justify-center gap-2 border border-slate-200 bg-white text-xs font-bold text-slate-600 shadow-sm transition-colors hover:border-[#0094eb] hover:text-[#0094eb] ${
+          className={`inline-flex cursor-pointer items-center justify-center gap-2 border border-slate-200 bg-white text-xs font-bold text-slate-600 shadow-sm transition-colors hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)] ${
             isExpanded ? 'w-full rounded-full px-3.5 py-2.5' : 'h-10 w-10 rounded-full'
           }`}
         >

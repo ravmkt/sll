@@ -74,7 +74,7 @@ function VideoKeepPicker({ storeId, limit, onClose }: { storeId: string; limit: 
         {err && <p className="mt-2 text-xs font-semibold text-rose-600">{err}</p>}
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600">Agora não</button>
-          <button type="button" disabled={saving} onClick={save} className="rounded-lg bg-[#0091ff] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50">Salvar escolha</button>
+          <button type="button" disabled={saving} onClick={save} className="rounded-lg bg-[color:var(--sll-b-brand)] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50">Salvar escolha</button>
         </div>
       </div>
     </div>
@@ -150,7 +150,7 @@ export default function MyAddonsCard({ storeId }: { storeId: string }) {
                 {r.cancel_at_period_end && <span className="ml-2 font-semibold text-amber-700">Cancelado · ativo até {day(r.ends_at)}</span>}
               </p>
               {r.cancel_at_period_end && r.videos > 0 && (
-                <button type="button" onClick={() => openPicker(rows)} className="mt-1 text-xs font-bold text-[#0091ff] hover:underline">
+                <button type="button" onClick={() => openPicker(rows)} className="mt-1 text-xs font-bold text-[color:var(--sll-b-brand)] hover:underline">
                   Escolher quais vídeos manter
                 </button>
               )}

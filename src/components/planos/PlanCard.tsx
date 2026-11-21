@@ -49,12 +49,12 @@ export function PlanCard({
     <div
       className={cn(
         "relative flex flex-col justify-between rounded-3xl border bg-white p-6 sm:p-7 transition-all duration-300 hover:-translate-y-1.5 shadow-sm",
-        isPopular ? "border-[#0091ff] shadow-lg shadow-blue-500/10 ring-1 ring-[#0091ff]/30" : "border-slate-200",
+        isPopular ? "border-[color:var(--sll-b-brand)] shadow-lg shadow-blue-500/10 ring-1 ring-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)]" : "border-slate-200",
         isCurrent && "bg-slate-50/70"
       )}
     >
       {isPopular && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#0091ff] px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[color:var(--sll-b-brand)] px-3.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
           Mais Popular
         </div>
       )}
@@ -84,7 +84,7 @@ export function PlanCard({
         <div className="mt-5 space-y-2.5 border-t border-slate-100 pt-4">
           {modules.map((m) => (
             <div key={m} className="flex items-center gap-2.5 text-xs font-bold text-slate-700">
-              <div className="w-4 h-4 rounded-full flex items-center justify-center bg-[#0091ff] text-white shrink-0">
+              <div className="w-4 h-4 rounded-full flex items-center justify-center bg-[color:var(--sll-b-brand)] text-white shrink-0">
                 <Check size={11} className="stroke-[3]" />
               </div>
               <span>{MODULE_LABELS[m] ?? m}</span>
@@ -108,7 +108,7 @@ export function PlanCard({
             "w-full rounded-2xl py-3 px-4 text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
             isCurrent
               ? "bg-slate-100 text-slate-400 cursor-default"
-              : "bg-[#0091ff] hover:bg-[#0070f3] text-white shadow-lg hover:scale-[1.02]"
+              : "bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white shadow-lg hover:scale-[1.02]"
           )}
         >
           {isLoading ? <Loader2 size={14} className="animate-spin" /> : isCurrent ? "Plano Atual" : "Assinar"}

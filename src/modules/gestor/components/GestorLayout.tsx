@@ -100,8 +100,8 @@ function GestorLayoutInner() {
   useEffect(() => { if (activeKey) setOpen(activeKey); }, [activeKey]);
 
   const rowBase = 'flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm transition-all duration-200';
-  const rowOn = 'bg-[#0094eb] font-medium text-white shadow-md shadow-[#0094eb]/20';
-  const rowOff = 'text-slate-600 hover:bg-slate-100 hover:text-[#0094eb]';
+  const rowOn = 'bg-[color:var(--sll-b-brand)] font-medium text-white shadow-md shadow-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]';
+  const rowOff = 'text-slate-600 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)]';
   const rowSoon = 'cursor-not-allowed text-slate-400';
 
   const visibleGroups = GROUPS
@@ -135,7 +135,7 @@ function GestorLayoutInner() {
           type="button"
           title={g.label}
           onClick={() => { setCollapsedSaved(false); setOpen(g.key); }}
-          className={`${rowBase} cursor-pointer justify-center ${groupActive ? 'text-[#0094eb] bg-[#0094eb]/10' : rowOff}`}
+          className={`${rowBase} cursor-pointer justify-center ${groupActive ? 'text-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]' : rowOff}`}
         >
           <Icon size={20} className="shrink-0" />
         </button>
@@ -169,7 +169,7 @@ function GestorLayoutInner() {
           type="button"
           onClick={() => setOpen(isOpen ? null : g.key)}
           aria-expanded={isOpen}
-          className={`${rowBase} cursor-pointer ${groupActive ? 'font-medium text-[#0094eb]' : rowOff}`}
+          className={`${rowBase} cursor-pointer ${groupActive ? 'font-medium text-[color:var(--sll-b-brand)]' : rowOff}`}
         >
           <Icon size={20} className="shrink-0" />
           <span className="whitespace-nowrap">{g.label}</span>
@@ -223,7 +223,7 @@ function GestorLayoutInner() {
               onClick={() => setCollapsedSaved(!collapsed)}
               title={isExpanded ? 'Recolher menu' : 'Expandir menu'}
               className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-bold transition-all ${
-                isExpanded ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-[#0094eb] text-white hover:bg-[#007bc4]'
+                isExpanded ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-[color:var(--sll-b-brand)] text-white hover:bg-[color:var(--sll-b-brand-hover)]'
               }`}
             >
               {collapsed ? (
@@ -248,7 +248,7 @@ function GestorLayoutInner() {
               type="button"
               onClick={() => navigate('/dashboard')}
               title={!isExpanded ? 'Voltar ao SLL' : undefined}
-              className={`flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-4 py-2 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#0094eb] ${
+              className={`flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-4 py-2 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] ${
                 !isExpanded ? 'justify-center' : 'justify-start'
               }`}
             >

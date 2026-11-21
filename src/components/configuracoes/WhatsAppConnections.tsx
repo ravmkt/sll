@@ -14,7 +14,7 @@ export function fmtWaNumber(v?: string | null): string {
 }
 
 const btnMain =
-  'inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-[#0094eb] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-blue-500/20 transition hover:bg-[#0082cf] disabled:opacity-50';
+  'inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-[color:var(--sll-b-brand)] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-blue-500/20 transition hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-50';
 const btnLine =
   'cursor-pointer rounded-2xl border border-slate-200 px-5 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50';
 

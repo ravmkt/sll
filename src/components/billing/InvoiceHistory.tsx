@@ -61,7 +61,7 @@ const fmtMoney = (c?: number | null) =>
   c == null ? "-" : (Number(c) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const LINK =
-  "inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700 transition hover:border-[#0091ff] hover:text-[#0091ff]";
+  "inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700 transition hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]";
 
 export default function InvoiceHistory() {
   const { storeId } = useLoja();
@@ -88,7 +88,7 @@ export default function InvoiceHistory() {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center gap-3 p-5">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0091ff]/10 text-[#0091ff]">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
           <Receipt size={20} />
         </span>
         <h2 className="text-base font-black text-slate-900">{T.title}</h2>
@@ -96,7 +96,7 @@ export default function InvoiceHistory() {
 
       <div className="border-t border-slate-100">
         {loading ? (
-          <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-[#0091ff]" /></div>
+          <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-[color:var(--sll-b-brand)]" /></div>
         ) : rows.length === 0 ? (
           <p className="px-5 py-10 text-center text-sm font-bold text-slate-500">{T.empty}</p>
         ) : (

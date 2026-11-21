@@ -24,7 +24,7 @@ const defaultSkip = (list: ImportItem[]): Set<string> => {
 const brl = (n: number) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const tabCls = (on: boolean) =>
   cn('flex-1 py-3 text-sm font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer transition',
-    on ? 'border-b-2 border-[#0094eb] text-[#0094eb]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300');
+    on ? 'border-b-2 border-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300');
 
 export default function ImportModal({ storeId, onClose, onImported }: Props) {
   const [tab, setTab] = useState<'xml' | 'sheet' | 'yampi'>('xml');
@@ -189,7 +189,7 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-slate-900 dark:text-white">{items.length} produtos encontrados ({withSku.length} com SKU)</p>
-              {selected.size > 0 && <p className="mt-0.5 text-xs font-semibold text-[#0094eb]">{selected.size} selecionados</p>}
+              {selected.size > 0 && <p className="mt-0.5 text-xs font-semibold text-[color:var(--sll-b-brand)]">{selected.size} selecionados</p>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <input placeholder="Buscar nome ou SKU..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className={cn(inputCls, '!w-48 !py-1.5 !text-xs')} />
@@ -220,13 +220,13 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                   <span className="font-semibold text-slate-700 dark:text-white">Categorias: {feedCats.length}</span>
                   <span className="text-slate-400">{nExist} já existem · {nCreate} serão criadas · {nSkip} ignoradas</span>
-                  <button type="button" onClick={() => setCatsOpen((o) => !o)} className="ml-auto font-semibold text-[#0094eb] cursor-pointer">{catsOpen ? 'Ocultar' : 'Revisar'}</button>
+                  <button type="button" onClick={() => setCatsOpen((o) => !o)} className="ml-auto font-semibold text-[color:var(--sll-b-brand)] cursor-pointer">{catsOpen ? 'Ocultar' : 'Revisar'}</button>
                 </div>
                 {catsOpen && (
                   <div className="mt-2 space-y-2">
                     <div className="flex flex-wrap gap-3 text-[11px] font-semibold">
                       <button type="button" onClick={() => setSkipCats(new Set(feedCats.filter((c) => !existingSet.has(normCat(c.name))).map((c) => normCat(c.name))))} className="text-amber-600 underline cursor-pointer">Ignorar novas</button>
-                      <button type="button" onClick={() => setSkipCats(new Set())} className="text-[#0094eb] underline cursor-pointer">Criar novas</button>
+                      <button type="button" onClick={() => setSkipCats(new Set())} className="text-[color:var(--sll-b-brand)] underline cursor-pointer">Criar novas</button>
                       <span className="ml-auto font-normal text-slate-400">Azul: criar · Cinza: já existe · Riscada: ignorada</span>
                     </div>
                     <div className="flex max-h-16 flex-wrap gap-1.5 overflow-y-auto">
@@ -241,7 +241,7 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
                             disabled={exists}
                             onClick={() => setSkipCats((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; })}
                             className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                              exists ? 'border-slate-200 text-slate-400' : skip ? 'border-amber-300 text-amber-600 line-through cursor-pointer' : 'border-[#0094eb]/40 text-[#0094eb] cursor-pointer')}
+                              exists ? 'border-slate-200 text-slate-400' : skip ? 'border-amber-300 text-amber-600 line-through cursor-pointer' : 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_40%,transparent)] text-[color:var(--sll-b-brand)] cursor-pointer')}
                           >
                             {c.name} · {c.count}
                           </button>
@@ -257,7 +257,7 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
               <input type="checkbox" checked={allVisible} onChange={(e) => setMany(pageRows.filter((r) => r.sku).map((r) => r.i), e.target.checked)} className="h-3.5 w-3.5" />
               Selecionar visíveis
             </label>
-            <button type="button" onClick={() => setMany(withSku, true)} className="text-[#0094eb] underline cursor-pointer">Selecionar todos com SKU ({withSku.length})</button>
+            <button type="button" onClick={() => setMany(withSku, true)} className="text-[color:var(--sll-b-brand)] underline cursor-pointer">Selecionar todos com SKU ({withSku.length})</button>
             <button type="button" onClick={() => setSelected(new Set())} className="text-slate-400 underline cursor-pointer">Limpar seleção</button>
           </div>
           <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800">
@@ -289,9 +289,9 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
           </div>
           {pages > 1 && (
             <div className="flex items-center justify-between text-xs">
-              <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)} className="font-semibold text-[#0094eb] disabled:opacity-30 cursor-pointer">← Anterior</button>
+              <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)} className="font-semibold text-[color:var(--sll-b-brand)] disabled:opacity-30 cursor-pointer">← Anterior</button>
               <span className="text-slate-400">{safePage} / {pages}</span>
-              <button type="button" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)} className="font-semibold text-[#0094eb] disabled:opacity-30 cursor-pointer">Próximo →</button>
+              <button type="button" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)} className="font-semibold text-[color:var(--sll-b-brand)] disabled:opacity-30 cursor-pointer">Próximo →</button>
             </div>
           )}
           <div className="flex gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
@@ -305,8 +305,8 @@ export default function ImportModal({ storeId, onClose, onImported }: Props) {
 
       {stage === 'report' && report && (
         <div className="p-6 space-y-4">
-          <div className="flex items-center gap-3 rounded-xl bg-[#0094eb]/10 dark:bg-[#0094eb]/10 p-4">
-            <CheckCircle2 className="text-[#0094eb]" />
+          <div className="flex items-center gap-3 rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] p-4">
+            <CheckCircle2 className="text-[color:var(--sll-b-brand)]" />
             <p className="text-sm font-semibold text-slate-800 dark:text-white">{report.imported} produto(s) importado(s)</p>
           </div>
           {report.discarded.length > 0 && (

@@ -60,7 +60,7 @@ export function StepSummary({ data, storeId, busy, onFinish }: { data: WizardDat
       </div>
 
       <button type="button" disabled={busy} onClick={onFinish}
-        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-6 py-3.5 text-sm font-black text-white shadow-lg shadow-[#0094eb]/30 disabled:opacity-50">
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-6 py-3.5 text-sm font-black text-white shadow-lg shadow-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] disabled:opacity-50">
         {busy ? <Loader2 size={16} className="animate-spin" /> : null}
         Finalizar e acessar o SLL Hub <ArrowRight size={16} />
       </button>

@@ -37,7 +37,7 @@ export function ReferralMilestones({ count }: { count: number }) {
       </div>
 
       <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-        <div className="h-full rounded-full bg-gradient-to-r from-[#0094eb] to-[#fd8539] transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-gradient-to-r from-[color:var(--sll-b-brand)] to-[#fd8539] transition-all" style={{ width: `${pct}%` }} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">

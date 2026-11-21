@@ -17,7 +17,7 @@ type Row = { id: string; name: string; tip: string; date: Date; left: number; st
 type Detail = { title: string; text: string };
 
 const STAGE: Record<SeasonalStage, { label: string; cls: string }> = {
-  plan: { label: 'Planejar', cls: 'bg-sky-50 text-sky-700' },
+  plan: { label: 'Planejar', cls: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' },
   produce: { label: 'Produzir', cls: 'bg-amber-50 text-amber-700' },
   urgent: { label: 'Urgente', cls: 'bg-rose-50 text-rose-700' },
 };
@@ -161,7 +161,7 @@ export default function CalendarioComercialHub() {
             )}
           </p>
         </div>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
           <CalendarDays className="h-4 w-4" />
         </div>
       </div>
@@ -179,11 +179,11 @@ export default function CalendarioComercialHub() {
               key={r.id}
               type="button"
               onClick={() => setSel(r)}
-              className={`group flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-left transition-all hover:border-[#0094eb]/40 hover:bg-slate-50 ${
-                i === 0 ? 'border-[#0094eb]/30 bg-sky-50/50' : 'border-slate-200 bg-white'
+              className={`group flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-left transition-all hover:border-[color:color-mix(in_srgb,var(--sll-b-brand)_40%,transparent)] hover:bg-slate-50 ${
+                i === 0 ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-sky-50/50' : 'border-slate-200 bg-white'
               }`}
             >
-              <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+              <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
                 <span className="text-sm font-black leading-none">{String(r.date.getDate()).padStart(2, '0')}</span>
                 <span className="text-[10px] font-bold uppercase leading-tight">{monthShort(r.date)}</span>
               </div>
@@ -202,7 +202,7 @@ export default function CalendarioComercialHub() {
       <button
         type="button"
         onClick={() => navigate('/dashboard/dicas')}
-        className="mt-auto inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline"
+        className="mt-auto inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[color:var(--sll-b-brand)] hover:underline"
       >
         Ver dicas e insights <ArrowRight className="h-3 w-3" />
       </button>
@@ -219,7 +219,7 @@ export default function CalendarioComercialHub() {
             <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+                  <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
                     <span className="text-base font-black leading-none">{String(sel.date.getDate()).padStart(2, '0')}</span>
                     <span className="text-[10px] font-bold uppercase leading-tight">{monthShort(sel.date)}</span>
                   </div>
@@ -242,7 +242,7 @@ export default function CalendarioComercialHub() {
               </div>
 
               <div className="mt-5 rounded-xl bg-slate-50 p-4">
-                <div className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0094eb]">
+                <div className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[color:var(--sll-b-brand)]">
                   <Lightbulb className="h-3.5 w-3.5" /> Sugestão rápida
                 </div>
                 {detail ? (
@@ -270,7 +270,7 @@ export default function CalendarioComercialHub() {
                 <button
                   type="button"
                   onClick={() => { setSel(null); navigate('/dashboard/dicas'); }}
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#007fcc]"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]"
                 >
                   Ver mais dicas <ArrowRight className="h-3 w-3" />
                 </button>

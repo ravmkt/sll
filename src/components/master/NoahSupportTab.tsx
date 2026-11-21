@@ -39,7 +39,7 @@ const usd = (v: number) => v.toLocaleString('en-US', { style: 'currency', curren
 const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 4 });
 
 const card = 'rounded-2xl border border-slate-800 bg-[#111524] p-5';
-const input = 'w-full rounded-xl border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[#0094eb]';
+const input = 'w-full rounded-xl border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[color:var(--sll-b-brand)]';
 const label = 'text-[11px] font-bold uppercase tracking-wider text-slate-400';
 
 function Switch({ on, onClick, text }: { on: boolean; onClick: () => void; text: string }) {
@@ -315,7 +315,7 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className={card}>
-              <div className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-[#0094eb]" /><span className={label}>Perguntas no período</span></div>
+              <div className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-[color:var(--sll-b-brand)]" /><span className={label}>Perguntas no período</span></div>
               <p className="mt-2 text-3xl font-black text-white">{n0(t.q)}</p>
             </div>
             <div className={card}>
@@ -337,7 +337,7 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
           )}
 
           <button type="button" onClick={() => setStoresOpen(true)} className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-white hover:bg-white/5">
-            <Store className="h-4 w-4 text-[#0094eb]" /> Ver consumo por lojas
+            <Store className="h-4 w-4 text-[color:var(--sll-b-brand)]" /> Ver consumo por lojas
           </button>
 
           <div className={`${card} space-y-3`}>
@@ -357,7 +357,7 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-slate-400">{m.price_checked_at ? new Date(m.price_checked_at).toLocaleDateString('pt-BR') : 'nunca'}</span>
                           <button type="button" disabled={checking === m.model} onClick={() => checkPrice(m.model)} className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-700 px-2 py-1 text-[11px] font-bold text-white hover:bg-white/5 disabled:opacity-50">
-                            {checking === m.model ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3 text-[#0094eb]" />} Conferir no Google
+                            {checking === m.model ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3 text-[color:var(--sll-b-brand)]" />} Conferir no Google
                           </button>
                         </div>
                         {found[m.model] && (
@@ -367,7 +367,7 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
                             <button type="button" onClick={() => applyPrice(m.model)} className="cursor-pointer rounded-lg bg-emerald-600 px-2 py-0.5 font-bold text-white hover:bg-emerald-700">
                               {Number(found[m.model].input_usd) === Number(m.input_usd) && Number(found[m.model].output_usd) === Number(m.output_usd) ? 'Confirmar' : 'Aplicar'}
                             </button>
-                            <a href={found[m.model].url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-[#0094eb] hover:underline">fonte <ExternalLink className="h-3 w-3" /></a>
+                            <a href={found[m.model].url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-[color:var(--sll-b-brand)] hover:underline">fonte <ExternalLink className="h-3 w-3" /></a>
                           </div>
                         )}
                       </td>
@@ -383,7 +383,7 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
             </div>
             <button type="button" onClick={addModel} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-white hover:bg-white/5"><Plus className="h-4 w-4" /> Adicionar modelo</button>
             <button type="button" disabled={listing} onClick={listModels} className="ml-2 inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-white hover:bg-white/5 disabled:opacity-50">
-              {listing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudDownload className="h-4 w-4 text-[#0094eb]" />} Buscar modelos do Google
+              {listing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudDownload className="h-4 w-4 text-[color:var(--sll-b-brand)]" />} Buscar modelos do Google
             </button>
             {avail.length > 0 && (
               <div className="max-h-56 space-y-1 overflow-y-auto rounded-xl border border-slate-800 bg-[#0b0e1a] p-2">
@@ -393,7 +393,7 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
                       <p className="truncate text-xs font-semibold text-white">{a.label}</p>
                       <p className="truncate text-[10px] text-slate-500">{a.model}</p>
                     </div>
-                    <button type="button" onClick={() => addAvail(a)} className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg bg-[#0094eb] px-2.5 py-1 text-[11px] font-bold text-white hover:bg-[#007fcc]"><Plus className="h-3 w-3" /> Adicionar</button>
+                    <button type="button" onClick={() => addAvail(a)} className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg bg-[color:var(--sll-b-brand)] px-2.5 py-1 text-[11px] font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]"><Plus className="h-3 w-3" /> Adicionar</button>
                   </div>
                 ))}
               </div>
@@ -403,14 +403,14 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-[#0094eb]" /><h3 className="text-base font-bold text-white">Base de conhecimento</h3></div>
+                <div className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-[color:var(--sll-b-brand)]" /><h3 className="text-base font-bold text-white">Base de conhecimento</h3></div>
                 <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-white hover:bg-white/5 ${reading ? 'pointer-events-none opacity-60' : ''}`}>
-                  {reading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4 text-[#0094eb]" />} Enviar documento
+                  {reading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4 text-[color:var(--sll-b-brand)]" />} Enviar documento
                   <input type="file" accept=".pdf,.docx,.txt,.md" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void readDoc(f); }} />
                 </label>
                 <span className="text-[11px] text-slate-500">≈ {n0(Math.min(150000, items.filter((i) => i.is_active).reduce((a, i) => a + Math.min(i.content.length, 60000), 0)) / 3.5)} tokens enviados a cada pergunta</span>
               </div>
-              <button type="button" onClick={() => setEditing({ module: 'geral', title: '', content: '' })} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#007fcc]">
+              <button type="button" onClick={() => setEditing({ module: 'geral', title: '', content: '' })} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]">
                 <Plus className="h-4 w-4" /> Novo tópico
               </button>
             </div>
@@ -425,7 +425,7 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="truncate text-sm font-bold text-white">{it.title}</p>
-                        <span className="rounded-full bg-[#0094eb]/15 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0094eb]">{MODULES.find((m) => m.key === it.module)?.label}</span>
+                        <span className="rounded-full bg-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)] px-2 py-0.5 text-[10px] font-bold uppercase text-[color:var(--sll-b-brand)]">{MODULES.find((m) => m.key === it.module)?.label}</span>
                       </div>
                       <p className="mt-1 line-clamp-2 text-xs text-slate-400">{it.content}</p>
                     </div>
@@ -476,7 +476,7 @@ export default function NoahSupportTab({ range }: { range: { from: Date; to: Dat
             </div>
             <div className="flex gap-3 border-t border-slate-800 pt-4">
               <button type="button" disabled={saving} onClick={() => setEditing(null)} className="flex-1 cursor-pointer rounded-xl border border-slate-700 py-2.5 text-sm font-bold text-slate-300 hover:bg-white/5">Cancelar</button>
-              <button type="button" disabled={saving} onClick={save} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] py-2.5 text-sm font-bold text-white hover:bg-[#007fcc] disabled:opacity-50">
+              <button type="button" disabled={saving} onClick={save} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] py-2.5 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-50">
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
               </button>
             </div>

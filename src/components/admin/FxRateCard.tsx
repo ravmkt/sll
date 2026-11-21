@@ -7,7 +7,7 @@ import { notifyFxUpdated } from '@/hooks/admin/useFxRate';
 
 const sb: any = supabase;
 const fmt4 = (v: number) => v.toFixed(4).replace('.', ',');
-const INPUT = 'h-9 w-36 rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 text-right text-sm font-bold text-white outline-none focus:border-[#0094eb]';
+const INPUT = 'h-9 w-36 rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 text-right text-sm font-bold text-white outline-none focus:border-[color:var(--sll-b-brand)]';
 const BTN = 'inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg px-4 text-[13px] font-bold disabled:opacity-40';
 
 export default function FxRateCard() {
@@ -115,7 +115,7 @@ export default function FxRateCard() {
           <button type="button" disabled={busy !== null || !changed} onClick={() => void manual()} className={BTN + ' bg-emerald-500 text-white hover:bg-emerald-600'}>
             {busy === 'save' ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Salvar
           </button>
-          <button type="button" disabled={busy !== null} onClick={() => void online()} className={BTN + ' bg-[#0094eb] text-white hover:bg-[#0082cf]'}>
+          <button type="button" disabled={busy !== null} onClick={() => void online()} className={BTN + ' bg-[color:var(--sll-b-brand)] text-white hover:bg-[color:var(--sll-b-brand-hover)]'}>
             {busy === 'sync' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} {'Atualizar cota\u00e7\u00e3o'}
           </button>
         </div>

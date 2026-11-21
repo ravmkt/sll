@@ -112,7 +112,7 @@ export default function MetricasEtapa4(_props: Record<string, unknown>) {
             <button
               key={d}
               onClick={() => setDias(d)}
-              className={`rounded-md px-3 py-1 text-xs font-semibold ${dias === d ? 'bg-sky-500 text-white' : 'text-slate-300 hover:text-white'}`}
+              className={`rounded-md px-3 py-1 text-xs font-semibold ${dias === d ? 'bg-[color:var(--sll-b-brand)] text-white' : 'text-slate-300 hover:text-white'}`}
             >
               {d} dias
             </button>

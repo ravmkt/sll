@@ -128,10 +128,10 @@ export default function PlatformConnectCard({ storeId }: Props) {
         <div className="flex flex-nowrap items-center justify-center gap-2">
           {connected ? (
             <>
-              <button type="button" onClick={doSync} disabled={syncing} className="inline-flex items-center gap-2 rounded-xl border border-[#0094eb] px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-[#0094eb] hover:bg-[#0094eb]/10 disabled:opacity-50 cursor-pointer">
+              <button type="button" onClick={doSync} disabled={syncing} className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--sll-b-brand)] px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] disabled:opacity-50 cursor-pointer">
                 {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Sincronizar agora
               </button>
-              <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] cursor-pointer">
+              <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-white hover:bg-[color:var(--sll-b-brand-hover)] cursor-pointer">
                 <Link2 size={14} /> Atualizar credenciais
               </button>
               <button type="button" onClick={doDisconnect} disabled={removing} className="inline-flex items-center gap-2 rounded-xl border border-rose-300 px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 disabled:opacity-50 cursor-pointer">
@@ -139,7 +139,7 @@ export default function PlatformConnectCard({ storeId }: Props) {
               </button>
             </>
           ) : (
-            <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] cursor-pointer">
+            <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-3 py-2 whitespace-nowrap text-xs font-black uppercase tracking-wider text-white hover:bg-[color:var(--sll-b-brand-hover)] cursor-pointer">
               <Link2 size={14} /> Conectar
             </button>
           )}
@@ -183,7 +183,7 @@ export default function PlatformConnectCard({ storeId }: Props) {
                 type="button"
                 disabled={busy}
                 onClick={connect}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] disabled:opacity-50 cursor-pointer"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-50 cursor-pointer"
               >
                 {busy ? <><Loader2 size={14} className="animate-spin" /> Validando...</> : 'Conectar'}
               </button>

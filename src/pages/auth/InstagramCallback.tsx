@@ -62,10 +62,10 @@ export default function InstagramCallback() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-900 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-slate-950 p-8 text-center shadow-2xl border border-[#0091ff]/30 space-y-4">
+      <div className="w-full max-w-md rounded-2xl bg-slate-950 p-8 text-center shadow-2xl border border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] space-y-4">
         {status === "loading" && (
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-10 w-10 animate-spin text-[#0091ff]" />
+            <Loader2 className="h-10 w-10 animate-spin text-[color:var(--sll-b-brand)]" />
             <h2 className="text-lg font-black text-white">Conectando sua conta do Instagram...</h2>
             <p className="text-xs text-slate-400">Aguarde enquanto validamos suas credenciais na Meta.</p>
           </div>
@@ -86,7 +86,7 @@ export default function InstagramCallback() {
             <p className="text-xs text-rose-400">{errorMessage}</p>
             <button
               onClick={() => navigate("/dashboard/integracao")}
-              className="mt-4 rounded-2xl bg-[#0091ff] px-4 py-2 text-xs font-black text-white hover:bg-[#0070f3] transition-all"
+              className="mt-4 rounded-2xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-black text-white hover:bg-[color:var(--sll-b-brand-hover)] transition-all"
             >
               Voltar para Integrações
             </button>

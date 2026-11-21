@@ -28,7 +28,7 @@ function Avatar({ size, className = '' }: { size: number; className?: string }) 
   const [failed, setFailed] = useState(false);
   if (failed) {
     return (
-      <span style={{ width: size, height: size }} className={`flex items-center justify-center rounded-full bg-[#0094eb] text-white ${className}`}>
+      <span style={{ width: size, height: size }} className={`flex items-center justify-center rounded-full bg-[color:var(--sll-b-brand)] text-white ${className}`}>
         <MessageCircle style={{ width: size * 0.5, height: size * 0.5 }} />
       </span>
     );
@@ -75,7 +75,7 @@ function Md({ text }: { text: string }) {
         li: ({ children }: any) => <li className="pl-0.5">{children}</li>,
         strong: ({ children }: any) => <strong className="font-semibold text-slate-900">{children}</strong>,
         a: ({ children, href }: any) => (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#0094eb] underline">{children}</a>
+          <a href={href} target="_blank" rel="noopener noreferrer" className="font-semibold text-[color:var(--sll-b-brand)] underline">{children}</a>
         ),
       }}
     >
@@ -190,7 +190,7 @@ export default function NoahChatWidget() {
         aria-label="Chat com o Noah"
         className={`${open ? 'flex' : 'hidden'} h-[500px] max-h-[calc(100vh-13rem)] w-[380px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl`}
       >
-        <div className="flex items-center gap-3 bg-[#0094eb] px-4 py-3 text-white">
+        <div className="flex items-center gap-3 bg-[color:var(--sll-b-brand)] px-4 py-3 text-white">
           <Avatar size={36} className="shrink-0 rounded-full bg-white p-0.5" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold leading-tight">Noah • Assistente SLL</p>
@@ -208,7 +208,7 @@ export default function NoahChatWidget() {
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-[85%] break-words rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed ${
-                  m.role === 'user' ? 'rounded-br-sm bg-[#0094eb] text-white' : 'rounded-bl-sm bg-slate-100 text-slate-800'
+                  m.role === 'user' ? 'rounded-br-sm bg-[color:var(--sll-b-brand)] text-white' : 'rounded-bl-sm bg-slate-100 text-slate-800'
                 }`}
               >
                 {m.animate ? <Typewriter text={m.content} onTick={scrollDown} /> : m.role === 'assistant' ? <Md text={m.content} /> : m.content}
@@ -257,13 +257,13 @@ export default function NoahChatWidget() {
               maxLength={MAX_LEN}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Escreva sua dúvida..."
-              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#0094eb]"
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)]"
             />
             <button
               type="submit"
               aria-label="Enviar"
               disabled={loading || !input.trim()}
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-[#0094eb] text-white hover:bg-[#007fcc] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-[color:var(--sll-b-brand)] text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>
@@ -290,7 +290,7 @@ export default function NoahChatWidget() {
           </span>
         )}
         <Avatar size={90} className="drop-shadow-lg" />
-        <span className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white text-white ${waMode ? 'bg-[#25D366]' : 'bg-[#0094eb]'}`}>
+        <span className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white text-white ${waMode ? 'bg-[#25D366]' : 'bg-[color:var(--sll-b-brand)]'}`}>
           {waMode ? <WaIcon /> : open ? <X className="h-3 w-3" /> : <MessageCircle className="h-3 w-3" />}
         </span>
       </button>

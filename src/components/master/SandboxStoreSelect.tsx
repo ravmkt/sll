@@ -53,7 +53,7 @@ export default function SandboxStoreSelect({ compact = false }: { compact?: bool
           value={value}
           disabled={loading || saving}
           onChange={(e) => change(e.target.value)}
-          className="h-7 max-w-[180px] cursor-pointer rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-xs text-white outline-none focus:border-[#0094eb]"
+          className="h-7 max-w-[180px] cursor-pointer rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-xs text-white outline-none focus:border-[color:var(--sll-b-brand)]"
         >
           {options}
         </select>
@@ -73,7 +73,7 @@ export default function SandboxStoreSelect({ compact = false }: { compact?: bool
         value={value}
         disabled={loading || saving}
         onChange={(e) => change(e.target.value)}
-        className="w-full cursor-pointer rounded-xl border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[#0094eb]"
+        className="w-full cursor-pointer rounded-xl border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-white outline-none focus:border-[color:var(--sll-b-brand)]"
       >
         {options}
       </select>

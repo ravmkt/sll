@@ -324,7 +324,7 @@ export const ComentariosTab: React.FC = () => {
             key={toast.id}
             className={`px-4 py-3 rounded-xl shadow-lg text-sm font-semibold text-white transform transition-all duration-300 ${
               toast.type === 'success' ? 'bg-emerald-500' :
-              toast.type === 'error' ? 'bg-rose-500' : 'bg-[#0094eb]'
+              toast.type === 'error' ? 'bg-rose-500' : 'bg-[color:var(--sll-b-brand)]'
             }`}
           >
             {toast.message}
@@ -344,7 +344,7 @@ export const ComentariosTab: React.FC = () => {
       <div data-tour="co-resumo" className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center gap-2.5 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#0094eb] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] flex items-center justify-center shrink-0">
               <ShieldCheck size={18} />
             </div>
             <div>
@@ -369,7 +369,7 @@ export const ComentariosTab: React.FC = () => {
               type="button"
               onClick={handleToggleAutoApprove}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                autoApprove ? 'bg-[#0094eb]' : 'bg-slate-200'
+                autoApprove ? 'bg-[color:var(--sll-b-brand)]' : 'bg-slate-200'
               }`}
             >
               <span
@@ -394,12 +394,12 @@ export const ComentariosTab: React.FC = () => {
                 type="button"
                 onClick={loadComments}
                 disabled={loading}
-                className="p-1.5 text-slate-400 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                className="p-1.5 text-slate-400 hover:text-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-soft)] rounded-lg transition-colors disabled:opacity-50"
                 title="Recarregar comentários"
               >
                 <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               </button>
-              <span className="px-2.5 py-0.5 bg-blue-50 text-[#0094eb] text-[11px] font-bold rounded-full">
+              <span className="px-2.5 py-0.5 bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] text-[11px] font-bold rounded-full">
                 {filteredComments.length} COMENTÁRIOS
               </span>
             </div>
@@ -413,7 +413,7 @@ export const ComentariosTab: React.FC = () => {
                 placeholder="Pesquisar autor ou texto..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[color:var(--sll-b-brand)] transition-colors"
               />
             </div>
 
@@ -421,7 +421,7 @@ export const ComentariosTab: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[#0094eb] transition-colors cursor-pointer"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[color:var(--sll-b-brand)] transition-colors cursor-pointer"
               >
                 <option value="TODOS">Todos os Status</option>
                 <option value="PENDENTE">Pendentes</option>
@@ -434,7 +434,7 @@ export const ComentariosTab: React.FC = () => {
               <select
                 value={videoFilter}
                 onChange={(e) => setVideoFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[#0094eb] transition-colors cursor-pointer truncate"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[color:var(--sll-b-brand)] transition-colors cursor-pointer truncate"
               >
                 <option value="TODOS">Todos os Vídeos</option>
                 {videoOptions.map((v) => (
@@ -479,7 +479,7 @@ export const ComentariosTab: React.FC = () => {
                       <tr className="hover:bg-slate-50/70 transition-colors">
                         <td className="py-4 px-6 text-left align-top">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-[#0094eb] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+                            <div className="w-9 h-9 rounded-full bg-[color:var(--sll-b-brand)] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
                               {getInitials(comment.author_name || 'Cliente')}
                             </div>
                             <div>
@@ -501,7 +501,7 @@ export const ComentariosTab: React.FC = () => {
                             <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
                               VÍDEO:
                             </span>
-                            <span className="text-xs font-semibold text-[#0094eb] truncate max-w-[320px] md:max-w-md">
+                            <span className="text-xs font-semibold text-[color:var(--sll-b-brand)] truncate max-w-[320px] md:max-w-md">
                               {videos[comment.video_id] || 'Vídeo não encontrado'}
                             </span>
                           </div>
@@ -595,10 +595,10 @@ export const ComentariosTab: React.FC = () => {
                                         )}
                                       </div>
                                       <div className="flex items-center gap-2">
-                                        <p className="text-xs font-bold text-[#0094eb]" title={reply.author_name}>
+                                        <p className="text-xs font-bold text-[color:var(--sll-b-brand)]" title={reply.author_name}>
                                           {reply.author_name}
                                         </p>
-                                        <span className="px-1.5 py-0.5 bg-blue-50 text-[#0094eb] text-[9px] rounded-full">
+                                        <span className="px-1.5 py-0.5 bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] text-[9px] rounded-full">
                                           Resposta oficial
                                         </span>
                                       </div>
@@ -681,12 +681,12 @@ export const ComentariosTab: React.FC = () => {
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder="Digite sua resposta ao cliente..."
                     rows={4}
-                    className="w-full px-3 py-2 pr-10 bg-slate-50 border border-slate-200/80 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#0094eb] transition-colors resize-none"
+                    className="w-full px-3 py-2 pr-10 bg-slate-50 border border-slate-200/80 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[color:var(--sll-b-brand)] transition-colors resize-none"
                   />
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className="absolute right-2 top-2 p-1.5 text-slate-400 hover:text-[#0094eb] hover:bg-blue-50 rounded-lg transition-colors"
+                    className="absolute right-2 top-2 p-1.5 text-slate-400 hover:text-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-soft)] rounded-lg transition-colors"
                     title="Inserir emoji"
                   >
                     <Smile size={18} />

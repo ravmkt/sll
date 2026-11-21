@@ -12,7 +12,7 @@ import {
 } from '@/services/admin/infraUsageAdmin';
 
 const BOX = 'space-y-4 rounded-2xl border border-slate-800 bg-[#111524] p-5';
-const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 py-1.5 text-[15px] text-slate-100 outline-none focus:border-[#0094eb]';
+const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 py-1.5 text-[15px] text-slate-100 outline-none focus:border-[color:var(--sll-b-brand)]';
 const LBL = 'text-xs font-bold uppercase tracking-wider text-slate-500';
 
 const parse = (v?: string): number | null => {
@@ -448,7 +448,7 @@ export default function InfraCostsCard({ onChanged }: { onChanged: () => void })
         </div>
       </section>
 
-      <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2.5 text-[13px] font-bold text-white disabled:opacity-40">
+      <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-[13px] font-bold text-white disabled:opacity-40">
         {busy ? 'Salvando…' : 'Salvar custos'}
       </button>
     </div>

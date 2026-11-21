@@ -12,7 +12,7 @@ import { AlertTriangle, Save, X } from "lucide-react";
 const btnCancel =
   "flex-1 cursor-pointer rounded-2xl border border-slate-200 px-5 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50";
 const btnMain =
-  "flex-1 cursor-pointer rounded-2xl bg-[#0088ff] px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-sky-200 transition hover:bg-[#0077e6] disabled:opacity-50";
+  "flex-1 cursor-pointer rounded-2xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-sky-200 transition hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-50";
 
 interface ShellProps {
   open: boolean;
@@ -176,7 +176,7 @@ export function PromptNameModal({
       }
     >
       <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-sky-200/80 bg-sky-50/40">
-        <Save className="h-9 w-9 stroke-[1.75] text-[#0088ff]" />
+        <Save className="h-9 w-9 stroke-[1.75] text-[color:var(--sll-b-brand)]" />
       </div>
       <WarnBanner>{message}</WarnBanner>
       <div className="mt-4 w-full space-y-1.5">
@@ -190,7 +190,7 @@ export function PromptNameModal({
           onKeyDown={(e) => {
             if (e.key === "Enter") onConfirm();
           }}
-          className="h-10 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-[#0088ff] focus:ring-2 focus:ring-sky-100"
+          className="h-10 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-sky-100"
         />
         {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
       </div>

@@ -288,7 +288,7 @@ export default function NewStoryModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex: Lançamento Coleção Verão"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-[color:var(--sll-b-brand)] focus:outline-none"
           />
         </div>
 
@@ -340,7 +340,7 @@ export default function NewStoryModal({
             <button
               type="button"
               onClick={addLocation}
-              className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="flex items-center gap-1 text-sm font-medium text-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]"
             >
               <Plus className="h-4 w-4" /> Adicionar localização
             </button>
@@ -367,7 +367,7 @@ export default function NewStoryModal({
                         title="Visualizar widget nesta página da loja"
                         className="flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
                       >
-                        <Eye className="h-3.5 w-3.5 text-blue-600" />
+                        <Eye className="h-3.5 w-3.5 text-[color:var(--sll-b-brand)]" />
                         Visualizar
                       </button>
                       {locations.length > 1 && (
@@ -452,13 +452,13 @@ export default function NewStoryModal({
                         title="Selecionar elemento visualmente na loja"
                         className={`flex items-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
                           isPicking
-                            ? 'border-blue-400 bg-blue-100 text-blue-800'
-                            : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                            ? 'border-blue-400 bg-[color:var(--sll-b-brand-soft)] text-blue-800'
+                            : 'border-blue-300 bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-soft)]'
                         }`}
                       >
                         {isPicking ? (
                           <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-[color:var(--sll-b-brand)]" />
                             Aguardando clique...
                           </>
                         ) : (
@@ -471,7 +471,7 @@ export default function NewStoryModal({
                     </div>
 
                     {isPicking && (
-                      <p className="mt-1 text-xs text-blue-600 font-medium animate-pulse">
+                      <p className="mt-1 text-xs text-[color:var(--sll-b-brand)] font-medium animate-pulse">
                         💡 Clique no elemento desejado na aba aberta da sua loja. O seletor será capturado automaticamente.
                       </p>
                     )}

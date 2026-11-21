@@ -53,7 +53,7 @@ export function StepStoreData({ data, storeId, onChange }: StepProps) {
             {b.logo_url ? <img src={b.logo_url} alt="Logo da loja" className="h-full w-full object-contain" /> : <Upload className="h-5 w-5 text-slate-400" />}
           </div>
           <div>
-            <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()} className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
+            <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()} className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
               {uploading ? 'Enviando...' : b.logo_url ? 'Trocar logo' : 'Enviar logo'}
             </button>
             <p className="mt-1 text-[11px] text-slate-400">PNG, JPG, WEBP ou SVG, até 2 MB.</p>

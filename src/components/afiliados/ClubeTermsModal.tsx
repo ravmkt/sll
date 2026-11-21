@@ -91,7 +91,7 @@ export function ClubeTermsModal({ open, storeId, settings, onClose, onAccepted }
               type="button"
               disabled={!checked || busy}
               onClick={accept}
-              className="cursor-pointer rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#007fcc] disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {busy ? 'Registrando...' : 'Aceitar e Liberar Link'}
             </button>

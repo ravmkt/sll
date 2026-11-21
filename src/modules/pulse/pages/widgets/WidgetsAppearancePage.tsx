@@ -57,7 +57,7 @@ export default function WidgetsAppearancePage({ ctx }: { ctx: WidgetsCtx }) {
         </div>
         <button type="button"
           onClick={() => setEditing({ name: '', primary_color: '#0094EB', config: buildConfig('#0094EB'), is_default: false })}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white">
+          className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white">
           <Plus className="h-4 w-4" /> Criar Novo Estilo
         </button>
       </div>
@@ -81,12 +81,12 @@ export default function WidgetsAppearancePage({ ctx }: { ctx: WidgetsCtx }) {
             <span className="text-center">
               {st.is_default
                 ? <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600">Padrão</span>
-                : <button type="button" onClick={() => handleDefault(st)} className="text-xs font-semibold text-slate-400 hover:text-[#0094EB]">Definir Padrão</button>}
+                : <button type="button" onClick={() => handleDefault(st)} className="text-xs font-semibold text-slate-400 hover:text-[color:var(--sll-b-brand)]">Definir Padrão</button>}
             </span>
             <span className="flex justify-end gap-3 text-slate-400">
               <button type="button" title="Editar"
                 onClick={() => setEditing({ id: st.id, name: st.name, primary_color: st.primary_color, config: mergeConfig(st.config), is_default: st.is_default })}
-                className="hover:text-[#0094EB]"><Pencil className="h-4 w-4" /></button>
+                className="hover:text-[color:var(--sll-b-brand)]"><Pencil className="h-4 w-4" /></button>
               <button type="button" title="Excluir" onClick={() => handleDelete(st)} className="hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
             </span>
           </div>
@@ -105,7 +105,7 @@ export default function WidgetsAppearancePage({ ctx }: { ctx: WidgetsCtx }) {
               <span className="text-sm font-bold text-slate-800">{p.name}</span>
               <button type="button"
                 onClick={() => setEditing({ name: '', template: p.name, primary_color: p.color, config: p.config, is_default: false })}
-                className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-600">
+                className="rounded-lg border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-3 py-1.5 text-xs font-bold text-[color:var(--sll-b-brand)]">
                 Usar template
               </button>
             </div>

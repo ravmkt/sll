@@ -35,7 +35,7 @@ export default function StudioArtesPage() {
   if (loading) {
     return (
       <div className={`${CARD} flex items-center justify-center gap-3 py-16 text-sm text-slate-500`}>
-        <Loader2 size={20} className="animate-spin text-[#0094eb]" /> Carregando...
+        <Loader2 size={20} className="animate-spin text-[color:var(--sll-b-brand)]" /> Carregando...
       </div>
     );
   }

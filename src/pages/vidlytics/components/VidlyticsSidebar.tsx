@@ -82,7 +82,7 @@ export function VidlyticsSidebar({
           className={`flex items-center justify-center gap-2 rounded-lg py-2 px-3 text-xs font-bold transition-all w-full cursor-pointer ${
             isExpanded
               ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200'
-              : 'bg-[#0094eb] text-white hover:bg-[#007bc4]'
+              : 'bg-[color:var(--sll-b-brand)] text-white hover:bg-[color:var(--sll-b-brand-hover)]'
           }`}
           title={isExpanded ? 'Recolher menu' : 'Expandir menu'}
         >
@@ -113,8 +113,8 @@ export function VidlyticsSidebar({
                   !isExpanded ? 'justify-center' : ''
                 } ${
                   isActive
-                    ? 'bg-[#0094eb] text-white font-medium shadow-md shadow-[#0094eb]/20'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb]'
+                    ? 'bg-[color:var(--sll-b-brand)] text-white font-medium shadow-md shadow-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[color:var(--sll-b-brand)]'
                 }`}
               >
                 <Icon size={20} className="shrink-0" />
@@ -133,7 +133,7 @@ export function VidlyticsSidebar({
           type="button"
           onClick={() => navigate('/dashboard')}
           title={!isExpanded ? 'Voltar ao Dashboard SLL' : undefined}
-          className={`flex items-center gap-2.5 px-4 py-2 w-full rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb] transition-colors cursor-pointer ${
+          className={`flex items-center gap-2.5 px-4 py-2 w-full rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[color:var(--sll-b-brand)] transition-colors cursor-pointer ${
             !isExpanded ? 'justify-center' : 'justify-start'
           }`}
         >

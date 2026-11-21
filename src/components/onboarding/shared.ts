@@ -13,7 +13,7 @@ export interface StepProps { data: WizardData; storeId: string; onChange: (patch
 export const DEFAULT_BRAND: Brand = { logo_url: '', primary_color: '#0094eb', secondary_color: '#fd8539' };
 export const NICHES = ['Moda & Acessórios','Eletrônicos','Beleza & Cosméticos','Saúde','Casa & Decoração','Alimentos & Bebidas','Esportes & Fitness','Pet','Infantil','Outros'];
 export const HEX = /^#[0-9a-fA-F]{6}$/;
-export const INPUT = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-[#0094eb]';
+export const INPUT = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)]';
 export const LABEL = 'mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500';
 export const digits = (v: string) => (v || '').replace(/\D/g, '');
 export const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());

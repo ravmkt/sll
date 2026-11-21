@@ -151,8 +151,8 @@ export default function ProximasDatasComerciais() {
     <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm h-full flex flex-col gap-4">
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#0094eb]/10 flex items-center justify-center shrink-0">
-            <CalendarDays className="w-4 h-4 text-[#0094eb]" />
+          <div className="w-8 h-8 rounded-lg bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] flex items-center justify-center shrink-0">
+            <CalendarDays className="w-4 h-4 text-[color:var(--sll-b-brand)]" />
           </div>
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Próximas Datas Comerciais</h3>
@@ -195,7 +195,7 @@ export default function ProximasDatasComerciais() {
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-[#0094eb] font-semibold mt-0.5 flex items-center gap-1">
+                <p className="text-[11px] text-[color:var(--sll-b-brand)] font-semibold mt-0.5 flex items-center gap-1">
                   <Lightbulb className="w-3 h-3" /> Ver dica de ação comercial
                 </p>
               </div>

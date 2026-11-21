@@ -106,8 +106,8 @@ export function ReferralEarningsChart({ storeId }: { storeId: string | null | un
               onClick={() => setPeriod(p.key)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
                 period === p.key
-                  ? "bg-[#0094eb] border-[#0094eb] text-white"
-                  : "bg-white dark:bg-transparent border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-[#0094eb]"
+                  ? "bg-[color:var(--sll-b-brand)] border-[color:var(--sll-b-brand)] text-white"
+                  : "bg-white dark:bg-transparent border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-[color:var(--sll-b-brand)]"
               }`}
             >
               {p.label}
@@ -118,7 +118,7 @@ export function ReferralEarningsChart({ storeId }: { storeId: string | null | un
 
       <div>
         <p className={LABEL}>Total no período</p>
-        <p className="text-3xl font-black text-[#0094eb]">{brl(total)}</p>
+        <p className="text-3xl font-black text-[color:var(--sll-b-brand)]">{brl(total)}</p>
       </div>
 
       <div className="h-56">

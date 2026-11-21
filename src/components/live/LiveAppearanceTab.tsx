@@ -24,12 +24,12 @@ const ToggleSwitch = ({
   description?: string;
 }) => {
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200/80 dark:border-[#ff7a29]/30 bg-white dark:bg-[#111524] px-3 py-2 transition hover:border-blue-200 hover:bg-blue-50/20 dark:hover:border-[#ff7a29]/60 dark:hover:bg-[#ff7a29]/5">
+    <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200/80 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#111524] px-3 py-2 transition hover:border-[color:var(--sll-b-brand-border)] hover:bg-blue-50/20 dark:hover:border-[color:color-mix(in_srgb,var(--sll-b-brand)_60%,transparent)] dark:hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)]">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="h-4 w-4 rounded border-slate-300 text-[#0091ff] accent-[#0091ff] focus:ring-2 focus:ring-[#0091ff]"
+        className="h-4 w-4 rounded border-slate-300 text-[color:var(--sll-b-brand)] accent-[#0091ff] focus:ring-2 focus:ring-[color:var(--sll-b-brand)]"
       />
       <span className="min-w-0 flex-1">
         <span className="block text-xs font-bold text-slate-800 dark:text-white">{label}</span>
@@ -56,7 +56,7 @@ const ColorInput = ({
   return (
     <div className="flex items-center gap-1.5 w-full">
       <div
-        className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 dark:border-[#ff7a29]/30 shadow-xs overflow-hidden"
+        className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] shadow-xs overflow-hidden"
         style={{ backgroundColor: safeColor }}
       >
         <input
@@ -71,7 +71,7 @@ const ColorInput = ({
         type="text"
         value={value}
         onChange={onChange}
-        className="w-full rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-slate-50 dark:bg-[#111524] px-2 py-1.5 font-mono text-xs font-bold text-slate-800 dark:text-white outline-none transition focus:border-[#0091ff] dark:focus:border-[#ff7a29]"
+        className="w-full rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-slate-50 dark:bg-[#111524] px-2 py-1.5 font-mono text-xs font-bold text-slate-800 dark:text-white outline-none transition focus:border-[color:var(--sll-b-brand)] dark:focus:border-[color:var(--sll-b-brand)]"
       />
     </div>
   );
@@ -93,11 +93,11 @@ const SectionCard = ({
   return (
     <div
       className={cn(
-        'space-y-5 rounded-2xl border border-slate-200/80 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35] p-5 shadow-xs transition-all duration-300 hover:shadow-md',
+        'space-y-5 rounded-2xl border border-slate-200/80 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#1a1f35] p-5 shadow-xs transition-all duration-300 hover:shadow-md',
         className,
       )}
     >
-      <div className="border-b border-slate-100 dark:border-[#ff7a29]/20 pb-3 flex items-center justify-between">
+      <div className="border-b border-slate-100 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] pb-3 flex items-center justify-between">
         <div>
           <h3 className="text-base font-black text-slate-900 dark:text-white">{title}</h3>
           {description && (
@@ -131,7 +131,7 @@ const AccordionSection = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35] shadow-xs transition-all duration-300 hover:shadow-md">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#1a1f35] shadow-xs transition-all duration-300 hover:shadow-md">
       <button
         type="button"
         onClick={onToggle}
@@ -146,7 +146,7 @@ const AccordionSection = ({
           )}
         />
       </button>
-      {isOpen && <div className="border-t border-slate-100 dark:border-[#ff7a29]/20 p-4">{children}</div>}
+      {isOpen && <div className="border-t border-slate-100 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] p-4">{children}</div>}
     </div>
   );
 };
@@ -223,7 +223,7 @@ const LiveAppearanceTab: React.FC<LiveAppearanceTabProps> = ({
                     position: e.target.value as LiveWidgetConfig['position'],
                   })
                 }
-                className="w-full rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-slate-50 dark:bg-[#111524] px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0091ff]"
+                className="w-full rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-slate-50 dark:bg-[#111524] px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[color:var(--sll-b-brand)]"
               >
                 <option value="bottom-right">Inferior direita</option>
                 <option value="bottom-left">Inferior esquerda</option>
@@ -239,7 +239,7 @@ const LiveAppearanceTab: React.FC<LiveAppearanceTabProps> = ({
                 value={widgetConfig.label_text}
                 onChange={(e) => onWidgetChange({ ...widgetConfig, label_text: e.target.value })}
                 placeholder="Ex: 🔴 AO VIVO AGORA"
-                className="w-full rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-slate-50 dark:bg-[#111524] px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[#0091ff]"
+                className="w-full rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-slate-50 dark:bg-[#111524] px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-[color:var(--sll-b-brand)]"
               />
             </div>
 

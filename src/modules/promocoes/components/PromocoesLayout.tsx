@@ -32,7 +32,7 @@ export default function PromocoesLayout({
         <div className="flex min-w-0 flex-1 flex-col">
           <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 p-6">
             <header className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#0094eb]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]">
                 <Icon size={24} />
               </div>
               <div className="min-w-0">

@@ -80,7 +80,7 @@ const LeadsPage = lazy(() => import('@/modules/leads/pages/LeadsPage'));
 function PageLoader() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-      <div className="w-10 h-10 border-4 border-[#0094eb]/20 border-t-[#0094eb] rounded-full animate-spin mb-4" />
+      <div className="w-10 h-10 border-4 border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] border-t-[#0094eb] rounded-full animate-spin mb-4" />
       <span className="text-sm font-medium text-gray-600 tracking-wide">
         Carregando SLL Hub...
       </span>

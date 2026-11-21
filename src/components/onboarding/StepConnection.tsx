@@ -62,7 +62,7 @@ function YampiBox({ storeId, onInstalled }: { storeId: string; onInstalled: () =
             <Field label="User-Token"><input type="password" value={token} onChange={(e) => setToken(e.target.value)} className={INPUT} placeholder="••••••••" /></Field>
             <Field label="User-Secret-Key"><input type="password" value={secret} onChange={(e) => setSecret(e.target.value)} className={INPUT} placeholder="••••••••" /></Field>
           </div>
-          <button type="button" onClick={connect} disabled={busy} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
+          <button type="button" onClick={connect} disabled={busy} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
             {busy ? <Loader2 size={14} className="animate-spin" /> : null} Conectar Yampi
           </button>
           {err && <p className="text-[11px] font-semibold text-rose-600">{err}</p>}
@@ -100,7 +100,7 @@ export function StepConnection({ data, storeId, onChange }: StepProps) {
   };
   const pick = (m: Method) => { setMsg(null); onChange({ connection_method: m }); };
   const card = (m: Method) =>
-    `w-full cursor-pointer rounded-2xl border p-4 text-left transition ${method === m ? 'border-[#0094eb] bg-[#0094eb]/5' : 'border-slate-200 hover:border-slate-300'}`;
+    `w-full cursor-pointer rounded-2xl border p-4 text-left transition ${method === m ? 'border-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)]' : 'border-slate-200 hover:border-slate-300'}`;
   const key = (m: Method) => (e: React.KeyboardEvent) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) pick(m); };
 
   const snippetBox = (
@@ -113,7 +113,7 @@ export function StepConnection({ data, storeId, onChange }: StepProps) {
   );
   const testBox = (
     <div className="space-y-2">
-      <button type="button" onClick={test} disabled={testing} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
+      <button type="button" onClick={test} disabled={testing} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
         {testing ? <Loader2 size={14} className="animate-spin" /> : <Plug size={14} />} Testar conexão
       </button>
       {data.script_verified && !msg && <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700"><CheckCircle2 size={14} /> Script já verificado.</p>}
@@ -159,7 +159,7 @@ export function StepConnection({ data, storeId, onChange }: StepProps) {
             <ol className="space-y-3">
               {GTM_STEPS.map(([title, text], i) => (
                 <li key={title} className="flex gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#0094eb] text-[11px] font-black text-white">{i + 1}</span>
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--sll-b-brand)] text-[11px] font-black text-white">{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-slate-800">{title}</p>
                     <p className="text-xs text-slate-500">{text}</p>

@@ -102,7 +102,7 @@ export default function Vidlytics() {
             <p className="text-slate-500 dark:text-slate-400 text-sm">Nenhum estilo customizado encontrado.</p>
             <button
               onClick={handleOpenCreateModal}
-              className="text-[#0094eb] hover:underline text-sm font-semibold"
+              className="text-[color:var(--sll-b-brand)] hover:underline text-sm font-semibold"
             >
               Criar o seu primeiro estilo
             </button>
@@ -137,7 +137,7 @@ export default function Vidlytics() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         {isDefault ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-[#0094eb] dark:bg-blue-950/50 dark:text-blue-400">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] dark:bg-blue-950/50 dark:text-blue-400">
                             <Star size={12} fill="currentColor" /> PADRÃO
                           </span>
                         ) : (
@@ -149,7 +149,7 @@ export default function Vidlytics() {
                           <button
                             onClick={() => handleOpenEditModal(item)}
                             title="Editar estilo"
-                            className="p-1.5 text-slate-400 hover:text-[#0094eb] hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-soft)] dark:hover:bg-blue-950/40 rounded-lg transition-colors"
                           >
                             <Edit2 size={16} />
                           </button>
@@ -204,7 +204,7 @@ export default function Vidlytics() {
               <div className="w-full bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/50 rounded-2xl p-4 text-left flex items-start gap-3">
                 <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-0.5" />
                 <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 leading-relaxed">
-                  Esta ação é irreversível. O item <span className="font-bold text-[#0094eb]">"{deleteModalItem.widget_style?.name || 'Estilo'}"</span> será removido permanentemente.
+                  Esta ação é irreversível. O item <span className="font-bold text-[color:var(--sll-b-brand)]">"{deleteModalItem.widget_style?.name || 'Estilo'}"</span> será removido permanentemente.
                 </p>
               </div>
             </div>
@@ -220,7 +220,7 @@ export default function Vidlytics() {
               <button
                 onClick={handleConfirmDelete}
                 disabled={deletingLoading}
-                className="py-3 px-4 rounded-full bg-[#0094eb] hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 disabled:opacity-50"
+                className="py-3 px-4 rounded-full bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 disabled:opacity-50"
               >
                 {deletingLoading ? <Loader2 size={16} className="animate-spin" /> : 'Excluir'}
               </button>

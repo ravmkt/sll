@@ -61,7 +61,7 @@ export default function StreamSellMetricas() {
                   <b>{nf(f.v)}{i > 0 ? ` (${pct(f.v, funnel[i - 1].v)})` : ''}</b>
                 </div>
                 <div className="h-2 rounded-full bg-slate-800">
-                  <div className="h-2 rounded-full bg-[#0094eb]" style={{ width: `${Math.max(2, Math.min(100, (f.v / base) * 100))}%` }} />
+                  <div className="h-2 rounded-full bg-[color:var(--sll-b-brand)]" style={{ width: `${Math.max(2, Math.min(100, (f.v / base) * 100))}%` }} />
                 </div>
               </div>
             ))}
@@ -71,7 +71,7 @@ export default function StreamSellMetricas() {
         <div className={card}>
           <p className="mb-3 text-[15px] font-bold text-white">Evolução diária</p>
           <div data-legend="evolucao" className="mb-2 flex flex-wrap items-center gap-4 text-[13px] text-slate-400">
-            <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#0094eb]" />{'Visualiza\u00e7\u00f5es'}</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[color:var(--sll-b-brand)]" />{'Visualiza\u00e7\u00f5es'}</span>
             <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#10b981]" />{'Cliques em produtos'}</span>
           </div>
           <div className="h-56">

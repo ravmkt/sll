@@ -51,7 +51,7 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 px-5 py-3 rounded-xl text-sm font-extrabold text-white bg-[#0094eb] hover:bg-[#0082d0] shadow-lg shadow-[#0094eb]/30 cursor-pointer transition-colors disabled:opacity-50"
+            className="flex-1 px-5 py-3 rounded-xl text-sm font-extrabold text-white bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] shadow-lg shadow-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] cursor-pointer transition-colors disabled:opacity-50"
           >
             {isLoading ? 'Aguarde...' : confirmLabel}
           </button>

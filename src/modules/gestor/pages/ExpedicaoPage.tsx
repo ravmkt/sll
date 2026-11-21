@@ -177,7 +177,7 @@ export default function ExpedicaoPage() {
                       <div>{r.shipping_provider || r.shipping_service || '-'}</div>
                       {r.tracking_code && (
                         r.tracking_url
-                          ? <a href={r.tracking_url} target="_blank" rel="noreferrer" className="text-[#0094eb] underline">{r.tracking_code}</a>
+                          ? <a href={r.tracking_url} target="_blank" rel="noreferrer" className="text-[color:var(--sll-b-brand)] underline">{r.tracking_code}</a>
                           : <span className="text-muted-foreground">{r.tracking_code}</span>
                       )}
                     </td>

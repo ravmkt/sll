@@ -30,7 +30,7 @@ function inShell(pathname: string): boolean {
 function ContentLoader() {
   return (
     <div className="flex items-center justify-center py-24">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094eb]/20 border-t-[#0094eb]" />
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] border-t-[#0094eb]" />
     </div>
   );
 }

@@ -84,7 +84,7 @@ export default function Vidlytics() {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
-              <Layers className="w-3.5 h-3.5 text-[#0094eb]" />
+              <Layers className="w-3.5 h-3.5 text-[color:var(--sll-b-brand)]" />
               Vidlytics Stories
             </span>
           </div>
@@ -123,14 +123,14 @@ export default function Vidlytics() {
                   <span className="text-emerald-400 font-semibold">+57.1%</span>
                 </div>
                 <div className="flex items-end gap-1.5 h-10 pt-2">
-                  <div className="flex-1 bg-[#0094eb]/40 rounded-t h-4"></div>
-                  <div className="flex-1 bg-[#0094eb]/60 rounded-t h-6"></div>
-                  <div className="flex-1 bg-[#0094eb]/40 rounded-t h-5"></div>
-                  <div className="flex-1 bg-[#0094eb]/80 rounded-t h-9"></div>
-                  <div className="flex-1 bg-[#0094eb]/90 rounded-t h-7"></div>
-                  <div className="flex-1 bg-[#0094eb] rounded-t h-10 shadow-[0_0_8px_rgba(0,148,235,0.4)]"></div>
-                  <div className="flex-1 bg-[#0094eb]/70 rounded-t h-8"></div>
-                  <div className="flex-1 bg-[#0094eb]/85 rounded-t h-9"></div>
+                  <div className="flex-1 bg-[color:color-mix(in_srgb,var(--sll-b-brand)_40%,transparent)] rounded-t h-4"></div>
+                  <div className="flex-1 bg-[color:color-mix(in_srgb,var(--sll-b-brand)_60%,transparent)] rounded-t h-6"></div>
+                  <div className="flex-1 bg-[color:color-mix(in_srgb,var(--sll-b-brand)_40%,transparent)] rounded-t h-5"></div>
+                  <div className="flex-1 bg-[color:color-mix(in_srgb,var(--sll-b-brand)_80%,transparent)] rounded-t h-9"></div>
+                  <div className="flex-1 bg-[color:color-mix(in_srgb,var(--sll-b-brand)_90%,transparent)] rounded-t h-7"></div>
+                  <div className="flex-1 bg-[color:var(--sll-b-brand)] rounded-t h-10 shadow-[0_0_8px_rgba(0,148,235,0.4)]"></div>
+                  <div className="flex-1 bg-[color:color-mix(in_srgb,var(--sll-b-brand)_70%,transparent)] rounded-t h-8"></div>
+                  <div className="flex-1 bg-[color:color-mix(in_srgb,var(--sll-b-brand)_85%,transparent)] rounded-t h-9"></div>
                 </div>
               </div>
             </div>

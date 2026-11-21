@@ -63,7 +63,7 @@ export const VidlyticsOverviewTab: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-20 text-slate-500">
-        <Loader2 className="w-8 h-8 animate-spin text-[#0094eb] mb-3" />
+        <Loader2 className="w-8 h-8 animate-spin text-[color:var(--sll-b-brand)] mb-3" />
         <p className="text-sm font-medium">Buscando informações da sua loja...</p>
       </div>
     );
@@ -84,7 +84,7 @@ export const VidlyticsOverviewTab: React.FC = () => {
   if (!activeStore) {
     return (
       <div className="p-12 text-center bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl">
-        <div className="w-12 h-12 bg-[#0094eb]/10 text-[#0094eb] rounded-xl flex items-center justify-center mx-auto mb-3">
+        <div className="w-12 h-12 bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)] rounded-xl flex items-center justify-center mx-auto mb-3">
           <StoreIcon className="w-6 h-6" />
         </div>
         <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
@@ -119,7 +119,7 @@ export const VidlyticsOverviewTab: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 mb-2">
             <span className="text-xs font-medium uppercase tracking-wider">Visualizações</span>
-            <div className="p-2 rounded-lg bg-[#0094eb]/10 text-[#0094eb]">
+            <div className="p-2 rounded-lg bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
               <Eye className="w-4 h-4" />
             </div>
           </div>
@@ -163,7 +163,7 @@ export const VidlyticsOverviewTab: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 mb-2">
             <span className="text-xs font-medium uppercase tracking-wider">Receita Atribuída</span>
-            <div className="p-2 rounded-lg bg-[#0094eb]/10 text-[#0094eb]">
+            <div className="p-2 rounded-lg bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
               <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>

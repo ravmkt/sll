@@ -96,7 +96,7 @@ export default function VisaoGeralTab({ storeId, onGoTab }: Props) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0094eb]/10 text-[#0094eb]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
             <Camera className="h-5 w-5" />
           </div>
           <div>
@@ -140,15 +140,15 @@ export default function VisaoGeralTab({ storeId, onGoTab }: Props) {
       )}
 
       <div className="grid gap-3 md:grid-cols-2">
-        <button type="button" onClick={() => onGoTab('aparencia')} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-[#0094eb]">
-          <Palette className="h-5 w-5 text-[#0094eb]" />
+        <button type="button" onClick={() => onGoTab('aparencia')} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-[color:var(--sll-b-brand)]">
+          <Palette className="h-5 w-5 text-[color:var(--sll-b-brand)]" />
           <div>
             <p className="text-sm font-semibold text-slate-900">Personalizar o botão</p>
             <p className="text-xs text-slate-500">Cores, texto e formato com a identidade da loja</p>
           </div>
         </button>
-        <button type="button" onClick={() => onGoTab('instalacao')} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-[#0094eb]">
-          <Code2 className="h-5 w-5 text-[#0094eb]" />
+        <button type="button" onClick={() => onGoTab('instalacao')} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-[color:var(--sll-b-brand)]">
+          <Code2 className="h-5 w-5 text-[color:var(--sll-b-brand)]" />
           <div>
             <p className="text-sm font-semibold text-slate-900">Instalar na loja</p>
             <p className="text-xs text-slate-500">Passo a passo via GTM ou script</p>

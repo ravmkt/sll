@@ -314,7 +314,7 @@ export default function StoreDetailPage({ storeId }: { storeId: string }) {
                   onChange={(e) => setBenMonths(e.target.value.replace(/\D/g, '').slice(0, 2))}
                   inputMode="numeric"
                   placeholder="Meses de desconto (vazio = sem prazo)"
-                  className="w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#0094eb]"
+                  className="w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[color:var(--sll-b-brand)]"
                 />
               )}
               <input

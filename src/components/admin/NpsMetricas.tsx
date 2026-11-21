@@ -56,7 +56,7 @@ function Ranking({ title, items }: { title: string; items: Count[] }) {
           {items.map((i) => (
             <li key={i.key} className="text-[13px]">
               <div className="mb-1 flex justify-between text-slate-300"><span>{pretty(i.key)}</span><b>{i.count}</b></div>
-              <div className="h-1.5 rounded-full bg-slate-800"><div className="h-1.5 rounded-full bg-[#0094eb]" style={{ width: `${(i.count / max) * 100}%` }} /></div>
+              <div className="h-1.5 rounded-full bg-slate-800"><div className="h-1.5 rounded-full bg-[color:var(--sll-b-brand)]" style={{ width: `${(i.count / max) * 100}%` }} /></div>
             </li>
           ))}
         </ul>

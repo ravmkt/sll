@@ -33,7 +33,7 @@ export default function ThemeToggle() {
       aria-label="Alternar tema"
       title={dark ? 'Modo escuro' : 'Modo claro'}
       onClick={() => applyTheme(!dark)}
-      className="relative h-7 w-14 shrink-0 cursor-pointer rounded-full bg-slate-200 transition-colors dark:bg-[#fd8539]"
+      className="relative h-7 w-14 shrink-0 cursor-pointer rounded-full bg-slate-200 transition-colors dark:bg-[color:var(--sll-b-brand)]"
     >
       <Sun className="absolute left-[7px] top-[7px] h-3.5 w-3.5 text-slate-400 dark:text-white" />
       <Moon className="absolute right-[7px] top-[7px] h-3.5 w-3.5 text-slate-400 dark:text-white" />
@@ -45,7 +45,7 @@ export default function ThemeToggle() {
         {dark ? (
           <Moon className="h-3 w-3 text-[#fd8539]" />
         ) : (
-          <Sun className="h-3 w-3 text-[#0094eb]" />
+          <Sun className="h-3 w-3 text-[color:var(--sll-b-brand)]" />
         )}
       </span>
     </button>

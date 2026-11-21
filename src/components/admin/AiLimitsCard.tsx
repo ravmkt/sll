@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 const sb: any = supabase;
-const INPUT = 'h-9 w-28 rounded-lg border border-white/10 bg-[#0b0e1a] px-3 text-sm text-slate-100 outline-none focus:border-[#0094eb]';
+const INPUT = 'h-9 w-28 rounded-lg border border-white/10 bg-[#0b0e1a] px-3 text-sm text-slate-100 outline-none focus:border-[color:var(--sll-b-brand)]';
 const CHIP = 'cursor-pointer rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-slate-300 hover:bg-white/10';
 
 export default function AiLimitsCard() {

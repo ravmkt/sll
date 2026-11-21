@@ -145,7 +145,7 @@ export default function VariationsTab({ storeId, productId, product }: Props) {
       <section className={CARD}>
         <h3 className={TITLE}>Variações cadastradas ({existing.length})</h3>
         {loading ? (
-          <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-[#0094eb]" /></div>
+          <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-[color:var(--sll-b-brand)]" /></div>
         ) : existing.length === 0 ? (
           <p className="text-sm text-slate-400">Nenhuma variação ainda. Monte abaixo.</p>
         ) : (
@@ -172,7 +172,7 @@ export default function VariationsTab({ storeId, productId, product }: Props) {
         {existing.length > 0 && (
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-[11px] text-slate-400">O saldo de estoque muda pelo Livro de estoque, que guarda o histórico.</p>
-            <Button type="button" disabled={!dirty || busy} onClick={() => void saveExisting()} className="rounded-xl bg-[#0094eb] font-bold uppercase text-white hover:bg-[#007bc4]">
+            <Button type="button" disabled={!dirty || busy} onClick={() => void saveExisting()} className="rounded-xl bg-[color:var(--sll-b-brand)] font-bold uppercase text-white hover:bg-[color:var(--sll-b-brand-hover)]">
               {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Salvar alterações
             </Button>
           </div>
@@ -196,7 +196,7 @@ export default function VariationsTab({ storeId, productId, product }: Props) {
               {g.values.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {g.values.map((v) => (
-                    <span key={v} className="inline-flex items-center gap-1 rounded-full bg-[#0094eb] px-3 py-1 text-xs font-bold text-white">
+                    <span key={v} className="inline-flex items-center gap-1 rounded-full bg-[color:var(--sll-b-brand)] px-3 py-1 text-xs font-bold text-white">
                       {v}<button type="button" onClick={() => setGroup(i, { values: g.values.filter((x) => x !== v) })} className="cursor-pointer opacity-80 hover:opacity-100"><X size={12} /></button>
                     </span>
                   ))}
@@ -207,7 +207,7 @@ export default function VariationsTab({ storeId, productId, product }: Props) {
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {groups.length < 3 && <Button type="button" variant="outline" className="rounded-xl" onClick={() => setGroups((g) => [...g, { name: '', values: [], draft: '' }])}><Plus className="mr-1 h-4 w-4" />Outro tipo</Button>}
-          <Button type="button" onClick={generate} className="rounded-xl bg-[#0094eb] font-bold uppercase text-white hover:bg-[#007bc4]">Gerar combinações</Button>
+          <Button type="button" onClick={generate} className="rounded-xl bg-[color:var(--sll-b-brand)] font-bold uppercase text-white hover:bg-[color:var(--sll-b-brand-hover)]">Gerar combinações</Button>
         </div>
 
         {rows.length > 0 && (
@@ -232,7 +232,7 @@ export default function VariationsTab({ storeId, productId, product }: Props) {
               </table>
             </div>
             <div className="flex justify-end">
-              <Button type="button" disabled={busy} onClick={() => void saveNew()} className="rounded-xl bg-[#0094eb] font-bold uppercase text-white hover:bg-[#007bc4]">
+              <Button type="button" disabled={busy} onClick={() => void saveNew()} className="rounded-xl bg-[color:var(--sll-b-brand)] font-bold uppercase text-white hover:bg-[color:var(--sll-b-brand-hover)]">
                 {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Criar {rows.length} variação(ões)
               </Button>
             </div>

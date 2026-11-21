@@ -220,7 +220,7 @@ export default function ComboModulesEditor({ combo, onClose, onSaved }: { combo:
           </div>
         )}
 
-        <button type="button" disabled={busy || loading} onClick={save} className="w-full rounded-lg bg-[#0094eb] px-4 py-2 text-[15px] font-semibold text-white disabled:opacity-40">
+        <button type="button" disabled={busy || loading} onClick={save} className="w-full rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-[15px] font-semibold text-white disabled:opacity-40">
           {busy ? 'Salvando...' : 'Salvar módulos'}
         </button>
       </div>

@@ -40,7 +40,7 @@ export function Badge({ children, tone = 'slate' }: { children: ReactNode; tone?
     green: 'bg-emerald-100 text-emerald-700',
     red: 'bg-red-100 text-red-700',
     amber: 'bg-amber-100 text-amber-700',
-    blue: 'bg-blue-100 text-blue-700',
+    blue: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]',
   };
   return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tones[tone]}`}>{children}</span>;
 }
@@ -71,7 +71,7 @@ export function PeriodSelector({ value, onChange }: { value: Period; onChange: (
           key={p.id}
           type="button"
           onClick={() => onChange(p.id)}
-          className={`rounded-md px-3 py-1 ${value === p.id ? 'bg-blue-600 font-medium text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+          className={`rounded-md px-3 py-1 ${value === p.id ? 'bg-[color:var(--sll-b-brand)] font-medium text-white' : 'text-slate-500 hover:bg-slate-50'}`}
         >
           {p.label}
         </button>

@@ -98,7 +98,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
         <DollarSign className="absolute right-[22rem] -bottom-6 h-24 w-24 rotate-6 text-white/10" strokeWidth={1.5} />
         <div className="relative flex h-full flex-col justify-center gap-1 px-10 text-white">
           <h1 className="text-3xl font-extrabold uppercase leading-tight tracking-tight">Sua próxima live vende mais</h1>
-          <p className="text-base text-blue-100">Prepare sua vitrine e transforme conexões em vendas.</p>
+          <p className="text-base text-[color:var(--sll-b-brand)]">Prepare sua vitrine e transforme conexões em vendas.</p>
         </div>
       </div>
 
@@ -148,14 +148,14 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Faturamento indicações</span>
-                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">Comissões</span>
+                <span className="rounded-full bg-[color:var(--sll-b-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--sll-b-brand)]">Comissões</span>
               </div>
               <div className="text-2xl font-extrabold text-slate-900">{brl(r.referralValue)}</div>
               <Link to={clubHref} className="inline-block rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50">
                 Acessar o Clube SLL
               </Link>
             </div>
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Wallet className="h-6 w-6" /></span>
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]"><Wallet className="h-6 w-6" /></span>
           </div>
         </div>
       </section>
@@ -205,7 +205,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600"><Radio className="h-[18px] w-[18px]" /></span>
               <h3 className="text-sm font-bold uppercase tracking-wide text-slate-900">Próxima live agendada</h3>
             </div>
-            <Link to={p.allLivesHref ?? "/live/lives"} className="text-xs font-semibold text-blue-600 hover:underline">Ver todas →</Link>
+            <Link to={p.allLivesHref ?? "/live/lives"} className="text-xs font-semibold text-[color:var(--sll-b-brand)] hover:underline">Ver todas →</Link>
           </div>
           {nl ? (
             <>
@@ -245,7 +245,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
 
         <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600"><MousePointerClick className="h-[18px] w-[18px]" /></span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]"><MousePointerClick className="h-[18px] w-[18px]" /></span>
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-900">Engajamento das lives</h3>
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -293,12 +293,12 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
             <h3 className="text-xl font-bold text-slate-900">Dica do <span className="font-semibold text-red-600">Noah</span></h3>
           </div>
           <p className="text-sm leading-relaxed text-slate-700">{p.tip || DEFAULT_TIP}</p>
-          <Link to={p.tipsHref ?? "/dashboard/insights-noah"} className="mt-auto pt-4 text-right text-xs font-semibold text-blue-600 hover:underline">Ver mais dicas →</Link>
+          <Link to={p.tipsHref ?? "/dashboard/insights-noah"} className="mt-auto pt-4 text-right text-xs font-semibold text-[color:var(--sll-b-brand)] hover:underline">Ver mais dicas →</Link>
         </div>
 
         <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-bold"><span className="text-blue-600">Clube</span><span className="text-red-600">SLL</span></h3>
+            <h3 className="text-2xl font-bold"><span className="text-[color:var(--sll-b-brand)]">Clube</span><span className="text-red-600">SLL</span></h3>
             <ShoppingCart className="h-5 w-5 text-slate-400" />
           </div>
           <p className="my-3 text-sm text-slate-600">Indique o StreamSell para outros lojistas e receba comissões e benefícios com o Clube SLL.</p>
@@ -315,7 +315,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
 
       {/* ACADEMY */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-2xl font-bold"><span className="text-blue-600">SLL</span> <span className="font-semibold text-red-600">Academy</span></h3>
+        <h3 className="text-2xl font-bold"><span className="text-[color:var(--sll-b-brand)]">SLL</span> <span className="font-semibold text-red-600">Academy</span></h3>
         <p className="mb-5 mt-1 text-sm text-slate-600">Aprenda a configurar sua live, apresentar seus produtos e vender mais com Stream Sell.</p>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {videos.slice(0, 2).map((v) => (
@@ -325,7 +325,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
                 <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">{v.duration}</span>
               </div>
               <div className="mt-2 text-sm font-medium text-slate-900">{v.title}</div>
-              <a href={v.url} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline">
+              <a href={v.url} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--sll-b-brand)] hover:underline">
                 Assistir no YouTube <ExternalLink className="h-3 w-3" />
               </a>
             </div>
@@ -336,7 +336,7 @@ export default function LiveOverviewLayout(p: LiveOverviewProps) {
           </div>
         </div>
         <div className="mt-4 text-right">
-          <a href={channelUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline">Assistir e se inscrever →</a>
+          <a href={channelUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[color:var(--sll-b-brand)] hover:underline">Assistir e se inscrever →</a>
         </div>
       </section>
     </div>

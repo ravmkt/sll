@@ -42,7 +42,7 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({ moduleKey, children }) =
   if (lojaLoading || (key && res?.key !== key)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-8 h-8 border-3 border-[#0094eb]/30 border-t-[#0094eb] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] border-t-[#0094eb] rounded-full animate-spin" />
       </div>
     );
   }

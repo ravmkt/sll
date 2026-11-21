@@ -202,7 +202,7 @@ export default function StoriesTab() {
             placeholder="Buscar por nome do story..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none focus:border-[#0094EB] focus:bg-white transition"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none focus:border-[color:var(--sll-b-brand)] focus:bg-white transition"
           />
         </div>
         <div className="flex gap-2">
@@ -212,7 +212,7 @@ export default function StoriesTab() {
               onClick={() => setStatusFiltro(status)}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                 statusFiltro === status
-                  ? status === 'ATIVO' ? 'bg-emerald-500 text-white shadow-sm' : status === 'INATIVO' ? 'bg-red-500 text-white shadow-sm' : 'bg-[#0094eb] text-white shadow-sm'
+                  ? status === 'ATIVO' ? 'bg-emerald-500 text-white shadow-sm' : status === 'INATIVO' ? 'bg-red-500 text-white shadow-sm' : 'bg-[color:var(--sll-b-brand)] text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >

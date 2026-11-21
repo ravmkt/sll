@@ -57,7 +57,7 @@ export default function ModuleTrialButton({ slug, route }: { slug: string; route
   if (used) {
     return (
       <div className="flex flex-col gap-2">
-        <div className="rounded-2xl border border-[#0094eb]/30 bg-gradient-to-b from-sky-50 to-white p-4 text-center">
+        <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-gradient-to-b from-sky-50 to-white p-4 text-center">
           <p className="text-sm font-black text-slate-900">Volte a usar e impulsione suas vendas!</p>
           <p className="mt-1 text-xs font-semibold text-slate-600">Seu teste grátis já foi utilizado. Assine para ter este módulo de volta na sua loja.</p>
         </div>
@@ -74,7 +74,7 @@ export default function ModuleTrialButton({ slug, route }: { slug: string; route
         type="button"
         onClick={start}
         disabled={busy || !storeId}
-        className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#007fcc] disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {busy ? (
           <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Iniciando teste...</>
@@ -86,7 +86,7 @@ export default function ModuleTrialButton({ slug, route }: { slug: string; route
       <button
         type="button"
         onClick={goPlans}
-        className="cursor-pointer text-center text-xs font-bold text-slate-500 hover:text-[#0094eb] hover:underline"
+        className="cursor-pointer text-center text-xs font-bold text-slate-500 hover:text-[color:var(--sll-b-brand)] hover:underline"
       >
         Ver planos
       </button>

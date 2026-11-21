@@ -41,7 +41,7 @@ export function RadarSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; 
           onClick={onToggle}
           title={isExpanded ? 'Recolher menu' : 'Expandir menu'}
           className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-bold transition-all ${
-            isExpanded ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-[#0094eb] text-white hover:bg-[#007bc4]'
+            isExpanded ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-[color:var(--sll-b-brand)] text-white hover:bg-[color:var(--sll-b-brand-hover)]'
           }`}
         >
           {isCollapsed ? (
@@ -68,8 +68,8 @@ export function RadarSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; 
                   !isExpanded ? 'justify-center' : ''
                 } ${
                   isActive
-                    ? 'bg-[#0094eb] font-medium text-white shadow-md shadow-[#0094eb]/20'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-[#0094eb]'
+                    ? 'bg-[color:var(--sll-b-brand)] font-medium text-white shadow-md shadow-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)]'
                 }`
               }
             >
@@ -87,7 +87,7 @@ export function RadarSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; 
           type="button"
           onClick={() => navigate('/dashboard')}
           title={!isExpanded ? 'Voltar ao SLL' : undefined}
-          className={`flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-4 py-2 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#0094eb] ${
+          className={`flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-4 py-2 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] ${
             !isExpanded ? 'justify-center' : 'justify-start'
           }`}
         >

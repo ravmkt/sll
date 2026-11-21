@@ -92,7 +92,7 @@ export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 
   if (!PLAYLIST_ID || (!loading && videos.length === 0 && !error)) return null;
 
   const arrowCls =
-    'absolute top-[4.2rem] z-10 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-[#0094eb] shadow hover:bg-slate-50';
+    'absolute top-[4.2rem] z-10 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-[color:var(--sll-b-brand)] shadow hover:bg-slate-50';
 
   return (
     <section data-tour="academy" className="flex w-full max-w-2xl flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md">
@@ -128,7 +128,7 @@ export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 
                   <img src={v.thumbnail} alt={v.title} loading="lazy" className="h-full w-full object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/95 shadow transition-transform group-hover:scale-110">
-                      <Play className="ml-0.5 h-4 w-4 fill-[#0094eb] text-[#0094eb]" />
+                      <Play className="ml-0.5 h-4 w-4 fill-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)]" />
                     </div>
                   </div>
                 </div>
@@ -164,7 +164,7 @@ export default function VidlyticsAcademy({ variant = 'vidlytics' }: { variant?: 
         href={SUBSCRIBE_URL}
         target="_blank"
         rel="noreferrer"
-        className={`mt-auto inline-flex items-center gap-1.5 self-end text-xs font-bold hover:underline ${streamsell ? 'text-[#DC2626]' : 'text-[#0094eb]'}`}
+        className={`mt-auto inline-flex items-center gap-1.5 self-end text-xs font-bold hover:underline ${streamsell ? 'text-[#DC2626]' : 'text-[color:var(--sll-b-brand)]'}`}
       >
         <Play className="h-3.5 w-3.5" /> Assistir e se inscrever <ArrowRight className="h-3 w-3" />
       </a>

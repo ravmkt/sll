@@ -17,7 +17,7 @@ export default function TasksPage() {
       <SectionTitle>Tarefas</SectionTitle>
       <div className="flex gap-2 text-sm">
         {filters.map((x) => (
-          <button key={x} type="button" onClick={() => setF(x)} className={`rounded-lg px-3 py-1.5 capitalize ${f === x ? 'bg-blue-600 font-medium text-white' : 'border border-slate-200 bg-white text-slate-600'}`}>{x}</button>
+          <button key={x} type="button" onClick={() => setF(x)} className={`rounded-lg px-3 py-1.5 capitalize ${f === x ? 'bg-[color:var(--sll-b-brand)] font-medium text-white' : 'border border-slate-200 bg-white text-slate-600'}`}>{x}</button>
         ))}
       </div>
       {error && <ErrorBox message={error} />}

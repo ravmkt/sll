@@ -137,11 +137,11 @@ export default function TrialExpiredModal() {
         </button>
 
         <div className="relative mx-auto mb-5 w-20 h-20">
-          <div className="w-20 h-20 rounded-2xl bg-[#0094eb]/10 flex items-center justify-center">
+          <div className="w-20 h-20 rounded-2xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] flex items-center justify-center">
             {showImg ? (
               <img src={info.logo!} alt={info.name} className="w-12 h-12 object-contain" onError={() => setImgFailed(true)} />
             ) : (
-              <span className="text-3xl font-black text-[#0094eb]">{info.name.charAt(0).toUpperCase()}</span>
+              <span className="text-3xl font-black text-[color:var(--sll-b-brand)]">{info.name.charAt(0).toUpperCase()}</span>
             )}
           </div>
           <span className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#fd8539] border-4 border-white flex items-center justify-center">

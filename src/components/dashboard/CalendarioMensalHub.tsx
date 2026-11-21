@@ -125,7 +125,7 @@ export default function CalendarioMensalHub({ storeId, showLives }: { storeId: s
             {showLives ? 'Datas comemorativas e lives agendadas.' : 'Datas comemorativas do seu segmento.'}
           </p>
         </div>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
           <CalendarDays className="h-4 w-4" />
         </div>
       </div>
@@ -145,7 +145,7 @@ export default function CalendarioMensalHub({ storeId, showLives }: { storeId: s
             <button
               type="button"
               onClick={() => setCursor(new Date(now.getFullYear(), now.getMonth(), 1))}
-              className="cursor-pointer rounded-md bg-[#0094eb]/10 px-2 py-0.5 text-[11px] font-bold text-[#0094eb] hover:bg-[#0094eb]/20"
+              className="cursor-pointer rounded-md bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-2 py-0.5 text-[11px] font-bold text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]"
             >
               Hoje
             </button>
@@ -181,8 +181,8 @@ export default function CalendarioMensalHub({ storeId, showLives }: { storeId: s
               key={day}
               {...(m ? { role: 'button', tabIndex: 0, onClick: () => open(m), onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter') open(m); } } : {})}
               className={`group relative flex h-10 items-center justify-center rounded-lg text-sm font-semibold outline-none ${tone} ${
-                m ? 'cursor-pointer hover:ring-1 hover:ring-slate-300 focus-visible:ring-2 focus-visible:ring-[#0094eb]' : ''
-              } ${isToday ? 'ring-2 ring-[#0094eb]' : ''}`}
+                m ? 'cursor-pointer hover:ring-1 hover:ring-slate-300 focus-visible:ring-2 focus-visible:ring-[color:var(--sll-b-brand)]' : ''
+              } ${isToday ? 'ring-2 ring-[color:var(--sll-b-brand)]' : ''}`}
             >
               <span>{day}</span>
               {(hasDate || hasLive) && (
@@ -219,7 +219,7 @@ export default function CalendarioMensalHub({ storeId, showLives }: { storeId: s
       <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-[11px] font-medium text-slate-500">
         <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-amber-500" />Data comemorativa</span>
         {showLives && <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-[#DC2626]" />Live agendada</span>}
-        <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full ring-2 ring-[#0094eb]" />Hoje</span>
+        <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full ring-2 ring-[color:var(--sll-b-brand)]" />Hoje</span>
       </div>
     </div>
   );

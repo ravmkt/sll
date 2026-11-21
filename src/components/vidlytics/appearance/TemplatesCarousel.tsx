@@ -122,8 +122,8 @@ export const TemplatesCarousel: React.FC<TemplatesCarouselProps> = ({
                   {tpl.name}
                 </span>
                 {isDefault && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-[#0094eb] bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-full">
-                    <Star size={11} className="fill-[#0094eb]" /> Padrão
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] dark:bg-blue-950/40 px-2 py-0.5 rounded-full">
+                    <Star size={11} className="fill-[color:var(--sll-b-brand)]" /> Padrão
                   </span>
                 )}
               </div>

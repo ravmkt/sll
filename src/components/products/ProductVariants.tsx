@@ -48,13 +48,13 @@ export function VariantsPanel({ product, storeId, onChanged }: PanelProps) {
           <span className="font-bold text-slate-800 dark:text-white">{total}</span>
         </p>
         {product.origin === 'yampi' && (
-          <button type="button" onClick={sync} disabled={busy} className="inline-flex items-center gap-2 rounded-lg border border-[#0094eb] px-3 py-1.5 text-[11px] font-bold uppercase text-[#0094eb] hover:bg-[#0094eb]/10 disabled:opacity-50 cursor-pointer">
+          <button type="button" onClick={sync} disabled={busy} className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--sll-b-brand)] px-3 py-1.5 text-[11px] font-bold uppercase text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] disabled:opacity-50 cursor-pointer">
             {busy ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />} Sincronizar produto
           </button>
         )}
       </div>
       {loading ? (
-        <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+        <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
       ) : rows.length === 0 ? (
         <p className="py-6 text-center text-xs text-slate-400">Este produto não tem variações cadastradas.</p>
       ) : (

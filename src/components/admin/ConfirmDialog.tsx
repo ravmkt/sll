@@ -53,7 +53,7 @@ function ConfirmDialog({ opts, onResult }: { opts: ConfirmOptions; onResult: (ok
           <button
             type="button"
             onClick={() => onResult(true)}
-            className={`cursor-pointer rounded-lg px-4 py-2 text-[13px] font-bold text-white ${danger ? 'bg-rose-600 hover:bg-rose-500' : 'bg-[#0094eb] hover:bg-sky-500'}`}
+            className={`cursor-pointer rounded-lg px-4 py-2 text-[13px] font-bold text-white ${danger ? 'bg-rose-600 hover:bg-rose-500' : 'bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand)]'}`}
           >
             {opts.confirmLabel || 'Confirmar'}
           </button>

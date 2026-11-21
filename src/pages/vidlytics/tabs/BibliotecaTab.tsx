@@ -389,7 +389,7 @@ const ProductSearchSelect: React.FC<{
   return (
     <div ref={boxRef} className="space-y-2">
       {selected && !changing ? (
-        <div className="flex items-center gap-3 px-3 py-2.5 bg-sky-50/60 border border-sky-100 rounded-2xl">
+        <div className="flex items-center gap-3 px-3 py-2.5 bg-sky-50/60 border border-[color:var(--sll-b-brand-border)] rounded-2xl">
           <ProductThumb src={selected.image} />
           <div className="min-w-0 flex-1">
             <div className="text-sm font-bold text-slate-800 truncate">{selected.label}</div>
@@ -398,7 +398,7 @@ const ProductSearchSelect: React.FC<{
           <button
             type="button"
             onClick={() => { setChanging(true); setOpen(true); }}
-            className="text-[11px] font-bold text-[#0088ff] hover:underline cursor-pointer"
+            className="text-[11px] font-bold text-[color:var(--sll-b-brand)] hover:underline cursor-pointer"
           >
             TROCAR
           </button>
@@ -422,7 +422,7 @@ const ProductSearchSelect: React.FC<{
               onFocus={() => setOpen(true)}
               onKeyDown={onKeyDown}
               placeholder="Buscar produto por nome ou SKU..."
-              className="w-full pl-11 pr-10 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] placeholder:text-slate-400"
+              className="w-full pl-11 pr-10 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)] placeholder:text-slate-400"
             />
             {loading && <RefreshCw className="w-4 h-4 text-slate-400 animate-spin absolute right-4 top-1/2 -translate-y-1/2" />}
           </div>
@@ -439,7 +439,7 @@ const ProductSearchSelect: React.FC<{
                     onMouseEnter={() => setActive(i)}
                     onClick={() => choose(o)}
                     className={`w-full flex items-center gap-3 px-3 py-2 text-left cursor-pointer border-b border-slate-100 last:border-b-0 ${
-                      i === active ? "bg-sky-50" : "bg-white"
+                      i === active ? "bg-[color:var(--sll-b-brand-soft)]" : "bg-white"
                     }`}
                   >
                     <ProductThumb src={o.image} />
@@ -1242,7 +1242,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)]"
             />
           </div>
 
@@ -1254,7 +1254,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             <select
               value={editSourceType}
               onChange={(e) => setEditSourceType(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)]"
             >
               <option value="upload">Upload de vídeo</option>
               <option value="youtube">YouTube / YouTube Shorts</option>
@@ -1298,7 +1298,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                     <button
                       type="button"
                       onClick={() => editVideoFileRef.current?.click()}
-                      className="px-4 py-2 bg-sky-50 hover:bg-sky-100 text-[#0088ff] border border-sky-100 rounded-xl text-xs font-bold transition cursor-pointer"
+                      className="px-4 py-2 bg-[color:var(--sll-b-brand-soft)] hover:bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] border border-[color:var(--sll-b-brand-border)] rounded-xl text-xs font-bold transition cursor-pointer"
                     >
                       Escolher arquivo
                     </button>
@@ -1378,7 +1378,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                   <button
                     type="button"
                     onClick={() => editThumbFileRef.current?.click()}
-                    className="px-4 py-2 bg-sky-50 hover:bg-sky-100 text-[#0088ff] border border-sky-100 rounded-xl text-xs font-bold transition cursor-pointer"
+                    className="px-4 py-2 bg-[color:var(--sll-b-brand-soft)] hover:bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] border border-[color:var(--sll-b-brand-border)] rounded-xl text-xs font-bold transition cursor-pointer"
                   >
                     Escolher arquivo
                   </button>
@@ -1390,7 +1390,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                   value={editThumbnailUrl}
                   onChange={(e) => setEditThumbnailUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-mono text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-mono text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)]"
                 />
 
                 <p className="text-[11px] text-slate-400">
@@ -1416,7 +1416,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             <select
               value={editModelId}
               onChange={(e) => setEditModelId(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)]"
             >
 <option value="">Sem modelo vinculado</option>
 {sizingModels.map((m) => (<option key={m.id} value={m.id}>{m.name} ({m.type === "objeto" ? "Objeto" : "Humano"})</option>))}
@@ -1431,7 +1431,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             <select
               value={editStatus}
               onChange={(e) => setEditStatus(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)]"
             >
               <option value="active">Ativo</option>
               <option value="inactive">Inativo</option>
@@ -1540,7 +1540,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             onClick={() => setIsUrlModalOpen(true)}
             className={`${VID_BTN_SECONDARY} whitespace-nowrap`}
           >
-            <Globe className="w-4 h-4 flex-shrink-0 text-sky-500" />
+            <Globe className="w-4 h-4 flex-shrink-0 text-[color:var(--sll-b-brand)]" />
             URL externa
           </button>
 
@@ -1573,13 +1573,13 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
       <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-[#0088ff] text-white flex items-center justify-center shadow-sm">
+            <div className="w-11 h-11 rounded-2xl bg-[color:var(--sll-b-brand)] text-white flex items-center justify-center shadow-sm">
               <HardDrive className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-slate-800 text-sm">SCALE</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-md">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] border border-[color:var(--sll-b-brand-border)] rounded-md">
                   {limitLabel} LIMITE
                 </span>
               </div>
@@ -1619,7 +1619,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 key={f.id}
                 onClick={() => { setActiveFolder(f.id); setSelectedIds(new Set()); }}
                 className={`inline-flex items-center gap-1.5 pl-3.5 pr-2 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition ${
-                  on ? "bg-[#0088ff] text-white shadow-sm" : "bg-slate-100/70 text-slate-600 hover:text-slate-900"
+                  on ? "bg-[color:var(--sll-b-brand)] text-white shadow-sm" : "bg-slate-100/70 text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {f.name}
@@ -1649,7 +1649,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
               onChange={(ev) => setNewFolderName(ev.target.value)}
               maxLength={60}
               placeholder="Nova pasta (ex.: Óculos)"
-              className="w-48 px-3 py-1.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff]"
+              className="w-48 px-3 py-1.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)]"
             />
             <button
               type="submit"
@@ -1690,7 +1690,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             data-tour="bi-pesquisa" placeholder="Pesquisar pelo nome do arquivo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] placeholder:text-slate-400"
+            className="w-full pl-11 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)] placeholder:text-slate-400"
           />
         </div>
 
@@ -1704,7 +1704,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 onClick={() => setActiveFilter(filter)}
                 className={`flex-1 md:flex-none px-5 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
                   isSelected
-                    ? "bg-[#0088ff] text-white shadow-sm"
+                    ? "bg-[color:var(--sll-b-brand)] text-white shadow-sm"
                     : "text-slate-500 hover:text-slate-800"
                 }`}
               >
@@ -1740,7 +1740,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             <button
               onClick={fetchVideos}
               disabled={loading}
-              className="text-xs text-[#0088ff] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+              className="text-xs text-[color:var(--sll-b-brand)] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
               Atualizar
@@ -1750,7 +1750,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 type="button"
                 title="Grade"
                 onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-lg cursor-pointer transition ${viewMode === "grid" ? "bg-white text-[#0088ff] shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+                className={`p-1.5 rounded-lg cursor-pointer transition ${viewMode === "grid" ? "bg-white text-[color:var(--sll-b-brand)] shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -1758,7 +1758,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 type="button"
                 title="Lista"
                 onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-lg cursor-pointer transition ${viewMode === "list" ? "bg-white text-[#0088ff] shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+                className={`p-1.5 rounded-lg cursor-pointer transition ${viewMode === "list" ? "bg-white text-[color:var(--sll-b-brand)] shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -1770,7 +1770,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           if (loading) {
             return (
               <div className="py-20 text-center">
-                <RefreshCw className="w-8 h-8 animate-spin text-[#0088ff] mx-auto mb-2" />
+                <RefreshCw className="w-8 h-8 animate-spin text-[color:var(--sll-b-brand)] mx-auto mb-2" />
                 <p className="text-sm text-slate-500">Carregando mídias...</p>
               </div>
             );
@@ -1861,7 +1861,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                               {renderThumb(video, m, "w-16 h-10 rounded-lg border border-slate-200/60")}
                               <div className="min-w-0">
                                 <div className="font-bold text-slate-800 text-[13px] line-clamp-1 max-w-[280px]" title={video.title}>{video.title}</div>
-                                <div className="text-[10px] font-bold text-[#0088ff] uppercase tracking-wider mt-0.5">{m.type}</div>
+                                <div className="text-[10px] font-bold text-[color:var(--sll-b-brand)] uppercase tracking-wider mt-0.5">{m.type}</div>
                               </div>
                             </div>
                           </td>
@@ -1879,7 +1879,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                           </td>
                           <td className="py-3 px-4">
                             {m.story ? (
-                              <span className="inline-block px-3 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-full text-[11px] font-bold uppercase">{m.story}</span>
+                              <span className="inline-block px-3 py-0.5 bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] border border-[color:var(--sll-b-brand-border)] rounded-full text-[11px] font-bold uppercase">{m.story}</span>
                             ) : (
                               <span className="text-slate-300 font-bold text-sm">—</span>
                             )}
@@ -1937,7 +1937,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 const stColor = failed ? "text-rose-500" : proc ? "text-amber-500" : "text-emerald-500";
                 const act = "p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer";
                 return (
-                  <div key={video.id} className={`bg-white border rounded-2xl shadow-sm overflow-hidden ${sel ? "border-[#0094eb] ring-2 ring-sky-100" : "border-slate-200/80"}`}>
+                  <div key={video.id} className={`bg-white border rounded-2xl shadow-sm overflow-hidden ${sel ? "border-[color:var(--sll-b-brand)] ring-2 ring-sky-100" : "border-slate-200/80"}`}>
                     <div className="relative cursor-pointer" title="Visualizar" onMouseEnter={() => setHoverId(video.id)} onMouseLeave={() => setHoverId(null)} onClick={() => setPreviewMedia(video)}>
                       {renderThumb(video, m, "w-full aspect-video")}
                       {hoverId === video.id && !m.isImg && video.video_url && !extractYouTubeId(video.video_url) && video.video_source_type !== "tiktok" && (
@@ -1962,7 +1962,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                           {m.product ? (m.product.name || m.product.title) : "Sem produto"}
                         </span>
                         {m.story ? (
-                          <span className="inline-block px-2.5 py-0.5 bg-sky-50 text-[#0088ff] border border-sky-100 rounded-full text-[10px] font-bold uppercase max-w-full truncate" title={m.story}>
+                          <span className="inline-block px-2.5 py-0.5 bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] border border-[color:var(--sll-b-brand-border)] rounded-full text-[10px] font-bold uppercase max-w-full truncate" title={m.story}>
                             {m.story}
                           </span>
                         ) : (
@@ -2015,7 +2015,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
             <div className="bg-white rounded-[32px] max-w-sm w-full p-6 shadow-2xl relative border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-sky-50 text-[#0088ff] flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] flex items-center justify-center flex-shrink-0">
                     <Eye className="w-5 h-5" />
                   </div>
                   <div className="max-w-[200px]">
@@ -2085,7 +2085,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-start justify-between p-6 pb-4">
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-sky-50 text-[#0088ff] flex items-center justify-center flex-shrink-0">
+                <div className="w-11 h-11 rounded-2xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] flex items-center justify-center flex-shrink-0">
                   <Link2 className="w-5 h-5" />
                 </div>
                 <div>
@@ -2116,7 +2116,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                   placeholder="https://youtube.com/shorts/... ou https://youtu.be/... ou MP4 direto"
                   value={externalUrl}
                   onChange={(e) => setExternalUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)] placeholder:text-slate-400"
                 />
               </div>
 
@@ -2129,7 +2129,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                   placeholder="Ex: REEL_PROMO_LANCAMENTO.mp4"
                   value={externalTitle}
                   onChange={(e) => setExternalTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)] placeholder:text-slate-400"
                 />
               </div>
 
@@ -2147,7 +2147,7 @@ export const BibliotecaTab: React.FC<BibliotecaTabProps> = ({ storeId: initialSt
                 <select
                   value={externalModel}
                   onChange={(e) => setExternalModel(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[#0088ff] text-slate-700"
+                  className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-[color:var(--sll-b-brand)] text-slate-700"
                 >
 <option value="">Sem modelo de medidas vinculado</option>
 {sizingModels.map((m) => (<option key={m.id} value={m.id}>{m.name} ({m.type === "objeto" ? "Objeto" : "Humano"})</option>))}

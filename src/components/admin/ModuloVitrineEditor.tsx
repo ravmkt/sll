@@ -34,8 +34,8 @@ function Preview({ name, status, logo, description, features }: { name: string; 
           <img src={logo} alt={name} className="h-20 w-auto max-w-[65%] object-contain object-left" />
         ) : (
           <div className="flex items-center gap-3">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0094eb]/15 to-[#0094eb]/5 ring-1 ring-[#0094eb]/15">
-              <Package className="h-9 w-9 text-[#0094eb]" />
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)] to-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)] ring-1 ring-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)]">
+              <Package className="h-9 w-9 text-[color:var(--sll-b-brand)]" />
             </div>
             <h3 className="text-lg font-black text-slate-900">{name || 'Nome do módulo'}</h3>
           </div>
@@ -43,7 +43,7 @@ function Preview({ name, status, logo, description, features }: { name: string; 
         {soon ? (
           <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold uppercase text-slate-500">Em breve</span>
         ) : (
-          <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-xs font-bold uppercase text-[#0094eb]">Disponível</span>
+          <span className="rounded-full bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-2.5 py-0.5 text-xs font-bold uppercase text-[color:var(--sll-b-brand)]">Disponível</span>
         )}
       </div>
       {description.trim()
@@ -53,7 +53,7 @@ function Preview({ name, status, logo, description, features }: { name: string; 
         <ul className="space-y-2">
           {features.map((b) => (
             <li key={b} className="flex items-start gap-2 text-[15px] font-medium text-slate-700">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#0094eb]" /> {b}
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--sll-b-brand)]" /> {b}
             </li>
           ))}
         </ul>
@@ -62,9 +62,9 @@ function Preview({ name, status, logo, description, features }: { name: string; 
       )}
       <div className="pt-1">
         {soon ? (
-          <div className="flex w-full items-center justify-center rounded-xl bg-[#0094eb] px-4 py-2.5 text-[13px] font-bold text-white">Entrar na lista de espera</div>
+          <div className="flex w-full items-center justify-center rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-[13px] font-bold text-white">Entrar na lista de espera</div>
         ) : (
-          <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-[13px] font-bold text-white">Ativar módulo <ArrowRight className="h-3.5 w-3.5" /></div>
+          <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-[13px] font-bold text-white">Ativar módulo <ArrowRight className="h-3.5 w-3.5" /></div>
         )}
       </div>
     </div>

@@ -180,7 +180,7 @@ export default function VideoRetentionModal({ open, onOpenChange, storeId, video
                 key={n}
                 type="button"
                 onClick={() => applyPreset(n)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold ${preset === n ? 'bg-sky-500 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'}`}
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold ${preset === n ? 'bg-[color:var(--sll-b-brand)] text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'}`}
               >
                 {n} dias
               </button>

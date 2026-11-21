@@ -172,7 +172,7 @@ export default function SocialConnectRow({ storeId, platform, label, logoSrc, pr
           </button>
         </div>
       ) : (
-        <button type="button" disabled={busy || loading} onClick={connect} className={`${BTN} bg-[#0094eb] text-white`}>
+        <button type="button" disabled={busy || loading} onClick={connect} className={`${BTN} bg-[color:var(--sll-b-brand)] text-white`}>
           {busy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />} Conectar
         </button>
       )}

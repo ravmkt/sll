@@ -14,7 +14,7 @@ export default function ProductMetricCards({ total, active, inactive, linked, lo
     { label: 'Total de produtos', value: total, Icon: Package, box: 'bg-slate-100 dark:bg-slate-800', icon: 'text-slate-600 dark:text-slate-300' },
     { label: 'Ativos', value: active, Icon: CheckCircle2, box: 'bg-emerald-50 dark:bg-emerald-950/30', icon: 'text-emerald-500' },
     { label: 'Inativos', value: inactive, Icon: Ban, box: 'bg-rose-50 dark:bg-rose-950/30', icon: 'text-rose-500' },
-    { label: 'Vinculados a vídeo', value: linked, Icon: Link2, box: 'bg-[#0094eb]/10', icon: 'text-[#0094eb]' },
+    { label: 'Vinculados a vídeo', value: linked, Icon: Link2, box: 'bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]', icon: 'text-[color:var(--sll-b-brand)]' },
   ];
 
   return (

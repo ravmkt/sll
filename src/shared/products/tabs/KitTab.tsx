@@ -86,7 +86,7 @@ export default function KitTab({ storeId, productId, items, onChange, product, o
               <li key={h.id}>
                 <button type="button" onClick={() => add(h)} className="flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5">
                   <span className="truncate">{h.name}{h.sku ? ` (${h.sku})` : ''}</span>
-                  <Plus size={14} className="shrink-0 text-[#0094eb]" />
+                  <Plus size={14} className="shrink-0 text-[color:var(--sll-b-brand)]" />
                 </button>
               </li>
             ))}

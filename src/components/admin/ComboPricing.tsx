@@ -70,10 +70,10 @@ export default function ComboPricing({ combo, list, pct, onChanged, guard }: { c
       <div className="flex items-center justify-center gap-2">
         <span className="text-xs text-slate-500">Desconto</span>
         <input value={val} onChange={(e) => setVal(e.target.value)}
-          className="h-7 w-14 rounded-md border border-slate-700 bg-[#0b0e1a] px-2 text-right text-[13px] text-slate-100 outline-none focus:border-[#0094eb]" />
+          className="h-7 w-14 rounded-md border border-slate-700 bg-[#0b0e1a] px-2 text-right text-[13px] text-slate-100 outline-none focus:border-[color:var(--sll-b-brand)]" />
         <span className="text-[13px] text-slate-400">%</span>
         <button type="button" disabled={busy || !dirty || blocked} onClick={save}
-          className="cursor-pointer rounded-md bg-[#0094eb] px-3 py-1 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">
+          className="cursor-pointer rounded-md bg-[color:var(--sll-b-brand)] px-3 py-1 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">
           {busy ? '…' : 'Aplicar'}
         </button>
       </div>
@@ -93,7 +93,7 @@ export default function ComboPricing({ combo, list, pct, onChanged, guard }: { c
                 <p className="text-slate-300">
                   Desconto máximo seguro: <b className="text-white">{String(guard.maxPct).replace('.', ',')}%</b>{' '}
                   {valid && n !== guard.maxPct && (
-                    <button type="button" onClick={() => setVal(String(guard.maxPct).replace('.', ','))} className="cursor-pointer font-bold text-[#0094eb] hover:underline">usar</button>
+                    <button type="button" onClick={() => setVal(String(guard.maxPct).replace('.', ','))} className="cursor-pointer font-bold text-[color:var(--sll-b-brand)] hover:underline">usar</button>
                   )}
                 </p>
               )}

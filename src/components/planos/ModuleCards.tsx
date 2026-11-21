@@ -44,12 +44,12 @@ export default function ModuleCards({ byModule, mods, cycle, onOpen }: Props) {
                 {mod?.logo_url ? (
                   <img src={mod.logo_url} alt={name} className="h-14 max-w-[170px] object-contain object-left" />
                 ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#0091ff]/10 text-2xl font-black text-[#0091ff]">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-2xl font-black text-[color:var(--sll-b-brand)]">
                     {name.charAt(0).toUpperCase()}
                   </div>
                 )}
                 {badge && (
-                  <span className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-black uppercase text-blue-700">{badge}</span>
+                  <span className="shrink-0 rounded-md border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-2 py-1 text-[10px] font-black uppercase text-[color:var(--sll-b-brand)]">{badge}</span>
                 )}
               </div>
 
@@ -93,7 +93,7 @@ export default function ModuleCards({ byModule, mods, cycle, onOpen }: Props) {
                   disabled={tiers.length === 0}
                   onClick={() => onOpen(slug)}
                   className={cn(
-                    "w-full cursor-pointer rounded-full bg-[#0091ff] py-3 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-[#0070f3]",
+                    "w-full cursor-pointer rounded-full bg-[color:var(--sll-b-brand)] py-3 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-[color:var(--sll-b-brand-hover)]",
                     "disabled:cursor-not-allowed disabled:opacity-40"
                   )}
                 >

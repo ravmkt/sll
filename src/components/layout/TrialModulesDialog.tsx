@@ -48,11 +48,11 @@ export default function TrialModulesDialog({ trials, onClose }: { trials: Trial[
             const urgent = t.expired || t.daysLeft <= 1;
             return (
               <div key={t.moduleKey} className="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
-                <div className="w-12 h-12 shrink-0 rounded-xl bg-[#0094eb]/10 flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] flex items-center justify-center">
                   {m?.logo_url ? (
                     <img src={m.logo_url} alt={m?.name || t.label} className="w-8 h-8 object-contain" />
                   ) : (
-                    <span className="text-lg font-black text-[#0094eb]">{(m?.name || t.label || '?').charAt(0).toUpperCase()}</span>
+                    <span className="text-lg font-black text-[color:var(--sll-b-brand)]">{(m?.name || t.label || '?').charAt(0).toUpperCase()}</span>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -76,7 +76,7 @@ export default function TrialModulesDialog({ trials, onClose }: { trials: Trial[
         <button
           type="button"
           onClick={() => go('/dashboard/planos')}
-          className="mt-5 w-full py-3 rounded-xl border-2 border-[#0094eb] text-[#0094eb] hover:bg-[#0094eb]/5 text-sm font-bold cursor-pointer"
+          className="mt-5 w-full py-3 rounded-xl border-2 border-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)] text-sm font-bold cursor-pointer"
         >
           Ver todos os planos
         </button>

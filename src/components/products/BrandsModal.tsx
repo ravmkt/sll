@@ -47,7 +47,7 @@ export default function BrandsModal({ storeId, onChanged, onClose }: Props) {
           <button type="button" onClick={add} disabled={busy} className={primaryBtn}><Plus size={16} /></button>
         </div>
         {loading ? (
-          <div className="flex justify-center py-6"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+          <div className="flex justify-center py-6"><Loader2 className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
         ) : (
           <div className="max-h-[50vh] space-y-2 overflow-y-auto">
             {brands.map((b) => (
@@ -61,11 +61,11 @@ export default function BrandsModal({ storeId, onChanged, onClose }: Props) {
                 )}
                 <div className="flex shrink-0 items-center gap-1">
                   {editId === b.id ? (
-                    <button type="button" onClick={() => rename(b)} disabled={busy} className="cursor-pointer rounded-lg p-1.5 text-[#0094eb] hover:bg-[#0094eb]/10"><Check size={15} /></button>
+                    <button type="button" onClick={() => rename(b)} disabled={busy} className="cursor-pointer rounded-lg p-1.5 text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]"><Check size={15} /></button>
                   ) : (
                     <button type="button" onClick={() => { setEditId(b.id); setEditName(b.name); }} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><Edit3 size={15} /></button>
                   )}
-                  <button type="button" disabled={busy} onClick={() => toggle(b)} className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase ${b.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
+                  <button type="button" disabled={busy} onClick={() => toggle(b)} className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase ${b.active ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
                     {b.active ? 'Ativa' : 'Inativa'}
                   </button>
                 </div>

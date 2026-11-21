@@ -297,7 +297,7 @@ const IndicaEGanha: React.FC = () => {
           <div className={`${CARD} p-4 flex items-start justify-between gap-2`}>
             <div className="space-y-0.5 min-w-0">
               <span className={LABEL}>Lojas indicadas</span>
-              <p className="text-xl font-bold text-[#0094eb]">{referredCount}</p>
+              <p className="text-xl font-bold text-[color:var(--sll-b-brand)]">{referredCount}</p>
               <p className={`text-[10px] ${MUTED}`}>
                 {referredCount === 0 ? "Indique a primeira agora" : "Continue indicando"}
               </p>
@@ -331,7 +331,7 @@ const IndicaEGanha: React.FC = () => {
                     {w.status === "paid" && w.proof_url && (
                       <button
                         onClick={() => openProof(w.proof_url as string)}
-                        className="text-xs font-semibold text-[#0094eb] hover:underline cursor-pointer"
+                        className="text-xs font-semibold text-[color:var(--sll-b-brand)] hover:underline cursor-pointer"
                       >
                         Ver comprovante
                       </button>

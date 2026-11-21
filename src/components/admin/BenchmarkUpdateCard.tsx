@@ -135,7 +135,7 @@ export default function BenchmarkUpdateCard() {
           type="button"
           disabled={busy || !enabled}
           onClick={() => void run(false)}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
+          className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-40"
         >
           {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
           {busy ? (progress || 'Pesquisando na web...') : 'Atualizar Benchmarks via IA'}

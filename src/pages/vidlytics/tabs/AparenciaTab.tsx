@@ -33,11 +33,11 @@ const StyleRow: React.FC<{
       </td>
       <td className="px-6 py-4 text-center">
         {app.is_default ? (
-          <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase text-[#0094eb] bg-blue-50 px-3 py-1 rounded-full">
-            <Star size={12} className="fill-[#0094eb]" /> Padrão
+          <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase text-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] px-3 py-1 rounded-full">
+            <Star size={12} className="fill-[color:var(--sll-b-brand)]" /> Padrão
           </span>
         ) : (
-          <button onClick={() => onSetDefault(app.id)} className="text-xs font-bold text-slate-400 hover:text-[#0094eb]">
+          <button onClick={() => onSetDefault(app.id)} className="text-xs font-bold text-slate-400 hover:text-[color:var(--sll-b-brand)]">
             Definir Padrão
           </button>
         )}
@@ -45,7 +45,7 @@ const StyleRow: React.FC<{
       <td className="px-6 py-4 text-right">
         <button
           onClick={() => onEdit(app.id)}
-          className="p-2 text-slate-400 hover:text-[#0094eb] transition-colors"
+          className="p-2 text-slate-400 hover:text-[color:var(--sll-b-brand)] transition-colors"
           title="Editar estilo"
         >
           <Pencil size={16} />

@@ -45,13 +45,13 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
     // Alerta especial e crítico para exclusão de vídeos que estão em uso ativo
     highlightedContent = (
       <>
-        Este vídeo está sendo usado em <span className="text-[#0091ff] dark:text-[#ff7a29] font-extrabold">Stories ativos</span>. Ao excluí-lo, ele será removido de todos os Stories vinculados na sua loja permanentemente.
+        Este vídeo está sendo usado em <span className="text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] font-extrabold">Stories ativos</span>. Ao excluí-lo, ele será removido de todos os Stories vinculados na sua loja permanentemente.
       </>
     );
   } else if (itemName) {
     highlightedContent = (
       <>
-        Esta ação é irreversível. O item <span className="text-[#0091ff] dark:text-[#ff7a29] font-extrabold">"{itemName}"</span> será removido permanentemente.
+        Esta ação é irreversível. O item <span className="text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] font-extrabold">"{itemName}"</span> será removido permanentemente.
       </>
     );
   } else if (textSource) {
@@ -62,7 +62,7 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
       highlightedContent = (
         <>
           {parts[0]}
-          <span className="text-[#0091ff] dark:text-[#ff7a29] font-extrabold">"{match[1]}"</span>
+          <span className="text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] font-extrabold">"{match[1]}"</span>
           {parts[1]}
         </>
       );
@@ -74,7 +74,7 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-[99999] bg-slate-900/40 dark:bg-black/60 flex items-center justify-center px-4 backdrop-blur-[2px] animate-fade-in">
-      <div className="relative w-full max-w-[480px] bg-white dark:bg-[#111524] rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-[#ff7a29]/30 overflow-hidden animate-scale-up flex flex-col transition-colors duration-300">
+      <div className="relative w-full max-w-[480px] bg-white dark:bg-[#111524] rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] overflow-hidden animate-scale-up flex flex-col transition-colors duration-300">
         
         {/* Cabeçalho */}
         <div className="flex items-center justify-between mb-6">
@@ -83,7 +83,7 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
           </h3>
           <button
             onClick={handleClose}
-            className="p-1 rounded-xl text-slate-400 dark:text-slate-500 hover:text-[#0091ff] dark:hover:text-[#ff7a29] transition-colors cursor-pointer"
+            className="p-1 rounded-xl text-slate-400 dark:text-slate-500 hover:text-[color:var(--sll-b-brand)] dark:hover:text-[color:var(--sll-b-brand)] transition-colors cursor-pointer"
             aria-label="Fechar"
           >
             <X size={18} />
@@ -109,7 +109,7 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={handleClose}
-            className="flex-1 py-3 rounded-2xl bg-white dark:bg-[#1a1f35] border border-slate-200 dark:border-[#ff7a29]/30 text-xs font-extrabold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1a1f35]/70 hover:text-slate-800 dark:hover:text-white transition-all cursor-pointer text-center"
+            className="flex-1 py-3 rounded-2xl bg-white dark:bg-[#1a1f35] border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] text-xs font-extrabold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1a1f35]/70 hover:text-slate-800 dark:hover:text-white transition-all cursor-pointer text-center"
           >
             Cancelar
           </button>
@@ -118,7 +118,7 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
               onConfirm();
               handleClose(); // Garante o fechamento correto após a confirmação
             }}
-            className="flex-1 py-3 rounded-2xl bg-[#0091ff] hover:bg-[#0070f3] dark:bg-[#ff7a29] dark:hover:bg-[#e05e10] text-xs font-extrabold text-white transition-all cursor-pointer text-center shadow-sm"
+            className="flex-1 py-3 rounded-2xl bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] dark:bg-[color:var(--sll-b-brand)] dark:hover:bg-[#e05e10] text-xs font-extrabold text-white transition-all cursor-pointer text-center shadow-sm"
           >
             Excluir
           </button>

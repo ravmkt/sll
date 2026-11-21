@@ -7,7 +7,7 @@ export type IdeaStatus = 'received' | 'analysis' | 'planned' | 'in_progress' | '
 export const IDEA_STATUS: Record<IdeaStatus, { label: string; cls: string }> = {
   received: { label: 'Recebida', cls: 'bg-slate-100 text-slate-600' },
   analysis: { label: 'Em análise', cls: 'bg-amber-100 text-amber-700' },
-  planned: { label: 'Planejado', cls: 'bg-sky-100 text-sky-700' },
+  planned: { label: 'Planejado', cls: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' },
   in_progress: { label: 'Em desenvolvimento', cls: 'bg-violet-100 text-violet-700' },
   done: { label: 'Entregue', cls: 'bg-emerald-100 text-emerald-700' },
   hidden: { label: 'Oculta', cls: 'bg-rose-100 text-rose-700' },

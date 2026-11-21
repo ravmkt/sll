@@ -166,7 +166,7 @@ export default function ChannelsModal({ storeId, onClose, onChanged }: Props) {
   const activeWhs = whs.filter((w) => w.active);
   const sampleN = sample === '' ? 0 : Number(sample);
   const tabBtn = (k: 'canais' | 'depositos', label: string) => (
-    <button type="button" onClick={() => setTab(k)} className={cn('cursor-pointer rounded-xl px-4 py-2 text-sm font-semibold transition', tab === k ? 'bg-[#0094eb] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')}>{label}</button>
+    <button type="button" onClick={() => setTab(k)} className={cn('cursor-pointer rounded-xl px-4 py-2 text-sm font-semibold transition', tab === k ? 'bg-[color:var(--sll-b-brand)] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')}>{label}</button>
   );
 
   return (
@@ -178,7 +178,7 @@ export default function ChannelsModal({ storeId, onClose, onChanged }: Props) {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
         ) : tab === 'canais' ? (
           <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
             <p className="text-xs text-slate-500">
@@ -219,9 +219,9 @@ export default function ChannelsModal({ storeId, onClose, onChanged }: Props) {
                         <p className={cn('truncate text-sm font-medium', !w.active && 'text-slate-400 line-through')}>{w.name}</p>
                         <p className="text-[11px] text-slate-400">{w.is_ecommerce ? 'Depósito principal (alimenta o e-commerce)' : w.kind === 'physical' ? 'Loja física' : 'Outro'}</p>
                       </div>
-                      {canEdit && <button type="button" onClick={() => { setEditId(w.id); setEditName(w.name); }} className="cursor-pointer text-slate-400 hover:text-[#0094eb]" title="Renomear"><Pencil size={15} /></button>}
+                      {canEdit && <button type="button" onClick={() => { setEditId(w.id); setEditName(w.name); }} className="cursor-pointer text-slate-400 hover:text-[color:var(--sll-b-brand)]" title="Renomear"><Pencil size={15} /></button>}
                       {canEdit && !w.is_ecommerce && (
-                        <button type="button" disabled={busy} onClick={() => toggle(w)} className={cn('cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase', w.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600')}>
+                        <button type="button" disabled={busy} onClick={() => toggle(w)} className={cn('cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase', w.active ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-rose-200 bg-rose-50 text-rose-600')}>
                           {w.active ? 'Ativo' : 'Inativo'}
                         </button>
                       )}

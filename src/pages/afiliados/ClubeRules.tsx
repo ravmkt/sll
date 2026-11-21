@@ -55,7 +55,7 @@ export default function ClubeRules() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-3xl space-y-5 p-6">
-        <Link to="/dashboard/afiliados" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0094eb] hover:underline">
+        <Link to="/dashboard/afiliados" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--sll-b-brand)] hover:underline">
           <ArrowLeft className="h-4 w-4" /> Voltar ao Clube SLL
         </Link>
 
@@ -75,7 +75,7 @@ export default function ClubeRules() {
                 <p className="flex items-center gap-2 text-sm font-bold text-green-600">
                   <CheckCircle2 className="h-4 w-4" /> Você aceitou estas regras em {new Date(acceptedAt).toLocaleDateString('pt-BR')}.
                 </p>
-                <Link to="/dashboard/afiliados" className="inline-block rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#007fcc]">
+                <Link to="/dashboard/afiliados" className="inline-block rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]">
                   Ir para o meu link
                 </Link>
               </>
@@ -89,7 +89,7 @@ export default function ClubeRules() {
                   type="button"
                   disabled={!checked || busy}
                   onClick={accept}
-                  className="cursor-pointer rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#007fcc] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="cursor-pointer rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {busy ? 'Registrando...' : 'Aceitar e ativar meu link'}
                 </button>

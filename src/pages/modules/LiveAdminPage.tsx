@@ -396,7 +396,7 @@ export default function LiveAdmin() {
                             {activeProduct.name}
                           </h4>
                           <span
-                            className="text-[9px] font-black bg-sky-100 px-1 py-0.2 rounded shrink-0"
+                            className="text-[9px] font-black bg-[color:var(--sll-b-brand-soft)] px-1 py-0.2 rounded shrink-0"
                             style={{ color: accentColor }}
                           >
                             NA LIVE
@@ -519,7 +519,7 @@ export default function LiveAdmin() {
                         onClick={() => toggleCoupon(coupon)}
                         className={`flex items-center justify-between p-2 rounded-lg text-left text-xs transition border ${
                           isSelected
-                            ? 'bg-sky-500/15 border-sky-500 text-sky-300 font-semibold'
+                            ? 'bg-sky-500/15 border-[color:var(--sll-b-brand)] text-sky-300 font-semibold'
                             : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/50'
                         }`}
                       >
@@ -564,7 +564,7 @@ export default function LiveAdmin() {
                         onClick={() => toggleAdvantage(idx)}
                         className={`flex items-center justify-between p-2 rounded-lg text-left text-xs transition border ${
                           isSelected
-                            ? 'bg-sky-500/15 border-sky-500 text-sky-300 font-semibold'
+                            ? 'bg-sky-500/15 border-[color:var(--sll-b-brand)] text-sky-300 font-semibold'
                             : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/50'
                         }`}
                       >
@@ -697,11 +697,11 @@ export default function LiveAdmin() {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Responder como Loja Oficial..."
-                className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
+                className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[color:var(--sll-b-brand)]"
               />
               <button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-500 text-white p-1.5 rounded-lg transition"
+                className="bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand)] text-white p-1.5 rounded-lg transition"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>

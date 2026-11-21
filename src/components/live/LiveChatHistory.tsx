@@ -47,7 +47,7 @@ export default function LiveChatHistory({ liveId }: { liveId?: string }) {
         {!loading && msgs.length === 0 && <p className="text-xs text-slate-400">Nenhuma mensagem nesta live.</p>}
         <div className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
           {msgs.map((m) => (
-            <div key={m.id} className={`rounded-lg px-3 py-1.5 text-xs ${m.is_from_store ? "bg-sky-50 text-sky-900" : "bg-slate-50 text-slate-800"}`}>
+            <div key={m.id} className={`rounded-lg px-3 py-1.5 text-xs ${m.is_from_store ? "bg-[color:var(--sll-b-brand-soft)] text-sky-900" : "bg-slate-50 text-slate-800"}`}>
               <div className="flex items-center justify-between gap-2 text-[10px] text-slate-500">
                 <b>
                   {m.is_from_store ? "Loja" : m.author_name || "Visitante"}

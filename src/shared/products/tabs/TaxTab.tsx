@@ -31,7 +31,7 @@ export default function TaxTab({ product, onChange }: Props) {
   );
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
+      <div className="rounded-lg border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] p-3 text-sm text-sky-800 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
         Preencha somente se for emitir nota fiscal.
       </div>
       <div>

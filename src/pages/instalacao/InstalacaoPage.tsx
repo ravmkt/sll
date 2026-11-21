@@ -155,7 +155,7 @@ window.SLL_STORE_ID = "${storeId || ""}";
     <DashboardLayout>
       <div className="space-y-8 pb-20">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-[#0091ff]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-3.5 py-1 text-xs font-black uppercase tracking-wider text-[color:var(--sll-b-brand)]">
             <Store className="h-3.5 w-3.5" />
             Instalação &amp; Script
           </div>
@@ -210,7 +210,7 @@ window.SLL_STORE_ID = "${storeId || ""}";
               onClick={() => setInstallTab("platform")}
               className={`rounded-xl px-6 py-3 text-xs font-black uppercase tracking-wider transition-all ${
                 installTab === "platform"
-                  ? "bg-white text-[#0091ff] shadow-md border border-slate-100"
+                  ? "bg-white text-[color:var(--sll-b-brand)] shadow-md border border-slate-100"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -221,7 +221,7 @@ window.SLL_STORE_ID = "${storeId || ""}";
               onClick={() => setInstallTab("gtm")}
               className={`rounded-xl px-6 py-3 text-xs font-black uppercase tracking-wider transition-all ${
                 installTab === "gtm"
-                  ? "bg-white text-[#0091ff] shadow-md border border-slate-100"
+                  ? "bg-white text-[color:var(--sll-b-brand)] shadow-md border border-slate-100"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -316,7 +316,7 @@ window.SLL_STORE_ID = "${storeId || ""}";
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0091ff] text-white font-black text-xs shadow-xs">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--sll-b-brand)] text-white font-black text-xs shadow-xs">
         {n}
       </div>
       <h3 className="mt-4 text-sm font-black text-slate-900 uppercase tracking-tight">{title}</h3>
@@ -350,7 +350,7 @@ function ScriptBlock({
     <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-10 shadow-sm space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0091ff] text-white font-black text-sm shadow-md">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--sll-b-brand)] text-white font-black text-sm shadow-md">
             {step}
           </div>
           <div>
@@ -372,7 +372,7 @@ function ScriptBlock({
           type="button"
           onClick={onCopy}
           disabled={disabled}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0091ff] hover:bg-[#0070f3] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg hover:scale-[1.02] transition-all disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg hover:scale-[1.02] transition-all disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
         >
           {copied ? (
             <>

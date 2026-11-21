@@ -88,7 +88,7 @@ export function ModuleSelectorDropdown() {
         className="flex items-center gap-2.5 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-xl px-3.5 py-1.5 text-xs text-slate-700 font-medium shadow-2xs hover:border-slate-300 transition-all cursor-pointer"
       >
         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-        <CurrentIcon className="w-4 h-4 text-[#0094eb]" />
+        <CurrentIcon className="w-4 h-4 text-[color:var(--sll-b-brand)]" />
         <span className="font-semibold text-slate-800">{currentModule.name}</span>
         <ChevronDown
           className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
@@ -123,7 +123,7 @@ export function ModuleSelectorDropdown() {
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer ${
                     mod.isCurrent
-                      ? 'bg-blue-50/80 text-[#0094eb]'
+                      ? 'bg-blue-50/80 text-[color:var(--sll-b-brand)]'
                       : 'hover:bg-slate-50 text-slate-700'
                   }`}
                 >
@@ -131,7 +131,7 @@ export function ModuleSelectorDropdown() {
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                         mod.isCurrent
-                          ? 'bg-[#0094eb] text-white shadow-xs'
+                          ? 'bg-[color:var(--sll-b-brand)] text-white shadow-xs'
                           : 'bg-slate-100 text-slate-600'
                       }`}
                     >
@@ -148,7 +148,7 @@ export function ModuleSelectorDropdown() {
                   </div>
 
                   {mod.isCurrent && (
-                    <Check className="w-4 h-4 text-[#0094eb] shrink-0 ml-2" />
+                    <Check className="w-4 h-4 text-[color:var(--sll-b-brand)] shrink-0 ml-2" />
                   )}
                 </button>
               );

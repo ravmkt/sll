@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Crosshair, Loader2 } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -12,7 +12,7 @@ const POSITIONS: { v: Position; label: string }[] = [
   { v: 'prepend', label: 'Dentro, no início' },
   { v: 'append', label: 'Dentro, no fim' },
 ];
-const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[#0094EB]';
+const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]';
 
 interface Props {
   supabase: SupabaseClient;
@@ -72,7 +72,7 @@ export default function WidgetPlacementPicker({ supabase, storeId, storeUrl, val
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={start} disabled={waiting}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0094EB] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+          className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">
           {waiting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />}
           {waiting ? 'Aguardando seleção na loja...' : 'Selecionar elemento na loja'}
         </button>
@@ -93,7 +93,7 @@ export default function WidgetPlacementPicker({ supabase, storeId, storeUrl, val
         {POSITIONS.map((p) => (
           <button key={p.v} type="button" onClick={() => onChange({ ...value, position: p.v })}
             className={`rounded-xl border px-3 py-2.5 text-sm font-semibold ${value.position === p.v
-              ? 'border-[#0094EB] bg-sky-50 text-[#0094EB]' : 'border-slate-200 text-slate-600'}`}>
+              ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 text-slate-600'}`}>
             {p.label}
           </button>
         ))}

@@ -18,7 +18,7 @@ export default function ProductsTabs() {
             to={path}
             className={`flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
               active
-                ? 'border-[#0094eb] text-[#0094eb]'
+                ? 'border-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)]'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
             }`}
           >

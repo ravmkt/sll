@@ -29,7 +29,7 @@ export default function AccessGuard({ children }: { children: ReactNode }) {
         <ShieldOff className="mx-auto mb-3 h-8 w-8 text-slate-400" />
         <p className="font-semibold">Sem acesso a esta área</p>
         <p className="mt-1 text-sm text-muted-foreground">Seu perfil não tem permissão para ver esta tela.</p>
-        <Link to={GESTOR_BASE} className="mt-4 inline-block text-sm font-medium text-[#0094eb] underline">Voltar à visão geral</Link>
+        <Link to={GESTOR_BASE} className="mt-4 inline-block text-sm font-medium text-[color:var(--sll-b-brand)] underline">Voltar à visão geral</Link>
       </div>
     );
   }

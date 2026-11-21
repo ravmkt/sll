@@ -141,7 +141,7 @@ export default function EmojiPicker({ onPick, compact }: { onPick?: (e: string) 
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:text-[#0094eb]"
+        className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:text-[color:var(--sll-b-brand)]"
       >
         {compact ? '\u{1F600}' : '\u{1F600} Emojis'}
       </button>
@@ -151,7 +151,7 @@ export default function EmojiPicker({ onPick, compact }: { onPick?: (e: string) 
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={'Buscar (ex.: fogo, frete, cora\u00e7\u00e3o)'}
-            className="mb-2 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-[#0094eb]"
+            className="mb-2 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-[color:var(--sll-b-brand)]"
           />
           {!q && (
             <div className="mb-2 flex flex-wrap gap-1">

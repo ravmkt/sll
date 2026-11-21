@@ -37,7 +37,7 @@ export default function ResetPassword() {
     setTimeout(() => nav('/dashboard', { replace: true }), 1500);
   };
 
-  const input = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-[#0094eb]';
+  const input = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-[color:var(--sll-b-brand)]';
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
@@ -51,14 +51,14 @@ export default function ResetPassword() {
             <input type="password" autoComplete="new-password" value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="Nova senha (mín. 8 caracteres)" className={input} />
             <input type="password" autoComplete="new-password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} placeholder="Repita a nova senha" className={input} />
             {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
-            <button type="submit" disabled={busy} className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] py-3 text-sm font-bold text-white disabled:opacity-50">
+            <button type="submit" disabled={busy} className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] py-3 text-sm font-bold text-white disabled:opacity-50">
               {busy && <Loader2 size={15} className="animate-spin" />} Salvar nova senha
             </button>
           </form>
         ) : timedOut ? (
           <div className="space-y-3 text-center">
             <p className="text-sm text-slate-600">Este link expirou ou já foi usado. Peça um novo link ao suporte.</p>
-            <button type="button" onClick={() => nav('/auth')} className="cursor-pointer text-sm font-bold text-[#0094eb] underline">Ir para o login</button>
+            <button type="button" onClick={() => nav('/auth')} className="cursor-pointer text-sm font-bold text-[color:var(--sll-b-brand)] underline">Ir para o login</button>
           </div>
         ) : (
           <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>

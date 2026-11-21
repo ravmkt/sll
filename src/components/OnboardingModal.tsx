@@ -208,8 +208,8 @@ export const OnboardingModal: React.FC = () => {
         <div className="px-8 pt-8 pb-4 border-b border-slate-100 dark:border-slate-800/80">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0094eb]" />
-              <span className="text-xs font-black uppercase tracking-wider text-[#0094eb]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[color:var(--sll-b-brand)]" />
+              <span className="text-xs font-black uppercase tracking-wider text-[color:var(--sll-b-brand)]">
                 Setup Inicial • SLL Hub
               </span>
             </div>
@@ -217,9 +217,9 @@ export const OnboardingModal: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-4 gap-2 mt-4">
-            <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 1 ? 'bg-[#0094eb]' : 'bg-slate-100 dark:bg-slate-800'}`} />
-            <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 2 ? 'bg-[#0094eb]' : 'bg-slate-100 dark:bg-slate-800'}`} />
-            <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 3 ? 'bg-[#0094eb]' : 'bg-slate-100 dark:bg-slate-800'}`} />
+            <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 1 ? 'bg-[color:var(--sll-b-brand)]' : 'bg-slate-100 dark:bg-slate-800'}`} />
+            <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 2 ? 'bg-[color:var(--sll-b-brand)]' : 'bg-slate-100 dark:bg-slate-800'}`} />
+            <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 3 ? 'bg-[color:var(--sll-b-brand)]' : 'bg-slate-100 dark:bg-slate-800'}`} />
             <div className={`h-1.5 rounded-full transition-all duration-300 ${step >= 4 ? 'bg-[#fd8539]' : 'bg-slate-100 dark:bg-slate-800'}`} />
           </div>
         </div>
@@ -288,7 +288,7 @@ export const OnboardingModal: React.FC = () => {
                       placeholder="Ex: Minha Loja Store"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[color:var(--sll-b-brand)] dark:bg-slate-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -304,7 +304,7 @@ export const OnboardingModal: React.FC = () => {
                       placeholder="ex: minhaloja.com.br"
                       value={formData.url}
                       onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[color:var(--sll-b-brand)] dark:bg-slate-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -319,7 +319,7 @@ export const OnboardingModal: React.FC = () => {
                       <select
                         value={formData.platform}
                         onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white cursor-pointer"
+                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[color:var(--sll-b-brand)] dark:bg-slate-900 dark:text-white cursor-pointer"
                       >
                         <option value="">Selecione sua plataforma</option>
 {PLATAFORMAS.map((plat) => (
@@ -338,7 +338,7 @@ export const OnboardingModal: React.FC = () => {
                       <select
                         value={selectedSectorId}
                         onChange={(e) => setSelectedSectorId(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white cursor-pointer"
+                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[color:var(--sll-b-brand)] dark:bg-slate-900 dark:text-white cursor-pointer"
                       >
                         <option value="">Selecione...</option>
                         {sectors.map((s) => (
@@ -360,7 +360,7 @@ export const OnboardingModal: React.FC = () => {
                       placeholder="Ex: Annellyse Moreira"
                       value={formData.contact_name}
                       onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[color:var(--sll-b-brand)] dark:bg-slate-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -377,7 +377,7 @@ export const OnboardingModal: React.FC = () => {
                         placeholder="contato@sualoja.com.br"
                         value={formData.contact_email}
                         onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
+                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[color:var(--sll-b-brand)] dark:bg-slate-900 dark:text-white"
                       />
                     </div>
                   </div>
@@ -393,7 +393,7 @@ export const OnboardingModal: React.FC = () => {
                         placeholder="dono@sualoja.com.br"
                         value={formData.owner_contact_email}
                         onChange={(e) => setFormData({ ...formData, owner_contact_email: e.target.value })}
-                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
+                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[color:var(--sll-b-brand)] dark:bg-slate-900 dark:text-white"
                       />
                     </div>
                   </div>
@@ -430,7 +430,7 @@ export const OnboardingModal: React.FC = () => {
                         whatsapp_number: e.target.value.replace(/[^\d+\-() ]/g, ''),
                       })
                     }
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[color:var(--sll-b-brand)] dark:bg-slate-900 dark:text-white"
                   />
                 </div>
                 <p className="text-[10px] text-slate-400 mt-1">Com código do país e DDD (Ex: 5545999999999).</p>
@@ -444,7 +444,7 @@ export const OnboardingModal: React.FC = () => {
                   rows={3}
                   value={formData.whatsapp_message_template}
                   onChange={(e) => setFormData({ ...formData, whatsapp_message_template: e.target.value })}
-                  className="w-full px-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#0094eb] dark:bg-slate-900 dark:text-white resize-none"
+                  className="w-full px-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[color:var(--sll-b-brand)] dark:bg-slate-900 dark:text-white resize-none"
                 />
               </div>
 
@@ -464,7 +464,7 @@ export const OnboardingModal: React.FC = () => {
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     onChange={handleLogoChange}
-                    className="flex-1 text-xs font-bold text-slate-600 dark:text-slate-300 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-[#0094eb] file:text-white file:font-black file:text-xs file:cursor-pointer cursor-pointer"
+                    className="flex-1 text-xs font-bold text-slate-600 dark:text-slate-300 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-[color:var(--sll-b-brand)] file:text-white file:font-black file:text-xs file:cursor-pointer cursor-pointer"
                   />
                 </div>
                 <p className="text-[10px] text-slate-400 mt-1">Pode enviar depois em Configurações, se preferir.</p>
@@ -531,7 +531,7 @@ export const OnboardingModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="flex items-center gap-2 px-6 py-2.5 bg-[#0094eb] hover:bg-[#0082cf] text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+                className="flex items-center gap-2 px-6 py-2.5 bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer"
               >
                 {step === 1 ? 'Começar Configuração' : 'Próximo'}
                 <ArrowRight size={14} />

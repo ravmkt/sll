@@ -9,7 +9,7 @@ import { isSafeUrl } from '@/lib/safe-link';
 import type { InfoCard } from '../../types/infoCards';
 import { SAMPLE_CONTENT, mergeConfig, type Tier, type WidgetStyle, type WidgetsCtx } from '../../types/widgets';
 
-const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[#0094EB]';
+const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]';
 const labelCls = 'mb-1 block text-[10px] font-bold uppercase text-slate-400';
 const EMPTY_PLACEMENT: Placement = { selector: '', position: 'before' };
 const hasText = (t: Tier): boolean => !!(t.label.trim() || t.value.trim() || (t.lines ?? []).some((l) => l.text.trim()));
@@ -94,7 +94,7 @@ export default function InfoCardModal({ ctx, initial, defaultName, styles, onClo
                     </div>
                     {tiers.length < 6 && (
                       <button type="button" onClick={() => setTiers([...tiers, { label: '', value: '' }])}
-                        className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-600">
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-3 py-1.5 text-xs font-bold text-[color:var(--sll-b-brand)]">
                         <Plus className="h-3.5 w-3.5" /> Adicionar faixa
                       </button>
                     )}
@@ -134,7 +134,7 @@ export default function InfoCardModal({ ctx, initial, defaultName, styles, onClo
                 <div className="flex rounded-lg border border-slate-200 p-0.5">
                   {(['mobile', 'desktop'] as const).map((d) => (
                     <button key={d} type="button" onClick={() => setDevice(d)}
-                      className={`rounded-md p-1.5 ${device === d ? 'bg-[#0094EB] text-white' : 'text-slate-500'}`}>
+                      className={`rounded-md p-1.5 ${device === d ? 'bg-[color:var(--sll-b-brand)] text-white' : 'text-slate-500'}`}>
                       {d === 'mobile' ? <Smartphone className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
                     </button>
                   ))}
@@ -162,7 +162,7 @@ export default function InfoCardModal({ ctx, initial, defaultName, styles, onClo
             {err && <span className="text-sm font-semibold text-red-600">{err}</span>}
             <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Cancelar</button>
             <button type="button" onClick={save} disabled={saving}
-              className="rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+              className="rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>

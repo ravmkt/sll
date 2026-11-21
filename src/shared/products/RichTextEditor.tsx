@@ -38,7 +38,7 @@ interface Props {
 
 const btn =
   'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-slate-200 text-slate-600 ' +
-  'hover:bg-slate-100 hover:text-[#0094eb] disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800';
+  'hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800';
 
 export default function RichTextEditor({ value, onChange, maxLength = 5000, minHeight = 160, placeholder }: Props) {
   const ref = useRef<HTMLDivElement>(null);
@@ -153,7 +153,7 @@ export default function RichTextEditor({ value, onChange, maxLength = 5000, minH
         </div>
         <div className="ml-auto flex gap-1">
           <button type="button" title={source ? 'Voltar ao editor visual' : 'Editar HTML'}
-            className={btn + (source ? ' border-[#0094eb] text-[#0094eb]' : '')} onClick={toggleSource}>
+            className={btn + (source ? ' border-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)]' : '')} onClick={toggleSource}>
             <Code2 size={15} />
           </button>
           <button type="button" title={expanded ? 'Reduzir' : 'Expandir'} className={btn} onClick={() => setExpanded((v) => !v)}>

@@ -22,7 +22,7 @@ export default function OverviewPage() {
         {store.logoUrl ? (
           <img src={store.logoUrl} alt="" className="h-14 w-14 rounded-xl object-cover" />
         ) : (
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-50"><Radar className="h-7 w-7 text-blue-600" /></div>
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[color:var(--sll-b-brand-soft)]"><Radar className="h-7 w-7 text-[color:var(--sll-b-brand)]" /></div>
         )}
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Sua loja sendo encontrada</h1>

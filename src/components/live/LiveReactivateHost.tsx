@@ -56,7 +56,7 @@ export default function LiveReactivateHost() {
   };
 
   const btnCancel = "flex-1 cursor-pointer rounded-2xl border border-slate-200 px-5 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50";
-  const btnMain = "flex-1 cursor-pointer rounded-2xl bg-[#0088ff] px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-sky-200 transition hover:bg-[#0077e6] disabled:opacity-50";
+  const btnMain = "flex-1 cursor-pointer rounded-2xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-sky-200 transition hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-50";
 
   return (
     <AppModal
@@ -72,7 +72,7 @@ export default function LiveReactivateHost() {
       }
     >
       <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-sky-200/80 bg-sky-50/40">
-        <RotateCcw className="h-9 w-9 stroke-[1.75] text-[#0088ff]" />
+        <RotateCcw className="h-9 w-9 stroke-[1.75] text-[color:var(--sll-b-brand)]" />
       </div>
       <p className="mb-4 w-full text-center text-xs font-medium leading-relaxed text-slate-600">
         {ask?.title ? <strong className="text-slate-900">"{ask.title}"</strong> : "A live"} voltará a ficar agendada com os mesmos produtos, cupons e aparência.
@@ -86,7 +86,7 @@ export default function LiveReactivateHost() {
           disabled={busy}
           onChange={(e) => { setValue(e.target.value); setError(""); }}
           onKeyDown={(e) => { if (e.key === "Enter") confirm(); }}
-          className="h-10 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-[#0088ff] focus:ring-2 focus:ring-sky-100"
+          className="h-10 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-sky-100"
         />
         {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
       </div>

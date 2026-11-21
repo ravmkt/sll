@@ -128,7 +128,7 @@ export default function AparenciaTab() {
           <div className="flex flex-wrap gap-2">
             {ICONS.map((i) => (
               <button key={i.l} type="button" onClick={() => set('icon', i.v)}
-                className={`rounded border px-3 py-1 text-sm ${a.icon === i.v ? 'border-[#0094eb] bg-sky-50' : 'border-slate-200'}`}>
+                className={`rounded border px-3 py-1 text-sm ${a.icon === i.v ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)]' : 'border-slate-200'}`}>
                 {i.l}
               </button>
             ))}
@@ -171,7 +171,7 @@ export default function AparenciaTab() {
 
         <div className="flex items-center gap-2 pt-2">
           <button type="button" onClick={onSave} disabled={!dirty || saving}
-            className="rounded-lg bg-[#0094eb] px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+            className="rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
           <button type="button" onClick={() => { setA(DEFAULT_APPEARANCE); setText(DEFAULT_BUTTON_TEXT); }}

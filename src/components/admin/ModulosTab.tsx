@@ -170,7 +170,7 @@ export default function ModulosTab({ onOpenStore }: { onOpenStore: (id: string) 
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ComboDiscountCard compact />
-              <button type="button" onClick={() => { setPlanModule(null); setView('precos'); }} className="cursor-pointer rounded-lg bg-[#0094eb] px-3 py-2 text-[13px] font-bold text-white hover:opacity-90">Preços e planos</button>
+              <button type="button" onClick={() => { setPlanModule(null); setView('precos'); }} className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-3 py-2 text-[13px] font-bold text-white hover:opacity-90">Preços e planos</button>
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#fd8539]" />}
           <select value={days} onChange={(e) => setDays(Number(e.target.value))} className={`${SELECT} cursor-pointer`}>
             <option value={1}>Hoje</option>

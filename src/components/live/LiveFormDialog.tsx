@@ -902,9 +902,9 @@ export function LiveFormDialog({
                     </div>
 
                     {/* SLL-PRESETS-PANEL */}
-                        <div className="rounded-xl border border-sky-100 bg-sky-50/40 p-3 space-y-2">
+                        <div className="rounded-xl border border-[color:var(--sll-b-brand-border)] bg-sky-50/40 p-3 space-y-2">
                           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                            <Bookmark className="w-3.5 h-3.5 text-sky-600" /> Atalhos salvos
+                            <Bookmark className="w-3.5 h-3.5 text-[color:var(--sll-b-brand)]" /> Atalhos salvos
                           </p>
                           {presets.length === 0 ? (
                             <p className="text-[11px] text-slate-500">
@@ -920,7 +920,7 @@ export function LiveFormDialog({
                                       type="button"
                                       onClick={() => applyPreset(p)}
                                       title={p.description || p.title}
-                                      className="inline-flex max-w-[260px] items-center gap-1.5 truncate px-3 py-1 font-semibold text-slate-700 hover:text-sky-700"
+                                      className="inline-flex max-w-[260px] items-center gap-1.5 truncate px-3 py-1 font-semibold text-slate-700 hover:text-[color:var(--sll-b-brand)]"
                                     >
                                       {p.kind === "coupon" ? <Tag className="w-3 h-3 text-rose-500" /> : <Gift className="w-3 h-3 text-amber-500" />}
                                       <span className="truncate">{p.title}{p.description ? " · " + p.description : ""}</span>
@@ -978,7 +978,7 @@ export function LiveFormDialog({
                                   />
                                 </td>
                                 <td className="p-2 text-center">
-                                  <button type="button" onClick={() => saveRowAsPreset("coupon", idx)} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-md transition-colors" title="Salvar como padrão"><Bookmark className="w-3.5 h-3.5" /></button>
+                                  <button type="button" onClick={() => saveRowAsPreset("coupon", idx)} className="p-1.5 text-slate-400 hover:text-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-soft)] rounded-md transition-colors" title="Salvar como padrão"><Bookmark className="w-3.5 h-3.5" /></button>
 <button
                                     type="button"
                                     onClick={() => handleRemoveCoupon(idx)}
@@ -1033,7 +1033,7 @@ export function LiveFormDialog({
                                   />
                                 </td>
                                 <td className="p-2 text-center">
-                                  <button type="button" onClick={() => saveRowAsPreset("advantage", idx)} className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-md transition-colors" title="Salvar como padrão"><Bookmark className="w-3.5 h-3.5" /></button>
+                                  <button type="button" onClick={() => saveRowAsPreset("advantage", idx)} className="p-1.5 text-slate-400 hover:text-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-soft)] rounded-md transition-colors" title="Salvar como padrão"><Bookmark className="w-3.5 h-3.5" /></button>
 <button
                                     type="button"
                                     onClick={() => handleRemoveAdvantage(idx)}

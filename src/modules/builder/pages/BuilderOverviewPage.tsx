@@ -30,7 +30,7 @@ function Delta({ cur, prev }: { cur: number; prev: number }) {
 function CardTitle({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0094eb]/10"><Icon className="h-4 w-4 text-[#0094eb]" /></div>
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]"><Icon className="h-4 w-4 text-[color:var(--sll-b-brand)]" /></div>
       <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">{children}</h3>
     </div>
   );
@@ -41,7 +41,7 @@ function Stat({ label, value, icon: Icon, hint }: { label: string; value: string
     <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all hover:border-slate-300">
       <div className="flex items-center justify-between text-slate-400">
         <span className="text-[11px] font-bold uppercase">{label}</span>
-        <Icon className="h-4 w-4 text-[#0094eb]" />
+        <Icon className="h-4 w-4 text-[color:var(--sll-b-brand)]" />
       </div>
       <span className="block text-2xl font-black text-slate-800">{value}</span>
       <div className="border-t border-slate-100 pt-1 text-[11px] text-slate-500">{hint}</div>
@@ -116,7 +116,7 @@ export default function BuilderOverviewPage() {
             <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5">
               {PERIODOS.map((p) => (
                 <button key={p.d} type="button" onClick={() => setDays(p.d)}
-                  className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${days === p.d ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-500 hover:text-[#0094eb]'}`}>
+                  className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${days === p.d ? 'bg-[color:var(--sll-b-brand)] text-white shadow-sm' : 'text-slate-500 hover:text-[color:var(--sll-b-brand)]'}`}>
                   {p.label}
                 </button>
               ))}
@@ -143,7 +143,7 @@ export default function BuilderOverviewPage() {
 
           <div className="space-y-2 border-t border-slate-100 pt-4">
             <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              <Trophy className="h-4 w-4 text-[#0094eb]" /> Páginas com melhor desempenho
+              <Trophy className="h-4 w-4 text-[color:var(--sll-b-brand)]" /> Páginas com melhor desempenho
             </p>
             {ranking.length === 0 ? (
               <p className="text-xs text-slate-500">
@@ -164,8 +164,8 @@ export default function BuilderOverviewPage() {
               ))
             )}
             <div className="flex justify-between pt-1">
-              <button type="button" onClick={() => navigate('/dashboard/modules/builder/paginas')} className="cursor-pointer text-[11px] font-semibold text-[#0094eb] hover:underline">Ver minhas páginas →</button>
-              <button type="button" onClick={() => navigate('/dashboard/leads')} className="cursor-pointer text-[11px] font-semibold text-[#0094eb] hover:underline">Ver leads →</button>
+              <button type="button" onClick={() => navigate('/dashboard/modules/builder/paginas')} className="cursor-pointer text-[11px] font-semibold text-[color:var(--sll-b-brand)] hover:underline">Ver minhas páginas →</button>
+              <button type="button" onClick={() => navigate('/dashboard/leads')} className="cursor-pointer text-[11px] font-semibold text-[color:var(--sll-b-brand)] hover:underline">Ver leads →</button>
             </div>
           </div>
         </div>
@@ -183,7 +183,7 @@ export default function BuilderOverviewPage() {
             <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{noah.text}</p>
           </div>
           {tips.length > 0 && (
-            <button type="button" onClick={() => navigate('/dashboard/insights-noah')} className="cursor-pointer self-end text-xs font-bold text-[#0094eb] hover:underline">Ver mais dicas →</button>
+            <button type="button" onClick={() => navigate('/dashboard/insights-noah')} className="cursor-pointer self-end text-xs font-bold text-[color:var(--sll-b-brand)] hover:underline">Ver mais dicas →</button>
           )}
         </div>
 

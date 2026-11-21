@@ -62,7 +62,7 @@ export function StorageRanking({ d, card }: { d: Consumption; card: string }) {
                 </div>
                 <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-800">
                   <div
-                    className={`h-full rounded-full ${pct !== null && pct >= 90 ? 'bg-rose-500' : 'bg-gradient-to-r from-[#0094eb] to-[#06b6d4]'}`}
+                    className={`h-full rounded-full ${pct !== null && pct >= 90 ? 'bg-rose-500' : 'bg-gradient-to-r from-[color:var(--sll-b-brand)] to-[#06b6d4]'}`}
                     style={{ width: `${Math.max(4, pct ?? 30)}%` }}
                   />
                 </div>

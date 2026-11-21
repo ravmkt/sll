@@ -254,7 +254,7 @@ function LiveAudiencePageInner() {
       <div data-tour="audiencia-metricas" className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <MetricCard icon={<Users className="h-5 w-5 text-rose-600" />} tone="bg-rose-50" label={T.cardTotal} value={stats.total} />
         <MetricCard icon={<Phone className="h-5 w-5 text-emerald-600" />} tone="bg-emerald-50" label={T.cardWa} value={stats.wa} />
-        <MetricCard icon={<UserPlus className="h-5 w-5 text-sky-600" />} tone="bg-sky-50" label={T.cardNew} value={stats.recent} />
+        <MetricCard icon={<UserPlus className="h-5 w-5 text-[color:var(--sll-b-brand)]" />} tone="bg-[color:var(--sll-b-brand-soft)]" label={T.cardNew} value={stats.recent} />
       </div>
 
       <div data-tour="audiencia-regua" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -281,7 +281,7 @@ function LiveAudiencePageInner() {
                 <Switch disabled={!notify.enabled} on={notify.whatsappEnabled} label="WhatsApp" onChange={() => saveNotify({ ...notify, whatsappEnabled: !notify.whatsappEnabled })} />
               </div>
               <div className="inline-flex items-center gap-2 font-semibold">
-                <Mail className="h-4 w-4 text-sky-600" /> E-mail
+                <Mail className="h-4 w-4 text-[color:var(--sll-b-brand)]" /> E-mail
                 <Switch disabled={!notify.enabled} on={notify.emailEnabled} label="E-mail" onChange={() => saveNotify({ ...notify, emailEnabled: !notify.emailEnabled })} />
                 {notify.emailEnabled && <span className="text-[11px] font-semibold text-amber-700">sem link de descadastro</span>}
               </div>

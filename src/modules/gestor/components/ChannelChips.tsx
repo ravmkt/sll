@@ -12,7 +12,7 @@ export function TotalCell({ ids, avail, compact, onTransfer }: {
       <div className="inline-flex items-center gap-1.5">
         <span className={cn('font-mono', compact ? 'text-xs' : 'text-sm')}>{total}</span>
         {onTransfer && (
-          <button type="button" title="Transferir entre depósitos" onClick={onTransfer} className="cursor-pointer rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800">
+          <button type="button" title="Transferir entre depósitos" onClick={onTransfer} className="cursor-pointer rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800">
             <ArrowLeftRight size={13} />
           </button>
         )}

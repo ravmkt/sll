@@ -158,7 +158,7 @@ export default function AvaliarPage() {
             <div className="text-xl font-bold text-slate-900 mb-1">Obrigado pela sua avaliação!</div>
             <p className="text-slate-600">{done ? 'Ela já está publicada.' : 'Ela será publicada após a aprovação da loja.'}</p>
             {st?.url && /^https?:\/\//i.test(st.url) && (
-              <a href={st.url} className="inline-block mt-4 px-5 py-2.5 rounded-lg bg-sky-500 text-white font-bold">Voltar à loja</a>
+              <a href={st.url} className="inline-block mt-4 px-5 py-2.5 rounded-lg bg-[color:var(--sll-b-brand)] text-white font-bold">Voltar à loja</a>
             )}
           </div>
         ) : (
@@ -189,16 +189,16 @@ export default function AvaliarPage() {
             </div>
             <label className="block mt-4 text-sm font-semibold text-slate-800">Título (opcional)
               <input value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 text-base font-normal outline-none focus:border-sky-500" />
+                className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 text-base font-normal outline-none focus:border-[color:var(--sll-b-brand)]" />
             </label>
             <label className="block mt-3 text-sm font-semibold text-slate-800">Sua avaliação (opcional)
               <textarea value={body} maxLength={2000} rows={4} onChange={(e) => setBody(e.target.value)}
-                className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 text-base font-normal outline-none focus:border-sky-500" />
+                className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 text-base font-normal outline-none focus:border-[color:var(--sll-b-brand)]" />
             </label>
             {info.allow_media && (
               <div className="mt-3">
                 <div className="text-sm font-semibold text-slate-800 mb-1">Fotos ou vídeo (opcional)</div>
-                <label className="block w-full text-center border border-dashed border-slate-300 rounded-lg py-2.5 text-sky-600 font-semibold cursor-pointer">
+                <label className="block w-full text-center border border-dashed border-slate-300 rounded-lg py-2.5 text-[color:var(--sll-b-brand)] font-semibold cursor-pointer">
                   + Adicionar foto ou vídeo
                   <input type="file" className="hidden" multiple accept="image/*,video/mp4,video/webm"
                     onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
@@ -217,7 +217,7 @@ export default function AvaliarPage() {
             )}
             {err && <p role="alert" className="text-sm text-red-700 mt-3">{err}</p>}
             <button type="button" disabled={!!busy} onClick={send}
-              className="mt-4 w-full py-3 rounded-lg bg-sky-500 text-white font-bold disabled:opacity-60">
+              className="mt-4 w-full py-3 rounded-lg bg-[color:var(--sll-b-brand)] text-white font-bold disabled:opacity-60">
               {busy || 'Enviar avaliação'}
             </button>
           </>

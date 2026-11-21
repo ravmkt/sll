@@ -43,7 +43,7 @@ export default function ComboDiscountCard({ compact = false }: { compact?: boole
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className={`rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-right text-slate-100 outline-none focus:border-[#0094eb] ${
+        className={`rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-right text-slate-100 outline-none focus:border-[color:var(--sll-b-brand)] ${
           compact ? 'h-7 w-14 text-xs' : 'h-9 w-20 text-[15px]'
         }`}
       />
@@ -52,7 +52,7 @@ export default function ComboDiscountCard({ compact = false }: { compact?: boole
         type="button"
         disabled={busy || !dirty}
         onClick={save}
-        className={`cursor-pointer rounded-lg bg-[#0094eb] font-bold text-white disabled:opacity-40 ${
+        className={`cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] font-bold text-white disabled:opacity-40 ${
           compact ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-[13px]'
         }`}
       >

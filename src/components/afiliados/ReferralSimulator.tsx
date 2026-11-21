@@ -37,8 +37,8 @@ const FALLBACK_PLANS: SimPlan[] = REF_PLANS.map((p) => ({
 const choice = (on: boolean) =>
   `rounded-xl border px-3 py-2.5 text-sm font-bold transition-colors cursor-pointer ${
     on
-      ? "border-[#0094eb] bg-[#0094eb]/10 text-[#0094eb]"
-      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-transparent text-slate-600 dark:text-slate-300 hover:border-[#0094eb]/60"
+      ? "border-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]"
+      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-transparent text-slate-600 dark:text-slate-300 hover:border-[color:color-mix(in_srgb,var(--sll-b-brand)_60%,transparent)]"
   }`;
 
 const BOX = "rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-slate-800 p-3 text-center";
@@ -131,7 +131,7 @@ export function ReferralSimulator() {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className={LABEL}>Lojas indicadas</label>
-              <span className="text-2xl font-black text-[#0094eb]">{count}</span>
+              <span className="text-2xl font-black text-[color:var(--sll-b-brand)]">{count}</span>
             </div>
             <input
               type="range"
@@ -151,11 +151,11 @@ export function ReferralSimulator() {
           <div className="grid grid-cols-3 gap-2">
             <div className={BOX}>
               <p className={LABEL}>Por mês</p>
-              <p className="mt-1 text-base font-black text-[#0094eb]">{brl(monthly)}</p>
+              <p className="mt-1 text-base font-black text-[color:var(--sll-b-brand)]">{brl(monthly)}</p>
             </div>
             <div className={BOX}>
               <p className={LABEL}>12 meses</p>
-              <p className="mt-1 text-base font-black text-[#0094eb]">{brl(monthly * 12)}</p>
+              <p className="mt-1 text-base font-black text-[color:var(--sll-b-brand)]">{brl(monthly * 12)}</p>
             </div>
             <div className={BOX}>
               <p className={LABEL}>24 meses</p>

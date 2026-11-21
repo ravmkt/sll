@@ -5,7 +5,7 @@ import { fetchActive, track, type ActiveItem } from '@/services/marketingPublic'
 type Loc = 'home' | 'vidlytics' | 'live';
 
 const NOTICE_CLS: Record<string, string> = {
-  info: 'bg-blue-600 text-white',
+  info: 'bg-[color:var(--sll-b-brand)] text-white',
   warning: 'bg-amber-400 text-slate-900',
   urgent: 'bg-red-600 text-white',
   success: 'bg-emerald-600 text-white',

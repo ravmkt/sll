@@ -128,7 +128,7 @@ export function InsightsTab({ timeRange }: InsightsTabProps) {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0091ff] border-t-transparent dark:border-[#ff7a29]" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[color:var(--sll-b-brand)] border-t-transparent dark:border-[color:var(--sll-b-brand)]" />
       </div>
     );
   }
@@ -136,9 +136,9 @@ export function InsightsTab({ timeRange }: InsightsTabProps) {
   return (
     <div className="space-y-6 animate-fade-in font-sans">
       {/* Header com chamada IA */}
-      <div className="bg-white dark:bg-[#1a1f35] border border-slate-200 dark:border-[#ff7a29]/30 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-300">
+      <div className="bg-white dark:bg-[#1a1f35] border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-300">
         <div className="flex items-start gap-4">
-          <div className="w-[45px] h-[45px] rounded-2xl bg-[#0091ff]/10 dark:bg-[#ff7a29]/10 border border-[#0091ff]/20 dark:border-[#ff7a29]/20 text-[#0091ff] dark:text-[#ff7a29] flex items-center justify-center shrink-0">
+          <div className="w-[45px] h-[45px] rounded-2xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] border border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] flex items-center justify-center shrink-0">
             <Sparkles className="w-[22px] h-[22px] animate-pulse" />
           </div>
           <div>
@@ -155,12 +155,12 @@ export function InsightsTab({ timeRange }: InsightsTabProps) {
           <button
             onClick={handleManualRefresh}
             disabled={refreshing}
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 px-3 py-2 text-[12px] font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] px-3 py-2 text-[12px] font-black text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50"
           >
             <RefreshCw className={cn('w-3.5 h-3.5', refreshing && 'animate-spin')} />
             {refreshing ? 'Analisando...' : 'Atualizar'}
           </button>
-          <span className="inline-flex items-center gap-1.5 bg-[#0091ff]/10 dark:bg-[#ff7a29]/10 border border-[#0091ff]/20 dark:border-[#ff7a29]/30 text-[#0091ff] dark:text-[#ff7a29] px-4 py-2 rounded-2xl text-[12px] font-black">
+          <span className="inline-flex items-center gap-1.5 bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] border border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] px-4 py-2 rounded-2xl text-[12px] font-black">
             <Zap className="w-4 h-4 fill-current" /> Motor de Regras Ativo
           </span>
         </div>
@@ -168,7 +168,7 @@ export function InsightsTab({ timeRange }: InsightsTabProps) {
 
       {/* Estado vazio */}
       {insights.length === 0 && !refreshing && (
-        <Card className="rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35]">
+        <Card className="rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#1a1f35]">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <VideoIcon className="mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
             <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">
@@ -191,9 +191,9 @@ export function InsightsTab({ timeRange }: InsightsTabProps) {
                 key={insight.id}
                 className={cn(
                   'rounded-2xl border bg-white dark:bg-[#1a1f35] p-5 shadow-xs transition-all duration-300 flex flex-col justify-between hover:shadow-md',
-                  insight.insight_type === 'success' && 'border-slate-200 dark:border-[#ff7a29]/30 hover:border-emerald-500/50',
-                  insight.insight_type === 'warning' && 'border-slate-200 dark:border-[#ff7a29]/30 hover:border-amber-500/50',
-                  insight.insight_type === 'tip' && 'border-slate-200 dark:border-[#ff7a29]/30 hover:border-[#0091ff]/50 dark:hover:border-[#ff7a29]/50'
+                  insight.insight_type === 'success' && 'border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] hover:border-emerald-500/50',
+                  insight.insight_type === 'warning' && 'border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] hover:border-amber-500/50',
+                  insight.insight_type === 'tip' && 'border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] hover:border-[color:color-mix(in_srgb,var(--sll-b-brand)_50%,transparent)] dark:hover:border-[color:color-mix(in_srgb,var(--sll-b-brand)_50%,transparent)]'
                 )}
               >
                 <div>
@@ -202,7 +202,7 @@ export function InsightsTab({ timeRange }: InsightsTabProps) {
                       'text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-2xl border',
                       insight.insight_type === 'success' && 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/5 border-emerald-100 dark:border-emerald-500/15',
                       insight.insight_type === 'warning' && 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-500/15',
-                      insight.insight_type === 'tip' && 'text-[#0091ff] dark:text-[#ff7a29] bg-[#0091ff]/5 dark:bg-[#ff7a29]/5 border-[#0091ff]/10 dark:border-[#ff7a29]/15'
+                      insight.insight_type === 'tip' && 'text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)] border-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)]'
                     )}>
                       {insight.impact_label}
                     </span>
@@ -210,7 +210,7 @@ export function InsightsTab({ timeRange }: InsightsTabProps) {
                       'w-[45px] h-[45px] rounded-2xl flex items-center justify-center shrink-0 border',
                       insight.insight_type === 'success' && 'bg-emerald-50 dark:bg-emerald-500/5 border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400',
                       insight.insight_type === 'warning' && 'bg-amber-50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-500/20 text-amber-600 dark:text-amber-400',
-                      insight.insight_type === 'tip' && 'bg-[#0091ff]/10 dark:bg-[#ff7a29]/10 border-[#0091ff]/20 dark:border-[#ff7a29]/20 text-[#0091ff] dark:text-[#ff7a29]'
+                      insight.insight_type === 'tip' && 'bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]'
                     )}>
                       <IconComponent className="w-[22px] h-[22px]" />
                     </div>
@@ -226,9 +226,9 @@ export function InsightsTab({ timeRange }: InsightsTabProps) {
                   </CardContent>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-[#ff7a29]/20 flex items-center justify-between">
+                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">Ação Sugerida:</span>
-                  <span className="text-[12px] font-black text-[#0091ff] dark:text-[#ff7a29] flex items-center gap-1">
+                  <span className="text-[12px] font-black text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] flex items-center gap-1">
                     {insight.action_text} <ChevronRight size={14} />
                   </span>
                 </div>

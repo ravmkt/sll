@@ -90,7 +90,7 @@ export default function SettingsPage() {
                 <button type="button" onClick={() => addRegion(region)} className="rounded-lg bg-slate-900 px-3 text-sm text-white">Add</button>
               </div>
               <div className="mt-2 flex flex-wrap gap-3 text-xs">
-                {store.city && <button type="button" onClick={() => addRegion(store.city as string)} className="text-blue-600">+ {store.city}</button>}
+                {store.city && <button type="button" onClick={() => addRegion(store.city as string)} className="text-[color:var(--sll-b-brand)]">+ {store.city}</button>}
                 <label className="flex items-center gap-1">
                   <input type="checkbox" checked={regions.includes(BRASIL)} onChange={(e) => setRegions(e.target.checked ? [...regions, BRASIL] : regions.filter((r) => r !== BRASIL))} /> {BRASIL}
                 </label>
@@ -105,7 +105,7 @@ export default function SettingsPage() {
               </div>
               <Chips items={competitors} onRemove={(i) => setCompetitors(competitors.filter((_, x) => x !== i))} />
             </div>
-            <button type="button" onClick={save} className="w-full rounded-lg bg-blue-600 py-2 text-sm font-semibold text-white hover:bg-blue-700">Salvar configurações</button>
+            <button type="button" onClick={save} className="w-full rounded-lg bg-[color:var(--sll-b-brand)] py-2 text-sm font-semibold text-white hover:bg-[color:var(--sll-b-brand-hover)]">Salvar configurações</button>
             {msg && <div className={`text-sm ${msg.ok ? 'text-emerald-600' : 'text-red-600'}`}>{msg.text}</div>}
           </Card>
 
@@ -119,7 +119,7 @@ export default function SettingsPage() {
             {kws.data && kws.data.length === 0 && <p className="text-xs text-slate-400">Nenhum termo cadastrado. A sugestão por IA virá em um próximo passo.</p>}
             <div className="flex flex-wrap gap-2">
               {kws.data?.map((k) => (
-                <span key={k.id} className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700">
+                <span key={k.id} className="inline-flex items-center gap-1 rounded-full bg-[color:var(--sll-b-brand-soft)] px-3 py-1 text-xs text-[color:var(--sll-b-brand)]">
                   {k.term}{k.region ? ` · ${k.region}` : ''}
                   <button type="button" aria-label="Remover" onClick={() => void run(async () => { await removeKeyword(store.id, k.id); kws.reload(); })}><X className="h-3 w-3" /></button>
                 </span>

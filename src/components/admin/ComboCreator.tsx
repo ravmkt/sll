@@ -253,7 +253,7 @@ export default function ComboCreator({ onCreated, onClose }: { onCreated: () => 
             </div>
 
             <button type="button" onClick={save} disabled={saving}
-              className="rounded-lg bg-[#0094eb] px-4 py-2 text-[15px] font-semibold text-white disabled:opacity-40">
+              className="rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-[15px] font-semibold text-white disabled:opacity-40">
               {saving ? 'Criando...' : 'Criar combo'}
             </button>
           </>

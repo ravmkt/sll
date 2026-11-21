@@ -178,8 +178,8 @@ export default function Medidas() {
               { t: 'humano' as ModelType, icon: User, title: 'Perfil Humano', desc: 'Ideal para roupas, calçados e provador de modelos.' },
               { t: 'objeto' as ModelType, icon: Package, title: 'Dimensões do Objeto', desc: 'Ideal para canecas, eletrônicos, móveis ou embalagens.' },
             ]).map(({ t, icon: Icon, title, desc }) => (
-              <button key={t} type="button" onClick={() => pick(t)} className="flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#111524]/40 p-5 text-left transition hover:border-[#0094eb]">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-[#0094eb]"><Icon size={24} /></div>
+              <button key={t} type="button" onClick={() => pick(t)} className="flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#111524]/40 p-5 text-left transition hover:border-[color:var(--sll-b-brand)]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]"><Icon size={24} /></div>
                 <div>
                   <h4 className="text-sm font-black uppercase tracking-tight">{title}</h4>
                   <p className="mt-1 text-xs text-slate-500">{desc}</p>
@@ -223,7 +223,7 @@ export default function Medidas() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className={labelCls}>Campos adicionais</label>
-                <button type="button" onClick={() => setForm((p) => ({ ...p, extras: [...p.extras, { id: uid(), name: '', value: '' }] }))} className="inline-flex cursor-pointer items-center gap-1 rounded-xl bg-[#0094eb]/10 px-3 py-1.5 text-xs font-black text-[#0094eb] transition hover:bg-[#0094eb] hover:text-white">
+                <button type="button" onClick={() => setForm((p) => ({ ...p, extras: [...p.extras, { id: uid(), name: '', value: '' }] }))} className="inline-flex cursor-pointer items-center gap-1 rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-3 py-1.5 text-xs font-black text-[color:var(--sll-b-brand)] transition hover:bg-[color:var(--sll-b-brand)] hover:text-white">
                   <Plus size={14} /> Adicionar
                 </button>
               </div>

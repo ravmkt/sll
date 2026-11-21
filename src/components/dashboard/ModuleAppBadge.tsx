@@ -19,7 +19,7 @@ function SwitchBadge({ moduleKey, trial }: { moduleKey: AppModuleKey; trial?: nu
   const color = !enabled
     ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
     : trial
-      ? 'bg-[#0094eb]/10 text-[#0094eb] hover:bg-[#0094eb]/20'
+      ? 'bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]'
       : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100';
   return (
     <button
@@ -38,7 +38,7 @@ export default function ModuleAppBadge({ slug, trial }: { slug: string; trial?: 
   const key = moduleKeyFromSlug(slug);
   if (!key) {
     return (
-      <span className={`${BASE} ${trial ? 'bg-[#0094eb]/10 text-[#0094eb]' : 'bg-emerald-50 text-emerald-700'}`}>
+      <span className={`${BASE} ${trial ? 'bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'bg-emerald-50 text-emerald-700'}`}>
         {'\u2022'} {trial ? trialText(trial) : 'Ativo'}
       </span>
     );

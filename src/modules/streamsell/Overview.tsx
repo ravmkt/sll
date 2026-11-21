@@ -71,7 +71,7 @@ export default function Overview() {
         <DollarSign className="absolute bottom-[-30px] right-40 h-28 w-28 -rotate-12 text-white/10" />
         <DollarSign className="absolute left-[45%] top-2 h-16 w-16 rotate-6 text-white/10" />
         <h1 className="relative text-2xl font-extrabold tracking-tight md:text-4xl">SUA PRÓXIMA LIVE VENDE MAIS</h1>
-        <p className="relative mt-2 text-blue-100">Prepare sua vitrine e transforme conexões em vendas.</p>
+        <p className="relative mt-2 text-[color:var(--sll-b-brand)]">Prepare sua vitrine e transforme conexões em vendas.</p>
       </section>
 
       {/* Faturamento */}
@@ -169,7 +169,7 @@ export default function Overview() {
         <div className={`${card} flex flex-col`}>
           <div className="mb-4 flex items-center justify-between">
             <SectionTitle>Próxima Live Agendada</SectionTitle>
-            <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">{nl.status}</span>
+            <span className="rounded-full bg-[color:var(--sll-b-brand-soft)] px-2.5 py-0.5 text-xs font-medium text-[color:var(--sll-b-brand)]">{nl.status}</span>
           </div>
           <div className="flex gap-4">
             <div className="relative flex h-24 w-40 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-600">

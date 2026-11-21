@@ -62,7 +62,7 @@ export default function NoahPackModal({ storeId, onClose }: { storeId: string; o
                 <p className="text-xs text-slate-500">{brl(p.price_cents)}</p>
               </div>
               <button type="button" disabled={!!busy} onClick={() => void buy(p)}
-                className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#007fcc] disabled:cursor-not-allowed disabled:opacity-50">
+                className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:cursor-not-allowed disabled:opacity-50">
                 {busy === p.key ? 'Gerando...' : 'Comprar'}
               </button>
             </div>
@@ -73,7 +73,7 @@ export default function NoahPackModal({ storeId, onClose }: { storeId: string; o
         {url && (
           <p className="mt-3 text-xs text-slate-600">
             Pagamento gerado.{' '}
-            <a href={url} target="_blank" rel="noopener noreferrer" className="font-bold text-[#0094eb] underline">Abrir página de pagamento</a>.
+            <a href={url} target="_blank" rel="noopener noreferrer" className="font-bold text-[color:var(--sll-b-brand)] underline">Abrir página de pagamento</a>.
             {' '}As mensagens são liberadas assim que o pagamento for confirmado.
           </p>
         )}

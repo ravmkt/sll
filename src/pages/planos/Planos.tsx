@@ -166,7 +166,7 @@ export default function Planos() {
     return (
       <DashboardLayout>
         <div className="flex min-h-[60vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#0091ff]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[color:var(--sll-b-brand)]" />
         </div>
       </DashboardLayout>
     );
@@ -181,7 +181,7 @@ export default function Planos() {
         <button
           type="button"
           onClick={() => navigate("/dashboard/assinaturas")}
-          className="inline-flex cursor-pointer items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 transition-colors hover:text-[#0091ff]"
+          className="inline-flex cursor-pointer items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 transition-colors hover:text-[color:var(--sll-b-brand)]"
         >
           <ArrowLeft size={16} /> Voltar para Minhas Assinaturas
         </button>
@@ -199,7 +199,7 @@ export default function Planos() {
                   onClick={() => setCycle(c.key)}
                   className={cn(
                     "flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-xs font-black transition-all",
-                    cycle === c.key ? "bg-white text-[#0091ff] shadow-sm" : "text-slate-400 hover:text-slate-600"
+                    cycle === c.key ? "bg-white text-[color:var(--sll-b-brand)] shadow-sm" : "text-slate-400 hover:text-slate-600"
                   )}
                 >
                   {c.label}

@@ -42,7 +42,7 @@ const TONES = {
   slate: { box: 'bg-slate-100 text-slate-500 dark:bg-slate-800', ring: 'border-slate-400' },
   emerald: { box: 'bg-emerald-50 text-emerald-500 dark:bg-emerald-950/30', ring: 'border-emerald-400' },
   rose: { box: 'bg-rose-50 text-rose-500 dark:bg-rose-950/30', ring: 'border-rose-400' },
-  sky: { box: 'bg-sky-50 text-[#0094eb] dark:bg-sky-950/30', ring: 'border-[#0094eb]' },
+  sky: { box: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] dark:bg-sky-950/30', ring: 'border-[color:var(--sll-b-brand)]' },
   amber: { box: 'bg-amber-50 text-amber-500 dark:bg-amber-950/30', ring: 'border-amber-400' },
 } as const;
 
@@ -282,13 +282,13 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
       type="button"
       title={title}
       onClick={() => changeView(v)}
-      className={cn('cursor-pointer rounded-lg p-1.5 transition', view === v ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700')}
+      className={cn('cursor-pointer rounded-lg p-1.5 transition', view === v ? 'bg-[color:var(--sll-b-brand)] text-white' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700')}
     >
       <Icon size={16} />
     </button>
   );
 
-  const btnGhost = 'inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-[#0094eb] transition cursor-pointer';
+  const btnGhost = 'inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1f2c] px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-[color:var(--sll-b-brand)] transition cursor-pointer';
   const mLoading = loading || lojaLoading;
 
   return (
@@ -303,14 +303,14 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <>{perms.create && (<button type="button" data-tour="prod-novo" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007bc4]">
+            <>{perms.create && (<button type="button" data-tour="prod-novo" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[color:var(--sll-b-brand-hover)]">
               <Plus size={16} /> Novo produto
             </button>)}</>
             <>{perms.edit && !isGestor && (<button type="button" data-tour="prod-categorias" onClick={() => setCatsOpen(true)} className={btnGhost}>
-              <Tag size={15} className="text-[#0094eb]" /> Categorias
+              <Tag size={15} className="text-[color:var(--sll-b-brand)]" /> Categorias
             </button>)}</>
             <>{perms.importar && (<button type="button" data-tour="prod-importar" onClick={() => setImportOpen(true)} className={btnGhost}>
-              <Upload size={15} className="text-[#0094eb]" /> Importar produtos
+              <Upload size={15} className="text-[color:var(--sll-b-brand)]" /> Importar produtos
             </button>)}</>
             </div>
         </div>
@@ -358,10 +358,10 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
           <div className="flex flex-col items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-[#111524] p-3 sm:flex-row">
             <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
               <span>{sorted.length} {sorted.length === 1 ? 'produto encontrado' : 'produtos encontrados'}</span>
-              {fLinked && <span className="rounded-full bg-sky-100 px-3 py-0.5 text-[#0094eb]">Vinculados a vídeo</span>}
-              {selected.size > 0 && <span className="rounded-full bg-[#0094eb]/10 px-3 py-0.5 text-[#0094eb]">{selected.size} selecionados</span>}
+              {fLinked && <span className="rounded-full bg-[color:var(--sll-b-brand-soft)] px-3 py-0.5 text-[color:var(--sll-b-brand)]">Vinculados a vídeo</span>}
+              {selected.size > 0 && <span className="rounded-full bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-3 py-0.5 text-[color:var(--sll-b-brand)]">{selected.size} selecionados</span>}
               {selected.size > 0 && !allFiltered && (
-                <button type="button" onClick={() => setSelected(new Set(sorted.map((p) => p.id)))} className="text-[#0094eb] underline cursor-pointer">Selecionar todos os {sorted.length}</button>
+                <button type="button" onClick={() => setSelected(new Set(sorted.map((p) => p.id)))} className="text-[color:var(--sll-b-brand)] underline cursor-pointer">Selecionar todos os {sorted.length}</button>
               )}
             </div>
             <div className="flex items-center gap-3">
@@ -386,7 +386,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
           </div>
 
           {mLoading ? (
-            <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+            <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
           ) : !storeId ? (
             <p className="py-12 text-center text-sm text-slate-500">Nenhuma loja vinculada à sua conta.</p>
           ) : (
@@ -412,22 +412,22 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                     const open = expandable && isOpen(p.id);
                     return (
                       <Fragment key={p.id}>
-                        <tr className={cn('transition-colors', selected.has(p.id) ? 'bg-[#0094eb]/5' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}>
+                        <tr className={cn('transition-colors', selected.has(p.id) ? 'bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)]' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}>
                           <td className="px-4 py-3 text-center"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleOne(p.id)} className="h-4 w-4 cursor-pointer" /></td>
                           <td className="px-4 py-3">
-                            <div role="button" tabIndex={0} title="Editar produto" onClick={() => openEdit(p)} className="mx-auto flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#111524] hover:border-[#0094eb] transition">
+                            <div role="button" tabIndex={0} title="Editar produto" onClick={() => openEdit(p)} className="mx-auto flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#111524] hover:border-[color:var(--sll-b-brand)] transition">
                               {p.image_url ? <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <Package size={18} className="text-slate-400" />}
                             </div>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               {expandable ? (
-                                <button type="button" onClick={() => toggleRow(p.id)} title={open ? 'Recolher variações' : `Ver ${vs!.length} variações`} className="cursor-pointer rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800">
+                                <button type="button" onClick={() => toggleRow(p.id)} title={open ? 'Recolher variações' : `Ver ${vs!.length} variações`} className="cursor-pointer rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800">
                                   {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                                 </button>
                               ) : <span className="inline-block w-5" />}
                               <div className="min-w-0">
-                                <p onClick={() => openEdit(p)} className="max-w-xs cursor-pointer truncate text-sm font-semibold text-slate-800 hover:text-[#0094eb] dark:text-white" title={p.name}>{p.name}</p>
+                                <p onClick={() => openEdit(p)} className="max-w-xs cursor-pointer truncate text-sm font-semibold text-slate-800 hover:text-[color:var(--sll-b-brand)] dark:text-white" title={p.name}>{p.name}</p>
                                 {p.sku && <p className="text-[11px] text-slate-400">SKU {p.sku}</p>}
                               </div>
                               {expandable && <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800">{vs!.length} var.</span>}
@@ -439,7 +439,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                           <td className="px-4 py-3 text-center font-mono text-xs font-bold text-slate-800 dark:text-white">{brl(p.price)}</td>
                           <td className="px-4 py-3 text-center">
                             <span className="inline-flex max-w-[140px] items-center gap-1 truncate rounded-lg bg-slate-100 dark:bg-[#111524] px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                              <Tag size={11} className="shrink-0 text-[#0094eb]" />
+                              <Tag size={11} className="shrink-0 text-[color:var(--sll-b-brand)]" />
                               <span className="truncate">{p.category || 'Sem categoria'}</span>
                             </span>
                           </td>
@@ -447,18 +447,18 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                             <span className="rounded-full border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">{ORIGIN[p.origin || ''] ?? (p.origin || '—')}</span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <button type="button" onClick={() => toggleStatus(p)} disabled={!perms.edit} className={cn('h-7 w-[100px] rounded-lg border text-[10px] font-bold uppercase cursor-pointer transition', p.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800/40 dark:bg-rose-950/30 dark:text-rose-400')}>
+                            <button type="button" onClick={() => toggleStatus(p)} disabled={!perms.edit} className={cn('h-7 w-[100px] rounded-lg border text-[10px] font-bold uppercase cursor-pointer transition', p.active ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800/40 dark:bg-rose-950/30 dark:text-rose-400')}>
                               {p.active ? 'Ativo' : 'Desativado'}
                             </button>
                           </td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
                               {p.origin === 'yampi' && (
-                                <>{perms.edit && (<button type="button" onClick={() => syncOne(p)} disabled={syncingId === p.id} title="Sincronizar este produto" className="mr-1 cursor-pointer text-slate-400 hover:text-[#0094eb] disabled:opacity-50">
+                                <>{perms.edit && (<button type="button" onClick={() => syncOne(p)} disabled={syncingId === p.id} title="Sincronizar este produto" className="mr-1 cursor-pointer text-slate-400 hover:text-[color:var(--sll-b-brand)] disabled:opacity-50">
                                   {syncingId === p.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                                 </button>)}</>
                               )}
-                              <>{perms.edit && (<button type="button" title="Editar" onClick={() => openEdit(p)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>)}</>
+                              <>{perms.edit && (<button type="button" title="Editar" onClick={() => openEdit(p)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>)}</>
                               <>{perms.remove && (<button type="button" title="Excluir" onClick={() => setDel({ ids: [p.id], label: `"${p.name}"` })} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/40 cursor-pointer"><Trash2 size={15} /></button>)}</>
                             </div>
                           </td>

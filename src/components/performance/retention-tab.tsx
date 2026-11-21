@@ -288,14 +288,14 @@ setVideoStats({
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0091ff] border-t-transparent dark:border-[#ff7a29]" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[color:var(--sll-b-brand)] border-t-transparent dark:border-[color:var(--sll-b-brand)]" />
       </div>
     );
   }
 
   if (videos.length === 0) {
     return (
-      <Card className="rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35]">
+      <Card className="rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#1a1f35]">
         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
           <VideoIcon className="mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
           <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">
@@ -314,7 +314,7 @@ setVideoStats({
       {/* CARDS DE RESUMO DE RETENÇÃO (do vídeo selecionado) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Taxa de Conclusão */}
-        <Card className="rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35]">
+        <Card className="rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#1a1f35]">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -336,13 +336,13 @@ setVideoStats({
         </Card>
 
         {/* Tempo Médio Assistido */}
-        <Card className="rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35]">
+        <Card className="rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#1a1f35]">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Tempo Médio
               </span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] dark:bg-blue-500/10 dark:text-blue-400">
                 <Clock size={16} />
               </div>
             </div>
@@ -361,7 +361,7 @@ setVideoStats({
         </Card>
 
         {/* Ponto Crítico */}
-        <Card className="rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35]">
+        <Card className="rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#1a1f35]">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -383,7 +383,7 @@ setVideoStats({
         </Card>
 
         {/* Evasão Total */}
-        <Card className="rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35]">
+        <Card className="rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#1a1f35]">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -406,7 +406,7 @@ setVideoStats({
       </div>
 
       {/* SELETOR DE VÍDEO */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-[#1a1f35] p-4 rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-[#1a1f35] p-4 rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] shadow-xs">
         <div>
           <h2 className="text-sm font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Vídeo Analisado
@@ -420,7 +420,7 @@ setVideoStats({
           <select
             value={selectedVideoId}
             onChange={(e) => setSelectedVideoId(e.target.value)}
-            className="w-full appearance-none rounded-xl border border-slate-200 dark:border-[#ff7a29]/30 bg-slate-50 dark:bg-[#111524] px-4 py-2.5 pr-10 text-sm font-bold text-slate-800 dark:text-white outline-none focus:border-[#0091ff] dark:focus:border-[#ff7a29] transition-colors cursor-pointer"
+            className="w-full appearance-none rounded-xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-slate-50 dark:bg-[#111524] px-4 py-2.5 pr-10 text-sm font-bold text-slate-800 dark:text-white outline-none focus:border-[color:var(--sll-b-brand)] dark:focus:border-[color:var(--sll-b-brand)] transition-colors cursor-pointer"
           >
             {videos.map((vid) => (
               <option key={vid.id} value={vid.id}>
@@ -435,7 +435,7 @@ setVideoStats({
       {/* GRÁFICO SEGUNDO A SEGUNDO COM PLAYER SINCRONIZADO */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Curva de Retenção */}
-        <Card className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35]">
+        <Card className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#1a1f35]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <h3 className="text-base font-black text-slate-800 dark:text-white">
@@ -498,7 +498,7 @@ setVideoStats({
                             <p className="text-xs font-bold text-slate-500">
                               Segundo {payload[0].payload.second}s
                             </p>
-                            <p className="text-sm font-black text-[#0091ff] dark:text-[#ff7a29]">
+                            <p className="text-sm font-black text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]">
                               {payload[0].value}% assistindo
                             </p>
                           </div>
@@ -533,8 +533,8 @@ setVideoStats({
             </div>
 
             {/* Insight Automático com IA */}
-            <div className="mt-4 flex items-start gap-3 rounded-2xl bg-[#0091ff]/5 dark:bg-[#ff7a29]/10 p-3.5 border border-[#0091ff]/20 dark:border-[#ff7a29]/20">
-              <Sparkles className="mt-0.5 h-5 w-5 text-[#0091ff] dark:text-[#ff7a29] shrink-0" />
+            <div className="mt-4 flex items-start gap-3 rounded-2xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] p-3.5 border border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]">
+              <Sparkles className="mt-0.5 h-5 w-5 text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] shrink-0" />
               <div className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
                 <span className="font-bold text-slate-900 dark:text-white">Diagnóstico Inteligente: </span>
                 {criticalDropSecond !== null && criticalDropSecond <= 4 ? (
@@ -548,7 +548,7 @@ setVideoStats({
         </Card>
 
         {/* Player de Prévia */}
-        <Card className="rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#1a1f35] flex flex-col">
+        <Card className="rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#1a1f35] flex flex-col">
           <CardHeader className="pb-2">
             <h3 className="text-base font-black text-slate-800 dark:text-white">
               Visualização
@@ -558,7 +558,7 @@ setVideoStats({
             </p>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col items-center justify-center p-4">
-            <div className="relative aspect-[9/16] w-full max-w-[220px] overflow-hidden rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-black shadow-md">
+            <div className="relative aspect-[9/16] w-full max-w-[220px] overflow-hidden rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-black shadow-md">
               {selectedVideo?.video_url ? (
                 <video
                   key={selectedVideoId}

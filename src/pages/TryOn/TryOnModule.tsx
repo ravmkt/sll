@@ -47,7 +47,7 @@ export default function TryOnModule() {
             type="button"
             onClick={() => setParams({ tab: t.key })}
             className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t.key ? 'border-[#0094eb] text-[#0094eb]' : 'border-transparent text-slate-500 hover:text-slate-800'
+              tab === t.key ? 'border-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)]' : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             {t.label}

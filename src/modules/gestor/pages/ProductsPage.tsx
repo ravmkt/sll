@@ -47,7 +47,7 @@ export default function ProductsPage() {
               onClick={() => go(t.key)}
               className={cn(
                 'inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition',
-                on ? 'bg-[#0094eb] text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100',
+                on ? 'bg-[color:var(--sll-b-brand)] text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100',
               )}
             >
               <Icon size={16} /> {t.label}

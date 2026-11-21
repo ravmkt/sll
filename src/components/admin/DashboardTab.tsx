@@ -42,7 +42,7 @@ const brl = (cents: number) => ((cents || 0) / 100).toLocaleString('pt-BR', { st
 const money = (v: number) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const int = (n: number) => (Number(n) || 0).toLocaleString('pt-BR');
 
-const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-[13px] text-slate-200 outline-none focus:border-[#0094eb]';
+const SELECT = 'h-8 rounded-lg border border-slate-700 bg-[#0b0e1a] px-2 text-[13px] text-slate-200 outline-none focus:border-[color:var(--sll-b-brand)]';
 const ITEM = { color: '#e2e8f0', fontSize: 12 };
 const TOOLTIP = { background: '#0b0e1a', border: '1px solid #1e293b', borderRadius: 12, color: '#e2e8f0', fontSize: 12 };
 
@@ -358,7 +358,7 @@ const s = data?.stores;
           <div className="inline-flex rounded-lg border border-slate-700 bg-[#0b0e1a] p-0.5">
             {PERIODOS.map((p) => (
               <button key={p.key} type="button" onClick={() => setPeriodo(p.key)}
-                className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${periodo === p.key ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`}>
+                className={`cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${periodo === p.key ? 'bg-[color:var(--sll-b-brand)] text-white' : 'text-slate-400 hover:text-white'}`}>
                 {p.label}
               </button>
             ))}
@@ -488,7 +488,7 @@ const s = data?.stores;
                           <span className="ml-2 shrink-0 text-slate-400">{int(t.views)}</span>
                         </div>
                         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-800">
-                          <div className="h-full rounded-full bg-gradient-to-r from-[#0094eb] to-[#06b6d4]" style={{ width: `${Math.max(4, (t.views / max) * 100)}%` }} />
+                          <div className="h-full rounded-full bg-gradient-to-r from-[color:var(--sll-b-brand)] to-[#06b6d4]" style={{ width: `${Math.max(4, (t.views / max) * 100)}%` }} />
                         </div>
                       </li>
                     );
@@ -515,7 +515,7 @@ const s = data?.stores;
                           <span className="ml-2 shrink-0 text-slate-400">{int(t.calls)} msg · {money(cost(t.prompt_tokens, t.completion_tokens))}</span>
                         </div>
                         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-800">
-                          <div className="h-full rounded-full bg-gradient-to-r from-[#0094eb] to-[#06b6d4]" style={{ width: `${Math.max(4, (t.tokens / max) * 100)}%` }} />
+                          <div className="h-full rounded-full bg-gradient-to-r from-[color:var(--sll-b-brand)] to-[#06b6d4]" style={{ width: `${Math.max(4, (t.tokens / max) * 100)}%` }} />
                         </div>
                       </li>
                     );

@@ -168,7 +168,7 @@ function PedidosMetricasBase() {
           <ul className="space-y-2">
             {data.top.map((r: any) => (
               <li key={r.id} className="flex items-center gap-3 rounded-xl border border-white/10 px-3 py-2">
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#0094eb]/15 px-2.5 py-1 text-xs font-black text-[#38bdf8]">
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)] px-2.5 py-1 text-xs font-black text-[#38bdf8]">
                   <ThumbsUp className="h-3 w-3" /> {Number(r.votes) || 0}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-sm text-slate-200" title={r.title}>{r.title}</span>

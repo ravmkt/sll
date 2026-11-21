@@ -19,7 +19,7 @@ export default function MedidasLayout({ children }: { children: (tab: MedidasTab
       <div className="flex">
         <aside className="hidden w-60 shrink-0 border-r border-slate-200 bg-white md:block" style={{ minHeight: 'calc(100vh - 56px)' }}>
           <div className="flex items-center gap-2 px-5 py-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]">
               <Ruler size={20} />
             </div>
             <span className="text-lg font-extrabold text-slate-900">Medidas</span>
@@ -32,7 +32,7 @@ export default function MedidasLayout({ children }: { children: (tab: MedidasTab
                 onClick={() => setTab(id)}
                 className={
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition ' +
-                  (tab === id ? 'bg-sky-500 text-white' : 'text-slate-600 hover:bg-slate-100')
+                  (tab === id ? 'bg-[color:var(--sll-b-brand)] text-white' : 'text-slate-600 hover:bg-slate-100')
                 }
               >
                 <Icon size={18} />

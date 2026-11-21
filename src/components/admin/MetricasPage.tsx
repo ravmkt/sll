@@ -252,7 +252,7 @@ function MetricasPageInner() {
             type="button"
             onClick={() => setAbaId(t.id)}
             className={`-mb-px cursor-pointer whitespace-nowrap border-b-2 px-4 py-2.5 text-[15px] font-semibold transition-colors ${
-              aba.id === t.id ? 'border-[#0094eb] text-white' : 'border-transparent text-slate-400 hover:text-white'
+              aba.id === t.id ? 'border-[color:var(--sll-b-brand)] text-white' : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
             {t.label}
@@ -267,7 +267,7 @@ function MetricasPageInner() {
               type="button"
               onClick={() => setSubSel((prev) => ({ ...prev, [aba.id]: s.id }))}
               className={`cursor-pointer rounded-full border px-4 py-1.5 text-[13px] font-semibold transition-colors ${
-                sub.id === s.id ? 'border-[#0094eb] bg-[#0094eb] text-white' : 'border-slate-700 text-slate-400 hover:text-white'
+                sub.id === s.id ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand)] text-white' : 'border-slate-700 text-slate-400 hover:text-white'
               }`}
             >
               {s.label}

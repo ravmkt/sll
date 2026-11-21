@@ -81,7 +81,7 @@ export function CommentAlertModal() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between">
-          <div className="w-11 h-11 rounded-xl bg-[#e6f4fd] text-[#0094eb] flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-[#e6f4fd] text-[color:var(--sll-b-brand)] flex items-center justify-center">
             <MessageSquare className="w-5 h-5" />
           </div>
           <button
@@ -112,7 +112,7 @@ export function CommentAlertModal() {
           <button
             type="button"
             onClick={() => close(true)}
-            className="flex-1 rounded-xl bg-[#0094eb] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#0082d0] transition-colors"
+            className="flex-1 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] transition-colors"
           >
             Responder
           </button>
@@ -152,7 +152,7 @@ export function CommentAlertsCard() {
   return (
     <div className="lg:col-span-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
       <div className="flex items-center gap-2.5 mb-3">
-        <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#0094eb] flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] flex items-center justify-center shrink-0">
           <Bell size={18} />
         </div>
         <div>
@@ -179,7 +179,7 @@ export function CommentAlertsCard() {
           aria-checked={on}
           onClick={toggle}
           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-            on ? 'bg-[#0094eb]' : 'bg-slate-200'
+            on ? 'bg-[color:var(--sll-b-brand)]' : 'bg-slate-200'
           }`}
         >
           <span

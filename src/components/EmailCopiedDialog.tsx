@@ -14,7 +14,7 @@ const EmailCopiedDialog: React.FC<EmailCopiedDialogProps> = ({ isOpen, email, co
   return (
     <div className="fixed inset-0 z-[99999] bg-slate-900/40 dark:bg-black/60 flex items-center justify-center px-4 backdrop-blur-[2px] animate-fade-in" onClick={onClose}>
       <div
-        className="relative w-full max-w-[480px] bg-white dark:bg-[#111524] rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-[#ff7a29]/30 overflow-hidden animate-scale-up flex flex-col transition-colors duration-300"
+        className="relative w-full max-w-[480px] bg-white dark:bg-[#111524] rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] overflow-hidden animate-scale-up flex flex-col transition-colors duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -23,7 +23,7 @@ const EmailCopiedDialog: React.FC<EmailCopiedDialogProps> = ({ isOpen, email, co
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-xl text-slate-400 dark:text-slate-500 hover:text-[#0091ff] dark:hover:text-[#ff7a29] transition-colors cursor-pointer"
+            className="p-1 rounded-xl text-slate-400 dark:text-slate-500 hover:text-[color:var(--sll-b-brand)] dark:hover:text-[color:var(--sll-b-brand)] transition-colors cursor-pointer"
             aria-label="Fechar"
           >
             <X size={18} />
@@ -40,14 +40,14 @@ const EmailCopiedDialog: React.FC<EmailCopiedDialogProps> = ({ isOpen, email, co
           {copied ? <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" /> : <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />}
           <p className={copied ? 'text-xs font-semibold text-emerald-950/90 dark:text-emerald-200/90 leading-relaxed text-left' : 'text-xs font-semibold text-amber-950/90 dark:text-amber-200/90 leading-relaxed text-left'}>
             {copied ? 'Nenhum programa de e-mail foi encontrado neste computador. O e-mail ' : 'Nenhum programa de e-mail foi encontrado e não foi possível copiar automaticamente. E-mail: '}
-            <span className="text-[#0091ff] dark:text-[#ff7a29] font-extrabold">"{email}"</span>
+            <span className="text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] font-extrabold">"{email}"</span>
             {copied ? ' foi copiado para a área de transferência.' : ''}
           </p>
         </div>
 
         <button
           onClick={onClose}
-          className="w-full py-3 rounded-2xl bg-[#0091ff] hover:bg-[#0070f3] dark:bg-[#ff7a29] dark:hover:bg-[#e05e10] text-xs font-extrabold text-white transition-all cursor-pointer text-center shadow-sm"
+          className="w-full py-3 rounded-2xl bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] dark:bg-[color:var(--sll-b-brand)] dark:hover:bg-[#e05e10] text-xs font-extrabold text-white transition-all cursor-pointer text-center shadow-sm"
         >
           OK
         </button>

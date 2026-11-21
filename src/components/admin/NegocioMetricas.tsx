@@ -154,7 +154,7 @@ export default function NegocioMetricas() {
           )}
         </div>
         <div className="mt-2 flex flex-wrap justify-center gap-4 text-[13px] text-slate-400">
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#0094eb]" /> Novas</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[color:var(--sll-b-brand)]" /> Novas</span>
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Renovações</span>
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-violet-500" /> Planos antecipados</span>
         </div>

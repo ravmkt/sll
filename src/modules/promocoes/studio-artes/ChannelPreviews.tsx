@@ -23,7 +23,7 @@ function WhatsAppGroup({ it }: { it: PreviewItem }) {
           <img src={it.imageUrl} alt="" className="w-full rounded-md" />
           <Caption text={it.caption} className="px-1.5 pt-1.5 text-slate-800" />
           <div className="flex items-center justify-end gap-1 px-1.5 pb-1 text-[10px] text-slate-500">
-            10:21 <Check size={12} className="text-sky-500" />
+            10:21 <Check size={12} className="text-[color:var(--sll-b-brand)]" />
           </div>
         </div>
       </div>

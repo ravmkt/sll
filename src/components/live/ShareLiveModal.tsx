@@ -24,7 +24,7 @@ const btnGhost =
 const btnWa =
   "inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-emerald-200 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50";
 const inputCls =
-  "h-10 min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-xs text-slate-700 outline-none transition focus:border-[#0088ff] focus:ring-2 focus:ring-sky-100";
+  "h-10 min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-xs text-slate-700 outline-none transition focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-sky-100";
 
 function normalizeBase(raw: string): string {
   const v = String(raw || "").trim();
@@ -187,7 +187,7 @@ export function ShareLiveModal({ open, onOpenChange, liveTitle, youtubeVideoId, 
       }
     >
       <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-sky-200/80 bg-sky-50/40">
-        <Share2 className="h-9 w-9 stroke-[1.75] text-[#0088ff]" />
+        <Share2 className="h-9 w-9 stroke-[1.75] text-[color:var(--sll-b-brand)]" />
       </div>
 
       <div className="mb-1 flex flex-wrap items-center justify-center gap-2">

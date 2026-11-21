@@ -158,7 +158,7 @@ export default function MeuPlanoPage() {
       key={k}
       type="button"
       onClick={() => setFilter(k)}
-      className={`rounded-full px-3 py-1 text-xs font-bold transition ${filter === k ? 'bg-[#0094eb] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'}`}
+      className={`rounded-full px-3 py-1 text-xs font-bold transition ${filter === k ? 'bg-[color:var(--sll-b-brand)] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'}`}
     >
       {label}
     </button>
@@ -179,7 +179,7 @@ export default function MeuPlanoPage() {
           <span className="flex items-center gap-2 font-semibold">
             <AlertTriangle className="h-4 w-4" /> Você usou {pct.toFixed(0)}% do armazenamento.
           </span>
-          <Link to="/dashboard/planos" className="rounded-lg bg-[#0094eb] px-4 py-2 text-xs font-bold text-white">Fazer upgrade</Link>
+          <Link to="/dashboard/planos" className="rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white">Fazer upgrade</Link>
         </div>
       )}
 
@@ -236,7 +236,7 @@ export default function MeuPlanoPage() {
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 truncate text-sm font-semibold text-slate-800 hover:text-[#0094eb] dark:text-slate-100"
+                        className="flex items-center gap-1 truncate text-sm font-semibold text-slate-800 hover:text-[color:var(--sll-b-brand)] dark:text-slate-100"
                         title="Abrir em nova aba"
                       >
                         <span className="truncate">{label}</span>

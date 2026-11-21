@@ -37,7 +37,7 @@ export default function StorageUsageCard({ storeId, dark = false }: { storeId?: 
 
   const lim = u.limit_bytes;
   const pct = lim ? Math.min(100, (u.used_bytes / lim) * 100) : 0;
-  const bar = !lim ? 'bg-[#0094eb]' : pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-400' : 'bg-[#0094eb]';
+  const bar = !lim ? 'bg-[color:var(--sll-b-brand)]' : pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-400' : 'bg-[color:var(--sll-b-brand)]';
   const mods = Object.entries(u.by_module ?? {}).filter(([, b]) => Number(b) > 0).sort((a, b) => Number(b[1]) - Number(a[1]));
 
   return (

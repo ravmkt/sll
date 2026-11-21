@@ -35,7 +35,7 @@ export default function StagingActionBar<T extends Record<string, any>>({ stagin
           <button type="button" disabled={busy} onClick={s.openSandbox} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-white/5 disabled:opacity-40">
             <Eye className="h-4 w-4" /> Abrir Loja Teste
           </button>
-          <button type="button" disabled={busy || !modified} onClick={s.requestPublish} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#007fcc] disabled:cursor-not-allowed disabled:opacity-40">
+          <button type="button" disabled={busy || !modified} onClick={s.requestPublish} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:cursor-not-allowed disabled:opacity-40">
             <Rocket className="h-4 w-4" /> Publicar ao Vivo
           </button>
         </div>
@@ -55,7 +55,7 @@ export default function StagingActionBar<T extends Record<string, any>>({ stagin
               <button type="button" disabled={busy} onClick={s.cancelPublish} className="flex-1 cursor-pointer rounded-xl border border-slate-700 py-2.5 text-sm font-bold text-slate-300 hover:bg-white/5">
                 Cancelar
               </button>
-              <button type="button" disabled={busy} onClick={s.confirmPublish} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] py-2.5 text-sm font-bold text-white hover:bg-[#007fcc] disabled:opacity-50">
+              <button type="button" disabled={busy} onClick={s.confirmPublish} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] py-2.5 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-50">
                 {s.busy === 'publish' && <Loader2 className="h-4 w-4 animate-spin" />} Publicar
               </button>
             </div>

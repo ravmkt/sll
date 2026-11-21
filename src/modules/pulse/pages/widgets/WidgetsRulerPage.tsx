@@ -6,7 +6,7 @@ import WidgetPlacementPicker, { type Placement } from '../../components/widgets/
 import { widgetsService } from '../../services/widgetsService';
 import { SAMPLE_CONTENT, mergeConfig, type RulerSettings, type Tier, type WidgetStyle, type WidgetsCtx } from '../../types/widgets';
 
-const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[#0094EB]';
+const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]';
 const labelCls = 'mb-1 block text-[10px] font-bold uppercase text-slate-400';
 type Form = Omit<RulerSettings, 'store_id'>;
 const EMPTY: Form = { active: false, title: '', tiers: [], footer: '', placement: { selector: '', position: 'before' }, style_id: null };
@@ -72,7 +72,7 @@ export default function WidgetsRulerPage({ ctx }: { ctx: WidgetsCtx }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Ruler className="h-6 w-6 text-[#0094EB]" />
+            <Ruler className="h-6 w-6 text-[color:var(--sll-b-brand)]" />
             <h1 className="text-2xl font-extrabold text-slate-900">Régua de descontos</h1>
           </div>
           <p className="mt-1 text-sm text-slate-500">Régua informativa exibida na loja. O desconto real é configurado na plataforma da loja.</p>
@@ -86,7 +86,7 @@ export default function WidgetsRulerPage({ ctx }: { ctx: WidgetsCtx }) {
             {form.active ? 'Ativa na loja' : 'Rascunho / pausada'}
           </div>
           <button type="button" onClick={() => persist(form, 'Régua salva.')} disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+            className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
             <Save className="h-4 w-4" /> {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
@@ -117,7 +117,7 @@ export default function WidgetsRulerPage({ ctx }: { ctx: WidgetsCtx }) {
               </div>
               {!isCards && form.tiers.length < 6 && (
                 <button type="button" onClick={() => setForm({ ...form, tiers: [...form.tiers, { label: '', value: '' }] })}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-600">
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-3 py-1.5 text-xs font-bold text-[color:var(--sll-b-brand)]">
                   <Plus className="h-3.5 w-3.5" /> Adicionar faixa
                 </button>
               )}
@@ -155,7 +155,7 @@ export default function WidgetsRulerPage({ ctx }: { ctx: WidgetsCtx }) {
               <div className="flex rounded-lg border border-slate-200 p-0.5">
                 {(['mobile', 'desktop'] as const).map((d) => (
                   <button key={d} type="button" onClick={() => setDevice(d)}
-                    className={`rounded-md p-1.5 ${device === d ? 'bg-[#0094EB] text-white' : 'text-slate-500'}`}>
+                    className={`rounded-md p-1.5 ${device === d ? 'bg-[color:var(--sll-b-brand)] text-white' : 'text-slate-500'}`}>
                     {d === 'mobile' ? <Smartphone className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
                   </button>
                 ))}

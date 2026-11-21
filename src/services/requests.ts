@@ -15,7 +15,7 @@ export const STATUS_LABEL: Record<ReqStatus, string> = {
 export const STATUS_CLS: Record<ReqStatus, string> = {
   received: 'bg-slate-100 text-slate-600',
   review: 'bg-amber-50 text-amber-700',
-  planned: 'bg-sky-50 text-[#0094eb]',
+  planned: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]',
   dev: 'bg-violet-50 text-violet-700',
   done: 'bg-emerald-50 text-emerald-700',
 };

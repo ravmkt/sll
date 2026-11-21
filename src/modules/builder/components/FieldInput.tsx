@@ -9,7 +9,7 @@ import type { StoreProduct } from '../services/products';
 import { ACCEPT, uploadBuilderAsset } from '../services/assets';
 
 export const INPUT =
-  'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20';
+  'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]';
 
 type Items = Record<string, string>[];
 
@@ -127,7 +127,7 @@ function Repeater({ f, value, onChange }: { f: Field; value: string; onChange: (
         <button
           type="button"
           onClick={() => { set([...list, { ...(f.itemDefaults ?? {}) }]); setOpen(list.length); }}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 py-2 text-xs font-semibold text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 py-2 text-xs font-semibold text-slate-600 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]"
         >
           <Plus className="h-3.5 w-3.5" /> Adicionar {(f.itemLabel ?? 'item').toLowerCase()}
         </button>
@@ -168,7 +168,7 @@ function UploadField({ f, value, onChange }: { f: Field; value: string; onChange
           type="button"
           disabled={busy}
           onClick={act(() => ref.current?.click())}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-[#0094eb] hover:text-[#0094eb] disabled:opacity-60"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)] disabled:opacity-60"
         >
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadIcon className="h-3.5 w-3.5" />}
           {busy ? 'Enviando' : 'Enviar'}
@@ -233,7 +233,7 @@ function ProductsField({ f, value, onChange }: { f: Field; value: string; onChan
         <button
           type="button"
           onClick={act(() => setTarget(-1))}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 py-2 text-xs font-semibold text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 py-2 text-xs font-semibold text-slate-600 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]"
         >
           <Plus className="h-3.5 w-3.5" /> Adicionar produto
         </button>
@@ -299,7 +299,7 @@ function RatioField({ value, onChange, n }: { value: string; onChange: (v: strin
           <div
             key={i}
             style={{ flexGrow: p, flexBasis: 0, minWidth: 0 }}
-            className="m-1 flex items-center justify-center rounded bg-[#0094eb]/15 text-xs font-bold text-[#0094eb]"
+            className="m-1 flex items-center justify-center rounded bg-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)] text-xs font-bold text-[color:var(--sll-b-brand)]"
           >
             {p}%
           </div>
@@ -318,7 +318,7 @@ function RatioField({ value, onChange, n }: { value: string; onChange: (v: strin
               setDrag(i);
             }}
           >
-            <div className="mx-auto h-full w-1 rounded bg-[#0094eb]" />
+            <div className="mx-auto h-full w-1 rounded bg-[color:var(--sll-b-brand)]" />
           </div>
         ))}
       </div>
@@ -327,7 +327,7 @@ function RatioField({ value, onChange, n }: { value: string; onChange: (v: strin
         <button
           type="button"
           onClick={act(() => onChange(''))}
-          className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-[#0094eb] hover:text-[#0094eb]"
+          className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]"
         >
           Igualar
         </button>

@@ -216,7 +216,7 @@ export default function ModuloDetalhe({ slug, onBack, onOpenStore, onOpenPlans }
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs text-slate-600">{modalDesc.length}/300. Vazio usa a descrição da vitrine. Vale ao vivo ao salvar.</span>
                   <button type="button" disabled={savingDesc} onClick={saveModalDesc}
-                    className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">
+                    className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-1.5 text-[13px] font-bold text-white disabled:opacity-40">
                     {savingDesc ? 'Salvando…' : 'Salvar resumo'}
                   </button>
                 </div>

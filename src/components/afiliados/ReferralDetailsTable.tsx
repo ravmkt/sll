@@ -8,7 +8,7 @@ const brl = (v: number) =>
 const dt = (d?: string | null) => (d ? new Date(d).toLocaleDateString("pt-BR") : "");
 
 const STATUS: Record<ReferralStatus, { label: string; cls: string }> = {
-  trial: { label: "Trial", cls: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" },
+  trial: { label: "Trial", cls: "bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] dark:bg-blue-500/10 dark:text-blue-400" },
   trial_expired: { label: "Trial encerrado", cls: "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400" },
   paid: { label: "Pago", cls: "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400" },
   past_due: { label: "Atrasado", cls: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" },
@@ -17,7 +17,7 @@ const STATUS: Record<ReferralStatus, { label: string; cls: string }> = {
 };
 
 const PRODUCT_CLS: Record<string, string> = {
-  vidlytics: "bg-sky-50 text-[#0094eb] dark:bg-sky-500/10",
+  vidlytics: "bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] dark:bg-sky-500/10",
   livecommerce: "bg-orange-50 text-[#fd8539] dark:bg-orange-500/10",
   live: "bg-orange-50 text-[#fd8539] dark:bg-orange-500/10",
 };

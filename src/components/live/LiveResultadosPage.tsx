@@ -448,11 +448,11 @@ export default function LiveResultadosPage() {
 
       <div data-tour="resultados-kpis" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi icon={<DollarSign className="h-5 w-5 text-emerald-600" />} tone="bg-emerald-50" label={T.kRev} value={brl(model.totals.revenue)} />
-        <Kpi icon={<ShoppingCart className="h-5 w-5 text-sky-600" />} tone="bg-sky-50" label={T.kOrd} value={num(model.totals.orders)} />
+        <Kpi icon={<ShoppingCart className="h-5 w-5 text-[color:var(--sll-b-brand)]" />} tone="bg-[color:var(--sll-b-brand-soft)]" label={T.kOrd} value={num(model.totals.orders)} />
         <Kpi icon={<Eye className="h-5 w-5 text-rose-600" />} tone="bg-rose-50" label={T.kPeak} value={num(model.historicPeak)} />
         <Kpi icon={<Percent className="h-5 w-5 text-violet-600" />} tone="bg-violet-50" label={T.kRate} value={model.totals.views > 0 ? (((model.totals.clicks / model.totals.views) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%') : '\u2014'} hint={'Cliques \u00f7 visualiza\u00e7\u00f5es'} />
         <Kpi icon={<MousePointerClick className="h-5 w-5 text-amber-600" />} tone="bg-amber-50" label={T.kClk} value={num(model.totals.clicks)} hint="Comprar + WhatsApp" />
-        <Kpi icon={<ShoppingBag className="h-5 w-5 text-blue-600" />} tone="bg-blue-50" label={T.kBuy} value={num(model.totals.buy)} />
+        <Kpi icon={<ShoppingBag className="h-5 w-5 text-[color:var(--sll-b-brand)]" />} tone="bg-[color:var(--sll-b-brand-soft)]" label={T.kBuy} value={num(model.totals.buy)} />
         <Kpi icon={<MessageCircle className="h-5 w-5 text-lime-600" />} tone="bg-lime-50" label={T.kWa} value={num(model.totals.wa)} />
         <Kpi icon={<UserPlus className="h-5 w-5 text-pink-600" />} tone="bg-pink-50" label={T.kSign} value={num(model.totals.signups)} hint="Cadastro e grupo" />
       </div>

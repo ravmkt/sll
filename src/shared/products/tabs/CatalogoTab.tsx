@@ -166,7 +166,7 @@ export default function CatalogoTab({ storeId, product, onChange }: Props) {
       </div>
 
       {adding && (
-        <div className="flex flex-wrap items-end gap-2 rounded-lg border border-[#0094eb]/30 bg-[#0094eb]/5 p-3">
+        <div className="flex flex-wrap items-end gap-2 rounded-lg border border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)] p-3">
           <Field label={adding === 'category' ? 'Nome da nova categoria' : 'Nome da nova marca'} className="min-w-[14rem] flex-1">
             <Input
               autoFocus value={newName} onChange={(e) => setNewName(e.target.value)}
@@ -212,7 +212,7 @@ export default function CatalogoTab({ storeId, product, onChange }: Props) {
             {gallery.map((u, i) => (
               <div key={u + i} className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
                 <img src={u} alt="" className="aspect-[4/5] w-full object-cover" />
-                {i === 0 && <span className="absolute left-1 top-1 rounded bg-[#0094eb] px-1.5 py-0.5 text-[10px] font-bold text-white">Principal</span>}
+                {i === 0 && <span className="absolute left-1 top-1 rounded bg-[color:var(--sll-b-brand)] px-1.5 py-0.5 text-[10px] font-bold text-white">Principal</span>}
                 <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 p-1 opacity-0 transition group-hover:opacity-100">
                   <button type="button" title="Tornar principal" onClick={() => makeMain(i)} className="cursor-pointer p-1 text-white"><Star size={14} /></button>
                   <button type="button" title="Remover" onClick={() => removeAt(i)} className="cursor-pointer p-1 text-white"><Trash2 size={14} /></button>

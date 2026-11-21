@@ -7,7 +7,7 @@ interface PromoBannerProps {
 
 export const PromoBanner: React.FC<PromoBannerProps> = ({ onActionClick }) => {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0094eb] to-[#0070b8] p-5 text-white shadow-md transition-all hover:shadow-lg mb-6">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[color:var(--sll-b-brand)] to-[#0070b8] p-5 text-white shadow-md transition-all hover:shadow-lg mb-6">
       <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-white/15 rounded-xl backdrop-blur-sm">
@@ -18,12 +18,12 @@ export const PromoBanner: React.FC<PromoBannerProps> = ({ onActionClick }) => {
               <span className="text-xs font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
                 Novidade SLL
               </span>
-              <span className="text-xs text-blue-100">Cross-sell & IA</span>
+              <span className="text-xs text-[color:var(--sll-b-brand)]">Cross-sell & IA</span>
             </div>
             <h3 className="text-lg font-bold text-white mt-0.5">
               Maximize suas conversões com o Assistente de Conteúdo IA
             </h3>
-            <p className="text-xs md:text-sm text-blue-100 mt-0.5">
+            <p className="text-xs md:text-sm text-[color:var(--sll-b-brand)] mt-0.5">
               Gere roteiros persuasivos e sincronize produtos direto nas vitrines de vídeos.
             </p>
           </div>

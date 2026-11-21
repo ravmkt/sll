@@ -10,7 +10,7 @@ type Props = { storeId: string; onClose: () => void; onImported: () => void };
 
 const viewCls = (on: boolean) =>
   cn('flex-1 py-2 text-xs font-semibold cursor-pointer transition border-b-2',
-    on ? 'border-[#0094eb] text-[#0094eb]' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300');
+    on ? 'border-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)]' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300');
 
 export default function YampiImport({ storeId, onClose, onImported }: Props) {
   const [phase, setPhase] = useState<'boot' | 'connect' | 'ready' | 'preview' | 'report'>('boot');
@@ -158,8 +158,8 @@ export default function YampiImport({ storeId, onClose, onImported }: Props) {
   if (phase === 'report' && report) {
     return (
       <div className="p-6 space-y-4">
-        <div className="flex items-center gap-3 rounded-xl bg-[#0094eb]/10 p-4">
-          <CheckCircle2 className="text-[#0094eb]" />
+        <div className="flex items-center gap-3 rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] p-4">
+          <CheckCircle2 className="text-[color:var(--sll-b-brand)]" />
           <p className="text-sm font-semibold text-slate-800 dark:text-white">{report.imported} produto(s) importado(s)</p>
         </div>
         {report.discarded.length > 0 && (
@@ -192,7 +192,7 @@ export default function YampiImport({ storeId, onClose, onImported }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-slate-900 dark:text-white">{products.length} produtos na Yampi</p>
-          <p className="mt-0.5 text-xs font-semibold text-[#0094eb]">
+          <p className="mt-0.5 text-xs font-semibold text-[color:var(--sll-b-brand)]">
             {selected.size > 0 ? `${selected.size} selecionados · ${nVariants} variações` : 'Nenhum selecionado'}
           </p>
         </div>
@@ -231,7 +231,7 @@ export default function YampiImport({ storeId, onClose, onImported }: Props) {
           <input type="checkbox" checked={allVisible} onChange={(e) => toggle(pageRows.map((p) => p.id), e.target.checked)} className="h-3.5 w-3.5" />
           Selecionar visíveis
         </label>
-        <button type="button" onClick={() => toggle(pool.map((p) => p.id), true)} className="text-[#0094eb] underline cursor-pointer">Selecionar todos ({pool.length})</button>
+        <button type="button" onClick={() => toggle(pool.map((p) => p.id), true)} className="text-[color:var(--sll-b-brand)] underline cursor-pointer">Selecionar todos ({pool.length})</button>
         <button type="button" onClick={() => setSelected(new Set())} className="text-slate-400 underline cursor-pointer">Limpar seleção</button>
       </div>
 
@@ -284,9 +284,9 @@ export default function YampiImport({ storeId, onClose, onImported }: Props) {
 
       {pages > 1 && (
         <div className="flex items-center justify-between text-xs">
-          <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)} className="font-semibold text-[#0094eb] disabled:opacity-30 cursor-pointer">← Anterior</button>
+          <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)} className="font-semibold text-[color:var(--sll-b-brand)] disabled:opacity-30 cursor-pointer">← Anterior</button>
           <span className="text-slate-400">{safePage} / {pages}</span>
-          <button type="button" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)} className="font-semibold text-[#0094eb] disabled:opacity-30 cursor-pointer">Próximo →</button>
+          <button type="button" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)} className="font-semibold text-[color:var(--sll-b-brand)] disabled:opacity-30 cursor-pointer">Próximo →</button>
         </div>
       )}
 

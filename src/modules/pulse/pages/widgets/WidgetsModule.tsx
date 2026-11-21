@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { BadgeCheck, GalleryHorizontal, PanelTop, Palette, Star } from 'lucide-react';
 import WidgetsInfoCardsPage from './WidgetsInfoCardsPage';
 import WidgetsBenefitsPage from './WidgetsBenefitsPage';
@@ -28,7 +28,7 @@ export default function WidgetsModule({ ctx }: { ctx: WidgetsCtx }) {
             type="button"
             onClick={() => setSub(s.id)}
             className={`inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
-              sub === s.id ? 'bg-[#0094eb] text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100'
+              sub === s.id ? 'bg-[color:var(--sll-b-brand)] text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100'
             }`}
           >
             <s.icon className="h-4 w-4" /> {s.label}

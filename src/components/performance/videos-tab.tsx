@@ -263,9 +263,9 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null;
     return sortDir === 'asc' ? (
-      <ChevronUp size={12} className="inline ml-1 shrink-0 text-[#0091ff] dark:text-[#ff7a29]" />
+      <ChevronUp size={12} className="inline ml-1 shrink-0 text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]" />
     ) : (
-      <ChevronDown size={12} className="inline ml-1 shrink-0 text-[#0091ff] dark:text-[#ff7a29]" />
+      <ChevronDown size={12} className="inline ml-1 shrink-0 text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]" />
     );
   };
 
@@ -301,7 +301,7 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0091ff] dark:border-[#ff7a29]" />
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[color:var(--sll-b-brand)] dark:border-[color:var(--sll-b-brand)]" />
       </div>
     );
   }
@@ -322,7 +322,7 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
                 </span>
                 <UITooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" className="text-slate-400 hover:text-blue-500 cursor-pointer">
+                    <button type="button" className="text-slate-400 hover:text-[color:var(--sll-b-brand)] cursor-pointer">
                       <Info size={14} />
                     </button>
                   </TooltipTrigger>
@@ -333,7 +333,7 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
                   </TooltipContent>
                 </UITooltip>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-[color:var(--sll-b-brand)] dark:text-blue-400 flex items-center justify-center shrink-0">
                 <Eye size={20} />
               </div>
             </CardHeader>
@@ -342,7 +342,7 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
                 {overallMetrics.totalViews.toLocaleString('pt-BR')}
               </div>
               <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                <span>Média de <strong className="text-blue-600 dark:text-blue-400 font-black">{overallMetrics.avgViewsPerVideo.toLocaleString('pt-BR')}</strong> por vídeo</span>
+                <span>Média de <strong className="text-[color:var(--sll-b-brand)] dark:text-blue-400 font-black">{overallMetrics.avgViewsPerVideo.toLocaleString('pt-BR')}</strong> por vídeo</span>
               </div>
             </CardContent>
           </Card>
@@ -401,7 +401,7 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
                   </TooltipContent>
                 </UITooltip>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-orange-500/10 text-orange-600 dark:text-[#ff7a29] flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-orange-500/10 text-orange-600 dark:text-[color:var(--sll-b-brand)] flex items-center justify-center shrink-0">
                 <ShoppingBag size={20} />
               </div>
             </CardHeader>
@@ -459,7 +459,7 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
                   <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Curtidas</span>
                 </div>
                 <div className="pl-4">
-                  <span className="text-2xl font-black text-sky-600 dark:text-sky-400">
+                  <span className="text-2xl font-black text-[color:var(--sll-b-brand)] dark:text-sky-400">
                     {overallMetrics.totalComments.toLocaleString('pt-BR')}
                   </span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Comentários</span>
@@ -476,23 +476,23 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
         <div className="relative">
           <Search
             size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#0091ff] dark:text-[#ff7a29]"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]"
           />
           <input
             type="text"
             placeholder="Buscar por título do vídeo..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 bg-white dark:bg-[#111524] text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#0091ff]/30 focus:border-[#0091ff] dark:focus:ring-[#ff7a29]/30 dark:focus:border-[#ff7a29] transition-all"
+            className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-white dark:bg-[#111524] text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] focus:border-[color:var(--sll-b-brand)] dark:focus:ring-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] dark:focus:border-[color:var(--sll-b-brand)] transition-all"
           />
         </div>
 
         {/* Tabela com Borda Arredondada Premium */}
-        <div className="bg-white dark:bg-[#111524] border border-slate-200 dark:border-[#ff7a29]/30 rounded-2xl shadow-xs overflow-hidden">
+        <div className="bg-white dark:bg-[#111524] border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] rounded-2xl shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-[#ff7a29]/20">
+                <tr className="border-b border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]">
                   <Th field="title" className="min-w-[220px]" align="left">
                     Vídeo
                   </Th>
@@ -508,12 +508,12 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
                 {paginated.map((video) => (
                   <tr
                     key={video.id}
-                    className="border-b border-slate-100 dark:border-[#ff7a29]/10 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                    className="border-b border-slate-100 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors"
                   >
                     {/* Vídeo */}
                     <td className="px-4 py-4 text-left">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-16 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200/60 dark:border-[#ff7a29]/20">
+                        <div className="h-10 w-16 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200/60 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]">
                           {video.thumbnail_url ? (
                             <img loading="lazy" decoding="async"
                               src={video.thumbnail_url}
@@ -633,7 +633,7 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
 
           {/* Paginação Premium */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-[#ff7a29]/20 bg-slate-50/50 dark:bg-transparent">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] bg-slate-50/50 dark:bg-transparent">
               <p className="text-xs font-bold text-slate-500">
                 {filteredAndSorted.length} vídeos · Página {page + 1} de {totalPages}
               </p>
@@ -641,14 +641,14 @@ export function VideosTab({ timeRange, customFrom, customTo }: Props) {
                 <button
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={page === 0}
-                  className="p-2 rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                  className="p-2 rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                   disabled={page >= totalPages - 1}
-                  className="p-2 rounded-2xl border border-slate-200 dark:border-[#ff7a29]/30 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                  className="p-2 rounded-2xl border border-slate-200 dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
                 >
                   <ChevronRight size={16} />
                 </button>

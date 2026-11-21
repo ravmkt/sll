@@ -449,7 +449,7 @@ function StorageCell({ used, limit }: { used: number | null; limit: number | nul
   const lim = Number(limit) || 0;
   if (!lim) return <span className="text-[13px] text-slate-400">{u > 0 ? fmtBytes(u) : '—'}</span>;
   const pct = Math.min(100, (u / lim) * 100);
-  const bar = pct >= 90 ? 'bg-rose-500' : pct >= 70 ? 'bg-amber-400' : 'bg-sky-500';
+  const bar = pct >= 90 ? 'bg-rose-500' : pct >= 70 ? 'bg-amber-400' : 'bg-[color:var(--sll-b-brand)]';
   return (
     <div className="w-36" title={`${fmtBytes(u)} de ${fmtBytes(lim)} (${pct.toFixed(0)}%)`}>
       <p className="text-[13px] text-slate-300">{fmtBytes(u)} <span className="text-slate-500">de {fmtBytes(lim)}</span></p>

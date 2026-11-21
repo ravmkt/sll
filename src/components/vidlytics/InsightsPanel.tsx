@@ -14,7 +14,7 @@ interface Tip { id: string; level: Level; title: string; data: string; action: s
 const LEVELS: Record<Level, { label: string; order: number; border: string; badge: string; iconBox: string; Icon: typeof Zap }> = {
   critico: { label: 'Crítico', order: 0, border: 'border-l-rose-500', badge: 'bg-rose-50 text-rose-600', iconBox: 'bg-rose-50 text-rose-500', Icon: AlertTriangle },
   atencao: { label: 'Atenção', order: 1, border: 'border-l-amber-400', badge: 'bg-amber-50 text-amber-600', iconBox: 'bg-amber-50 text-amber-500', Icon: TrendingDown },
-  oportunidade: { label: 'Oportunidade', order: 2, border: 'border-l-sky-400', badge: 'bg-sky-50 text-sky-600', iconBox: 'bg-sky-50 text-[#0094eb]', Icon: Lightbulb },
+  oportunidade: { label: 'Oportunidade', order: 2, border: 'border-l-sky-400', badge: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]', iconBox: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]', Icon: Lightbulb },
   vitoria: { label: 'Vitória', order: 3, border: 'border-l-emerald-500', badge: 'bg-emerald-50 text-emerald-600', iconBox: 'bg-emerald-50 text-emerald-500', Icon: Trophy },
 };
 

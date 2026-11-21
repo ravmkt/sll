@@ -90,10 +90,10 @@ export default function StockImportModal({ onClose, onPick }: Props) {
           onDrop={onDrop}
           className={cn(
             'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-6 py-10 text-center transition',
-            over ? 'border-[#0094eb] bg-[#0094eb]/10' : 'border-slate-300 bg-slate-50 hover:border-[#0094eb] dark:border-slate-700 dark:bg-[#111524]',
+            over ? 'border-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]' : 'border-slate-300 bg-slate-50 hover:border-[color:var(--sll-b-brand)] dark:border-slate-700 dark:bg-[#111524]',
           )}
         >
-          {busy ? <Loader2 size={32} className="animate-spin text-[#0094eb]" /> : <UploadCloud size={32} className="text-[#0094eb]" />}
+          {busy ? <Loader2 size={32} className="animate-spin text-[color:var(--sll-b-brand)]" /> : <UploadCloud size={32} className="text-[color:var(--sll-b-brand)]" />}
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {busy ? 'Lendo a planilha...' : 'Clique para escolher o arquivo ou arraste e solte aqui'}
           </p>
@@ -114,10 +114,10 @@ export default function StockImportModal({ onClose, onPick }: Props) {
             type="button"
             disabled={tplBusy}
             onClick={() => void template()}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#0094eb] disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[color:var(--sll-b-brand)] disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
           >
-            {tplBusy ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} className="text-[#0094eb]" />}
-            <FileSpreadsheet size={15} className="text-[#0094eb]" /> Baixar planilha modelo
+            {tplBusy ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} className="text-[color:var(--sll-b-brand)]" />}
+            <FileSpreadsheet size={15} className="text-[color:var(--sll-b-brand)]" /> Baixar planilha modelo
           </button>
           <button type="button" onClick={onClose} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-slate-700">
             Cancelar

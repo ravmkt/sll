@@ -78,8 +78,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           !isExpanded ? 'justify-center' : ''
         } ${
           isActive(it)
-            ? 'bg-[#0094eb] text-white font-medium shadow-md shadow-[#0094eb]/20'
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#0094eb]'
+            ? 'bg-[color:var(--sll-b-brand)] text-white font-medium shadow-md shadow-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]'
+            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[color:var(--sll-b-brand)]'
         }`}
       >
         <Icon size={20} className="shrink-0" />
@@ -122,7 +122,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           className={`flex items-center justify-center gap-2 rounded-lg py-2 px-3 text-xs font-bold transition-all w-full cursor-pointer ${
             isExpanded
               ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200'
-              : 'bg-[#0094eb] text-white hover:bg-[#007bc4]'
+              : 'bg-[color:var(--sll-b-brand)] text-white hover:bg-[color:var(--sll-b-brand-hover)]'
           }`}
           title={isExpanded ? 'Recolher menu' : 'Expandir menu'}
         >
@@ -147,7 +147,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             type="button"
             onClick={() => window.dispatchEvent(new Event('sll:tour-start'))}
             title="Ver tour desta p&aacute;gina"
-            className={`inline-flex cursor-pointer items-center justify-center gap-2 border border-slate-200 bg-white text-xs font-bold text-slate-600 shadow-sm transition-colors hover:border-[#0094eb] hover:text-[#0094eb] ${
+            className={`inline-flex cursor-pointer items-center justify-center gap-2 border border-slate-200 bg-white text-xs font-bold text-slate-600 shadow-sm transition-colors hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)] ${
               isExpanded ? 'w-full rounded-full px-3.5 py-2.5' : 'h-10 w-10 rounded-full'
             }`}
           >

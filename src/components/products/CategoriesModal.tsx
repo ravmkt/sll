@@ -52,7 +52,7 @@ export default function CategoriesModal({ storeId, categories, onChanged, onClos
               )}
               <div className="flex items-center gap-1 shrink-0">
                 {editId === c.id ? (
-                  <button type="button" onClick={() => save(c)} disabled={busy} className="rounded-lg p-1.5 text-[#0094eb] hover:bg-[#0094eb]/10 dark:hover:bg-[#0094eb]/10 cursor-pointer"><Check size={15} /></button>
+                  <button type="button" onClick={() => save(c)} disabled={busy} className="rounded-lg p-1.5 text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] dark:hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] cursor-pointer"><Check size={15} /></button>
                 ) : (
                   <button type="button" onClick={() => { setEditId(c.id); setEditName(c.name); }} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>
                 )}

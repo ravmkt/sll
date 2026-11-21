@@ -28,7 +28,7 @@ const cache = new Map<string, string[]>();
 
 function Logo({ src, Icon, size }: { src?: string; Icon: ElementType; size: number }) {
   const [failed, setFailed] = useState(false);
-  if (!src || failed) return <Icon style={{ width: size * 0.6, height: size * 0.6 }} className="text-[#0094eb]" />;
+  if (!src || failed) return <Icon style={{ width: size * 0.6, height: size * 0.6 }} className="text-[color:var(--sll-b-brand)]" />;
   return <img src={src} alt="" style={{ width: size, height: size }} className="object-contain" onError={() => setFailed(true)} />;
 }
 
@@ -107,10 +107,10 @@ export function ModuleSwitcher() {
               const isCurrent = m.key === current.key;
                   const Row: any = isCurrent || m.soon ? 'button' : Link;
               return (
-                <Row key={m.key} {...(isCurrent || m.soon ? { type: 'button' } : { to: m.locked ? `/dashboard/planos?modulo=${m.key}` : m.path })} onClick={() => setOpen(false)} className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${m.soon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'} ${m.locked ? 'opacity-60 grayscale' : ''} ${isCurrent ? 'bg-blue-50/80 text-[#0094eb]' : 'text-slate-700 hover:bg-slate-50'}`}
+                <Row key={m.key} {...(isCurrent || m.soon ? { type: 'button' } : { to: m.locked ? `/dashboard/planos?modulo=${m.key}` : m.path })} onClick={() => setOpen(false)} className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${m.soon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'} ${m.locked ? 'opacity-60 grayscale' : ''} ${isCurrent ? 'bg-blue-50/80 text-[color:var(--sll-b-brand)]' : 'text-slate-700 hover:bg-slate-50'}`}
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-white ${isCurrent ? 'border-[#0094eb]/40' : 'border-slate-200'}`}>
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-white ${isCurrent ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_40%,transparent)]' : 'border-slate-200'}`}>
                       <Logo src={m.logo} Icon={m.icon} size={34} />
                     </div>
                     <div className="truncate">
@@ -119,7 +119,7 @@ export function ModuleSwitcher() {
                     </div>
                   </div>
                   {m.locked && <span className="ml-2 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Assinar</span>}
-                      {isCurrent && <Check className="ml-2 h-4 w-4 shrink-0 text-[#0094eb]" />}
+                      {isCurrent && <Check className="ml-2 h-4 w-4 shrink-0 text-[color:var(--sll-b-brand)]" />}
                   {m.soon && <span className="ml-2 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Em breve</span>}
                 </Row>
               );

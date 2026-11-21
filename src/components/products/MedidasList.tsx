@@ -79,7 +79,7 @@ export default function MedidasList({ models, linked, loading, onEdit, onDelete,
   );
 
   if (loading) {
-    return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[#0094eb]" /></div>;
+    return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[color:var(--sll-b-brand)]" /></div>;
   }
 
   if (models.length === 0) {
@@ -116,9 +116,9 @@ export default function MedidasList({ models, linked, loading, onEdit, onDelete,
       <div className="flex flex-col items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-[#111524] p-3 sm:flex-row">
         <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
           <span>{sorted.length} {sorted.length === 1 ? 'medida encontrada' : 'medidas encontradas'}</span>
-          {selected.size > 0 && <span className="rounded-full bg-[#0094eb]/10 px-3 py-0.5 text-[#0094eb]">{selected.size} selecionadas</span>}
+          {selected.size > 0 && <span className="rounded-full bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-3 py-0.5 text-[color:var(--sll-b-brand)]">{selected.size} selecionadas</span>}
           {selected.size > 0 && !allFiltered && (
-            <button type="button" onClick={() => setSelected(new Set(sorted.map((m) => m.id)))} className="text-[#0094eb] underline cursor-pointer">Selecionar todas as {sorted.length}</button>
+            <button type="button" onClick={() => setSelected(new Set(sorted.map((m) => m.id)))} className="text-[color:var(--sll-b-brand)] underline cursor-pointer">Selecionar todas as {sorted.length}</button>
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -157,7 +157,7 @@ export default function MedidasList({ models, linked, loading, onEdit, onDelete,
             {pageItems.map((m) => {
               const isLinked = linked.has(m.id);
               return (
-                <tr key={m.id} className={cn('transition-colors', selected.has(m.id) ? 'bg-[#0094eb]/5' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}>
+                <tr key={m.id} className={cn('transition-colors', selected.has(m.id) ? 'bg-[color:color-mix(in_srgb,var(--sll-b-brand)_5%,transparent)]' : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]')}>
                   <td className="px-4 py-3 text-center"><input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleOne(m.id)} className="h-4 w-4 cursor-pointer" /></td>
                   <td className="px-4 py-3">
                     <p className="max-w-xs truncate text-sm font-semibold text-slate-800 dark:text-white" title={m.name}>{m.name}</p>
@@ -167,18 +167,18 @@ export default function MedidasList({ models, linked, loading, onEdit, onDelete,
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-[#111524] px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                      {m.type === 'objeto' ? <Package size={11} className="text-[#0094eb]" /> : <User size={11} className="text-[#0094eb]" />}
+                      {m.type === 'objeto' ? <Package size={11} className="text-[color:var(--sll-b-brand)]" /> : <User size={11} className="text-[color:var(--sll-b-brand)]" />}
                       {m.type === 'objeto' ? 'Objeto' : 'Humano'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={cn('inline-flex h-7 min-w-[110px] items-center justify-center rounded-lg border text-[10px] font-bold uppercase', isLinked ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-slate-200 dark:border-slate-700 text-slate-400')}>
+                    <span className={cn('inline-flex h-7 min-w-[110px] items-center justify-center rounded-lg border text-[10px] font-bold uppercase', isLinked ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 dark:border-slate-700 text-slate-400')}>
                       {isLinked ? 'Vinculado' : 'Não vinculado'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <button type="button" title="Editar" onClick={() => onEdit(m)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0094eb] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>
+                      <button type="button" title="Editar" onClick={() => onEdit(m)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>
                       <button type="button" title="Excluir" onClick={() => onDelete(m)} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/40 cursor-pointer"><Trash2 size={15} /></button>
                     </div>
                   </td>

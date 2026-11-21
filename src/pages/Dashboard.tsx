@@ -81,7 +81,7 @@ function AssetImg({ src, alt, className, fallback }: { src: string; alt: string;
 }
 
 const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md';
-const DATE_IN = 'h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#0094eb]';
+const DATE_IN = 'h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]';
 
 
 function TipBubble({ text, right }: { text: string; right?: boolean }) {
@@ -103,11 +103,11 @@ function Metric({ label, value, hint, icon: Icon, onClick, badge, tip, tipRight 
       {...(onClick
         ? { role: 'button', tabIndex: 0, onClick, onKeyDown: (e: KeyboardEvent) => { if (e.key === 'Enter') onClick(); } }
         : {})}
-      className={`${CARD} group relative flex h-full min-h-[148px] flex-col justify-between p-4 ${onClick ? 'cursor-pointer hover:border-[#0094eb]/40' : ''}`}
+      className={`${CARD} group relative flex h-full min-h-[148px] flex-col justify-between p-4 ${onClick ? 'cursor-pointer hover:border-[color:color-mix(in_srgb,var(--sll-b-brand)_40%,transparent)]' : ''}`}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
           <Icon className="h-4 w-4" />
         </div>
       </div>
@@ -123,8 +123,8 @@ function Metric({ label, value, hint, icon: Icon, onClick, badge, tip, tipRight 
 
 function Mini({ label, value, icon: Icon }: { label: string; value: string; icon: ElementType }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-1.5 rounded-xl bg-sky-50/70 px-3 py-3 text-center ring-1 ring-[#0094eb]/10">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#0094eb] shadow-sm"><Icon className="h-4 w-4" /></div>
+    <div className="flex h-full flex-col items-center justify-center gap-1.5 rounded-xl bg-sky-50/70 px-3 py-3 text-center ring-1 ring-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[color:var(--sll-b-brand)] shadow-sm"><Icon className="h-4 w-4" /></div>
       <p className="text-sm font-semibold leading-tight text-slate-700">{label}</p>
       <p className="mt-1 text-lg font-black text-slate-900">{value}</p>
     </div>
@@ -178,7 +178,7 @@ function buildInsight(d: DashData, hasVid: boolean): { title: string; text: stri
 }
 
 function ModulePreview({ slug }: { slug: string }) {
-  const wrap = 'relative flex h-28 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-[#0094eb]/10 via-slate-50 to-slate-100 p-3';
+  const wrap = 'relative flex h-28 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] via-slate-50 to-slate-100 p-3';
   if (slug === 'vidlytics') {
     return (
       <div className={wrap} aria-hidden="true">
@@ -186,7 +186,7 @@ function ModulePreview({ slug }: { slug: string }) {
           <div key={i} className={`relative h-full w-16 rounded-lg bg-white shadow-sm ring-1 ring-slate-200 ${i === 1 ? '-translate-y-1 scale-105' : ''}`}>
             <div className="absolute inset-1 rounded-md bg-gradient-to-b from-slate-200 to-slate-300" />
             <div className="absolute left-1/2 top-1/2 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow">
-              <Play className="ml-0.5 h-3 w-3 fill-[#0094eb] text-[#0094eb]" />
+              <Play className="ml-0.5 h-3 w-3 fill-[color:var(--sll-b-brand)] text-[color:var(--sll-b-brand)]" />
             </div>
             <div className="absolute bottom-2 left-2 right-2 h-1 rounded-full bg-white/80" />
           </div>
@@ -214,7 +214,7 @@ function ModulePreview({ slug }: { slug: string }) {
     <div className={wrap} aria-hidden="true">
       <div className="flex w-44 flex-col gap-1.5">
         <div className="w-3/4 rounded-lg rounded-bl-sm bg-white px-2 py-1.5 shadow-sm ring-1 ring-slate-200"><div className="h-1.5 w-full rounded-full bg-slate-200" /></div>
-        <div className="ml-auto w-2/3 rounded-lg rounded-br-sm bg-[#0094eb] px-2 py-1.5 shadow-sm"><div className="h-1.5 w-full rounded-full bg-white/70" /></div>
+        <div className="ml-auto w-2/3 rounded-lg rounded-br-sm bg-[color:var(--sll-b-brand)] px-2 py-1.5 shadow-sm"><div className="h-1.5 w-full rounded-full bg-white/70" /></div>
         <div className="w-4/5 rounded-lg rounded-bl-sm bg-white px-2 py-1.5 shadow-sm ring-1 ring-slate-200"><div className="h-1.5 w-full rounded-full bg-slate-200" /></div>
       </div>
     </div>
@@ -376,7 +376,7 @@ export default function Dashboard() {
                     type="button"
                     onClick={() => setPeriodo(p.key)}
                     className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
-                      periodo === p.key ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-500 hover:text-[#0094eb]'
+                      periodo === p.key ? 'bg-[color:var(--sll-b-brand)] text-white shadow-sm' : 'text-slate-500 hover:text-[color:var(--sll-b-brand)]'
                     }`}
                   >
                     {p.label}
@@ -394,7 +394,7 @@ export default function Dashboard() {
               <TipBubble text="Soma das vendas assistidas pelos seus vídeos com as comissões recebidas do Clube SLL no período escolhido." />
               <div className="relative flex items-start justify-between gap-2">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Impacto financeiro</p>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
                   <DollarSign className="h-4 w-4" />
                 </div>
               </div>
@@ -416,7 +416,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate(METRICS_ROUTE)}
-              className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+              className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[color:var(--sll-b-brand)] hover:underline"
             >
               Ver relatório completo de métricas <ArrowRight className="h-3 w-3" />
             </button>
@@ -484,15 +484,15 @@ export default function Dashboard() {
                           ) : used ? (
                             <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">{'\u2022'} Teste encerrado</span>
                           ) : (
-                            <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-1 text-xs font-semibold text-[#0094eb]">{'\u2022'} Teste grátis disponível</span>
+                            <span className="rounded-full bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-2.5 py-1 text-xs font-semibold text-[color:var(--sll-b-brand)]">{'\u2022'} Teste grátis disponível</span>
                           )}
                         </div>
                         {m.logo_url ? (
                           <img src={m.logo_url} alt={m.name} className="h-20 w-auto max-w-[80%] object-contain object-center" />
                         ) : (
                           <div className="flex flex-col items-center gap-2">
-                            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#0094eb]/10 ring-1 ring-[#0094eb]/15">
-                              <Icon className="h-10 w-10 text-[#0094eb]" />
+                            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] ring-1 ring-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)]">
+                              <Icon className="h-10 w-10 text-[color:var(--sll-b-brand)]" />
                             </div>
                             <h3 className="text-lg font-bold text-slate-900">{m.name}</h3>
                           </div>
@@ -512,7 +512,7 @@ export default function Dashboard() {
                             <button
                               type="button"
                               onClick={() => navigate(route)}
-                              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#007bc4]"
+                              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[color:var(--sll-b-brand-hover)]"
                             >
                               Acessar {m.name} <ArrowRight className="h-3.5 w-3.5" />
                             </button>
@@ -523,7 +523,7 @@ export default function Dashboard() {
                             disabled={isJoined || busySlug === m.slug}
                             onClick={() => onWait(m.slug)}
                             className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold ${
-                              isJoined ? 'cursor-default bg-emerald-50 text-emerald-700' : 'cursor-pointer bg-[#0094eb] text-white hover:bg-[#007fcc] disabled:opacity-60'
+                              isJoined ? 'cursor-default bg-emerald-50 text-emerald-700' : 'cursor-pointer bg-[color:var(--sll-b-brand)] text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-60'
                             }`}
                           >
                             {isJoined ? <><Check className="h-3.5 w-3.5" /> Você está na lista</> : busySlug === m.slug ? 'Entrando...' : 'Entrar na lista de espera'}
@@ -558,7 +558,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate('/dashboard/planos')}
-              className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#0094eb] hover:underline"
+              className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[color:var(--sll-b-brand)] hover:underline"
             >
               Ver módulos e planos <ArrowRight className="h-3 w-3" />
             </button>
@@ -594,17 +594,17 @@ export default function Dashboard() {
                   {int(data.referred)} <span className="text-base text-slate-400">/ {nxt ? nxt.n : data.referred}</span>{' '}
                   <span className="text-sm font-bold text-slate-600">{data.referred === 1 ? 'loja indicada' : 'lojas indicadas'}</span>
                 </p>
-                <span className="rounded-full bg-[#0094eb]/10 px-3 py-1 text-[11px] font-bold text-[#0094eb]">Nível {cur.name}</span>
+                <span className="rounded-full bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-3 py-1 text-[11px] font-bold text-[color:var(--sll-b-brand)]">Nível {cur.name}</span>
               </div>
               <div className="relative pt-1">
                 <div className="absolute left-[10%] right-[10%] top-[10px] h-2 -translate-y-1/2 rounded-full bg-slate-200">
-                  <div className="h-full rounded-full bg-[#0094eb] transition-all duration-500" style={{ width: `${clubPct}%` }} />
+                  <div className="h-full rounded-full bg-[color:var(--sll-b-brand)] transition-all duration-500" style={{ width: `${clubPct}%` }} />
                 </div>
                 <div className="relative grid grid-cols-5">
                   {LEVELS.map((l, i) => (
                     <div key={l.name} className="flex flex-col items-center gap-1.5">
-                      <span className={`h-[18px] w-[18px] rounded-full border-2 ${i <= lvIdx ? 'border-[#0094eb] bg-[#0094eb]' : 'border-slate-300 bg-white'}`} />
-                      <span className={`text-xs font-bold ${i === lvIdx ? 'text-[#0094eb]' : 'text-slate-700'}`}>{l.name}</span>
+                      <span className={`h-[18px] w-[18px] rounded-full border-2 ${i <= lvIdx ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand)]' : 'border-slate-300 bg-white'}`} />
+                      <span className={`text-xs font-bold ${i === lvIdx ? 'text-[color:var(--sll-b-brand)]' : 'text-slate-700'}`}>{l.name}</span>
                     </div>
                   ))}
                 </div>
@@ -620,7 +620,7 @@ export default function Dashboard() {
                 <div className="min-w-0 flex-1 truncate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
                   {referralLink || 'Gerando seu link...'}
                 </div>
-                <button type="button" onClick={copy} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#007fcc]">
+                <button type="button" onClick={copy} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]">
                   <Copy className="h-3.5 w-3.5" /> Copiar link
                 </button>
                 <a
@@ -644,7 +644,7 @@ export default function Dashboard() {
                 </button>
               </div>
             )}
-            <button type="button" onClick={() => navigate('/dashboard/afiliados')} className="mt-auto inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[#0094eb] hover:underline">
+            <button type="button" onClick={() => navigate('/dashboard/afiliados')} className="mt-auto inline-flex cursor-pointer items-center gap-1.5 self-end text-xs font-bold text-[color:var(--sll-b-brand)] hover:underline">
               <Gift className="h-3.5 w-3.5" /> Ver ganhos e metas <ArrowRight className="h-3 w-3" />
             </button>
           </div>

@@ -45,7 +45,7 @@ function Section({ id, className = "", children }: { id?: string; className?: st
 function SectionTitle({ eyebrow, title, sub }: { eyebrow: string; title: string; sub?: string }) {
   return (
     <div className="mx-auto mb-12 max-w-2xl text-center">
-      <span className="text-xs font-bold uppercase tracking-widest text-sky-600">{eyebrow}</span>
+      <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--sll-b-brand)]">{eyebrow}</span>
       <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">{title}</h2>
       {sub && <p className="mt-3 text-slate-600">{sub}</p>}
     </div>
@@ -89,11 +89,11 @@ function Header() {
         <Link to="/" aria-label="SLL Hub"><img src="/assets/sll-hub-logo-wide-transp.png" alt="SLL Hub" className="-ml-5 h-12 w-auto" width={214} height={48} /></Link>
         <nav className="hidden items-center gap-7 md:flex">
           {NAV.map((n) => (
-            <button key={n.id} onClick={() => go(n.id)} className="text-sm font-medium text-slate-600 transition hover:text-sky-600">{n.label}</button>
+            <button key={n.id} onClick={() => go(n.id)} className="text-sm font-medium text-slate-600 transition hover:text-[color:var(--sll-b-brand)]">{n.label}</button>
           ))}
         </nav>
         <div className="hidden items-center gap-4 md:flex">
-          <Link to="/auth" className="text-sm font-semibold text-slate-700 hover:text-sky-600">Entrar</Link>
+          <Link to="/auth" className="text-sm font-semibold text-slate-700 hover:text-[color:var(--sll-b-brand)]">Entrar</Link>
           <Cta to="/auth?mode=signup" event="header_register" className="!px-5 !py-2.5">Começar Grátis</Cta>
         </div>
         <button className="md:hidden" onClick={() => setOpen((v) => !v)} aria-label="Menu" aria-expanded={open}>
@@ -138,13 +138,13 @@ function PhoneMockup() {
         </div>
         <div className="absolute inset-x-2 bottom-2 z-10">
           <span className="mb-1.5 inline-block rounded-full bg-red-600 px-3 py-0.5 text-[10px] font-bold text-white ring-2 ring-white/80">Restam 2</span>
-          <div className="flex items-center gap-2 rounded-xl border-2 border-sky-500 bg-white p-1.5">
+          <div className="flex items-center gap-2 rounded-xl border-2 border-[color:var(--sll-b-brand)] bg-white p-1.5">
             <MImg src="prod-bazer.jpg" tile={1} className="h-10 w-10 shrink-0 rounded-md" />
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-medium leading-tight text-slate-900">Blazer Linho Bege</p>
-              <p className="text-[11px] text-sky-500">R$ 149,90</p>
+              <p className="text-[11px] text-[color:var(--sll-b-brand)]">R$ 149,90</p>
             </div>
-            <span className="shrink-0 rounded-full bg-sky-500 px-2.5 py-1 text-[10px] font-bold text-white">Comprar</span>
+            <span className="shrink-0 rounded-full bg-[color:var(--sll-b-brand)] px-2.5 py-1 text-[10px] font-bold text-white">Comprar</span>
           </div>
         </div>
       </div>
@@ -173,7 +173,7 @@ function Hero() {
               onClick={() => { track("click_cta", { cta: "hero_formats" }); scrollToId("formatos"); }}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-base font-bold text-slate-700 transition hover:bg-slate-100"
             >
-              <Play className="h-4 w-4 text-sky-600" /> Ver formatos em ação
+              <Play className="h-4 w-4 text-[color:var(--sll-b-brand)]" /> Ver formatos em ação
             </button>
           </div>
           <p className="mt-4 text-xs text-slate-500">Sem cartão de crédito · Instalação em 5 minutos · Cancele quando quiser</p>
@@ -197,7 +197,7 @@ function Stats() {
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 lg:grid-cols-4">
         {items.map(({ icon: Icon, value, label }) => (
           <div key={value} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-sky-50 text-sky-600"><Icon className="h-5 w-5" /></div>
+            <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]"><Icon className="h-5 w-5" /></div>
             <p className="text-3xl font-extrabold text-slate-900">{value}</p>
             <p className="mt-1 text-sm text-slate-600">{label}</p>
           </div>
@@ -246,7 +246,7 @@ function Modules() {
           <article key={m.name} className="group rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
             <div className="flex items-center justify-between">
               <img src={m.logo} alt={m.name} loading="lazy" className="-ml-10 h-14 w-auto" />
-              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sky-50 text-sky-600"><m.icon className="h-5 w-5" /></span>
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]"><m.icon className="h-5 w-5" /></span>
             </div>
             <p className="mt-6 text-slate-700">{m.text}</p>
             <ul className="mt-5 space-y-2">
@@ -254,7 +254,7 @@ function Modules() {
                 <li key={b} className="flex items-start gap-2 text-sm text-slate-600"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />{b}</li>
               ))}
             </ul>
-            <Link to={m.to} onClick={() => track("click_module", { module: m.name })} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-sky-600 hover:text-sky-700">
+            <Link to={m.to} onClick={() => track("click_module", { module: m.name })} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]">
               Conhecer {m.name} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
             </Link>
           </article>
@@ -506,11 +506,11 @@ function Formats() {
             <button
               key={f.id}
               onClick={() => { setActive(f.id); track("select_format", { format: f.id }); }}
-              className={`min-w-[220px] rounded-2xl border p-4 text-left transition lg:min-w-0 ${active === f.id ? "border-sky-500 bg-sky-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"}`}
+              className={`min-w-[220px] rounded-2xl border p-4 text-left transition lg:min-w-0 ${active === f.id ? "border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"}`}
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-slate-900">{f.title}</h3>
-                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-sky-600 ring-1 ring-sky-200">{f.tag}</span>
+                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-[color:var(--sll-b-brand)] ring-1 ring-sky-200">{f.tag}</span>
               </div>
               {active === f.id && <p className="mt-2 text-sm text-slate-600">{f.desc}</p>}
             </button>
@@ -595,7 +595,7 @@ function Integration() {
           <ol className="mt-8 space-y-4">
             {steps.map((s) => (
               <li key={s.n} className="flex gap-4">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky-600 text-sm font-bold text-white">{s.n}</span>
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[color:var(--sll-b-brand)] text-sm font-bold text-white">{s.n}</span>
                 <div><p className="font-bold text-slate-900">{s.t}</p><p className="text-sm text-slate-600">{s.d}</p></div>
               </li>
             ))}
@@ -647,7 +647,7 @@ function Pricing() {
               <button
                 key={t.key}
                 onClick={() => { setTab(t.key); track("select_pricing_tab", { tab: t.key }); }}
-                className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${active.key === t.key ? "bg-sky-600 text-white shadow-md" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"}`}
+                className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${active.key === t.key ? "bg-[color:var(--sll-b-brand)] text-white shadow-md" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"}`}
               >
                 {t.label}
               </button>
@@ -660,7 +660,7 @@ function Pricing() {
               const features = planFeatures(p, includesOf(p.id), ov);
               const price = p.price_monthly_cents / 100;
               return (
-                <article key={p.id} className={`relative rounded-3xl bg-white p-7 transition ${featured ? "z-10 border-2 border-sky-500 shadow-2xl shadow-sky-500/15 md:scale-105" : "border border-slate-200 shadow-sm"}`}>
+                <article key={p.id} className={`relative rounded-3xl bg-white p-7 transition ${featured ? "z-10 border-2 border-[color:var(--sll-b-brand)] shadow-2xl shadow-sky-500/15 md:scale-105" : "border border-slate-200 shadow-sm"}`}>
                   {featured && (
                     <span className="absolute -top-3.5 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-1 text-xs font-bold text-white shadow">
                       <Sparkles className="h-3 w-3" /> Mais Escolhido
@@ -719,7 +719,7 @@ function Faq() {
               className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
             >
               <span className="font-bold text-slate-900">{f.q}</span>
-              <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition ${open === i ? "rotate-180 text-sky-600" : ""}`} />
+              <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition ${open === i ? "rotate-180 text-[color:var(--sll-b-brand)]" : ""}`} />
             </button>
             {open === i && <p className="px-6 pb-5 text-sm leading-relaxed text-slate-600">{f.a}</p>}
           </div>
@@ -735,7 +735,7 @@ function FinalCta() {
     <section className="px-4 py-16">
       <div className="mx-auto max-w-4xl rounded-3xl bg-gradient-to-br from-sky-600 to-blue-800 p-10 text-center text-white shadow-2xl">
         <h2 className="text-3xl font-extrabold md:text-4xl">Pronto para vender mais com vídeo?</h2>
-        <p className="mx-auto mt-3 max-w-xl text-sky-100">Instale em 5 minutos e teste <TrialDays /> dias grátis, sem cartão de crédito.</p>
+        <p className="mx-auto mt-3 max-w-xl text-[color:var(--sll-b-brand)]">Instale em 5 minutos e teste <TrialDays /> dias grátis, sem cartão de crédito.</p>
         <Cta to="/auth?mode=signup" event="final_cta" className="mt-7 !px-8 text-base">Testar <TrialDays /> dias grátis <ArrowRight className="h-4 w-4" /></Cta>
       </div>
     </section>
@@ -766,8 +766,8 @@ function Footer() {
               {c.l.map(([label, href]) => (
                 <li key={label}>
                   {href.startsWith("#")
-                    ? <button onClick={() => scrollToId(href.slice(1))} className="hover:text-sky-600">{label}</button>
-                    : <Link to={href} className="hover:text-sky-600">{label}</Link>}
+                    ? <button onClick={() => scrollToId(href.slice(1))} className="hover:text-[color:var(--sll-b-brand)]">{label}</button>
+                    : <Link to={href} className="hover:text-[color:var(--sll-b-brand)]">{label}</Link>}
                 </li>
               ))}
             </ul>

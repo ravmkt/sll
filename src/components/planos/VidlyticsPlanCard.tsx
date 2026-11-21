@@ -93,7 +93,7 @@ export function VidlyticsPlanCard({
           {logoUrl ? (
             <img src={logoUrl} alt={moduleName} className="h-20 w-20 object-contain" />
           ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#0091ff]/10 text-3xl font-black text-[#0091ff]">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-3xl font-black text-[color:var(--sll-b-brand)]">
               {moduleName.charAt(0).toUpperCase()}
             </div>
           )}
@@ -156,7 +156,7 @@ export function VidlyticsPlanCard({
               ? "bg-slate-100 text-slate-400 cursor-default"
               : isPopular
                 ? "bg-[#fd8539] hover:bg-[#e8742a] text-white shadow-lg hover:scale-[1.02] shadow-orange-500/30"
-                : "bg-[#0091ff] hover:bg-[#0070f3] text-white shadow-lg hover:scale-[1.02]"
+                : "bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white shadow-lg hover:scale-[1.02]"
           )}
         >
           {isLoading ? <Loader2 size={14} className="animate-spin" /> : isCurrent ? "Plano Ativo" : (ctaLabel ?? "Assinar")}

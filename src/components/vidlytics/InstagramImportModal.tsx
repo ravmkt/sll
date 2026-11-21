@@ -73,7 +73,7 @@ function VideosPanel({ storeId }: { storeId: string }) {
                     type="button"
                     disabled={busy || done}
                     onClick={() => handleImport(v)}
-                    className={`flex w-full items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-black text-white cursor-pointer disabled:cursor-default ${done ? 'bg-[#0070f3]' : 'bg-[#0094eb]'}`}
+                    className={`flex w-full items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-black text-white cursor-pointer disabled:cursor-default ${done ? 'bg-[color:var(--sll-b-brand-hover)]' : 'bg-[color:var(--sll-b-brand)]'}`}
                   >
                     {busy ? <Loader2 size={12} className="animate-spin" /> : done ? <Check size={12} /> : <Download size={12} />}
                     {done ? 'Importado' : busy ? 'Importando...' : 'Importar'}

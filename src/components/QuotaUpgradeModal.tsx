@@ -54,7 +54,7 @@ export default function QuotaUpgradeModal({ state, onClose, onUpgrade, onAddon, 
             </button>
           )}
           {onAddon && !suspended && (
-            <button type="button" onClick={onAddon} className="w-full cursor-pointer rounded-lg bg-[#0094eb] px-4 py-2.5 text-sm font-bold text-white hover:opacity-90">
+            <button type="button" onClick={onAddon} className="w-full cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-sm font-bold text-white hover:opacity-90">
               Comprar add-on
             </button>
           )}

@@ -306,7 +306,7 @@ export default function RulerStyleEditorModal({ initial, content, existingNames 
             <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700"><X className="h-6 w-6" /></button>
           </div>
           <div className="mt-4 flex gap-2 pb-4">
-            <span className="inline-flex items-center gap-2 rounded-lg bg-[#0094EB] px-4 py-2 text-sm font-bold text-white">
+            <span className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-sm font-bold text-white">
               <Ruler className="h-4 w-4" /> Régua
             </span>
           </div>
@@ -321,14 +321,14 @@ export default function RulerStyleEditorModal({ initial, content, existingNames 
               <div className="flex items-center gap-2">
                 {device === 'desktop' && (
                   <button type="button" onClick={() => setCfg((p) => ({ ...p, desktop: { ...p.mobile } }))}
-                    className="rounded-md border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-600">
+                    className="rounded-md border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-2 py-1 text-[11px] font-semibold text-[color:var(--sll-b-brand)]">
                     Sincronizar com Mobile
                   </button>
                 )}
                 <div className="flex rounded-lg border border-slate-200 p-0.5">
                   {(['mobile', 'desktop'] as Device[]).map((d) => (
                     <button key={d} type="button" onClick={() => setDevice(d)}
-                      className={`rounded-md p-1.5 ${device === d ? 'bg-[#0094EB] text-white' : 'text-slate-500'}`}>
+                      className={`rounded-md p-1.5 ${device === d ? 'bg-[color:var(--sll-b-brand)] text-white' : 'text-slate-500'}`}>
                       {d === 'mobile' ? <Smartphone className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
                     </button>
                   ))}
@@ -391,12 +391,12 @@ export default function RulerStyleEditorModal({ initial, content, existingNames 
             </button>
             {initial.id && (
               <button type="button" onClick={() => openNaming(true)} disabled={saving}
-                className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-bold text-sky-600 disabled:opacity-60">
+                className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-4 py-2.5 text-sm font-bold text-[color:var(--sll-b-brand)] disabled:opacity-60">
                 <Plus className="h-4 w-4" /> Salvar como novo
               </button>
             )}
             <button type="button" onClick={onSaveClick} disabled={saving}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+              className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
               <Save className="h-4 w-4" /> {saving ? 'Salvando...' : initial.id ? 'Salvar' : 'Salvar como novo estilo'}
             </button>
           </div>
@@ -415,13 +415,13 @@ export default function RulerStyleEditorModal({ initial, content, existingNames 
             <input autoFocus value={nameDraft} onChange={(e) => { setNameDraft(e.target.value); setNameErr(''); }}
               onKeyDown={(e) => { if (e.key === 'Enter') confirmName(); }}
               placeholder="Ex.: Black Friday 2026"
-              className="mt-4 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-[#0094EB]" />
+              className="mt-4 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-[color:var(--sll-b-brand)]" />
             {nameErr && <p className="mt-2 text-xs font-semibold text-red-600">{nameErr}</p>}
             <div className="mt-5 flex justify-end gap-2">
               <button type="button" onClick={() => setNaming(null)} disabled={saving}
                 className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700">Cancelar</button>
               <button type="button" onClick={confirmName} disabled={saving}
-                className="rounded-xl bg-[#0094EB] px-5 py-2 text-sm font-bold text-white disabled:opacity-60">
+                className="rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2 text-sm font-bold text-white disabled:opacity-60">
                 {saving ? 'Salvando...' : 'Salvar'}
               </button>
             </div>

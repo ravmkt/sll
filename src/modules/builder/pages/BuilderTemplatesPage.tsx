@@ -51,8 +51,8 @@ function Card({ t, thumb, busy, onUse, onThumb }: { t: Item; thumb: string; busy
         </span>
       </button>
       <div className="flex items-center justify-center gap-5 text-xs font-semibold text-slate-400">
-        <button type="button" onClick={onUse} className="flex items-center gap-1 hover:text-[#0094eb]"><Eye className="h-4 w-4" /> Usar</button>
-        <button type="button" onClick={onThumb} className="flex items-center gap-1 hover:text-[#0094eb]"><ImagePlus className="h-4 w-4" /> Imagem</button>
+        <button type="button" onClick={onUse} className="flex items-center gap-1 hover:text-[color:var(--sll-b-brand)]"><Eye className="h-4 w-4" /> Usar</button>
+        <button type="button" onClick={onThumb} className="flex items-center gap-1 hover:text-[color:var(--sll-b-brand)]"><ImagePlus className="h-4 w-4" /> Imagem</button>
       </div>
     </div>
   );
@@ -99,7 +99,7 @@ export default function BuilderTemplatesPage() {
   return (
     <div className="space-y-6 font-sans text-slate-800">
       <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0094eb]/10"><LayoutTemplate className="h-7 w-7 text-[#0094eb]" /></div>
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]"><LayoutTemplate className="h-7 w-7 text-[color:var(--sll-b-brand)]" /></div>
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Templates</h1>
           <p className="text-sm text-slate-500">{T_SUB}</p>

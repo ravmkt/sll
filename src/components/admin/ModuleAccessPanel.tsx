@@ -22,7 +22,7 @@ const STATE_STYLE: Record<StoreModule['state'], string> = {
   off: 'bg-slate-100 text-slate-600',
   manual: 'bg-violet-100 text-violet-700',
   paid: 'bg-emerald-100 text-emerald-700',
-  plan: 'bg-sky-100 text-sky-700',
+  plan: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]',
 };
 
 export function ModuleAccessPanel({ storeId }: { storeId: string }) {
@@ -115,7 +115,7 @@ export function ModuleAccessPanel({ storeId }: { storeId: string }) {
                   disabled={locked || busy === m.module_key}
                   onClick={() => toggle(m)}
                   className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 ${
-                    m.state === 'off' ? 'bg-[#0094eb]' : 'bg-red-600'
+                    m.state === 'off' ? 'bg-[color:var(--sll-b-brand)]' : 'bg-red-600'
                   }`}
                 >
                   {busy === m.module_key ? '...' : m.state === 'off' ? 'Ativar' : 'Desativar'}

@@ -1,11 +1,11 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ExternalLink, Loader2, Save, Star } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { listDynamicPlans, updateDynamicPlan, type DynamicPlan } from "@/services/admin/plansAdmin";
 import { listAllComboModules, listHubModules, type ComboModuleRow, type HubModule } from "@/services/admin/combosAdmin";
 import { COMBO_TAB, defaultTabLabel, fetchLandingData, planFeatures, tabKeys, type LandingConfig, type PlanOverride, type PublicPlan } from "@/lib/landingConfig";
 
-const inp = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100";
+const inp = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-sky-100";
 const msgOf = (e: unknown) => (e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? String((e as { message: unknown }).message) : "Erro inesperado"));
 const brl = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -106,7 +106,7 @@ export default function LandpageTab() {
           <a href="/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
             Ver página <ExternalLink className="h-4 w-4" />
           </a>
-          <button onClick={saveConfig} disabled={busy === "cfg"} className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-bold text-white hover:bg-sky-700 disabled:opacity-60">
+          <button onClick={saveConfig} disabled={busy === "cfg"} className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-60">
             {busy === "cfg" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Salvar landing
           </button>
         </div>

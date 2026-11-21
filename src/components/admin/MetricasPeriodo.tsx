@@ -71,7 +71,7 @@ export function PeriodoBar() {
   const today = todaySP();
   const valid = !!s && !!e && s <= e && e <= today;
   const btn = (on: boolean) =>
-    `cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${on ? 'bg-[#0094eb] text-white' : 'text-slate-400 hover:text-white'}`;
+    `cursor-pointer rounded-md px-3 py-1 text-[13px] font-semibold transition-colors ${on ? 'bg-[color:var(--sll-b-brand)] text-white' : 'text-slate-400 hover:text-white'}`;
   const inp = 'rounded-md border border-slate-700 bg-[#0b0e1a] px-2 py-1 text-[13px] text-slate-200 outline-none [color-scheme:dark]';
 
   return (
@@ -99,7 +99,7 @@ export function PeriodoBar() {
               type="button"
               disabled={!valid}
               onClick={() => p.setCustom(s, e)}
-              className="cursor-pointer rounded-md bg-[#0094eb] px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded-md bg-[color:var(--sll-b-brand)] px-3 py-1.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               Aplicar
             </button>

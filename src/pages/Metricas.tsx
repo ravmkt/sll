@@ -32,7 +32,7 @@ const pick = (o: any, ...keys: string[]) => {
 const dayLabel = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`;
 
 const CARD = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm';
-const DATE_IN = 'h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#0094eb]';
+const DATE_IN = 'h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]';
 const BLUE = '#0094eb';
 const GREEN = '#059669';
 
@@ -176,7 +176,7 @@ export default function Metricas() {
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <Link to="/dashboard" className="mb-1 inline-flex items-center gap-1 text-xs font-bold text-[#0094eb] hover:underline">
+            <Link to="/dashboard" className="mb-1 inline-flex items-center gap-1 text-xs font-bold text-[color:var(--sll-b-brand)] hover:underline">
               <ArrowLeft className="h-3 w-3" /> Voltar para a visão geral
             </Link>
             <h2 className="text-lg font-black text-slate-900">Relatório completo de métricas</h2>
@@ -197,7 +197,7 @@ export default function Metricas() {
                   type="button"
                   onClick={() => setPeriodo(p.key)}
                   className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
-                    periodo === p.key ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-500 hover:text-[#0094eb]'
+                    periodo === p.key ? 'bg-[color:var(--sll-b-brand)] text-white shadow-sm' : 'text-slate-500 hover:text-[color:var(--sll-b-brand)]'
                   }`}
                 >
                   {p.label}

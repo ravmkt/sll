@@ -361,7 +361,7 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
             <textarea ref={msgRef} className={`${INP} mt-0 h-36 font-mono`} value={message} onChange={(e) => setMessage(e.target.value)} />
             <div className="mt-3 flex flex-wrap gap-1.5">
               {VARIABLES.map((v) => (
-                <button key={v} type="button" className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 transition hover:border-[#0094eb] hover:text-[#0094eb]" onMouseDown={(e) => e.preventDefault()} onClick={() => insertVar(v)}>{`{{${v}}}`}</button>
+                <button key={v} type="button" className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 transition hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]" onMouseDown={(e) => e.preventDefault()} onClick={() => insertVar(v)}>{`{{${v}}}`}</button>
               ))}
               <button type="button" className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100" onClick={() => setMessage(DEFAULT_MESSAGE)}>Restaurar modelo</button>
             </div>
@@ -374,13 +374,13 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <div className="relative">
                 <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input className="w-64 rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20" placeholder="Buscar produto ou SKU" value={search} onChange={(e) => setSearch(e.target.value)} />
+                <input className="w-64 rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]" placeholder="Buscar produto ou SKU" value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
               <span className="ml-2 text-sm text-slate-600">Aplicar</span>
               <input type="number" min={0} max={90} className={`${NUM} w-20`} value={globalPct} onChange={(e) => setGlobalPct(Number(e.target.value))} />
               <span className="text-sm text-slate-600">% nos selecionados</span>
               <button className={BTN_SECONDARY} onClick={applyGlobal} disabled={!selected.length}>Aplicar</button>
-              <span className="ml-auto rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-[#0094eb]">{selected.length} selecionado(s) de {rows.length}</span>
+              <span className="ml-auto rounded-full bg-[color:var(--sll-b-brand-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--sll-b-brand)]">{selected.length} selecionado(s) de {rows.length}</span>
             </div>
             <div className="max-h-[480px] overflow-auto rounded-xl border border-slate-200">
               <table className="w-full text-sm">
@@ -422,7 +422,7 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
             <div className="flex items-center gap-2 text-xs text-slate-500">
               {saveState === 'saving' && (<><Loader2 size={12} className="animate-spin" /> Salvando...</>)}
               {saveState === 'saved' && (<span className="flex items-center gap-1 text-emerald-600"><Check size={12} /> Ajustes salvos</span>)}
-              {previewing && <Loader2 size={16} className="animate-spin text-[#0094eb]" />}
+              {previewing && <Loader2 size={16} className="animate-spin text-[color:var(--sll-b-brand)]" />}
             </div>
           </div>
           {!pvRow || !activeCh ? (
@@ -436,7 +436,7 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
                       key={k}
                       type="button"
                       onClick={() => setPvChannel(k)}
-                      className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${k === activeCh ? 'border-[#0094eb] bg-sky-50 text-[#0094eb]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                      className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${k === activeCh ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                     >
                       {channelByKey(k)?.label ?? k}
                     </button>
@@ -452,7 +452,7 @@ const draftKey = `sll_studio_adjust_${store.id}_${mode}_${campaign?.id ?? 'new'}
 
               <div className="[&>div]:!grid-cols-1">
                 <>
-                      <button type="button" className="mb-2 text-xs font-semibold text-[#0094eb] hover:underline" onClick={() => setShowMock((v) => !v)}>
+                      <button type="button" className="mb-2 text-xs font-semibold text-[color:var(--sll-b-brand)] hover:underline" onClick={() => setShowMock((v) => !v)}>
                         {showMock ? 'Ver só a arte' : 'Ver simulação da rede'}
                       </button>
                       {showMock ? (

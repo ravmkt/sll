@@ -30,8 +30,8 @@ export const MarketStudyModal: React.FC<MarketStudyModalProps> = ({
         </button>
 
         {/* Badge Inteligência Setorial */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 dark:bg-sky-950/50 border border-sky-100 dark:border-sky-800/60 text-[#0094eb] text-xs font-semibold tracking-wide mb-3">
-          <Sparkles className="w-3.5 h-3.5 text-[#0094eb]" />
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[color:var(--sll-b-brand-soft)] dark:bg-sky-950/50 border border-[color:var(--sll-b-brand-border)] dark:border-sky-800/60 text-[color:var(--sll-b-brand)] text-xs font-semibold tracking-wide mb-3">
+          <Sparkles className="w-3.5 h-3.5 text-[color:var(--sll-b-brand)]" />
           <span>INTELIGÊNCIA SETORIAL 2026</span>
         </div>
 
@@ -50,7 +50,7 @@ export const MarketStudyModal: React.FC<MarketStudyModalProps> = ({
             <span className="text-[11px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase">
               CTR MÉDIO (CLIQUES)
             </span>
-            <div className="my-2 text-3xl font-extrabold text-[#0094eb]">
+            <div className="my-2 text-3xl font-extrabold text-[color:var(--sll-b-brand)]">
               3.9%
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug">
@@ -88,8 +88,8 @@ export const MarketStudyModal: React.FC<MarketStudyModalProps> = ({
         {/* Box Playbook de Ação */}
         <div className="p-5 md:p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-4 h-4 text-[#0094eb]" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#0094eb]">
+            <TrendingUp className="w-4 h-4 text-[color:var(--sll-b-brand)]" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[color:var(--sll-b-brand)]">
               PLAYBOOK DE AÇÃO PARA ALCANÇAR A META
             </h3>
           </div>

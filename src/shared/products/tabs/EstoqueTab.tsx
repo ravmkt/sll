@@ -90,11 +90,11 @@ export default function EstoqueTab({ storeId, product: p, onChange }: Props) {
                         {w.is_ecommerce ? 'Depósito do e-commerce (padrão)' : w.kind === 'physical' ? 'Loja física' : 'Outro'}
                       </p>
                     </div>
-                    <button type="button" onClick={() => { setEditId(w.id); setEditName(w.name); }} className="cursor-pointer text-slate-400 hover:text-[#0094eb]" title="Renomear"><Pencil size={15} /></button>
+                    <button type="button" onClick={() => { setEditId(w.id); setEditName(w.name); }} className="cursor-pointer text-slate-400 hover:text-[color:var(--sll-b-brand)]" title="Renomear"><Pencil size={15} /></button>
                     {!w.is_ecommerce && (
                       <button
                         type="button" disabled={busy} onClick={() => void toggle(w)}
-                        className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase ${w.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600'}`}
+                        className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase ${w.active ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-rose-200 bg-rose-50 text-rose-600'}`}
                       >
                         {w.active ? 'Ativo' : 'Inativo'}
                       </button>
@@ -121,7 +121,7 @@ export default function EstoqueTab({ storeId, product: p, onChange }: Props) {
         {err && <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
       </div>
 
-      <div className="flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-sky-200">
+      <div className="flex items-start gap-2 rounded-xl border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] p-3 text-xs text-sky-800 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-sky-200">
         <Info size={14} className="mt-0.5 shrink-0" />
         <p>
           O saldo não é editado aqui. Entradas, saídas, ajustes e transferências entre depósitos são feitos no <strong>Livro de estoque</strong>,

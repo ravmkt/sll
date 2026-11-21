@@ -62,7 +62,7 @@ function TipCard({ tip, fb, urgent, onDone, onVote, onAction }: {
               <AlertTriangle className="h-3 w-3" /> Oportunidade detectada
             </span>
           )}
-          <span className="rounded-full bg-[#0094eb]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#0094eb]">{categoryLabel(tip.category)}</span>
+          <span className="rounded-full bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-2.5 py-0.5 text-[10px] font-bold uppercase text-[color:var(--sll-b-brand)]">{categoryLabel(tip.category)}</span>
           {done && (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black uppercase text-emerald-700">
               <Check className="h-3 w-3" /> Concluído
@@ -81,7 +81,7 @@ function TipCard({ tip, fb, urgent, onDone, onVote, onAction }: {
 
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-2">
         {tip.action_url && tip.action_label ? (
-          <button type="button" onClick={onAction} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#007fcc]">
+          <button type="button" onClick={onAction} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]">
             {tip.action_label} <ArrowRight className="h-3.5 w-3.5" />
           </button>
         ) : <span />}
@@ -199,12 +199,12 @@ export default function DicasNoah({ scope = 'hub' }: { scope?: 'hub' | 'vidlytic
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <button type="button" onClick={() => navigate(scope === 'vidlytics' ? '/dashboard/modules/vidlytics' : '/dashboard')} className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#0094eb]">
+        <button type="button" onClick={() => navigate(scope === 'vidlytics' ? '/dashboard/modules/vidlytics' : '/dashboard')} className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[color:var(--sll-b-brand)]">
           <ArrowLeft className="h-3.5 w-3.5" /> {scope === 'vidlytics' ? 'Voltar ao Vidlytics' : 'Voltar ao Dashboard'}
         </button>
 
         <div className="flex items-center gap-4">
-          <NoahImg className="h-16 w-16 shrink-0 rounded-2xl object-contain" fallback={<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0094eb]/10"><Lightbulb className="h-8 w-8 text-[#0094eb]" /></div>} />
+          <NoahImg className="h-16 w-16 shrink-0 rounded-2xl object-contain" fallback={<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]"><Lightbulb className="h-8 w-8 text-[color:var(--sll-b-brand)]" /></div>} />
           <div>
             <h1 className="text-2xl font-black text-slate-900">{scope === 'vidlytics' ? 'Dicas do Vidlytics' : 'Dicas & Insights do Noah'}</h1>
             <p className="text-sm text-slate-600">Recomendações práticas e acionáveis para destravar as vendas e a margem da sua loja.</p>
@@ -212,8 +212,8 @@ export default function DicasNoah({ scope = 'hub' }: { scope?: 'hub' | 'vidlytic
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700"><Store className="h-3.5 w-3.5 text-[#0094eb]" /> {store?.name || 'Sua loja'}</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700"><Tag className="h-3.5 w-3.5 text-[#0094eb]" /> {niche || 'Nicho não informado'}</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700"><Store className="h-3.5 w-3.5 text-[color:var(--sll-b-brand)]" /> {store?.name || 'Sua loja'}</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700"><Tag className="h-3.5 w-3.5 text-[color:var(--sll-b-brand)]" /> {niche || 'Nicho não informado'}</span>
           <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 ${priorityCount > 0 ? 'bg-[#fd8539]/15 text-[#c2571a]' : 'bg-emerald-50 text-emerald-700'}`}>
             <AlertTriangle className="h-3.5 w-3.5" />
             {metricsLoading ? 'Analisando sua loja...' : priorityCount > 0 ? `${priorityCount} ${priorityCount === 1 ? 'melhoria prioritária' : 'melhorias prioritárias'} hoje` : 'Nenhuma melhoria urgente'}
@@ -225,7 +225,7 @@ export default function DicasNoah({ scope = 'hub' }: { scope?: 'hub' | 'vidlytic
             <div className="relative min-w-[220px] flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por palavra-chave: frete, cadastro, tráfego..."
-                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-800 outline-none focus:border-[#0094eb]" />
+                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-800 outline-none focus:border-[color:var(--sll-b-brand)]" />
             </div>
             <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600">
               <input type="checkbox" checked={onlyPending} onChange={(e) => setOnlyPending(e.target.checked)} /> Ocultar concluídas{doneCount > 0 ? ` (${doneCount})` : ''}
@@ -234,7 +234,7 @@ export default function DicasNoah({ scope = 'hub' }: { scope?: 'hub' | 'vidlytic
           <div className="flex flex-wrap gap-2">
             {[{ key: 'all', label: 'Todas' }, ...CATEGORIES].map((c) => (
               <button key={c.key} type="button" onClick={() => setCat(c.key)}
-                className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-xs font-bold transition-colors ${cat === c.key ? 'border-[#0094eb] bg-[#0094eb] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]'}`}>
+                className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-xs font-bold transition-colors ${cat === c.key ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand)] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]'}`}>
                 {c.label}
               </button>
             ))}
@@ -247,7 +247,7 @@ export default function DicasNoah({ scope = 'hub' }: { scope?: 'hub' | 'vidlytic
           <div className={`${CARD} flex flex-col items-center gap-3 py-14 text-center`}>
             <NoahImg className="h-20 w-20 object-contain opacity-80" fallback={<Lightbulb className="h-12 w-12 text-slate-300" />} />
             <p className="text-sm font-semibold text-slate-600">Nenhuma dica encontrada para este filtro no momento.</p>
-            <button type="button" onClick={clear} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#007fcc]">
+            <button type="button" onClick={clear} className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]">
               <X className="h-3.5 w-3.5" /> Limpar filtros
             </button>
           </div>

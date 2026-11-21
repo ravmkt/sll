@@ -10,7 +10,7 @@ import { BENEFIT_TEMPLATES, DEFAULT_DESIGN, DEFAULT_ICON, ICON_MAP, type Benefit
 import type { BenefitItem, BenefitsDesign, IconBg, IconPosition, IconSettings, InfoCard } from '../../types/infoCards';
 import type { WidgetsCtx } from '../../types/widgets';
 
-const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[#0094EB]';
+const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]';
 const labelCls = 'mb-1 block text-[10px] font-bold uppercase text-slate-400';
 const EMPTY_PLACEMENT: Placement = { selector: '', position: 'before' };
 const MAX_ITEMS = 8;
@@ -92,7 +92,7 @@ export default function BenefitsModal({ ctx, initial, defaultName, onClose, onSa
               <div className="grid grid-cols-3 gap-2">
                 {BENEFIT_TEMPLATES.map((t, ti) => (
                   <button key={t.id} type="button" onClick={() => applyTemplate(t)}
-                    className={`rounded-xl border p-3 text-left ${tplId === t.id ? 'border-[#0094EB] bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
+                    className={`rounded-xl border p-3 text-left ${tplId === t.id ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)]' : 'border-slate-200 hover:border-slate-300'}`}>
                     <div className="text-sm font-bold text-slate-800">Template {ti + 1}</div>
                   </button>
                 ))}
@@ -130,7 +130,7 @@ export default function BenefitsModal({ ctx, initial, defaultName, onClose, onSa
               {items.length < MAX_ITEMS && (
                 <button type="button"
                   onClick={() => setItems([...items, { label: '', value: '', icon: 'badge-check', icon_svg: ICON_MAP['badge-check'].svg, link: '' }])}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-600">
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-3 py-1.5 text-xs font-bold text-[color:var(--sll-b-brand)]">
                   <Plus className="h-3.5 w-3.5" /> Adicionar benefício
                 </button>
               )}
@@ -142,7 +142,7 @@ export default function BenefitsModal({ ctx, initial, defaultName, onClose, onSa
               <div className="flex gap-2">
                 {POSITIONS.map((p) => (
                   <button key={p.id} type="button" onClick={() => setIcon({ position: p.id })}
-                    className={`flex-1 rounded-xl border px-3 py-2 text-sm font-bold ${ic.position === p.id ? 'border-[#0094EB] bg-sky-50 text-[#0094EB]' : 'border-slate-200 text-slate-600'}`}>{p.label}</button>
+                    className={`flex-1 rounded-xl border px-3 py-2 text-sm font-bold ${ic.position === p.id ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 text-slate-600'}`}>{p.label}</button>
                 ))}
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3">
@@ -191,7 +191,7 @@ export default function BenefitsModal({ ctx, initial, defaultName, onClose, onSa
                 <div className="flex rounded-lg border border-slate-200 p-0.5">
                   {(['mobile', 'desktop'] as const).map((d) => (
                     <button key={d} type="button" onClick={() => setDevice(d)}
-                      className={`rounded-md p-1.5 ${device === d ? 'bg-[#0094EB] text-white' : 'text-slate-500'}`}>
+                      className={`rounded-md p-1.5 ${device === d ? 'bg-[color:var(--sll-b-brand)] text-white' : 'text-slate-500'}`}>
                       {d === 'mobile' ? <Smartphone className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
                     </button>
                   ))}
@@ -218,7 +218,7 @@ export default function BenefitsModal({ ctx, initial, defaultName, onClose, onSa
             {err && <span className="text-sm font-semibold text-red-600">{err}</span>}
             <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Cancelar</button>
             <button type="button" onClick={save} disabled={saving}
-              className="rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+              className="rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>

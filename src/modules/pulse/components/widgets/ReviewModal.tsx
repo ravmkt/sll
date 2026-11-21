@@ -1,10 +1,10 @@
-﻿import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ImagePlus, Loader2, Play, Star, X } from 'lucide-react';
 import { reviewsService } from '../../services/reviewsService';
 import type { Review, ReviewInput, ReviewMedia, ReviewSource, ReviewStatus } from '../../types/reviews';
 import type { WidgetsCtx } from '../../types/widgets';
 
-const inp = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[#0094EB]';
+const inp = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]';
 const lbl = 'mb-1 block text-[10px] font-bold uppercase text-slate-400';
 
 interface Props { ctx: WidgetsCtx; initial: Review | null; onClose: () => void; onSaved: () => void; }
@@ -104,7 +104,7 @@ export default function ReviewModal({ ctx, initial, onClose, onSaved }: Props) {
               </div>
             ))}
             <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()}
-              className="flex h-20 w-20 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400 hover:border-[#0094EB] hover:text-[#0094EB]">
+              className="flex h-20 w-20 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]">
               {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
             </button>
             <input ref={fileRef} type="file" multiple hidden accept="image/*,video/mp4,video/webm" onChange={(e) => void onFiles(e.target.files)} />
@@ -115,7 +115,7 @@ export default function ReviewModal({ ctx, initial, onClose, onSaved }: Props) {
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
           <button type="button" disabled={busy || uploading} onClick={save}
-            className="rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">{busy ? 'Salvando...' : 'Salvar'}</button>
+            className="rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">{busy ? 'Salvando...' : 'Salvar'}</button>
         </div>
       </div>
     </div>

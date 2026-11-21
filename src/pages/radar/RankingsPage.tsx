@@ -10,7 +10,7 @@ export default function RankingsPage() {
       <SectionTitle>Rankings</SectionTitle>
       <div className="flex gap-2 text-sm">
         {tabs.map((t) => (
-          <button key={t} type="button" onClick={() => setTab(t)} className={`rounded-lg px-3 py-1.5 ${tab === t ? 'bg-blue-600 font-medium text-white' : 'border border-slate-200 bg-white text-slate-600'}`}>{t}</button>
+          <button key={t} type="button" onClick={() => setTab(t)} className={`rounded-lg px-3 py-1.5 ${tab === t ? 'bg-[color:var(--sll-b-brand)] font-medium text-white' : 'border border-slate-200 bg-white text-slate-600'}`}>{t}</button>
         ))}
       </div>
       <Card className="overflow-x-auto">

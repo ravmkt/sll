@@ -10,7 +10,7 @@ import {
 
 const sb: any = supabase;
 
-const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-[15px] text-slate-100 outline-none focus:border-[#0094eb]';
+const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-[15px] text-slate-100 outline-none focus:border-[color:var(--sll-b-brand)]';
 const LBL = 'mb-1 block text-[13px] font-semibold uppercase tracking-wider text-slate-400';
 const TH = 'px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-500';
 
@@ -226,7 +226,7 @@ export default function AddonsAdminTab() {
 
             <div className="flex justify-end gap-2 border-t border-slate-800 pt-4">
               <button type="button" disabled={busy} onClick={() => setForm(null)} className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-[13px] font-semibold text-slate-200 hover:bg-white/10">Cancelar</button>
-              <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-[13px] font-bold text-white disabled:opacity-40">
+              <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-5 py-2 text-[13px] font-bold text-white disabled:opacity-40">
                 {busy ? 'Salvando...' : 'Salvar add-on'}
               </button>
             </div>

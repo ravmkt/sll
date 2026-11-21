@@ -27,9 +27,9 @@ type Form = {
 
 const CUSTOM = "__custom";
 const inputCls =
-  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20";
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]";
 const btnPrimary =
-  "inline-flex items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#0083d1] disabled:opacity-60";
+  "inline-flex items-center gap-1.5 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#0083d1] disabled:opacity-60";
 const btnOutline =
   "inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60";
 const card = "rounded-2xl border border-slate-100 bg-white p-5 shadow-sm";
@@ -78,8 +78,8 @@ function status(g: Gate) {
 function CardTitle({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0094eb]/10">
-        <Icon className="h-4 w-4 text-[#0094eb]" />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]">
+        <Icon className="h-4 w-4 text-[color:var(--sll-b-brand)]" />
       </div>
       <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">{children}</h3>
     </div>
@@ -259,8 +259,8 @@ export default function PulsePage({ tab = "campanhas" }: { tab?: PulseTab }) {
       <div className="space-y-6">
         <div className={`${card} flex flex-wrap items-center justify-between gap-4`}>
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0094eb]/10">
-              <ShieldCheck className="h-7 w-7 text-[#0094eb]" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]">
+              <ShieldCheck className="h-7 w-7 text-[color:var(--sll-b-brand)]" />
             </div>
             <div>
               <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Pulse</h1>
@@ -280,7 +280,7 @@ export default function PulsePage({ tab = "campanhas" }: { tab?: PulseTab }) {
 
         <div className={tab === "campanhas" ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" : "hidden"}>
           <Metric label="Campanhas no ar" value={live} icon={ShieldCheck} tone="bg-emerald-50 text-emerald-600" />
-          <Metric label="Redirecionados" value={sum("redirect")} icon={ArrowRightLeft} tone="bg-sky-50 text-[#0094eb]" />
+          <Metric label="Redirecionados" value={sum("redirect")} icon={ArrowRightLeft} tone="bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]" />
           <Metric label="Views da campanha" value={sum("view")} icon={Eye} tone="bg-violet-50 text-violet-600" />
           <Metric label="Cliques WhatsApp" value={sum("whatsapp_click")} icon={MessageCircle} tone="bg-amber-50 text-amber-600" />
         </div>
@@ -316,7 +316,7 @@ export default function PulsePage({ tab = "campanhas" }: { tab?: PulseTab }) {
                     placeholder="https://black.useanny.com/black"
                   />
                 ) : (
-                  <a href={form.gate_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#0094eb] hover:underline">
+                  <a href={form.gate_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[color:var(--sll-b-brand)] hover:underline">
                     {form.gate_url} <ExternalLink className="h-3 w-3" />
                   </a>
                 )}
@@ -325,7 +325,7 @@ export default function PulsePage({ tab = "campanhas" }: { tab?: PulseTab }) {
                 ) : pages.length === 0 ? (
                   <p className="font-normal text-slate-500">
                     Nenhuma página publicada no Builder.{" "}
-                    <Link to="/dashboard/modules/builder" className="font-semibold text-[#0094eb] hover:underline">
+                    <Link to="/dashboard/modules/builder" className="font-semibold text-[color:var(--sll-b-brand)] hover:underline">
                       Criar página
                     </Link>
                   </p>

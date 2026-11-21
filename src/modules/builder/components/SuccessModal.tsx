@@ -43,7 +43,7 @@ export default function SuccessModal({ open, title, message, onClose, href }: Pr
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-[#0094eb] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#007bc4]"
+            className="rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]"
           >
             OK
           </button>

@@ -60,7 +60,7 @@ export default function TransferDialog({ variant, onClose, onDone }: Props) {
           <p className="text-[11px] text-slate-400">SKU {variant.sku}</p>
         </div>
         {loading ? (
-          <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+          <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
         ) : rows.length < 2 ? (
           <p className="py-4 text-center text-sm text-slate-400">É preciso ter ao menos dois depósitos ativos. Crie em Canais e depósitos.</p>
         ) : (

@@ -11,7 +11,7 @@ const srcLabel = (s: string | null) => (s ? SOURCE_LABEL[s] || s : '-');
 const fmtDate = (d: string) => new Date(d).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
 const STATUS_CLASS: Record<LeadStatus, string> = {
-  new: 'bg-sky-50 text-sky-700 border-sky-200',
+  new: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] border-[color:var(--sll-b-brand-border)]',
   contacted: 'bg-amber-50 text-amber-700 border-amber-200',
   qualified: 'bg-violet-50 text-violet-700 border-violet-200',
   converted: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -55,7 +55,7 @@ function exportCsv(rows: Lead[]) {
   URL.revokeObjectURL(url);
 }
 
-const fieldCls = 'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-[#0094eb] focus:outline-none';
+const fieldCls = 'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-[color:var(--sll-b-brand)] focus:outline-none';
 const labelCls = 'mb-1 block text-xs font-medium text-slate-600';
 
 function LeadEdit({ lead, onClose, onSaved }: { lead: Lead; onClose: () => void; onSaved: (l: Lead) => void }) {
@@ -126,7 +126,7 @@ function LeadEdit({ lead, onClose, onSaved }: { lead: Lead; onClose: () => void;
         ) : null}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="cursor-pointer rounded-full px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">Cancelar</button>
-          <button type="button" disabled={saving} onClick={save} className="cursor-pointer rounded-full bg-[#0094eb] px-5 py-2 text-sm font-semibold text-white hover:bg-[#007bc4] disabled:opacity-60">
+          <button type="button" disabled={saving} onClick={save} className="cursor-pointer rounded-full bg-[color:var(--sll-b-brand)] px-5 py-2 text-sm font-semibold text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-60">
             {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
@@ -143,7 +143,7 @@ function SortTh({ label, k, sort, onSort }: { label: string; k: SortKey; sort: S
       <button
         type="button"
         onClick={() => onSort(k)}
-        className={`inline-flex cursor-pointer items-center gap-1 text-[11px] font-bold uppercase tracking-wider ${active ? 'text-[#0094eb]' : 'text-slate-500 hover:text-slate-700'}`}
+        className={`inline-flex cursor-pointer items-center gap-1 text-[11px] font-bold uppercase tracking-wider ${active ? 'text-[color:var(--sll-b-brand)]' : 'text-slate-500 hover:text-slate-700'}`}
       >
         {label} <Icon size={12} />
       </button>
@@ -286,7 +286,7 @@ export default function LeadsPage() {
           type="button"
           disabled={!filtered.length}
           onClick={() => exportCsv(filtered)}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-[#0094eb] hover:text-[#0094eb] disabled:opacity-50"
+          className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)] disabled:opacity-50"
         >
           <Download size={16} /> Exportar CSV
         </button>
@@ -354,7 +354,7 @@ export default function LeadsPage() {
                           <span title="Sem WhatsApp" className={actionCls + ' cursor-not-allowed opacity-30'}><MessageCircle size={16} /></span>
                         )}
                         {l.email ? (
-                          <button type="button" title="Enviar e-mail" onClick={() => openMail(l.email || '', (em, copied) => setMailInfo({ email: em, copied }))} className={actionCls + ' hover:bg-sky-50 hover:text-[#0094eb]'}><Mail size={16} /></button>
+                          <button type="button" title="Enviar e-mail" onClick={() => openMail(l.email || '', (em, copied) => setMailInfo({ email: em, copied }))} className={actionCls + ' hover:bg-[color:var(--sll-b-brand-soft)] hover:text-[color:var(--sll-b-brand)]'}><Mail size={16} /></button>
                         ) : (
                           <span title="Sem e-mail" className={actionCls + ' cursor-not-allowed opacity-30'}><Mail size={16} /></span>
                         )}

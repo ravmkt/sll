@@ -227,7 +227,7 @@ export default function LivePresetsPage() {
                       <td className={"p-3 text-center tabular-nums" + dim}>{fmt(m?.lives_count)}</td>
                       <td className={"p-3 text-center font-semibold tabular-nums" + dim}>{fmt(isCoupon ? m?.uses : m?.views)}</td>
                       <td className="p-3 text-center">
-                        <button type="button" onClick={() => openEdit(p)} className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-sky-50 hover:text-sky-600">
+                        <button type="button" onClick={() => openEdit(p)} className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-[color:var(--sll-b-brand-soft)] hover:text-[color:var(--sll-b-brand)]">
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button type="button" onClick={() => setDel(p)} className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600">

@@ -180,7 +180,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
   const CHIP = {
     emerald: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30',
     rose: 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30',
-    blue: 'bg-blue-50 dark:bg-blue-950/40 text-[#0094eb] dark:text-[#fd8539] border border-blue-100 dark:border-orange-500/20',
+    blue: 'bg-[color:var(--sll-b-brand-soft)] dark:bg-blue-950/40 text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] border border-[color:var(--sll-b-brand-border)] dark:border-orange-500/20',
     amber: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30',
     violet: 'bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 border border-violet-100 dark:border-violet-900/30',
     slate: 'bg-slate-50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800/30',
@@ -199,7 +199,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[350px]">
-        <div className="w-9 h-9 border-4 border-[#0094eb] dark:border-[#fd8539] border-t-transparent rounded-full animate-spin mb-3" />
+        <div className="w-9 h-9 border-4 border-[color:var(--sll-b-brand)] dark:border-[color:var(--sll-b-brand)] border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Carregando visão geral do Vidlytics...</p>
       </div>
     );
@@ -211,7 +211,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="lg:col-span-2 flex flex-col justify-center space-y-2.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-black uppercase tracking-wider text-[#0094eb] dark:text-[#fd8539] bg-blue-50 dark:bg-[#fd8539]/10 px-3 py-1 rounded-full border border-blue-100 dark:border-[#fd8539]/25">
+            <span className="text-xs font-black uppercase tracking-wider text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-3 py-1 rounded-full border border-[color:var(--sll-b-brand-border)] dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_25%,transparent)]">
               Plano {usage.planName}
             </span>
             <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-700/40">
@@ -321,18 +321,18 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   Indicações Vidlytics
                 </span>
-                <span className="text-[10px] font-black uppercase bg-blue-50 dark:bg-[#fd8539]/15 text-[#0094eb] dark:text-[#fd8539] px-2 py-0.5 rounded-full border border-blue-200 dark:border-orange-500/30">
+                <span className="text-[10px] font-black uppercase bg-[color:var(--sll-b-brand-soft)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)] text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] px-2 py-0.5 rounded-full border border-[color:var(--sll-b-brand-border)] dark:border-orange-500/30">
                   Comissões
                 </span>
               </div>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(referralEarnings)}
               </h2>
-              <p className="text-[11px] font-medium text-[#0094eb] dark:text-[#fd8539]">
+              <p className="text-[11px] font-medium text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]">
                 Recompensas de indicação
               </p>
             </div>
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-[#fd8539]/15 text-[#0094eb] dark:text-[#fd8539] shrink-0">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[color:var(--sll-b-brand-soft)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)] text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] shrink-0">
               <DollarSign size={24} className="stroke-[2.5]" />
             </div>
           </div>
@@ -349,7 +349,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
           <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2.5">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Visualizações</span>
-              <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-[#fd8539]/15 text-[#0094eb] dark:text-[#fd8539]">
+              <div className="p-1.5 rounded-lg bg-[color:var(--sll-b-brand-soft)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)] text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]">
                 <Eye size={15} />
               </div>
             </div>
@@ -364,7 +364,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
             </div>
             <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
               <span>Quota do mês</span>
-              <span className={viewsPercent >= 90 ? 'text-rose-500 font-black' : 'text-[#0094eb] dark:text-[#fd8539]'}>{viewsPercent}%</span>
+              <span className={viewsPercent >= 90 ? 'text-rose-500 font-black' : 'text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]'}>{viewsPercent}%</span>
             </div>
           </div>
 
@@ -372,7 +372,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
           <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2.5">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Armazenamento</span>
-              <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-[#fd8539]/15 text-[#0094eb] dark:text-[#fd8539]">
+              <div className="p-1.5 rounded-lg bg-[color:var(--sll-b-brand-soft)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)] text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]">
                 <HardDrive size={15} />
               </div>
             </div>
@@ -387,7 +387,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
             </div>
             <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
               <span>Vídeos na nuvem</span>
-              <span className={storagePercent >= 90 ? 'text-rose-500 font-black' : 'text-[#0094eb] dark:text-[#fd8539]'}>{storagePercent}%</span>
+              <span className={storagePercent >= 90 ? 'text-rose-500 font-black' : 'text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]'}>{storagePercent}%</span>
             </div>
           </div>
 
@@ -395,7 +395,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
           <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2.5">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Páginas com Vídeos</span>
-              <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-[#fd8539]/15 text-[#0094eb] dark:text-[#fd8539]">
+              <div className="p-1.5 rounded-lg bg-[color:var(--sll-b-brand-soft)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)] text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]">
                 <FileText size={15} />
               </div>
             </div>
@@ -408,7 +408,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
             </div>
             <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
               <span>Locais de exibição</span>
-              <span className={pagesPercent >= 90 ? 'text-rose-500 font-black' : 'text-[#0094eb] dark:text-[#fd8539]'}>{pagesPercent}%</span>
+              <span className={pagesPercent >= 90 ? 'text-rose-500 font-black' : 'text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]'}>{pagesPercent}%</span>
             </div>
           </div>
 
@@ -416,7 +416,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
           <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2.5 flex flex-col justify-between">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Ciclo da Conta</span>
-              <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-[#fd8539]/15 text-[#0094eb] dark:text-[#fd8539]">
+              <div className="p-1.5 rounded-lg bg-[color:var(--sll-b-brand-soft)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_15%,transparent)] text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]">
                 <Clock size={15} />
               </div>
             </div>
@@ -426,7 +426,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
             </div>
             <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2">
               <span>Módulo:</span>
-              <span className="text-[#0094eb] dark:text-[#fd8539]">Vidlytics SaaS</span>
+              <span className="text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]">Vidlytics SaaS</span>
             </div>
           </div>
         </div>
@@ -451,12 +451,12 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
                   <div
                     className={cn(
                       'h-full rounded-full transition-all duration-500',
-                      checklistPercent === 100 ? '!bg-[#22c55e]' : '!bg-[#0094eb] dark:!bg-[#fd8539]'
+                      checklistPercent === 100 ? '!bg-[#22c55e]' : '!bg-[color:var(--sll-b-brand)] dark:!bg-[#fd8539]'
                     )}
                     style={{ width: `${checklistPercent}%` }}
                   />
                 </div>
-                <span className={cn('text-xs font-black', checklistPercent === 100 ? 'text-[#22c55e]' : 'text-[#0094eb] dark:text-[#fd8539]')}>
+                <span className={cn('text-xs font-black', checklistPercent === 100 ? 'text-[#22c55e]' : 'text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)]')}>
                   {checklistPercent}%
                 </span>
               </div>
@@ -471,7 +471,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
                     'flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer group',
                     item.completed
                       ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200/70 dark:border-emerald-800/30'
-                      : 'bg-slate-50/70 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 hover:border-[#0094eb] dark:hover:border-[#fd8539]'
+                      : 'bg-slate-50/70 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 hover:border-[color:var(--sll-b-brand)] dark:hover:border-[color:var(--sll-b-brand)]'
                   )}
                 >
                   <div
@@ -479,7 +479,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
                       'w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-black',
                       item.completed
                         ? 'bg-emerald-500 text-white'
-                        : 'border-2 border-slate-300 dark:border-slate-600 text-slate-400 group-hover:border-[#0094eb] dark:group-hover:border-[#fd8539]'
+                        : 'border-2 border-slate-300 dark:border-slate-600 text-slate-400 group-hover:border-[color:var(--sll-b-brand)] dark:group-hover:border-[color:var(--sll-b-brand)]'
                     )}
                   >
                     {item.completed ? '✓' : index + 1}
@@ -490,7 +490,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
                       <h3 className={cn('text-xs font-black', item.completed ? 'text-emerald-950 dark:text-emerald-300 line-through opacity-80' : 'text-slate-900 dark:text-white')}>
                         {item.title}
                       </h3>
-                      <span className="text-[10px] font-bold text-[#0094eb] dark:text-[#fd8539] opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-[10px] font-bold text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] opacity-0 group-hover:opacity-100 transition-opacity">
                         Configurar &rarr;
                       </span>
                     </div>
@@ -560,13 +560,13 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
               loading="lazy"
             />
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-9 h-9 rounded-full bg-[#0094eb] dark:bg-[#fd8539] text-white flex items-center justify-center shadow-md">
+              <div className="w-9 h-9 rounded-full bg-[color:var(--sll-b-brand)] dark:bg-[color:var(--sll-b-brand)] text-white flex items-center justify-center shadow-md">
                 <Play size={15} fill="white" className="ml-0.5" />
               </div>
             </div>
           </div>
           <div className="space-y-1 text-center sm:text-left">
-            <span className="text-[10px] font-black uppercase text-[#0094eb] dark:text-[#fd8539] bg-blue-50 dark:bg-[#fd8539]/10 px-2 py-0.5 rounded-full border border-blue-100 dark:border-[#fd8539]/20 inline-block">
+            <span className="text-[10px] font-black uppercase text-[color:var(--sll-b-brand)] dark:text-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] dark:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] px-2 py-0.5 rounded-full border border-[color:var(--sll-b-brand-border)] dark:border-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] inline-block">
               🎓 Vidlytics Academy
             </span>
             <h4 className="text-xs font-black text-slate-800 dark:text-white">
@@ -581,7 +581,7 @@ export const VidlyticsOverviewTab: React.FC<OverviewTabProps> = ({ storeId, onNa
         <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#0094eb] dark:bg-[#fd8539] text-white">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[color:var(--sll-b-brand)] dark:bg-[color:var(--sll-b-brand)] text-white">
                 <DollarSign size={16} className="stroke-[2.5]" />
               </div>
               <h4 className="text-sm font-black text-slate-900 dark:text-white">Clube SLL</h4>

@@ -30,8 +30,8 @@ interface AparenciaModalProps {
   isDefaultEditing?: boolean;
 }
 
-const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white cursor-pointer";
-const inputClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0094eb] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
+const selectClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--sll-b-brand)] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white cursor-pointer";
+const inputClass = "w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[color:var(--sll-b-brand)] focus:border-transparent dark:bg-slate-800 dark:text-white transition-shadow bg-white";
 
 const DEMO_PREVIEW_VIDEOS = [
   DEMO_COVER_VIDEO,
@@ -648,7 +648,7 @@ const ColorInput = ({ value, onChange }: any) => (
 
 const CheckboxField = ({ label, checked, onChange, disabled = false }: any) => (
   <label className={`flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl mb-2 transition-colors ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
-    <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer" />
+    <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 rounded border-slate-300 text-[color:var(--sll-b-brand)] focus:ring-[color:var(--sll-b-brand)] cursor-pointer" />
     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
   </label>
 );
@@ -1069,7 +1069,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   onChange={(e) => setStyleName(e.target.value)}
                   placeholder="Nome do estilo"
                   maxLength={60}
-                  className="w-full h-10 pl-9 pr-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-base font-bold text-slate-800 dark:text-white placeholder:text-slate-400 hover:border-slate-300 focus:bg-white dark:focus:bg-slate-900 focus:border-[#0094eb] focus:ring-2 focus:ring-[#0094eb]/20 outline-none transition-colors"
+                  className="w-full h-10 pl-9 pr-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-base font-bold text-slate-800 dark:text-white placeholder:text-slate-400 hover:border-slate-300 focus:bg-white dark:focus:bg-slate-900 focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] outline-none transition-colors"
                 />
               </div>
             )}
@@ -1095,7 +1095,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors whitespace-nowrap cursor-pointer
-                    ${isActive ? 'bg-[#0094eb] text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
+                    ${isActive ? 'bg-[color:var(--sll-b-brand)] text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
                 >
                   <Icon size={16} /> {tab.label}
                 </button>
@@ -1147,7 +1147,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                           checked={isDefault}
                           disabled={isDefaultEditing}
                           onChange={(e) => setIsDefault(e.target.checked)}
-                          className="w-5 h-5 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer"
+                          className="w-5 h-5 rounded border-slate-300 text-[color:var(--sll-b-brand)] focus:ring-[color:var(--sll-b-brand)] cursor-pointer"
                         />
                       </div>
                       <div>
@@ -1172,7 +1172,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                         type="button"
                         onClick={handleSyncFromMobile}
                         title="Copia todas as configurações do Mobile para o Desktop"
-                        className="px-3 py-1 rounded-lg text-xs font-bold text-[#0094eb] bg-[#0094eb]/10 hover:bg-[#0094eb]/20 border border-[#0094eb]/30 cursor-pointer transition-colors"
+                        className="px-3 py-1 rounded-lg text-xs font-bold text-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] border border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] cursor-pointer transition-colors"
                       >
                         Sincronizar com Mobile
                       </button>
@@ -1181,14 +1181,14 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                   <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1">
                     <button
                       onClick={() => selectDevice('mobile')}
-                      className={`p-1.5 rounded-md transition-colors ${previewDevice === 'mobile' ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
+                      className={`p-1.5 rounded-md transition-colors ${previewDevice === 'mobile' ? 'bg-[color:var(--sll-b-brand)] text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <Smartphone size={16} strokeWidth={2.5} />
                     </button>
                     <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
                     <button
                       onClick={() => selectDevice('desktop')}
-                      className={`p-1.5 rounded-md transition-colors ${previewDevice === 'desktop' ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
+                      className={`p-1.5 rounded-md transition-colors ${previewDevice === 'desktop' ? 'bg-[color:var(--sll-b-brand)] text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${isUnified ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <Monitor size={16} strokeWidth={2.5} />
                     </button>
@@ -1276,7 +1276,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                               </FormField>
                               <div className="flex items-center pt-5">
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                  <input type="checkbox" checked={getC('floating_cta_is_bold') ?? true} onChange={e => setC('floating_cta_is_bold', e.target.checked)} className="w-4 h-4 rounded text-[#0094eb]" />
+                                  <input type="checkbox" checked={getC('floating_cta_is_bold') ?? true} onChange={e => setC('floating_cta_is_bold', e.target.checked)} className="w-4 h-4 rounded text-[color:var(--sll-b-brand)]" />
                                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Negrito</span>
                                 </label>
                               </div>
@@ -1926,16 +1926,16 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
                 <h2 className="text-4xl font-black text-[#1a1f36] dark:text-white mb-12 uppercase">{styleName || 'NOME DO ESTILO'}</h2>
 
                 <div className="bg-[#f8f9fb] dark:bg-slate-800/50 rounded-2xl p-8 w-full max-w-xl flex items-center justify-between relative border border-slate-100 dark:border-slate-700 mb-8">
-                  <div className="absolute top-[45%] left-24 right-24 h-0.5 bg-[#0094eb] z-0"></div>
+                  <div className="absolute top-[45%] left-24 right-24 h-0.5 bg-[color:var(--sll-b-brand)] z-0"></div>
                   <div className="flex flex-col items-center gap-4 z-10 bg-[#f8f9fb] dark:bg-slate-800 px-2">
                     <div className="w-20 h-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[#1a1f36] dark:text-white shadow-sm"><Monitor size={40} strokeWidth={1.5} /></div>
                     <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider">DESKTOP</span>
                   </div>
                   <div className="z-10 flex flex-col items-center gap-2 bg-[#f8f9fb] dark:bg-slate-800 px-2 mt-[-20px]">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-white dark:bg-slate-900 border-2 shadow-sm ${isUnified ? 'border-[#0094eb] text-[#1a1f36]' : 'border-slate-300 text-slate-400'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-white dark:bg-slate-900 border-2 shadow-sm ${isUnified ? 'border-[color:var(--sll-b-brand)] text-[#1a1f36]' : 'border-slate-300 text-slate-400'}`}>
                       {isUnified ? <Link size={18} strokeWidth={2.5} /> : <Link2Off size={18} strokeWidth={2.5} />}
                     </div>
-                    <span className={`text-[10px] font-black uppercase tracking-wider ${isUnified ? 'text-[#0094eb]' : 'text-slate-400'}`}>{isUnified ? 'UNIFICADOS' : 'SEPARADOS'}</span>
+                    <span className={`text-[10px] font-black uppercase tracking-wider ${isUnified ? 'text-[color:var(--sll-b-brand)]' : 'text-slate-400'}`}>{isUnified ? 'UNIFICADOS' : 'SEPARADOS'}</span>
                   </div>
                   <div className="flex flex-col items-center gap-4 z-10 bg-[#f8f9fb] dark:bg-slate-800 px-2">
                     <div className="w-20 h-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[#1a1f36] dark:text-white shadow-sm"><Smartphone size={32} strokeWidth={1.5} /></div>
@@ -2074,7 +2074,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
             </div>
             <h3 className="text-xl font-black tracking-wide text-slate-800 dark:text-white mb-2">SINCRONIZAR COM MOBILE</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-7">
-              Todas as configurações do <span className="font-bold text-[#0094eb]">Desktop</span> serão substituídas pelas do <span className="font-bold text-[#0094eb]">Mobile</span>. Depois você pode editar o Desktop novamente.
+              Todas as configurações do <span className="font-bold text-[color:var(--sll-b-brand)]">Desktop</span> serão substituídas pelas do <span className="font-bold text-[color:var(--sll-b-brand)]">Mobile</span>. Depois você pode editar o Desktop novamente.
             </p>
             <div className="flex items-center gap-3">
               <button
@@ -2106,7 +2106,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
           <div className="flex items-center gap-3 ml-auto">
             {!isDefaultEditing && (
   <label className="flex items-center gap-2 mr-2 cursor-pointer select-none" title="Os vídeos sem estilo específico usarão este modelo">
-    <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} className="w-4 h-4 rounded border-slate-300 text-[#0094eb] focus:ring-[#0094eb] cursor-pointer" />
+    <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} className="w-4 h-4 rounded border-slate-300 text-[color:var(--sll-b-brand)] focus:ring-[color:var(--sll-b-brand)] cursor-pointer" />
     <span className="text-sm font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">Padrão da loja</span>
   </label>
 )}
@@ -2119,7 +2119,7 @@ const AparenciaModal: React.FC<AparenciaModalProps> = ({
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer ${
                 isDefaultEditing
                   ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                  : 'bg-[#0094eb] hover:bg-[#0082cf] text-white'
+                  : 'bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white'
               } disabled:opacity-50`}
             >
               {isSaving || localSaving ? <Loader2 size={18} className="animate-spin" /> : isDefaultEditing ? <Copy size={18} strokeWidth={2.5} /> : <Save size={18} strokeWidth={2.5} />}

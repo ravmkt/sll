@@ -6,7 +6,7 @@ import { CATEGORIES, METRICS, OPERATORS, categoryLabel, type Operator, type Trig
 import { NICHES } from '@/components/onboarding/shared';
 import { deleteTip, listAllTips, saveTip, setTipStatus, type Tip, type TipInput } from '@/services/tipsService';
 
-const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-[15px] text-slate-100 outline-none focus:border-[#0094eb]';
+const IN = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-[15px] text-slate-100 outline-none focus:border-[color:var(--sll-b-brand)]';
 const LBL = 'mb-1 block text-[13px] font-semibold uppercase tracking-wide text-slate-400';
 
 const EMPTY: TipInput = {
@@ -153,7 +153,7 @@ export default function TipsTab() {
                 const on = form.niche.includes(n);
                 return (
                   <button key={n} type="button" onClick={() => toggleNiche(n)}
-                    className={`cursor-pointer rounded-full border px-3 py-1 text-[13px] font-semibold ${on ? 'border-[#0094eb] bg-[#0094eb]/20 text-sky-200' : 'border-slate-700 text-slate-400 hover:text-white'}`}>
+                    className={`cursor-pointer rounded-full border px-3 py-1 text-[13px] font-semibold ${on ? 'border-[color:var(--sll-b-brand)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-slate-700 text-slate-400 hover:text-white'}`}>
                     {n === 'geral' ? 'Geral (todos)' : n}
                   </button>
                 );
@@ -188,7 +188,7 @@ export default function TipsTab() {
 
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setForm(null)} className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-[13px] font-semibold text-slate-200 hover:bg-white/10">Cancelar</button>
-            <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[#0094eb] px-5 py-2 text-[13px] font-bold text-white disabled:opacity-40">
+            <button type="button" disabled={busy} onClick={save} className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-5 py-2 text-[13px] font-bold text-white disabled:opacity-40">
               {busy ? 'Salvando...' : 'Salvar dica'}
             </button>
           </div>

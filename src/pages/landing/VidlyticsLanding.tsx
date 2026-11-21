@@ -24,7 +24,7 @@ const TRIAL_STEPS = [
 const FORMATS = [
   { icon: Smartphone, color: 'bg-indigo-100 text-indigo-600', t: 'Vídeo Flutuante', d: 'Um player estilo TikTok que acompanha o usuário pela tela, perfeito para retenção e avisos rápidos.' },
   { icon: Layers, color: 'bg-pink-100 text-pink-600', t: 'Carrossel Dinâmico', d: 'Exiba múltiplos vídeos em formato horizontal na sua home. Com autoplay inteligente para atrair cliques.' },
-  { icon: LayoutGrid, color: 'bg-blue-100 text-blue-600', t: 'Grade de Vídeos', d: 'Ideal para galerias de produtos ou provas sociais (reviews de clientes) integrados diretamente na página.' },
+  { icon: LayoutGrid, color: 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]', t: 'Grade de Vídeos', d: 'Ideal para galerias de produtos ou provas sociais (reviews de clientes) integrados diretamente na página.' },
   { icon: PlayCircle, color: 'bg-emerald-100 text-emerald-600', t: 'Player Tela Cheia', d: 'Ao clicar no widget, o vídeo expande com interações: Curtir, Comentar e botões de compra imediatos.' },
 ];
 
@@ -70,13 +70,13 @@ export default function VidlyticsLanding() {
             SLL Hub
           </div>
           <div className="hidden md:flex space-x-8">
-            <a href="#recursos" className="text-gray-600 hover:text-blue-600 transition font-medium">Recursos</a>
-            <a href="#diferenciais" className="text-gray-600 hover:text-blue-600 transition font-medium">Diferenciais</a>
-            <a href="#planos" className="text-gray-600 hover:text-blue-600 transition font-medium">Planos</a>
+            <a href="#recursos" className="text-gray-600 hover:text-[color:var(--sll-b-brand)] transition font-medium">Recursos</a>
+            <a href="#diferenciais" className="text-gray-600 hover:text-[color:var(--sll-b-brand)] transition font-medium">Diferenciais</a>
+            <a href="#planos" className="text-gray-600 hover:text-[color:var(--sll-b-brand)] transition font-medium">Planos</a>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/auth" className="hidden sm:block text-sm text-gray-500 hover:text-gray-900">Entrar</Link>
-            <Link to={CTA} className="bg-gray-900 hover:bg-blue-600 text-white px-6 py-2.5 rounded-full font-medium transition shadow-lg shadow-gray-900/20">
+            <Link to={CTA} className="bg-gray-900 hover:bg-[color:var(--sll-b-brand-hover)] text-white px-6 py-2.5 rounded-full font-medium transition shadow-lg shadow-gray-900/20">
               Teste Grátis {trialDays} Dias
             </Link>
           </div>
@@ -90,8 +90,8 @@ export default function VidlyticsLanding() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-semibold mb-6">
-              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[color:var(--sll-b-brand-soft)] border border-[color:var(--sll-b-brand-border)] text-[color:var(--sll-b-brand)] text-sm font-semibold mb-6">
+              <span className="flex h-2 w-2 rounded-full bg-[color:var(--sll-b-brand)] animate-pulse" />
               Sem cartão de crédito necessário
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
@@ -101,7 +101,7 @@ export default function VidlyticsLanding() {
             <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
               Widgets de vídeo interativos para o seu e-commerce. Retenha a atenção do seu cliente, mostre o produto em ação e impulsione sua taxa de conversão em poucos cliques.
             </p>
-            <Link to={CTA} className="inline-flex bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full text-lg font-bold transition shadow-xl shadow-blue-600/30 items-center justify-center gap-2">
+            <Link to={CTA} className="inline-flex bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white px-8 py-4 rounded-full text-lg font-bold transition shadow-xl shadow-blue-600/30 items-center justify-center gap-2">
               Comece seu Teste Grátis de {trialDays} Dias <ArrowRight className="w-5 h-5" />
             </Link>
             <p className="mt-4 text-sm text-gray-500">Instalação em 2 minutos. Sem fidelidade.</p>
@@ -217,7 +217,7 @@ export default function VidlyticsLanding() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto mb-12">
             {TRIAL_STEPS.map(([n, t, d]) => (
               <div key={n} className="flex gap-4 bg-white border border-gray-200 rounded-2xl p-5">
-                <span className="w-9 h-9 shrink-0 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center">{n}</span>
+                <span className="w-9 h-9 shrink-0 rounded-full bg-[color:var(--sll-b-brand)] text-white font-bold flex items-center justify-center">{n}</span>
                 <div>
                   <h3 className="font-bold">{t}</h3>
                   <p className="text-sm text-gray-600">{d}</p>
@@ -283,14 +283,14 @@ export default function VidlyticsLanding() {
                   type="button"
                   onClick={() => setTrialOpen(true)}
                   className={`block w-full py-3 px-4 text-center font-bold rounded-xl transition ${
-                    p.highlight ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                    p.highlight ? 'bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                   }`}
                 >
                   Testar {trialDays} Dias Grátis
                 </button>
                 <p className={`text-xs text-center mt-3 ${p.highlight ? 'text-gray-400' : 'text-gray-500'}`}>
                   Já quer assinar?{' '}
-                  <Link to={checkoutUrl(p.id, cycle)} className={`font-semibold underline ${p.highlight ? 'text-orange-300' : 'text-[#0094eb]'}`}>
+                  <Link to={checkoutUrl(p.id, cycle)} className={`font-semibold underline ${p.highlight ? 'text-orange-300' : 'text-[color:var(--sll-b-brand)]'}`}>
                     Contratar agora
                   </Link>
                 </p>
@@ -360,7 +360,7 @@ export default function VidlyticsLanding() {
         </div>
       </section>
 
-      {/* CTA final */}      <section className="py-20 bg-blue-700">
+      {/* CTA final */}      <section className="py-20 bg-[color:var(--sll-b-brand)]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Pronto para aumentar suas conversões?</h2>
           <p className="text-xl text-indigo-100 mb-10">Crie sua conta em segundos. Não pedimos cartão de crédito. Risco zero para você testar na sua loja real.</p>

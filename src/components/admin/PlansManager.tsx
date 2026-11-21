@@ -119,7 +119,7 @@ function PlanEditor({ plan, onDone }: { plan: DynamicPlan; onDone: (m: Msg) => v
         type="button"
         onClick={save}
         disabled={saving}
-        className="mt-4 rounded-lg bg-[#0094eb] px-4 py-1.5 text-[13px] font-semibold text-white disabled:opacity-40"
+        className="mt-4 rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-1.5 text-[13px] font-semibold text-white disabled:opacity-40"
       >
         {saving ? 'Salvando...' : 'Salvar'}
       </button>
@@ -159,7 +159,7 @@ function AddonRow({ addon, onDone }: { addon: PlanAddon; onDone: (m: Msg) => voi
         type="button"
         onClick={save}
         disabled={saving}
-        className="rounded-lg bg-[#0094eb] px-3 py-1.5 text-[13px] font-semibold text-white disabled:opacity-40"
+        className="rounded-lg bg-[color:var(--sll-b-brand)] px-3 py-1.5 text-[13px] font-semibold text-white disabled:opacity-40"
       >
         {saving ? '...' : 'Salvar'}
       </button>

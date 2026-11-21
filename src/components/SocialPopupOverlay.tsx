@@ -30,11 +30,11 @@ export function SocialPopupOverlay() {
         <>
           <CheckCircle2 className="h-8 w-8 text-emerald-500" />
           <p className="text-sm font-bold text-slate-700">Pronto. Você já pode fechar esta janela.</p>
-          <button type="button" onClick={() => window.close()} className="cursor-pointer rounded-xl bg-[#0094eb] px-5 py-2.5 text-xs font-bold text-white">Fechar janela</button>
+          <button type="button" onClick={() => window.close()} className="cursor-pointer rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-xs font-bold text-white">Fechar janela</button>
         </>
       ) : (
         <>
-          <Loader2 className="h-8 w-8 animate-spin text-[#0094eb]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[color:var(--sll-b-brand)]" />
           <p className="text-sm font-bold text-slate-700">Conectando sua conta...</p>
           <p className="text-xs text-slate-400">Esta janela fecha sozinha em instantes.</p>
         </>

@@ -58,7 +58,7 @@ export default function CampaignList({ storeId, onNew, onEdit, onReuse }: Props)
 
       {loading ? (
         <div className="flex items-center justify-center gap-3 py-12 text-sm text-slate-500">
-          <Loader2 size={20} className="animate-spin text-[#0094eb]" /> Carregando campanhas...
+          <Loader2 size={20} className="animate-spin text-[color:var(--sll-b-brand)]" /> Carregando campanhas...
         </div>
       ) : items.length === 0 ? (
         <div className="py-12 text-center text-sm text-slate-500">Nenhuma campanha ainda. Clique em "Nova arte" para começar.</div>

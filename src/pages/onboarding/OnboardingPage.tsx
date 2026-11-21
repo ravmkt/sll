@@ -131,7 +131,7 @@ export default function OnboardingPage() {
           </div>
           <div className="mt-3 flex items-center gap-3">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
-              <div className="h-full rounded-full bg-[#0094eb] transition-all" style={{ width: `${pct}%` }} />
+              <div className="h-full rounded-full bg-[color:var(--sll-b-brand)] transition-all" style={{ width: `${pct}%` }} />
             </div>
             <span className="text-[11px] font-bold text-slate-500">{pct}%</span>
           </div>
@@ -159,7 +159,7 @@ export default function OnboardingPage() {
           ) : <span />}
           {step < TOTAL ? (
             <button type="button" onClick={next} disabled={busy}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0094eb] px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50">
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50">
               {busy ? <Loader2 size={14} className="animate-spin" /> : null} Continuar <ArrowRight size={14} />
             </button>
           ) : <span className="w-24" />}

@@ -13,7 +13,7 @@ const EMPTY: Form = {
   district: '', city: '', state: '', tagsText: '', notes: '', accepts_marketing: false, accepts_whatsapp: false,
 };
 
-const inputCls = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0094eb]';
+const inputCls = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[color:var(--sll-b-brand)]';
 
 type Props = { storeId: string; customerId: string | null; open: boolean; onClose: () => void; onSaved: () => void };
 
@@ -106,7 +106,7 @@ export default function CustomerDialog({ storeId, customerId, open, onClose, onS
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => (customerId ? setEditing(false) : onClose())} className="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50">Cancelar</button>
-              <button type="button" disabled={busy} onClick={submit} className="rounded-md bg-[#0094eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#007bc4] disabled:opacity-60">
+              <button type="button" disabled={busy} onClick={submit} className="rounded-md bg-[color:var(--sll-b-brand)] px-4 py-2 text-sm font-medium text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-60">
                 {busy ? 'Salvando...' : 'Salvar'}
               </button>
             </div>

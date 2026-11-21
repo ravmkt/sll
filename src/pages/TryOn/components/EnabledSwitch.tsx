@@ -39,7 +39,7 @@ export default function EnabledSwitch({ storeId, enabled, onChanged }: Props) {
         aria-checked={on}
         disabled={busy}
         onClick={() => void toggle()}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${on ? 'bg-[#0094eb]' : 'bg-slate-300'}`}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${on ? 'bg-[color:var(--sll-b-brand)]' : 'bg-slate-300'}`}
       >
         <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
       </button>

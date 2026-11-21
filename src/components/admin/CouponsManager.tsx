@@ -117,7 +117,7 @@ export default function CouponsManager() {
         <button
           type="button"
           onClick={() => { setMsg(null); setForm({ ...EMPTY }); }}
-          className="rounded-lg bg-[#0094eb] px-4 py-2 text-[15px] font-semibold text-white"
+          className="rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-2 text-[15px] font-semibold text-white"
         >
           Novo cupom
         </button>
@@ -172,7 +172,7 @@ export default function CouponsManager() {
               type="button"
               disabled={saving}
               onClick={async () => { if (await submit(form)) setForm(null); }}
-              className="rounded-lg bg-[#0094eb] px-4 py-1.5 text-[13px] font-semibold text-white disabled:opacity-40"
+              className="rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-1.5 text-[13px] font-semibold text-white disabled:opacity-40"
             >
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
@@ -216,7 +216,7 @@ export default function CouponsManager() {
                     </span>
                   </td>
                   <td className="space-x-3 px-4 py-3 text-right text-[13px]">
-                    <button type="button" onClick={() => { setMsg(null); setForm(toInput(c)); }} className="text-sky-600 underline">Editar</button>
+                    <button type="button" onClick={() => { setMsg(null); setForm(toInput(c)); }} className="text-[color:var(--sll-b-brand)] underline">Editar</button>
                     <button type="button" onClick={() => toggle(c)} className="text-slate-600 underline">{c.is_active ? 'Desativar' : 'Ativar'}</button>
                   </td>
                 </tr>

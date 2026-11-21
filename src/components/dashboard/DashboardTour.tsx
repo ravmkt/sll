@@ -60,14 +60,14 @@ export default function DashboardTour({ storeId, createdAt }: { storeId: string;
     <div className="fixed inset-0 z-[120]" role="dialog" aria-modal="true" aria-label={s.title}>
       {rect ? (
         <div
-          className="pointer-events-none absolute rounded-2xl ring-2 ring-[#0094eb] transition-all"
+          className="pointer-events-none absolute rounded-2xl ring-2 ring-[color:var(--sll-b-brand)] transition-all"
           style={{ top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12, boxShadow: '0 0 0 9999px rgba(15,23,42,0.6)' }}
         />
       ) : (
         <div className="absolute inset-0 bg-slate-900/60" />
       )}
       <div className="absolute rounded-2xl bg-white p-4 shadow-2xl" style={{ top, left, width: W }}>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-[#0094eb]">Passo {step + 1} de {STEPS.length}</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--sll-b-brand)]">Passo {step + 1} de {STEPS.length}</p>
         <h3 className="mt-1 text-sm font-black text-slate-900">{s.title}</h3>
         <p className="mt-1 text-xs leading-relaxed text-slate-600">{s.text}</p>
         <div className="mt-3 flex items-center justify-between">
@@ -75,7 +75,7 @@ export default function DashboardTour({ storeId, createdAt }: { storeId: string;
           <button
             type="button"
             onClick={() => (last ? finish() : setStep(step + 1))}
-            className="cursor-pointer rounded-lg bg-[#0094eb] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#007fcc]"
+            className="cursor-pointer rounded-lg bg-[color:var(--sll-b-brand)] px-4 py-1.5 text-xs font-bold text-white hover:bg-[color:var(--sll-b-brand-hover)]"
           >
             {last ? 'Concluir' : 'Próximo'}
           </button>

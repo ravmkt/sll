@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Copy, GalleryHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import CarouselModal from '../../components/widgets/CarouselModal';
 import { infoCardsService } from '../../services/infoCardsService';
@@ -59,13 +59,13 @@ export default function WidgetsCarouselPage({ ctx }: { ctx: WidgetsCtx }) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <GalleryHorizontal className="h-6 w-6 text-[#0094EB]" />
+            <GalleryHorizontal className="h-6 w-6 text-[color:var(--sll-b-brand)]" />
             <h1 className="text-2xl font-extrabold text-slate-900">Carrossel</h1>
           </div>
           <p className="mt-1 text-sm text-slate-500">Carrossel de imagens com legenda e link: categorias, coleções, marcas e destaques.</p>
         </div>
         <button type="button" onClick={() => setEditing('new')}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0094EB] px-5 py-2.5 text-sm font-bold text-white">
+          className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-sm font-bold text-white">
           <Plus className="h-4 w-4" /> Criar novo
         </button>
       </div>
@@ -96,8 +96,8 @@ export default function WidgetsCarouselPage({ ctx }: { ctx: WidgetsCtx }) {
               </button>
             </span>
             <span className="flex justify-end gap-3 text-slate-400">
-              <button type="button" title="Editar" onClick={() => setEditing(c)} className="hover:text-[#0094EB]"><Pencil className="h-4 w-4" /></button>
-              <button type="button" title="Duplicar" onClick={() => duplicate(c)} className="hover:text-[#0094EB]"><Copy className="h-4 w-4" /></button>
+              <button type="button" title="Editar" onClick={() => setEditing(c)} className="hover:text-[color:var(--sll-b-brand)]"><Pencil className="h-4 w-4" /></button>
+              <button type="button" title="Duplicar" onClick={() => duplicate(c)} className="hover:text-[color:var(--sll-b-brand)]"><Copy className="h-4 w-4" /></button>
                   <button type="button" title="Excluir" onClick={() => remove(c)} className="hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
             </span>
           </div>

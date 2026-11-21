@@ -81,7 +81,7 @@ export default function CreateCategoryModal({ storeId, onCreated, onClose }: Pro
         <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
           <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Vincular a um canal de vendas</label>
           {loading ? (
-            <div className="flex justify-center py-4"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+            <div className="flex justify-center py-4"><Loader2 className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
           ) : channels.length === 0 ? (
             <p className="text-sm text-slate-400">Nenhum canal com categorias. Importe produtos da Yampi para vincular.</p>
           ) : (

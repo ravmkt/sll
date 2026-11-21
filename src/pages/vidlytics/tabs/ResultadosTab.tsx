@@ -182,7 +182,7 @@ export default function ResultadosTab() {
         <button
           type="button"
           onClick={() => set({ key, dir: on ? (cur!.dir === 'asc' ? 'desc' : 'asc') : first })}
-          className={`inline-flex items-center gap-1 uppercase text-[10px] font-bold cursor-pointer hover:text-[#0094eb] ${on ? 'text-[#0094eb]' : ''}`}
+          className={`inline-flex items-center gap-1 uppercase text-[10px] font-bold cursor-pointer hover:text-[color:var(--sll-b-brand)] ${on ? 'text-[color:var(--sll-b-brand)]' : ''}`}
         >
           {label}
           <span className="text-[9px]">{on ? (cur!.dir === 'asc' ? '\u25B2' : '\u25BC') : '\u2195'}</span>
@@ -341,7 +341,7 @@ export default function ResultadosTab() {
             type="button"
             onClick={() => setPeriodo(k)}
             className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
-              periodo === k ? 'bg-[#0094eb] text-white shadow-sm' : 'text-slate-500 hover:text-[#0094eb]'
+              periodo === k ? 'bg-[color:var(--sll-b-brand)] text-white shadow-sm' : 'text-slate-500 hover:text-[color:var(--sll-b-brand)]'
             }`}
           >
             {l}
@@ -355,14 +355,14 @@ export default function ResultadosTab() {
             type="date"
             value={customStart}
             onChange={(e) => setCustomStart(e.target.value)}
-            className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#0094eb]"
+            className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]"
           />
           <span className="text-xs text-slate-400">até</span>
           <input
             type="date"
             value={customEnd}
             onChange={(e) => setCustomEnd(e.target.value)}
-            className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[#0094eb]"
+            className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]"
           />
         </div>
       )}
@@ -379,7 +379,7 @@ export default function ResultadosTab() {
         <TourTagger rules={RESULTADOS_TAGS} />
         <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Resultados</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Métricas reais de <strong className="text-[#0094eb] font-semibold">{nicho}</strong> comparadas aos benchmarks nacionais de 2026.
+            Métricas reais de <strong className="text-[color:var(--sll-b-brand)] font-semibold">{nicho}</strong> comparadas aos benchmarks nacionais de 2026.
           </p>
         </div>
 
@@ -391,7 +391,7 @@ export default function ResultadosTab() {
         <button
           onClick={() => setSubTab('visao-geral')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            subTab === 'visao-geral' ? 'bg-[#0094eb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            subTab === 'visao-geral' ? 'bg-[color:var(--sll-b-brand)] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           <BarChart3 className="w-3.5 h-3.5" />
@@ -401,7 +401,7 @@ export default function ResultadosTab() {
         <button
           onClick={() => setSubTab('videos')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            subTab === 'videos' ? 'bg-[#0094eb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            subTab === 'videos' ? 'bg-[color:var(--sll-b-brand)] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           <Film className="w-3.5 h-3.5" />
@@ -411,7 +411,7 @@ export default function ResultadosTab() {
         <button
           onClick={() => setSubTab('retencao')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            subTab === 'retencao' ? 'bg-[#0094eb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            subTab === 'retencao' ? 'bg-[color:var(--sll-b-brand)] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           <CheckSquare className="w-3.5 h-3.5" />
@@ -421,7 +421,7 @@ export default function ResultadosTab() {
         <button
           onClick={() => setSubTab('insights')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            subTab === 'insights' ? 'bg-[#0094eb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            subTab === 'insights' ? 'bg-[color:var(--sll-b-brand)] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-pink-400" />
@@ -495,10 +495,10 @@ export default function ResultadosTab() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Total Gerado</span>
                   </div>
-                  <p className="text-2xl font-bold text-[#0094eb]">{formatCurrency(metrics.totalRevenue + (affiliateSummary?.total_generated || 0))}</p>
+                  <p className="text-2xl font-bold text-[color:var(--sll-b-brand)]">{formatCurrency(metrics.totalRevenue + (affiliateSummary?.total_generated || 0))}</p>
                   <p className="text-xs text-slate-400">Vendas Pagas + Indicações</p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-[#0094eb] text-white flex items-center justify-center shadow-xs flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[color:var(--sll-b-brand)] text-white flex items-center justify-center shadow-xs flex-shrink-0">
                   <Wallet className="w-4 h-4" />
                 </div>
               </div>
@@ -524,7 +524,7 @@ export default function ResultadosTab() {
                   <p className="text-2xl font-bold text-slate-800">{metrics.totalViews.toLocaleString('pt-BR')}</p>
                   <p className="text-xs text-slate-400">Sessões de stories abertas</p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0094eb] flex items-center justify-center border border-sky-100 flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] flex items-center justify-center border border-[color:var(--sll-b-brand-border)] flex-shrink-0">
                   <Eye className="w-4 h-4" />
                 </div>
               </div>
@@ -555,7 +555,7 @@ export default function ResultadosTab() {
                       <p className="text-[10px] text-slate-400 font-medium">Curtidas</p>
                     </div>
                     <div>
-                      <p className="text-xl font-bold text-[#0094eb]">{metrics.totalComments}</p>
+                      <p className="text-xl font-bold text-[color:var(--sll-b-brand)]">{metrics.totalComments}</p>
                       <p className="text-[10px] text-slate-400 font-medium">Comentários</p>
                     </div>
                   </div>
@@ -687,7 +687,7 @@ export default function ResultadosTab() {
 
             <div className="flex flex-wrap items-center justify-center gap-6 pt-3 text-[11px] text-slate-500 font-medium">
               <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#0094eb]"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[color:var(--sll-b-brand)]"></span>
                 <span>Visualizações</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -704,7 +704,7 @@ export default function ResultadosTab() {
           {/* BANNER BENCHMARK DO SETOR */}
           <div data-tour="rs-como-benchmark" className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0094eb] flex items-center justify-center border border-sky-100 flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] flex items-center justify-center border border-[color:var(--sll-b-brand-border)] flex-shrink-0">
                 <Compass className="w-5 h-5" />
               </div>
               <div>
@@ -715,7 +715,7 @@ export default function ResultadosTab() {
               </div>
             </div>
 
-            <button type="button" onClick={() => setStudyOpen(true)} className="bg-[#0094eb] hover:bg-sky-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex-shrink-0">Ver Estudo de Mercado</button>
+            <button type="button" onClick={() => setStudyOpen(true)} className="bg-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-hover)] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex-shrink-0">Ver Estudo de Mercado</button>
 <MarketStudyModal open={studyOpen} onClose={() => setStudyOpen(false)} sector={nicho} loja={{ ctr: metrics.ctr }} />
           </div>
 
@@ -775,7 +775,7 @@ export default function ResultadosTab() {
                         <td className="text-center px-4 py-3 text-slate-600">{v.clicks.toLocaleString('pt-BR')}</td>
                         <td className="text-center px-4 py-3 text-slate-600">{v.ctr.toFixed(1)}%</td>
                         <td className="text-center px-4 py-3 text-rose-500 font-semibold">{v.likes}</td>
-                        <td className="text-center px-4 py-3 text-[#0094eb] font-semibold">{v.comments}</td>
+                        <td className="text-center px-4 py-3 text-[color:var(--sll-b-brand)] font-semibold">{v.comments}</td>
                         <td className="text-center px-4 py-3 text-emerald-600 font-semibold">{v.conversions}</td>
                         <td className="text-center px-4 py-3 text-slate-700 font-bold">
                           {v.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -847,7 +847,7 @@ export default function ResultadosTab() {
                           <button
                             type="button"
                             onClick={() => setRetentionVideo({ id: r.id, title: r.title })}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 px-3 py-1.5 text-[11px] font-bold text-sky-600 hover:bg-sky-100"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--sll-b-brand-soft)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-soft)]"
                           >
                             <BarChart3 className="w-3.5 h-3.5" />
                             Métricas

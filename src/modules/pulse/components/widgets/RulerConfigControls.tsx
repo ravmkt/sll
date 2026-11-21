@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { ChevronDown, Minus, Plus } from 'lucide-react';
 
-const box = 'h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-[#0094EB]';
+const box = 'h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]';
 
 export function Section({ n, title, open, onToggle, children }: { n: number; title: string; open: boolean; onToggle: () => void; children: ReactNode }) {
   return (
@@ -50,7 +50,7 @@ export function NumField({ label, value, onChange, min = 0, max = 100, step = 1 
             onChange={(e) => setDraft(e.target.value)}
             onBlur={commit}
             onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-            className="h-7 w-14 rounded-md border border-slate-200 text-center text-xs font-semibold text-slate-700 outline-none focus:border-[#0094EB]"
+            className="h-7 w-14 rounded-md border border-slate-200 text-center text-xs font-semibold text-slate-700 outline-none focus:border-[color:var(--sll-b-brand)]"
           />
           <button type="button" className={btn} onClick={() => bump(step)}><Plus className="h-3 w-3" /></button>
         </div>
@@ -103,7 +103,7 @@ export function SelectField({ label, value, options, onChange }: {
 export function ToggleBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={`h-9 flex-1 rounded-lg border text-xs font-bold transition-colors ${active ? 'border-[#0094EB] bg-sky-50 text-[#0094EB]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
+      className={`h-9 flex-1 rounded-lg border text-xs font-bold transition-colors ${active ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
       {children}
     </button>
   );

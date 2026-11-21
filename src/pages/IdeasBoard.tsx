@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase';
 const LONG = 140;
 
 const SUG_CATEGORIES = ['Novo m\u00f3dulo', 'Integra\u00e7\u00e3o com plataforma', 'Relat\u00f3rios e m\u00e9tricas', 'Automa\u00e7\u00e3o e IA', 'Outro'];
-const SUG_FIELD = 'w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 outline-none transition focus:border-[#0088ff] focus:ring-2 focus:ring-sky-100';
+const SUG_FIELD = 'w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 outline-none transition focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-sky-100';
 
 const get = (r: BoardRow, k: string): string | number =>
   k === 'votes' ? r.votes : k === 'status' ? STATUS_ORDER.indexOf(r.status) : k === 'module' ? r.module : k === 'category' ? r.category : r.title;
@@ -74,7 +74,7 @@ export default function IdeasBoard() {
 
   const VoteBtn = ({ r }: { r: BoardRow }) => (
     <button type="button" onClick={() => vote(r)} title={r.voted ? 'Remover meu voto' : 'Votar neste pedido'}
-      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-black transition ${r.voted ? 'border-[#0094eb] bg-[#0094eb] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0094eb] hover:text-[#0094eb]'}`}>
+      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-black transition ${r.voted ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand)] text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)]'}`}>
       <ThumbsUp className="h-3.5 w-3.5" /> {r.votes}
     </button>
   );
@@ -85,7 +85,7 @@ export default function IdeasBoard() {
         <div className="flex flex-wrap items-start justify-between gap-3"><div>
           <h1 className="text-2xl font-black text-slate-900">Pedidos dos lojistas</h1>
           <p className="mt-1 text-sm text-slate-500">Veja o que outras lojas pediram e vote no que também faria diferença para você. Os mais votados entram primeiro na fila.</p>
-        </div><button type="button" onClick={() => setSugOpen(true)} className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-[#0088ff] px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-sky-200 transition hover:bg-[#0077e6]"><Plus className="h-4 w-4" /> Sugerir ideia</button></div>
+        </div><button type="button" onClick={() => setSugOpen(true)} className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-sky-200 transition hover:bg-[color:var(--sll-b-brand-hover)]"><Plus className="h-4 w-4" /> Sugerir ideia</button></div>
 
         <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-sm">
@@ -99,7 +99,7 @@ export default function IdeasBoard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {!rows && <tr><td colSpan={5} className="py-10 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-[#0094eb]" /></td></tr>}
+              {!rows && <tr><td colSpan={5} className="py-10 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-[color:var(--sll-b-brand)]" /></td></tr>}
               {rows && sorted.length === 0 && <tr><td colSpan={5} className="py-10 text-center text-slate-400">Nenhum pedido ainda. Seja o primeiro a sugerir.</td></tr>}
               {sorted.map((r) => (
                 <tr key={r.id} className="align-top hover:bg-slate-50/60">
@@ -108,7 +108,7 @@ export default function IdeasBoard() {
                   <td className="min-w-[320px] max-w-[520px] px-3 py-3">
                     <button type="button" onClick={() => setOpenId(r.id)} className="block w-full cursor-pointer text-left" title="Abrir pedido completo">
                       <span className="line-clamp-3 whitespace-pre-wrap break-words font-medium text-slate-800">{r.title}</span>
-                      {r.title.length > LONG && <span className="mt-1 block text-[11px] font-bold text-[#0094eb]">Ler pedido completo</span>}
+                      {r.title.length > LONG && <span className="mt-1 block text-[11px] font-bold text-[color:var(--sll-b-brand)]">Ler pedido completo</span>}
                     </button>
                   </td>
                   <td className="px-3 py-3 text-center"><VoteBtn r={r} /></td>
@@ -152,7 +152,7 @@ export default function IdeasBoard() {
         footer={
           <>
             <button type="button" onClick={closeSug} disabled={sugBusy} className="flex-1 cursor-pointer rounded-2xl border border-slate-200 px-5 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50">Cancelar</button>
-            <button type="button" onClick={sendSug} disabled={sugBusy || sugText.trim().length < 5} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#0088ff] px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-sky-200 transition hover:bg-[#0077e6] disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="button" onClick={sendSug} disabled={sugBusy || sugText.trim().length < 5} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[color:var(--sll-b-brand)] px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-sky-200 transition hover:bg-[color:var(--sll-b-brand-hover)] disabled:cursor-not-allowed disabled:opacity-50">
               {sugBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} Enviar pedido
             </button>
           </>

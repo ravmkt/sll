@@ -105,7 +105,7 @@ export default function SocialConnectCard({ storeId }: { storeId: string }) {
             </button>
           </div>
         ) : (
-          <button type="button" disabled={busy || loading} onClick={connect} className="inline-flex items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-[#0082cf] disabled:opacity-50 cursor-pointer">
+          <button type="button" disabled={busy || loading} onClick={connect} className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-50 cursor-pointer">
             {busy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />} Conectar TikTok
           </button>
         )}

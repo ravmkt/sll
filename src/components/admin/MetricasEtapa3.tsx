@@ -79,7 +79,7 @@ function BarList({ title, rows, fmt, empty, hint }: { title: string; rows: Row[]
                 <span className="truncate text-slate-300">{r.label}</span>
                 <span className="shrink-0 font-semibold text-white">{fmt ? fmt(r.value) : r.value}{r.extra ? <span className="ml-2 font-normal text-slate-500">{r.extra}</span> : null}</span>
               </div>
-              <div className="mt-1 h-1.5 rounded-full bg-slate-800"><div className="h-1.5 rounded-full bg-[#0094eb]" style={{ width: `${Math.max(2, (r.value / max) * 100)}%` }} /></div>
+              <div className="mt-1 h-1.5 rounded-full bg-slate-800"><div className="h-1.5 rounded-full bg-[color:var(--sll-b-brand)]" style={{ width: `${Math.max(2, (r.value / max) * 100)}%` }} /></div>
             </div>
           ))}
         </div>

@@ -148,7 +148,7 @@ export default function IntegracoesPage() {
                 {status.yampi && <YampiWebhookCard storeId={storeId} call={call} />}
                 <Link
                   to="/dashboard/instalacao"
-                  className="block rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-[#0091ff] hover:bg-blue-100"
+                  className="block rounded-xl border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-4 py-3 text-sm font-bold text-[color:var(--sll-b-brand)] hover:bg-[color:var(--sll-b-brand-soft)]"
                 >
                   Proximo passo: instalar o script de rastreamento &rarr;
                 </Link>

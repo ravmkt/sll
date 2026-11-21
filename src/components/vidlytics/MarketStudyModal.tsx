@@ -83,7 +83,7 @@ function MetricCard({ m }: { m: Metric }) {
       </div>
       {hasRange && (
         <div className="relative mt-3 h-2 rounded-full bg-slate-100">
-          <div className="absolute top-0 h-2 rounded-full bg-[#0094eb]/30" style={{ left: `${left}%`, width: `${width}%` }} />
+          <div className="absolute top-0 h-2 rounded-full bg-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)]" style={{ left: `${left}%`, width: `${width}%` }} />
           {m.value !== null && m.value > 0 && (
             <div className={`absolute -top-1 h-4 w-1.5 rounded-full ${ui.marker}`} style={{ left: `${pos}%` }} />
           )}
@@ -196,10 +196,10 @@ export function MarketStudyModal({ open, onClose, sector, loja }: Props) {
         aria-modal="true"
         aria-label="Estudo de mercado"
       >
-        <div className="flex items-center justify-between gap-4 bg-gradient-to-r from-[#0094eb]/10 via-white to-white px-6 pt-5">
+        <div className="flex items-center justify-between gap-4 bg-gradient-to-r from-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] via-white to-white px-6 pt-5">
           <div className="pb-4">
             <h2 className="text-lg font-bold text-slate-900">Estudo de mercado</h2>
-            <p className="text-sm font-semibold text-[#0094eb]">{row ? String(row.sector_name) : sector || 'Setor não definido'}</p>
+            <p className="text-sm font-semibold text-[color:var(--sll-b-brand)]">{row ? String(row.sector_name) : sector || 'Setor não definido'}</p>
             <p className="mt-2 max-w-md text-sm font-medium leading-snug text-slate-700">{sectorSummary}</p><p className="mt-1 max-w-md text-sm leading-snug text-slate-500">{summary}</p><p className="mt-2 max-w-md text-[11px] leading-snug text-slate-400">Fontes: NIQ Ebit (Webshoppers), Neotrust e relatórios de Social Commerce. As faixas são estimativas internas do SLL, revisadas a cada semestre.</p>
           </div>
           <div className="flex items-start gap-1">

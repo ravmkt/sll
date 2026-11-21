@@ -9,7 +9,7 @@ export default function GestorSecaoPage({ slug }: { slug: string }) {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0094eb]/10 text-[#0094eb]">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
           <Icon size={22} />
         </div>
         <div>
@@ -26,7 +26,7 @@ export default function GestorSecaoPage({ slug }: { slug: string }) {
         <ul className="space-y-2">
           {s.features.map((f) => (
             <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#0094eb]" />
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--sll-b-brand)]" />
               {f}
             </li>
           ))}

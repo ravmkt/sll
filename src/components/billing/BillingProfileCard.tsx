@@ -44,7 +44,7 @@ const T = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const INPUT =
-  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/20";
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-[color:var(--sll-b-brand)] focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--sll-b-brand)_20%,transparent)]";
 
 const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
 
@@ -174,7 +174,7 @@ export default function BillingProfileCard() {
         className="flex w-full cursor-pointer items-center justify-between gap-3 p-5 text-left"
       >
         <span className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0091ff]/10 text-[#0091ff]">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]">
             <FileText size={20} />
           </span>
           <span>
@@ -200,7 +200,7 @@ export default function BillingProfileCard() {
       {open && (
         <div className="space-y-5 border-t border-slate-100 p-5">
           {loading ? (
-            <div className="flex justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-[#0091ff]" /></div>
+            <div className="flex justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-[color:var(--sll-b-brand)]" /></div>
           ) : (
             <>
               <div className="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1">
@@ -211,7 +211,7 @@ export default function BillingProfileCard() {
                     onClick={() => changeType(t)}
                     className={cn(
                       "cursor-pointer rounded-lg px-4 py-2 text-xs font-black transition",
-                      f.doc_type === t ? "bg-white text-[#0091ff] shadow-sm" : "text-slate-500 hover:text-slate-700"
+                      f.doc_type === t ? "bg-white text-[color:var(--sll-b-brand)] shadow-sm" : "text-slate-500 hover:text-slate-700"
                     )}
                   >
                     {t === "cnpj" ? T.pj : T.pf}
@@ -257,7 +257,7 @@ export default function BillingProfileCard() {
                   type="button"
                   onClick={save}
                   disabled={saving}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-[#0091ff] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg transition hover:bg-[#0070f3] disabled:opacity-60"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-[color:var(--sll-b-brand)] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg transition hover:bg-[color:var(--sll-b-brand-hover)] disabled:opacity-60"
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   {T.save}

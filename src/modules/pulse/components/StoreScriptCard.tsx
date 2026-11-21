@@ -45,8 +45,8 @@ export default function StoreScriptCard({ storeId }: { storeId: string }) {
     <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0094eb]/10">
-            <Zap className="h-4 w-4 text-[#0094eb]" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]">
+            <Zap className="h-4 w-4 text-[color:var(--sll-b-brand)]" />
           </div>
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Instalação automática</h3>
         </div>
@@ -79,7 +79,7 @@ export default function StoreScriptCard({ storeId }: { storeId: string }) {
               <button
                 onClick={() => run("install")}
                 disabled={busy !== null}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#0094eb] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#0083d1] disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#0083d1] disabled:opacity-60"
               >
                 {busy === "install" && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Instalar na loja
               </button>

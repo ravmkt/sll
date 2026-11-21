@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { listAdminStores, saveNpsSurvey, type AdminQuestion, type AdminSurvey, type QType } from '@/services/admin/npsSurveys';
 
 const SCROLL = 'overflow-y-auto overscroll-contain [scrollbar-width:thin] [scrollbar-color:#334155_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-700';
-const INPUT = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[#0094eb]';
+const INPUT = 'w-full rounded-lg border border-slate-700 bg-[#0b0e1a] px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-[color:var(--sll-b-brand)]';
 const LABEL = 'mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400';
 const ICONBTN = 'cursor-pointer rounded-md p-1.5 text-slate-400 hover:bg-white/10 hover:text-white disabled:cursor-default disabled:opacity-30';
 const TYPES: { v: QType; label: string }[] = [
@@ -155,7 +155,7 @@ export default function NpsSurveyEditor({ open, survey, onClose, onSaved }: {
           {draft.questions.map((q, i) => (
             <div key={q.id ?? `n${i}`} className="space-y-3 rounded-xl border border-slate-800 bg-[#111524] p-4">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-[#0094eb]">#{i + 1}</span>
+                <span className="text-xs font-black text-[color:var(--sll-b-brand)]">#{i + 1}</span>
                 <select className={`${INPUT} max-w-[220px]`} value={q.type} onChange={(e) => changeType(i, e.target.value as QType)}>
                   {TYPES.map((t) => <option key={t.v} value={t.v}>{t.label}</option>)}
                 </select>
@@ -181,7 +181,7 @@ export default function NpsSurveyEditor({ open, survey, onClose, onSaved }: {
                     </div>
                   ))}
                   {q.allow_other && <p className="pl-6 text-sm text-slate-400">Outro (a loja descreve)</p>}
-                  <button type="button" onClick={() => setOpts(i, (os) => [...os, { key: 'o_' + uid(), label: '' }])} className="cursor-pointer text-xs font-bold text-[#0094eb] hover:underline">+ Adicionar opção</button>
+                  <button type="button" onClick={() => setOpts(i, (os) => [...os, { key: 'o_' + uid(), label: '' }])} className="cursor-pointer text-xs font-bold text-[color:var(--sll-b-brand)] hover:underline">+ Adicionar opção</button>
                 </div>
               )}
               <div className="flex flex-wrap gap-4 border-t border-slate-800 pt-2 text-sm text-slate-300">
@@ -196,7 +196,7 @@ export default function NpsSurveyEditor({ open, survey, onClose, onSaved }: {
           <div className="flex flex-wrap gap-2">
             {TYPES.map((t) => (
               <button key={t.v} type="button" onClick={() => mapQ((qs) => [...qs, newQuestion(t.v)])}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-[#0094eb] px-3 py-2 text-xs font-bold text-[#0094eb] hover:bg-[#0094eb]/10">
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-[color:var(--sll-b-brand)] px-3 py-2 text-xs font-bold text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]">
                 <Plus className="h-3.5 w-3.5" /> {t.label}
               </button>
             ))}
@@ -208,7 +208,7 @@ export default function NpsSurveyEditor({ open, survey, onClose, onSaved }: {
           <div className="ml-auto flex items-center gap-2">
             <button type="button" onClick={onClose} className="cursor-pointer rounded-lg bg-white/5 px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10">Cancelar</button>
             <button type="button" onClick={save} disabled={saving}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0094eb] px-5 py-2 text-sm font-black text-white hover:bg-[#0082d1] disabled:opacity-60">
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[color:var(--sll-b-brand)] px-5 py-2 text-sm font-black text-white hover:bg-[#0082d1] disabled:opacity-60">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar pesquisa
             </button>
           </div>

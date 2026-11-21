@@ -29,7 +29,7 @@ const CYCLE_ADJ: Record<string, string> = {
 
 const STATUS_STYLE: Record<string, { label: string; className: string; dot: string; icon: React.ReactNode }> = {
   active: { label: "Ativo", className: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500", icon: <CheckCircle2 size={13} /> },
-  trialing: { label: "Em Teste", className: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-blue-500", icon: <Clock size={13} /> },
+  trialing: { label: "Em Teste", className: "bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)] border-[color:var(--sll-b-brand-border)]", dot: "bg-[color:var(--sll-b-brand)]", icon: <Clock size={13} /> },
   lifetime: { label: "Vital\u00edcio", className: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500", icon: <Sparkles size={13} /> },
   past_due: { label: "Pagamento Pendente", className: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: <AlertTriangle size={13} /> },
   canceled: { label: "Cancelado", className: "bg-rose-50 text-rose-700 border-rose-200", dot: "bg-rose-500", icon: <XCircle size={13} /> },
@@ -81,7 +81,7 @@ export function SubscriptionModuleCard({ sub, onCanceled }: { sub: StoreSubscrip
 
       <div>
         <h3 className="text-lg font-black text-slate-900">{sub.plan?.name ?? "Plano"}</h3>
-        <p className="text-2xl font-black text-[#0091ff]">
+        <p className="text-2xl font-black text-[color:var(--sll-b-brand)]">
           R$ {priceReais}
           <span className="text-xs font-bold text-slate-400"> /{cycleLabel}</span>
         </p>
@@ -107,7 +107,7 @@ export function SubscriptionModuleCard({ sub, onCanceled }: { sub: StoreSubscrip
       <div className="flex items-center justify-between border-t border-slate-100 pt-3">
         <Link
           to={`/dashboard/planos${sub.module_key ? `?modulo=${sub.module_key}` : ""}`}
-          className="text-xs font-black text-[#0091ff] hover:underline"
+          className="text-xs font-black text-[color:var(--sll-b-brand)] hover:underline"
         >
           {"Alterar plano ou ciclo"}
         </Link>
