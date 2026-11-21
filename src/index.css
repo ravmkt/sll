@@ -101,3 +101,6 @@ F:\RODRIGO VICENTE\DYAD\sll-hub\src\index.css
 .dark .text-sky-900,.dark .text-blue-900{color:#fed7aa}
 
 .dark img[src$="sll-hub-logo-wide-transp.png"]{content:url(/assets/sll-hub-logo-wide-dark.png)}
+
+/* SLL-LOGO-CLUBE: altura fixa do logo Clube SLL */
+img[alt="Clube SLL"]{height:30px !important;width:auto !important;max-width:none !important;max-height:none !important}
