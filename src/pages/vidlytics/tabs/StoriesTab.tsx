@@ -1,4 +1,4 @@
-import PageTour from '@/components/tour/PageTour';
+﻿import PageTour from '@/components/tour/PageTour';
 import { STORIES_TOUR } from '@/tours/vidlyticsTabsTours';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Eye, Pencil, Trash2, Send, TrendingUp, TrendingDown, Info } from 'lucide-react';
@@ -178,7 +178,7 @@ export default function StoriesTab() {
         {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Stories</h2>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Stories</h1>
           <p className="text-sm text-slate-500">
             Gerencie as réguas de Stories exibidas em sua loja virtual
           </p>
@@ -338,3 +338,4 @@ export default function StoriesTab() {
     </div>
   );
 }
+
