@@ -73,9 +73,16 @@ Deno.serve(async (req) => {
     if (action === 'probe') {
       const { j, inc } = await getPage(c, 1, 1);
       const o = (j.data || [])[0];
+      let totalClientes: number | null = null;
+      try {
+        const cj = await yampi(c, 'customers?limit=1&page=1');
+        const n = cj?.meta?.pagination?.total;
+        totalClientes = n == null ? null : Number(n);
+      } catch { /* endpoint indisponivel: segue sem a contagem de clientes */ }
       return json({
         include_usado: inc,
         total_pedidos: Number(j.meta?.pagination?.total || 0),
+        total_clientes: totalClientes,
         estrutura_do_primeiro_pedido: o ? shape(o) : null,
       });
     }

@@ -6,7 +6,7 @@ export const IMPORT_MAX_MB = 5;
 export const IMPORT_MAX_ROWS = 20000;
 
 // Plataforma (e-commerce) conectada. Hoje so a Yampi; novas plataformas entram aqui.
-export const PLATFORM = { key: 'yampi', label: 'Yampi', fn: 'yampi-import-orders' };
+export const PLATFORM = { key: 'yampi', label: 'Yampi', fn: 'yampi-import-orders', logo: '/assets/platforms/yampi.png' };
 
 export type ImportError = { ref: string; msg: string };
 
@@ -251,9 +251,12 @@ async function invoke(body: Record<string, unknown>): Promise<any> {
   return data;
 }
 
-export async function probePlatform(storeId: string): Promise<number> {
+export async function probePlatform(storeId: string): Promise<{ orders: number; customers: number | null }> {
   const d = await invoke({ action: 'probe', store_id: storeId });
-  return Number(d?.total_pedidos || 0);
+  return {
+    orders: Number(d?.total_pedidos || 0),
+    customers: d?.total_clientes == null ? null : Number(d.total_clientes),
+  };
 }
 
 async function countCustomers(storeId: string): Promise<number> {

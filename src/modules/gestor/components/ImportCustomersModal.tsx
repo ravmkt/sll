@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { DragEvent, KeyboardEvent } from 'react';
 import { AlertTriangle, Download, FileSpreadsheet, Loader2, Plug, Upload, UploadCloud } from 'lucide-react';
 import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
+import { SllLogo } from '@/components/sll/SllLogo';
 import { cn } from '@/lib/utils';
 import { showError } from '@/utils/toast';
 import {
@@ -11,7 +12,7 @@ import {
 import type { ImportError } from '../services/clientes-import';
 
 type Stage = 'pick' | 'confirm' | 'running' | 'result';
-type Probe = { state: 'loading' | 'ok' | 'none' | 'error'; total?: number; msg?: string };
+type Probe = { state: 'loading' | 'ok' | 'none' | 'error'; orders?: number; customers?: number | null; msg?: string };
 type ResultView = { ok: number; okLabel: string; fail: number; lines: string[]; warn?: string; warnTone?: 'rose' | 'amber'; errors: ImportError[] };
 
 const tabCls = (on: boolean) =>
@@ -37,7 +38,7 @@ export default function ImportCustomersModal({ storeId, onClose, onDone }: Props
   useEffect(() => {
     let alive = true;
     probePlatform(storeId)
-      .then((total) => { if (alive) setProbe({ state: 'ok', total }); })
+      .then((r) => { if (alive) setProbe({ state: 'ok', orders: r.orders, customers: r.customers }); })
       .catch((e: Error) => {
         if (!alive) return;
         setProbe(/n[aã]o conectada/i.test(e.message) ? { state: 'none' } : { state: 'error', msg: e.message });
@@ -144,8 +145,8 @@ export default function ImportCustomersModal({ storeId, onClose, onDone }: Props
               {probe.state === 'ok' && (
                 <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">E-commerce conectado</p>
-                  <p className="mt-1 text-lg font-bold text-slate-800 dark:text-white">{PLATFORM.label}</p>
-                  <p className="text-sm text-slate-500">{(probe.total ?? 0).toLocaleString('pt-BR')} pedido(s) encontrado(s) na plataforma.</p>
+                  <SllLogo src={PLATFORM.logo} alt={PLATFORM.label} className="mt-2" />
+                  <p className="mt-2 text-sm text-slate-500">{probe.customers != null ? ` cliente(s) encontrado(s) na plataforma.` : ` pedido(s) encontrado(s) na plataforma.`}</p>
                 </div>
               )}
               {probe.state === 'none' && (
