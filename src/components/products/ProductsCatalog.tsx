@@ -2,10 +2,9 @@ import PageTour from '@/components/tour/PageTour';
 import { produtosTour } from '@/tours/produtosTour';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ElementType } from 'react';
-import { Link } from 'react-router-dom';
 import {
-  BadgeCheck, BookOpen, Ban, ChevronDown, ChevronRight, ChevronUp, Edit3, Link2, List, ListTree, Loader2,
-  Package, PackageX, Plus, RefreshCw, Search, Tag, Trash2, Upload, Bookmark,
+  BadgeCheck, Ban, ChevronDown, ChevronRight, ChevronUp, Edit3, Link2, List, ListTree, Loader2,
+  Package, PackageX, Plus, RefreshCw, Search, Tag, Trash2, Upload,
 } from 'lucide-react';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog';
 import { useLoja } from '@/contexts/LojaContext';
@@ -22,7 +21,6 @@ import {
 } from '@/services/productsService';
 import ProductFormDialog from '@/shared/products/ProductFormDialog';
 import CategoriesModal from '@/components/products/CategoriesModal';
-import BrandsModal from '@/components/products/BrandsModal';
 import ImportModal from '@/components/products/ImportModal';
 import StockEditDialog from '@/components/products/StockEditDialog';
 import { inputCls } from '@/components/products/Modal';
@@ -39,7 +37,6 @@ const VIEW_KEY = 'sll_products_view';
 const ORIGIN: Record<string, string> = { manual: 'Manual', xml: 'XML', planilha: 'Planilha', yampi: 'Yampi' };
 const brl = (n: number | null) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const selectCls = cn(inputCls, '!w-auto !py-2.5 cursor-pointer');
-const GESTOR_BASE = '/dashboard/modules/gestor';
 
 const TONES = {
   slate: { box: 'bg-slate-100 text-slate-500 dark:bg-slate-800', ring: 'border-slate-400' },
@@ -101,7 +98,6 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogProduct | null>(null);
   const [catsOpen, setCatsOpen] = useState(false);
-  const [brandsOpen, setBrandsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [del, setDel] = useState<{ ids: string[]; label: string } | null>(null);
   const [stock, setStock] = useState<Map<string, number>>(new Map());
@@ -301,7 +297,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             {!isGestor && <PageTour tourKey="produtos" steps={produtosTour} />}
-            <h1 className="text-2xl font-bold tracking-tight">{isGestor ? 'Produtos' : 'Catálogo de Produtos'}</h1>
+            <h1 className={isGestor ? 'hidden' : 'text-2xl font-bold tracking-tight'}>{isGestor ? 'Produtos' : 'Catálogo de Produtos'}</h1>
             {!isGestor && (
               <p className="text-sm text-slate-500 dark:text-slate-400">Base central de produtos, compartilhada com todos os seus módulos SLL.</p>
             )}
@@ -310,21 +306,13 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
             <>{perms.create && (<button type="button" data-tour="prod-novo" onClick={() => { setEditing(null); setFormOpen(true); }} className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0094eb] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007bc4]">
               <Plus size={16} /> Novo produto
             </button>)}</>
-            <>{perms.edit && (<button type="button" data-tour="prod-categorias" onClick={() => setCatsOpen(true)} className={btnGhost}>
+            <>{perms.edit && !isGestor && (<button type="button" data-tour="prod-categorias" onClick={() => setCatsOpen(true)} className={btnGhost}>
               <Tag size={15} className="text-[#0094eb]" /> Categorias
-            </button>)}</>
-            <>{perms.edit && (<button type="button" onClick={() => setBrandsOpen(true)} className={btnGhost}>
-              <Bookmark size={15} className="text-[#0094eb]" /> Marcas
             </button>)}</>
             <>{perms.importar && (<button type="button" data-tour="prod-importar" onClick={() => setImportOpen(true)} className={btnGhost}>
               <Upload size={15} className="text-[#0094eb]" /> Importar produtos
             </button>)}</>
-            {isGestor && (
-              <Link to={`${GESTOR_BASE}/estoque`} className={btnGhost}>
-                <BookOpen size={15} className="text-[#0094eb]" /> Estoque
-              </Link>
-            )}
-          </div>
+            </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
@@ -524,9 +512,6 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
       )}
       {catsOpen && storeId && (
         <CategoriesModal storeId={storeId} categories={categories} onChanged={reload} onClose={() => setCatsOpen(false)} />
-      )}
-      {brandsOpen && storeId && (
-        <BrandsModal storeId={storeId} onClose={() => setBrandsOpen(false)} />
       )}
       {importOpen && storeId && (
         <ImportModal storeId={storeId} onImported={reload} onClose={() => setImportOpen(false)} />

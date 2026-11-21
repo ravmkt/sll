@@ -1,0 +1,105 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Check, Edit3, Loader2, Plus, Tag } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useLoja } from '@/contexts/LojaContext';
+import { showError, showSuccess } from '@/utils/toast';
+import { inputCls } from '@/components/products/Modal';
+import { flattenTree, listCategories } from '../services/catalogo';
+import type { Category } from '../services/catalogo';
+
+const sb: any = supabase;
+const parentOf = (c: Category) => ((c as any).parent_id ?? (c as any).parent ?? null) as string | null;
+
+export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
+  const { storeId, loading: lojaLoading } = useLoja();
+  const [cats, setCats] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [name, setName] = useState('');
+  const [parent, setParent] = useState('');
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+
+  const load = useCallback(async () => {
+    if (!storeId) { setLoading(false); return; }
+    try { setCats(await listCategories(storeId)); }
+    catch (e) { showError((e as Error).message); }
+    finally { setLoading(false); }
+  }, [storeId]);
+
+  useEffect(() => { if (!lojaLoading) void load(); }, [lojaLoading, load]);
+
+  const tree = useMemo(() => flattenTree(cats), [cats]);
+
+  const save = async (id: string | null, n: string, p: string | null, active: boolean) => {
+    if (!storeId) return;
+    setBusy(true);
+    try {
+      const { error } = await sb.rpc('gestor_category_save', { p_store: storeId, p_name: n.trim(), p_id: id, p_parent: p, p_active: active });
+      if (error) throw new Error(error.message);
+      await load();
+      return true;
+    } catch (e) { showError((e as Error).message); return false; }
+    finally { setBusy(false); }
+  };
+
+  const add = async () => {
+    if (!name.trim()) return;
+    if (await save(null, name, parent || null, true)) { setName(''); showSuccess('Categoria criada.'); }
+  };
+  const rename = async (c: Category) => {
+    if (!editName.trim()) return;
+    if (await save(c.id, editName, parentOf(c), c.active)) setEditId(null);
+  };
+
+  return (
+    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-[#1a1f2c]">
+      {canEdit && (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void add()} placeholder="Nova categoria..." className={inputCls} />
+          <select value={parent} onChange={(e) => setParent(e.target.value)} className={inputCls + ' sm:!w-64 cursor-pointer'}>
+            <option value="">Sem categoria pai</option>
+            {tree.map(({ cat, depth }) => <option key={cat.id} value={cat.id}>{`${'— '.repeat(depth)}${cat.name}`}</option>)}
+          </select>
+          <button type="button" disabled={busy} onClick={() => void add()} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0094eb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#007bc4] disabled:opacity-50">
+            <Plus size={16} /> Criar
+          </button>
+        </div>
+      )}
+
+      {loading || lojaLoading ? (
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#0094eb]" /></div>
+      ) : tree.length === 0 ? (
+        <p className="py-10 text-center text-sm text-slate-400">Nenhuma categoria cadastrada.</p>
+      ) : (
+        <div className="space-y-2">
+          {tree.map(({ cat, depth }) => (
+            <div key={cat.id} style={{ marginLeft: depth * 24 }} className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 dark:border-slate-800 dark:bg-[#111524]">
+              <Tag size={14} className="shrink-0 text-[#0094eb]" />
+              {editId === cat.id ? (
+                <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void rename(cat); if (e.key === 'Escape') setEditId(null); }} className={inputCls + ' !py-1.5'} />
+              ) : (
+                <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${cat.active ? 'text-slate-700 dark:text-white' : 'text-slate-400 line-through'}`}>
+                  {cat.name}
+                  {typeof (cat as any).products === 'number' && <span className="ml-1 text-[11px] font-normal text-slate-400">({(cat as any).products})</span>}
+                </span>
+              )}
+              {canEdit && (
+                <div className="ml-auto flex shrink-0 items-center gap-1">
+                  {editId === cat.id ? (
+                    <button type="button" disabled={busy} onClick={() => void rename(cat)} className="cursor-pointer rounded-lg p-1.5 text-[#0094eb] hover:bg-[#0094eb]/10"><Check size={15} /></button>
+                  ) : (
+                    <button type="button" onClick={() => { setEditId(cat.id); setEditName(cat.name); }} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><Edit3 size={15} /></button>
+                  )}
+                  <button type="button" disabled={busy} onClick={() => void save(cat.id, cat.name, parentOf(cat), !cat.active)} className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase ${cat.active ? 'border-[#0094eb]/30 bg-[#0094eb]/10 text-[#0094eb]' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
+                    {cat.active ? 'Ativa' : 'Inativa'}
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

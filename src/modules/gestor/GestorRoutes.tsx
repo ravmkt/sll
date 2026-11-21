@@ -8,7 +8,6 @@ import CatalogPage from './pages/CatalogPage';
 import OrdersPage from './pages/OrdersPage';
 import CustomersPage from './pages/CustomersPage';
 import { secaoRoutes } from './pages/secaoRoutes';
-import StockPage from './pages/StockPage';
 import ExpedicaoPage from './pages/ExpedicaoPage';
 import TeamPage from './pages/TeamPage';
 
@@ -23,7 +22,7 @@ export default function GestorRoutes() {
             <Route path="clientes" element={<CustomersPage />} />
         <Route path="fornecedores" element={<SuppliersPage />} />
         <Route path="expedicao" element={<ExpedicaoPage />} />
-        <Route path="estoque" element={<StockPage />} />
+        <Route path="estoque" element={<Navigate to="/dashboard/modules/gestor/produtos?aba=estoque" replace />} />
         <Route path="estoque/historico" element={<GestorPage />} />
             <Route path="equipe" element={<TeamPage />} />
         {secaoRoutes}
