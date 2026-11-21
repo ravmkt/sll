@@ -93,3 +93,47 @@
 /* SLL-CARD-BORDER-V1: borda padrao dos cards. Dark = mesma do Gestor/Produtos. */
 :root{ --sll-b-card-bd:#e2e8f0; }
 .dark{ --sll-b-card-bd:#1e293b; }
+
+/* SLL-BORDAS-DARK:BEGIN */
+:root { --sll-b-card-bd: #e2e8f0; }
+.dark { --sll-b-card-bd: #1e293b; }
+.dark .border-slate-50,
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300,
+.dark .border-slate-200\/50,
+.dark .border-slate-200\/60,
+.dark .border-slate-200\/80,
+.dark .border-slate-200\/90,
+.dark .border-slate-600,
+.dark .border-slate-700,
+.dark .border-slate-700\/60,
+.dark .border-slate-700\/80,
+.dark .border-slate-800,
+.dark .border-slate-800\/60,
+.dark .border-slate-800\/70,
+.dark .border-slate-800\/80,
+.dark .border-slate-900,
+.dark .border-slate-500\/20,
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark .border-gray-700,
+.dark .border-gray-800,
+.dark .border-white\/5,
+.dark .border-white\/10,
+.dark .border-white\/15,
+.dark .border-black\/10,
+.dark .border-\[\#1a1f36\],
+.dark .border-\[\#1e2140\],
+.dark .border-\[\#0a0a0a\],
+.dark .dark\:border-slate-600,
+.dark .dark\:border-slate-700,
+.dark .dark\:border-slate-800,
+.dark .dark\:border-slate-800\/30,
+.dark .dark\:border-slate-800\/80,
+.dark .dark\:border-white\/5,
+.dark .dark\:border-white\/10 {
+  border-color: var(--sll-b-card-bd) !important;
+}
+/* SLL-BORDAS-DARK:END */
