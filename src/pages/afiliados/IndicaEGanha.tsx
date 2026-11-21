@@ -184,7 +184,7 @@ const IndicaEGanha: React.FC = () => {
           <div className="absolute -left-16 -bottom-20 w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(0,148,235,0.22),transparent_70%)]" />
           <div className="relative flex flex-col md:flex-row items-center gap-5 md:gap-8">
             <div className="shrink-0 rounded-2xl bg-white p-2 shadow-md">
-              <img src="/clube-sll-logo.png" alt="Clube SLL" className="h-24 md:h-28 w-auto object-contain" />
+              <img src="/clube-sll-logo.png" alt="Clube SLL" className="object-contain w-auto max-w-none shrink-0" style={{ height: 30, width: 'auto' }} />
             </div>
             <div className="flex-1 min-w-0 w-full space-y-3 text-center md:text-left">
               <h1 className="text-2xl md:text-3xl font-black leading-tight">

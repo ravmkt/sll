@@ -121,7 +121,7 @@ export default function ModuloPlanoModal({
         <div className="space-y-6 bg-slate-50 p-6 md:max-h-[94vh] md:overflow-y-auto">
           <div className="flex items-center gap-4">
             {logoUrl ? (
-              <img src={logoUrl} alt={name} className="h-16 max-w-[220px] object-contain object-left" />
+              <img src={logoUrl} alt={name} className="object-contain object-left w-auto max-w-none shrink-0" style={{ height: 30, width: 'auto' }} />
             ) : (
               <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-200 text-xl font-black text-slate-500">{name.charAt(0).toUpperCase()}</div>
             )}
