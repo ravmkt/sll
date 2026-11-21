@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Download, Loader2, Plus } from 'lucide-react';
+import { Download, Loader2, Plus, Upload } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { SllField, SllFilterBar, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllPager, SllTable } from '@/components/sll/SllTable';
@@ -7,7 +7,7 @@ import type { SllColumn } from '@/components/sll/SllTable';
 import { sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
 import { exportCustomers } from '../services/clientes-export';
 import CustomerDialog from '../components/CustomerDialog';
-import YampiHistoryImport from '../components/YampiHistoryImport';
+import ImportCustomersModal from '../components/ImportCustomersModal';
 import { PAGE_SIZE, brl, fmtDate, listCustomers, maskDoc } from '../services/clientes';
 import type { CustomerRow, SortKey } from '../services/clientes';
 import { useGestorAccess } from '../hooks/useGestorAccess';
@@ -69,6 +69,7 @@ export default function CustomersPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const canExport = allow('clientes', 'editar');
 
   const doExport = async () => {
@@ -108,6 +109,9 @@ export default function CustomersPage() {
         </div>
         <div className="flex items-center gap-2">
               {canExport && (
+                    <button type="button" onClick={() => setImportOpen(true)} className={sllBtnGhost}><Upload size={16} /> Importar</button>
+                  )}
+                  {canExport && (
                 <button type="button" disabled={exporting} onClick={() => void doExport()} className={sllBtnGhost}>
                   {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} {exporting ? 'Exportando...' : 'Exportar'}
                 </button>
@@ -117,8 +121,6 @@ export default function CustomersPage() {
         )}
             </div>
       </div>
-
-      {storeId && allow('clientes', 'editar') && <YampiHistoryImport storeId={storeId} onDone={() => void load()} />}
 
       <SllFilterBar>
         <SllSearch value={search} onChange={setSearch} placeholder="Nome, e-mail, telefone ou documento..." />
@@ -145,6 +147,8 @@ export default function CustomersPage() {
       />
 
       <SllPager page={page} pages={pages} total={total} noun="cliente(s)" onPage={setPage} />
+
+      {importOpen && storeId && <ImportCustomersModal storeId={storeId} onClose={() => setImportOpen(false)} onDone={() => void load()} />}
 
       {storeId && (
         <CustomerDialog storeId={storeId} customerId={openId} open={dialogOpen} onClose={() => setDialogOpen(false)} onSaved={() => void load()} />
