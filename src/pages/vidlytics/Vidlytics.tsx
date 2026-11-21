@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit2, Trash2, Star, Loader2, Sparkles, AlertTriangle, X 
 } from 'lucide-react';
@@ -71,11 +71,11 @@ export default function Vidlytics() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Sparkles className="text-[#0094eb]" size={24} /> Aparência
+            Aparência
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Gerencie os estilos visuais dos seus widgets.
@@ -231,5 +231,6 @@ export default function Vidlytics() {
     </div>
   );
 }
+
 
 
