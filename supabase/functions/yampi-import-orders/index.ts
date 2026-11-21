@@ -87,6 +87,57 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === 'import_customers') {
+      const span = Math.min(5, Math.max(1, Number(pages) || 2));
+      const first = Math.max(1, Number(from_page) || 1);
+      let next = first;
+      let totalPages = first + span;
+      const res = { processed: 0, created: 0, existing: 0, failed: 0, errors: [] as string[] };
+      const digits = (v: unknown) => String(v ?? '').replace(/\D/g, '');
+      const phoneOf = (v: any): string => {
+        if (v == null) return '';
+        if (typeof v === 'object') return String(v.data?.full_number ?? v.full_number ?? v.formated_number ?? v.number ?? '');
+        return String(v);
+      };
+      while (next < first + span && next <= totalPages) {
+        const j = await yampi(c, `customers?limit=100&page=${next}`);
+        totalPages = Number(j.meta?.pagination?.total_pages || 1);
+        for (const cu of (j.data || []) as any[]) {
+          res.processed++;
+          const email = String(cu.email ?? '').trim().toLowerCase();
+          let doc = digits(cu.cpf ?? cu.cnpj ?? cu.document ?? cu.generic_document ?? '');
+          if (doc.length >= 9 && doc.length <= 11) doc = doc.padStart(11, '0');
+          else if (doc.length >= 12 && doc.length <= 14) doc = doc.padStart(14, '0');
+          else doc = '';
+          const name = String(cu.name ?? [cu.first_name, cu.last_name].filter(Boolean).join(' ') ?? '').trim() || email;
+          const ref = name || String(cu.id ?? '?');
+          if (!email && !doc) { res.failed++; if (res.errors.length < 20) res.errors.push(`${ref}: sem e-mail e sem documento`); continue; }
+          if (!name) { res.failed++; if (res.errors.length < 20) res.errors.push(`${ref}: sem nome`); continue; }
+
+          let exists = false;
+          if (doc) {
+            const { data } = await admin.from('customers').select('id').eq('store_id', store_id).eq('document', doc).limit(1);
+            exists = !!data?.length;
+          }
+          if (!exists && email) {
+            const { data } = await admin.from('customers').select('id').eq('store_id', store_id).eq('email', email).limit(1);
+            exists = !!data?.length;
+          }
+          if (exists) { res.existing++; continue; }
+
+          const birthRaw = String(cu.birthday ?? cu.birth_date ?? '');
+          const birth = /^\d{4}-\d{2}-\d{2}/.test(birthRaw) ? birthRaw.slice(0, 10) : null;
+          const { error } = await admin.from('customers').insert({
+            store_id, name, email: email || null, phone: phoneOf(cu.phone) || phoneOf(cu.mobile) || null,
+            document: doc || null, birth_date: birth, source_platform: 'yampi',
+          });
+          if (error) { res.failed++; if (res.errors.length < 20) res.errors.push(`${ref}: ${error.message}`); }
+          else res.created++;
+        }
+        next++;
+      }
+      return json({ ...res, next_page: next, total_pages: totalPages, done: next > totalPages });
+    }
     if (action === 'import') {
       const span = Math.min(5, Math.max(1, Number(pages) || 3));
       const first = Math.max(1, Number(from_page) || 1);

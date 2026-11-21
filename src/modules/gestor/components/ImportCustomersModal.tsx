@@ -146,7 +146,11 @@ export default function ImportCustomersModal({ storeId, onClose, onDone }: Props
                 <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">E-commerce conectado</p>
                   <SllLogo src={PLATFORM.logo} alt={PLATFORM.label} className="mt-2" />
-                  <p className="mt-2 text-sm text-slate-500">{probe.customers != null ? ` cliente(s) encontrado(s) na plataforma.` : ` pedido(s) encontrado(s) na plataforma.`}</p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    {probe.customers != null
+                      ? `${probe.customers.toLocaleString('pt-BR')} cliente(s) encontrado(s) na plataforma.`
+                      : `${(probe.orders ?? 0).toLocaleString('pt-BR')} pedido(s) encontrado(s) na plataforma.`}
+                  </p>
                 </div>
               )}
               {probe.state === 'none' && (

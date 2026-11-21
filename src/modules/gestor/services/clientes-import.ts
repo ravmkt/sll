@@ -292,6 +292,20 @@ export async function importPlatformHistory(
       if (shouldStop()) { r.stopped = true; break; }
       page = d.next_page;
     }
+      if (!r.stopped) {
+        let cp = 1;
+        for (let guard = 0; guard < 50; guard++) {
+          const d = await invoke({ action: 'import_customers', store_id: storeId, from_page: cp, pages: 2 });
+          r.failed += d.failed;
+          for (const m of (d.errors || []) as string[]) {
+            const i = m.indexOf(': ');
+            r.errors.push(i > 0 ? { ref: `Cliente ${m.slice(0, i)}`, msg: m.slice(i + 2) } : { ref: 'Cliente', msg: m });
+          }
+          if (d.done) break;
+          if (shouldStop()) { r.stopped = true; break; }
+          cp = d.next_page;
+        }
+      }
   } catch (e) {
     r.fatal = (e as Error).message;
   }
