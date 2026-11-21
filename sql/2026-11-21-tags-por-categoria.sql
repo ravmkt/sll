@@ -14,6 +14,7 @@ $$;
 -- Estado do pedido para efeito de tag: paid | canceled | refunded | null
 create or replace function public.gestor_order_tag_state(p_payment text, p_status text, p_canceled timestamptz)
 returns text language sql stable as $$
+  -- Regra: reembolsado > cancelado (qualquer pagamento, inclusive failed) > pago > pendente (sem tag)
   select case
     when lower(coalesce(p_payment, '') || ' ' || coalesce(p_status, '')) ~ '(refund|reembols|estorn|chargeback)' then 'refunded'
     when p_canceled is not null or lower(coalesce(p_payment, '') || ' ' || coalesce(p_status, '')) ~ 'cancel' then 'canceled'
@@ -199,3 +200,9 @@ from public.orders group by 1, 2 order by 3 desc;
 select t as tag, count(*) as clientes
 from public.customers c, unnest(c.auto_tags) t
 group by 1 order by 2 desc;
+
+-- Conferencia 3: estado de tag por combinacao de pagamento/status (esperado: 70 canceled, 1 refunded, 42 paid, 55 pendentes sem tag)
+select payment_status, status,
+       public.gestor_order_tag_state(payment_status, status, canceled_at) as estado_tag,
+       count(*) as pedidos
+from public.orders group by 1, 2, 3 order by 4 desc;
