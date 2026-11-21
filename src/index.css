@@ -72,35 +72,43 @@ F:\RODRIGO VICENTE\DYAD\sll-hub\src\index.css
 }
 /* === SLL DARK LAYER (fim) === */
 
-/* SLL-DARK-V2: modo escuro com seletores de classe (leve) */
-.dark body{background-color:#020617;color:#cbd5e1}
-.dark .bg-white{background-color:#0f172a}
-.dark .bg-slate-50{background-color:#020617}
-.dark .bg-slate-100{background-color:#1e293b}
-.dark .bg-slate-200{background-color:#334155}
-.dark .hover\:bg-slate-50:hover{background-color:rgba(30,41,59,.6)}
-.dark .hover\:bg-slate-100:hover,.dark .hover\:bg-slate-200:hover{background-color:#334155}
-.dark .border-slate-100,.dark .border-slate-200{border-color:#1e293b}
-.dark .border-slate-300{border-color:#334155}
-.dark .text-slate-900,.dark .text-slate-800{color:#f8fafc}
-.dark .text-slate-700,.dark .text-slate-600{color:#cbd5e1}
-.dark .text-slate-500{color:#94a3b8}
-.dark .text-slate-400{color:#64748b}
-.dark .hover\:text-slate-600:hover,.dark .hover\:text-slate-700:hover{color:#e2e8f0}
-.dark input,.dark textarea,.dark select{background-color:#1e293b;color:#e2e8f0;border-color:#334155}
-.dark ::placeholder{color:#64748b}
-
-.dark .bg-\[\#0094eb\],.dark .bg-\[\#0088ff\],.dark .bg-blue-600,.dark .bg-blue-500,.dark .bg-sky-500{background-color:#fd8539}
-.dark .hover\:bg-\[\#0082d0\]:hover,.dark .hover\:bg-\[\#0077e6\]:hover,.dark .hover\:bg-\[\#007bc4\]:hover,.dark .hover\:bg-blue-700:hover,.dark .hover\:bg-sky-600:hover{background-color:#ea7424}
-.dark .text-\[\#0094eb\],.dark .text-\[\#0088ff\],.dark .text-blue-600,.dark .text-blue-500,.dark .text-sky-600,.dark .text-sky-500{color:#fd8539}
-.dark .hover\:text-\[\#0094eb\]:hover,.dark .hover\:text-blue-600:hover{color:#fd8539}
-.dark .bg-sky-50,.dark .bg-sky-100,.dark .bg-blue-50,.dark .bg-blue-100,.dark .bg-sky-50\/70{background-color:rgba(253,133,57,.15)}
-.dark .hover\:bg-sky-50:hover,.dark .hover\:bg-blue-50:hover{background-color:rgba(253,133,57,.2)}
-.dark .border-sky-100,.dark .border-sky-200,.dark .border-blue-100,.dark .border-blue-200,.dark .border-sky-200\/70{border-color:rgba(253,133,57,.3)}
-.dark .border-\[\#0094eb\],.dark .focus\:border-\[\#0094eb\]:focus{border-color:#fd8539}
-.dark .text-sky-900,.dark .text-blue-900{color:#fed7aa}
-
-.dark img[src$="sll-hub-logo-wide-transp.png"]{content:url(/assets/sll-hub-logo-wide-dark.png)}
 
 /* SLL-LOGO-CLUBE: altura fixa do logo Clube SLL */
 img[alt="Clube SLL"]{height:30px !important;width:auto !important;max-width:none !important;max-height:none !important}
+
+/* SLL-BRIDGE-LAYER-V1: tudo aqui le variaveis de src/styles/tokens.css. Nao coloque cor fixa neste bloco. */
+body{background-color:var(--sll-b-bg-50);color:var(--sll-b-tx-700)}
+.bg-white{background-color:var(--sll-b-bg-0)}
+.bg-slate-50{background-color:var(--sll-b-bg-50)}
+.bg-slate-100{background-color:var(--sll-b-bg-100)}
+.bg-slate-200{background-color:var(--sll-b-bg-200)}
+.hover\:bg-slate-50:hover{background-color:var(--sll-b-bg-hover)}
+.border-slate-100{border-color:var(--sll-b-bd-100)}
+.border-slate-200{border-color:var(--sll-b-bd-200)}
+.border-slate-300{border-color:var(--sll-b-bd-300)}
+.text-slate-900{color:var(--sll-b-tx-900)}
+.text-slate-800{color:var(--sll-b-tx-800)}
+.text-slate-700{color:var(--sll-b-tx-700)}
+.text-slate-600{color:var(--sll-b-tx-600)}
+.text-slate-500{color:var(--sll-b-tx-500)}
+.text-slate-400{color:var(--sll-b-tx-400)}
+
+.bg-\[\#0094eb\],.bg-\[\#0088ff\]{background-color:var(--sll-b-brand)}
+.hover\:bg-\[\#0082d0\]:hover,.hover\:bg-\[\#0077e6\]:hover,.hover\:bg-\[\#007bc4\]:hover{background-color:var(--sll-b-brand-hover)}
+.text-\[\#0094eb\],.text-\[\#0088ff\],.hover\:text-\[\#0094eb\]:hover{color:var(--sll-b-brand)}
+.border-\[\#0094eb\],.focus\:border-\[\#0094eb\]:focus{border-color:var(--sll-b-brand)}
+
+.dark .hover\:bg-slate-100:hover,.dark .hover\:bg-slate-200:hover{background-color:var(--sll-b-bg-200)}
+.dark .hover\:text-slate-600:hover,.dark .hover\:text-slate-700:hover{color:var(--sll-b-tx-hover)}
+.dark input,.dark textarea,.dark select{background-color:var(--sll-b-input-bg);color:var(--sll-b-input-text);border-color:var(--sll-b-input-border)}
+.dark ::placeholder{color:var(--sll-b-placeholder)}
+
+.dark .bg-blue-600,.dark .bg-blue-500,.dark .bg-sky-500{background-color:var(--sll-b-brand)}
+.dark .hover\:bg-blue-700:hover,.dark .hover\:bg-sky-600:hover{background-color:var(--sll-b-brand-hover)}
+.dark .text-blue-600,.dark .text-blue-500,.dark .text-sky-600,.dark .text-sky-500,.dark .hover\:text-blue-600:hover{color:var(--sll-b-brand)}
+.dark .bg-sky-50,.dark .bg-sky-100,.dark .bg-blue-50,.dark .bg-blue-100,.dark .bg-sky-50\/70{background-color:var(--sll-b-brand-soft)}
+.dark .hover\:bg-sky-50:hover,.dark .hover\:bg-blue-50:hover{background-color:var(--sll-b-brand-soft-hover)}
+.dark .border-sky-100,.dark .border-sky-200,.dark .border-blue-100,.dark .border-blue-200,.dark .border-sky-200\/70{border-color:var(--sll-b-brand-border)}
+.dark .text-sky-900,.dark .text-blue-900{color:var(--sll-b-brand-ink)}
+
+.dark img[src$="sll-hub-logo-wide-transp.png"]{content:url(/assets/sll-hub-logo-wide-dark.png)}

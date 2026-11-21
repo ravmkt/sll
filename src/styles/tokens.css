@@ -34,3 +34,59 @@
   --sll-warning: #fbbf24;
   --sll-danger: #f87171;
 }
+
+/* SLL-BRIDGE-V1: ponte entre as classes dos modulos e os tokens. EDITE AQUI para mudar o visual do hub inteiro. */
+:root{
+  --sll-b-bg-0:#ffffff;
+  --sll-b-bg-50:#f8fafc;
+  --sll-b-bg-100:#f1f5f9;
+  --sll-b-bg-200:#e2e8f0;
+  --sll-b-bg-hover:#f8fafc;
+  --sll-b-bd-100:#f1f5f9;
+  --sll-b-bd-200:#e2e8f0;
+  --sll-b-bd-300:#cbd5e1;
+  --sll-b-tx-900:#0f172a;
+  --sll-b-tx-800:#1e293b;
+  --sll-b-tx-700:#334155;
+  --sll-b-tx-600:#475569;
+  --sll-b-tx-500:#64748b;
+  --sll-b-tx-400:#94a3b8;
+  --sll-b-tx-hover:#334155;
+  --sll-b-brand:#0094eb;
+  --sll-b-brand-hover:#0082d0;
+  --sll-b-brand-soft:rgba(0,148,235,.10);
+  --sll-b-brand-soft-hover:rgba(0,148,235,.16);
+  --sll-b-brand-border:rgba(0,148,235,.30);
+  --sll-b-brand-ink:#0c4a6e;
+  --sll-b-input-bg:#ffffff;
+  --sll-b-input-text:#0f172a;
+  --sll-b-input-border:#cbd5e1;
+  --sll-b-placeholder:#94a3b8;
+}
+.dark{
+  --sll-b-bg-0:#0f172a;
+  --sll-b-bg-50:#020617;
+  --sll-b-bg-100:#1e293b;
+  --sll-b-bg-200:#334155;
+  --sll-b-bg-hover:rgba(30,41,59,.6);
+  --sll-b-bd-100:#1e293b;
+  --sll-b-bd-200:#1e293b;
+  --sll-b-bd-300:#334155;
+  --sll-b-tx-900:#f8fafc;
+  --sll-b-tx-800:#f8fafc;
+  --sll-b-tx-700:#cbd5e1;
+  --sll-b-tx-600:#cbd5e1;
+  --sll-b-tx-500:#94a3b8;
+  --sll-b-tx-400:#64748b;
+  --sll-b-tx-hover:#e2e8f0;
+  --sll-b-brand:#fd8539;
+  --sll-b-brand-hover:#ea7424;
+  --sll-b-brand-soft:rgba(253,133,57,.15);
+  --sll-b-brand-soft-hover:rgba(253,133,57,.20);
+  --sll-b-brand-border:rgba(253,133,57,.30);
+  --sll-b-brand-ink:#fed7aa;
+  --sll-b-input-bg:#1e293b;
+  --sll-b-input-text:#e2e8f0;
+  --sll-b-input-border:#334155;
+  --sll-b-placeholder:#64748b;
+}
