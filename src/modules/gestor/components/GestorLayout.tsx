@@ -211,7 +211,7 @@ function GestorLayoutInner() {
         >
           <div className="flex h-24 flex-col items-center justify-center border-b border-slate-200 p-4">
             {isExpanded ? (
-              <img src="/assets/gestor-logo-wide.png" alt="Gestor" className="h-14 w-auto max-w-full object-contain" />
+              <img src="/assets/gestor-logo-wide-transp.png" alt="Gestor" className="h-14 w-auto max-w-full object-contain" />
             ) : (
               <img src="/assets/gestor-logo-ico.png" alt="Gestor" className="h-11 w-11 object-contain" />
             )}

@@ -58,8 +58,8 @@ const LEVELS = [
   { n: 100, name: 'Platinum' },
 ];
 
-const CLUB_LOGO = '/assets/clube-sll-logo-wide.png';
-const NOAH_LOGO = '/assets/dica-do-noah-logo-wide.png';
+const CLUB_LOGO = '/assets/clube-sll-logo-wide-transp.png';
+const NOAH_LOGO = '/assets/dica-do-noah-logo-wide-transp.png';
 const METRICS_ROUTE = '/dashboard/metricas';
 const TIPS_ROUTE = '/dashboard/dicas';
 const PRODUCTS_ROUTE = '/dashboard/produtos';

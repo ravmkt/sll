@@ -58,7 +58,7 @@ export function VidlyticsSidebar({
         <div className="flex justify-center items-center">
           {isExpanded ? (
             <img
-              src="/assets/vidlytics-logo-wide.png"
+              src="/assets/vidlytics-logo-wide-transp.png"
               alt="Vidlytics"
               className="h-14 w-auto max-w-full object-contain"
               onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}

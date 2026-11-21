@@ -32,7 +32,7 @@ export function PulseSidebar({
     >
       <div className="flex h-24 items-center justify-center gap-3 border-b border-slate-200 p-4">
         {isExpanded ? (
-              <img src="/assets/pulse-logo-wide.png" alt="Pulse" className="h-14 w-auto max-w-full object-contain" />
+              <img src="/assets/pulse-logo-wide-transp.png" alt="Pulse" className="h-14 w-auto max-w-full object-contain" />
             ) : (
               <img src="/assets/pulse-logo-ico.png" alt="Pulse" className="h-11 w-11 object-contain" />
             )}

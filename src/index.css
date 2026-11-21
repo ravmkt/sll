@@ -11,7 +11,7 @@
 
 @layer base {
   body {
-    @apply bg-light-bg text-slate-900 transition-colors duration-300;
+    @apply bg-light-bg text-slate-900;
   }
   .dark body {
     @apply bg-dark-bg text-slate-100;
@@ -62,73 +62,42 @@ F:\RODRIGO VICENTE\DYAD\sll-hub\src\index.css
 :root.dark { color-scheme: dark; }
 
 :where(.dark) {
-  /* Fundos */
-  .min-h-screen.bg-slate-50:not([class*="dark:bg-"]) { background-color: #020617; }
-  .bg-white:not([class*="dark:bg-"]) { background-color: #0f172a; }
-  .bg-slate-50:not([class*="dark:bg-"]),
-  .bg-slate-100:not([class*="dark:bg-"]) { background-color: #1e293b; }
-  .bg-slate-50\/50:not([class*="dark:bg-"]),
-  .bg-slate-50\/40:not([class*="dark:bg-"]) { background-color: rgba(30, 41, 59, 0.5); }
-  .bg-emerald-50:not([class*="dark:bg-"]) { background-color: rgba(16, 185, 129, 0.15); }
-  .bg-red-50:not([class*="dark:bg-"]) { background-color: rgba(239, 68, 68, 0.15); }
-  .bg-amber-50:not([class*="dark:bg-"]) { background-color: rgba(245, 158, 11, 0.15); }
   .from-white, .from-slate-50 { --tw-gradient-from: #0f172a; }
   .to-white, .to-slate-50 { --tw-gradient-to: #0f172a; }
-
-  /* Azul vira laranja: fundos */
-  .bg-blue-50:not([class*="dark:bg-"]),
-  .bg-sky-50:not([class*="dark:bg-"]),
-  .bg-\[\#0094eb\]\/10:not([class*="dark:bg-"]) { background-color: rgba(253, 133, 57, 0.15); }
-  .bg-\[\#0094eb\]:not([class*="dark:bg-"]),
-  .bg-\[\#0088ff\]:not([class*="dark:bg-"]) { background-color: #fd8539; }
-
-  /* Textos */
-  .text-slate-900:not([class*="dark:text-"]),
-  .text-slate-800:not([class*="dark:text-"]) { color: #f8fafc; }
-  .text-slate-700:not([class*="dark:text-"]) { color: #cbd5e1; }
-  .text-slate-600:not([class*="dark:text-"]),
-  .text-slate-500:not([class*="dark:text-"]),
-  .text-gray-600:not([class*="dark:text-"]) { color: #94a3b8; }
-  .text-slate-400:not([class*="dark:text-"]),
-  .text-gray-400:not([class*="dark:text-"]) { color: #64748b; }
-  .text-emerald-600:not([class*="dark:text-"]) { color: #34d399; }
-  .text-red-600:not([class*="dark:text-"]) { color: #f87171; }
-
-  /* Azul vira laranja: textos */
-  .text-\[\#0094eb\]:not([class*="dark:text-"]),
-  .text-\[\#0088ff\]:not([class*="dark:text-"]),
-  .text-blue-600:not([class*="dark:text-"]),
-  .text-sky-600:not([class*="dark:text-"]),
-  .text-sky-900:not([class*="dark:text-"]) { color: #fd8539; }
-
-  /* Bordas */
-  .border-slate-200:not([class*="dark:border-"]),
-  .border-slate-200\/80:not([class*="dark:border-"]),
-  .border-slate-100:not([class*="dark:border-"]),
-  .border-gray-200:not([class*="dark:border-"]) { border-color: #1e293b; }
-  .border-slate-300:not([class*="dark:border-"]),
-  .border-gray-300:not([class*="dark:border-"]) { border-color: #334155; }
-  .border-sky-100:not([class*="dark:border-"]),
-  .border-sky-200:not([class*="dark:border-"]),
-  .border-sky-200\/70:not([class*="dark:border-"]) { border-color: rgba(253, 133, 57, 0.3); }
-  .border-\[\#0094eb\]:not([class*="dark:border-"]) { border-color: #fd8539; }
   .divide-slate-100 > :not(:last-child),
   .divide-slate-200 > :not(:last-child) { border-color: #1e293b; }
-
-  /* Hover */
-  .hover\:bg-slate-50:hover:not([class*="dark:hover:bg-"]),
-  .hover\:bg-slate-100:hover:not([class*="dark:hover:bg-"]),
-  .hover\:bg-slate-200:hover:not([class*="dark:hover:bg-"]) { background-color: #334155; }
-  .hover\:bg-sky-50:hover:not([class*="dark:hover:bg-"]),
-  .hover\:bg-blue-50:hover:not([class*="dark:hover:bg-"]),
-  .hover\:bg-\[\#0094eb\]\/10:hover:not([class*="dark:hover:bg-"]) { background-color: rgba(253, 133, 57, 0.15); }
-  .hover\:bg-\[\#0082d0\]:hover:not([class*="dark:hover:bg-"]),
-  .hover\:bg-\[\#0077e6\]:hover:not([class*="dark:hover:bg-"]),
-  .hover\:bg-\[\#007bc4\]:hover:not([class*="dark:hover:bg-"]) { background-color: #ea7424; }
-  .hover\:text-\[\#0094eb\]:hover:not([class*="dark:hover:text-"]),
-  .hover\:text-blue-600:hover:not([class*="dark:hover:text-"]) { color: #fd8539; }
   .group:hover .group-hover\:text-\[\#0094eb\] { color: #fd8539; }
   .hover\:border-\[\#0094eb\]:hover { border-color: #fd8539; }
   .focus\:border-\[\#0094eb\]:focus { border-color: #fd8539; }
 }
 /* === SLL DARK LAYER (fim) === */
+
+/* SLL-DARK-V2: modo escuro com seletores de classe (leve) */
+.dark body{background-color:#020617;color:#cbd5e1}
+.dark .bg-white{background-color:#0f172a}
+.dark .bg-slate-50{background-color:#020617}
+.dark .bg-slate-100{background-color:#1e293b}
+.dark .bg-slate-200{background-color:#334155}
+.dark .hover\:bg-slate-50:hover{background-color:rgba(30,41,59,.6)}
+.dark .hover\:bg-slate-100:hover,.dark .hover\:bg-slate-200:hover{background-color:#334155}
+.dark .border-slate-100,.dark .border-slate-200{border-color:#1e293b}
+.dark .border-slate-300{border-color:#334155}
+.dark .text-slate-900,.dark .text-slate-800{color:#f8fafc}
+.dark .text-slate-700,.dark .text-slate-600{color:#cbd5e1}
+.dark .text-slate-500{color:#94a3b8}
+.dark .text-slate-400{color:#64748b}
+.dark .hover\:text-slate-600:hover,.dark .hover\:text-slate-700:hover{color:#e2e8f0}
+.dark input,.dark textarea,.dark select{background-color:#1e293b;color:#e2e8f0;border-color:#334155}
+.dark ::placeholder{color:#64748b}
+
+.dark .bg-\[\#0094eb\],.dark .bg-\[\#0088ff\],.dark .bg-blue-600,.dark .bg-blue-500,.dark .bg-sky-500{background-color:#fd8539}
+.dark .hover\:bg-\[\#0082d0\]:hover,.dark .hover\:bg-\[\#0077e6\]:hover,.dark .hover\:bg-\[\#007bc4\]:hover,.dark .hover\:bg-blue-700:hover,.dark .hover\:bg-sky-600:hover{background-color:#ea7424}
+.dark .text-\[\#0094eb\],.dark .text-\[\#0088ff\],.dark .text-blue-600,.dark .text-blue-500,.dark .text-sky-600,.dark .text-sky-500{color:#fd8539}
+.dark .hover\:text-\[\#0094eb\]:hover,.dark .hover\:text-blue-600:hover{color:#fd8539}
+.dark .bg-sky-50,.dark .bg-sky-100,.dark .bg-blue-50,.dark .bg-blue-100,.dark .bg-sky-50\/70{background-color:rgba(253,133,57,.15)}
+.dark .hover\:bg-sky-50:hover,.dark .hover\:bg-blue-50:hover{background-color:rgba(253,133,57,.2)}
+.dark .border-sky-100,.dark .border-sky-200,.dark .border-blue-100,.dark .border-blue-200,.dark .border-sky-200\/70{border-color:rgba(253,133,57,.3)}
+.dark .border-\[\#0094eb\],.dark .focus\:border-\[\#0094eb\]:focus{border-color:#fd8539}
+.dark .text-sky-900,.dark .text-blue-900{color:#fed7aa}
+
+.dark img[src$="sll-hub-logo-wide-transp.png"]{content:url(/assets/sll-hub-logo-wide-dark.png)}

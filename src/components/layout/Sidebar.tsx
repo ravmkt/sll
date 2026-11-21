@@ -108,7 +108,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       <div className="p-4 flex flex-col gap-3 h-24 justify-center border-b border-slate-200 dark:border-slate-800">
         <div className="flex justify-center items-center">
           {isExpanded ? (
-            <img src="/assets/sll-hub-logo-wide.png" alt="SLL Hub" className="h-14 w-auto max-w-full object-contain" />
+            <img src="/assets/sll-hub-logo-wide-transp.png" alt="SLL Hub" className="h-14 w-auto max-w-full object-contain" />
           ) : (
             <img src="/assets/sll-hub-logo-ico.png" alt="SLL Hub" className="h-11 w-11 object-contain" />
           )}

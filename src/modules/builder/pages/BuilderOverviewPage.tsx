@@ -177,7 +177,7 @@ export default function BuilderOverviewPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <img src="/assets/dica-do-noah-logo-wide.png" alt="Dica do Noah" className="h-auto w-[180px] shrink-0 object-contain object-left" />
+          <img src="/assets/dica-do-noah-logo-wide-transp.png" alt="Dica do Noah" className="h-auto w-[180px] shrink-0 object-contain object-left" />
           <div className="flex-1">
             <p className="text-sm font-bold text-slate-800">{noah.title}</p>
             <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{noah.text}</p>
@@ -189,7 +189,7 @@ export default function BuilderOverviewPage() {
 
         <div className="flex h-full flex-col justify-between space-y-4 rounded-2xl border border-[#fd8539]/60 bg-white p-5 shadow-sm transition-all hover:border-[#fd8539]">
           <div className="flex items-center justify-between">
-            <img src="/assets/clube-sll-logo-wide.png" alt="Clube SLL" className="h-auto w-[140px] shrink-0 object-contain object-left" />
+            <img src="/assets/clube-sll-logo-wide-transp.png" alt="Clube SLL" className="h-auto w-[140px] shrink-0 object-contain object-left" />
             <Share2 className="h-4 w-4 text-slate-400" />
           </div>
           <p className="text-xs leading-relaxed text-slate-500">Receba comissões e benefícios ao indicar o Builder para outros lojistas.</p>

@@ -3,7 +3,7 @@ import { ArrowLeft, LayoutGrid, ListChecks, LogOut, PanelLeftClose, PanelLeftOpe
 import { useAuth } from '@/contexts/AuthContext';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 
-const LOGO_WIDE = '/assets/radar-logo-wide.png';
+const LOGO_WIDE = '/assets/radar-logo-wide-transp.png';
 const LOGO_ICO = '/assets/radar-logo-ico.png';
 
 const ITEMS = [

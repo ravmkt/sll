@@ -5,7 +5,7 @@ import { ArrowLeft, LayoutTemplate, Users, LogOut, PanelLeftClose, PanelLeftOpen
 import { useAuth } from '@/contexts/AuthContext';
 import SidebarTourSlot from '@/components/layout/SidebarTourSlot';
 
-const LOGO_WIDE = '/assets/builder-logo-wide.png';
+const LOGO_WIDE = '/assets/builder-logo-wide-transp.png';
 const LOGO_ICO = '/assets/builder-sell-logo-ico.png';
 
 type Item = { name: string; icon: ElementType; path: string; end: boolean };

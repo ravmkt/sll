@@ -59,7 +59,7 @@ export function LiveSidebar({ activeTab, onTabChange, isCollapsed, onToggle }: L
       <div className="p-4 flex flex-col gap-3 h-24 justify-center border-b border-slate-200 dark:border-slate-800">
         <div className="flex justify-center items-center">
           {isExpanded ? (
-            <img src="/assets/stream-sell-logo-wide.png" alt="Stream Sell" className="h-14 w-auto max-w-full object-contain" />
+            <img src="/assets/stream-sell-logo-wide-transp.png" alt="Stream Sell" className="h-14 w-auto max-w-full object-contain" />
           ) : (
             <img src="/assets/stream-sell-logo-ico.png" alt="Stream Sell" className="h-11 w-11 object-contain" />
           )}
