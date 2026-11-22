@@ -45,7 +45,7 @@ function Info({ label, children, wide }: { label: string; children: ReactNode; w
 
 const PRODUCT_COLS: SllColumn<CustomerProduct>[] = [
   {
-    key: 'p', header: 'Produto',
+    key: 'p', header: 'Produto', align: 'left',
     render: (p) => (
       <>
         <span className="font-bold text-slate-800 dark:text-white">{p.name}</span>

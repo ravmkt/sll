@@ -166,12 +166,12 @@ export default function OrdersPage() {
         </label>
       ),
     },
-    { key: 'num', header: H('Pedido'), render: (r) => <span className="font-bold text-slate-800 dark:text-white">#{pick(r, 'number', 'external_id')}</span> },
-    { key: 'data', header: H('Data'), render: (r) => <span className="text-slate-500">{fmtDate(pick(r, 'created_at', 'ordered_at'))}</span> },
-    { key: 'cli', header: H('Cliente'), render: (r) => <span className="text-sm font-semibold text-slate-800 dark:text-white">{customerName(r, r.customer)}</span> },
+    { key: 'num', header: H('Pedido'), align: 'center', render: (r) => <span className="font-bold text-slate-800 dark:text-white">#{pick(r, 'number', 'external_id')}</span> },
+    { key: 'data', header: H('Data'), align: 'center', render: (r) => <span className="text-slate-500">{fmtDate(pick(r, 'created_at', 'ordered_at'))}</span> },
+    { key: 'cli', header: H('Cliente'), align: 'left', render: (r) => <span className="text-sm font-semibold text-slate-800 dark:text-white">{customerName(r, r.customer)}</span> },
     { key: 'canal', header: H('Canal'), align: 'center', className: 'w-20', render: (r) => <ChannelCell value={r.channel} /> },
-    { key: 'status', header: H('Status'), render: (r) => <OrderStatusBadge status={fulfillmentOf(r)} /> },
-    { key: 'total', header: H('Total'), align: 'right', render: (r) => <span className="font-mono font-bold">{brl(r.total)}</span> },
+    { key: 'status', header: H('Status'), align: 'center', render: (r) => <OrderStatusBadge status={fulfillmentOf(r)} /> },
+    { key: 'total', header: H('Total'), align: 'center', render: (r) => <span className="font-mono font-bold">{brl(r.total)}</span> },
     {
       key: 'acoes', header: H('Ações'), align: 'center', className: 'w-44',
       render: (r) => (

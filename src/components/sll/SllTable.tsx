@@ -67,7 +67,7 @@ export function SllTable<T>({ columns, rows, rowKey, onRowClick, loading, empty 
                 className={cn('align-top transition-colors hover:bg-slate-50 dark:hover:bg-slate-800', onRowClick && 'cursor-pointer')}
               >
                 {columns.map((c) => (
-                  <td key={c.key} className={cn('px-3 py-2.5', ALIGN[c.align ?? 'left'], c.className)}>{c.render(r)}</td>
+                  <td key={c.key} className={cn('px-3 py-2.5', ALIGN[c.align ?? 'center'], c.className)}>{c.render(r)}</td>
                 ))}
               </tr>
             ))}
