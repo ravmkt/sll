@@ -18,10 +18,11 @@ import { pushStockToYampi } from '../services/gestor';
 import { listChannelLinks } from '../services/vinculos';
 import { CHANNEL_META, listActiveChannels } from '../services/canais';
 import type { ChannelKey } from '../services/canais';
-import ChannelIcon from '../components/ChannelIcon';
+import ChannelFavicon from '../components/ChannelFavicon';
 import HistoryDialog from '../components/HistoryDialog';
-import SyncChannelModal from '../components/SyncChannelModal';
-import type { SyncJob } from '../components/SyncChannelModal';
+import StockSyncModal from '../components/StockSyncModal';
+import type { SyncProduct } from '../components/StockSyncModal';
+
 import ChannelsModal from '../components/ChannelsModal';
 import TransferDialog from '../components/TransferDialog';
 import { ChannelsCell, TotalCell } from '../components/ChannelChips';
@@ -108,7 +109,7 @@ export default function StockPage() {
   const [impIgnored, setImpIgnored] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
-  const [syncJobs, setSyncJobs] = useState<SyncJob[]>([]);
+  const [syncProducts, setSyncProducts] = useState<SyncProduct[]>([]);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [channelsOpen, setChannelsOpen] = useState(false);
   const [transferFor, setTransferFor] = useState<{ id: string; label: string; sku: string } | null>(null);
@@ -455,10 +456,14 @@ export default function StockPage() {
       const syncIds = (ids: string[]) => {
         if (pending.length > 0) { showError('Salve ou descarte as alterações pendentes antes de sincronizar.'); return; }
         const pick = new Set(ids);
-        const jobs: SyncJob[] = items.filter((i) => pick.has(i.product.id)).flatMap((i) =>
-          i.variants.map((v) => ({ sku: v.sku, stock: v.stock, label: i.multi ? `${i.product.name} · ${variantLabel(v)}` : i.product.name })));
-        if (!jobs.length) { showError('Selecione ao menos um produto na lista.'); return; }
-        setSyncJobs(jobs);
+        const list: SyncProduct[] = items.filter((i) => pick.has(i.product.id)).map((i) => ({
+          id: i.product.id,
+          name: i.product.name,
+          channels: activeCh.filter((c) => hasCh(i.product.id, c)),
+          variants: i.variants.map((v) => ({ id: v.id, sku: v.sku, stock: v.stock, label: i.multi ? variantLabel(v) : '' })),
+        }));
+        if (!list.length) { showError('Marque ao menos um produto na lista para sincronizar.'); return; }
+        setSyncProducts(list);
         setSyncOpen(true);
       };
       const syncSelected = () => syncIds(Array.from(sel));
@@ -479,7 +484,7 @@ export default function StockPage() {
           <>{allow('estoque','editar') && (<button type="button" onClick={() => setImpOpen(true)} className={btn}><Upload size={15} className="text-[color:var(--sll-b-brand)]" /> Importar planilha</button>)}</>
           {impOpen && <StockImportModal onClose={() => setImpOpen(false)} onPick={async (file) => { setImpOpen(false); await onFile(file); }} />}
           <button type="button" onClick={() => setHistoryOpen(true)} className={btn}><History size={15} className="text-[color:var(--sll-b-brand)]" /> Histórico de movimentações</button>
-          <button type="button" onClick={() => syncSelected()} className={btn}><RefreshCw size={15} className="text-[color:var(--sll-b-brand)]" /> Sincronizar canais</button>
+          <button type="button" onClick={() => syncSelected()} className={btn}><RefreshCw size={15} className="text-[color:var(--sll-b-brand)]" /> Sincronizar estoque</button>
               <button type="button" onClick={() => setChannelsOpen(true)} className={btn}><Settings2 size={15} className="text-[color:var(--sll-b-brand)]" /> Canais e depósitos</button>
         </div>
       </div>
@@ -568,13 +573,13 @@ export default function StockPage() {
                         </td>
                         <td className="px-4 py-2.5">
                               <div className="flex flex-wrap items-center justify-center gap-1">
-                                {activeCh.filter((c) => hasCh(it.product.id, c)).map((c) => <ChannelIcon key={c} channel={c} className="h-5 w-5 text-[10px]" />)}
+                                {activeCh.filter((c) => hasCh(it.product.id, c)).map((c) => <ChannelFavicon key={c} channel={c} size={20} />)}
                                 {!activeCh.some((c) => hasCh(it.product.id, c)) && <span className="text-xs text-slate-300">—</span>}
                               </div>
                             </td>
                             <td className="px-4 py-2.5 text-right">
                           {allow('estoque','editar') && (
-                                <button type="button" title="Sincronizar este produto com o canal" onClick={() => syncIds([it.product.id])} className="mr-1 cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800">
+                                <button type="button" title="Sincronizar o estoque deste produto" onClick={() => syncIds([it.product.id])} className="mr-1 cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800">
                                   <RefreshCw size={15} />
                                 </button>
                               )}
@@ -638,12 +643,12 @@ export default function StockPage() {
       </div>
 
       <HistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} />
-      {syncOpen && storeId && <SyncChannelModal storeId={storeId} jobs={syncJobs} onClose={() => setSyncOpen(false)} />}
+      {syncOpen && storeId && <StockSyncModal storeId={storeId} products={syncProducts} activeChannels={activeCh} onClose={() => setSyncOpen(false)} onDone={() => void reload()} />}
           {sel.size > 0 && (
             <div className={cn('fixed left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-xl dark:border-slate-700 dark:bg-[#1a1f2c]', pending.length > 0 ? 'bottom-24' : 'bottom-4')}>
               <span className="text-sm font-semibold">{sel.size} selecionado(s)</span>
               <button type="button" onClick={() => setSel(new Set())} className="cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold dark:border-slate-700">Limpar</button>
-              <button type="button" onClick={syncSelected} className={primaryBtn}>Sincronizar {sel.size}</button>
+              <button type="button" onClick={syncSelected} className={primaryBtn}>Sincronizar estoque ({sel.size})</button>
             </div>
           )}
       {channelsOpen && storeId && <ChannelsModal storeId={storeId} onClose={() => setChannelsOpen(false)} onChanged={() => { void refreshAvail(); void refreshActive(); }} />}
