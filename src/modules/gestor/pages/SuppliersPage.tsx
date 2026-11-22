@@ -55,7 +55,7 @@ export default function SuppliersPage() {
       if (status === 'active' && !s.active) return false;
       if (status === 'inactive' && s.active) return false;
       if (!q) return true;
-      const text = norm([s.name, s.contact_name, s.email, s.payment_terms].filter(Boolean).join(' '));
+      const text = norm([s.name, s.legal_name, s.contact_name, s.email, s.payment_terms, s.city].filter(Boolean).join(' '));
       if (text.includes(q)) return true;
       return qd.length > 0 && (`${s.document ?? ''}${s.phone ?? ''}`.replace(/\D/g, '').includes(qd));
     });
@@ -93,11 +93,12 @@ export default function SuppliersPage() {
       render: (s) => (
         <>
           <p className={`text-sm font-bold ${s.active ? 'text-slate-800 dark:text-white' : 'text-slate-400 line-through'}`}>{s.name}</p>
-          <p className="text-[11px] text-slate-400">{s.email ?? (s.phone ? fmtPhone(s.phone) : '-')}</p>
+          <p className="text-[11px] text-slate-400">{s.legal_name && s.legal_name !== s.name ? s.legal_name : (s.email ?? (s.phone ? fmtPhone(s.phone) : '-'))}</p>
         </>
       ),
     },
     { key: 'doc', sortKey: 'document', header: 'CNPJ / CPF', render: (s) => <span className="font-mono text-slate-500">{fmtDoc(s.document)}</span> },
+    { key: 'city', header: 'Cidade / UF', render: (s) => <span className="text-slate-500">{[s.city, s.state].filter(Boolean).join('/') || '-'}</span> },
     {
       key: 'contact', sortKey: 'contact_name', header: 'Contato',
       render: (s) => (
