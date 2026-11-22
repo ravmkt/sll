@@ -110,3 +110,10 @@ export async function listLowStock(storeId: string): Promise<LowStockRow[]> {
   if (error) throw error;
   return (data || []) as LowStockRow[];
 }
+
+/** Exclui o fornecedor. Devolve quantos vinculos com produtos foram removidos. */
+export async function deleteSupplier(storeId: string, id: string): Promise<number> {
+  const { data, error } = await sb.rpc('gestor_supplier_delete', { p_store: storeId, p_id: id });
+  if (error) throw error;
+  return Number(data ?? 0);
+}

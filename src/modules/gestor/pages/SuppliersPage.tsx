@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Mail, MessageCircle, Pencil, Plus } from 'lucide-react';
+import { Mail, MessageCircle, Pencil, Plus , Trash2 } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { SllField, SllFilterBar, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllPager, SllTable } from '@/components/sll/SllTable';
 import type { SllColumn } from '@/components/sll/SllTable';
-import { sllBtnPrimary } from '@/components/sll/SllModal';
-import { showError } from '@/utils/toast';
+import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
+import { showError, showSuccess } from '@/utils/toast';
 import SupplierDialog from '../components/SupplierDialog';
-import { listSuppliers, saveSupplier } from '../services/cadastros';
+import { listSuppliers, saveSupplier , deleteSupplier } from '../services/cadastros';
 import type { Supplier } from '../services/cadastros';
 import {
   compareSuppliers, defaultSupplierDir, fmtDoc, fmtPhone, norm, toForm, whatsappUrl,
@@ -37,6 +37,8 @@ export default function SuppliersPage() {
   const [pageSize, setPageSize] = useState(25);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [removing, setRemoving] = useState<Supplier | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
@@ -87,6 +89,21 @@ export default function SuppliersPage() {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!storeId || !removing) return;
+    setDeleting(true);
+    try {
+      const links = await deleteSupplier(storeId, removing.id);
+      setAll((p) => p.filter((x) => x.id !== removing.id));
+      showSuccess(links > 0 ? 'Fornecedor excluído. ' + links + ' vínculo(s) com produtos removido(s).' : 'Fornecedor excluído.');
+      setRemoving(null);
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const columns: SllColumn<Supplier>[] = [
     {
       key: 'name', sortKey: 'name', header: 'Fornecedor',
@@ -134,7 +151,7 @@ export default function SuppliersPage() {
       ),
     },
     {
-      key: 'acoes', header: 'Ações', align: 'center', className: 'w-32',
+      key: 'acoes', header: 'Ações', align: 'center', className: 'w-40',
       render: (s) => {
         const wa = whatsappUrl(s.phone);
         return (
@@ -142,6 +159,15 @@ export default function SuppliersPage() {
             {canEdit && (
               <button type="button" title="Editar" aria-label={'Editar ' + s.name} onClick={() => open(s)} className={actionBtn}><Pencil size={15} /></button>
             )}
+                {canEdit && (
+                  <button
+                    type="button"
+                    title="Excluir"
+                    aria-label={'Excluir ' + s.name}
+                    onClick={() => setRemoving(s)}
+                    className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-400"
+                  ><Trash2 size={15} /></button>
+                )}
             {wa && (
               <a href={wa} target="_blank" rel="noreferrer" title="WhatsApp" aria-label={'WhatsApp de ' + s.name} className={actionBtn}><MessageCircle size={15} /></a>
             )}
@@ -205,7 +231,34 @@ export default function SuppliersPage() {
         <SllPager page={safePage} pages={pages} total={total} noun="fornecedor(es)" onPage={setPage} />
       </div>
 
-      {storeId && (
+      <SllModal
+            open={!!removing}
+            onOpenChange={(o) => { if (!o && !deleting) setRemoving(null); }}
+            title="Excluir fornecedor"
+            size="md"
+            footer={
+              <>
+                <button type="button" disabled={deleting} onClick={() => setRemoving(null)} className={sllBtnGhost}>Cancelar</button>
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => void confirmDelete()}
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Trash2 size={16} /> {deleting ? 'Excluindo...' : 'Excluir'}
+                </button>
+              </>
+            }
+          >
+            <p className="text-sm text-slate-700 dark:text-slate-200">
+              Excluir <strong>{removing?.name}</strong>? Esta ação não pode ser desfeita.
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Os produtos ligados a este fornecedor continuam existindo, mas perdem o vínculo com ele. Se só quiser parar de usar, prefira desativar pelo botão Status.
+            </p>
+          </SllModal>
+
+          {storeId && (
         <SupplierDialog
           storeId={storeId}
           supplier={editing}
