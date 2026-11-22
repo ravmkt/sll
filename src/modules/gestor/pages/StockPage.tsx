@@ -474,12 +474,12 @@ export default function StockPage() {
 
   return (
     <div className="space-y-5 pb-24">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col items-start flex-col gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Estoque</h1>
           
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap justify-start gap-2">
           <>{allow('estoque','exportar') && (<button type="button" onClick={() => void exportXlsx()} className={btn}><Download size={15} className="text-[color:var(--sll-b-brand)]" /> Baixar planilha</button>)}</>
           <>{allow('estoque','editar') && (<button type="button" onClick={() => setImpOpen(true)} className={btn}><Upload size={15} className="text-[color:var(--sll-b-brand)]" /> Importar planilha</button>)}</>
           {impOpen && <StockImportModal onClose={() => setImpOpen(false)} onPick={async (file) => { setImpOpen(false); await onFile(file); }} />}
