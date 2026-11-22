@@ -22,7 +22,7 @@ const TYPES = {
 
 const LOGO_EXTS = ['svg', 'png', 'webp'];
 
-function Badge({ c }: { c: string }) {
+function Badge({ c, wide }: { c: string; wide?: boolean }) {
   const [i, setI] = useState(0);
   const m = (CHANNEL_META as unknown as Record<string, { color: string; letter: string }>)[c];
   if (i < LOGO_EXTS.length) {
@@ -31,13 +31,16 @@ function Badge({ c }: { c: string }) {
         src={`/assets/platforms/${c}.${LOGO_EXTS[i]}`}
         alt={channelLabel(c)}
         onError={() => setI(i + 1)}
-        className="h-9 w-9 shrink-0 rounded-lg object-contain"
+        className={wide ? 'h-10 max-w-[180px] shrink-0 object-contain' : 'h-9 w-9 shrink-0 rounded-lg object-contain'}
       />
     );
   }
   return (
-    <span style={m ? { backgroundColor: m.color } : undefined} className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold text-white ${m ? '' : 'bg-slate-400'}`}>
-      {m?.letter ?? c.charAt(0).toUpperCase()}
+    <span className="flex items-center gap-3">
+      <span style={m ? { backgroundColor: m.color } : undefined} className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold text-white ${m ? '' : 'bg-slate-400'}`}>
+        {m?.letter ?? c.charAt(0).toUpperCase()}
+      </span>
+      {wide && <span className="text-sm font-bold">{channelLabel(c)}</span>}
     </span>
   );
 }
@@ -152,11 +155,8 @@ export default function CategoryChannelsDialog({ storeId, onChanged, onClose }: 
               <div className="grid gap-3 sm:grid-cols-2">
                 {typeChannels.map((c) => (
                   <button key={c} type="button" onClick={() => { setChannel(c); setStep('map'); }} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 text-left hover:border-[color:var(--sll-b-brand)] dark:border-slate-700">
-                    <Badge c={c} />
-                    <span className="flex-1">
-                      <span className="block text-sm font-bold">{channelLabel(c)}</span>
-                      <span className="block text-[11px] text-slate-400">{rows.filter((r) => r.channel === c && !r.category_id).length} sem vínculo</span>
-                    </span>
+                    <Badge c={c} wide />
+                    <span className="flex-1" />
                     <ChevronRight size={16} className="text-slate-400" />
                   </button>
                 ))}
