@@ -401,11 +401,19 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                   <Trash2 size={14} /> Excluir {selected.size}
                 </button>)}</>
               )}
-              {selected.size > 0 && perms.edit && (
-                    <button type="button" onClick={() => setBulkChOpen(true)} className={btnGhost}>
-                      <Globe size={14} className="text-[color:var(--sll-b-brand)]" /> Canais ({selected.size})
-                    </button>
-                  )}
+              {perms.edit && (
+                        <button
+                          type="button"
+                          title="Marque os produtos na lista e vincule todos de uma vez"
+                          onClick={() => {
+                            if (selected.size === 0) { showError('Marque os produtos na lista (caixinha à esquerda) e clique de novo.'); return; }
+                            setBulkChOpen(true);
+                          }}
+                          className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[color:var(--sll-b-brand)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[color:var(--sll-b-brand-hover)]"
+                        >
+                          <Globe size={14} /> Vincular a canais{selected.size > 0 ? ' (' + selected.size + ')' : ''}
+                        </button>
+                      )}
                   <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
                 {viewBtn('parents', List, 'Só produtos (variações recolhidas)')}
                 {viewBtn('expanded', ListTree, 'Produtos com variações expandidas')}
@@ -438,7 +446,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                     <Th k="category" label="Categoria" cls="text-center" />
                         <th className="px-4 py-3 text-center">Canais</th>
                     <Th k="active" label="Status" cls="text-center" />
-                    <th className="w-28 px-4 py-3 text-center">Ações</th>
+                    <th className="w-36 px-4 py-3 text-center">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -503,7 +511,8 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                                   {syncingId === p.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                                 </button>)}</>
                               )}
-                              <>{perms.edit && (<button type="button" title="Editar" onClick={() => openEdit(p)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>)}</>
+                              <>{perms.edit && (<button type="button" title="Vincular a canais de venda" onClick={() => setChProduct(p)} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800"><Globe size={15} /></button>)}</>
+                                  <>{perms.edit && (<button type="button" title="Editar" onClick={() => openEdit(p)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800 cursor-pointer"><Edit3 size={15} /></button>)}</>
                               <>{perms.remove && (<button type="button" title="Excluir" onClick={() => setDel({ ids: [p.id], label: `"${p.name}"` })} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/40 cursor-pointer"><Trash2 size={15} /></button>)}</>
                             </div>
                           </td>
