@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Edit3, Link2, Loader2, Plus, Tag } from 'lucide-react';
+import { Check, Edit3, Link2, Loader2, Plus, Tag, Tags } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { showError } from '@/utils/toast';
@@ -7,6 +7,7 @@ import { inputCls } from '@/components/products/Modal';
 import { flattenTree, listCategories } from '../services/catalogo';
 import type { Category } from '../services/catalogo';
 import CategoryChannelsDialog from './CategoryChannelsDialog';
+import CategoryTagsDialog from './CategoryTagsDialog';
 import CreateCategoryModal from './CreateCategoryModal';
 
 const sb: any = supabase;
@@ -20,9 +21,9 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [linkOpen, setLinkOpen] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [tags, setTags] = useState<Record<string, string>>({});
-  const [editTag, setEditTag] = useState('');
 
   const load = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
@@ -38,6 +39,7 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
   useEffect(() => { if (!lojaLoading) void load(); }, [lojaLoading, load]);
 
   const tree = useMemo(() => flattenTree(cats), [cats]);
+  const withTag = useMemo(() => tree.filter(({ cat }) => tags[cat.id]).length, [tree, tags]);
 
   const save = async (id: string | null, n: string, p: string | null, active: boolean) => {
     if (!storeId) return;
@@ -53,13 +55,7 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
 
   const rename = async (c: Category) => {
     if (!editName.trim()) return;
-    if (!(await save(c.id, editName, parentOf(c), c.active))) return;
-    if (storeId && (tags[c.id] || '') !== editTag.trim()) {
-      const { error } = await sb.rpc('gestor_category_set_tag', { p_store: storeId, p_category: c.id, p_tag: editTag });
-      if (error) { showError(error.message); return; }
-      await load();
-    }
-    setEditId(null);
+    if (await save(c.id, editName, parentOf(c), c.active)) setEditId(null);
   };
 
   return (
@@ -71,6 +67,10 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
           </button>
           <button type="button" onClick={() => setLinkOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold hover:border-[color:var(--sll-b-brand)] dark:border-slate-700">
             <Link2 size={16} className="text-[color:var(--sll-b-brand)]" /> Vincular canais
+          </button>
+          <button type="button" onClick={() => setTagsOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold hover:border-[color:var(--sll-b-brand)] dark:border-slate-700">
+            <Tags size={16} className="text-[color:var(--sll-b-brand)]" /> Vincular tags
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800">{withTag}/{tree.length}</span>
           </button>
         </div>
       )}
@@ -85,23 +85,32 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
             <div key={cat.id} style={{ marginLeft: depth * 24 }} className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 dark:border-slate-800 dark:bg-[#111524]">
               <Tag size={14} className="shrink-0 text-[color:var(--sll-b-brand)]" />
               {editId === cat.id ? (
-                <>
-                      <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void rename(cat); if (e.key === 'Escape') setEditId(null); }} className={inputCls + ' !py-1.5'} />
-                      <input value={editTag} onChange={(e) => setEditTag(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void rename(cat); if (e.key === 'Escape') setEditId(null); }} placeholder="Tag do cliente (opcional)" title="Clientes que comprarem desta categoria recebem esta tag" className={inputCls + ' !py-1.5 !w-56 shrink-0'} />
-                    </>
+                <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void rename(cat); if (e.key === 'Escape') setEditId(null); }} className={inputCls + ' !py-1.5'} />
               ) : (
                 <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${cat.active ? 'text-slate-700 dark:text-white' : 'text-slate-400 line-through'}`}>
                   {cat.name}
-                      {tags[cat.id] && <span className="ml-2 rounded-full bg-[color:var(--sll-b-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--sll-b-brand)]">{tags[cat.id]}</span>}
                   {typeof (cat as any).products === 'number' && <span className="ml-1 text-[11px] font-normal text-slate-400">({(cat as any).products})</span>}
                 </span>
               )}
+
+              {editId !== cat.id && (
+                <button
+                  type="button"
+                  disabled={!canEdit}
+                  onClick={() => setTagsOpen(true)}
+                  title={canEdit ? 'Editar tags das categorias' : undefined}
+                  className={`shrink-0 truncate rounded-full px-2.5 py-0.5 text-[10px] font-bold ${canEdit ? 'cursor-pointer' : 'cursor-default'} ${tags[cat.id] ? 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border border-dashed border-slate-300 text-slate-400 dark:border-slate-600'}`}
+                >
+                  {tags[cat.id] ? `Tag: ${tags[cat.id]}` : 'sem tag'}
+                </button>
+              )}
+
               {canEdit && (
-                <div className="ml-auto flex shrink-0 items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1">
                   {editId === cat.id ? (
-                    <button type="button" disabled={busy} onClick={() => void rename(cat)} className="cursor-pointer rounded-lg p-1.5 text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]"><Check size={15} /></button>
+                    <button type="button" disabled={busy} onClick={() => void rename(cat)} title="Salvar nome" className="cursor-pointer rounded-lg p-1.5 text-[color:var(--sll-b-brand)] hover:bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)]"><Check size={15} /></button>
                   ) : (
-                    <button type="button" onClick={() => { setEditId(cat.id); setEditName(cat.name); setEditTag(tags[cat.id] || ''); }} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><Edit3 size={15} /></button>
+                    <button type="button" onClick={() => { setEditId(cat.id); setEditName(cat.name); }} title="Renomear" className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><Edit3 size={15} /></button>
                   )}
                   <button type="button" disabled={busy} onClick={() => void save(cat.id, cat.name, parentOf(cat), !cat.active)} className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase ${cat.active ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-rose-200 bg-rose-50 text-rose-600'}`}>
                     {cat.active ? 'Ativa' : 'Inativa'}
@@ -118,6 +127,9 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
       )}
       {linkOpen && storeId && (
         <CategoryChannelsDialog storeId={storeId} onChanged={() => void load()} onClose={() => setLinkOpen(false)} />
+      )}
+      {tagsOpen && storeId && (
+        <CategoryTagsDialog storeId={storeId} tree={tree} tags={tags} onSaved={() => void load()} onClose={() => setTagsOpen(false)} />
       )}
     </div>
   );
