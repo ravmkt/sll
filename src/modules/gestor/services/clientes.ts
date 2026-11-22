@@ -37,7 +37,7 @@ export function maskDoc(doc: string | null | undefined): string {
   return d ? '***' : '-';
 }
 
-export async function listCustomers(p: { storeId: string; search: string; tag: string; sort: SortKey; dir?: SortDir; page: number }) {
+export async function listCustomers(p: { storeId: string; search: string; tag: string; sort: SortKey; dir?: SortDir; page: number; pageSize?: number }) {
   let q = supabase.from('customer_stats').select('*', { count: 'exact' }).eq('store_id', p.storeId);
   const term = p.search.trim().replace(/[,()%]/g, ' ');
   if (term) {
@@ -45,10 +45,32 @@ export async function listCustomers(p: { storeId: string; search: string; tag: s
   }
   if (p.tag.trim()) q = q.contains('tags', [p.tag.trim()]);
   q = q.order(p.sort, { ascending: (p.dir ?? defaultDir(p.sort)) === 'asc', nullsFirst: false }).order('customer_id', { ascending: true });
-  const from = p.page * PAGE_SIZE;
-  const { data, error, count } = await q.range(from, from + PAGE_SIZE - 1);
+  const size = p.pageSize ?? PAGE_SIZE;
+  const from = p.page * size;
+  const { data, error, count } = await q.range(from, from + size - 1);
   if (error) throw error;
   return { rows: (data ?? []) as CustomerRow[], total: count ?? 0 };
+}
+
+/** Ids de todos os clientes do filtro atual (busca + tag), em lotes, sem paginar. */
+export async function listCustomerIds(p: { storeId: string; search: string; tag: string }) {
+  const out: string[] = [];
+  const BATCH = 1000;
+  for (let from = 0; from < 50000; from += BATCH) {
+    let q = supabase.from('customer_stats').select('customer_id').eq('store_id', p.storeId);
+    const term = p.search.trim().replace(/[,()%]/g, ' ');
+    if (term) {
+      q = q.or('name.ilike.%' + term + '%,email.ilike.%' + term + '%,phone.ilike.%' + term + '%,document.ilike.%' + term + '%');
+    }
+    if (p.tag.trim()) q = q.contains('tags', [p.tag.trim()]);
+    q = q.order('customer_id', { ascending: true });
+    const { data, error } = await q.range(from, from + BATCH - 1);
+    if (error) throw error;
+    const part = (data ?? []) as { customer_id: string }[];
+    out.push(...part.map((r) => r.customer_id));
+    if (part.length < BATCH) break;
+  }
+  return out;
 }
 
 export async function getCustomer(id: string) {

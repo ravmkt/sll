@@ -13,7 +13,7 @@ import CustomerDialog from '../components/CustomerDialog';
 import CustomerActions from '../components/CustomerActions';
 import CategoryTagPicker from '../components/CategoryTagPicker';
 import ImportCustomersModal from '../components/ImportCustomersModal';
-import { PAGE_SIZE, brl, fmtDate, listCustomers, maskDoc } from '../services/clientes';
+import { PAGE_SIZE, brl, fmtDate, listCustomerIds, listCustomers, maskDoc } from '../services/clientes';
 import type { CustomerRow, SortKey } from '../services/clientes';
 import { useGestorAccess } from '../hooks/useGestorAccess';
 import { defaultDir } from '../services/clientes';
@@ -31,6 +31,8 @@ const SORTS: { value: SortKey; label: string }[] = [
   { value: 'tags', label: 'Tags' },
 ];
 
+const PAGE_SIZES = [25, 50, 100];
+
 export default function CustomersPage() {
   const { can: allow } = useGestorAccess();
   const ctx: any = useLoja();
@@ -39,6 +41,7 @@ export default function CustomersPage() {
   const [rows, setRows] = useState<CustomerRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(PAGE_SIZE);
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
   const [tag, setTag] = useState('');
@@ -54,6 +57,19 @@ export default function CustomersPage() {
   const [importOpen, setImportOpen] = useState(false);
   const canEdit = allow('clientes', 'editar');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectingAll, setSelectingAll] = useState(false);
+  const selectAllFiltered = async () => {
+    if (!storeId) return;
+    setSelectingAll(true);
+    try {
+      const ids = await listCustomerIds({ storeId, search: debounced, tag });
+      setSelected(new Set(ids));
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setSelectingAll(false);
+    }
+  };
   const pageIds = rows.map((r) => r.customer_id);
   const selOnPage = pageIds.filter((id) => selected.has(id)).length;
   const allOnPage = pageIds.length > 0 && selOnPage === pageIds.length;
@@ -89,11 +105,11 @@ export default function CustomersPage() {
     if (!storeId) return;
     setLoading(true); setErr('');
     try {
-      const r = await listCustomers({ storeId, search: debounced, tag, sort, dir, page });
+      const r = await listCustomers({ storeId, search: debounced, tag, sort, dir, page, pageSize });
       setRows(r.rows); setTotal(r.total);
     } catch (e: any) { setErr(e?.message ?? 'Erro ao carregar clientes'); }
     finally { setLoading(false); }
-  }, [storeId, debounced, tag, sort, dir, page]);
+  }, [storeId, debounced, tag, sort, dir, page, pageSize]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -104,7 +120,7 @@ export default function CustomersPage() {
     setPage(0);
   };
 
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pages = Math.max(1, Math.ceil(total / pageSize));
   const open = (id: string | null) => { setOpenId(id); setDialogOpen(true); };
   const allTags = useMemo(() => tagList.map((t) => t.tag), [tagList]);
 
@@ -251,7 +267,14 @@ export default function CustomersPage() {
 
       {selected.size > 0 && (
             <div className="flex items-center justify-between rounded-xl border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-4 py-2 text-sm font-semibold text-[color:var(--sll-b-brand)]">
-              <span>{selected.size} cliente(s) selecionado(s)</span>
+              <span className="flex flex-wrap items-center gap-3">
+                <span>{selected.size} cliente(s) selecionado(s)</span>
+                {allOnPage && selected.size < total && (
+                  <button type="button" disabled={selectingAll} onClick={() => void selectAllFiltered()} className="cursor-pointer underline disabled:cursor-wait disabled:opacity-60">
+                    {selectingAll ? 'Selecionando...' : `Selecionar todos os ${total} clientes`}
+                  </button>
+                )}
+              </span>
               <button type="button" onClick={() => setSelected(new Set())} className="cursor-pointer underline">Limpar seleção</button>
             </div>
           )}
@@ -270,7 +293,17 @@ export default function CustomersPage() {
         minWidth="64rem"
       />
 
-      <SllPager page={page} pages={pages} total={total} noun="cliente(s)" onPage={setPage} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-500">
+              Linhas por página
+              <div className="w-24">
+                <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }} className={sllFieldCls + ' cursor-pointer'}>
+                  {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+            </label>
+            <SllPager page={page} pages={pages} total={total} noun="cliente(s)" onPage={setPage} />
+          </div>
 
       {importOpen && storeId && <ImportCustomersModal storeId={storeId} onClose={() => setImportOpen(false)} onDone={() => { void load(); void loadTags(); }} />}
 
