@@ -73,7 +73,7 @@ export function buildOrdersHtml(list: OrderDetail[], mode: PrintMode = 'page'): 
     ? 'section{padding:24px;page-break-after:always}section:last-child{page-break-after:auto}'
     : 'section{padding:16px 24px;break-inside:avoid;page-break-inside:avoid;border-bottom:1px dashed #999}section:last-child{border-bottom:0}';
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Pedidos</title>
-<style>body{font-family:Arial,sans-serif;font-size:13px;margin:0;color:#111}section{padding:24px;page-break-after:always}section:last-child{page-break-after:auto}
+<style>body{font-family:Arial,sans-serif;font-size:13px;margin:0;color:#111}${sectionCss}
 h1{font-size:18px;margin:0 0 4px}h1 small{font-size:12px;color:#666;font-weight:normal}h2{font-size:12px;text-transform:uppercase;color:#666;margin:12px 0 2px}
 p{margin:2px 0}.m{color:#666}.g{display:grid;grid-template-columns:1fr 1fr;gap:16px}table{border-collapse:collapse;width:100%;margin-top:14px}
 td,th{border:1px solid #ccc;padding:4px 8px;text-align:left}.n{text-align:right}.t{text-align:right;margin-top:10px}</style></head><body>${pages}</body></html>`;
