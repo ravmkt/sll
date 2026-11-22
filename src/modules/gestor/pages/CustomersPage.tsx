@@ -53,6 +53,16 @@ export default function CustomersPage() {
   const [applying, setApplying] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const canEdit = allow('clientes', 'editar');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const pageIds = rows.map((r) => r.customer_id);
+  const selOnPage = pageIds.filter((id) => selected.has(id)).length;
+  const allOnPage = pageIds.length > 0 && selOnPage === pageIds.length;
+  const toggleOne = (id: string) => setSelected((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const toggleAll = () => setSelected((p) => {
+    const n = new Set(p);
+    if (allOnPage) pageIds.forEach((id) => n.delete(id)); else pageIds.forEach((id) => n.add(id));
+    return n;
+  });
 
   const doExport = async () => {
     if (!storeId) return;
@@ -125,6 +135,30 @@ export default function CustomersPage() {
   };
 
   const columns: SllColumn<CustomerRow>[] = [
+    {
+      key: 'sel', className: 'w-10',
+      header: (
+        <input
+          type="checkbox"
+          aria-label="Selecionar todos da página"
+          checked={allOnPage}
+          ref={(el) => { if (el) el.indeterminate = selOnPage > 0 && !allOnPage; }}
+          onChange={toggleAll}
+          className="h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]"
+        />
+      ),
+      render: (r) => (
+        <span onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            aria-label={'Selecionar ' + r.name}
+            checked={selected.has(r.customer_id)}
+            onChange={() => toggleOne(r.customer_id)}
+            className="h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]"
+          />
+        </span>
+      ),
+    },
     {
       key: 'cliente', sortKey: 'name', header: 'Cliente',
       render: (r) => (
@@ -215,7 +249,14 @@ export default function CustomersPage() {
         </SllField>
       </SllFilterBar>
 
-      {err && <p className="rounded-xl bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700">{err}</p>}
+      {selected.size > 0 && (
+            <div className="flex items-center justify-between rounded-xl border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] px-4 py-2 text-sm font-semibold text-[color:var(--sll-b-brand)]">
+              <span>{selected.size} cliente(s) selecionado(s)</span>
+              <button type="button" onClick={() => setSelected(new Set())} className="cursor-pointer underline">Limpar seleção</button>
+            </div>
+          )}
+
+          {err && <p className="rounded-xl bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700">{err}</p>}
 
       <SllTable
         columns={columns}
