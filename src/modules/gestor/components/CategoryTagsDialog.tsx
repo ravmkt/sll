@@ -19,6 +19,17 @@ type Props = {
 
 const norm = (s: string) => s.trim().toLowerCase();
 
+function parseTags(s: string): string[] {
+  const out: string[] = [];
+  for (const raw of s.split(/[,;]/)) {
+    const t = raw.trim();
+    if (t && !out.some((o) => norm(o) === norm(t))) out.push(t);
+  }
+  return out;
+}
+
+const keyOf = (s: string) => parseTags(s).map(norm).sort().join('|');
+
 function nextOnEnter(e: KeyboardEvent<HTMLInputElement>) {
   if (e.key !== 'Enter') return;
   e.preventDefault();
@@ -32,40 +43,30 @@ export default function CategoryTagsDialog({ storeId, tree, tags, onSaved, onClo
   const [busy, setBusy] = useState(false);
 
   const changed = useMemo(
-    () => tree.filter(({ cat }) => (vals[cat.id] || '').trim() !== (tags[cat.id] || '').trim()),
+    () => tree.filter(({ cat }) => keyOf(vals[cat.id] || '') !== keyOf(tags[cat.id] || '')),
     [tree, vals, tags],
   );
 
-  const dups = useMemo(() => {
-    const count = new Map<string, number>();
-    for (const { cat } of tree) {
-      const k = norm(vals[cat.id] || '');
-      if (k) count.set(k, (count.get(k) || 0) + 1);
-    }
-    return new Set([...count.entries()].filter(([, n]) => n > 1).map(([k]) => k));
-  }, [tree, vals]);
-
-  async function setTag(id: string, tag: string) {
-    const { error } = await sb.rpc('gestor_category_set_tag', { p_store: storeId, p_category: id, p_tag: tag });
+  async function setTags(id: string, list: string[]) {
+    const { data, error } = await sb
+      .from('product_categories')
+      .update({ customer_tags: list })
+      .eq('id', id)
+      .eq('store_id', storeId)
+      .select('id');
     if (error) throw new Error(error.message);
+    if (!data?.length) throw new Error('Categoria não encontrada ou sem permissão.');
   }
 
   async function save() {
-    if (dups.size) { showError('Há tags repetidas. Cada categoria precisa de uma tag diferente.'); return; }
     if (changed.length === 0) return;
     setBusy(true);
     const failed: string[] = [];
     let ok = 0;
     try {
-      // Libera primeiro as tags antigas que outra categoria alterada vai ocupar (troca de tags entre categorias)
-      const wanted = new Set(changed.map(({ cat }) => norm(vals[cat.id] || '')).filter(Boolean));
-      for (const { cat } of changed) {
-        const old = (tags[cat.id] || '').trim();
-        if (old && wanted.has(norm(old))) await setTag(cat.id, '');
-      }
       for (const { cat } of changed) {
         try {
-          await setTag(cat.id, vals[cat.id] || '');
+          await setTags(cat.id, parseTags(vals[cat.id] || ''));
           ok++;
         } catch (e) {
           failed.push(`${cat.name}: ${(e as Error).message}`);
@@ -77,7 +78,7 @@ export default function CategoryTagsDialog({ storeId, tree, tags, onSaved, onClo
       setBusy(false);
     }
     onSaved();
-    if (ok) showSuccess(`${ok} tag(s) salva(s). Os clientes foram recalculados.`);
+    if (ok) showSuccess(`${ok} categoria(s) atualizada(s). Os clientes foram recalculados.`);
     if (failed.length) showError(failed.slice(0, 2).join(' | '));
     else onClose();
   }
@@ -86,15 +87,14 @@ export default function CategoryTagsDialog({ storeId, tree, tags, onSaved, onClo
     <Modal title="Vincular tags às categorias" onClose={() => { if (!busy) onClose(); }}>
       <div className="space-y-4 p-6">
         <p className="text-xs text-slate-500">
-          Quem comprar de uma categoria recebe a tag dela (inclusive nas categorias filhas). Pedidos cancelados viram
+          Quem comprar de uma categoria recebe as tags dela (inclusive nas categorias filhas). Pedidos cancelados viram
           "tag (cancelado)" e reembolsados "tag (reembolsado)". Deixe em branco para não gerar tag.
         </p>
 
         <div className="max-h-[55vh] space-y-2 overflow-y-auto overflow-x-hidden pr-1">
           {tree.map(({ cat, depth }) => {
             const v = vals[cat.id] || '';
-            const dup = !!norm(v) && dups.has(norm(v));
-            const dirty = v.trim() !== (tags[cat.id] || '').trim();
+            const dirty = keyOf(v) !== keyOf(tags[cat.id] || '');
             return (
               <div key={cat.id} style={{ marginLeft: depth * 20 }} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2 dark:border-slate-800 dark:bg-[#111524]">
                 <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${cat.active ? 'text-slate-700 dark:text-white' : 'text-slate-400 line-through'}`} title={cat.name}>
@@ -106,8 +106,8 @@ export default function CategoryTagsDialog({ storeId, tree, tags, onSaved, onClo
                   disabled={busy}
                   onChange={(e) => setVals((p) => ({ ...p, [cat.id]: e.target.value }))}
                   onKeyDown={nextOnEnter}
-                  placeholder="Sem tag"
-                  className={inputCls + ' !w-56 shrink-0 !py-1.5 ' + (dup ? 'border-rose-400' : dirty ? 'border-amber-400' : '')}
+                  placeholder="Ex.: Comfort, Verão"
+                  className={inputCls + ' !w-72 shrink-0 !py-1.5 ' + (dirty ? 'border-amber-400' : '')}
                 />
               </div>
             );
@@ -115,13 +115,13 @@ export default function CategoryTagsDialog({ storeId, tree, tags, onSaved, onClo
           {tree.length === 0 && <p className="py-6 text-center text-sm text-slate-400">Nenhuma categoria cadastrada.</p>}
         </div>
 
-        {dups.size > 0 && <p className="text-xs font-semibold text-rose-500">Tags repetidas em vermelho: use uma tag diferente em cada categoria.</p>}
+        <p className="text-xs text-slate-400">Separe várias tags com vírgula. A mesma tag pode ser usada em várias categorias.</p>
 
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs text-slate-400">{changed.length} alteração(ões) · Enter vai para o próximo campo</span>
           <div className="flex gap-2">
             <button type="button" disabled={busy} onClick={onClose} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold disabled:opacity-50 dark:border-slate-700">Cancelar</button>
-            <button type="button" disabled={busy || changed.length === 0 || dups.size > 0} onClick={() => void save()} className={primaryBtn + ' disabled:opacity-50'}>
+            <button type="button" disabled={busy || changed.length === 0} onClick={() => void save()} className={primaryBtn + ' disabled:opacity-50'}>
               {busy && <Loader2 size={15} className="mr-2 inline animate-spin" />}
               {busy ? 'Salvando...' : `Salvar${changed.length ? ` (${changed.length})` : ''}`}
             </button>

@@ -29,8 +29,11 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
     if (!storeId) { setLoading(false); return; }
     try {
       setCats(await listCategories(storeId));
-      const { data } = await sb.from('product_categories').select('id, customer_tag').eq('store_id', storeId);
-      setTags(Object.fromEntries(((data || []) as any[]).map((r) => [r.id, r.customer_tag || ''])));
+      const { data } = await sb.from('product_categories').select('id, customer_tag, customer_tags').eq('store_id', storeId);
+      setTags(Object.fromEntries(((data || []) as any[]).map((r) => {
+        const list: string[] = r.customer_tags?.length ? r.customer_tags : r.customer_tag ? [r.customer_tag] : [];
+        return [r.id, list.join(', ')];
+      })));
     }
     catch (e) { showError((e as Error).message); }
     finally { setLoading(false); }
@@ -99,9 +102,9 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
                   disabled={!canEdit}
                   onClick={() => setTagsOpen(true)}
                   title={canEdit ? 'Editar tags das categorias' : undefined}
-                  className={`shrink-0 truncate rounded-full px-2.5 py-0.5 text-[10px] font-bold ${canEdit ? 'cursor-pointer' : 'cursor-default'} ${tags[cat.id] ? 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border border-dashed border-slate-300 text-slate-400 dark:border-slate-600'}`}
+                  className={`max-w-[18rem] shrink-0 truncate rounded-full px-2.5 py-0.5 text-[10px] font-bold ${canEdit ? 'cursor-pointer' : 'cursor-default'} ${tags[cat.id] ? 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border border-dashed border-slate-300 text-slate-400 dark:border-slate-600'}`}
                 >
-                  {tags[cat.id] ? `Tag: ${tags[cat.id]}` : 'sem tag'}
+                  {tags[cat.id] ? `Tags: ${tags[cat.id]}` : 'sem tag'}
                 </button>
               )}
 
