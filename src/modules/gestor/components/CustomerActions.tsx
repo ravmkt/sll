@@ -1,4 +1,4 @@
-import { Mail, MessageCircle, Pencil } from 'lucide-react';
+import { Mail, MessageCircle, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { mailLink, whatsappLink } from '../services/contato';
 import type { CustomerRow } from '../services/clientes';
@@ -8,10 +8,17 @@ const base =
 const on =
   'cursor-pointer hover:bg-[color:var(--sll-b-brand-soft)] hover:text-[color:var(--sll-b-brand)]';
 const off = 'cursor-not-allowed opacity-40';
+const danger = 'cursor-pointer hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-400';
 
-type Props = { row: CustomerRow; canEdit: boolean; onEdit: () => void };
+type Props = {
+  row: CustomerRow;
+  canEdit: boolean;
+  onEdit: () => void;
+  canDelete?: boolean;
+  onDelete?: () => void;
+};
 
-export default function CustomerActions({ row, canEdit, onEdit }: Props) {
+export default function CustomerActions({ row, canEdit, onEdit, canDelete, onDelete }: Props) {
   const wa = whatsappLink(row.phone);
   const mail = mailLink(row.email);
   const stop = (e: { stopPropagation: () => void }) => e.stopPropagation();
@@ -36,6 +43,11 @@ export default function CustomerActions({ row, canEdit, onEdit }: Props) {
         </a>
       ) : (
         <span title="Cliente sem e-mail válido" className={cn(base, off)}><Mail size={16} /></span>
+      )}
+      {canDelete && onDelete && (
+        <button type="button" title="Excluir cliente" aria-label="Excluir cliente" onClick={(e) => { stop(e); onDelete(); }} className={cn(base, danger)}>
+          <Trash2 size={16} />
+        </button>
       )}
     </div>
   );

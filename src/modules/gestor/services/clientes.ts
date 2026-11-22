@@ -119,3 +119,10 @@ export async function saveCustomer(storeId: string, id: string | null, f: Omit<C
     throw res.error;
   }
 }
+
+/** Exclui o cliente. Devolve quantos pedidos ficaram sem cliente vinculado. */
+export async function deleteCustomer(storeId: string, id: string): Promise<number> {
+  const { data, error } = await supabase.rpc('gestor_customer_delete', { p_store: storeId, p_id: id });
+  if (error) throw new Error(error.message);
+  return Number(data ?? 0);
+}

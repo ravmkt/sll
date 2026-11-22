@@ -4,13 +4,14 @@ import { useLoja } from '@/contexts/LojaContext';
 import { SllField, SllFilterBar, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllPager, SllTable } from '@/components/sll/SllTable';
 import type { SllColumn } from '@/components/sll/SllTable';
-import { sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
+import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
 import { showError, showSuccess } from '@/utils/toast';
 import { exportCustomers } from '../services/clientes-export';
 import { applyTagsByPurchase, listCustomerTags, setCustomerTags } from '../services/clientes-tags';
 import type { CustomerTag } from '../services/clientes-tags';
 import CustomerDialog from '../components/CustomerDialog';
 import CustomerActions from '../components/CustomerActions';
+import { deleteCustomer } from '../services/clientes';
 import CategoryTagPicker from '../components/CategoryTagPicker';
 import ImportCustomersModal from '../components/ImportCustomersModal';
 import { PAGE_SIZE, brl, fmtDate, listCustomerIds, listCustomers, maskDoc } from '../services/clientes';
@@ -55,6 +56,8 @@ export default function CustomersPage() {
   const [exporting, setExporting] = useState(false);
   const [applying, setApplying] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [removing, setRemoving] = useState<CustomerRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const canEdit = allow('clientes', 'editar');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectingAll, setSelectingAll] = useState(false);
@@ -122,6 +125,24 @@ export default function CustomersPage() {
 
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const open = (id: string | null) => { setOpenId(id); setDialogOpen(true); };
+
+  const confirmDelete = async () => {
+    if (!storeId || !removing) return;
+    setDeleting(true);
+    try {
+      const orders = await deleteCustomer(storeId, removing.customer_id);
+      const id = removing.customer_id;
+      setSelected((p) => { const n = new Set(p); n.delete(id); return n; });
+      showSuccess(orders > 0 ? `Cliente excluído. ${orders} pedido(s) ficaram sem cliente vinculado.` : 'Cliente excluído.');
+      setRemoving(null);
+      void load();
+      void loadTags();
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
   const allTags = useMemo(() => tagList.map((t) => t.tag), [tagList]);
 
   const changeTags = async (r: CustomerRow, list: string[]) => {
@@ -218,7 +239,7 @@ export default function CustomersPage() {
     },
     {
       key: 'acoes', header: 'Ações', align: 'center', className: 'w-32',
-      render: (r) => <CustomerActions row={r} canEdit={canEdit} onEdit={() => open(r.customer_id)} />,
+      render: (r) => <CustomerActions row={r} canEdit={canEdit} onEdit={() => open(r.customer_id)} canDelete={allow('clientes', 'excluir')} onDelete={() => setRemoving(r)} />,
     },
   ];
 
@@ -304,6 +325,36 @@ export default function CustomersPage() {
             </label>
             <SllPager page={page} pages={pages} total={total} noun="cliente(s)" onPage={setPage} />
           </div>
+
+      <SllModal
+        open={!!removing}
+        onOpenChange={(o) => { if (!o && !deleting) setRemoving(null); }}
+        title="Excluir cliente"
+        size="md"
+        footer={
+          <>
+            <button type="button" disabled={deleting} onClick={() => setRemoving(null)} className={sllBtnGhost}>Cancelar</button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => void confirmDelete()}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {deleting ? 'Excluindo...' : 'Excluir'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-700 dark:text-slate-200">
+          Excluir <strong>{removing?.name}</strong>? Esta ação não pode ser desfeita.
+        </p>
+        <p className="mt-2 text-xs text-slate-500">
+          {removing && removing.orders_all > 0
+            ? `Os ${removing.orders_all} pedido(s) deste cliente continuam no sistema, mas ficam sem cliente vinculado. `
+            : ''}
+          Se o cliente veio de uma plataforma (ex.: Yampi), ele pode ser recriado na próxima importação de pedidos.
+        </p>
+      </SllModal>
 
       {importOpen && storeId && <ImportCustomersModal storeId={storeId} onClose={() => setImportOpen(false)} onDone={() => { void load(); void loadTags(); }} />}
 

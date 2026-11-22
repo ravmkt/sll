@@ -159,6 +159,12 @@ export default function SuppliersPage() {
             {canEdit && (
               <button type="button" title="Editar" aria-label={'Editar ' + s.name} onClick={() => open(s)} className={actionBtn}><Pencil size={15} /></button>
             )}
+            {wa && (
+              <a href={wa} target="_blank" rel="noreferrer" title="WhatsApp" aria-label={'WhatsApp de ' + s.name} className={actionBtn}><MessageCircle size={15} /></a>
+            )}
+            {s.email && (
+              <a href={`mailto:${s.email}`} title="E-mail" aria-label={'E-mail de ' + s.name} className={actionBtn}><Mail size={15} /></a>
+            )}
                 {canEdit && (
                   <button
                     type="button"
@@ -168,12 +174,6 @@ export default function SuppliersPage() {
                     className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-400"
                   ><Trash2 size={15} /></button>
                 )}
-            {wa && (
-              <a href={wa} target="_blank" rel="noreferrer" title="WhatsApp" aria-label={'WhatsApp de ' + s.name} className={actionBtn}><MessageCircle size={15} /></a>
-            )}
-            {s.email && (
-              <a href={`mailto:${s.email}`} title="E-mail" aria-label={'E-mail de ' + s.name} className={actionBtn}><Mail size={15} /></a>
-            )}
           </div>
         );
       },
