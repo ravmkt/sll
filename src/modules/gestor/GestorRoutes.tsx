@@ -24,7 +24,9 @@ export default function GestorRoutes() {
         <Route path="expedicao" element={<ExpedicaoPage />} />
         <Route path="estoque" element={<Navigate to="/dashboard/modules/gestor/produtos?aba=estoque" replace />} />
         <Route path="estoque/historico" element={<GestorPage />} />
-            <Route path="equipe" element={<TeamPage />} />
+            <Route path="usuarios" element={<TeamPage />} />
+            <Route path="equipe" element={<Navigate to="../usuarios" relative="path" replace />} />
+            <Route path="vendedores" element={<Navigate to="../usuarios" relative="path" replace />} />
         {secaoRoutes}
         <Route path="*" element={<Navigate to="/dashboard/modules/gestor" replace />} />
       </Route>

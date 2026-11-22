@@ -28,7 +28,7 @@ const GROUPS: Group[] = [
       { label: 'Produtos', to: `${BASE}/produtos` },
       { label: 'Clientes', to: `${BASE}/clientes` },
       { label: 'Fornecedores', to: `${BASE}/fornecedores` },
-      { label: 'Vendedores', to: `${BASE}/vendedores` },
+      { label: 'Usuários', to: `${BASE}/usuarios` },
     ],
   },
   {
@@ -58,7 +58,7 @@ const GROUPS: Group[] = [
     ],
   },
   { key: 'relatorios', label: 'Relatórios', icon: TrendingUp, to: `${BASE}/relatorios` },
-  { key: 'config', label: 'Configurações', icon: Settings, items: [{ label: 'Empresa', to: `${BASE}/configuracoes` }, { label: 'Equipe e permissões', to: `${BASE}/equipe` }] },
+  { key: 'config', label: 'Configurações', icon: Settings, items: [{ label: 'Empresa', to: `${BASE}/configuracoes` },] },
   {
     key: 'integracoes', label: 'Integrações', icon: Plug,
     items: [

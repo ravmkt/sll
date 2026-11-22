@@ -16,12 +16,6 @@ export const SECOES: Record<string, Secao> = {
     description: 'Separação, embalagem e envio dos pedidos pagos.',
     features: ['Fila de pedidos prontos para separar', 'Etiquetas e código de rastreio', 'Status: separado, embalado, enviado', 'Baixa de estoque na saída'],
   },
-  vendedores: {
-    title: 'Vendedores',
-    icon: UserCheck,
-    description: 'Cadastro de vendedores, metas e comissões.',
-    features: ['Cadastro e vínculo com a loja', 'Vendas por vendedor', 'Metas mensais', 'Comissão por venda'],
-  },
   'venda-manual': {
     title: 'Venda manual',
     icon: ShoppingCart,

@@ -13,7 +13,7 @@ const SEGMENT_AREA: Record<string, string> = {
   estoque: 'estoque',
   clientes: 'clientes',
   fornecedores: 'fornecedores',
-  vendedores: 'configuracoes',
+  usuarios: 'configuracoes',
   pedidos: 'pedidos',
   'venda-manual': 'pedidos',
   propostas: 'pedidos',

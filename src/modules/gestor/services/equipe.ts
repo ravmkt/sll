@@ -17,11 +17,12 @@ export interface TeamMember {
   permissions: TeamPermissions;
   active: boolean;
   must_change_password: boolean;
+  type_id: string | null;
   created_at: string | null;
 }
 
 const COLS =
-  "id, store_id, user_id, role, display_name, email, phone, commission_pct, scope, permissions, active, must_change_password, created_at";
+  "id, store_id, user_id, role, display_name, email, phone, commission_pct, scope, permissions, active, must_change_password, type_id, created_at";
 
 export async function listTeam(storeId: string): Promise<TeamMember[]> {
   const { data, error } = await supabase
@@ -117,5 +118,58 @@ export async function saveMember(storeId: string, userId: string, f: MemberUpdat
     p_permissions: f.permissions,
     p_active: f.active,
   });
+  if (error) throw new Error(error.message);
+}
+
+// ---------- Tipos de usuario ----------
+export type TypeRole = Exclude<TeamRole, "admin">;
+
+export interface MemberType {
+  id: string;
+  store_id: string;
+  name: string;
+  role: TypeRole;
+  scope: TeamScope;
+  has_commission: boolean;
+  permissions: TeamPermissions;
+  is_system: boolean;
+  active: boolean;
+  sort_order: number;
+}
+
+export interface MemberTypeInput {
+  id: string | null;
+  name: string;
+  role: TypeRole;
+  scope: TeamScope;
+  has_commission: boolean;
+  permissions: TeamPermissions;
+  active: boolean;
+}
+
+const sbAny: any = supabase;
+
+export async function listMemberTypes(storeId: string): Promise<MemberType[]> {
+  const { data, error } = await sbAny.rpc("gestor_member_types", { p_store: storeId });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as MemberType[];
+}
+
+export async function saveMemberType(storeId: string, t: MemberTypeInput): Promise<string> {
+  const { data, error } = await sbAny.rpc("gestor_member_type_save", {
+    p_store: storeId, p_id: t.id, p_name: t.name, p_role: t.role, p_scope: t.scope,
+    p_commission: t.has_commission, p_permissions: t.permissions, p_active: t.active,
+  });
+  if (error) throw new Error(error.message);
+  return data as string;
+}
+
+export async function deleteMemberType(storeId: string, id: string): Promise<void> {
+  const { error } = await sbAny.rpc("gestor_member_type_delete", { p_store: storeId, p_id: id });
+  if (error) throw new Error(error.message);
+}
+
+export async function setMemberType(storeId: string, userId: string, typeId: string | null): Promise<void> {
+  const { error } = await sbAny.rpc("gestor_member_set_type", { p_store: storeId, p_user: userId, p_type: typeId });
   if (error) throw new Error(error.message);
 }
