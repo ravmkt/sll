@@ -20,8 +20,21 @@ const TYPES = {
   marketplace: { label: 'Marketplace', Icon: Store },
 } as const;
 
+const LOGO_EXTS = ['svg', 'png', 'webp'];
+
 function Badge({ c }: { c: string }) {
+  const [i, setI] = useState(0);
   const m = (CHANNEL_META as unknown as Record<string, { color: string; letter: string }>)[c];
+  if (i < LOGO_EXTS.length) {
+    return (
+      <img
+        src={`/assets/platforms/${c}.${LOGO_EXTS[i]}`}
+        alt={channelLabel(c)}
+        onError={() => setI(i + 1)}
+        className="h-9 w-9 shrink-0 rounded-lg object-contain"
+      />
+    );
+  }
   return (
     <span style={m ? { backgroundColor: m.color } : undefined} className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold text-white ${m ? '' : 'bg-slate-400'}`}>
       {m?.letter ?? c.charAt(0).toUpperCase()}
