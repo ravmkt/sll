@@ -440,7 +440,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                   <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     <th className="w-12 px-4 py-3 text-center"><input type="checkbox" checked={allOnPage} onChange={togglePage} className="h-4 w-4 cursor-pointer" /></th>
                     <th className="w-20 px-4 py-3 text-center">Foto</th>
-                    <Th k="name" label="Produto" />
+                    <Th k="name" label="Produto" cls="sll-left" />
                     <Th k="stock" label="Estoque" cls="text-center" />
                     <Th k="price" label="Preço" cls="text-center" />
                     <Th k="category" label="Categoria" cls="text-center" />
@@ -463,7 +463,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                               {p.image_url ? <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <Package size={18} className="text-slate-400" />}
                             </div>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="sll-left px-4 py-3">
                             <div className="flex items-center gap-2">
                               {expandable ? (
                                 <button type="button" onClick={() => toggleRow(p.id)} title={open ? 'Recolher variações' : `Ver ${vs!.length} variações`} className="cursor-pointer rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-[color:var(--sll-b-brand)] dark:hover:bg-slate-800">
@@ -521,7 +521,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                           <tr key={v.id} className="bg-slate-50/70 dark:bg-white/[0.02]">
                             <td />
                             <td />
-                            <td className="py-2 pl-12 pr-4">
+                            <td className="sll-left py-2 pl-12 pr-4">
                               <div className="border-l-2 border-slate-200 pl-3 dark:border-slate-700">
                                 <p className="max-w-xs truncate text-xs font-semibold text-slate-700 dark:text-slate-200" title={variantLabel(v)}>{variantLabel(v)}</p>
                                 <p className="text-[10px] text-slate-400">SKU {v.sku}</p>

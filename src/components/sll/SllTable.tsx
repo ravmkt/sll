@@ -30,7 +30,7 @@ export function SllTable<T>({ columns, rows, rowKey, onRowClick, loading, empty 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs" style={{ minWidth }}>
+        <table data-sll-table className="w-full text-left text-xs" style={{ minWidth }}>
           <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800">
             <tr>
               {columns.map((c) => (
