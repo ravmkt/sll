@@ -11,6 +11,8 @@ export interface OrderFilters {
   fulfillment: string;
   channel: string;
   page: number;
+  from?: string | null;
+  to?: string | null;
 }
 
 export interface OrderDetail {
@@ -83,6 +85,8 @@ export async function listOrders(storeId: string, f: OrderFilters): Promise<{ to
     p_payment: f.payment || null,
     p_fulfillment: f.fulfillment || null,
     p_channel: f.channel || null,
+    p_from: f.from || null,
+    p_to: f.to || null,
     p_limit: PAGE_SIZE,
     p_offset: f.page * PAGE_SIZE,
   });
