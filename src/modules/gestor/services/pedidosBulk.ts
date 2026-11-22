@@ -47,7 +47,9 @@ export async function fetchDetails(ids: string[]): Promise<OrderDetail[]> {
 const esc = (s: unknown) =>
   String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export function buildOrdersHtml(list: OrderDetail[]): string {
+export type PrintMode = 'page' | 'flow';
+
+export function buildOrdersHtml(list: OrderDetail[], mode: PrintMode = 'page'): string {
   const pages = list.map(({ order: o, customer, items }) => {
     const a: Record<string, any> = o.shipping_address && typeof o.shipping_address === 'object' ? o.shipping_address : {};
     const l1 = [a.street, a.number, a.complement].filter(Boolean).join(', ');
@@ -67,6 +69,9 @@ export function buildOrdersHtml(list: OrderDetail[]): string {
 <p class="t">Produtos: ${esc(brl(o.subtotal))} · Desconto: ${esc(brl(o.discount))} · Frete: ${esc(brl(o.shipping_cost))}<br><b>Total: ${esc(brl(o.total))}</b></p>
 </section>`;
   }).join('');
+  const sectionCss = mode === 'page'
+    ? 'section{padding:24px;page-break-after:always}section:last-child{page-break-after:auto}'
+    : 'section{padding:16px 24px;break-inside:avoid;page-break-inside:avoid;border-bottom:1px dashed #999}section:last-child{border-bottom:0}';
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Pedidos</title>
 <style>body{font-family:Arial,sans-serif;font-size:13px;margin:0;color:#111}section{padding:24px;page-break-after:always}section:last-child{page-break-after:auto}
 h1{font-size:18px;margin:0 0 4px}h1 small{font-size:12px;color:#666;font-weight:normal}h2{font-size:12px;text-transform:uppercase;color:#666;margin:12px 0 2px}

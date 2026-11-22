@@ -19,6 +19,7 @@ import {
 } from '../services/pedidos';
 import type { Row } from '../services/pedidos';
 import { buildOrdersHtml, deleteOrders, fetchDetails } from '../services/pedidosBulk';
+import type { PrintMode } from '../services/pedidosBulk';
 
 const act =
   'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-[color:var(--sll-b-brand-soft)] hover:text-[color:var(--sll-b-brand)]';
@@ -51,6 +52,8 @@ export default function OrdersPage() {
   const [statusIds, setStatusIds] = useState<string[] | null>(null);
   const [nfIds, setNfIds] = useState<string[] | null>(null);
   const [printing, setPrinting] = useState(false);
+  const [printIds, setPrintIds] = useState<string[] | null>(null);
+  const [printMode, setPrintMode] = useState<PrintMode>('page');
   const [deleteIds, setDeleteIds] = useState<string[] | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -104,7 +107,7 @@ export default function OrdersPage() {
     return false;
   };
 
-  const printOrders = async (ids: string[]) => {
+  const printOrders = async (ids: string[], mode: PrintMode = 'page') => {
     const w = window.open('', '_blank');
     if (!w) { showError('Libere os pop-ups para imprimir.'); return; }
     w.document.write('<p style="font-family:Arial;padding:24px">Preparando impressão...</p>');
@@ -113,7 +116,7 @@ export default function OrdersPage() {
       const list = await fetchDetails(ids);
       if (list.length === 0) throw new Error('Não foi possível carregar os pedidos para impressão.');
       w.document.open();
-      w.document.write(buildOrdersHtml(list));
+      w.document.write(buildOrdersHtml(list, mode));
       w.document.close();
       w.focus();
       w.print();
@@ -123,6 +126,10 @@ export default function OrdersPage() {
     } finally {
       setPrinting(false);
     }
+  };
+
+  const requestPrint = (ids: string[]) => {
+    if (ids.length > 1) { setPrintMode('page'); setPrintIds(ids); } else void printOrders(ids);
   };
 
   const confirmDelete = async () => {
@@ -207,7 +214,7 @@ export default function OrdersPage() {
           <p className="text-sm text-slate-500">Todos os canais em uma lista.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" disabled={printing} onClick={() => { if (!needSelection()) void printOrders([...selected]); }} className={sllBtnGhost}>
+          <button type="button" disabled={printing} onClick={() => { if (!needSelection()) requestPrint([...selected]); }} className={sllBtnGhost}>
             {printing ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />} Imprimir selecionados
           </button>
           {canEdit && (
@@ -276,6 +283,52 @@ export default function OrdersPage() {
         onClose={() => { if (!deleting) setDeleteIds(null); }}
         onConfirm={() => void confirmDelete()}
       />
+
+      <SllModal
+        open={!!printIds}
+        onOpenChange={(o) => { if (!o) setPrintIds(null); }}
+        title="Imprimir pedidos"
+        size="md"
+        footer={(
+          <>
+            <button type="button" onClick={() => setPrintIds(null)} className={sllBtnGhost}>Cancelar</button>
+            <button
+              type="button"
+              onClick={() => { const ids = printIds ?? []; setPrintIds(null); void printOrders(ids, printMode); }}
+              className={sllBtnPrimary}
+            >
+              <Printer size={16} /> Imprimir
+            </button>
+          </>
+        )}
+      >
+        <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
+          Como imprimir os <strong>{printIds?.length ?? 0}</strong> pedidos selecionados?
+        </p>
+        <div className="space-y-2">
+          {([
+            { key: 'page', label: 'Uma por folha', hint: 'Cada pedido começa em uma folha nova.' },
+            { key: 'flow', label: 'Corrido', hint: 'Os pedidos seguem um após o outro, aproveitando a folha.' },
+          ] as { key: PrintMode; label: string; hint: string }[]).map((o) => (
+            <button
+              key={o.key}
+              type="button"
+              onClick={() => setPrintMode(o.key)}
+              className={`flex w-full cursor-pointer items-center justify-between rounded-xl border bg-white px-4 py-3 text-left transition dark:bg-slate-800 ${
+                printMode === o.key
+                  ? 'border-[color:var(--sll-b-brand)] ring-2 ring-[color:var(--sll-b-brand-soft)]'
+                  : 'border-slate-200 hover:border-[color:var(--sll-b-brand)] dark:border-slate-700'
+              }`}
+            >
+              <span>
+                <span className="block text-sm font-bold text-slate-800 dark:text-white">{o.label}</span>
+                <span className="block text-xs text-slate-500">{o.hint}</span>
+              </span>
+              {printMode === o.key && <span className="text-xs font-bold text-[color:var(--sll-b-brand)]">Selecionado</span>}
+            </button>
+          ))}
+        </div>
+      </SllModal>
 
       <SllModal
         open={!!nfIds}
