@@ -529,7 +529,7 @@ export default function StockPage() {
                           <span>Produto / variação</span>
                         </div>
                       </th>
-                  <th className="px-4 py-3">SKU</th>
+                  <th className="px-4 py-3 text-center">SKU</th>
                   <th className="px-4 py-3 text-center">Atual</th>
                       {showTotal && <th className="px-4 py-3 text-center" title="Soma de todos os depósitos ativos">Total físico</th>}
                       {showCh && <th className="px-4 py-3 text-center" title="O que cada canal exibe, já com teto e reserva">Disponível por canal</th>}

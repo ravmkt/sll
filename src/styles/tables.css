@@ -1,22 +1,17 @@
-/* Tabelas do SLL: conteudo e titulos centralizados; coluna de nome a esquerda.
-   Excecoes: classe .sll-left na celula, ou data-align="manual" na tabela.
+/* Tabelas do SLL: titulos sempre centralizados; conteudo centralizado, exceto a coluna de nome.
+   Excecoes: classe .sll-left na celula (td), ou data-align="manual" na tabela.
    SllTable (data-sll-table) controla o proprio alinhamento. */
 
 table:not([data-sll-table], [data-align="manual"], :is(.prose, [contenteditable]) table) :is(th, td) {
   text-align: center;
 }
 
-/* Primeira coluna (nome) */
-table:not([data-sll-table], [data-align="manual"], :is(.prose, [contenteditable]) table) tr > :is(th, td):first-child:not(:has(input[type="checkbox"])) {
+/* Celula da primeira coluna (nome) */
+table:not([data-sll-table], [data-align="manual"], :is(.prose, [contenteditable]) table) tr > td:first-child:not(:has(input[type="checkbox"])) {
   text-align: left;
 }
 
-/* Quando a primeira coluna e de checkbox, a segunda e a de nome */
-table:not([data-sll-table], [data-align="manual"], :is(.prose, [contenteditable]) table) tr > :is(th, td):first-child:has(input[type="checkbox"]) + :is(th, td) {
-  text-align: left;
-}
-
-/* Marcacao manual (sempre vence as regras acima) */
-table:not([data-sll-table], [data-align="manual"], :is(.prose, [contenteditable]) table) tr > :is(th, td).sll-left {
+/* Marcacao manual na celula (vence as regras acima) */
+table:not([data-sll-table], [data-align="manual"], :is(.prose, [contenteditable]) table) tr > td.sll-left {
   text-align: left;
 }

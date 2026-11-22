@@ -440,7 +440,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                   <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     <th className="w-12 px-4 py-3 text-center"><input type="checkbox" checked={allOnPage} onChange={togglePage} className="h-4 w-4 cursor-pointer" /></th>
                     <th className="w-20 px-4 py-3 text-center">Foto</th>
-                    <Th k="name" label="Produto" cls="sll-left" />
+                    <Th k="name" label="Produto" cls="text-center" />
                     <Th k="stock" label="Estoque" cls="text-center" />
                     <Th k="price" label="Preço" cls="text-center" />
                     <Th k="category" label="Categoria" cls="text-center" />
