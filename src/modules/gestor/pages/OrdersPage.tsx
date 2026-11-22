@@ -7,6 +7,7 @@ import type { PeriodValue } from '@/components/sll/SllPeriodFilter';
 import { SllPager, SllTable } from '@/components/sll/SllTable';
 import type { SllColumn } from '@/components/sll/SllTable';
 import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
+import { ConfirmDangerModal } from '@/components/common/AppModal';
 import { showError, showSuccess } from '@/utils/toast';
 import OrderDetailDialog from '../components/OrderDetailDialog';
 import OrderStatusBadge from '../components/OrderStatusBadge';
@@ -262,32 +263,19 @@ export default function OrdersPage() {
 
       <OrderStatusDialog ids={statusIds} onClose={() => setStatusIds(null)} onDone={() => { setSelected(new Set()); void reload(); }} />
 
-      <SllModal
+      <ConfirmDangerModal
         open={!!deleteIds}
-        onOpenChange={(o) => { if (!o && !deleting) setDeleteIds(null); }}
-        title="Excluir pedido"
-        size="md"
-        footer={(
-          <>
-            <button type="button" disabled={deleting} onClick={() => setDeleteIds(null)} className={sllBtnGhost}>Cancelar</button>
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={() => void confirmDelete()}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {deleting && <Loader2 size={15} className="animate-spin" />}Excluir
-            </button>
-          </>
-        )}
-      >
-        <p className="text-sm text-slate-700 dark:text-slate-200">
-          Excluir <strong>{deleteIds?.length ?? 0}</strong> pedido(s) e seus itens? Esta ação não pode ser desfeita.
-        </p>
-        <p className="mt-2 text-xs text-slate-500">
-          O estoque não é devolvido na exclusão. Se o pedido já baixou estoque, cancele-o antes.
-        </p>
-      </SllModal>
+        title={deleteIds && deleteIds.length > 1 ? 'EXCLUIR PEDIDOS' : 'EXCLUIR PEDIDO'}
+        itemName={
+          deleteIds && deleteIds.length === 1
+            ? `Pedido #${pick(rows.find((r) => r.id === deleteIds[0]) ?? {}, 'number', 'external_id') ?? ''}`
+            : `${deleteIds?.length ?? 0} pedidos`
+        }
+        message={'Esta ação é irreversível. ' + (deleteIds && deleteIds.length > 1 ? 'Os pedidos e seus itens serão removidos permanentemente.' : 'O pedido e seus itens serão removidos permanentemente.') + ' O estoque não é devolvido: se o pedido já baixou estoque, cancele-o antes de excluir.'}
+        busy={deleting}
+        onClose={() => { if (!deleting) setDeleteIds(null); }}
+        onConfirm={() => void confirmDelete()}
+      />
 
       <SllModal
         open={!!nfIds}
