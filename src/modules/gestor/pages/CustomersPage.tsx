@@ -28,6 +28,7 @@ const SORTS: { value: SortKey; label: string }[] = [
   { value: 'avg_ticket', label: 'Ticket médio' },
   { value: 'city', label: 'Cidade' },
   { value: 'document', label: 'Documento' },
+  { value: 'tags', label: 'Tags' },
 ];
 
 export default function CustomersPage() {
@@ -134,7 +135,7 @@ export default function CustomersPage() {
       ),
     },
     {
-      key: 'tags', header: 'Tags', className: 'min-w-[11rem]',
+      key: 'tags', sortKey: 'tags', header: 'Tags', className: 'min-w-[11rem]',
       render: (r) => (
         <div className="flex items-start gap-1" onClick={(e) => e.stopPropagation()}>
           {canEdit ? (

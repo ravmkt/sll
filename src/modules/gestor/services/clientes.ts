@@ -2,11 +2,11 @@ import { supabase } from '@/lib/supabase';
 
 export const PAGE_SIZE = 25;
 
-export type SortKey = 'total_spent' | 'last_order_at' | 'created_at' | 'name' | 'orders_count' | 'avg_ticket' | 'city' | 'document';
+export type SortKey = 'total_spent' | 'last_order_at' | 'created_at' | 'name' | 'orders_count' | 'avg_ticket' | 'city' | 'document' | 'tags';
 export type SortDir = 'asc' | 'desc';
 
 /** Texto começa A-Z; números e datas começam do maior para o menor. */
-export const defaultDir = (k: SortKey): SortDir => (k === 'name' || k === 'city' || k === 'document' ? 'asc' : 'desc');
+export const defaultDir = (k: SortKey): SortDir => (k === 'name' || k === 'city' || k === 'document' || k === 'tags' ? 'asc' : 'desc');
 
 export type CustomerRow = {
   customer_id: string; name: string; email: string | null; phone: string | null; document: string | null;

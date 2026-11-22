@@ -18,7 +18,7 @@ async function fetchAll(p: { storeId: string; search: string; tag: string; sort:
       q = q.or('name.ilike.%' + term + '%,email.ilike.%' + term + '%,phone.ilike.%' + term + '%,document.ilike.%' + term + '%');
     }
     if (p.tag.trim()) q = q.contains('tags', [p.tag.trim()]);
-    q = q.order(p.sort, { ascending: (p.dir ?? (p.sort === 'name' || p.sort === 'city' || p.sort === 'document' ? 'asc' : 'desc')) === 'asc', nullsFirst: false });
+    q = q.order(p.sort, { ascending: (p.dir ?? (p.sort === 'name' || p.sort === 'city' || p.sort === 'document' || p.sort === 'tags' ? 'asc' : 'desc')) === 'asc', nullsFirst: false });
     q = q.order('customer_id', { ascending: true });
     const { data, error } = await q.range(from, from + BATCH - 1);
     if (error) throw error;
