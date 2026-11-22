@@ -15,7 +15,7 @@ import CustomerActions from '../components/CustomerActions';
 import { deleteCustomer } from '../services/clientes';
 import CategoryTagPicker from '../components/CategoryTagPicker';
 import ImportCustomersModal from '../components/ImportCustomersModal';
-import { PAGE_SIZE, brl, fmtDate, listCustomerIds, listCustomers, maskDoc } from '../services/clientes';
+import { PAGE_SIZE, brl, fmtDate, listCustomerIds, listCustomers } from '../services/clientes';
 import type { CustomerRow, SortKey } from '../services/clientes';
 import { useGestorAccess } from '../hooks/useGestorAccess';
 import { defaultDir } from '../services/clientes';
@@ -26,10 +26,7 @@ const SORTS: { value: SortKey; label: string }[] = [
   { value: 'last_order_at', label: 'Última compra' },
   { value: 'created_at', label: 'Cadastro' },
   { value: 'name', label: 'Nome' },
-  { value: 'orders_count', label: 'Pedidos' },
   { value: 'avg_ticket', label: 'Ticket médio' },
-  { value: 'city', label: 'Cidade' },
-  { value: 'document', label: 'Documento' },
   { value: 'tags', label: 'Tags' },
 ];
 
@@ -198,7 +195,7 @@ export default function CustomersPage() {
       ),
     },
     {
-      key: 'cliente', sortKey: 'name', header: 'Cliente',
+      key: 'cliente', sortKey: 'name', header: 'Cliente', align: 'left',
       render: (r) => (
         <>
           <p className="text-sm font-bold text-slate-800 dark:text-white">{r.name}</p>
@@ -209,13 +206,13 @@ export default function CustomersPage() {
     {
       key: 'tags', sortKey: 'tags', header: 'Tags', className: 'min-w-[11rem]',
       render: (r) => (
-        <div className="flex items-start gap-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-center gap-1" onClick={(e) => e.stopPropagation()}>
           {canEdit ? (
             <CategoryTagPicker value={r.tags ?? []} allTags={allTags} onChange={(list) => void changeTags(r, list)} />
           ) : (r.tags ?? []).length === 0 ? (
             <span className="text-slate-300">-</span>
           ) : (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap justify-center gap-1">
               {r.tags.map((t) => (
                 <button key={t} type="button" onClick={() => { setTag(t); setPage(0); }} className="cursor-pointer rounded-full bg-[color:var(--sll-b-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--sll-b-brand)]">{t}</button>
               ))}
@@ -224,11 +221,8 @@ export default function CustomersPage() {
         </div>
       ),
     },
-    { key: 'doc', sortKey: 'document', header: 'Documento', render: (r) => <span className="font-mono text-slate-500">{maskDoc(r.document)}</span> },
-    { key: 'cidade', sortKey: 'city', header: 'Cidade/UF', render: (r) => <span className="text-slate-500">{[r.city, r.state].filter(Boolean).join('/') || '-'}</span> },
-    { key: 'pedidos', sortKey: 'orders_count', header: 'Pedidos', align: 'right', render: (r) => <span className="font-mono font-bold">{r.orders_count}</span> },
-    { key: 'total', sortKey: 'total_spent', header: 'Total gasto', align: 'right', render: (r) => <span className="font-mono font-bold">{brl(r.total_spent)}</span> },
-    { key: 'ticket', sortKey: 'avg_ticket', header: 'Ticket médio', align: 'right', render: (r) => <span className="font-mono text-slate-600 dark:text-slate-300">{brl(r.avg_ticket)}</span> },
+    { key: 'total', sortKey: 'total_spent', header: 'Total gasto', render: (r) => <span className="font-mono font-bold">{brl(r.total_spent)}</span> },
+    { key: 'ticket', sortKey: 'avg_ticket', header: 'Ticket médio', render: (r) => <span className="font-mono text-slate-600 dark:text-slate-300">{brl(r.avg_ticket)}</span> },
     {
       key: 'ultima', sortKey: 'last_order_at', header: 'Última compra',
       render: (r) => (
@@ -312,7 +306,7 @@ export default function CustomersPage() {
         onRowClick={(r) => open(r.customer_id)}
         loading={loading}
         empty="Nenhum cliente encontrado."
-        minWidth="64rem"
+        minWidth="48rem"
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3">

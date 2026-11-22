@@ -37,7 +37,7 @@ export function SllTable<T>({ columns, rows, rowKey, onRowClick, loading, empty 
                 <th
                       key={c.key}
                       aria-sort={c.sortKey && sort?.key === c.sortKey ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
-                      className={cn('px-3 py-2.5', ALIGN[c.align ?? 'left'], c.className)}
+                      className={cn('px-3 py-2.5', ALIGN[c.align ?? 'center'], c.className)}
                     >
                       {c.sortKey && onSort ? (
                         <button
