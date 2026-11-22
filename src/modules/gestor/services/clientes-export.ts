@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { supabase } from '@/lib/supabase';
-import type { CustomerRow, SortKey } from './clientes';
+import type { CustomerRow, SortDir, SortKey } from './clientes';
 
 type ExportRow = CustomerRow & { source_platform?: string | null; created_at?: string | null };
 
@@ -9,7 +9,7 @@ const MAX_ROWS = 50000;
 
 const d = (v: string | null | undefined) => (v ? new Date(v).toLocaleDateString('pt-BR') : '');
 
-async function fetchAll(p: { storeId: string; search: string; tag: string; sort: SortKey }) {
+async function fetchAll(p: { storeId: string; search: string; tag: string; sort: SortKey; dir?: SortDir }) {
   const out: ExportRow[] = [];
   for (let from = 0; from < MAX_ROWS; from += BATCH) {
     let q = supabase.from('customer_stats').select('*').eq('store_id', p.storeId);
@@ -18,9 +18,7 @@ async function fetchAll(p: { storeId: string; search: string; tag: string; sort:
       q = q.or('name.ilike.%' + term + '%,email.ilike.%' + term + '%,phone.ilike.%' + term + '%,document.ilike.%' + term + '%');
     }
     if (p.tag.trim()) q = q.contains('tags', [p.tag.trim()]);
-    q = p.sort === 'name'
-      ? q.order('name', { ascending: true })
-      : q.order(p.sort, { ascending: false, nullsFirst: false });
+    q = q.order(p.sort, { ascending: (p.dir ?? (p.sort === 'name' || p.sort === 'city' || p.sort === 'document' ? 'asc' : 'desc')) === 'asc', nullsFirst: false });
     q = q.order('customer_id', { ascending: true });
     const { data, error } = await q.range(from, from + BATCH - 1);
     if (error) throw error;
@@ -31,7 +29,7 @@ async function fetchAll(p: { storeId: string; search: string; tag: string; sort:
   return out;
 }
 
-export async function exportCustomers(p: { storeId: string; search: string; tag: string; sort: SortKey }) {
+export async function exportCustomers(p: { storeId: string; search: string; tag: string; sort: SortKey; dir?: SortDir }) {
   const rows = await fetchAll(p);
   if (rows.length === 0) throw new Error('Nenhum cliente para exportar.');
   const header = [

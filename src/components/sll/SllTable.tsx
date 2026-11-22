@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type SllColumn<T> = {
   key: string;
   header: ReactNode;
+  /** Quando definido, o título da coluna fica clicável para ordenar. */
+  sortKey?: string;
   align?: 'left' | 'center' | 'right';
   className?: string;
   render: (row: T) => ReactNode;
@@ -20,9 +22,11 @@ type Props<T> = {
   loading?: boolean;
   empty?: string;
   minWidth?: string;
+  sort?: { key: string; dir: 'asc' | 'desc' };
+  onSort?: (key: string) => void;
 };
 
-export function SllTable<T>({ columns, rows, rowKey, onRowClick, loading, empty = 'Nenhum registro.', minWidth = '44rem' }: Props<T>) {
+export function SllTable<T>({ columns, rows, rowKey, onRowClick, loading, empty = 'Nenhum registro.', minWidth = '44rem', sort, onSort }: Props<T>) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
       <div className="overflow-x-auto">
@@ -30,7 +34,28 @@ export function SllTable<T>({ columns, rows, rowKey, onRowClick, loading, empty 
           <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800">
             <tr>
               {columns.map((c) => (
-                <th key={c.key} className={cn('px-3 py-2.5', ALIGN[c.align ?? 'left'], c.className)}>{c.header}</th>
+                <th
+                      key={c.key}
+                      aria-sort={c.sortKey && sort?.key === c.sortKey ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
+                      className={cn('px-3 py-2.5', ALIGN[c.align ?? 'left'], c.className)}
+                    >
+                      {c.sortKey && onSort ? (
+                        <button
+                          type="button"
+                          onClick={() => onSort(c.sortKey as string)}
+                          title="Clique para ordenar"
+                          className={cn(
+                            'group inline-flex cursor-pointer items-center gap-1 font-bold uppercase tracking-wider transition-colors hover:text-[color:var(--sll-b-brand)]',
+                            sort?.key === c.sortKey && 'text-[color:var(--sll-b-brand)]',
+                          )}
+                        >
+                          {c.header}
+                          {sort?.key === c.sortKey
+                            ? (sort.dir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)
+                            : <ChevronsUpDown size={12} className="opacity-40 group-hover:opacity-100" />}
+                        </button>
+                      ) : c.header}
+                    </th>
               ))}
             </tr>
           </thead>

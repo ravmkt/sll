@@ -2,7 +2,11 @@ import { supabase } from '@/lib/supabase';
 
 export const PAGE_SIZE = 25;
 
-export type SortKey = 'total_spent' | 'last_order_at' | 'created_at' | 'name';
+export type SortKey = 'total_spent' | 'last_order_at' | 'created_at' | 'name' | 'orders_count' | 'avg_ticket' | 'city' | 'document';
+export type SortDir = 'asc' | 'desc';
+
+/** Texto começa A-Z; números e datas começam do maior para o menor. */
+export const defaultDir = (k: SortKey): SortDir => (k === 'name' || k === 'city' || k === 'document' ? 'asc' : 'desc');
 
 export type CustomerRow = {
   customer_id: string; name: string; email: string | null; phone: string | null; document: string | null;
@@ -33,16 +37,14 @@ export function maskDoc(doc: string | null | undefined): string {
   return d ? '***' : '-';
 }
 
-export async function listCustomers(p: { storeId: string; search: string; tag: string; sort: SortKey; page: number }) {
+export async function listCustomers(p: { storeId: string; search: string; tag: string; sort: SortKey; dir?: SortDir; page: number }) {
   let q = supabase.from('customer_stats').select('*', { count: 'exact' }).eq('store_id', p.storeId);
   const term = p.search.trim().replace(/[,()%]/g, ' ');
   if (term) {
     q = q.or('name.ilike.%' + term + '%,email.ilike.%' + term + '%,phone.ilike.%' + term + '%,document.ilike.%' + term + '%');
   }
   if (p.tag.trim()) q = q.contains('tags', [p.tag.trim()]);
-  q = p.sort === 'name'
-    ? q.order('name', { ascending: true })
-    : q.order(p.sort, { ascending: false, nullsFirst: false });
+  q = q.order(p.sort, { ascending: (p.dir ?? defaultDir(p.sort)) === 'asc', nullsFirst: false }).order('customer_id', { ascending: true });
   const from = p.page * PAGE_SIZE;
   const { data, error, count } = await q.range(from, from + PAGE_SIZE - 1);
   if (error) throw error;

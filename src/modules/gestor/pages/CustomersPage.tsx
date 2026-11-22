@@ -16,12 +16,18 @@ import ImportCustomersModal from '../components/ImportCustomersModal';
 import { PAGE_SIZE, brl, fmtDate, listCustomers, maskDoc } from '../services/clientes';
 import type { CustomerRow, SortKey } from '../services/clientes';
 import { useGestorAccess } from '../hooks/useGestorAccess';
+import { defaultDir } from '../services/clientes';
+import type { SortDir } from '../services/clientes';
 
 const SORTS: { value: SortKey; label: string }[] = [
-  { value: 'total_spent', label: 'Maior total gasto' },
+  { value: 'total_spent', label: 'Total gasto' },
   { value: 'last_order_at', label: 'Última compra' },
-  { value: 'created_at', label: 'Cadastro mais recente' },
-  { value: 'name', label: 'Nome (A-Z)' },
+  { value: 'created_at', label: 'Cadastro' },
+  { value: 'name', label: 'Nome' },
+  { value: 'orders_count', label: 'Pedidos' },
+  { value: 'avg_ticket', label: 'Ticket médio' },
+  { value: 'city', label: 'Cidade' },
+  { value: 'document', label: 'Documento' },
 ];
 
 export default function CustomersPage() {
@@ -37,6 +43,7 @@ export default function CustomersPage() {
   const [tag, setTag] = useState('');
   const [tagList, setTagList] = useState<CustomerTag[]>([]);
   const [sort, setSort] = useState<SortKey>('total_spent');
+  const [dir, setDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -49,7 +56,7 @@ export default function CustomersPage() {
   const doExport = async () => {
     if (!storeId) return;
     setExporting(true); setErr('');
-    try { await exportCustomers({ storeId, search: debounced, tag, sort }); }
+    try { await exportCustomers({ storeId, search: debounced, tag, sort, dir }); }
     catch (e: any) { setErr(e?.message ?? 'Erro ao exportar'); }
     finally { setExporting(false); }
   };
@@ -71,13 +78,20 @@ export default function CustomersPage() {
     if (!storeId) return;
     setLoading(true); setErr('');
     try {
-      const r = await listCustomers({ storeId, search: debounced, tag, sort, page });
+      const r = await listCustomers({ storeId, search: debounced, tag, sort, dir, page });
       setRows(r.rows); setTotal(r.total);
     } catch (e: any) { setErr(e?.message ?? 'Erro ao carregar clientes'); }
     finally { setLoading(false); }
-  }, [storeId, debounced, tag, sort, page]);
+  }, [storeId, debounced, tag, sort, dir, page]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const onSort = (key: string) => {
+    const k = key as SortKey;
+    if (k === sort) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSort(k); setDir(defaultDir(k)); }
+    setPage(0);
+  };
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const open = (id: string | null) => { setOpenId(id); setDialogOpen(true); };
@@ -111,7 +125,7 @@ export default function CustomersPage() {
 
   const columns: SllColumn<CustomerRow>[] = [
     {
-      key: 'cliente', header: 'Cliente',
+      key: 'cliente', sortKey: 'name', header: 'Cliente',
       render: (r) => (
         <>
           <p className="text-sm font-bold text-slate-800 dark:text-white">{r.name}</p>
@@ -137,13 +151,13 @@ export default function CustomersPage() {
         </div>
       ),
     },
-    { key: 'doc', header: 'Documento', render: (r) => <span className="font-mono text-slate-500">{maskDoc(r.document)}</span> },
-    { key: 'cidade', header: 'Cidade/UF', render: (r) => <span className="text-slate-500">{[r.city, r.state].filter(Boolean).join('/') || '-'}</span> },
-    { key: 'pedidos', header: 'Pedidos', align: 'right', render: (r) => <span className="font-mono font-bold">{r.orders_count}</span> },
-    { key: 'total', header: 'Total gasto', align: 'right', render: (r) => <span className="font-mono font-bold">{brl(r.total_spent)}</span> },
-    { key: 'ticket', header: 'Ticket médio', align: 'right', render: (r) => <span className="font-mono text-slate-600 dark:text-slate-300">{brl(r.avg_ticket)}</span> },
+    { key: 'doc', sortKey: 'document', header: 'Documento', render: (r) => <span className="font-mono text-slate-500">{maskDoc(r.document)}</span> },
+    { key: 'cidade', sortKey: 'city', header: 'Cidade/UF', render: (r) => <span className="text-slate-500">{[r.city, r.state].filter(Boolean).join('/') || '-'}</span> },
+    { key: 'pedidos', sortKey: 'orders_count', header: 'Pedidos', align: 'right', render: (r) => <span className="font-mono font-bold">{r.orders_count}</span> },
+    { key: 'total', sortKey: 'total_spent', header: 'Total gasto', align: 'right', render: (r) => <span className="font-mono font-bold">{brl(r.total_spent)}</span> },
+    { key: 'ticket', sortKey: 'avg_ticket', header: 'Ticket médio', align: 'right', render: (r) => <span className="font-mono text-slate-600 dark:text-slate-300">{brl(r.avg_ticket)}</span> },
     {
-      key: 'ultima', header: 'Última compra',
+      key: 'ultima', sortKey: 'last_order_at', header: 'Última compra',
       render: (r) => (
         <span className="text-slate-500">
           {fmtDate(r.last_order_at)}
@@ -194,7 +208,7 @@ export default function CustomersPage() {
           </select>
         </SllField>
         <SllField label="Ordenar por" className="w-56">
-          <select value={sort} onChange={(e) => { setSort(e.target.value as SortKey); setPage(0); }} className={sllFieldCls + ' cursor-pointer'}>
+          <select value={sort} onChange={(e) => { const k = e.target.value as SortKey; setSort(k); setDir(defaultDir(k)); setPage(0); }} className={sllFieldCls + ' cursor-pointer'}>
             {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </SllField>
@@ -206,6 +220,8 @@ export default function CustomersPage() {
         columns={columns}
         rows={rows}
         rowKey={(r) => r.customer_id}
+        sort={{ key: sort, dir }}
+        onSort={onSort}
         onRowClick={(r) => open(r.customer_id)}
         loading={loading}
         empty="Nenhum cliente encontrado."
