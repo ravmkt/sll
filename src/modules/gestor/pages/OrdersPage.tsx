@@ -150,6 +150,7 @@ export default function OrdersPage() {
   };
 
   const slot = 'flex h-8 w-8 items-center justify-center';
+  const H = (t: string) => <div className="w-full text-center">{t}</div>;
 
   const columns: SllColumn<Row>[] = [
     {
@@ -165,14 +166,14 @@ export default function OrdersPage() {
         </label>
       ),
     },
-    { key: 'num', header: 'Pedido', render: (r) => <span className="font-bold text-slate-800 dark:text-white">#{pick(r, 'number', 'external_id')}</span> },
-    { key: 'data', header: 'Data', render: (r) => <span className="text-slate-500">{fmtDate(pick(r, 'created_at', 'ordered_at'))}</span> },
-    { key: 'cli', header: 'Cliente', render: (r) => <span className="text-sm font-semibold text-slate-800 dark:text-white">{customerName(r, r.customer)}</span> },
-    { key: 'canal', header: 'Canal', align: 'center', className: 'w-20', render: (r) => <ChannelCell value={r.channel} /> },
-    { key: 'status', header: 'Status', render: (r) => <OrderStatusBadge status={fulfillmentOf(r)} /> },
-    { key: 'total', header: 'Total', align: 'right', render: (r) => <span className="font-mono font-bold">{brl(r.total)}</span> },
+    { key: 'num', header: H('Pedido'), render: (r) => <span className="font-bold text-slate-800 dark:text-white">#{pick(r, 'number', 'external_id')}</span> },
+    { key: 'data', header: H('Data'), render: (r) => <span className="text-slate-500">{fmtDate(pick(r, 'created_at', 'ordered_at'))}</span> },
+    { key: 'cli', header: H('Cliente'), render: (r) => <span className="text-sm font-semibold text-slate-800 dark:text-white">{customerName(r, r.customer)}</span> },
+    { key: 'canal', header: H('Canal'), align: 'center', className: 'w-20', render: (r) => <ChannelCell value={r.channel} /> },
+    { key: 'status', header: H('Status'), render: (r) => <OrderStatusBadge status={fulfillmentOf(r)} /> },
+    { key: 'total', header: H('Total'), align: 'right', render: (r) => <span className="font-mono font-bold">{brl(r.total)}</span> },
     {
-      key: 'acoes', header: 'Ações', align: 'center', className: 'w-44',
+      key: 'acoes', header: H('Ações'), align: 'center', className: 'w-44',
       render: (r) => (
         <div className="grid grid-cols-[repeat(4,2rem)] justify-center gap-1" onClick={(e) => e.stopPropagation()}>
           <span className={slot}>
