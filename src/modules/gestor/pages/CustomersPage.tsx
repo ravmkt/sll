@@ -1,13 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Download, Loader2, Plus, Upload } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Download, Loader2, Plus, Tags, Upload } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { SllField, SllFilterBar, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllPager, SllTable } from '@/components/sll/SllTable';
 import type { SllColumn } from '@/components/sll/SllTable';
 import { sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
+import { showError, showSuccess } from '@/utils/toast';
 import { exportCustomers } from '../services/clientes-export';
+import { applyTagsByPurchase, listCustomerTags, setCustomerTags } from '../services/clientes-tags';
+import type { CustomerTag } from '../services/clientes-tags';
 import CustomerDialog from '../components/CustomerDialog';
 import CustomerActions from '../components/CustomerActions';
+import CategoryTagPicker from '../components/CategoryTagPicker';
 import ImportCustomersModal from '../components/ImportCustomersModal';
 import { PAGE_SIZE, brl, fmtDate, listCustomers, maskDoc } from '../services/clientes';
 import type { CustomerRow, SortKey } from '../services/clientes';
@@ -18,39 +22,6 @@ const SORTS: { value: SortKey; label: string }[] = [
   { value: 'last_order_at', label: 'Última compra' },
   { value: 'created_at', label: 'Cadastro mais recente' },
   { value: 'name', label: 'Nome (A-Z)' },
-];
-
-const COLUMNS: SllColumn<CustomerRow>[] = [
-  {
-    key: 'cliente', header: 'Cliente',
-    render: (r) => (
-      <>
-        <p className="text-sm font-bold text-slate-800 dark:text-white">{r.name}</p>
-        <p className="text-[11px] text-slate-400">{r.email ?? r.phone ?? '-'}</p>
-        {r.tags?.length > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1">
-            {r.tags.map((t) => (
-              <span key={t} className="rounded bg-slate-100 px-1.5 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">{t}</span>
-            ))}
-          </div>
-        )}
-      </>
-    ),
-  },
-  { key: 'doc', header: 'Documento', render: (r) => <span className="font-mono text-slate-500">{maskDoc(r.document)}</span> },
-  { key: 'cidade', header: 'Cidade/UF', render: (r) => <span className="text-slate-500">{[r.city, r.state].filter(Boolean).join('/') || '-'}</span> },
-  { key: 'pedidos', header: 'Pedidos', align: 'right', render: (r) => <span className="font-mono font-bold">{r.orders_count}</span> },
-  { key: 'total', header: 'Total gasto', align: 'right', render: (r) => <span className="font-mono font-bold">{brl(r.total_spent)}</span> },
-  { key: 'ticket', header: 'Ticket médio', align: 'right', render: (r) => <span className="font-mono text-slate-600 dark:text-slate-300">{brl(r.avg_ticket)}</span> },
-  {
-    key: 'ultima', header: 'Última compra',
-    render: (r) => (
-      <span className="text-slate-500">
-        {fmtDate(r.last_order_at)}
-        {r.days_since_last != null && <span className="ml-1 text-[11px] text-slate-400">({r.days_since_last}d)</span>}
-      </span>
-    ),
-  },
 ];
 
 export default function CustomersPage() {
@@ -64,14 +35,16 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
   const [tag, setTag] = useState('');
+  const [tagList, setTagList] = useState<CustomerTag[]>([]);
   const [sort, setSort] = useState<SortKey>('total_spent');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const canExport = allow('clientes', 'editar');
+  const canEdit = allow('clientes', 'editar');
 
   const doExport = async () => {
     if (!storeId) return;
@@ -85,6 +58,14 @@ export default function CustomersPage() {
     const t = setTimeout(() => { setDebounced(search); setPage(0); }, 350);
     return () => clearTimeout(t);
   }, [search]);
+
+  const loadTags = useCallback(async () => {
+    if (!storeId) return;
+    try { setTagList(await listCustomerTags(storeId)); }
+    catch (e) { console.error('[Gestor] tags', e); }
+  }, [storeId]);
+
+  useEffect(() => { void loadTags(); }, [loadTags]);
 
   const load = useCallback(async () => {
     if (!storeId) return;
@@ -100,14 +81,81 @@ export default function CustomersPage() {
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const open = (id: string | null) => { setOpenId(id); setDialogOpen(true); };
+  const allTags = useMemo(() => tagList.map((t) => t.tag), [tagList]);
 
-  const actionsColumn: SllColumn<CustomerRow> = {
-    key: 'acoes',
-    header: 'Ações',
-    align: 'center',
-    className: 'w-32',
-    render: (r) => <CustomerActions row={r} canEdit={allow('clientes', 'editar')} onEdit={() => open(r.customer_id)} />,
+  const changeTags = async (r: CustomerRow, list: string[]) => {
+    const prev = r.tags ?? [];
+    setRows((p) => p.map((x) => (x.customer_id === r.customer_id ? { ...x, tags: list } : x)));
+    try {
+      await setCustomerTags(r.customer_id, list);
+      void loadTags();
+    } catch (e) {
+      setRows((p) => p.map((x) => (x.customer_id === r.customer_id ? { ...x, tags: prev } : x)));
+      showError((e as Error).message);
+    }
   };
+
+  const applyByPurchase = async () => {
+    if (!storeId) return;
+    setApplying(true);
+    try {
+      const n = await applyTagsByPurchase(storeId);
+      showSuccess(n ? `${n} cliente(s) receberam tags pelo que compraram.` : 'Nenhum cliente com tag nova para aplicar.');
+      await Promise.all([load(), loadTags()]);
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const columns: SllColumn<CustomerRow>[] = [
+    {
+      key: 'cliente', header: 'Cliente',
+      render: (r) => (
+        <>
+          <p className="text-sm font-bold text-slate-800 dark:text-white">{r.name}</p>
+          <p className="text-[11px] text-slate-400">{r.email ?? r.phone ?? '-'}</p>
+        </>
+      ),
+    },
+    {
+      key: 'tags', header: 'Tags', className: 'min-w-[11rem]',
+      render: (r) => (
+        <div className="flex items-start gap-1" onClick={(e) => e.stopPropagation()}>
+          {canEdit ? (
+            <CategoryTagPicker value={r.tags ?? []} allTags={allTags} onChange={(list) => void changeTags(r, list)} />
+          ) : (r.tags ?? []).length === 0 ? (
+            <span className="text-slate-300">-</span>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {r.tags.map((t) => (
+                <button key={t} type="button" onClick={() => { setTag(t); setPage(0); }} className="cursor-pointer rounded-full bg-[color:var(--sll-b-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--sll-b-brand)]">{t}</button>
+              ))}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    { key: 'doc', header: 'Documento', render: (r) => <span className="font-mono text-slate-500">{maskDoc(r.document)}</span> },
+    { key: 'cidade', header: 'Cidade/UF', render: (r) => <span className="text-slate-500">{[r.city, r.state].filter(Boolean).join('/') || '-'}</span> },
+    { key: 'pedidos', header: 'Pedidos', align: 'right', render: (r) => <span className="font-mono font-bold">{r.orders_count}</span> },
+    { key: 'total', header: 'Total gasto', align: 'right', render: (r) => <span className="font-mono font-bold">{brl(r.total_spent)}</span> },
+    { key: 'ticket', header: 'Ticket médio', align: 'right', render: (r) => <span className="font-mono text-slate-600 dark:text-slate-300">{brl(r.avg_ticket)}</span> },
+    {
+      key: 'ultima', header: 'Última compra',
+      render: (r) => (
+        <span className="text-slate-500">
+          {fmtDate(r.last_order_at)}
+          {r.days_since_last != null && <span className="ml-1 text-[11px] text-slate-400">({r.days_since_last}d)</span>}
+        </span>
+      ),
+    },
+    {
+      key: 'acoes', header: 'Ações', align: 'center', className: 'w-32',
+      render: (r) => <CustomerActions row={r} canEdit={canEdit} onEdit={() => open(r.customer_id)} />,
+    },
+  ];
 
   return (
     <div className="space-y-4">
@@ -116,25 +164,34 @@ export default function CustomersPage() {
           <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
           <p className="text-sm text-slate-500">O total gasto considera só pedidos pagos e não cancelados.</p>
         </div>
-        <div className="flex items-center gap-2">
-              {canExport && (
-                    <button type="button" onClick={() => setImportOpen(true)} className={sllBtnGhost}><Upload size={16} /> Importar</button>
-                  )}
-                  {canExport && (
-                <button type="button" disabled={exporting} onClick={() => void doExport()} className={sllBtnGhost}>
-                  {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} {exporting ? 'Exportando...' : 'Exportar'}
-                </button>
-              )}
-              {allow('clientes', 'criar') && (
-          <button type="button" onClick={() => open(null)} className={sllBtnPrimary}><Plus size={16} /> Novo cliente</button>
-        )}
-            </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {canEdit && (
+            <button type="button" disabled={applying} onClick={() => void applyByPurchase()} title="Aplica as tags das categorias dos produtos que cada cliente comprou" className={sllBtnGhost}>
+              {applying ? <Loader2 size={16} className="animate-spin" /> : <Tags size={16} />} Tags por compra
+            </button>
+          )}
+          {canEdit && (
+            <button type="button" onClick={() => setImportOpen(true)} className={sllBtnGhost}><Upload size={16} /> Importar</button>
+          )}
+          {canEdit && (
+            <button type="button" disabled={exporting} onClick={() => void doExport()} className={sllBtnGhost}>
+              {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} {exporting ? 'Exportando...' : 'Exportar'}
+            </button>
+          )}
+          {allow('clientes', 'criar') && (
+            <button type="button" onClick={() => open(null)} className={sllBtnPrimary}><Plus size={16} /> Novo cliente</button>
+          )}
+        </div>
       </div>
 
       <SllFilterBar>
         <SllSearch value={search} onChange={setSearch} placeholder="Nome, e-mail, telefone ou documento..." />
-        <SllField label="Tag" className="w-44">
-          <input value={tag} onChange={(e) => { setTag(e.target.value); setPage(0); }} placeholder="Filtrar por tag" className={sllFieldCls} />
+        <SllField label="Tag" className="w-56">
+          <select value={tag} onChange={(e) => { setTag(e.target.value); setPage(0); }} className={sllFieldCls + ' cursor-pointer'}>
+            <option value="">Todas as tags</option>
+            {tag && !allTags.includes(tag) && <option value={tag}>{tag}</option>}
+            {tagList.map((t) => <option key={t.tag} value={t.tag}>{t.tag} ({t.customers})</option>)}
+          </select>
         </SllField>
         <SllField label="Ordenar por" className="w-56">
           <select value={sort} onChange={(e) => { setSort(e.target.value as SortKey); setPage(0); }} className={sllFieldCls + ' cursor-pointer'}>
@@ -146,21 +203,21 @@ export default function CustomersPage() {
       {err && <p className="rounded-xl bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700">{err}</p>}
 
       <SllTable
-        columns={[...COLUMNS, actionsColumn]}
+        columns={columns}
         rows={rows}
         rowKey={(r) => r.customer_id}
         onRowClick={(r) => open(r.customer_id)}
         loading={loading}
         empty="Nenhum cliente encontrado."
-        minWidth="56rem"
+        minWidth="64rem"
       />
 
       <SllPager page={page} pages={pages} total={total} noun="cliente(s)" onPage={setPage} />
 
-      {importOpen && storeId && <ImportCustomersModal storeId={storeId} onClose={() => setImportOpen(false)} onDone={() => void load()} />}
+      {importOpen && storeId && <ImportCustomersModal storeId={storeId} onClose={() => setImportOpen(false)} onDone={() => { void load(); void loadTags(); }} />}
 
       {storeId && (
-        <CustomerDialog storeId={storeId} customerId={openId} open={dialogOpen} onClose={() => setDialogOpen(false)} onSaved={() => void load()} />
+        <CustomerDialog storeId={storeId} customerId={openId} open={dialogOpen} onClose={() => setDialogOpen(false)} onSaved={() => { void load(); void loadTags(); }} />
       )}
     </div>
   );
