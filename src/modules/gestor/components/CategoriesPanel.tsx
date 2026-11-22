@@ -8,6 +8,7 @@ import { flattenTree, listCategories } from '../services/catalogo';
 import type { Category } from '../services/catalogo';
 import CategoryChannelsDialog from './CategoryChannelsDialog';
 import CategoryTagsDialog from './CategoryTagsDialog';
+import CategoryTagPicker from './CategoryTagPicker';
 import CreateCategoryModal from './CreateCategoryModal';
 
 const sb: any = supabase;
@@ -23,7 +24,7 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [tags, setTags] = useState<Record<string, string>>({});
+  const [tags, setTags] = useState<Record<string, string[]>>({});
 
   const load = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
@@ -32,7 +33,7 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
       const { data } = await sb.from('product_categories').select('id, customer_tag, customer_tags').eq('store_id', storeId);
       setTags(Object.fromEntries(((data || []) as any[]).map((r) => {
         const list: string[] = r.customer_tags?.length ? r.customer_tags : r.customer_tag ? [r.customer_tag] : [];
-        return [r.id, list.join(', ')];
+        return [r.id, list];
       })));
     }
     catch (e) { showError((e as Error).message); }
@@ -42,7 +43,20 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
   useEffect(() => { if (!lojaLoading) void load(); }, [lojaLoading, load]);
 
   const tree = useMemo(() => flattenTree(cats), [cats]);
-  const withTag = useMemo(() => tree.filter(({ cat }) => tags[cat.id]).length, [tree, tags]);
+  const withTag = useMemo(() => tree.filter(({ cat }) => (tags[cat.id] || []).length > 0).length, [tree, tags]);
+  const allTags = useMemo(() => {
+    const m = new Map<string, string>();
+    Object.values(tags).flat().forEach((t) => { if (!m.has(t.toLowerCase())) m.set(t.toLowerCase(), t); });
+    return Array.from(m.values()).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, [tags]);
+
+  const setCatTags = async (id: string, list: string[]) => {
+    if (!storeId) return;
+    const prev = tags[id] ?? [];
+    setTags((p) => ({ ...p, [id]: list }));
+    const { error } = await sb.rpc('gestor_category_set_tags', { p_store: storeId, p_category: id, p_tags: list });
+    if (error) { setTags((p) => ({ ...p, [id]: prev })); showError(error.message); }
+  };
 
   const save = async (id: string | null, n: string, p: string | null, active: boolean) => {
     if (!storeId) return;
@@ -97,15 +111,12 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
               )}
 
               {editId !== cat.id && (
-                <button
-                  type="button"
+                <CategoryTagPicker
+                  value={tags[cat.id] || []}
+                  allTags={allTags}
                   disabled={!canEdit}
-                  onClick={() => setTagsOpen(true)}
-                  title={canEdit ? 'Editar tags das categorias' : undefined}
-                  className={`max-w-[18rem] shrink-0 truncate rounded-full px-2.5 py-0.5 text-[10px] font-bold ${canEdit ? 'cursor-pointer' : 'cursor-default'} ${tags[cat.id] ? 'bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border border-dashed border-slate-300 text-slate-400 dark:border-slate-600'}`}
-                >
-                  {tags[cat.id] ? `Tags: ${tags[cat.id]}` : 'sem tag'}
-                </button>
+                  onChange={(list) => void setCatTags(cat.id, list)}
+                />
               )}
 
               {canEdit && (
@@ -132,7 +143,7 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
         <CategoryChannelsDialog storeId={storeId} onChanged={() => void load()} onClose={() => setLinkOpen(false)} />
       )}
       {tagsOpen && storeId && (
-        <CategoryTagsDialog storeId={storeId} tree={tree} tags={tags} onSaved={() => void load()} onClose={() => setTagsOpen(false)} />
+        <CategoryTagsDialog storeId={storeId} tree={tree} tags={tags} allTags={allTags} onSaved={() => void load()} onClose={() => setTagsOpen(false)} />
       )}
     </div>
   );
