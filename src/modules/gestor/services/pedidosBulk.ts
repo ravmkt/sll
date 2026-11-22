@@ -25,6 +25,13 @@ export async function setStatusMany(ids: string[], status: BulkStatus): Promise<
   return { ok, failed, reason };
 }
 
+/** Exclui pedidos (e itens). Lanca erro se algum nao puder ser excluido. */
+export async function deleteOrders(ids: string[]): Promise<number> {
+  const { data, error } = await sb.rpc('gestor_orders_delete', { p_orders: ids });
+  if (error) throw new Error(error.message);
+  return Number(data ?? 0);
+}
+
 export async function fetchDetails(ids: string[]): Promise<OrderDetail[]> {
   const out: (OrderDetail | null)[] = new Array(ids.length).fill(null);
   let i = 0;

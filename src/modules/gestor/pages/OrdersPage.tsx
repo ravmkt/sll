@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FileText, Loader2, Printer, RefreshCw } from 'lucide-react';
+import { FileText, Loader2, Printer, RefreshCw, Trash2 } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { SllField, SllFilterBar, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllPeriodFilter, PERIOD_ALL, periodRange } from '@/components/sll/SllPeriodFilter';
@@ -7,7 +7,7 @@ import type { PeriodValue } from '@/components/sll/SllPeriodFilter';
 import { SllPager, SllTable } from '@/components/sll/SllTable';
 import type { SllColumn } from '@/components/sll/SllTable';
 import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast';
 import OrderDetailDialog from '../components/OrderDetailDialog';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import OrderStatusDialog from '../components/OrderStatusDialog';
@@ -17,7 +17,7 @@ import {
   FULFILLMENT_LABEL, PAGE_SIZE, brl, customerName, fmtDate, fulfillmentOf, listOrders, orderFacets, pick,
 } from '../services/pedidos';
 import type { Row } from '../services/pedidos';
-import { buildOrdersHtml, fetchDetails } from '../services/pedidosBulk';
+import { buildOrdersHtml, deleteOrders, fetchDetails } from '../services/pedidosBulk';
 
 const act =
   'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-[color:var(--sll-b-brand-soft)] hover:text-[color:var(--sll-b-brand)]';
@@ -50,6 +50,8 @@ export default function OrdersPage() {
   const [statusIds, setStatusIds] = useState<string[] | null>(null);
   const [nfIds, setNfIds] = useState<string[] | null>(null);
   const [printing, setPrinting] = useState(false);
+  const [deleteIds, setDeleteIds] = useState<string[] | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const range = useMemo(() => periodRange(period), [period]);
 
@@ -122,6 +124,25 @@ export default function OrdersPage() {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!deleteIds?.length) return;
+    setDeleting(true);
+    try {
+      const n = await deleteOrders(deleteIds);
+      showSuccess(`${n} pedido(s) excluído(s).`);
+      setSelected((p) => { const s = new Set(p); deleteIds.forEach((id) => s.delete(id)); return s; });
+      const wasLastPage = rows.length <= deleteIds.length && page > 0;
+      setDeleteIds(null);
+      if (wasLastPage) setPage((p) => p - 1); else await reload();
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const slot = 'flex h-8 w-8 items-center justify-center';
+
   const columns: SllColumn<Row>[] = [
     {
       key: 'sel', align: 'center', className: 'w-10',
@@ -143,16 +164,35 @@ export default function OrdersPage() {
     { key: 'status', header: 'Status', render: (r) => <OrderStatusBadge status={fulfillmentOf(r)} /> },
     { key: 'total', header: 'Total', align: 'right', render: (r) => <span className="font-mono font-bold">{brl(r.total)}</span> },
     {
-      key: 'acoes', header: 'Ações', align: 'center', className: 'w-36',
+      key: 'acoes', header: 'Ações', align: 'center', className: 'w-44',
       render: (r) => (
-        <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <button type="button" title="Imprimir pedido" aria-label="Imprimir pedido" onClick={() => void printOrders([r.id])} className={act}><Printer size={16} /></button>
-          {canEdit && (
-            <button type="button" title="Gerar nota fiscal" aria-label="Gerar nota fiscal" onClick={() => setNfIds([r.id])} className={act}><FileText size={16} /></button>
-          )}
-          {canEdit && !r.canceled_at && (
-            <button type="button" title="Alterar status" aria-label="Alterar status" onClick={() => setStatusIds([r.id])} className={act}><RefreshCw size={16} /></button>
-          )}
+        <div className="grid grid-cols-[repeat(4,2rem)] justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <span className={slot}>
+            <button type="button" title="Imprimir pedido" aria-label="Imprimir pedido" onClick={() => void printOrders([r.id])} className={act}><Printer size={16} /></button>
+          </span>
+          <span className={slot}>
+            {canEdit && (
+              <button type="button" title="Gerar nota fiscal" aria-label="Gerar nota fiscal" onClick={() => setNfIds([r.id])} className={act}><FileText size={16} /></button>
+            )}
+          </span>
+          <span className={slot}>
+            {canEdit && !r.canceled_at && (
+              <button type="button" title="Alterar status" aria-label="Alterar status" onClick={() => setStatusIds([r.id])} className={act}><RefreshCw size={16} /></button>
+            )}
+          </span>
+          <span className={slot}>
+            {canEdit && (
+              <button
+                type="button"
+                title="Excluir pedido"
+                aria-label="Excluir pedido"
+                onClick={() => setDeleteIds([r.id])}
+                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </span>
         </div>
       ),
     },
@@ -221,6 +261,33 @@ export default function OrdersPage() {
       {storeId && <OrderDetailDialog storeId={storeId} orderId={detail} onClose={() => setDetail(null)} onChanged={() => void reload()} />}
 
       <OrderStatusDialog ids={statusIds} onClose={() => setStatusIds(null)} onDone={() => { setSelected(new Set()); void reload(); }} />
+
+      <SllModal
+        open={!!deleteIds}
+        onOpenChange={(o) => { if (!o && !deleting) setDeleteIds(null); }}
+        title="Excluir pedido"
+        size="md"
+        footer={(
+          <>
+            <button type="button" disabled={deleting} onClick={() => setDeleteIds(null)} className={sllBtnGhost}>Cancelar</button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => void confirmDelete()}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {deleting && <Loader2 size={15} className="animate-spin" />}Excluir
+            </button>
+          </>
+        )}
+      >
+        <p className="text-sm text-slate-700 dark:text-slate-200">
+          Excluir <strong>{deleteIds?.length ?? 0}</strong> pedido(s) e seus itens? Esta ação não pode ser desfeita.
+        </p>
+        <p className="mt-2 text-xs text-slate-500">
+          O estoque não é devolvido na exclusão. Se o pedido já baixou estoque, cancele-o antes.
+        </p>
+      </SllModal>
 
       <SllModal
         open={!!nfIds}

@@ -76,6 +76,21 @@ end $$;
 
 grant execute on function public.gestor_orders_list(uuid, text, text, text, text, int, int, timestamptz, timestamptz) to authenticated;
 
+create or replace function public.gestor_orders_delete(p_orders uuid[])
+returns int language plpgsql as $$
+declare n int;
+begin
+  delete from public.order_items where order_id = any(p_orders);
+  delete from public.orders where id = any(p_orders);
+  get diagnostics n = row_count;
+  if n <> cardinality(p_orders) then
+    raise exception 'Sem permissão ou pedido não encontrado.';
+  end if;
+  return n;
+end $$;
+
+grant execute on function public.gestor_orders_delete(uuid[]) to authenticated;
+
 notify pgrst, 'reload schema';
 
-select count(*) as funcao_criada from pg_proc where proname = 'gestor_orders_list';
+select count(*) as funcao_criada from pg_proc where proname in ('gestor_orders_list', 'gestor_orders_delete');
