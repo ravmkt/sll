@@ -4,7 +4,8 @@ import { useLoja } from '@/contexts/LojaContext';
 import { SllField, SllFilterBar, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllPager, SllTable } from '@/components/sll/SllTable';
 import type { SllColumn } from '@/components/sll/SllTable';
-import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
+import { sllBtnPrimary } from '@/components/sll/SllModal';
+import { ConfirmDangerModal } from '@/components/common/AppModal';
 import { showError, showSuccess } from '@/utils/toast';
 import SupplierDialog from '../components/SupplierDialog';
 import { listSuppliers, saveSupplier , deleteSupplier } from '../services/cadastros';
@@ -231,32 +232,15 @@ export default function SuppliersPage() {
         <SllPager page={safePage} pages={pages} total={total} noun="fornecedor(es)" onPage={setPage} />
       </div>
 
-      <SllModal
-            open={!!removing}
-            onOpenChange={(o) => { if (!o && !deleting) setRemoving(null); }}
-            title="Excluir fornecedor"
-            size="md"
-            footer={
-              <>
-                <button type="button" disabled={deleting} onClick={() => setRemoving(null)} className={sllBtnGhost}>Cancelar</button>
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={() => void confirmDelete()}
-                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Trash2 size={16} /> {deleting ? 'Excluindo...' : 'Excluir'}
-                </button>
-              </>
-            }
-          >
-            <p className="text-sm text-slate-700 dark:text-slate-200">
-              Excluir <strong>{removing?.name}</strong>? Esta ação não pode ser desfeita.
-            </p>
-            <p className="mt-2 text-xs text-slate-500">
-              Os produtos ligados a este fornecedor continuam existindo, mas perdem o vínculo com ele. Se só quiser parar de usar, prefira desativar pelo botão Status.
-            </p>
-          </SllModal>
+      <ConfirmDangerModal
+        open={!!removing}
+        title="EXCLUIR FORNECEDOR"
+        itemName={removing?.name ?? ''}
+        message={'Esta a\u00e7\u00e3o \u00e9 irrevers\u00edvel. O item "' + (removing?.name ?? '') + '" ser\u00e1 removido permanentemente. Os produtos ligados a ele continuam existindo, mas perdem o v\u00ednculo. Se s\u00f3 quiser parar de usar, desative pelo bot\u00e3o Status.'}
+        busy={deleting}
+        onClose={() => { if (!deleting) setRemoving(null); }}
+        onConfirm={() => void confirmDelete()}
+      />
 
           {storeId && (
         <SupplierDialog

@@ -4,7 +4,8 @@ import { useLoja } from '@/contexts/LojaContext';
 import { SllField, SllFilterBar, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllPager, SllTable } from '@/components/sll/SllTable';
 import type { SllColumn } from '@/components/sll/SllTable';
-import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
+import { sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
+import { ConfirmDangerModal } from '@/components/common/AppModal';
 import { showError, showSuccess } from '@/utils/toast';
 import { exportCustomers } from '../services/clientes-export';
 import { applyTagsByPurchase, listCustomerTags, setCustomerTags } from '../services/clientes-tags';
@@ -326,35 +327,15 @@ export default function CustomersPage() {
             <SllPager page={page} pages={pages} total={total} noun="cliente(s)" onPage={setPage} />
           </div>
 
-      <SllModal
+      <ConfirmDangerModal
         open={!!removing}
-        onOpenChange={(o) => { if (!o && !deleting) setRemoving(null); }}
-        title="Excluir cliente"
-        size="md"
-        footer={
-          <>
-            <button type="button" disabled={deleting} onClick={() => setRemoving(null)} className={sllBtnGhost}>Cancelar</button>
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={() => void confirmDelete()}
-              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {deleting ? 'Excluindo...' : 'Excluir'}
-            </button>
-          </>
-        }
-      >
-        <p className="text-sm text-slate-700 dark:text-slate-200">
-          Excluir <strong>{removing?.name}</strong>? Esta ação não pode ser desfeita.
-        </p>
-        <p className="mt-2 text-xs text-slate-500">
-          {removing && removing.orders_all > 0
-            ? `Os ${removing.orders_all} pedido(s) deste cliente continuam no sistema, mas ficam sem cliente vinculado. `
-            : ''}
-          Se o cliente veio de uma plataforma (ex.: Yampi), ele pode ser recriado na próxima importação de pedidos.
-        </p>
-      </SllModal>
+        title="EXCLUIR CLIENTE"
+        itemName={removing?.name ?? ''}
+        message={'Esta a\u00e7\u00e3o \u00e9 irrevers\u00edvel. O item "' + (removing?.name ?? '') + '" ser\u00e1 removido permanentemente. ' + (removing && removing.orders_all > 0 ? 'Os ' + removing.orders_all + ' pedido(s) continuam no sistema, mas ficam sem cliente vinculado. ' : '') + 'Se veio de uma plataforma (ex.: Yampi), pode ser recriado na pr\u00f3xima importa\u00e7\u00e3o.'}
+        busy={deleting}
+        onClose={() => { if (!deleting) setRemoving(null); }}
+        onConfirm={() => void confirmDelete()}
+      />
 
       {importOpen && storeId && <ImportCustomersModal storeId={storeId} onClose={() => setImportOpen(false)} onDone={() => { void load(); void loadTags(); }} />}
 
