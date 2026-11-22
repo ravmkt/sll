@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ElementType } from 'react';
 import {
   BadgeCheck, Ban, ChevronDown, ChevronRight, ChevronUp, Edit3, Link2, List, ListTree, Loader2,
-  Package, PackageX, Plus, RefreshCw, Search, Tag, Trash2, Upload,
+  Globe, Package, PackageX, Plus, RefreshCw, Search, Tag, Trash2, Upload,
 } from 'lucide-react';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog';
 import { useLoja } from '@/contexts/LojaContext';
@@ -23,7 +23,13 @@ import ProductFormDialog from '@/shared/products/ProductFormDialog';
 import CategoriesModal from '@/components/products/CategoriesModal';
 import ImportModal from '@/components/products/ImportModal';
 import StockEditDialog from '@/components/products/StockEditDialog';
-import { inputCls } from '@/components/products/Modal';
+import { Modal, inputCls } from '@/components/products/Modal';
+import { listChannelLinks } from '@/modules/gestor/services/vinculos';
+import { CHANNEL_META, listActiveChannels } from '@/modules/gestor/services/canais';
+import type { ChannelKey } from '@/modules/gestor/services/canais';
+import ChannelFavicon, { normChannel } from '@/modules/gestor/components/ChannelFavicon';
+import ProductChannelsPanel from '@/modules/gestor/components/ProductChannelsPanel';
+import ChannelsBulkDialog from '@/modules/gestor/components/ChannelsBulkDialog';
 import { listStock } from '@/services/productVariantsService';
 import { syncYampi } from '@/services/yampiSyncService';
 import { hasRealVariants, listVariantsByProduct, variantLabel } from '@/components/products/variantsData';
@@ -34,7 +40,6 @@ type StockFilter = 'all' | 'with' | 'without' | 'nocontrol';
 type ViewMode = 'parents' | 'expanded';
 
 const VIEW_KEY = 'sll_products_view';
-const ORIGIN: Record<string, string> = { manual: 'Manual', xml: 'XML', planilha: 'Planilha', yampi: 'Yampi' };
 const brl = (n: number | null) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const selectCls = cn(inputCls, '!w-auto !py-2.5 cursor-pointer');
 
@@ -105,6 +110,11 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
   const [linked, setLinked] = useState<Set<string>>(new Set());
   const [stockProduct, setStockProduct] = useState<CatalogProduct | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [chLinks, setChLinks] = useState<Map<string, { channel: ChannelKey; published: boolean }[]>>(new Map());
+  const [activeCh, setActiveCh] = useState<ChannelKey[]>([]);
+  const [fChannel, setFChannel] = useState('all');
+  const [chProduct, setChProduct] = useState<CatalogProduct | null>(null);
+  const [bulkChOpen, setBulkChOpen] = useState(false);
 
   const reload = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
@@ -121,6 +131,21 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
       setStock(st);
       setLinked(lk);
       setVariants(vs);
+      try {
+        const [lk2, act] = await Promise.all([listChannelLinks(storeId), listActiveChannels(storeId)]);
+        const m = new Map<string, { channel: ChannelKey; published: boolean }[]>();
+        for (const l of lk2) {
+          const ch = normChannel(l.channel);
+          if (!ch) continue;
+          const arr = m.get(l.product_id) ?? [];
+          if (!arr.some((a) => a.channel === ch)) arr.push({ channel: ch, published: l.published });
+          m.set(l.product_id, arr);
+        }
+        setChLinks(m);
+        setActiveCh(act);
+      } catch (e) {
+        console.warn('[Produtos] canais indisponiveis', e);
+      }
     } catch (e) {
       console.error('Erro ao carregar produtos:', e);
       showError('Erro ao carregar produtos.');
@@ -130,7 +155,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
   }, [storeId]);
 
   useEffect(() => { if (!lojaLoading) reload(); }, [lojaLoading, reload]);
-  useEffect(() => { setPage(1); }, [search, fCat, fStatus, fOrigin, fStock, fLinked, pageSize]);
+  useEffect(() => { setPage(1); }, [search, fCat, fStatus, fOrigin, fStock, fLinked, fChannel, pageSize]);
 
   const changeView = (v: ViewMode) => {
     setView(v);
@@ -180,6 +205,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
         (fStatus === 'all' || (fStatus === 'active' ? !!p.active : !p.active)) &&
         (fOrigin === 'all' || p.origin === fOrigin) &&
         (!fLinked || linked.has(p.id)) &&
+            (fChannel === 'all' || (fChannel === 'none' ? !(chLinks.get(p.id)?.length) : !!chLinks.get(p.id)?.some((x) => x.channel === fChannel))) &&
         stockOk(p)
     );
     if (!sortKey) return list;
@@ -196,7 +222,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
       const r = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'pt-BR');
       return asc ? r : -r;
     });
-  }, [products, variants, search, fCat, fStatus, fOrigin, fStock, fLinked, linked, stock, sortKey, asc]);
+  }, [products, variants, search, fCat, fStatus, fOrigin, fStock, fLinked, fChannel, chLinks, linked, stock, sortKey, asc]);
 
   const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const safePage = Math.min(page, pages);
@@ -345,7 +371,12 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                 <option value="active">Ativos</option>
                 <option value="inactive">Desativados</option>
               </select>
-              <select value={fOrigin} onChange={(e) => setFOrigin(e.target.value)} className={selectCls}>
+              <select value={fChannel} onChange={(e) => setFChannel(e.target.value)} className={selectCls}>
+                    <option value="all">Todos canais</option>
+                    {activeCh.map((ch) => <option key={ch} value={ch}>{CHANNEL_META[ch].label}</option>)}
+                    <option value="none">Sem canal</option>
+                  </select>
+                  <select value={fOrigin} onChange={(e) => setFOrigin(e.target.value)} className={selectCls}>
                 <option value="all">Todas origens</option>
                 <option value="manual">Manual</option>
                 <option value="xml">XML</option>
@@ -370,7 +401,12 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                   <Trash2 size={14} /> Excluir {selected.size}
                 </button>)}</>
               )}
-              <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              {selected.size > 0 && perms.edit && (
+                    <button type="button" onClick={() => setBulkChOpen(true)} className={btnGhost}>
+                      <Globe size={14} className="text-[color:var(--sll-b-brand)]" /> Canais ({selected.size})
+                    </button>
+                  )}
+                  <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
                 {viewBtn('parents', List, 'Só produtos (variações recolhidas)')}
                 {viewBtn('expanded', ListTree, 'Produtos com variações expandidas')}
               </div>
@@ -400,7 +436,7 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                     <Th k="stock" label="Estoque" cls="text-center" />
                     <Th k="price" label="Preço" cls="text-center" />
                     <Th k="category" label="Categoria" cls="text-center" />
-                    <Th k="origin" label="Origem" cls="text-center" />
+                        <th className="px-4 py-3 text-center">Canais</th>
                     <Th k="active" label="Status" cls="text-center" />
                     <th className="w-28 px-4 py-3 text-center">Ações</th>
                   </tr>
@@ -443,8 +479,17 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
                               <span className="truncate">{p.category || 'Sem categoria'}</span>
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="rounded-full border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">{ORIGIN[p.origin || ''] ?? (p.origin || '—')}</span>
+                              <td className="px-4 py-3 text-center">
+                                <button
+                                  type="button"
+                                  disabled={!perms.edit}
+                                  onClick={() => setChProduct(p)}
+                                  title="Escolher canais de venda"
+                                  className="mx-auto flex min-h-[28px] cursor-pointer flex-wrap items-center justify-center gap-1 rounded-lg px-1.5 py-1 hover:bg-slate-100 disabled:cursor-default dark:hover:bg-slate-800"
+                                >
+                                  {(chLinks.get(p.id) ?? []).map((x) => <ChannelFavicon key={x.channel} channel={x.channel} pending={!x.published} />)}
+                                  {!(chLinks.get(p.id)?.length) && <span className="text-xs text-slate-300">—</span>}
+                                </button>
                           </td>
                           <td className="px-4 py-3 text-center">
                             <button type="button" onClick={() => toggleStatus(p)} disabled={!perms.edit} className={cn('h-7 w-[100px] rounded-lg border text-[10px] font-bold uppercase cursor-pointer transition', p.active ? 'border-[color:color-mix(in_srgb,var(--sll-b-brand)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--sll-b-brand)_10%,transparent)] text-[color:var(--sll-b-brand)]' : 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800/40 dark:bg-rose-950/30 dark:text-rose-400')}>
@@ -516,7 +561,17 @@ export default function ProductsCatalog({ mode = 'hub', perms = ALL_PERMS }: { m
       {importOpen && storeId && (
         <ImportModal storeId={storeId} onImported={reload} onClose={() => setImportOpen(false)} />
       )}
-      <ConfirmDeleteDialog
+      {chProduct && storeId && (
+            <Modal title={`Canais: ${chProduct.name}`} onClose={() => setChProduct(null)}>
+              <div className="p-6">
+                <ProductChannelsPanel storeId={storeId} productId={chProduct.id} onChanged={() => void reload()} />
+              </div>
+            </Modal>
+          )}
+          {bulkChOpen && storeId && (
+            <ChannelsBulkDialog storeId={storeId} productIds={Array.from(selected)} onClose={() => setBulkChOpen(false)} onDone={() => void reload()} />
+          )}
+          <ConfirmDeleteDialog
         isOpen={!!del}
         title="Excluir produtos"
         message={del ? `Tem certeza que deseja excluir ${del.label}? Esta ação não pode ser desfeita.` : ''}

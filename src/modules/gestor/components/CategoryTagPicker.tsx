@@ -74,7 +74,7 @@ export default function CategoryTagPicker({ value, allTags, disabled, onChange }
       {pos && createPortal(
         <>
           <div className="fixed inset-0 z-[200]" onClick={() => setPos(null)} />
-          <div style={{ top: pos.top, left: pos.left, width: W }} className="fixed z-[210] rounded-xl border border-slate-200 bg-white p-2 shadow-2xl dark:border-slate-700 dark:bg-[#1a1f2c]">
+          <div style={{ top: pos.top, left: pos.left, width: W }} className="fixed z-[210] rounded-xl border border-slate-200 bg-[color:var(--sll-surface)] p-2 shadow-2xl dark:border-slate-700">
             <input
               autoFocus
               value={q}

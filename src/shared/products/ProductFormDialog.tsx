@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Boxes, ChevronLeft, ChevronRight, DollarSign, FileText, Layers, ListPlus, Loader2, Package, Puzzle, Ruler, Tag, Truck } from 'lucide-react';
+import { Boxes, ChevronLeft, Globe, ChevronRight, DollarSign, FileText, Layers, ListPlus, Loader2, Package, Puzzle, Ruler, Tag, Truck } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -17,6 +17,7 @@ import TaxTab from './tabs/TaxTab';
 import CustomFieldsTab from './tabs/CustomFieldsTab';
 import KitTab from './tabs/KitTab';
 import VariationsTab from './tabs/VariationsTab';
+import ProductChannelsPanel from '@/modules/gestor/components/ProductChannelsPanel';
 import { DESCRIPTION_LIMIT } from './tabs/uiHelpers';
 
 interface Props {
@@ -58,6 +59,7 @@ const TAB_META: Record<string, { label: string; icon: LucideIcon }> = {
   extras: { label: 'Campos extras', icon: ListPlus },
   variacoes: { label: 'Variações', icon: Layers },
   composicao: { label: 'Composição', icon: Puzzle },
+  canais: { label: 'Canais de venda', icon: Globe },
 };
 
 export default function ProductFormDialog({ open, onOpenChange, storeId, productId, onSaved }: Props) {
@@ -89,7 +91,7 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
   const format = draft.product.format;
   const isActive = draft.product.active !== false;
   const available = [
-    'geral', 'catalogo', 'precos', 'dimensoes', 'estoque', 'fornecedores', 'tributacao', 'extras',
+    'geral', 'catalogo', 'precos', 'dimensoes', 'estoque', 'fornecedores', 'tributacao', 'extras', 'canais',
     ...(format === 'variation' ? ['variacoes'] : []),
     ...(format === 'kit' ? ['composicao'] : []),
   ];
@@ -98,7 +100,7 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
   // Criação = passo a passo (pode sair clicando em qualquer aba). Edição = livre.
   const currentId = savedId ?? productId ?? null;
   const isCreate = !currentId;
-  const steps = available.filter((t) => t !== 'variacoes');
+  const steps = available.filter((t) => t !== 'variacoes' && t !== 'canais');
   const idx = steps.indexOf(current);
   const showNext = guided && isCreate && idx >= 0 && idx < steps.length - 1;
 
@@ -207,6 +209,15 @@ export default function ProductFormDialog({ open, onOpenChange, storeId, product
             </TabsContent>
             <TabsContent value="extras" className={PANE}>
               <CustomFieldsTab storeId={storeId} product={draft.product} onChange={patchProduct} />
+                </TabsContent>
+                <TabsContent value="canais" className={PANE}>
+                  {currentId ? (
+                    <ProductChannelsPanel storeId={storeId} productId={currentId} onChanged={() => onSaved?.(currentId)} />
+                  ) : (
+                    <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700">
+                      Salve o produto primeiro. Depois, reabra e escolha em quais canais ele é vendido.
+                    </p>
+                  )}
             </TabsContent>
             {format === 'variation' && (
               <TabsContent value="variacoes" className={PANE}>

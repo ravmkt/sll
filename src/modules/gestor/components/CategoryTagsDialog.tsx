@@ -69,7 +69,7 @@ export default function CategoryTagsDialog({ storeId, tree, tags, allTags, onSav
           {shown.map(({ cat, depth }) => {
             const dirty = keyOf(vals[cat.id] || []) !== keyOf(tags[cat.id] || []);
             return (
-              <div key={cat.id} style={{ marginLeft: q ? 0 : depth * 20 }} className={`flex items-center gap-3 rounded-xl border bg-slate-50 px-4 py-2.5 dark:bg-[#111524] ${dirty ? 'border-amber-400' : 'border-slate-100 dark:border-slate-800'}`}>
+              <div key={cat.id} style={{ marginLeft: q ? 0 : depth * 20 }} className={`flex items-center gap-3 rounded-xl border bg-[color:var(--sll-bg)] px-4 py-2.5 ${dirty ? 'border-amber-400' : 'border-slate-100 dark:border-slate-800'}`}>
                 <span className={`min-w-0 flex-1 break-words text-sm font-semibold ${cat.active ? 'text-slate-700 dark:text-white' : 'text-slate-400 line-through'}`}>
                   {cat.name}
                 </span>
