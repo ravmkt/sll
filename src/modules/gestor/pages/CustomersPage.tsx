@@ -7,6 +7,7 @@ import type { SllColumn } from '@/components/sll/SllTable';
 import { sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
 import { exportCustomers } from '../services/clientes-export';
 import CustomerDialog from '../components/CustomerDialog';
+import CustomerActions from '../components/CustomerActions';
 import ImportCustomersModal from '../components/ImportCustomersModal';
 import { PAGE_SIZE, brl, fmtDate, listCustomers, maskDoc } from '../services/clientes';
 import type { CustomerRow, SortKey } from '../services/clientes';
@@ -100,6 +101,14 @@ export default function CustomersPage() {
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const open = (id: string | null) => { setOpenId(id); setDialogOpen(true); };
 
+  const actionsColumn: SllColumn<CustomerRow> = {
+    key: 'acoes',
+    header: 'Ações',
+    align: 'center',
+    className: 'w-32',
+    render: (r) => <CustomerActions row={r} canEdit={allow('clientes', 'editar')} onEdit={() => open(r.customer_id)} />,
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -137,7 +146,7 @@ export default function CustomersPage() {
       {err && <p className="rounded-xl bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700">{err}</p>}
 
       <SllTable
-        columns={COLUMNS}
+        columns={[...COLUMNS, actionsColumn]}
         rows={rows}
         rowKey={(r) => r.customer_id}
         onRowClick={(r) => open(r.customer_id)}
