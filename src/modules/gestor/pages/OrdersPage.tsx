@@ -12,6 +12,10 @@ import { showError, showSuccess } from '@/utils/toast';
 import OrderDetailDialog from '../components/OrderDetailDialog';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import OrderStatusDialog from '../components/OrderStatusDialog';
+import { NotaDetailModal, NotaRegisterModal, StatusBadge } from '../components/NotasModals';
+import type { NfOrderPrefill } from '../components/NotasModals';
+import { NF_STATUS_LABEL, activeNotasByOrder, fmtNumber } from '../services/notas';
+import type { NfNota } from '../services/notas';
 import ChannelFavicon, { normChannel } from '../components/ChannelFavicon';
 import { useGestorAccess } from '../hooks/useGestorAccess';
 import {
@@ -24,6 +28,8 @@ import type { PrintMode } from '../services/pedidosBulk';
 const act =
   'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-[color:var(--sll-b-brand-soft)] hover:text-[color:var(--sll-b-brand)]';
 const checkCls = 'h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]';
+const actDone =
+  'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-emerald-600 transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-500/10';
 
 function ChannelCell({ value }: { value: string | null }) {
   const x = String(value || '').toLowerCase();
@@ -36,6 +42,8 @@ export default function OrdersPage() {
   const { can: allow } = useGestorAccess();
   const { storeId, loading: lojaLoading } = useLoja();
   const canEdit = allow('pedidos', 'editar');
+  const canSeeNf = allow('notas_fiscais', 'ver');
+  const canCreateNf = allow('notas_fiscais', 'criar');
 
   const [rows, setRows] = useState<Row[]>([]);
   const [total, setTotal] = useState(0);
@@ -50,7 +58,11 @@ export default function OrdersPage() {
   const [detail, setDetail] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [statusIds, setStatusIds] = useState<string[] | null>(null);
-  const [nfIds, setNfIds] = useState<string[] | null>(null);
+  const [nfQueue, setNfQueue] = useState<{ items: NfOrderPrefill[]; index: number; skipped: number } | null>(null);
+  const [nfBusy, setNfBusy] = useState(false);
+  const [nfNotes, setNfNotes] = useState<Map<string, NfNota>>(new Map());
+  const [nfDetail, setNfDetail] = useState<string | null>(null);
+  const [nfTick, setNfTick] = useState(0);
   const [printing, setPrinting] = useState(false);
   const [printIds, setPrintIds] = useState<string[] | null>(null);
   const [printMode, setPrintMode] = useState<PrintMode>('page');
@@ -87,6 +99,43 @@ export default function OrdersPage() {
   }, [storeId, query, fulfillment, channel, page, range.from, range.to]);
 
   useEffect(() => { if (!lojaLoading) void reload(); }, [lojaLoading, reload]);
+
+  useEffect(() => {
+    if (!storeId || !canSeeNf || rows.length === 0) { setNfNotes(new Map()); return; }
+    let alive = true;
+    activeNotasByOrder(storeId, rows.map((r) => r.id as string))
+      .then((m) => { if (alive) setNfNotes(m); })
+      .catch(() => { if (alive) setNfNotes(new Map()); });
+    return () => { alive = false; };
+  }, [storeId, rows, canSeeNf, nfTick]);
+
+  const startNf = async (ids: string[]) => {
+    if (!storeId || nfBusy) return;
+    setNfBusy(true);
+    try {
+      const [details, existing] = await Promise.all([fetchDetails(ids), activeNotasByOrder(storeId, ids)]);
+      const items: NfOrderPrefill[] = details
+        .filter((d) => !d.order.canceled_at && !existing.has(d.order.id))
+        .map((d) => ({
+          id: d.order.id as string,
+          label: `#${pick(d.order, 'number', 'external_id') ?? ''}`,
+          name: customerName(d.order, d.customer),
+          document: String(pick(d.customer, 'document', 'cpf', 'cnpj') ?? ''),
+          total: Number(d.order.total || 0),
+          channel: String(d.order.channel || ''),
+        }));
+      const skipped = ids.length - items.length;
+      if (items.length === 0) { showError('Nenhum pedido elegível: todos estão cancelados ou já têm nota fiscal.'); return; }
+      setNfQueue({ items, index: 0, skipped });
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setNfBusy(false);
+    }
+  };
+
+  const nextNf = () =>
+    setNfQueue((q) => (q && q.index + 1 < q.items.length ? { ...q, index: q.index + 1 } : null));
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -173,6 +222,10 @@ export default function OrdersPage() {
     { key: 'status', header: H('Status'), align: 'center', render: (r) => <OrderStatusBadge status={fulfillmentOf(r)} /> },
     { key: 'total', header: H('Total'), align: 'center', render: (r) => <span className="font-mono font-bold">{brl(r.total)}</span> },
     {
+      key: 'nf', header: H('NF'), align: 'center', className: 'w-28',
+      render: (r) => { const nf = nfNotes.get(r.id); return nf ? <StatusBadge s={nf.status} /> : <span className="text-slate-300">-</span>; },
+    },
+    {
       key: 'acoes', header: H('Ações'), align: 'center', className: 'w-44',
       render: (r) => (
         <div className="grid grid-cols-[repeat(4,2rem)] justify-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -180,9 +233,21 @@ export default function OrdersPage() {
             <button type="button" title="Imprimir pedido" aria-label="Imprimir pedido" onClick={() => void printOrders([r.id])} className={act}><Printer size={16} /></button>
           </span>
           <span className={slot}>
-            {canEdit && (
-              <button type="button" title="Gerar nota fiscal" aria-label="Gerar nota fiscal" onClick={() => setNfIds([r.id])} className={act}><FileText size={16} /></button>
-            )}
+            {nfNotes.get(r.id) ? (
+                  canSeeNf && (
+                    <button
+                      type="button"
+                      title={`Nota fiscal ${fmtNumber(nfNotes.get(r.id)!)} (${NF_STATUS_LABEL[nfNotes.get(r.id)!.status]})`}
+                      aria-label="Ver nota fiscal"
+                      onClick={() => setNfDetail(nfNotes.get(r.id)!.id)}
+                      className={actDone}
+                    ><FileText size={16} /></button>
+                  )
+                ) : (
+                  canCreateNf && !r.canceled_at && (
+                    <button type="button" title="Registrar nota fiscal" aria-label="Registrar nota fiscal" onClick={() => void startNf([r.id])} className={act}><FileText size={16} /></button>
+                  )
+                )}
           </span>
           <span className={slot}>
             {canEdit && !r.canceled_at && (
@@ -218,9 +283,9 @@ export default function OrdersPage() {
           <button type="button" disabled={printing} onClick={() => { if (!needSelection()) requestPrint([...selected]); }} className={sllBtnGhost}>
             {printing ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />} Imprimir selecionados
           </button>
-          {canEdit && (
-            <button type="button" onClick={() => { if (!needSelection()) setNfIds([...selected]); }} className={sllBtnGhost}>
-              <FileText size={16} /> Gerar nota fiscal
+          {canCreateNf && (
+            <button type="button" disabled={nfBusy} onClick={() => { if (!needSelection()) void startNf([...selected]); }} className={sllBtnGhost}>
+              {nfBusy ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />} Registrar nota fiscal
             </button>
           )}
           {canEdit && (
@@ -331,20 +396,27 @@ export default function OrdersPage() {
         </div>
       </SllModal>
 
-      <SllModal
-        open={!!nfIds}
-        onOpenChange={(o) => { if (!o) setNfIds(null); }}
-        title="Gerar nota fiscal"
-        size="md"
-        footer={<button type="button" onClick={() => setNfIds(null)} className={sllBtnPrimary}>Entendi</button>}
-      >
-        <p className="text-sm text-slate-700 dark:text-slate-200">
-          A emissão de nota fiscal ainda está em desenvolvimento e chega na etapa fiscal do Gestor.
-        </p>
-        <p className="mt-2 text-xs text-slate-500">
-          Quando estiver disponível, os {nfIds?.length ?? 0} pedido(s) escolhido(s) poderão ser emitidos daqui, individualmente ou em lote.
-        </p>
-      </SllModal>
+      {nfQueue && storeId && (
+        <NotaRegisterModal
+          key={nfQueue.items[nfQueue.index].id}
+          storeId={storeId}
+          order={nfQueue.items[nfQueue.index]}
+          step={`Pedido ${nfQueue.index + 1} de ${nfQueue.items.length}${nfQueue.skipped ? ` · ${nfQueue.skipped} ignorado(s) (cancelado ou já com nota)` : ''}`}
+          onSaved={() => setNfTick((n) => n + 1)}
+          onNext={nextNf}
+          onSkip={nfQueue.index < nfQueue.items.length - 1 ? nextNf : undefined}
+          onClose={() => setNfQueue(null)}
+        />
+      )}
+
+      {nfDetail && (
+        <NotaDetailModal
+          notaId={nfDetail}
+          canEdit={allow('notas_fiscais', 'editar')}
+          onClose={() => setNfDetail(null)}
+          onChanged={() => setNfTick((n) => n + 1)}
+        />
+      )}
     </div>
   );
 }
