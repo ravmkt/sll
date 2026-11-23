@@ -38,6 +38,13 @@ const Info = ({ label, children }: { label: string; children: React.ReactNode })
 
 const Spinner = () => <Loader2 className="mx-auto h-6 w-6 animate-spin text-[color:var(--sll-b-brand)]" />;
 
+const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
+    <h3 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">{title}</h3>
+    <div className="space-y-3">{children}</div>
+  </section>
+);
+
 const xmlLinkCls = 'cursor-pointer text-[color:var(--sll-b-brand)] hover:underline';
 
 function XmlLink({ url }: { url: string }) {
@@ -202,6 +209,7 @@ export function NotaRegisterModal({ storeId, onClose, onSaved, order, step, onNe
     total: order ? String(order.total).replace('.', ',') : '', channel: order?.channel ?? '',
   });
   const [file, setFile] = useState<File | null>(null);
+  const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof NfManualForm, v: string) => setF((s) => ({ ...s, [k]: v }));
 
@@ -263,9 +271,20 @@ export function NotaRegisterModal({ storeId, onClose, onSaved, order, step, onNe
         </>
       }
     >
-      <div className="space-y-4">
+      <div
+        className={`space-y-4 rounded-xl transition ${drag ? 'ring-2 ring-[color:var(--sll-b-brand)] ring-offset-4 ring-offset-transparent' : ''}`}
+        onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); if (!drag) setDrag(true); } }}
+        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDrag(false); }}
+        onDrop={(e) => {
+          if (!e.dataTransfer.types.includes('Files')) return;
+          e.preventDefault();
+          setDrag(false);
+          if (!busy) void pickFile(e.dataTransfer.files?.[0]);
+        }}
+      >
         {step && <p className="text-xs font-bold text-[color:var(--sll-b-brand)]">{step}</p>}
         <p className="text-xs text-slate-500">Use para notas já emitidas fora do SLL (contador, emissor da prefeitura ou da SEFAZ).</p>
+        <Card title="Dados da nota">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <SllField label="Série"><input value={f.serie} onChange={(e) => set('serie', e.target.value)} className={sllFieldCls} /></SllField>
           <SllField label="Número da nota *"><input value={f.number} onChange={(e) => set('number', e.target.value)} className={sllFieldCls} /></SllField>
@@ -276,8 +295,9 @@ export function NotaRegisterModal({ storeId, onClose, onSaved, order, step, onNe
         </SllField>
         {keyErr && <p className="text-xs font-semibold text-red-600">{keyErr}</p>}
         {dvWarn && <p className="text-xs font-semibold text-amber-600">O dígito verificador não confere. Você pode registrar mesmo assim, mas confira a chave.</p>}
+        </Card>
+        <Card title="Arquivo XML">
         <div className="space-y-2">
-          <span className="block text-xs font-bold text-slate-700 dark:text-slate-300">Arquivo XML da nota</span>
           {file ? (
             <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
               <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -290,8 +310,8 @@ export function NotaRegisterModal({ storeId, onClose, onSaved, order, step, onNe
               </button>
             </div>
           ) : (
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 py-5 text-sm font-semibold text-slate-600 transition hover:border-[color:var(--sll-b-brand)] dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
-              <FileUp size={16} className="text-[color:var(--sll-b-brand)]" /> Escolher arquivo .xml (até 2 MB)
+            <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed py-6 text-sm font-semibold text-slate-600 transition hover:border-[color:var(--sll-b-brand)] dark:text-slate-300 ${drag ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)]' : 'border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50'}`}>
+              <FileUp size={16} className="text-[color:var(--sll-b-brand)]" /> {drag ? 'Solte o XML aqui' : 'Arraste o XML para esta janela ou clique para escolher (até 2 MB)'}
               <input
                 type="file"
                 accept=".xml,text/xml,application/xml"
@@ -305,12 +325,15 @@ export function NotaRegisterModal({ storeId, onClose, onSaved, order, step, onNe
             <SllField label="Ou informe o link do XML"><input value={f.xml_url} onChange={(e) => set('xml_url', e.target.value)} className={sllFieldCls} /></SllField>
           )}
         </div>
+        </Card>
+        <Card title="Destinatário e valor">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <SllField label="Destinatário"><input value={f.recipient_name} onChange={(e) => set('recipient_name', e.target.value)} className={sllFieldCls} /></SllField>
           <SllField label="CPF/CNPJ"><input value={f.recipient_document} onChange={(e) => set('recipient_document', e.target.value)} className={sllFieldCls} /></SllField>
           <SllField label="Valor total (R$)"><input value={f.total} onChange={(e) => set('total', e.target.value)} placeholder="0,00" className={sllFieldCls} /></SllField>
           <SllField label="Canal"><input value={f.channel} onChange={(e) => set('channel', e.target.value)} placeholder="Ex.: yampi" className={sllFieldCls} /></SllField>
         </div>
+        </Card>
       </div>
     </SllModal>
   );
