@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Edit3, Link2, Loader2, Plus, Tag, Tags } from 'lucide-react';
+import { Check, Edit3, Link2, Loader2, Plus, Receipt, Tag, Tags } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useLoja } from '@/contexts/LojaContext';
 import { showError } from '@/utils/toast';
@@ -10,6 +10,7 @@ import CategoryChannelsDialog from './CategoryChannelsDialog';
 import CategoryTagsDialog from './CategoryTagsDialog';
 import CategoryTagPicker from './CategoryTagPicker';
 import CreateCategoryModal from './CreateCategoryModal';
+import FiscalRulesDialog from './FiscalRulesDialog';
 
 const sb: any = supabase;
 const parentOf = (c: Category) => ((c as any).parent_id ?? (c as any).parent ?? null) as string | null;
@@ -24,6 +25,7 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [fiscalOpen, setFiscalOpen] = useState(false);
   const [tags, setTags] = useState<Record<string, string[]>>({});
 
   const load = useCallback(async () => {
@@ -85,6 +87,9 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
           <button type="button" onClick={() => setLinkOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold hover:border-[color:var(--sll-b-brand)] dark:border-slate-700">
             <Link2 size={16} className="text-[color:var(--sll-b-brand)]" /> Vincular canais
           </button>
+          <button type="button" onClick={() => setFiscalOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold hover:border-[color:var(--sll-b-brand)] dark:border-slate-700">
+            <Receipt size={16} className="text-[color:var(--sll-b-brand)]" /> Regras fiscais
+          </button>
           <button type="button" onClick={() => setTagsOpen(true)} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold hover:border-[color:var(--sll-b-brand)] dark:border-slate-700">
             <Tags size={16} className="text-[color:var(--sll-b-brand)]" /> Vincular tags
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800">{withTag}/{tree.length}</span>
@@ -136,6 +141,9 @@ export default function CategoriesPanel({ canEdit }: { canEdit: boolean }) {
         </div>
       )}
 
+      {fiscalOpen && storeId && (
+        <FiscalRulesDialog storeId={storeId} canEdit={canEdit} onChanged={() => void load()} onClose={() => setFiscalOpen(false)} />
+      )}
       {createOpen && storeId && (
         <CreateCategoryModal storeId={storeId} onCreated={() => void load()} onClose={() => setCreateOpen(false)} />
       )}
