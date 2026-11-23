@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { ProductRow, ProductTax } from '../types';
+import { onlyDigits, formatNcm, formatCest } from '../fiscalFormat';
 
 const ORIGINS = [
   '0 - Nacional, exceto as indicadas nos códigos 3, 4, 5 e 8',
@@ -17,12 +18,15 @@ const ITEM_TYPES = ['Mercadoria para revenda', 'Matéria-prima', 'Embalagem', 'P
 const num = (v: string) => (v === '' ? null : Number(v));
 const lbl = 'mb-1 block text-xs font-semibold text-slate-500';
 const sel = 'h-10 w-full rounded-md border border-slate-200 bg-transparent px-3 text-sm dark:border-slate-700';
+const err = 'mt-1 text-[11px] font-semibold text-red-600';
 
 interface Props { product: ProductRow; onChange: (patch: Partial<ProductRow>) => void }
 
 export default function TaxTab({ product, onChange }: Props) {
   const t: ProductTax = product.tax || {};
   const set = (patch: Partial<ProductTax>) => onChange({ tax: { ...t, ...patch } });
+  const ncmLen = onlyDigits(t.ncm).length;
+  const cestLen = onlyDigits(t.cest).length;
   const rate = (label: string, key: 'icms_rate' | 'ipi_rate' | 'pis_rate' | 'cofins_rate') => (
     <div>
       <label className={lbl}>{label} (%)</label>
@@ -31,8 +35,8 @@ export default function TaxTab({ product, onChange }: Props) {
   );
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] p-3 text-sm text-sky-800 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
-        Preencha somente se for emitir nota fiscal.
+      <div className="rounded-lg border border-[color:var(--sll-b-brand-border)] bg-[color:var(--sll-b-brand-soft)] p-3 text-sm text-[color:var(--sll-b-brand)]">
+        Preencha somente se for emitir nota fiscal. O NCM e o CEST da variação (botão Dados) têm prioridade; os daqui valem para as variações que não têm os seus.
       </div>
       <div>
         <label className={lbl}>Origem da mercadoria</label>
@@ -43,11 +47,13 @@ export default function TaxTab({ product, onChange }: Props) {
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <label className={lbl}>NCM</label>
-          <Input maxLength={10} placeholder="0000.00.00" value={t.ncm ?? ''} onChange={(e) => set({ ncm: e.target.value })} />
+          <Input inputMode="numeric" maxLength={10} placeholder="0000.00.00" value={formatNcm(t.ncm)} onChange={(e) => set({ ncm: onlyDigits(e.target.value).slice(0, 8) })} />
+          {ncmLen > 0 && ncmLen !== 8 && <p className={err}>O NCM precisa ter 8 dígitos.</p>}
         </div>
         <div>
           <label className={lbl}>CEST</label>
-          <Input maxLength={9} placeholder="00.000.00" value={t.cest ?? ''} onChange={(e) => set({ cest: e.target.value })} />
+          <Input inputMode="numeric" maxLength={9} placeholder="00.000.00" value={formatCest(t.cest)} onChange={(e) => set({ cest: onlyDigits(e.target.value).slice(0, 7) })} />
+          {cestLen > 0 && cestLen !== 7 && <p className={err}>O CEST precisa ter 7 dígitos.</p>}
         </div>
         <div>
           <label className={lbl}>Tipo do item</label>
