@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { FileUp, Loader2, X } from 'lucide-react';
 import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
 import { SllField, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllTable } from '@/components/sll/SllTable';
@@ -11,6 +11,9 @@ import {
   onlyDigits, registerManual, saveSettings, settingsToForm, validateAccessKey, validateReason,
 } from '../services/notas';
 import type { NfDetail, NfInutilizada, NfItem, NfManualForm, NfSettingsForm, NfStatus } from '../services/notas';
+import {
+  isStoredXml, nfXmlDownloadUrl, parseNfeXml, removeNfXml, uploadNfXml, validateXmlFile,
+} from '../services/notasXml';
 
 /** Data do dia (sem fuso): usa os 10 primeiros caracteres. */
 export const fmtDay = (v: string | null | undefined) => {
@@ -34,6 +37,32 @@ const Info = ({ label, children }: { label: string; children: React.ReactNode })
 );
 
 const Spinner = () => <Loader2 className="mx-auto h-6 w-6 animate-spin text-[color:var(--sll-b-brand)]" />;
+
+const xmlLinkCls = 'cursor-pointer text-[color:var(--sll-b-brand)] hover:underline';
+
+function XmlLink({ url }: { url: string }) {
+  const [busy, setBusy] = useState(false);
+  if (!isStoredXml(url)) {
+    return <a href={url} target="_blank" rel="noreferrer" className={xmlLinkCls}>Abrir XML</a>;
+  }
+  const download = async () => {
+    setBusy(true);
+    try {
+      const u = await nfXmlDownloadUrl(url);
+      const a = document.createElement('a');
+      a.href = u;
+      a.download = 'nota-fiscal.xml';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) { showError(msg(e)); } finally { setBusy(false); }
+  };
+  return (
+    <button type="button" disabled={busy} onClick={() => void download()} className={xmlLinkCls}>
+      {busy ? 'Gerando link...' : 'Baixar XML'}
+    </button>
+  );
+}
 
 // ---------------- Detalhe ----------------
 export function NotaDetailModal({ notaId, canEdit, onClose, onChanged }: {
@@ -121,7 +150,7 @@ export function NotaDetailModal({ notaId, canEdit, onClose, onChanged }: {
               <p className="mt-2 text-xs font-semibold text-amber-600">Aviso: o dígito verificador da chave não confere. Confira com o XML.</p>
             )}
             <div className="mt-3 flex flex-wrap gap-4 text-sm font-semibold">
-              {n.xml_url && <a href={n.xml_url} target="_blank" rel="noreferrer" className="text-[color:var(--sll-b-brand)] hover:underline">Abrir XML</a>}
+              {n.xml_url && <XmlLink url={n.xml_url} />}
               {n.danfe_url && <a href={n.danfe_url} target="_blank" rel="noreferrer" className="text-[color:var(--sll-b-brand)] hover:underline">Abrir DANFE</a>}
             </div>
             {n.reject_reason && <p className="mt-3 text-sm font-semibold text-red-600">Rejeição: {n.reject_reason}</p>}
@@ -161,23 +190,61 @@ export function NotaDetailModal({ notaId, canEdit, onClose, onChanged }: {
 }
 
 // ---------------- Registrar manual ----------------
-export function NotaRegisterModal({ storeId, onClose, onSaved }: { storeId: string; onClose: () => void; onSaved: () => void }) {
+export type NfOrderPrefill = { id: string; label: string; name: string; document: string; total: number; channel: string };
+
+export function NotaRegisterModal({ storeId, onClose, onSaved, order, step, onNext, onSkip }: {
+  storeId: string; onClose: () => void; onSaved: () => void;
+  order?: NfOrderPrefill; step?: string; onNext?: () => void; onSkip?: () => void;
+}) {
   const [f, setF] = useState<NfManualForm>({
-    order_id: null, serie: '1', number: '', access_key: '', xml_url: '', issued: today(),
-    recipient_name: '', recipient_document: '', total: '', channel: '',
+    order_id: order?.id ?? null, serie: '1', number: '', access_key: '', xml_url: '', issued: today(),
+    recipient_name: order?.name ?? '', recipient_document: order?.document ?? '',
+    total: order ? String(order.total).replace('.', ',') : '', channel: order?.channel ?? '',
   });
+  const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof NfManualForm, v: string) => setF((s) => ({ ...s, [k]: v }));
+
+  const pickFile = async (picked: File | undefined) => {
+    if (!picked) return;
+    const bad = validateXmlFile(picked);
+    if (bad) { showError(bad); return; }
+    try {
+      const info = parseNfeXml(await picked.text());
+      setFile(picked);
+      if (!info) { showError('Não consegui ler os dados deste XML. Preencha os campos manualmente.'); return; }
+      setF((s) => ({
+        ...s,
+        xml_url: '',
+        serie: info.serie || s.serie,
+        number: info.number || s.number,
+        access_key: info.accessKey || s.access_key,
+        issued: info.issued || s.issued,
+        recipient_name: info.recipientName || s.recipient_name,
+        recipient_document: info.recipientDocument || s.recipient_document,
+        total: info.total || s.total,
+      }));
+      showSuccess('XML lido. Confira os campos preenchidos antes de registrar.');
+    } catch (e) { showError(msg(e)); }
+  };
   const keyErr = validateAccessKey(f.access_key);
   const dvWarn = !keyErr && onlyDigits(f.access_key).length === 44 && !accessKeyDvOk(f.access_key);
 
   const save = async () => {
     setBusy(true);
     try {
-      await registerManual(storeId, f);
+      let uploaded: string | null = null;
+      let xmlRef = f.xml_url;
+      if (file) { uploaded = await uploadNfXml(storeId, file); xmlRef = uploaded; }
+      try {
+        await registerManual(storeId, { ...f, xml_url: xmlRef });
+      } catch (e) {
+        if (uploaded) await removeNfXml(uploaded);
+        throw e;
+      }
       showSuccess('Nota registrada.');
       onSaved();
-      onClose();
+      if (onNext) onNext(); else onClose();
     } catch (e) { showError(msg(e)); } finally { setBusy(false); }
   };
 
@@ -185,10 +252,11 @@ export function NotaRegisterModal({ storeId, onClose, onSaved }: { storeId: stri
     <SllModal
       open
       onOpenChange={(o) => { if (!o && !busy) onClose(); }}
-      title="Registrar nota emitida"
+      title={order ? `Registrar nota do pedido ${order.label}` : 'Registrar nota emitida'}
       footer={
         <>
           <button type="button" className={sllBtnGhost} disabled={busy} onClick={onClose}>Cancelar</button>
+          {onSkip && <button type="button" className={sllBtnGhost} disabled={busy} onClick={onSkip}>Pular pedido</button>}
           <button type="button" className={sllBtnPrimary} disabled={busy || !f.number.trim() || !!keyErr} onClick={() => void save()}>
             {busy && <Loader2 size={15} className="animate-spin" />}Registrar
           </button>
@@ -196,6 +264,7 @@ export function NotaRegisterModal({ storeId, onClose, onSaved }: { storeId: stri
       }
     >
       <div className="space-y-4">
+        {step && <p className="text-xs font-bold text-[color:var(--sll-b-brand)]">{step}</p>}
         <p className="text-xs text-slate-500">Use para notas já emitidas fora do SLL (contador, emissor da prefeitura ou da SEFAZ).</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <SllField label="Série"><input value={f.serie} onChange={(e) => set('serie', e.target.value)} className={sllFieldCls} /></SllField>
@@ -207,7 +276,35 @@ export function NotaRegisterModal({ storeId, onClose, onSaved }: { storeId: stri
         </SllField>
         {keyErr && <p className="text-xs font-semibold text-red-600">{keyErr}</p>}
         {dvWarn && <p className="text-xs font-semibold text-amber-600">O dígito verificador não confere. Você pode registrar mesmo assim, mas confira a chave.</p>}
-        <SllField label="Link do XML"><input value={f.xml_url} onChange={(e) => set('xml_url', e.target.value)} className={sllFieldCls} /></SllField>
+        <div className="space-y-2">
+          <span className="block text-xs font-bold text-slate-700 dark:text-slate-300">Arquivo XML da nota</span>
+          {file ? (
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
+              <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <FileUp size={16} className="shrink-0 text-[color:var(--sll-b-brand)]" />
+                <span className="truncate">{file.name}</span>
+                <span className="shrink-0 text-xs font-normal text-slate-400">({Math.max(1, Math.round(file.size / 1024))} KB)</span>
+              </span>
+              <button type="button" disabled={busy} title="Remover arquivo" onClick={() => setFile(null)} className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-rose-600 dark:hover:bg-slate-800">
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 py-5 text-sm font-semibold text-slate-600 transition hover:border-[color:var(--sll-b-brand)] dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+              <FileUp size={16} className="text-[color:var(--sll-b-brand)]" /> Escolher arquivo .xml (até 2 MB)
+              <input
+                type="file"
+                accept=".xml,text/xml,application/xml"
+                className="hidden"
+                onChange={(e) => { const p = e.target.files?.[0]; e.target.value = ''; void pickFile(p); }}
+              />
+            </label>
+          )}
+          <p className="text-[11px] text-slate-500">Ao enviar, o sistema lê o XML e preenche número, série, chave, data, destinatário e valor. Confira antes de registrar.</p>
+          {!file && (
+            <SllField label="Ou informe o link do XML"><input value={f.xml_url} onChange={(e) => set('xml_url', e.target.value)} className={sllFieldCls} /></SllField>
+          )}
+        </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <SllField label="Destinatário"><input value={f.recipient_name} onChange={(e) => set('recipient_name', e.target.value)} className={sllFieldCls} /></SllField>
           <SllField label="CPF/CNPJ"><input value={f.recipient_document} onChange={(e) => set('recipient_document', e.target.value)} className={sllFieldCls} /></SllField>
