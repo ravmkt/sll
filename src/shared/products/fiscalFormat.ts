@@ -17,3 +17,11 @@ export const formatCest = (v?: string | null): string => {
   const d = onlyDigits(v).slice(0, 7);
   return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7)].filter(Boolean).join('.');
 };
+
+// CFOP: 4 digitos; o primeiro indica a operacao (1,2,3 entrada; 5,6,7 saida). Vazio vale (usa o padrao da loja).
+export const isValidCfop = (v?: string | null): boolean => {
+  const d = onlyDigits(v);
+  return d === '' || (d.length === 4 && /^[123567]/.test(d));
+};
+
+export const formatCfop = (v?: string | null): string => onlyDigits(v).slice(0, 4);

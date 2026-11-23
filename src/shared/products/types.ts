@@ -6,6 +6,7 @@ export interface ProductTax {
   origin?: string | null;
   ncm?: string | null;
   cest?: string | null;
+  cfop?: string | null;
   item_type?: string | null;
   icms_rate?: number | null;
   ipi_rate?: number | null;
