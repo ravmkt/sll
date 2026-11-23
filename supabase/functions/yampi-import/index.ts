@@ -113,6 +113,21 @@ Deno.serve(async (req) => {
       return json({ products, categories: cats.length });
     }
 
+    if (action === 'ncm') {
+      if (!conn) return json({ error: 'Yampi não conectada.' }, 400);
+      const c: Cred = { alias: conn.alias, token: conn.user_token, secret: conn.user_secret };
+      const prods = await all(c, 'catalog/products?include=skus');
+      const items = prods
+        .filter((p: any) => String(p.ncm || '').replace(/\D/g, '').length === 8)
+        .map((p: any) => ({
+          id: String(p.id),
+          name: p.name,
+          ncm: String(p.ncm).replace(/\D/g, ''),
+          skus: (p.skus?.data ?? []).map((s: any) => String(s.sku || '')).filter(Boolean),
+        }));
+      return json({ items, total: prods.length });
+    }
+
     return json({ error: 'Ação inválida.' }, 400);
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 400);
