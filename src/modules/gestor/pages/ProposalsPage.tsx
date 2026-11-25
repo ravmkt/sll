@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Copy, Eye, Mail, MessageCircle, Pencil, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import { Copy, Eye, Mail, MessageCircle, Pencil, Plus, ShoppingCart, Trash2, Printer } from 'lucide-react';
 import { SllPageHeader } from '@/components/sll/SllPageHeader';
 import { SllFilterBar, SllField, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllPeriodFilter, PERIOD_ALL, periodRange } from '@/components/sll/SllPeriodFilter';
