@@ -55,6 +55,7 @@ function Thumb({ url, size = 40 }: { url: string | null; size?: number }) {
   );
 }
 
+
 type Props = {
   storeId: string;
   proposalId: string | null;
@@ -121,6 +122,7 @@ export default function ProposalModal({ storeId, proposalId, sellers, defaultSel
       .catch(() => setTerms([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId, proposalId]);
+
 
   // busca de cliente (so quando o usuario digita)
   useEffect(() => {
