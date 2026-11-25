@@ -20,6 +20,7 @@ import {
 } from '../services/propostas';
 import type { Proposal, ProposalStatus } from '../services/propostas';
 
+import { openProposalPrint } from '../services/proposalPrintAction';
 const sb: any = supabase;
 const PAGE = 25;
 const msg = (e: unknown) => (e instanceof Error ? e.message : 'Erro inesperado.');
@@ -194,6 +195,7 @@ export default function ProposalsPage() {
             </button>
             <button type="button" title="Enviar por WhatsApp" onClick={() => void openWhats(p)} className={iconBtn}><MessageCircle size={15} /></button>
             <button type="button" title="Enviar por e-mail" onClick={() => void openMail(p)} className={iconBtn}><Mail size={15} /></button>
+            <button type="button" title="Imprimir proposta" onClick={() => void openProposalPrint(p.store_id, p.id)} className={iconBtn}><Printer size={15} /></button>
             {perms.create && (
               <button type="button" title="Duplicar" disabled={busy} onClick={() => ctx && void act(async () => { const id = await duplicateProposal(ctx.storeId, p.id); setModal({ id }); }, 'Proposta duplicada como rascunho.')} className={iconBtn}>
                 <Copy size={15} />

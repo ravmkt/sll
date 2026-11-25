@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Plus, Search, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Search, Trash2, Package } from 'lucide-react';
 import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
 import { SllField, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { supabase } from '@/lib/supabase';
@@ -10,6 +10,7 @@ import {
   PROPOSAL_STATUS_CLS, PROPOSAL_STATUS_LABEL, brl, calcTotals, canEditProposal, getProposal, itemTotal, saveProposal,
 } from '../services/propostas';
 import type { ProposalHeaderForm, ProposalItemForm, ProposalStatus } from '../services/propostas';
+import { listPaymentTerms } from '../services/proposalTerms';
 
 export type SellerOption = { id: string; label: string };
 type Row = ProposalItemForm & { key: string };
@@ -35,6 +36,22 @@ function Num({ value, onChange, disabled, step = '0.01', min = 0, className = ''
       onChange={(e) => onChange(Number(e.target.value || 0))}
       className={`${sllFieldCls} ${className}`}
     />
+  );
+}
+
+const productImage = (p: any): string | null => {
+  const v = p?.image_url ?? p?.image ?? p?.thumbnail ?? p?.thumb_url ?? p?.main_image ?? p?.images?.[0] ?? p?.photos?.[0];
+  const u = typeof v === 'string' ? v : v?.url ?? v?.src ?? null;
+  return u || null;
+};
+
+function Thumb({ url, size = 40 }: { url: string | null; size?: number }) {
+  return url ? (
+    <img src={url} alt="" loading="lazy" style={{ width: size, height: size }} className="shrink-0 rounded-lg border border-slate-200 object-cover dark:border-slate-700" />
+  ) : (
+    <span style={{ width: size, height: size }} className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-300 dark:border-slate-700">
+      <Package size={16} />
+    </span>
   );
 }
 
@@ -65,6 +82,7 @@ export default function ProposalModal({ storeId, proposalId, sellers, defaultSel
   const [products, setProducts] = useState<CatalogProduct[] | null>(null);
   const [pq, setPq] = useState('');
   const [pOpen, setPOpen] = useState(false);
+  const [terms, setTerms] = useState<string[]>([]);
 
   const readOnly = !!proposalId && !canEditProposal(status);
   const set = <K extends keyof ProposalHeaderForm>(k: K, v: ProposalHeaderForm[K]) => setHeader((s) => ({ ...s, [k]: v }));
@@ -85,7 +103,7 @@ export default function ProposalModal({ storeId, proposalId, sellers, defaultSel
         });
         setRows(items.map((i) => ({
           key: nextKey(), product_id: i.product_id, variant_id: i.variant_id, sku: i.sku || '',
-          name: i.name, qty: i.qty, unit_price: i.unit_price, discount: i.discount,
+          name: i.name, qty: i.qty, unit_price: i.unit_price, discount: i.discount, image_url: i.image_url,
         })));
       })
       .catch((e) => { showError(msg(e)); onClose(); })
@@ -93,6 +111,16 @@ export default function ProposalModal({ storeId, proposalId, sellers, defaultSel
     return () => { on = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proposalId]);
+
+  useEffect(() => {
+    listPaymentTerms(storeId)
+      .then((t) => {
+        setTerms(t);
+        if (!proposalId && t.length) set('payment_terms', t[0]);
+      })
+      .catch(() => setTerms([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeId, proposalId]);
 
   // busca de cliente (so quando o usuario digita)
   useEffect(() => {
@@ -126,11 +154,11 @@ export default function ProposalModal({ storeId, proposalId, sellers, defaultSel
 
   const addProduct = (p: CatalogProduct) => {
     const price = Number((p as any).price ?? (p as any).sale_price ?? 0) || 0;
-    setRows((r) => [...r, { key: nextKey(), product_id: p.id, variant_id: null, sku: p.sku || '', name: p.name, qty: 1, unit_price: price, discount: 0 }]);
+    setRows((r) => [...r, { key: nextKey(), product_id: p.id, variant_id: null, sku: p.sku || '', name: p.name, qty: 1, unit_price: price, discount: 0, image_url: productImage(p) }]);
     setPq('');
     setPOpen(false);
   };
-  const addBlank = () => setRows((r) => [...r, { key: nextKey(), product_id: null, variant_id: null, sku: '', name: '', qty: 1, unit_price: 0, discount: 0 }]);
+  const addBlank = () => setRows((r) => [...r, { key: nextKey(), product_id: null, variant_id: null, sku: '', name: '', qty: 1, unit_price: 0, discount: 0, image_url: null }]);
   const patch = (key: string, v: Partial<ProposalItemForm>) => setRows((r) => r.map((x) => (x.key === key ? { ...x, ...v } : x)));
   const remove = (key: string) => setRows((r) => r.filter((x) => x.key !== key));
 

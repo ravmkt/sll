@@ -79,6 +79,7 @@ export interface ProposalItem {
   discount: number;
   total: number;
   position: number;
+  image_url: string | null;
 }
 
 export interface ProposalHeaderForm {
@@ -102,6 +103,7 @@ export interface ProposalItemForm {
   qty: number;
   unit_price: number;
   discount: number;
+  image_url: string | null;
 }
 
 export interface ProposalFilters {
@@ -245,7 +247,7 @@ export async function duplicateProposal(storeId: string, id: string): Promise<st
     shipping_cost: p.shipping_cost,
   }, items.map((i) => ({
     product_id: i.product_id, variant_id: i.variant_id, sku: i.sku || '',
-    name: i.name, qty: i.qty, unit_price: i.unit_price, discount: i.discount,
+    name: i.name, qty: i.qty, unit_price: i.unit_price, discount: i.discount, image_url: i.image_url,
   })));
 }
 
