@@ -275,7 +275,7 @@ export default function ProposalModal({ storeId, proposalId, sellers, defaultSel
                         {found.map((p) => (
                           <li key={p.id}>
                             <button type="button" onClick={() => addProduct(p)} className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
-                              <span className="truncate font-semibold">{p.name}</span>
+                              <span className="flex min-w-0 items-center gap-2"><Thumb url={productImage(p)} size={32} /><span className="truncate font-semibold">{p.name}</span></span>
                               <span className="shrink-0 font-mono text-xs text-slate-500">{p.sku}</span>
                             </button>
                           </li>
@@ -303,10 +303,7 @@ export default function ProposalModal({ storeId, proposalId, sellers, defaultSel
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {rows.map((r) => (
                     <tr key={r.key} className="align-middle">
-                      <td className="px-2 py-2">
-                        <input value={r.name} onChange={(e) => patch(r.key, { name: e.target.value })} placeholder="Descrição" className={sllFieldCls} />
-                        {r.sku && <span className="mt-0.5 block font-mono text-[10px] text-slate-400">{r.sku}</span>}
-                      </td>
+                      <td className="px-2 py-2"><div className="flex items-center gap-2"><Thumb url={r.image_url} /><div className="min-w-0 flex-1"><input value={r.name} onChange={(e) => patch(r.key, { name: e.target.value })} placeholder="Descrição" className={sllFieldCls} />{r.sku && <span className="mt-0.5 block font-mono text-[10px] text-slate-400">{r.sku}</span>}</div></div></td>
                       <td className="px-2 py-2"><Num value={r.qty} min={1} step="1" onChange={(v) => patch(r.key, { qty: Math.max(Math.floor(v), 1) })} className="text-center" /></td>
                       <td className="px-2 py-2"><Num value={r.unit_price} onChange={(v) => patch(r.key, { unit_price: v })} className="text-center" /></td>
                       <td className="px-2 py-2"><Num value={r.discount} onChange={(v) => patch(r.key, { discount: v })} className="text-center" /></td>
