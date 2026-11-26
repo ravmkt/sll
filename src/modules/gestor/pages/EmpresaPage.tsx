@@ -114,6 +114,7 @@ export default function EmpresaPage() {
         district: r.district || f.district, city: r.city || f.city, state: r.state || f.state,
         ibge_code: ibge || f.ibge_code,
         tax_regime: r.tax_regime || f.tax_regime,
+        cnae: r.cnae || f.cnae,
       }));
       if (r.situation && r.situation.toUpperCase() !== 'ATIVA') showError(`Atenção: situação na Receita é "${r.situation}".`);
       else showSuccess('Dados da Receita carregados. Confira e salve.');
