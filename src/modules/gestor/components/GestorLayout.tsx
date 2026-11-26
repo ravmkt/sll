@@ -28,7 +28,6 @@ const GROUPS: Group[] = [
       { label: 'Produtos', to: `${BASE}/produtos` },
       { label: 'Clientes', to: `${BASE}/clientes` },
       { label: 'Fornecedores', to: `${BASE}/fornecedores` },
-      { label: 'Usuários', to: `${BASE}/usuarios` },
     ],
   },
   {
@@ -58,7 +57,24 @@ const GROUPS: Group[] = [
     ],
   },
   { key: 'relatorios', label: 'Relatórios', icon: TrendingUp, to: `${BASE}/relatorios` },
-  { key: 'config', label: 'Configurações', icon: Settings, items: [{ label: 'Empresa', to: `${BASE}/configuracoes` }, { label: 'Canais', to: `${BASE}/canais` }, { label: 'Financeiro', to: `${BASE}/config-financeiro` },] },
+  {
+    key: 'config', label: 'Configurações', icon: Settings,
+    items: [
+      { label: 'Empresa', to: `${BASE}/empresa` },
+      { label: 'Usuários', to: `${BASE}/usuarios` },
+      { label: 'Canais', to: `${BASE}/canais` },
+      { label: 'Financeiro', to: `${BASE}/config-financeiro` },
+      { label: 'Transições de status' },
+      { label: 'Notas fiscais' },
+      { label: 'Certificado digital' },
+      { label: 'Etiquetas' },
+      { label: 'Logística' },
+      { label: 'Suprimentos' },
+      { label: 'Contabilidade' },
+      { label: 'Backup' },
+      { label: 'Marketplaces' },
+    ],
+  },
   {
     key: 'integracoes', label: 'Integrações', icon: Plug,
     items: [
