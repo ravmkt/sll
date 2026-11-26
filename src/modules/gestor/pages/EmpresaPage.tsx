@@ -12,6 +12,15 @@ import { fetchCep, fetchCnpj, fmtCep, fmtCnpjCpf, isValidCnpj, onlyDigits } from
 
 const fmt = (c: Company): Company => ({ ...c, cnpj: fmtCnpjCpf(c.cnpj), zip: fmtCep(c.zip) });
 
+// Máscara aplicada enquanto a pessoa digita (com ou sem pontos, traço e barra)
+const maskCnpj = (v: string) =>
+  onlyDigits(v).slice(0, 14)
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2');
+const maskCep = (v: string) => onlyDigits(v).slice(0, 8).replace(/^(\d{5})(\d)/, '$1-$2');
+
 function Card({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
@@ -73,7 +82,7 @@ export default function EmpresaPage() {
     if (onlyDigits(raw).length !== 8) return;
     setLookup('cep');
     try {
-      const r = await fetchCep(raw);
+      const r = await fetchCep(maskCep(raw));
       if (!r) { showError('CEP não encontrado. Preencha o endereço manualmente.'); return; }
       setForm((f) => ({
         ...f, zip: fmtCep(raw), street: r.street || f.street, district: r.district || f.district,
@@ -84,10 +93,13 @@ export default function EmpresaPage() {
   };
 
   const cnpjLookup = async () => {
-    if (!isValidCnpj(form.cnpj)) { showError('CNPJ inválido. Confira os dígitos.'); return; }
+    const masked = maskCnpj(form.cnpj);
+    if (onlyDigits(masked).length !== 14) { showError('CNPJ incompleto. Digite os 14 números.'); return; }
+    if (!isValidCnpj(masked)) { showError('CNPJ inválido. Confira os dígitos.'); return; }
+    setForm((f) => ({ ...f, cnpj: masked }));
     setLookup('cnpj');
     try {
-      const r = await fetchCnpj(form.cnpj);
+      const r = await fetchCnpj(masked);
       if (!r) { showError('CNPJ não encontrado na Receita.'); return; }
       let ibge = r.ibge_code;
       if (!ibge && r.zip) { try { ibge = (await fetchCep(r.zip))?.ibge_code ?? ''; } catch { /* segue sem IBGE */ } }
@@ -165,7 +177,9 @@ export default function EmpresaPage() {
             <div className="flex gap-2">
               <input
                 className={sllFieldCls} disabled={ro} value={form.cnpj} placeholder="00.000.000/0000-00"
-                onChange={(e) => set('cnpj', e.target.value)} onBlur={() => set('cnpj', fmtCnpjCpf(form.cnpj))}
+                inputMode="numeric" maxLength={18}
+                onChange={(e) => set('cnpj', maskCnpj(e.target.value))}
+                onKeyDown={(e) => { if (e.key === 'Enter' && canEdit) { e.preventDefault(); void cnpjLookup(); } }}
               />
               {canEdit && (
                 <button type="button" disabled={lookup !== null || onlyDigits(form.cnpj).length !== 14} onClick={() => void cnpjLookup()} className={sllBtnGhost + ' shrink-0 !px-4 !py-2'}>
@@ -208,7 +222,8 @@ export default function EmpresaPage() {
             <div className="relative">
               <input
                 className={sllFieldCls} disabled={ro} value={form.zip} maxLength={9} placeholder="00000-000"
-                onChange={(e) => { set('zip', e.target.value); if (onlyDigits(e.target.value).length === 8) void cepLookup(e.target.value); }}
+                inputMode="numeric"
+                onChange={(e) => { const m = maskCep(e.target.value); set('zip', m); if (onlyDigits(m).length === 8) void cepLookup(m); }}
                 onBlur={() => set('zip', fmtCep(form.zip))}
               />
               {lookup === 'cep' && <Loader2 size={15} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-[color:var(--sll-b-brand)]" />}
