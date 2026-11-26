@@ -27,6 +27,7 @@ const SEGMENT_AREA: Record<string, string> = {
   contabilidade: 'financeiro',
   relatorios: 'relatorios',
   'config-financeiro': 'configuracoes',
+  canais: 'configuracoes',
   configuracoes: 'configuracoes',
   integracoes: 'configuracoes',
   whatsapp: 'configuracoes',

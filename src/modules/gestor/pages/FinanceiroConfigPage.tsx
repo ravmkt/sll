@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { KeyRound, Loader2, Plus, Trash2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useLoja } from '@/contexts/LojaContext';
 import { cn } from '@/lib/utils';
 import { SllPageHeader } from '@/components/sll/SllPageHeader';
@@ -158,6 +159,8 @@ const checkCls = 'h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)] disab
 
 export default function FinanceiroConfigPage() {
   const { storeId, loading: lojaLoading } = useLoja();
+  const [qs] = useSearchParams();
+  const canal = qs.get('canal') || 'yampi';
   const [base, setBase] = useState<Form | null>(null);
   const [form, setForm] = useState<Form | null>(null);
   const [canEdit, setCanEdit] = useState(false);
@@ -172,7 +175,7 @@ export default function FinanceiroConfigPage() {
   const load = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
     try {
-      const c = await getFinConfig(storeId);
+      const c = await getFinConfig(storeId, canal);
       const f = toForm(c);
       setBase(f); setForm(f); setCanEdit(c.can_edit);
     } catch (e) {
@@ -180,7 +183,7 @@ export default function FinanceiroConfigPage() {
     } finally {
       setLoading(false);
     }
-  }, [storeId]);
+  }, [storeId, canal]);
 
   useEffect(() => { if (!lojaLoading) void load(); }, [lojaLoading, load]);
 
@@ -228,7 +231,7 @@ export default function FinanceiroConfigPage() {
     if ('error' in r) { showError(r.error); return; }
     setSaving(true);
     try {
-      await saveFinConfig(storeId, r.payload);
+      await saveFinConfig(storeId, r.payload, canal);
       showSuccess('Configurações financeiras salvas.');
       await load();
     } catch (e) {
@@ -282,7 +285,7 @@ export default function FinanceiroConfigPage() {
     <div className="space-y-4">
       <SllPageHeader
         title="Financeiro"
-        subtitle="Meios de pagamento, parcelamento, Pix e integrações da loja."
+        subtitle={canal === 'yampi' ? 'Meios de pagamento, parcelamento, Pix e integrações da loja.' : 'Canal: ' + canal + '. Meios de pagamento, parcelas e taxas deste canal.'}
         actions={canEdit ? (
           <>
             {dirty && <button type="button" disabled={saving} onClick={() => setForm(base)} className={sllBtnGhost}>Descartar</button>}

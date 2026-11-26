@@ -23,19 +23,21 @@ export interface FinSettings {
 }
 export interface FinFee { method: 'debit' | 'credit'; installments: number; fee_pct: number }
 export interface FinGateway { provider: string; enabled: boolean; mode: 'test' | 'live'; has_secret: boolean }
-export interface FinMap { platform: 'yampi'; platform_method: string; method: FinMethodKey }
+export interface FinMap { platform: string; platform_method: string; method: FinMethodKey }
 export interface FinPayload {
   settings: FinSettings; methods: FinMethod[]; fees: FinFee[]; gateways: FinGateway[]; platform_map: FinMap[];
 }
-export interface FinConfig extends FinPayload { can_edit: boolean }
+export interface FinConfig extends FinPayload { can_edit: boolean; inherits_from: string | null; effective_channel: string }
 
-export async function getFinConfig(storeId: string): Promise<FinConfig> {
-  const { data, error } = await sb.rpc('gestor_fin_get', { p_store: storeId });
+export async function getFinConfig(storeId: string, channel = 'yampi'): Promise<FinConfig> {
+  const { data, error } = await sb.rpc('gestor_fin_get', { p_store: storeId, p_channel: channel });
   if (error) throw new Error(error.message);
   const d: any = data || {};
   const s: any = d.settings || {};
   return {
     can_edit: !!d.can_edit,
+    inherits_from: d.inherits_from ?? null,
+    effective_channel: d.effective_channel ?? channel,
     settings: {
       max_installments: Number(s.max_installments ?? 12),
       max_interest_free: Number(s.max_interest_free ?? 1),
@@ -50,12 +52,12 @@ export async function getFinConfig(storeId: string): Promise<FinConfig> {
     })),
     fees: ((d.fees || []) as any[]).map((f) => ({ method: f.method, installments: Number(f.installments), fee_pct: Number(f.fee_pct) })),
     gateways: ((d.gateways || []) as any[]).map((g) => ({ provider: g.provider, enabled: !!g.enabled, mode: g.mode, has_secret: !!g.has_secret })),
-    platform_map: ((d.platform_map || []) as any[]).map((p) => ({ platform: 'yampi', platform_method: p.platform_method, method: p.method })),
+    platform_map: ((d.platform_map || []) as any[]).map((p) => ({ platform: p.platform ?? channel, platform_method: p.platform_method, method: p.method })),
   };
 }
 
-export async function saveFinConfig(storeId: string, payload: FinPayload): Promise<void> {
-  const { error } = await sb.rpc('gestor_fin_save', { p_store: storeId, p_data: payload });
+export async function saveFinConfig(storeId: string, payload: FinPayload, channel = 'yampi'): Promise<void> {
+  const { error } = await sb.rpc('gestor_fin_save', { p_store: storeId, p_data: payload, p_channel: channel });
   if (error) throw new Error(error.message);
 }
 

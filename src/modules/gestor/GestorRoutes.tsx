@@ -13,6 +13,7 @@ import { secaoRoutes } from './pages/secaoRoutes';
 import ExpedicaoPage from './pages/ExpedicaoPage';
 import TeamPage from './pages/TeamPage';
 import FinanceiroConfigPage from './pages/FinanceiroConfigPage';
+import ChannelsConfigPage from './pages/ChannelsConfigPage';
 
 export default function GestorRoutes() {
   return (
@@ -33,6 +34,7 @@ export default function GestorRoutes() {
         <Route path="notas-fiscais" element={<NotasFiscaisPage />} />
             <Route path="propostas" element={<ProposalsPage />} />
         <Route path="config-financeiro" element={<FinanceiroConfigPage />} />
+        <Route path="canais" element={<ChannelsConfigPage />} />
         {secaoRoutes}
         <Route path="*" element={<Navigate to="/dashboard/modules/gestor" replace />} />
       </Route>
