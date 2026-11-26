@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { AlertTriangle, CheckCircle2, Loader2, Search } from 'lucide-react';
+import { ImagePlus, Loader2, Search, Trash2 } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { SllPageHeader } from '@/components/sll/SllPageHeader';
 import { SllField, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
 import { showError, showSuccess } from '@/utils/toast';
-import { EMPTY_COMPANY, REGIMES, getCompany, missingFields, saveCompany } from '../services/empresa';
+import { EMPTY_COMPANY, REGIMES, getCompany, saveCompany, uploadStoreLogo } from '../services/empresa';
 import type { Company } from '../services/empresa';
 import { fetchCep, fetchCnpj, fmtCep, fmtCnpjCpf, isValidCnpj, onlyDigits } from '../services/fornecedoresLookup';
 
@@ -40,6 +40,9 @@ export default function EmpresaPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [lookup, setLookup] = useState<'cnpj' | 'cep' | null>(null);
+  const [ieError, setIeError] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
@@ -57,7 +60,7 @@ export default function EmpresaPage() {
   useEffect(() => { if (!lojaLoading) void load(); }, [lojaLoading, load]);
 
   const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(base), [form, base]);
-  const missing = useMemo(() => missingFields(form), [form]);
+
 
   useEffect(() => {
     if (!dirty) return;
@@ -122,8 +125,28 @@ export default function EmpresaPage() {
     finally { setLookup(null); }
   };
 
+  const onLogo = async (file?: File) => {
+    if (fileRef.current) fileRef.current.value = '';
+    if (!file || !storeId) return;
+    setLogoBusy(true);
+    try {
+      const url = await uploadStoreLogo(storeId, file);
+      set('logo_url', url);
+      showSuccess('Logotipo enviado. Clique em Salvar para confirmar.');
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      setLogoBusy(false);
+    }
+  };
+
   const save = async () => {
     if (!storeId) return;
+    if (!form.ie_exempt && !form.ie.trim()) {
+      setIeError(true);
+      showError('Preencha a inscrição estadual ou marque "Isento de IE" para salvar.');
+      return;
+    }
     if (form.cnpj.trim() && !isValidCnpj(form.cnpj)) { showError('CNPJ inválido.'); return; }
     if (form.email.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) { showError('E-mail inválido.'); return; }
     if (form.zip.trim() && onlyDigits(form.zip).length !== 8) { showError('CEP deve ter 8 dígitos.'); return; }
@@ -163,14 +186,28 @@ export default function EmpresaPage() {
       {ro && <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">Você pode ver estes dados, mas só o dono e quem tem permissão de edição em Configurações altera.</p>}
       {!saved && canEdit && <p className="rounded-xl bg-[color:var(--sll-b-brand-soft)] px-4 py-2 text-sm font-medium text-[color:var(--sll-b-brand)]">Preenchemos o que já existia no cadastro da loja. Confira, complete o que faltar e clique em Salvar.</p>}
 
-      {missing.length === 0 ? (
-        <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700"><CheckCircle2 size={16} /> Cadastro completo para emitir nota fiscal.</div>
-      ) : (
-        <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-800">
-          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-          <p><strong>Falta para emitir nota fiscal:</strong> {missing.join(', ')}.</p>
+      <Card title="Logotipo" hint="É o mesmo logotipo da sua loja no SLL Hub. Se enviar ou trocar aqui, o cadastro lá também é atualizado ao salvar. PNG, JPG ou WebP, até 2 MB.">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex h-20 w-40 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700">
+            {form.logo_url
+              ? <img src={form.logo_url} alt="Logotipo da loja" className="max-h-full max-w-full object-contain" />
+              : <span className="text-xs text-slate-400">Sem logotipo</span>}
+          </div>
+          {canEdit && (
+            <div className="flex flex-wrap gap-2">
+              <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => void onLogo(e.target.files?.[0])} />
+              <button type="button" disabled={logoBusy} onClick={() => fileRef.current?.click()} className={sllBtnGhost}>
+                {logoBusy ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />} {form.logo_url ? 'Trocar logotipo' : 'Enviar logotipo'}
+              </button>
+              {form.logo_url && (
+                <button type="button" disabled={logoBusy} onClick={() => set('logo_url', '')} className={sllBtnGhost}>
+                  <Trash2 size={15} /> Remover
+                </button>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </Card>
 
       <Card title="Dados da empresa" hint="Digite o CNPJ e clique em Buscar: razão social, endereço e regime vêm da Receita.">
         <div className="grid gap-3 sm:grid-cols-3">
@@ -197,10 +234,11 @@ export default function EmpresaPage() {
               {REGIMES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
           </SllField>
-          <SllField label="Inscrição estadual">
-            <input className={sllFieldCls} disabled={ro || form.ie_exempt} value={form.ie_exempt ? '' : form.ie} placeholder={form.ie_exempt ? 'Isento' : ''} onChange={(e) => set('ie', e.target.value)} />
+          <SllField label="Inscrição estadual *">
+            <input className={sllFieldCls + (ieError ? ' !border-rose-500' : '')} disabled={ro || form.ie_exempt} value={form.ie_exempt ? '' : form.ie} placeholder={form.ie_exempt ? 'Isento' : ''} onChange={(e) => { set('ie', e.target.value); setIeError(false); }} />
+            {ieError && <p className="mt-1 text-xs font-semibold text-rose-600">Preencha a inscrição estadual ou marque Isento de IE.</p>}
             <label className="mt-1.5 flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-              <input type="checkbox" disabled={ro} checked={form.ie_exempt} onChange={(e) => set('ie_exempt', e.target.checked)} className="h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]" />
+              <input type="checkbox" disabled={ro} checked={form.ie_exempt} onChange={(e) => { set('ie_exempt', e.target.checked); setIeError(false); }} className="h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]" />
               Isento de IE
             </label>
           </SllField>

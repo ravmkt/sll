@@ -30,7 +30,7 @@ create or replace function public.gestor_company_get(p_store uuid)
 returns jsonb
 language plpgsql stable security definer set search_path to 'public'
 as $function$
-declare c public.gestor_company; j jsonb; v_edit boolean;
+declare c public.gestor_company; j jsonb; v_edit boolean; v_logo text;
 begin
   if not exists (select 1 from public.store_members sm where sm.store_id = p_store and sm.user_id = auth.uid())
      and not exists (select 1 from public.stores s where s.id = p_store and s.owner_user_id = auth.uid())
@@ -39,21 +39,32 @@ begin
   end if;
   v_edit := public.gestor_fin_can(p_store, 'editar');
 
+  select s.logo_url into v_logo from public.stores s where s.id = p_store;
+
   select * into c from public.gestor_company where store_id = p_store;
   if found then
     return jsonb_build_object('saved', true, 'can_edit', v_edit,
-      'company', to_jsonb(c) - 'store_id' - 'updated_at' - 'updated_by');
+      'company', (to_jsonb(c) - 'store_id' - 'updated_at' - 'updated_by')
+                 || jsonb_build_object('logo_url', coalesce(v_logo, '')));
   end if;
 
   -- ainda nao cadastrada: sugere o que ja existe na loja do SLL Hub
   select to_jsonb(s) into j from public.stores s where s.id = p_store;
   return jsonb_build_object('saved', false, 'can_edit', v_edit, 'company', jsonb_build_object(
+    'logo_url', coalesce(v_logo, ''),
     'trade_name', coalesce(j->>'name', j->>'store_name'),
-    'legal_name', coalesce(j->>'legal_name', j->>'company_name'),
-    'cnpj', regexp_replace(coalesce(j->>'cnpj', j->>'document', j->>'cpf_cnpj', ''), '\D', '', 'g'),
-    'email', coalesce(j->>'contact_email', j->>'email'),
-    'phone', coalesce(j->>'whatsapp', j->>'contact_phone', j->>'phone'),
-    'website', coalesce(j->>'store_url', j->>'url', j->>'website')
+    'legal_name', coalesce(j->'billing_data'->>'legal_name', j->'billing_data'->>'razao_social', j->>'legal_name', j->>'company_name'),
+    'cnpj', regexp_replace(coalesce(j->'billing_data'->>'cnpj', j->>'cnpj', j->>'document', j->>'cpf_cnpj', ''), '\D', '', 'g'),
+    'email', coalesce(nullif(j->>'store_email', ''), nullif(j->>'contact_email', ''), j->>'email'),
+    'phone', coalesce(nullif(j->>'store_whatsapp', ''), nullif(j->>'whatsapp', ''), j->>'contact_phone', j->>'phone'),
+    'website', coalesce(nullif(j->>'store_url', ''), j->>'url', j->>'website'),
+    'zip', coalesce(j->'billing_data'->>'zip', j->'billing_data'->>'cep'),
+    'street', coalesce(j->'billing_data'->>'street', j->'billing_data'->>'address'),
+    'number', coalesce(j->'billing_data'->>'number', j->'billing_data'->>'numero'),
+    'complement', coalesce(j->'billing_data'->>'complement', j->'billing_data'->>'complemento'),
+    'district', coalesce(j->'billing_data'->>'district', j->'billing_data'->>'neighborhood', j->'billing_data'->>'bairro'),
+    'city', coalesce(j->'billing_data'->>'city', j->'billing_data'->>'cidade'),
+    'state', coalesce(j->'billing_data'->>'state', j->'billing_data'->>'uf')
   ));
 end $function$;
 
@@ -70,9 +81,17 @@ declare
   v_reg   text := nullif(btrim(coalesce(p_data->>'tax_regime', '')), '');
   v_email text := lower(btrim(coalesce(p_data->>'email', '')));
   v_exempt boolean := coalesce((p_data->>'ie_exempt')::boolean, false);
+  v_ie    text := nullif(btrim(coalesce(p_data->>'ie', '')), '');
+  v_logo  text := nullif(btrim(coalesce(p_data->>'logo_url', '')), '');
 begin
   if not public.gestor_fin_can(p_store, 'editar') then
     raise exception 'Sem permissão para editar os dados da empresa';
+  end if;
+  if not v_exempt and v_ie is null then
+    raise exception 'Preencha a inscrição estadual ou marque "Isento de IE" para salvar';
+  end if;
+  if v_logo is not null and v_logo !~* '^https?://' then
+    raise exception 'Logotipo inválido';
   end if;
   if v_cnpj <> '' and length(v_cnpj) <> 14 then raise exception 'CNPJ deve ter 14 dígitos'; end if;
   if v_zip <> '' and length(v_zip) <> 8 then raise exception 'CEP deve ter 8 dígitos'; end if;
@@ -113,12 +132,78 @@ begin
     zip = excluded.zip, street = excluded.street, number = excluded.number, complement = excluded.complement,
     district = excluded.district, city = excluded.city, state = excluded.state, ibge_code = excluded.ibge_code,
     updated_at = now(), updated_by = auth.uid();
+
+  -- Sincroniza com o cadastro da loja no SLL Hub
+  if p_data ? 'logo_url' then
+    update public.stores set logo_url = v_logo, updated_at = now() where id = p_store;
+  end if;
+
+  begin
+    update public.stores s set
+      store_email    = coalesce(nullif(s.store_email, ''), nullif(v_email, '')),
+      store_whatsapp = coalesce(nullif(s.store_whatsapp, ''), nullif(btrim(coalesce(p_data->>'phone', '')), '')),
+      store_url      = coalesce(nullif(s.store_url, ''), nullif(btrim(coalesce(p_data->>'website', '')), ''))
+    where s.id = p_store;
+  exception when others then
+    raise notice 'Hub: contato nao sincronizado: %', sqlerrm;
+  end;
+
+  begin
+    update public.stores s set billing_data =
+      (case when jsonb_typeof(to_jsonb(s.billing_data)) = 'object' then to_jsonb(s.billing_data) else '{}'::jsonb end)
+      || jsonb_strip_nulls(jsonb_build_object(
+           'legal_name', nullif(btrim(coalesce(p_data->>'legal_name', '')), ''),
+           'cnpj', nullif(v_cnpj, ''),
+           'ie', case when v_exempt then null else v_ie end,
+           'zip', nullif(v_zip, ''),
+           'street', nullif(btrim(coalesce(p_data->>'street', '')), ''),
+           'number', nullif(btrim(coalesce(p_data->>'number', '')), ''),
+           'complement', nullif(btrim(coalesce(p_data->>'complement', '')), ''),
+           'district', nullif(btrim(coalesce(p_data->>'district', '')), ''),
+           'city', nullif(btrim(coalesce(p_data->>'city', '')), ''),
+           'state', nullif(v_state, '')))
+    where s.id = p_store;
+  exception when others then
+    raise notice 'Hub: dados de cobranca nao sincronizados: %', sqlerrm;
+  end;
 end $function$;
 
 revoke all on function public.gestor_company_get(uuid) from public, anon;
 revoke all on function public.gestor_company_save(uuid, jsonb) from public, anon;
 grant execute on function public.gestor_company_get(uuid) to authenticated;
 grant execute on function public.gestor_company_save(uuid, jsonb) to authenticated;
+
+-- Logotipos da loja (bucket publico; so quem edita a Empresa envia, na pasta da propria loja)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('store-logos', 'store-logos', true, 2097152, array['image/png', 'image/jpeg', 'image/webp'])
+on conflict (id) do update
+  set public = true,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+create or replace function public.gestor_logo_store(p_name text)
+returns uuid language sql immutable as $fn$
+  select case
+    when split_part(p_name, '/', 1) ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    then split_part(p_name, '/', 1)::uuid
+  end
+$fn$;
+
+drop policy if exists store_logos_read on storage.objects;
+create policy store_logos_read on storage.objects for select
+  using (bucket_id = 'store-logos');
+
+drop policy if exists store_logos_insert on storage.objects;
+create policy store_logos_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'store-logos' and public.gestor_fin_can(public.gestor_logo_store(name), 'editar'));
+
+drop policy if exists store_logos_update on storage.objects;
+create policy store_logos_update on storage.objects for update to authenticated
+  using (bucket_id = 'store-logos' and public.gestor_fin_can(public.gestor_logo_store(name), 'editar'));
+
+drop policy if exists store_logos_delete on storage.objects;
+create policy store_logos_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'store-logos' and public.gestor_fin_can(public.gestor_logo_store(name), 'editar'));
 
 notify pgrst, 'reload schema';
 
