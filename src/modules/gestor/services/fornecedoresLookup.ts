@@ -35,20 +35,29 @@ export function isValidCpf(v: string): boolean {
   return calc(9) === Number(d[9]) && calc(10) === Number(d[10]);
 }
 
-async function getJson(url: string): Promise<any> {
+type Hit = { ok: true; data: any } | { ok: false; notFound: boolean };
+
+// Uma tentativa. 404 = nao existe; qualquer outra falha (429, 5xx, rede, CORS, tempo) = tentar a proxima fonte.
+async function tryGet(url: string): Promise<Hit> {
   const ctl = new AbortController();
-  const t = setTimeout(() => ctl.abort(), 10000);
+  const t = setTimeout(() => ctl.abort(), 8000);
   try {
     const res = await fetch(url, { signal: ctl.signal });
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error('Serviço de consulta indisponível. Tente de novo em instantes.');
-    return await res.json();
-  } catch (e) {
-    if ((e as Error).name === 'AbortError') throw new Error('A consulta demorou demais. Tente de novo.');
-    throw e;
+    if (res.status === 404) return { ok: false, notFound: true };
+    if (!res.ok) return { ok: false, notFound: false };
+    return { ok: true, data: await res.json() };
+  } catch {
+    return { ok: false, notFound: false };
   } finally {
     clearTimeout(t);
   }
+}
+
+async function getJson(url: string): Promise<any> {
+  const r = await tryGet(url);
+  if (r.ok) return r.data;
+  if (r.notFound) return null;
+  throw new Error('Serviço de consulta indisponível. Tente de novo em instantes.');
 }
 
 export interface CepResult {
@@ -72,11 +81,14 @@ export interface CnpjResult {
   tax_regime: '' | 'mei' | 'simples'; situation: string;
 }
 
-export async function fetchCnpj(cnpj: string): Promise<CnpjResult | null> {
-  const d = onlyDigits(cnpj);
-  if (d.length !== 14) return null;
-  const j = await getJson(`https://brasilapi.com.br/api/cnpj/v1/${d}`);
-  if (!j) return null;
+const CNPJ_SOURCES = [
+  (d: string) => `https://brasilapi.com.br/api/cnpj/v1/${d}`,
+  (d: string) => `https://minhareceita.org/${d}`,
+];
+
+const cnpjCache = new Map<string, CnpjResult>();
+
+function mapCnpj(j: any): CnpjResult {
   return {
     legal_name: j.razao_social || '',
     trade_name: j.nome_fantasia || '',
@@ -93,4 +105,24 @@ export async function fetchCnpj(cnpj: string): Promise<CnpjResult | null> {
     tax_regime: j.opcao_pelo_mei ? 'mei' : j.opcao_pelo_simples ? 'simples' : '',
     situation: j.descricao_situacao_cadastral || '',
   };
+}
+
+export async function fetchCnpj(cnpj: string): Promise<CnpjResult | null> {
+  const d = onlyDigits(cnpj);
+  if (d.length !== 14) return null;
+  const cached = cnpjCache.get(d);
+  if (cached) return cached;
+
+  let allNotFound = true;
+  for (const src of CNPJ_SOURCES) {
+    const r = await tryGet(src(d));
+    if (r.ok) {
+      const out = mapCnpj(r.data);
+      cnpjCache.set(d, out);
+      return out;
+    }
+    if (!r.notFound) allNotFound = false;
+  }
+  if (allNotFound) return null;
+  throw new Error('As consultas de CNPJ estão com muitas requisições no momento. Aguarde cerca de 1 minuto e clique em Buscar de novo, ou preencha os dados manualmente.');
 }
