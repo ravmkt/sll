@@ -126,7 +126,7 @@ export default function ChannelsConfigPage() {
     <div className="space-y-4">
       <SllPageHeader
         title="Canais"
-        subtitle="Ative cada canal de venda, escolha o depósito, a forma de pagamento e como os status dos pedidos viram status do Gestor."
+        subtitle="Ative cada canal de venda, escolha o depósito e configure as formas de pagamento de cada um."
         actions={canEdit && free.length > 0 ? (
           <div className="flex items-center gap-2">
             <select className={sllFieldCls + ' w-48 cursor-pointer'} value={newKey} onChange={(e) => setNewKey(e.target.value)}>
@@ -216,11 +216,20 @@ export default function ChannelsConfigPage() {
                 </>
               )}
             </div>
-          </Card>
+              {!isPdv && !ch.inherit_from && (
+                <p className="mt-3 text-xs text-slate-500">
+                  Como {channelName(ch.channel)} chama cada forma de pagamento (ex.: credit_card) e como ela aparece no Gestor:{' '}
+                  <Link to={`/dashboard/modules/gestor/config-financeiro?canal=${encodeURIComponent(ch.channel)}&aba=integracoes`} className="font-semibold text-[color:var(--sll-b-brand)] hover:underline">traduzir formas de pagamento</Link>.
+                </p>
+              )}
+              </Card>
 
-          {!isPdv && (
-            <Card
-              title="Status dos pedidos"
+              {!isPdv && (
+                <details className="group">
+                  <summary className="cursor-pointer select-none rounded-xl px-1 py-2 text-sm font-semibold text-slate-600 hover:text-[color:var(--sll-b-brand)] dark:text-slate-300">Avançado: status dos pedidos</summary>
+                  <div className="mt-2">
+                <Card
+                  title="Status dos pedidos"
               hint="Como cada status que chega do canal vira status do pedido no Gestor. Linhas marcadas com “devolve estoque” repõem o saldo quando o Gestor controla o estoque do canal."
               actions={canEdit ? (
                 <button type="button" disabled={bn} onClick={saveStatus} className={sllBtnPrimary}>
@@ -273,11 +282,13 @@ export default function ChannelsConfigPage() {
                 </button>
               )}
             </Card>
+                  </div>
+                </details>
+              )}
+            </>
           )}
-        </>
-      )}
 
-      <SllModal
+          <SllModal
         open={!!confirm}
         onOpenChange={(o) => { if (!o) setConfirm(null); }}
         title={confirm?.from ? 'Seguir outro canal?' : 'Desvincular canal?'}

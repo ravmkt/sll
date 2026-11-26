@@ -12,6 +12,7 @@ import {
   METHOD_LABEL, METHOD_ORDER, SCOPE_LABEL, clearGatewayKey, getFinConfig, saveFinConfig, saveGatewayKey,
 } from '../services/financeiro';
 import type { FinConfig, FinMethodKey, FinPayload, FinScope } from '../services/financeiro';
+import { channelName } from '../services/canaisConfig';
 
 type Form = {
   settings: { max_installments: string; max_interest_free: string; min_installment_value: string; pix_key_type: string; pix_key: string; pix_receiver_name: string; pix_city: string };
@@ -166,7 +167,7 @@ export default function FinanceiroConfigPage() {
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<Tab>('meios');
+  const [tab, setTab] = useState<Tab>(TABS.some((t) => t.k === qs.get('aba')) ? (qs.get('aba') as Tab) : 'meios');
   const [sample, setSample] = useState('1000');
   const [keyOpen, setKeyOpen] = useState(false);
   const [keyVal, setKeyVal] = useState('');
@@ -285,7 +286,7 @@ export default function FinanceiroConfigPage() {
     <div className="space-y-4">
       <SllPageHeader
         title="Financeiro"
-        subtitle={canal === 'yampi' ? 'Meios de pagamento, parcelamento, Pix e integrações da loja.' : 'Canal: ' + canal + '. Meios de pagamento, parcelas e taxas deste canal.'}
+        subtitle={'Canal: ' + channelName(canal) + '. Meios de pagamento, parcelas, taxas e Pix.'}
         actions={canEdit ? (
           <>
             {dirty && <button type="button" disabled={saving} onClick={() => setForm(base)} className={sllBtnGhost}>Descartar</button>}
@@ -413,11 +414,11 @@ export default function FinanceiroConfigPage() {
 
       {tab === 'integracoes' && (
         <>
-          <Card title="Plataforma de e-commerce: Yampi" hint="Diga como cada forma de pagamento que chega da Yampi é tratada no Gestor.">
+          <Card title={'Plataforma de e-commerce: ' + channelName(canal)} hint={'Diga como cada forma de pagamento que chega de ' + channelName(canal) + ' é tratada no Gestor.'}>
             <div className="space-y-2">
               {form.map.map((r, i) => (
                 <div key={i} className="flex flex-wrap items-center gap-2">
-                  <input className={sllFieldCls + ' max-w-[16rem]'} disabled={ro} placeholder="Nome na Yampi (ex.: credit_card)" value={r.platform_method}
+                  <input className={sllFieldCls + ' max-w-[16rem]'} disabled={ro} placeholder={'Nome em ' + channelName(canal) + ' (ex.: credit_card)'} value={r.platform_method}
                     onChange={(e) => set((f) => ({ ...f, map: f.map.map((x, j) => (j === i ? { ...x, platform_method: e.target.value } : x)) }))} />
                   <span className="text-xs text-slate-400">vira</span>
                   <select className={sllFieldCls + ' max-w-[14rem] cursor-pointer'} disabled={ro} value={r.method}
