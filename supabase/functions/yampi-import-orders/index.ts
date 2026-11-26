@@ -9,6 +9,7 @@ const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 const API = 'https://api.dooki.com.br/v2';
 const INCLUDES = [
+  'customer,items.sku,status,statuses,shipping_address,search,transactions',
   'customer,items.sku,status,statuses,shipping_address,search',
   'customer,items,status,statuses,shipping_address',
   'customer,items,status,shipping_address',
@@ -151,7 +152,7 @@ Deno.serve(async (req) => {
       let next = first;
       let totalPages = first + span;
       let totalOrders = 0;
-      const res = { processed: 0, ok: 0, failed: 0, no_items: 0, errors: [] as string[], unknown_status: {} as Record<string, number> };
+      const res = { processed: 0, ok: 0, failed: 0, no_items: 0, no_payment: 0, errors: [] as string[], unknown_status: {} as Record<string, number> };
 
       while (next < first + span && next <= totalPages) {
         const { j } = await getPage(c, next, 100);
@@ -165,6 +166,10 @@ Deno.serve(async (req) => {
             if (!Array.isArray(items) || items.length === 0) res.no_items++;
             const alias = String(o.status?.data?.alias ?? o.status?.alias ?? '');
             if (alias && !KNOWN.has(alias)) res.unknown_status[alias] = (res.unknown_status[alias] || 0) + 1;
+                if (['paid', 'handling_products', 'shipped', 'delivered'].includes(alias)) {
+                  const tx = o.transactions?.data ?? o.transactions;
+                  if (!Array.isArray(tx) || tx.length === 0) res.no_payment++;
+                }
             const { data, error } = await admin.rpc('gestor_ingest_yampi_order', {
               p_payload: { event: 'order.imported', merchant: { alias: c.alias }, resource: o },
             });
