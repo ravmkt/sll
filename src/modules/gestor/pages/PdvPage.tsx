@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Minus, Package, Plus, Trash2, UserPlus, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2, Minus, Package, Plus, Trash2, UserPlus, Wifi, WifiOff, X } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { cn } from '@/lib/utils';
 import { SllPageHeader } from '@/components/sll/SllPageHeader';
@@ -15,6 +15,7 @@ import { brl } from '../services/clientes';
 import { METHOD_LABEL, getFinConfig } from '../services/financeiro';
 import type { FinConfig, FinMethodKey } from '../services/financeiro';
 import { createPdvSale, newSaleKey } from '../services/pdv';
+import { isContingency, usePdvNet } from '../services/pdvNet';
 import { cashCurrent } from '@/modules/pdv/services/caixa';
 import { cacheKeys, countQueue, loadCache, saveCache } from '../services/pdvOffline';
 import { companyBriefCached, finCached, loadSnapshot, saveSnapshot } from '../services/pdvCache';
@@ -30,6 +31,8 @@ import { useGestorAccess } from '../hooks/useGestorAccess';
 type Line = { variantId: string; name: string; sku: string; price: number; qty: number };
 
 const PAGE = 40;
+
+type DoneInfo = { queued: boolean; provisional: string | null };
 
 function Card({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
   return (
@@ -49,6 +52,7 @@ const qtyBtn =
 export default function PdvPage() {
   const { can } = useGestorAccess();
   const { storeId, loading: lojaLoading } = useLoja();
+  const net = usePdvNet();
 
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [variants, setVariants] = useState<Map<string, VariantRow[]>>(new Map());
@@ -85,6 +89,8 @@ export default function PdvPage() {
 
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<Receipt | null>(null);
+  const [doneInfo, setDoneInfo] = useState<DoneInfo | null>(null);
+  const [tick, setTick] = useState(0);
   const idem = useRef(newSaleKey());
 
   const load = useCallback(async () => {
@@ -100,7 +106,7 @@ export default function PdvPage() {
       return true;
     };
     try {
-      if (!navigator.onLine) {
+      if (!navigator.onLine || (isContingency() && (await loadSnapshot(storeId)))) {
         if (!(await useCache())) showError('Sem conexão e sem catálogo salvo neste aparelho. Conecte-se uma vez para baixar o catálogo.');
         return;
       }
@@ -164,13 +170,18 @@ export default function PdvPage() {
     return () => window.removeEventListener('online', h);
   }, [storeId, load]);
 
+  // saiu da contingência: recarrega do servidor
+  useEffect(() => {
+    if (!net.contingency && source === 'cache' && storeId) void load();
+  }, [net.contingency, source, storeId, load]);
+
   // guarda o caixa aberto para liberar a venda offline
   useEffect(() => {
-    if (!storeId || !channel || !navigator.onLine) return;
+    if (!storeId || !channel || net.contingency) return;
     cashCurrent(storeId, channel)
       .then((s) => saveCache(cacheKeys.cash(storeId), s ? { id: s.id } : null))
       .catch(() => undefined);
-  }, [storeId, channel, source]);
+  }, [storeId, channel, source, net.contingency]);
 
   // saldo por variação do depósito escolhido (base das travas offline).
   // Online: grava, mas só sem venda na fila (senão apagaria o que foi vendido offline).
@@ -189,7 +200,7 @@ export default function PdvPage() {
     } else {
       void loadCache<Record<string, number>>(key).then((c) => setFlat(c ? c.value : null));
     }
-  }, [storeId, warehouse, source, variants, stock]);
+  }, [storeId, warehouse, source, variants, stock, tick]);
 
   // ---------- catalogo ----------
   const categories = useMemo(
@@ -331,6 +342,7 @@ export default function PdvPage() {
         sendToExpedition: toExp,
         note: note.trim() || null,
         idemKey: idem.current,
+            warehouseId: warehouse,
         channel,
         origin,
       });
@@ -350,10 +362,12 @@ export default function PdvPage() {
         },
         note: note.trim(),
       });
-      showSuccess(`Venda registrada #${String(res.number).padStart(4, '0')}`);
+      setDoneInfo({ queued: !!res.queued, provisional: res.provisional ?? null });
+          if (res.queued) showSuccess(`Venda salva neste aparelho (${res.provisional ?? 'pendente'}). Será enviada quando a conexão voltar.`);
+          else showSuccess(`Venda registrada #${String(res.number).padStart(4, '0')}`);
       idem.current = newSaleKey();
       clearSale();
-      void load();
+      void load().then(() => setTick((t) => t + 1));
     } catch (e) {
       showError((e as Error).message);
     } finally {
@@ -366,7 +380,7 @@ export default function PdvPage() {
     const w = window.open('', '_blank');
     if (!w) { showError('Libere os pop-ups para imprimir.'); return; }
     w.document.open();
-    w.document.write(buildReceiptHtml(done));
+    w.document.write(withPendingBanner(buildReceiptHtml(done), doneInfo));
     w.document.close();
     w.focus();
     w.print();
@@ -389,7 +403,29 @@ export default function PdvPage() {
     <div className="space-y-4">
       <SllPageHeader title="PDV" subtitle="Venda rápida de balcão. A baixa de estoque e o pedido entram no Gestor na hora." className="mb-0" />
 
-      {source === 'cache' && (
+      {net.contingency ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">
+              <span className="flex items-center gap-2">
+                <WifiOff size={16} />
+                {net.manual
+                  ? 'Modo offline manual ligado: as vendas ficam salvas neste aparelho e sobem quando você voltar ao online.'
+                  : 'Sem conexão com o servidor: as vendas ficam salvas neste aparelho e sobem sozinhas quando a conexão voltar.'}
+              </span>
+              {net.manual ? (
+                <button type="button" onClick={() => net.setManual(false)} className={sllBtnGhost}><Wifi size={14} /> Voltar ao online</button>
+              ) : (
+                <button type="button" onClick={() => void net.check()} className={sllBtnGhost}>Testar conexão</button>
+              )}
+            </div>
+          ) : (
+            <div className="flex justify-end">
+              <button type="button" onClick={() => net.setManual(true)} className="cursor-pointer text-[11px] font-medium text-slate-400 hover:text-[color:var(--sll-b-brand)]">
+                Internet instável? Usar modo offline
+              </button>
+            </div>
+          )}
+
+          {source === 'cache' && (
         <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">
           Sem conexão: usando o catálogo e o estoque salvos neste aparelho{cachedAt ? ` em ${new Date(cachedAt).toLocaleString('pt-BR')}` : ''}. Os saldos podem estar desatualizados.
         </p>
@@ -638,7 +674,7 @@ export default function PdvPage() {
       <SllModal
         open={!!done}
         onOpenChange={(o) => { if (!o) setDone(null); }}
-        title="Venda salva com sucesso"
+        title={doneInfo?.queued ? 'Venda salva neste aparelho' : 'Venda salva com sucesso'}
         size="md"
         footer={(
           <>
@@ -649,7 +685,11 @@ export default function PdvPage() {
       >
         {done && (
           <div className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
-            <p>Pedido <strong>#{String(done.number).padStart(4, '0')}</strong> registrado.</p>
+            {doneInfo?.queued ? (
+                  <p>Venda <strong>{doneInfo.provisional ?? 'pendente'}</strong> guardada neste aparelho. O pedido e a baixa de estoque são criados quando a conexão voltar.</p>
+                ) : (
+                  <p>Pedido <strong>#{String(done.number).padStart(4, '0')}</strong> registrado.</p>
+                )}
             <p>Total: <strong>{brl(done.total + done.interest)}</strong> · {done.payment.label}{done.payment.installments > 1 ? ` em ${done.payment.installments}x` : ''}</p>
             {done.payment.given != null && done.payment.change > 0 && <p>Troco: <strong>{brl(done.payment.change)}</strong></p>}
           </div>
@@ -657,6 +697,12 @@ export default function PdvPage() {
       </SllModal>
     </div>
   );
+}
+
+function withPendingBanner(html: string, info: DoneInfo | null): string {
+  if (!info?.queued) return html;
+  const banner = `<p style="text-align:center;font-weight:bold;border:1px dashed #000;padding:4px;margin:4px 0">VENDA PENDENTE DE ENVIO<br/>${info.provisional ?? ''}</p>`;
+  return /<body[^>]*>/i.test(html) ? html.replace(/<body[^>]*>/i, (m) => m + banner) : banner + html;
 }
 
 // Agrupa as linhas de um produto e das variacoes dentro do mesmo tbody

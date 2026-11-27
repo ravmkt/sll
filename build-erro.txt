@@ -4,85 +4,163 @@
 
 [36mvite v8.3.0 [32mbuilding client environment for production...[36m[39m
 transforming...
-Ô£ô 3036 modules transformed.
-rendering chunks...
-computing gzip size...
-dist/index.html                                      1.90 kB Ôöé gzip:   0.73 kB
-dist/assets/PageTour-IrK-etCd.css                    1.95 kB Ôöé gzip:   0.62 kB
-dist/assets/vendor-libs-CTZuBZOi.css                 3.04 kB Ôöé gzip:   0.97 kB
-dist/assets/index-D2y0Mu7-.css                     283.74 kB Ôöé gzip:  33.59 kB
-dist/assets/LegacyLiveRedirect-CJCI2ekR.js           0.22 kB Ôöé gzip:   0.19 kB
-dist/assets/supabase-DDgxVn0_.js                     0.23 kB Ôöé gzip:   0.21 kB
-dist/assets/CheckoutIdRedirect-DXNAoLOX.js           0.26 kB Ôöé gzip:   0.22 kB
-dist/assets/modules-Dax6ENGr.js                      0.42 kB Ôöé gzip:   0.27 kB
-dist/assets/clubeStyles-DQw0HasI.js                  0.44 kB Ôöé gzip:   0.27 kB
-dist/assets/AppFooter-Ds-OTb9f.js                    0.66 kB Ôöé gzip:   0.42 kB
-dist/assets/rolldown-runtime-hePW80VL.js             0.71 kB Ôöé gzip:   0.42 kB
-dist/assets/socialIntegrationsService-BqMn39W9.js    0.89 kB Ôöé gzip:   0.42 kB
-dist/assets/useModuleAppEnabled-BDQKAvCq.js          0.89 kB Ôöé gzip:   0.52 kB
-dist/assets/StreamSellLayout-bUOjFQp_.js             1.03 kB Ôöé gzip:   0.57 kB
-dist/assets/planosShared-D22hZrgv.js                 1.22 kB Ôöé gzip:   0.64 kB
-dist/assets/BillingSuccess-DAzms51C.js               1.79 kB Ôöé gzip:   0.99 kB
-dist/assets/Modal-g7_W8qQO.js                        1.86 kB Ôöé gzip:   0.73 kB
-dist/assets/Destinos-C5iIGUJg.js                     2.18 kB Ôöé gzip:   0.99 kB
-dist/assets/useStoreSector-I1nEJiAV.js               2.27 kB Ôöé gzip:   1.15 kB
-dist/assets/SidebarTourSlot-CvtjHDnO.js              2.61 kB Ôöé gzip:   1.19 kB
-dist/assets/seasonalTips-DmTqxjd9.js                 2.87 kB Ôöé gzip:   1.31 kB
-dist/assets/ResetPassword-CV1I0FPq.js                2.98 kB Ôöé gzip:   1.36 kB
-dist/assets/getStoreSubscriptions-CTJQOxTr.js        3.07 kB Ôöé gzip:   1.35 kB
-dist/assets/ClubeRules-CaL-IeoE.js                   3.08 kB Ôöé gzip:   1.43 kB
-dist/assets/InstagramCallback-D08INCqu.js            3.10 kB Ôöé gzip:   1.34 kB
-dist/assets/ClubeTermsModal-CC7HyrOI.js              3.40 kB Ôöé gzip:   1.45 kB
-dist/assets/PageTour-C6n2e2-U.js                     3.70 kB Ôöé gzip:   1.68 kB
-dist/assets/LiveSidebar-5gv1w1M4.js                  3.81 kB Ôöé gzip:   1.38 kB
-dist/assets/PlanosGatePage-Bz-NsAZe.js               3.97 kB Ôöé gzip:   1.43 kB
-dist/assets/ProductsTabs-CKPRcUBg.js                 4.06 kB Ôöé gzip:   1.54 kB
-dist/assets/AffiliateDatabaseService-B6_H3rYe.js     4.08 kB Ôöé gzip:   1.43 kB
-dist/assets/useDashboardData-BBh0f2eX.js             4.34 kB Ôöé gzip:   1.94 kB
-dist/assets/streamSellService-DBr5WNrE.js            4.44 kB Ôöé gzip:   1.66 kB
-dist/assets/Login-dM_qDxp-.js                        5.22 kB Ôöé gzip:   1.89 kB
-dist/assets/IdeasBoard-CgbfSRR3.js                   5.28 kB Ôöé gzip:   1.93 kB
-dist/assets/ClubeRulesContent-DAw2QwNY.js            5.30 kB Ôöé gzip:   2.33 kB
-dist/assets/MarketingHost-BGJ7RKr0.js                5.56 kB Ôöé gzip:   2.02 kB
-dist/assets/VidlyticsAcademy-C5ZvbPu-.js             6.52 kB Ôöé gzip:   2.59 kB
-dist/assets/yampiService-DL-kGI_s.js                 7.38 kB Ôöé gzip:   2.54 kB
-dist/assets/LiveCockpit-BOuIO6dX.js                  7.75 kB Ôöé gzip:   2.57 kB
-dist/assets/Metricas-CXoX9XoI.js                     9.59 kB Ôöé gzip:   3.43 kB
-dist/assets/TopBar-BE21aR5b.js                       9.68 kB Ôöé gzip:   3.56 kB
-dist/assets/ModuloPlanoModal-CVIE5JH-.js            10.94 kB Ôöé gzip:   3.81 kB
-dist/assets/DicasNoah-Ia2xiEcr.js                   11.42 kB Ôöé gzip:   3.93 kB
-dist/assets/VidlyticsDatabaseService-CHR3kaw5.js    16.31 kB Ôöé gzip:   4.84 kB
-dist/assets/Assinaturas-DM-iXqS-.js                 16.54 kB Ôöé gzip:   5.62 kB
-dist/assets/CheckoutPage-BcgOLFiu.js                21.00 kB Ôöé gzip:   6.87 kB
-dist/assets/Medidas-CXFAFjzV.js                     22.09 kB Ôöé gzip:   6.28 kB
-dist/assets/IntegrationPage-trIeaS6g.js             22.85 kB Ôöé gzip:   6.52 kB
-dist/assets/Planos-BeEt280O.js                      24.90 kB Ôöé gzip:   7.16 kB
-dist/assets/DashboardLayout-BPWM8O8_.js             24.92 kB Ôöé gzip:   7.57 kB
-dist/assets/LiveAdminPage-Dr4wfy6s.js               25.00 kB Ôöé gzip:   5.98 kB
-dist/assets/SettingsPage-uGNiftwi.js                25.85 kB Ôöé gzip:   6.10 kB
-dist/assets/IndicaEGanha-cBePQbsV.js                29.70 kB Ôöé gzip:   8.59 kB
-dist/assets/OnboardingPage-vYQ0sFlp.js              29.85 kB Ôöé gzip:   9.23 kB
-dist/assets/Dashboard-PXMxCt2O.js                   41.54 kB Ôöé gzip:  12.26 kB
-dist/assets/Products-56odRnrM.js                    64.14 kB Ôöé gzip:  15.30 kB
-dist/assets/LiveCommerce-Ckgmdoaa.js               155.98 kB Ôöé gzip:  36.43 kB
-dist/assets/vendor-supabase-quqfZ7Fw.js            208.60 kB Ôöé gzip:  53.60 kB
-dist/assets/Vidlytics-D4_vthtv.js                  323.02 kB Ôöé gzip:  72.13 kB
-dist/assets/vendor-react-t8xRsov0.js               338.38 kB Ôöé gzip: 108.53 kB
-dist/assets/vendor-charts-DH_uE_v7.js              425.03 kB Ôöé gzip: 109.51 kB
-dist/assets/index-DC2GAG_O.js                      612.07 kB Ôöé gzip: 150.48 kB
-dist/assets/vendor-libs-HHRg9Olw.js                635.64 kB Ôöé gzip: 205.10 kB
-
-node.exe : [33m[plugin builtin:vite-reporter] 
+node.exe : Found 1 warning while optimizing generated 
+CSS:
 No linha:1 caractere:1
 + & "C:\Program Files\nodejs/node.exe" "C:\Program 
 Files\nodejs/node_mo ...
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: ([33m[plu 
-   gin builtin:vite-reporter] :String) [], RemoteExce  
-  ption
+    + CategoryInfo          : NotSpecified: (Found 1 w 
+   arning... generated CSS::String) [], RemoteExcepti  
+  on
     + FullyQualifiedErrorId : NativeCommandError
  
+
+[2mÔöé   cursor: not-allowed !important;[22m
+[2mÔöé }[22m
+[2mÔöé[22m F:\RODRIGO 
+VICENTE\DYAD\sll-hub\src\index.css 
+.sll-scroll::-webkit-scrollbar {
+[2mÔöå[22m   [33m[2m^--[22m 'RODRIGO' is not 
+recognized as a valid pseudo-class. Did you mean 
+'::RODRIGO' (pseudo-element) or is this a typo?[39m
+[2mÔöå[22m
+[2mÔöé   width: 16px;[22m
+[2mÔöé }[22m
+
+Ô£ô 3381 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/assets/rolldown-runtime-I1t7kcUN.js                    0.41 kB
+dist/index.html                                             2.65 kB Ôöé gzip:     1.01 kB
+dist/assets/cutout.worker-Di84hdzv.js                      82.47 kB
+dist/assets/ort.bundle.min-rNU6acf8.js                    392.59 kB
+dist/assets/ort.webgpu.bundle.min-Dpb7EFU3.js             392.60 kB
+dist/assets/ort.bundle.min-OfoG_cy9.mjs                   399.90 kB
+dist/assets/ort.webgpu.bundle.min-CEayb2S6.mjs            399.92 kB
+dist/assets/ort-wasm-simd-threaded.jsep-D5Jk56-t.wasm  23,914.39 kB Ôöé gzip: 5,743.61 kB
+dist/assets/index-DsL9y5u_.css                            361.87 kB Ôöé gzip:    42.46 kB
+dist/assets/hls-Bnv6gk1R.js                                 0.07 kB Ôöé gzip:     0.08 kB
+dist/assets/supabaseClients-CmAGPiwW.js                     0.08 kB Ôöé gzip:     0.10 kB
+dist/assets/TrialDays-CJ4hz-b7.js                           0.17 kB Ôöé gzip:     0.15 kB
+dist/assets/LiveCockpitRedirect-oL0gokvu.js                 0.20 kB Ôöé gzip:     0.18 kB
+dist/assets/LegacyLiveRedirect-DuttYbiQ.js                  0.22 kB Ôöé gzip:     0.19 kB
+dist/assets/supabase-CVyrSYcY.js                            0.23 kB Ôöé gzip:     0.21 kB
+dist/assets/CheckoutIdRedirect-C9NlS3Fb.js                  0.26 kB Ôöé gzip:     0.22 kB
+dist/assets/Products-DcZ3J-Q-.js                            0.34 kB Ôöé gzip:     0.25 kB
+dist/assets/modules-DPwF9Wck.js                             0.42 kB Ôöé gzip:     0.26 kB
+dist/assets/useStoreSector-B_wlMdg4.js                      0.51 kB Ôöé gzip:     0.35 kB
+dist/assets/useTrialDays-BtjXSzI8.js                        0.53 kB Ôöé gzip:     0.37 kB
+dist/assets/clubeStyles-Bmy37-a_.js                         0.55 kB Ôöé gzip:     0.31 kB
+dist/assets/socialIntegrationsService-DiicF3SU.js           0.55 kB Ôöé gzip:     0.38 kB
+dist/assets/PromocoesSoon-ZsTAgSEG.js                       0.68 kB Ôöé gzip:     0.40 kB
+dist/assets/SortTh-Bs3-CnEA.js                              0.69 kB Ôöé gzip:     0.44 kB
+dist/assets/label-D56ipdVj.js                               0.76 kB Ôöé gzip:     0.48 kB
+dist/assets/ProductsTabs-B_SrizE_.js                        0.78 kB Ôöé gzip:     0.44 kB
+dist/assets/badge-Dz7Co3zf.js                               0.87 kB Ôöé gzip:     0.45 kB
+dist/assets/useModuleAppEnabled-DCP9jzWJ.js                 0.90 kB Ôöé gzip:     0.52 kB
+dist/assets/LegalLayout-Dzx4W2F_.js                         0.98 kB Ôöé gzip:     0.47 kB
+dist/assets/StreamSellLayout-Q151NDTt.js                    0.98 kB Ôöé gzip:     0.55 kB
+dist/assets/AuthContext-Hvnhhe87.js                         1.07 kB Ôöé gzip:     0.57 kB
+dist/assets/rolldown-runtime-Dd_uD5pT.js                    1.10 kB Ôöé gzip:     0.62 kB
+dist/assets/PulseSoon-DnbOVJJh.js                           1.16 kB Ôöé gzip:     0.67 kB
+dist/assets/planosShared-DsY37l8-.js                        1.22 kB Ôöé gzip:     0.64 kB
+dist/assets/SidebarTourSlot-BHFucJ-7.js                     1.28 kB Ôöé gzip:     0.67 kB
+dist/assets/AppToggle-DJ-u0SML.js                           1.67 kB Ôöé gzip:     0.80 kB
+dist/assets/landingConfig-BzYVxgyN.js                       1.72 kB Ôöé gzip:     0.95 kB
+dist/assets/AboutPage-BtAygClI.js                           1.78 kB Ôöé gzip:     0.89 kB
+dist/assets/scopedTips-ALQ5cmFt.js                          1.81 kB Ôöé gzip:     0.92 kB
+dist/assets/BillingSuccess-CohZS6jn.js                      1.85 kB Ôöé gzip:     1.01 kB
+dist/assets/TourTagger-BOEmTdMq.js                          1.96 kB Ôöé gzip:     1.00 kB
+dist/assets/Modal-DvcuolS4.js                               1.98 kB Ôöé gzip:     0.76 kB
+dist/assets/MedidasLayout-BQXlAQxQ.js                       2.00 kB Ôöé gzip:     0.86 kB
+dist/assets/Destinos-CM6kwouL.js                            2.22 kB Ôöé gzip:     1.00 kB
+dist/assets/StorageUsageCard-Cemx0xOQ.js                    2.22 kB Ôöé gzip:     1.07 kB
+dist/assets/input-ARtNRyDn.js                               2.51 kB Ôöé gzip:     1.11 kB
+dist/assets/ModuleHeader-wTXJTEYD.js                        2.54 kB Ôöé gzip:     1.21 kB
+dist/assets/MarketingSideBanner-CmDznf4S.js                 2.57 kB Ôöé gzip:     1.31 kB
+dist/assets/ExclusaoDadosPage-NpQJIK51.js                   2.69 kB Ôöé gzip:     1.15 kB
+dist/assets/TryOnModule-CiUCKOW6.js                         2.76 kB Ôöé gzip:     1.27 kB
+dist/assets/seasonalTips-wNj1C-EP.js                        2.87 kB Ôöé gzip:     1.30 kB
+dist/assets/TermsPage-C-xxN71J.js                           3.05 kB Ôöé gzip:     1.37 kB
+dist/assets/getStoreSubscriptions-CIbMdniX.js               3.07 kB Ôöé gzip:     1.36 kB
+dist/assets/ResetPassword-DB6f2v6N.js                       3.08 kB Ôöé gzip:     1.39 kB
+dist/assets/ClubeRules-BhWvfsoT.js                          3.21 kB Ôöé gzip:     1.45 kB
+dist/assets/InstagramCallback-Wv7p4Kmm.js                   3.23 kB Ôöé gzip:     1.39 kB
+dist/assets/StreamSellLanding-beWlagIs.js                   3.27 kB Ôöé gzip:     1.20 kB
+dist/assets/ClubeTermsModal-Dm9zd-ME.js                     3.48 kB Ôöé gzip:     1.48 kB
+dist/assets/yampiService-RFyYPxO2.js                        3.67 kB Ôöé gzip:     1.58 kB
+dist/assets/ConfirmDeleteDialog-k2QUVNnJ.js                 3.73 kB Ôöé gzip:     1.37 kB
+dist/assets/productsService-C_ATLRDx.js                     3.78 kB Ôöé gzip:     1.51 kB
+dist/assets/AffiliateDatabaseService-DoV2TMrE.js            4.08 kB Ôöé gzip:     1.43 kB
+dist/assets/LiveSidebar-wQRITDU2.js                         4.11 kB Ôöé gzip:     1.50 kB
+dist/assets/useDashboardData-DHR2D4uR.js                    4.34 kB Ôöé gzip:     1.94 kB
+dist/assets/PlanosGatePage-BMj7uY79.js                      4.37 kB Ôöé gzip:     1.50 kB
+dist/assets/AppModal--37imRk9.js                            4.47 kB Ôöé gzip:     1.64 kB
+dist/assets/LojaContext-HddBi27l.js                         4.53 kB Ôöé gzip:     1.78 kB
+dist/assets/BuilderListPage-DnOgv1IY.js                     4.65 kB Ôöé gzip:     1.54 kB
+dist/assets/PulseLayout-e9uSaR4j.js                         4.72 kB Ôöé gzip:     1.74 kB
+dist/assets/PrivacyPage-B1qKEiRr.js                         4.86 kB Ôöé gzip:     1.83 kB
+dist/assets/BuilderLayout-DoOVk9oG.js                       4.95 kB Ôöé gzip:     1.78 kB
+dist/assets/Login-56Wv3J6S.js                               5.24 kB Ôöé gzip:     1.89 kB
+dist/assets/ClubeRulesContent-QY_i6QcQ.js                   5.34 kB Ôöé gzip:     2.34 kB
+dist/assets/TryOnPage-DA9W6GdL.js                           5.59 kB Ôöé gzip:     2.42 kB
+dist/assets/MedidasBotao-CI5-mLm4.js                        6.60 kB Ôöé gzip:     2.30 kB
+dist/assets/VisaoGeralTab-C5-WI2UF.js                       6.68 kB Ôöé gzip:     2.28 kB
+dist/assets/EmojiPicker-BQb8O0ND.js                         7.15 kB Ôöé gzip:     3.37 kB
+dist/assets/PromocoesLayout-C61mGPGL.js                     7.19 kB Ôöé gzip:     2.54 kB
+dist/assets/streamSellService-Bu-MC-oo.js                   7.31 kB Ôöé gzip:     2.47 kB
+dist/assets/VidlyticsAcademy-BCLLnKUY.js                    7.67 kB Ôöé gzip:     2.98 kB
+dist/assets/AparenciaTab-PEQlg-NM.js                        7.77 kB Ôöé gzip:     2.69 kB
+dist/assets/ProximasDatasComerciais-CGeRIMQg.js             8.47 kB Ôöé gzip:     2.96 kB
+dist/assets/AvaliarPage-CQN2KhCi.js                         8.92 kB Ôöé gzip:     3.56 kB
+dist/assets/IdeasBoard-D5U0Vk-x.js                          9.02 kB Ôöé gzip:     3.06 kB
+dist/assets/Metricas-DYXoeSlS.js                            9.70 kB Ôöé gzip:     3.46 kB
+dist/assets/MeuPlanoPage-DbcINkDn.js                       10.16 kB Ôöé gzip:     3.60 kB
+dist/assets/BuilderOverviewPage-BYzhEQ46.js                10.38 kB Ôöé gzip:     3.37 kB
+dist/assets/ModuloPlanoModal-C2_wjjHE.js                   11.02 kB Ôöé gzip:     3.85 kB
+dist/assets/InstalacaoPage-BeXMB_nZ.js                     11.26 kB Ôöé gzip:     3.64 kB
+dist/assets/DicasNoah-lbi67F6A.js                          11.85 kB Ôöé gzip:     4.00 kB
+dist/assets/publish-tn7yu4UX.js                            11.97 kB Ôöé gzip:     5.10 kB
+dist/assets/VidlyticsDatabaseService-j55f1rWi.js           16.68 kB Ôöé gzip:     4.98 kB
+dist/assets/LeadsPage-aA9My7KD.js                          17.14 kB Ôöé gzip:     5.44 kB
+dist/assets/BuilderTemplatesPage-B0aD41Fp.js               18.10 kB Ôöé gzip:     6.12 kB
+dist/assets/MedidasAparencia-CAR4xLpC.js                   19.19 kB Ôöé gzip:     5.37 kB
+dist/assets/PulsePage-CWpDMcU5.js                          19.41 kB Ôöé gzip:     5.57 kB
+dist/assets/SettingsPage-Cw9v5-lH.js                       21.00 kB Ôöé gzip:     6.17 kB
+dist/assets/CheckoutPage-Cw9dLY2h.js                       21.28 kB Ôöé gzip:     6.93 kB
+dist/assets/Medidas-fbPe6S6b.js                            22.74 kB Ôöé gzip:     6.36 kB
+dist/assets/LiveCockpit-0MZmVMPT.js                        24.88 kB Ôöé gzip:     7.13 kB
+dist/assets/VidlyticsLanding-CmNThWMO.js                   24.96 kB Ôöé gzip:     7.17 kB
+dist/assets/LiveAdminPage-G5ah34AN.js                      25.18 kB Ôöé gzip:     6.01 kB
+dist/assets/Planos--iyGKqfN.js                             25.55 kB Ôöé gzip:     7.35 kB
+dist/assets/RadarRoutes-XhTLiuod.js                        28.25 kB Ôöé gzip:     8.02 kB
+dist/assets/IntegracoesPage-IT5c0FTz.js                    29.02 kB Ôöé gzip:     8.16 kB
+dist/assets/Assinaturas-C1iQV0B9.js                        29.77 kB Ôöé gzip:     8.80 kB
+dist/assets/IndicaEGanha-DClwNX5e.js                       30.20 kB Ôöé gzip:     8.69 kB
+dist/assets/LandingHub-CYogRo-3.js                         37.99 kB Ôöé gzip:    10.31 kB
+dist/assets/Dashboard-O6OU8fI1.js                          48.93 kB Ôöé gzip:    13.74 kB
+dist/assets/vendor-icons-hpl-CWgd.js                       63.67 kB Ôöé gzip:    20.06 kB
+dist/assets/dist-CizAvoLI.js                               83.02 kB Ôöé gzip:    22.51 kB
+dist/assets/BuilderEditorPage-gUVFTNXM.js                  85.33 kB Ôöé gzip:    27.13 kB
+dist/assets/pages-CWsVco92.js                              89.47 kB Ôöé gzip:    25.79 kB
+dist/assets/PulseWidgetsTab-lZvuuvsw.js                   152.35 kB Ôöé gzip:    35.84 kB
+dist/assets/StudioArtesPage-DXkixLt9.js                   157.84 kB Ôöé gzip:    47.59 kB
+dist/assets/ProductsCatalog-BfgoZRhC.js                   168.92 kB Ôöé gzip:    42.77 kB
+dist/assets/vendor-supabase-DBwSh9Uq.js                   214.97 kB Ôöé gzip:    55.17 kB
+dist/assets/StreamSell-0YV7ZqaP.js                        259.51 kB Ôöé gzip:    69.16 kB
+dist/assets/GestorRoutes-DmaR9sso.js                      358.35 kB Ôöé gzip:    89.48 kB
+dist/assets/ort.bundle.min-DsEg-uBR.js                    389.68 kB Ôöé gzip:   104.81 kB
+dist/assets/ort.webgpu.bundle.min-D-p0R_fU.js             389.70 kB Ôöé gzip:   104.81 kB
+dist/assets/index-CZF1x7UY.js                             395.41 kB Ôöé gzip:   117.02 kB
+dist/assets/xlsx-DrIhlVRN.js                              424.03 kB Ôöé gzip:   141.30 kB
+dist/assets/vendor-charts-CrClq2k8.js                     437.05 kB Ôöé gzip:   111.81 kB
+dist/assets/vendor-react-C1zGms31.js                      453.62 kB Ôöé gzip:   141.02 kB
+dist/assets/AdminMasterPage-CQR8h7fg.js                   595.29 kB Ôöé gzip:   141.16 kB
+dist/assets/Vidlytics-CSGSGswo.js                         987.77 kB Ôöé gzip:   275.06 kB
+
+[33m[plugin builtin:vite-reporter] 
 (!) Some chunks are larger than 600 kB after 
 minification. Consider:
 - Using dynamic import() to code-split the application
@@ -91,4 +169,31 @@ improve chunking: https://rolldown.rs/reference/OutputO
 ptions.codeSplitting
 - Adjust chunk size limit for this warning via 
 build.chunkSizeWarningLimit.[39m
-[32mÔ£ô built in 11.46s[39m
+[33m[33m[INEFFECTIVE_DYNAMIC_IMPORT] 
+[0mnode_modules/hls.js/dist/hls.mjs is dynamically 
+imported by src/pages/vidlytics/tabs/BibliotecaTab.tsx 
+but also statically imported by 
+src/components/vidlytics/HlsPlayer.tsx, dynamic import 
+will not move module into another chunk.
+[39m
+[32mÔ£ô built in 23.53s[39m
+[33m[33m[PLUGIN_TIMINGS] [0mPlugin hooks ran for 
+22.3s of this 23.5s build (95%).
+The slowest hooks, timed inside each callback (the 
+wait before a callback starts is excluded, the time it 
+awaits is included):
+  - vite:prepare-out-dir renderStart (9%, 2.0s, 1 call)
+  - vite:worker-import-meta-url transform (5%, 1.2s, 1 
+call)
+Additional hook time came from the hooks below and 
+from hooks under 1s.
+2 hooks are listed without a time. Their calls 
+overlapped, so the time inside one call includes work 
+from other calls. To find their cost, profile the 
+build with `node --cpu-prof`:
+  - @tailwindcss/vite:generate:build transform (5 
+calls)
+  - vite:asset-import-meta-url transform (2 calls)
+See https://rolldown.rs/reference/InputOptions.checks#p
+lugintimings for more details.
+[39m

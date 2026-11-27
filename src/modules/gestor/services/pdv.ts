@@ -3,7 +3,7 @@ import { setOrderOrigin } from './canaisVenda';
 import type { SaleOrigin } from './canaisVenda';
 import { assertOfflineSale, consumeCachedStock, queueSale } from './pdvOffline';
 import type { NewCustomer } from './pdvOffline';
-import { isNetworkFailure, withTimeout } from './pdvNet';
+import { isContingency, isNetworkFailure, reportNetworkFailure, withTimeout } from './pdvNet';
 
 const sb: any = supabase;
 
@@ -86,7 +86,7 @@ async function enqueueSale(i: PdvSaleInput): Promise<PdvSaleResult> {
 }
 
 export async function createPdvSale(i: PdvSaleInput): Promise<PdvSaleResult> {
-  if (!navigator.onLine) return enqueueSale(i);
+  if (isContingency()) return enqueueSale(i);
 
   let res: PdvSaleResult;
   try {
@@ -109,7 +109,7 @@ export async function createPdvSale(i: PdvSaleInput): Promise<PdvSaleResult> {
     res = data as PdvSaleResult;
   } catch (e) {
     // So queda de rede/timeout vai para a fila. Erro de regra (saldo, permissao) aparece para o operador.
-    if (isNetworkFailure(e)) return enqueueSale(i);
+    if (isNetworkFailure(e)) { reportNetworkFailure(); return enqueueSale(i); }
     throw e instanceof Error ? e : new Error(String(e));
   }
 
