@@ -1,13 +1,13 @@
-export type Paper = '58' | '80' | 'a4';
+export type Paper = '58' | '80' | '100' | 'a4';
 
 const KEY = 'sll-pdv-paper';
 
 export function getPaper(): Paper {
   try {
     const v = localStorage.getItem(KEY);
-    if (v === '58' || v === '80' || v === 'a4') return v;
+    if (v === '58' || v === '80' || v === '100' || v === 'a4') return v;
   } catch { /* ignora */ }
-  return '80';
+  return '100';
 }
 
 export function setPaper(p: Paper): void {
@@ -17,6 +17,9 @@ export function setPaper(p: Paper): void {
 export function receiptCss(p: Paper): string {
   if (p === 'a4') {
     return '@page{size:A4;margin:15mm}body{margin:0;font:12pt Arial,sans-serif}';
+  }
+  if (p === '100') {
+    return '@page{size:100mm 150mm;margin:4mm}body{margin:0;width:92mm;font:11pt "Courier New",monospace}';
   }
   const mm = p === '58' ? 58 : 80;
   const width = p === '58' ? '48mm' : '72mm';

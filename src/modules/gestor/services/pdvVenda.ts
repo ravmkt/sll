@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { brl } from './clientes';
+import { getPaper, type Paper } from '@/modules/pdv/offline/receiptConfig';
 
 const sb: any = supabase;
 
@@ -108,9 +109,32 @@ const fmtCnpj = (v: string) => {
   return d.length === 14 ? `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}` : v;
 };
 
-export function buildReceiptHtml(r: Receipt): string {
+function paperCss(p: Paper): string {
+  const page =
+    p === 'a4' ? '@page{size:A4;margin:15mm}'
+    : p === '100' ? '@page{size:100mm 150mm;margin:4mm}'
+    : p === '58' ? '@page{size:58mm auto;margin:3mm}'
+    : '@page{size:80mm auto;margin:4mm}';
+  const width = p === 'a4' ? '180mm' : p === '100' ? '92mm' : p === '58' ? '48mm' : '72mm';
+  const font = p === 'a4' ? '13px' : p === '100' ? '12px' : p === '58' ? '9px' : '11px';
+  return `${page}
+body{font-family:"Courier New",monospace;font-size:${font};color:#000;margin:0;width:${width}}
+h1{font-size:1.25em;margin:4px 0;text-align:center}.c{text-align:center}.s{color:#444;font-size:.85em}
+p{margin:2px 0}
+.hd{display:flex;justify-content:space-between;border-bottom:1px solid #000;font-weight:bold;padding:2px 0;margin-top:8px}
+.it{padding:3px 0;border-bottom:1px dashed #999}.nm{word-break:break-word}
+.ln{display:flex;justify-content:space-between;gap:8px}
+.t{margin-top:6px}.t div{display:flex;justify-content:space-between;gap:8px}
+.g{font-weight:bold;font-size:1.2em;border-top:1px solid #000;margin-top:4px;padding-top:4px}
+.f{margin-top:10px;text-align:center;font-size:.85em;color:#333}
+img{max-width:50mm;max-height:20mm;display:block;margin:0 auto 4px}`;
+}
+
+export function buildReceiptHtml(r: Receipt, paper: Paper = getPaper()): string {
   const num = String(r.number).padStart(4, '0');
-  const rows = r.items.map((i) => `<tr><td>${esc(i.name)}${i.sku ? `<div class="s">${esc(i.sku)}</div>` : ''}</td><td class="n">${i.qty}</td><td class="n">${esc(brl(i.unit))}</td><td class="n">${esc(brl(i.unit * i.qty))}</td></tr>`).join('');
+  const rows = r.items.map((i) =>
+    `<div class="it"><div class="nm">${esc(i.name)}${i.sku ? ` <span class="s">${esc(i.sku)}</span>` : ''}</div>` +
+    `<div class="ln"><span>${i.qty} x ${esc(brl(i.unit))}</span><span>${esc(brl(i.unit * i.qty))}</span></div></div>`).join('');
   const cust = r.customer
     ? `<p><b>Cliente:</b> ${esc(r.customer.name)}${r.customer.document ? ' · CPF/CNPJ ' + esc(r.customer.document) : ''}${r.customer.phone ? ' · ' + esc(r.customer.phone) : ''}</p>`
     : '';
@@ -119,21 +143,15 @@ export function buildReceiptHtml(r: Receipt): string {
     : esc(r.payment.label);
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Pedido #${num}</title>
 <style>
-@page{size:80mm auto;margin:4mm}
-body{font-family:Arial,sans-serif;font-size:12px;color:#000;margin:0;width:72mm}
-h1{font-size:14px;margin:4px 0;text-align:center}.c{text-align:center}.s{color:#555;font-size:10px}
-p{margin:2px 0}table{width:100%;border-collapse:collapse;margin:8px 0}
-th{font-size:10px;text-align:left;border-bottom:1px solid #000;padding:2px 0}
-td{padding:3px 0;border-bottom:1px dashed #bbb;vertical-align:top}.n{text-align:right;white-space:nowrap}
-.t{margin-top:6px}.t div{display:flex;justify-content:space-between}.g{font-weight:bold;font-size:14px;border-top:1px solid #000;margin-top:4px;padding-top:4px}
-.f{margin-top:10px;text-align:center;font-size:10px;color:#444}img{max-width:40mm;max-height:18mm;display:block;margin:0 auto 4px}
+${paperCss(paper)}
 </style></head><body>
 ${r.company.logo ? `<img src="${esc(r.company.logo)}" alt="">` : ''}
 <h1>${esc(r.company.name || 'Recibo de venda')}</h1>
 <p class="c s">${r.company.cnpj ? 'CNPJ ' + esc(fmtCnpj(r.company.cnpj)) : ''}${r.company.cnpj && r.company.phone ? ' · ' : ''}${esc(r.company.phone)}</p>
 <p><b>Pedido #${num}</b> · ${esc(r.date.toLocaleString('pt-BR'))}</p>
 ${cust}
-<table><thead><tr><th>Item</th><th class="n">Qtd</th><th class="n">Unit.</th><th class="n">Subt.</th></tr></thead><tbody>${rows}</tbody></table>
+<div class="hd"><span>Item</span><span>Subtotal</span></div>
+${rows}
 <div class="t">
 <div><span>Subtotal</span><span>${esc(brl(r.subtotal))}</span></div>
 ${r.discount ? `<div><span>Desconto</span><span>- ${esc(brl(r.discount))}</span></div>` : ''}
