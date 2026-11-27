@@ -100,7 +100,8 @@ function Inner() {
                     lastError={off.lastError}
                     paper={paper}
                     onPaper={changePaper}
-                    onSync={() => { void off.sync(); }}
+                    canSync={off.canSync}
+                        onSync={() => { void off.sync(true); }}
                   />
                 </div>
               )}

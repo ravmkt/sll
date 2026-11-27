@@ -167,7 +167,9 @@ export default function PdvPage() {
   useEffect(() => {
     const h = () => { if (storeId) void load(); };
     window.addEventListener('online', h);
+    window.addEventListener('sll-pdv-synced', h);
     return () => window.removeEventListener('online', h);
+      window.removeEventListener('sll-pdv-synced', h);
   }, [storeId, load]);
 
   // saiu da contingência: recarrega do servidor

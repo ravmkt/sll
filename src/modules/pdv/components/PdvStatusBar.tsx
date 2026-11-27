@@ -10,9 +10,10 @@ interface Props {
   paper: Paper;
   onPaper: (p: Paper) => void;
   onSync: () => void;
+  canSync?: boolean;
 }
 
-export default function PdvStatusBar({ online, pending, syncing, expired, lastError, paper, onPaper, onSync }: Props) {
+export default function PdvStatusBar({ online, pending, syncing, expired, lastError, paper, onPaper, onSync, canSync }: Props) {
   const tone = !online
     ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300'
     : 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300';
@@ -44,7 +45,7 @@ export default function PdvStatusBar({ online, pending, syncing, expired, lastEr
         <button
           type="button"
           onClick={onSync}
-          disabled={!online || syncing}
+          disabled={!(canSync ?? online) || syncing}
           className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[color:var(--sll-b-brand)] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[color:var(--sll-b-brand-hover)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} /> Sincronizar

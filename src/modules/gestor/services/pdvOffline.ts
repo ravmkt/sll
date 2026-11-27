@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { setOrderOrigin } from './canaisVenda';
 import type { SaleOrigin } from './canaisVenda';
+import { withTimeout } from './pdvNet';
 
 const sb: any = supabase;
 
@@ -288,7 +289,7 @@ const RPC_BY_KIND: Record<QueueKind, string> = {
 
 function isNetworkError(e: unknown): boolean {
   const msg = String((e as any)?.message ?? e ?? '');
-  return !navigator.onLine || /failed to fetch|networkerror|network request failed|load failed/i.test(msg);
+  return !navigator.onLine || /failed to fetch|networkerror|network request failed|load failed|PDV_TIMEOUT|timeout|timed out|abort/i.test(msg);
 }
 
 let syncing = false;
@@ -311,7 +312,7 @@ export async function syncQueue(): Promise<SyncSummary> {
           const cid = await resolveCustomer(String(it.params.p_store), it.customer);
           params = { ...it.params, p_customer: cid };
         }
-        const { data, error } = await sb.rpc(RPC_BY_KIND[it.kind], params);
+        const { data, error } = await withTimeout(Promise.resolve(sb.rpc(RPC_BY_KIND[it.kind], params)), 20000) as { data: any; error: any };
         if (error) throw error;
         markOnline();
         if (it.kind === 'sale') {
