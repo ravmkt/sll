@@ -75,7 +75,9 @@ export function customerName(order: Row, customer: Row | null | undefined): stri
 
 export function fulfillmentOf(o: Row): string {
   if (o.canceled_at) return 'canceled';
-  return o.fulfillment_status || 'pending';
+  if (o.fulfillment_status) return o.fulfillment_status;
+  const FULFILL_FROM_STATUS: Record<string, string> = { delivered: 'delivered', shipped: 'shipped', processing: 'separating', canceled: 'canceled', cancelled: 'canceled' };
+  return FULFILL_FROM_STATUS[String(o.status || '')] || 'pending';
 }
 
 export async function listOrders(storeId: string, f: OrderFilters): Promise<{ total: number; rows: Row[] }> {

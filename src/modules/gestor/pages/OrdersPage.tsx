@@ -19,7 +19,7 @@ import type { NfNota } from '../services/notas';
 import ChannelFavicon, { normChannel } from '../components/ChannelFavicon';
 import { useGestorAccess } from '../hooks/useGestorAccess';
 import {
-  FULFILLMENT_LABEL, PAGE_SIZE, brl, customerName, fmtDate, fulfillmentOf, listOrders, orderFacets, pick,
+  FULFILLMENT_LABEL, PAGE_SIZE, PAYMENT_LABEL, brl, customerName, fmtDate, fulfillmentOf, listOrders, orderFacets, pick,
 } from '../services/pedidos';
 import type { Row } from '../services/pedidos';
 import { buildOrdersHtml, deleteOrders, fetchDetails } from '../services/pedidosBulk';
@@ -30,6 +30,26 @@ const act =
 const checkCls = 'h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]';
 const actDone =
   'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-emerald-600 transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-500/10';
+
+const PAY_CLS: Record<string, string> = {
+  paid: 'bg-emerald-600 text-white',
+  approved: 'bg-emerald-600 text-white',
+  pending: 'bg-amber-600 text-white',
+  waiting_payment: 'bg-amber-600 text-white',
+  refused: 'bg-red-600 text-white',
+  refunded: 'bg-slate-500 text-white',
+  canceled: 'bg-slate-500 text-white',
+  cancelled: 'bg-slate-500 text-white',
+};
+
+function PayBadge({ status }: { status: string | null }) {
+  if (!status) return <span className="text-slate-300">-</span>;
+  return (
+    <span className={'inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-bold ' + (PAY_CLS[status] ?? 'bg-slate-500 text-white')}>
+      {PAYMENT_LABEL[status] || status}
+    </span>
+  );
+}
 
 function ChannelCell({ value }: { value: string | null }) {
   const x = String(value || '').toLowerCase();
@@ -220,6 +240,7 @@ export default function OrdersPage() {
     { key: 'cli', header: H('Cliente'), align: 'left', render: (r) => <span className="text-sm font-semibold text-slate-800 dark:text-white">{customerName(r, r.customer)}</span> },
     { key: 'canal', header: H('Canal'), align: 'center', className: 'w-20', render: (r) => <ChannelCell value={r.channel} /> },
     { key: 'status', header: H('Status'), align: 'center', render: (r) => <OrderStatusBadge status={fulfillmentOf(r)} /> },
+        { key: 'pagto', header: H('Pagamento'), align: 'center', render: (r) => <PayBadge status={r.payment_status ?? null} /> },
     { key: 'total', header: H('Total'), align: 'center', render: (r) => <span className="font-mono font-bold">{brl(r.total)}</span> },
     {
       key: 'nf', header: H('NF'), align: 'center', className: 'w-28',
@@ -327,7 +348,7 @@ export default function OrdersPage() {
         onRowClick={(r) => setDetail(r.id)}
         loading={loading}
         empty="Nenhum pedido encontrado."
-        minWidth="56rem"
+        minWidth="64rem"
       />
 
       <SllPager page={page} pages={pages} total={total} noun="pedido(s)" onPage={setPage} />
