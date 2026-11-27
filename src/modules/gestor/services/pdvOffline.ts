@@ -14,12 +14,20 @@ export const MAX_OFFLINE_MS = 3 * 24 * 60 * 60 * 1000;
 
 export type QueueKind = 'sale' | 'cash_move' | 'cash_close';
 
+export interface NewCustomer {
+  name: string;
+  cpf?: string | null;
+  whatsapp?: string | null;
+}
+
 export interface QueueItem {
   id: string;
   kind: QueueKind;
   params: Record<string, unknown>;
   origin?: SaleOrigin | null;
   provisional?: string | null;
+  /** Cliente novo digitado offline: resolvido (CPF > WhatsApp > cria) na sincronizacao. */
+  customer?: NewCustomer | null;
   status: 'pending' | 'error';
   error?: string | null;
   createdAt: number;
@@ -28,6 +36,8 @@ export interface QueueItem {
 export interface OfflineSaleInput {
   storeId: string;
   customerId?: string | null;
+  /** Cliente novo (offline). Ignorado se customerId vier preenchido. */
+  newCustomer?: NewCustomer | null;
   items: { variant_id: string; qty: number; unit_price: number; discount?: number }[];
   discount?: number;
   shipping?: number;
@@ -130,6 +140,87 @@ export function offlineBlocked(): boolean {
   } catch { return false; }
 }
 
+/* ---------- Cliente novo offline ---------- */
+
+const digits = (s?: string | null) => String(s ?? '').replace(/\D/g, '');
+
+/** Sem CPF e sem WhatsApp nao ha como identificar: a venda vai como consumidor (null). */
+function cleanCustomer(c?: NewCustomer | null): NewCustomer | null {
+  if (!c) return null;
+  const cpf = digits(c.cpf);
+  const whatsapp = digits(c.whatsapp);
+  if (!cpf && !whatsapp) return null;
+  return { name: String(c.name ?? '').trim(), cpf, whatsapp };
+}
+
+async function resolveCustomer(storeId: string, c: NewCustomer): Promise<string | null> {
+  const { data, error } = await sb.rpc('gestor_customer_resolve', {
+    p_store: storeId,
+    p_name: c.name,
+    p_cpf: c.cpf || null,
+    p_whatsapp: c.whatsapp || null,
+  });
+  if (error) throw error;
+  if (!data) return null;
+  if (typeof data === 'string') return data;
+  return (data as any).id ?? (data as any).customer_id ?? null;
+}
+
+/* ---------- Travas da venda offline (estoque e caixa em cache) ---------- */
+
+export const cacheKeys = {
+  /** valor: Record<variant_id, saldo> */
+  stock: (storeId: string, warehouseId?: string | null) => 'stock:' + storeId + ':' + (warehouseId || 'all'),
+  /** valor: { id: string } do caixa aberto, ou null */
+  cash: (storeId: string) => 'cash-open:' + storeId,
+};
+
+export type StockMap = Record<string, number>;
+
+export interface StockShortage {
+  variant_id: string;
+  wanted: number;
+  available: number;
+}
+
+export function findStockShortages(stock: StockMap, items: { variant_id: string; qty: number }[]): StockShortage[] {
+  const wanted = new Map<string, number>();
+  for (const it of items) wanted.set(it.variant_id, (wanted.get(it.variant_id) ?? 0) + Number(it.qty || 0));
+  const out: StockShortage[] = [];
+  wanted.forEach((qty, variant_id) => {
+    const available = Number(stock[variant_id] ?? 0);
+    if (available < qty) out.push({ variant_id, wanted: qty, available });
+  });
+  return out;
+}
+
+/** Chame antes de queueSale quando estiver offline. Lanca Error com a mensagem para o operador. */
+export async function assertOfflineSale(i: OfflineSaleInput): Promise<void> {
+  if (offlineBlocked()) throw new Error('Limite de 3 dias offline atingido. Conecte-se para continuar vendendo.');
+
+  const cash = await loadCache<{ id: string } | null>(cacheKeys.cash(i.storeId));
+  if (!cash?.value?.id) throw new Error('Nao ha caixa aberto neste aparelho. Abra o caixa com internet antes de vender offline.');
+
+  const stock = await loadCache<StockMap>(cacheKeys.stock(i.storeId, i.warehouseId));
+  if (!stock) throw new Error('Estoque nao carregado neste aparelho. Conecte-se uma vez para baixar o estoque.');
+
+  const short = findStockShortages(stock.value, i.items);
+  if (short.length) {
+    const msg = short.map((s) => s.variant_id + ' (pedido ' + s.wanted + ', saldo ' + s.available + ')').join('; ');
+    throw new Error('Saldo insuficiente em cache: ' + msg);
+  }
+}
+
+/** Abate do saldo em cache o que acabou de ser vendido offline (evita vender 2x o mesmo saldo). */
+export async function consumeCachedStock(storeId: string, warehouseId: string | null | undefined, items: { variant_id: string; qty: number }[]): Promise<void> {
+  const key = cacheKeys.stock(storeId, warehouseId);
+  const cur = await loadCache<StockMap>(key);
+  if (!cur) return;
+  const next: StockMap = { ...cur.value };
+  for (const it of items) next[it.variant_id] = Number(next[it.variant_id] ?? 0) - Number(it.qty || 0);
+  await saveCache(key, next);
+}
+
 /* ---------- Enfileirar ---------- */
 
 export function provisionalNumber(): string {
@@ -170,7 +261,7 @@ export function queueSale(i: OfflineSaleInput): Promise<QueueItem> {
     p_channel: i.channel || 'pdv',
     p_sold_at: soldAt,
     p_offline_ref: provisional,
-  }), { origin: i.origin ?? null, provisional }, i.idem);
+  }), { origin: i.origin ?? null, provisional, customer: i.customerId ? null : cleanCustomer(i.newCustomer) }, i.idem);
 }
 
 export function queueCashMove(sessionId: string, kind: string, amount: number, reason?: string | null): Promise<QueueItem> {
@@ -215,7 +306,12 @@ export async function syncQueue(): Promise<SyncSummary> {
     for (const it of items) {
       if (it.kind === 'cash_close' && blockClose) continue;
       try {
-        const { data, error } = await sb.rpc(RPC_BY_KIND[it.kind], it.params);
+        let params = it.params;
+        if (it.kind === 'sale' && it.customer) {
+          const cid = await resolveCustomer(String(it.params.p_store), it.customer);
+          params = { ...it.params, p_customer: cid };
+        }
+        const { data, error } = await sb.rpc(RPC_BY_KIND[it.kind], params);
         if (error) throw error;
         markOnline();
         if (it.kind === 'sale') {
