@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { SLLDatabaseService } from '@/services/SLLDatabaseService';
+import { cacheGet, cacheSet, storedSession } from '@/lib/offlineCache';
 
 interface LojaContextData {
   store: any | null;
@@ -14,38 +15,59 @@ interface LojaContextData {
 
 const LojaContext = createContext<LojaContextData>({} as LojaContextData);
 
+async function resolveUserId(): Promise<string | null> {
+  if (navigator.onLine) {
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (data.user) return data.user.id;
+      if (!error) return null; // deslogado de verdade
+    } catch { /* cai para a sessao local */ }
+  }
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) return session.user.id;
+  } catch { /* segue */ }
+  return storedSession()?.user?.id ?? null;
+}
+
 export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [store, setStore] = useState<any | null>(null);
   const [stores, setStores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
+  const applyStores = (userStores: any[]) => {
+    setStores(userStores || []);
+    // Prioriza a loja que ja estava salva no localStorage, se existir
+    const savedId = localStorage.getItem('sll_store_id') || localStorage.getItem('store_id');
+    const activeStore = userStores.find((s: any) => s.id === savedId) || userStores[0];
+    setStore(activeStore);
+    setNeedsOnboarding(false);
+    localStorage.setItem('sll_store_id', activeStore.id);
+    localStorage.setItem('store_id', activeStore.id);
+  };
+
   const fetchStore = async (silent = false) => {
+    let uid: string | null = null;
     try {
       if (!silent) setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      uid = await resolveUserId();
 
-      if (!user) {
+      if (!uid) {
         setStore(null);
         setStores([]);
         setNeedsOnboarding(false);
         return;
       }
 
-      // 1. Busca todas as lojas vinculadas ao usuário
-      const userStores = await SLLDatabaseService.getStores(user.id);
-      setStores(userStores || []);
+      // 1. Busca todas as lojas vinculadas ao usuario
+      const userStores = await SLLDatabaseService.getStores(uid);
 
       if (userStores && userStores.length > 0) {
-        // Prioriza a loja que já estava salva no localStorage, se existir
-        const savedId = localStorage.getItem('sll_store_id') || localStorage.getItem('store_id');
-        const activeStore = userStores.find((s: any) => s.id === savedId) || userStores[0];
-
-        setStore(activeStore);
-        setNeedsOnboarding(false);
-        localStorage.setItem('sll_store_id', activeStore.id);
-        localStorage.setItem('store_id', activeStore.id);
+        cacheSet('stores:' + uid, userStores);
+        applyStores(userStores);
       } else {
+        setStores([]);
         setStore(null);
         setNeedsOnboarding(true);
         localStorage.removeItem('sll_store_id');
@@ -53,6 +75,9 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.error('Falha ao obter lojas no LojaContext:', err);
+      // Falha de rede: usa as lojas guardadas (ate 3 dias). Nunca manda para o onboarding por erro.
+      const cached = uid ? cacheGet<any[]>('stores:' + uid) : null;
+      if (cached && cached.length > 0) applyStores(cached);
     } finally {
       setLoading(false);
     }
@@ -61,14 +86,14 @@ export const LojaProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     fetchStore();
 
-    // Ouve alterações de autenticação
+    // Ouve alteracoes de autenticacao
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         fetchStore(true);
       }
     });
 
-    // Ouve evento disparado após criar loja no Onboarding
+    // Ouve evento disparado apos criar loja no Onboarding
     const handleStoreCreated = () => {
       fetchStore(true);
     };

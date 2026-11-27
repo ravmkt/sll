@@ -1,3 +1,4 @@
+import './lib/offlineFetch';
 import { getActiveReferralCode } from '@/lib/auth';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

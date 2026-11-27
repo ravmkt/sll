@@ -1,12 +1,24 @@
-const VERSION = 'sll-pdv-v1';
+const VERSION = 'sll-pdv-v2';
 const SHELL = ['/', '/manifest.webmanifest', '/assets/gestor-logo-quadrado.png'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(VERSION)
-      .then((c) => c.addAll(SHELL).catch(() => undefined))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil((async () => {
+    const c = await caches.open(VERSION);
+    await c.addAll(SHELL).catch(() => undefined);
+    try {
+      const r = await fetch('/precache.json', { cache: 'no-store' });
+      if (r.ok) {
+        const list = await r.json();
+        await Promise.all(list.map((u) => c.add(u).catch(() => undefined)));
+        const keep = new Set(list);
+        for (const req of await c.keys()) {
+          const p = new URL(req.url).pathname;
+          if (/^\/assets\/.+\.(js|css)$/.test(p) && !keep.has(p)) await c.delete(req);
+        }
+      }
+    } catch (e) { /* sem lista: segue com o cache sob demanda */ }
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {

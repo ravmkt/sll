@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabasePublic as supabase } from '../services/supabaseClients';
+import { clearOfflineCache, storedSession } from '../lib/offlineCache';
 
 interface AuthContextType {
   user: User | null;
@@ -26,33 +27,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     let active = true;
 
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      try {
+        let { data: { session } } = await supabase.auth.getSession();
 
-      // Valida se o usuário ainda existe (token órfão de conta excluída)
-      if (session) {
-        const { error } = await supabase.auth.getUser();
-        if (error && (error.status === 401 || error.status === 403 || error.status === 404)) {
-          await supabase.auth.signOut({ scope: 'local' });
-          if (!active) return;
-          setSession(null);
-          setUser(null);
-          setLoading(false);
-          return;
+        // Sem internet: usa a sessao guardada no aparelho
+        if (!session && !navigator.onLine) session = storedSession();
+
+        // Valida se o usuario ainda existe (token orfao de conta excluida) - so online
+        if (session && navigator.onLine) {
+          const { error } = await supabase.auth.getUser();
+          if (error && (error.status === 401 || error.status === 403 || error.status === 404)) {
+            await supabase.auth.signOut({ scope: 'local' });
+            clearOfflineCache();
+            if (!active) return;
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
         }
-      }
 
-      if (!active) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+        if (!active) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      } catch {
+        const s = storedSession();
+        if (!active) return;
+        setSession(s);
+        setUser(s?.user ?? null);
+        setLoading(false);
+      }
     };
 
     init();
 
-    // Escuta mudanças de autenticação
+    // Escuta mudancas de autenticacao
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+      if (event === 'SIGNED_OUT') clearOfflineCache();
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -65,6 +79,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const signOut = async () => {
+    clearOfflineCache();
     await supabase.auth.signOut();
   };
 
