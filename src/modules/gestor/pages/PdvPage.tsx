@@ -15,8 +15,11 @@ import { brl } from '../services/clientes';
 import { METHOD_LABEL, getFinConfig } from '../services/financeiro';
 import type { FinConfig, FinMethodKey } from '../services/financeiro';
 import { createPdvSale, newSaleKey } from '../services/pdv';
+import { cashCurrent } from '@/modules/pdv/services/caixa';
+import { cacheKeys, countQueue, loadCache, saveCache } from '../services/pdvOffline';
+import { companyBriefCached, finCached, loadSnapshot, saveSnapshot } from '../services/pdvCache';
 import {
-  buildReceiptHtml, installmentOptions, loadCompanyBrief, loadStockByWarehouse, norm, parseMoney, quickCustomer,
+  buildReceiptHtml, installmentOptions, loadStockByWarehouse, norm, parseMoney, quickCustomer,
   r2, searchCustomers,
 } from '../services/pdvVenda';
 import type { CustomerHit, Receipt, StockMap } from '../services/pdvVenda';
@@ -56,6 +59,9 @@ export default function PdvPage() {
   const [warehouse, setWarehouse] = useState<string | null>(null);
   const [origin, setOrigin] = useState<SaleOrigin>('balcao');
   const [fin, setFin] = useState<FinConfig | null>(null);
+  const [source, setSource] = useState<'online' | 'cache'>('online');
+  const [cachedAt, setCachedAt] = useState<number | null>(null);
+  const [flat, setFlat] = useState<Record<string, number> | null>(null);
 
   const [search, setSearch] = useState('');
   const [cat, setCat] = useState('');
@@ -83,14 +89,38 @@ export default function PdvPage() {
 
   const load = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
+    const useCache = async (): Promise<boolean> => {
+      const snap = await loadSnapshot(storeId);
+      if (!snap) return false;
+      setProducts(snap.products);
+      setVariants(snap.variants);
+      setStock(snap.stock);
+      setCachedAt(snap.savedAt);
+      setSource('cache');
+      return true;
+    };
     try {
-      const [p, v] = await Promise.all([listProducts(storeId), listVariantsByProduct(storeId)]);
-      setProducts(p.filter((x) => !!x.active));
-      setVariants(v);
-      try { setStock(await loadStockByWarehouse(storeId)); } catch { setStock(new Map()); }
-    } catch (e) {
-      console.error('[PDV]', e);
-      showError('Erro ao carregar os produtos.');
+      if (!navigator.onLine) {
+        if (!(await useCache())) showError('Sem conexão e sem catálogo salvo neste aparelho. Conecte-se uma vez para baixar o catálogo.');
+        return;
+      }
+      try {
+        const [p, v] = await Promise.all([listProducts(storeId), listVariantsByProduct(storeId)]);
+        const active = p.filter((x) => !!x.active);
+        let st: StockMap = new Map();
+        try { st = await loadStockByWarehouse(storeId); } catch { /* segue sem estoque por depósito */ }
+        setProducts(active);
+        setVariants(v);
+        setStock(st);
+        setSource('online');
+        setCachedAt(null);
+        void saveSnapshot(storeId, active, v, st);
+        void companyBriefCached(storeId);
+      } catch (e) {
+        if (await useCache()) return;
+        console.error('[PDV]', e);
+        showError('Erro ao carregar os produtos.');
+      }
     } finally {
       setLoading(false);
     }
@@ -101,11 +131,15 @@ export default function PdvPage() {
   useEffect(() => {
     if (!storeId || !channel) return;
     let on = true;
-    getFinConfig(storeId, channel)
-      .then((c) => { if (on) setFin(c); })
-      .catch((e) => showError((e as Error).message));
+    finCached(storeId, channel)
+      .then((c) => {
+        if (!on) return;
+        if (c) setFin(c);
+        else showError('Sem conexão e sem formas de pagamento salvas para esta loja. Conecte-se uma vez.');
+      })
+      .catch((e) => { if (on) showError((e as Error).message); });
     return () => { on = false; };
-  }, [storeId, channel]);
+  }, [storeId, channel, source]);
 
   useEffect(() => {
     const t = custTerm.trim();
@@ -117,10 +151,45 @@ export default function PdvPage() {
   }, [custTerm, storeId, customer]);
 
   const stockOf = useCallback((v: VariantRow): number => {
+    if (source === 'cache' && flat) return Number(flat[v.id] ?? 0);
     const m = stock.get(v.id);
     if (warehouse && m) return Number(m[warehouse] ?? 0);
     return v.stock;
-  }, [stock, warehouse]);
+  }, [stock, warehouse, source, flat]);
+
+  // voltou a conexão: recarrega do servidor
+  useEffect(() => {
+    const h = () => { if (storeId) void load(); };
+    window.addEventListener('online', h);
+    return () => window.removeEventListener('online', h);
+  }, [storeId, load]);
+
+  // guarda o caixa aberto para liberar a venda offline
+  useEffect(() => {
+    if (!storeId || !channel || !navigator.onLine) return;
+    cashCurrent(storeId, channel)
+      .then((s) => saveCache(cacheKeys.cash(storeId), s ? { id: s.id } : null))
+      .catch(() => undefined);
+  }, [storeId, channel, source]);
+
+  // saldo por variação do depósito escolhido (base das travas offline).
+  // Online: grava, mas só sem venda na fila (senão apagaria o que foi vendido offline).
+  useEffect(() => {
+    if (!storeId) return;
+    const key = cacheKeys.stock(storeId, warehouse);
+    if (source === 'online') {
+      if (variants.size === 0) return;
+      setFlat(null);
+      const m: Record<string, number> = {};
+      variants.forEach((vs) => vs.forEach((v) => {
+        const w = stock.get(v.id);
+        m[v.id] = warehouse && w ? Number(w[warehouse] ?? 0) : v.stock;
+      }));
+      void countQueue().then((n) => { if (n === 0) void saveCache(key, m); });
+    } else {
+      void loadCache<Record<string, number>>(key).then((c) => setFlat(c ? c.value : null));
+    }
+  }, [storeId, warehouse, source, variants, stock]);
 
   // ---------- catalogo ----------
   const categories = useMemo(
@@ -265,7 +334,7 @@ export default function PdvPage() {
         channel,
         origin,
       });
-      const company = await loadCompanyBrief(storeId);
+      const company = await companyBriefCached(storeId);
       setDone({
         number: res.number,
         date: new Date(),
@@ -319,6 +388,12 @@ export default function PdvPage() {
   return (
     <div className="space-y-4">
       <SllPageHeader title="PDV" subtitle="Venda rápida de balcão. A baixa de estoque e o pedido entram no Gestor na hora." className="mb-0" />
+
+      {source === 'cache' && (
+        <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">
+          Sem conexão: usando o catálogo e o estoque salvos neste aparelho{cachedAt ? ` em ${new Date(cachedAt).toLocaleString('pt-BR')}` : ''}. Os saldos podem estar desatualizados.
+        </p>
+      )}
 
       <div className="grid gap-4 xl:grid-cols-[1fr_26rem]">
         <div className="space-y-4">

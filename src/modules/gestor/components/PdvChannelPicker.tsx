@@ -4,6 +4,7 @@ import { SllField, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { showError } from '@/utils/toast';
 import { SALE_ORIGINS, mySaleChannels } from '../services/canaisVenda';
 import type { SaleChannel, SaleOrigin } from '../services/canaisVenda';
+import { loadCache, saveCache } from '../services/pdvOffline';
 
 type Props = {
   storeId: string;
@@ -15,19 +16,36 @@ type Props = {
   disabled?: boolean;
 };
 
+async function fetchChannels(storeId: string): Promise<SaleChannel[]> {
+  const key = 'channels:' + storeId;
+  if (navigator.onLine) {
+    try {
+      const l = await mySaleChannels(storeId);
+      await saveCache(key, l);
+      return l;
+    } catch (e) {
+      const c = await loadCache<SaleChannel[]>(key);
+      if (c) return c.value;
+      throw e;
+    }
+  }
+  const c = await loadCache<SaleChannel[]>(key);
+  if (!c) throw new Error('Sem conexão e sem lojas salvas neste aparelho. Conecte-se uma vez para baixá-las.');
+  return c.value;
+}
+
 export default function PdvChannelPicker({ storeId, channel, origin, onChannelChange, onOriginChange, disabled }: Props) {
   const [list, setList] = useState<SaleChannel[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let on = true;
-    mySaleChannels(storeId)
+    fetchChannels(storeId)
       .then((l) => {
         if (!on) return;
         setList(l);
         const cur = l.find((c) => c.channel === channel) ?? l[0];
-        if (cur && cur.channel !== channel) onChannelChange(cur.channel, cur.warehouse_id);
-        else if (cur) onChannelChange(cur.channel, cur.warehouse_id);
+        if (cur) onChannelChange(cur.channel, cur.warehouse_id);
       })
       .catch((e) => showError((e as Error).message))
       .finally(() => { if (on) setLoading(false); });
