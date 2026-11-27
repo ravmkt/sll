@@ -34,7 +34,8 @@ const GROUPS: Group[] = [
     key: 'vendas', label: 'Vendas', icon: ShoppingCart,
     items: [
       { label: 'Pedidos de vendas', to: `${BASE}/pedidos` },
-          { label: 'Venda manual', to: `${BASE}/venda-manual` },
+          { label: 'PDV', to: `${BASE}/pdv` },
+      { label: 'Venda manual', to: `${BASE}/venda-manual` },
       { label: 'Notas Fiscais', to: `${BASE}/notas-fiscais` },
       { label: 'Propostas Comerciais', to: `${BASE}/propostas` },
     ],

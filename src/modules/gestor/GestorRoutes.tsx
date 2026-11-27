@@ -13,6 +13,7 @@ import { secaoRoutes } from './pages/secaoRoutes';
 import ExpedicaoPage from './pages/ExpedicaoPage';
 import TeamPage from './pages/TeamPage';
 import FinanceiroConfigPage from './pages/FinanceiroConfigPage';
+import PdvPage from './pages/PdvPage';
 import ChannelsConfigPage from './pages/ChannelsConfigPage';
 import EmpresaPage from './pages/EmpresaPage';
 
@@ -37,6 +38,7 @@ export default function GestorRoutes() {
         <Route path="config-financeiro" element={<FinanceiroConfigPage />} />
         <Route path="canais" element={<ChannelsConfigPage />} />
         <Route path="empresa" element={<EmpresaPage />} />
+        <Route path="pdv" element={<PdvPage />} />
         {secaoRoutes}
         <Route path="*" element={<Navigate to="/dashboard/modules/gestor" replace />} />
       </Route>

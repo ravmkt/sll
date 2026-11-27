@@ -15,6 +15,7 @@ const SEGMENT_AREA: Record<string, string> = {
   fornecedores: 'fornecedores',
   usuarios: 'configuracoes',
   pedidos: 'pedidos',
+  pdv: 'pedidos',
   'venda-manual': 'pedidos',
   propostas: 'pedidos',
   'notas-fiscais': 'notas_fiscais',
