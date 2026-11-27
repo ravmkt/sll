@@ -44,6 +44,12 @@ export const PAYMENT_STATUS: { value: string; label: string }[] = [
 export async function getChannelsConfig(storeId: string): Promise<ChannelsConfig> {
   const { data, error } = await sb.rpc('gestor_channels_get', { p_store: storeId });
   if (error) throw new Error(error.message);
+  try {
+    const { data: lab } = await sb.from('gestor_channels').select('channel,label').eq('store_id', storeId);
+    for (const r of (lab || []) as { channel: string; label: string | null }[]) {
+      if (r.label && !CHANNEL_LABEL[r.channel]) CHANNEL_LABEL[r.channel] = r.label;
+    }
+  } catch { /* sem nome salvo: usa a chave do canal */ }
   const d: any = data || {};
   return {
     can_edit: !!d.can_edit,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, KeyRound, Loader2, Pencil, Plus, Settings2, Wand2 } from 'lucide-react';
+import { Copy, KeyRound, Loader2, Pencil, Plus, Settings2, Store as StoreIcon, Wand2 } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { SllModal, sllBtnGhost, sllBtnPrimary } from '@/components/sll/SllModal';
 import { SllField, SllFilterBar, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
@@ -13,6 +13,7 @@ import type { MemberAccess, MemberType, TeamMember, TeamPermissions, TeamRole, T
 import { ROLE_LABEL, clonePerms, generatePassword } from '../services/teamConfig';
 import PermissionMatrix from '../components/PermissionMatrix';
 import UserTypesModal from '../components/UserTypesModal';
+import SellerChannelsModal from '../components/SellerChannelsModal';
 
 const ADMIN = '__admin';
 
@@ -58,6 +59,7 @@ export default function TeamPage() {
   const [form, setForm] = useState<Form>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [typesOpen, setTypesOpen] = useState(false);
+  const [storesFor, setStoresFor] = useState<TeamMember | null>(null);
 
   const [resetFor, setResetFor] = useState<TeamMember | null>(null);
   const [resetPwd, setResetPwd] = useState('');
@@ -244,11 +246,14 @@ export default function TeamPage() {
       ),
     },
     {
-      key: 'acoes', header: 'Ações', align: 'center', className: 'w-28',
+      key: 'acoes', header: 'Ações', align: 'center', className: 'w-36',
       render: (m) => canTouch(m) ? (
         <div className="flex items-center justify-center gap-1">
           <button type="button" title="Editar" aria-label="Editar usuário" onClick={() => openEdit(m)} className={actionBtn}><Pencil size={15} /></button>
           <button type="button" title="Redefinir senha" aria-label="Redefinir senha" onClick={() => { setResetFor(m); setResetPwd(generatePassword()); }} className={actionBtn}><KeyRound size={15} /></button>
+              {m.role === 'vendedor' && (
+                <button type="button" title="Lojas em que pode vender" aria-label="Lojas em que pode vender" onClick={() => setStoresFor(m)} className={actionBtn}><StoreIcon size={15} /></button>
+              )}
         </div>
       ) : null,
     },
@@ -423,6 +428,10 @@ export default function TeamPage() {
           <p>Senha: {creds?.password}</p>
         </div>
       </SllModal>
+
+      {storesFor && storeId && (
+        <SellerChannelsModal storeId={storeId} userId={storesFor.user_id} name={storesFor.display_name || storesFor.email || 'vendedor'} onClose={() => setStoresFor(null)} />
+      )}
 
       {typesOpen && storeId && (
         <UserTypesModal storeId={storeId} types={types} onChanged={() => void reload()} onClose={() => setTypesOpen(false)} />

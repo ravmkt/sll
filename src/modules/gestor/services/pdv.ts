@@ -1,4 +1,6 @@
 import { supabase } from '@/lib/supabase';
+import { setOrderOrigin } from './canaisVenda';
+import type { SaleOrigin } from './canaisVenda';
 
 const sb: any = supabase;
 
@@ -19,6 +21,8 @@ export interface PdvSaleInput {
   warehouseId?: string | null;
   note?: string | null;
   idemKey: string;
+  channel?: string | null;
+  origin?: SaleOrigin | null;
 }
 
 export interface PdvSaleResult {
@@ -49,9 +53,15 @@ export async function createPdvSale(i: PdvSaleInput): Promise<PdvSaleResult> {
     p_warehouse: i.warehouseId ?? null,
     p_note: i.note ?? null,
     p_idem: i.idemKey,
+    p_channel: i.channel || 'pdv',
   });
   if (error) throw new Error(error.message);
-  return data as PdvSaleResult;
+  const res = data as PdvSaleResult;
+  if (i.origin && res?.order_id) {
+    try { await setOrderOrigin(res.order_id, i.origin); }
+    catch (e) { console.warn('[PDV] origem não gravada:', e); }
+  }
+  return res;
 }
 
 export async function previewCharge(storeId: string, method: PdvMethod, installments: number, amount: number): Promise<PdvCharge> {

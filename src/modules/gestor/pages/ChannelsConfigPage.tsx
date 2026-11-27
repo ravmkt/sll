@@ -13,6 +13,7 @@ import {
   saveStatusMap, setChannelInherit,
 } from '../services/canaisConfig';
 import type { ChannelsConfig, StatusRow } from '../services/canaisConfig';
+import PhysicalStoreModal from '../components/PhysicalStoreModal';
 
 const checkCls = 'h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)] disabled:cursor-not-allowed';
 
@@ -42,6 +43,7 @@ export default function ChannelsConfigPage() {
   const [rows, setRows] = useState<StatusRow[]>([]);
   const [newKey, setNewKey] = useState('');
   const [confirm, setConfirm] = useState<{ from: string | null } | null>(null);
+  const [newStoreOpen, setNewStoreOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!storeId) { setLoading(false); return; }
@@ -140,7 +142,16 @@ export default function ChannelsConfigPage() {
 
       {!canEdit && <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">Você pode ver os canais, mas só o dono e quem tem permissão de edição em Configurações altera.</p>}
 
-      <div className="flex flex-wrap gap-2">
+      {canEdit && (
+            <div>
+              <button type="button" onClick={() => setNewStoreOpen(true)} className={sllBtnGhost}><Plus size={15} /> Nova loja física</button>
+            </div>
+          )}
+          {newStoreOpen && storeId && (
+            <PhysicalStoreModal storeId={storeId} channels={cfg.channels} warehouses={cfg.warehouses} onClose={() => setNewStoreOpen(false)} onCreated={() => void load()} />
+          )}
+
+          <div className="flex flex-wrap gap-2">
         {cfg.channels.map((c) => (
           <button
             key={c.channel} type="button" onClick={() => setSel(c.channel)}
