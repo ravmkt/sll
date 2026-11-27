@@ -1,0 +1,7 @@
+{
+  "name": "SLL PDV",
+  "short_name": "PDV",
+  "start_url": "/dashboard/modules/pdv",
+  "scope": "/",
+  "display": "standalone"
+}
