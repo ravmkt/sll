@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { QUEUE_EVENT, listQueue, markOnline, offlineBlocked, registerPdvSw, syncQueue } from '../services/pdvOffline';
 import type { SyncSummary } from '../services/pdvOffline';
 
+// Trava global: varias telas usando o hook nao disparam envios ao mesmo tempo
+let inflight: Promise<SyncSummary | null> | null = null;
+
 export function usePdvOffline() {
   const [online, setOnline] = useState<boolean>(navigator.onLine);
   const [pending, setPending] = useState(0);
@@ -21,8 +24,14 @@ export function usePdvOffline() {
 
   const sync = useCallback(async (): Promise<SyncSummary | null> => {
     if (!navigator.onLine) return null;
+    if (inflight) return inflight;
     setSyncing(true);
-    try { return await syncQueue(); }
+    const run = (async () => {
+      try { return await syncQueue(); }
+      finally { inflight = null; }
+    })();
+    inflight = run;
+    try { return await run; }
     finally { setSyncing(false); await refresh(); }
   }, [refresh]);
 
@@ -30,9 +39,11 @@ export function usePdvOffline() {
     registerPdvSw();
     const goOnline = () => { setOnline(true); markOnline(); void sync(); };
     const goOffline = () => { setOnline(false); void refresh(); };
+    const goVisible = () => { if (document.visibilityState === 'visible' && navigator.onLine) void sync(); };
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
     window.addEventListener(QUEUE_EVENT, refresh);
+    document.addEventListener('visibilitychange', goVisible);
     if (navigator.onLine) { markOnline(); void sync(); } else { void refresh(); }
     const t = window.setInterval(() => {
       if (navigator.onLine) { markOnline(); void sync(); } else { void refresh(); }
@@ -41,6 +52,7 @@ export function usePdvOffline() {
       window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
       window.removeEventListener(QUEUE_EVENT, refresh);
+      document.removeEventListener('visibilitychange', goVisible);
       window.clearInterval(t);
     };
   }, [sync, refresh]);

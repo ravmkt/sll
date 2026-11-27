@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { ArrowLeft, ClipboardList, Loader2, Package, ShieldOff, ShoppingCart, Store, Wallet } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -5,6 +6,18 @@ import { TopBar } from '@/components/layout/TopBar';
 import { AppFooter } from '@/components/layout/AppFooter';
 import ForcePasswordChange from '@/modules/gestor/components/ForcePasswordChange';
 import { GestorAccessProvider, useGestorAccess } from '@/modules/gestor/hooks/useGestorAccess';
+import { usePdvOffline } from '@/modules/gestor/hooks/usePdvOffline';
+import PdvStatusBar from './PdvStatusBar';
+import type { Paper } from '../offline/receiptConfig';
+
+const PAPER_KEY = 'sll-pdv-paper';
+function readPaper(): Paper {
+  try {
+    const v = localStorage.getItem(PAPER_KEY);
+    if (v === '58' || v === '80' || v === 'a4') return v as Paper;
+  } catch { /* sem acesso ao storage */ }
+  return '80' as Paper;
+}
 
 export const PDV_BASE = '/dashboard/modules/pdv';
 
@@ -26,6 +39,13 @@ const linkCls = ({ isActive }: { isActive: boolean }) =>
 
 function Inner() {
   const { loading, error, access, isManager, can } = useGestorAccess();
+  const off = usePdvOffline();
+  const [paper, setPaper] = useState<Paper>(readPaper);
+  const changePaper = (p: Paper) => {
+    setPaper(p);
+    try { localStorage.setItem(PAPER_KEY, p); } catch { /* sem acesso ao storage */ }
+  };
+  const hasAccess = !loading && !error && !!access && access.active !== false;
 
   const body = loading ? (
     <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-[color:var(--sll-b-brand)]" /></div>
@@ -70,7 +90,21 @@ function Inner() {
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">{body}</main>
+          {hasAccess && (
+                <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6">
+                  <PdvStatusBar
+                    online={off.online}
+                    pending={off.pending}
+                    syncing={off.syncing}
+                    expired={off.expired}
+                    lastError={off.lastError}
+                    paper={paper}
+                    onPaper={changePaper}
+                    onSync={() => { void off.sync(); }}
+                  />
+                </div>
+              )}
+              <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">{body}</main>
           <AppFooter />
         </div>
       </div>
