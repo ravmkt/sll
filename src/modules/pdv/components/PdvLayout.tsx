@@ -8,17 +8,12 @@ import ForcePasswordChange from '@/modules/gestor/components/ForcePasswordChange
 import { GestorAccessProvider, useGestorAccess } from '@/modules/gestor/hooks/useGestorAccess';
 import { usePdvOffline } from '@/modules/gestor/hooks/usePdvOffline';
 import PdvStatusBar from './PdvStatusBar';
+import { getPaper } from '../offline/receiptConfig';
 import type { Paper } from '../offline/receiptConfig';
+import { usePdvNet } from '@/modules/gestor/services/pdvNet';
+import { usePwaInstall } from '../hooks/usePwaInstall';
 
 const PAPER_KEY = 'sll-pdv-paper';
-function readPaper(): Paper {
-  try {
-    const v = localStorage.getItem(PAPER_KEY);
-    if (v === '58' || v === '80' || v === 'a4') return v as Paper;
-  } catch { /* sem acesso ao storage */ }
-  return '80' as Paper;
-}
-
 export const PDV_BASE = '/dashboard/modules/pdv';
 
 type Item = { to: string; label: string; icon: LucideIcon; end?: boolean; area: string; act: string };
@@ -40,7 +35,9 @@ const linkCls = ({ isActive }: { isActive: boolean }) =>
 function Inner() {
   const { loading, error, access, isManager, can } = useGestorAccess();
   const off = usePdvOffline();
-  const [paper, setPaper] = useState<Paper>(readPaper);
+  const net = usePdvNet();
+  const pwa = usePwaInstall();
+  const [paper, setPaper] = useState<Paper>(getPaper);
   const changePaper = (p: Paper) => {
     setPaper(p);
     try { localStorage.setItem(PAPER_KEY, p); } catch { /* sem acesso ao storage */ }
@@ -101,6 +98,12 @@ function Inner() {
                     paper={paper}
                     onPaper={changePaper}
                     canSync={off.canSync}
+                    manual={net.manual}
+                    onToggleManual={() => net.setManual(!net.manual)}
+                    onCheck={() => { void net.check(); }}
+                    canInstall={pwa.canInstall}
+                    onInstall={() => { void pwa.install(); }}
+                    showPaper={isManager}
                         onSync={() => { void off.sync(true); }}
                   />
                 </div>
