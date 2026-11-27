@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FileText, Loader2, Printer, RefreshCw, Trash2 } from 'lucide-react';
+import { FileText, Loader2, Printer, RefreshCw, Trash2, Store as StoreIcon } from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
 import { SllField, SllFilterBar, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
 import { SllPeriodFilter, PERIOD_ALL, periodRange } from '@/components/sll/SllPeriodFilter';
@@ -55,6 +55,13 @@ function ChannelCell({ value }: { value: string | null }) {
   const x = String(value || '').toLowerCase();
   const key = normChannel(x) ?? (x.startsWith('yampi') ? 'yampi' : null);
   if (key) return <span className="inline-flex"><ChannelFavicon channel={key} size={20} /></span>;
+  if (x === 'pdv' || x.startsWith('pdv-')) {
+    return (
+      <span title={x === 'pdv' ? 'PDV (loja física)' : 'Loja física: ' + x} className="inline-flex h-5 w-5 items-center justify-center rounded bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]">
+        <StoreIcon size={13} />
+      </span>
+    );
+  }
   return <span className="text-slate-400">{value || '-'}</span>;
 }
 
