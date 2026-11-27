@@ -49,32 +49,58 @@ const esc = (s: unknown) =>
 
 export type PrintMode = 'page' | 'flow';
 
+// SLL-LABEL-100x150: 'page' = uma etiqueta 100x150 mm por pedido; 'flow' = A4 corrido
 export function buildOrdersHtml(list: OrderDetail[], mode: PrintMode = 'page'): string {
-  const pages = list.map(({ order: o, customer, items }) => {
+  const sections = list.map(({ order: o, customer, items }) => {
     const a: Record<string, any> = o.shipping_address && typeof o.shipping_address === 'object' ? o.shipping_address : {};
     const l1 = [a.street, a.number, a.complement].filter(Boolean).join(', ');
     const l2 = [a.neighborhood || a.district, [a.city, a.uf || a.state].filter(Boolean).join('/')].filter(Boolean).join(' - ');
     const zip = a.zipcode || a.zip || '';
+    const contact = [pick(customer, 'email'), pick(customer, 'phone', 'whatsapp')].filter(Boolean).join(' · ');
+    const hasAddress = !!(l1 || l2);
+
     const rows = items.map((i) => {
       const qty = Number(i.qty || 0);
       const unit = Number(pick(i, 'unit_price', 'price') || 0);
-      return `<tr><td>${esc(i.sku || '-')}</td><td>${esc(pick(i, 'name', 'title', 'product_name') || '-')}</td><td class="n">${qty}</td><td class="n">${esc(brl(unit))}</td><td class="n">${esc(brl(unit * qty))}</td></tr>`;
+      const name = pick(i, 'name', 'title', 'product_name') || '-';
+      return `<div class="it"><div class="nm">${esc(name)}</div><div class="ln"><span class="m">${esc(i.sku || '-')} · ${qty} x ${esc(brl(unit))}</span><b>${esc(brl(unit * qty))}</b></div></div>`;
     }).join('');
+
+    const discount = Number(o.discount || 0);
+    const shipping = Number(o.shipping_cost || 0);
+    const totals =
+      `<div class="tl"><span>Produtos</span><span>${esc(brl(o.subtotal))}</span></div>` +
+      (discount > 0 ? `<div class="tl"><span>Desconto</span><span>-${esc(brl(discount))}</span></div>` : '') +
+      (shipping > 0 ? `<div class="tl"><span>Frete</span><span>${esc(brl(shipping))}</span></div>` : '') +
+      `<div class="tl tot"><span>TOTAL</span><span>${esc(brl(o.total))}</span></div>`;
+
     return `<section>
 <h1>Pedido #${esc(pick(o, 'number', 'external_id'))} <small>${esc(o.channel || '')}</small></h1>
-<p class="m">Criado em ${esc(fmtDate(pick(o, 'created_at', 'ordered_at')))}${o.shipping_service ? ' · ' + esc(o.shipping_service) : ''}${o.tracking_code ? ' · Rastreio ' + esc(o.tracking_code) : ''}</p>
-<div class="g"><div><h2>Cliente</h2><p>${esc(customerName(o, customer))}</p><p class="m">${esc([pick(customer, 'email'), pick(customer, 'phone', 'whatsapp')].filter(Boolean).join(' · '))}</p></div>
-<div><h2>Entrega</h2><p>${esc(l1 || '-')}</p><p class="m">${esc(l2)}${zip ? ' · CEP ' + esc(zip) : ''}</p></div></div>
-<table><thead><tr><th>SKU</th><th>Produto</th><th class="n">Qtd</th><th class="n">Unitário</th><th class="n">Subtotal</th></tr></thead><tbody>${rows || '<tr><td colspan="5">Sem itens.</td></tr>'}</tbody></table>
-<p class="t">Produtos: ${esc(brl(o.subtotal))} · Desconto: ${esc(brl(o.discount))} · Frete: ${esc(brl(o.shipping_cost))}<br><b>Total: ${esc(brl(o.total))}</b></p>
+<p class="m">${esc(fmtDate(pick(o, 'created_at', 'ordered_at')))}${o.shipping_service ? ' · ' + esc(o.shipping_service) : ''}${o.tracking_code ? ' · Rastreio ' + esc(o.tracking_code) : ''}</p>
+<h2>Cliente</h2><p><b>${esc(customerName(o, customer))}</b></p>${contact ? `<p class="m">${esc(contact)}</p>` : ''}
+${hasAddress ? `<h2>Entrega</h2><p>${esc(l1 || '-')}</p><p class="m">${esc(l2)}${zip ? ' · CEP ' + esc(zip) : ''}</p>` : ''}
+<h2>Itens</h2>
+<div class="its">${rows || '<p class="m">Sem itens.</p>'}</div>
+<div class="tls">${totals}</div>
 </section>`;
   }).join('');
-  const sectionCss = mode === 'page'
-    ? 'section{padding:24px;page-break-after:always}section:last-child{page-break-after:auto}'
-    : 'section{padding:16px 24px;break-inside:avoid;page-break-inside:avoid;border-bottom:1px dashed #999}section:last-child{border-bottom:0}';
+
+  const pageCss = mode === 'page'
+    ? '@page{size:100mm 150mm;margin:0}body{width:100mm}section{padding:4mm;page-break-after:always;break-after:page}section:last-child{page-break-after:auto;break-after:auto}'
+    : '@page{size:A4;margin:10mm}section{padding:8px 0;break-inside:avoid;page-break-inside:avoid;border-bottom:1px dashed gray}section:last-child{border-bottom:0}';
+  const fs = mode === 'page' ? 11 : 12;
+
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Pedidos</title>
-<style>body{font-family:Arial,sans-serif;font-size:13px;margin:0;color:#111}${sectionCss}
-h1{font-size:18px;margin:0 0 4px}h1 small{font-size:12px;color:#666;font-weight:normal}h2{font-size:12px;text-transform:uppercase;color:#666;margin:12px 0 2px}
-p{margin:2px 0}.m{color:#666}.g{display:grid;grid-template-columns:1fr 1fr;gap:16px}table{border-collapse:collapse;width:100%;margin-top:14px}
-td,th{border:1px solid #ccc;padding:4px 8px;text-align:left}.n{text-align:right}.t{text-align:right;margin-top:10px}</style></head><body>${pages}</body></html>`;
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;font-size:${fs}px;line-height:1.25;margin:0;color:black}
+${pageCss}
+h1{font-size:${fs + 4}px;margin:0 0 2px}h1 small{font-size:${fs - 1}px;color:dimgray;font-weight:normal}
+h2{font-size:${fs - 2}px;text-transform:uppercase;color:dimgray;margin:7px 0 2px;border-bottom:1px solid silver;padding-bottom:1px}
+p{margin:1px 0}.m{color:dimgray}
+.its{margin-top:2px}.it{padding:3px 0;border-bottom:1px dotted silver;break-inside:avoid;page-break-inside:avoid}
+.nm{font-weight:bold;word-break:break-word}.ln{display:flex;justify-content:space-between;gap:6px;margin-top:1px}
+.tls{margin-top:6px}.tl{display:flex;justify-content:space-between;padding:1px 0}
+.tot{font-size:${fs + 3}px;font-weight:bold;border-top:1px solid black;margin-top:3px;padding-top:3px}
+</style></head><body>${sections}</body></html>`;
 }
