@@ -1,0 +1,14 @@
+{
+  "name": "SLL PDV",
+  "short_name": "PDV",
+  "description": "Ponto de venda do Gestor SLL, com uso offline",
+  "start_url": "/dashboard/modules/pdv",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/assets/gestor-logo-quadrado.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/gestor-logo-quadrado.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
