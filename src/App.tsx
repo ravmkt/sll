@@ -58,6 +58,7 @@ const StreamSellLayout = lazy(() => import('./components/streamsell/StreamSellLa
 const LegacyLiveRedirect = lazy(() => import('./pages/streamsell/LegacyLiveRedirect'));
 const Products = lazy(() => import('./pages/Products'));
 const GestorRoutes = lazy(() => import('@/modules/gestor/GestorRoutes'));
+const PdvRoutes = lazy(() => import('@/modules/pdv/PdvRoutes'));
 const PulsePage = lazy(() => import('@/modules/pulse/pages/PulsePage'));
 const PulseWidgetsTab = lazy(() => import('@/modules/pulse/pages/PulseWidgetsTab'));
 const Medidas = lazy(() => import('./pages/Medidas'));
@@ -388,6 +389,7 @@ function AppRoutes() {
         <Route path="/redefinir-senha" element={<ResetPassword />} />
         <Route path="/dashboard/modules/radar/*" element={user ? (<SubscriptionGate><ModuleGate moduleKey="radar"><RadarRoutes /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/gestor/*" element={user ? (<SubscriptionGate><ModuleGate moduleKey="gestor"><GestorRoutes /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
+        <Route path="/dashboard/modules/pdv/*" element={user ? (<SubscriptionGate><ModuleGate moduleKey="pdv"><PdvRoutes /></ModuleGate></SubscriptionGate>) : <Navigate to="/auth" replace />} />
         <Route path="/dashboard/modules/gate" element={<Navigate to="/dashboard/modules/pulse" replace />} />
     <Route path="/dashboard/modules/pulse" element={user ? <ModuleGate moduleKey="gate"><PulseLayout>{(tab) => (tab === 'campanhas' || tab === 'instalacao' ? <PulsePage tab={tab} /> : tab === 'widgets' ? <Suspense fallback={null}><PulseWidgetsTab /></Suspense> : <PulseSoon tab={tab} />)}</PulseLayout></ModuleGate> : <Navigate to="/auth" replace />} />
     <Route path="/dashboard/modules/medidas" element={user ? <ModuleGate moduleKey="medidas"><MedidasLayout>{(tab) => (tab === 'aparencia' ? <MedidasAparencia /> : <MedidasBotao />)}</MedidasLayout></ModuleGate> : <Navigate to="/auth" replace />} />

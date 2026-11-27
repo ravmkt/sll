@@ -41,7 +41,7 @@ export interface PdvCharge { fee_pct: number; interest: number; charged: number 
 export const newSaleKey = (): string => crypto.randomUUID();
 
 export async function createPdvSale(i: PdvSaleInput): Promise<PdvSaleResult> {
-  const { data, error } = await sb.rpc('gestor_pdv_sale', {
+  const { data, error } = await sb.rpc('gestor_pdv_sale_sync', {
     p_store: i.storeId,
     p_customer: i.customerId ?? null,
     p_items: i.items,
