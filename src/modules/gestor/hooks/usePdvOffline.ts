@@ -1,16 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
-import { QUEUE_EVENT, countQueue, markOnline, offlineBlocked, registerPdvSw, syncQueue } from '../services/pdvOffline';
+import { QUEUE_EVENT, listQueue, markOnline, offlineBlocked, registerPdvSw, syncQueue } from '../services/pdvOffline';
 import type { SyncSummary } from '../services/pdvOffline';
 
 export function usePdvOffline() {
   const [online, setOnline] = useState<boolean>(navigator.onLine);
   const [pending, setPending] = useState(0);
+  const [failed, setFailed] = useState(0);
+  const [lastError, setLastError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [blocked, setBlocked] = useState(false);
+  const [expired, setExpired] = useState(false);
 
   const refresh = useCallback(async () => {
-    setPending(await countQueue());
-    setBlocked(offlineBlocked());
+    const q = await listQueue();
+    const errs = q.filter((i) => i.status === 'error');
+    setPending(q.filter((i) => i.status === 'pending').length);
+    setFailed(errs.length);
+    setLastError(errs.length ? (errs[errs.length - 1].error ?? 'Erro ao enviar') : null);
+    setExpired(offlineBlocked());
   }, []);
 
   const sync = useCallback(async (): Promise<SyncSummary | null> => {
@@ -23,7 +29,7 @@ export function usePdvOffline() {
   useEffect(() => {
     registerPdvSw();
     const goOnline = () => { setOnline(true); markOnline(); void sync(); };
-    const goOffline = () => { setOnline(false); setBlocked(offlineBlocked()); };
+    const goOffline = () => { setOnline(false); void refresh(); };
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
     window.addEventListener(QUEUE_EVENT, refresh);
@@ -39,5 +45,5 @@ export function usePdvOffline() {
     };
   }, [sync, refresh]);
 
-  return { online, pending, syncing, blocked, sync };
+  return { online, pending, failed, lastError, syncing, expired, blocked: expired, sync };
 }
