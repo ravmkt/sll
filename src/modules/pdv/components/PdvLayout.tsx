@@ -228,7 +228,7 @@ function Inner() {
           onInstall={() => { void pwa.install(); }}
           onSignOut={doSignOut}
         />
-        <main className="min-h-0 flex-1 overflow-auto p-2 sm:p-3"><Outlet /></main>
+        <main className="flex min-h-0 flex-1 flex-col overflow-auto p-2 sm:p-3"><Outlet /></main>
       </div>
     );
   }
