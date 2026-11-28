@@ -1,7 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Minus, Package, Plus, Trash2, UserPlus, Wifi, WifiOff, X } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  ArrowLeftRight, Banknote, ChevronDown, ChevronRight, CreditCard, Loader2, Minus, Package, Plus, QrCode,
+  Receipt as ReceiptIcon, Trash2, UserPlus, Wifi, WifiOff, X,
+} from 'lucide-react';
 import { useLoja } from '@/contexts/LojaContext';
+import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { SllPageHeader } from '@/components/sll/SllPageHeader';
 import { SllField, SllSearch, sllFieldCls } from '@/components/sll/SllFilterBar';
@@ -12,7 +17,7 @@ import { hasRealVariants, listVariantsByProduct, variantLabel } from '@/componen
 import type { VariantRow } from '@/components/products/variantsData';
 import { showError, showSuccess } from '@/utils/toast';
 import { brl } from '../services/clientes';
-import { METHOD_LABEL, getFinConfig } from '../services/financeiro';
+import { METHOD_LABEL } from '../services/financeiro';
 import type { FinConfig, FinMethodKey } from '../services/financeiro';
 import { createPdvSale, newSaleKey } from '../services/pdv';
 import { isContingency, usePdvNet } from '../services/pdvNet';
@@ -20,28 +25,38 @@ import { cashCurrent } from '@/modules/pdv/services/caixa';
 import { cacheKeys, countQueue, loadCache, saveCache } from '../services/pdvOffline';
 import { companyBriefCached, finCached, loadSnapshot, saveSnapshot } from '../services/pdvCache';
 import {
-  buildReceiptHtml, installmentOptions, loadStockByWarehouse, norm, parseMoney, quickCustomer,
-  r2, searchCustomers,
+  buildReceiptHtml, installmentOptions, loadStockByWarehouse, norm, parseMoney, r2, searchCustomers,
 } from '../services/pdvVenda';
 import type { CustomerHit, Receipt, StockMap } from '../services/pdvVenda';
 import type { SaleOrigin } from '../services/canaisVenda';
 import PdvChannelPicker from '../components/PdvChannelPicker';
 import { useGestorAccess } from '../hooks/useGestorAccess';
+import {
+  CUSTOMER_FIELD_LABEL, canDiscount, canNote, canShipping, freeShipping, maxDiscount, missingCustomerFields, usePdvRules,
+} from '../services/pdvSettings';
+
+const sb: any = supabase;
 
 type Line = { variantId: string; name: string; sku: string; price: number; qty: number };
+type NewCust = { name: string; phone: string; document: string };
+type DoneInfo = { queued: boolean; provisional: string | null };
 
 const PAGE = 40;
 
-type DoneInfo = { queued: boolean; provisional: string | null };
+const PAY_ICON: Record<string, LucideIcon> = {
+  cash: Banknote, pix: QrCode, debit: CreditCard, credit: CreditCard, transfer: ArrowLeftRight, receivable: ReceiptIcon,
+};
 
-function Card({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
+function Card({ title, children, actions, className, grow }: {
+  title: string; children: ReactNode; actions?: ReactNode; className?: string; grow?: boolean;
+}) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <section className={cn('rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800/50', grow && 'flex min-h-0 flex-col', className)}>
+      <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{title}</h3>
         {actions}
       </div>
-      {children}
+      <div className={cn(grow && 'min-h-0 flex-1 overflow-auto')}>{children}</div>
     </section>
   );
 }
@@ -50,9 +65,12 @@ const qtyBtn =
   'inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-[color:var(--sll-b-brand)] hover:text-[color:var(--sll-b-brand)] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300';
 
 export default function PdvPage() {
-  const { can } = useGestorAccess();
+  const { can, isManager: accMgr } = useGestorAccess();
   const { storeId, loading: lojaLoading } = useLoja();
   const net = usePdvNet();
+  const { rules: rawRules } = usePdvRules(storeId);
+  const mgr = !!accMgr || rawRules.is_manager;
+  const rules = useMemo(() => ({ ...rawRules, is_manager: mgr }), [rawRules, mgr]);
 
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [variants, setVariants] = useState<Map<string, VariantRow[]>>(new Map());
@@ -74,9 +92,10 @@ export default function PdvPage() {
 
   const [cart, setCart] = useState<Line[]>([]);
   const [customer, setCustomer] = useState<CustomerHit | null>(null);
+  const [pendingCust, setPendingCust] = useState<NewCust | null>(null);
   const [custTerm, setCustTerm] = useState('');
   const [hits, setHits] = useState<CustomerHit[]>([]);
-  const [newCust, setNewCust] = useState<{ name: string; phone: string; document: string } | null>(null);
+  const [newCust, setNewCust] = useState<NewCust | null>(null);
   const [custBusy, setCustBusy] = useState(false);
 
   const [note, setNote] = useState('');
@@ -147,14 +166,15 @@ export default function PdvPage() {
     return () => { on = false; };
   }, [storeId, channel, source]);
 
+  // busca de clientes: só com conexão
   useEffect(() => {
     const t = custTerm.trim();
-    if (!storeId || t.length < 2 || customer) { setHits([]); return; }
+    if (!storeId || t.length < 2 || customer || net.contingency) { setHits([]); return; }
     const h = setTimeout(() => {
       searchCustomers(storeId, t).then(setHits).catch(() => setHits([]));
     }, 300);
     return () => clearTimeout(h);
-  }, [custTerm, storeId, customer]);
+  }, [custTerm, storeId, customer, net.contingency]);
 
   const stockOf = useCallback((v: VariantRow): number => {
     if (source === 'cache' && flat) return Number(flat[v.id] ?? 0);
@@ -163,13 +183,15 @@ export default function PdvPage() {
     return v.stock;
   }, [stock, warehouse, source, flat]);
 
-  // voltou a conexão: recarrega do servidor
+  // voltou a conexão ou a fila sincronizou: recarrega do servidor
   useEffect(() => {
     const h = () => { if (storeId) void load(); };
     window.addEventListener('online', h);
     window.addEventListener('sll-pdv-synced', h);
-    return () => window.removeEventListener('online', h);
+    return () => {
+      window.removeEventListener('online', h);
       window.removeEventListener('sll-pdv-synced', h);
+    };
   }, [storeId, load]);
 
   // saiu da contingência: recarrega do servidor
@@ -185,8 +207,7 @@ export default function PdvPage() {
       .catch(() => undefined);
   }, [storeId, channel, source, net.contingency]);
 
-  // saldo por variação do depósito escolhido (base das travas offline).
-  // Online: grava, mas só sem venda na fila (senão apagaria o que foi vendido offline).
+  // saldo por variação do depósito escolhido (base das travas offline)
   useEffect(() => {
     if (!storeId) return;
     const key = cacheKeys.stock(storeId, warehouse);
@@ -210,17 +231,21 @@ export default function PdvPage() {
     [products],
   );
 
+  const q = search.trim();
+  const showList = mgr || q.length > 0;
+
   const list = useMemo(() => {
-    const q = norm(search.trim());
+    const t = norm(q);
+    if (!mgr && !t) return [];
     return products.filter((p) => {
       const vs = variants.get(p.id) ?? [];
       if (vs.length === 0) return false;
       if (cat && p.category !== cat) return false;
-      if (!q) return true;
-      return norm(p.name).includes(q) || norm(p.category).includes(q) || norm(p.sku).includes(q)
-        || vs.some((v) => norm(variantLabel(v)).includes(q) || norm(v.sku).includes(q));
+      if (!t) return true;
+      return norm(p.name).includes(t) || norm(p.category).includes(t) || norm(p.sku).includes(t)
+        || vs.some((v) => norm(variantLabel(v)).includes(t) || norm(v.sku).includes(t));
     });
-  }, [products, variants, search, cat]);
+  }, [products, variants, q, cat, mgr]);
 
   useEffect(() => { setLimit(PAGE); }, [search, cat]);
 
@@ -260,8 +285,19 @@ export default function PdvPage() {
     }));
   };
 
+  // ---------- regras do gestor ----------
+  const showDisc = canDiscount(rules);
+  const showShip = canShipping(rules);
+  const freeShip = freeShipping(rules);
+  const showNote = canNote(rules);
+
+  useEffect(() => { if (!showDisc && discount) setDiscount(''); }, [showDisc, discount]);
+  useEffect(() => { if (!showShip && shipping) setShipping(''); }, [showShip, shipping]);
+  useEffect(() => { if (!showNote && note) setNote(''); }, [showNote, note]);
+
   // ---------- valores ----------
   const subtotal = r2(cart.reduce((s, l) => s + l.price * l.qty, 0));
+  const maxD = maxDiscount(rules, subtotal);
   const disc = parseMoney(discount);
   const ship = parseMoney(shipping);
   const total = r2(subtotal - disc + ship);
@@ -295,18 +331,35 @@ export default function PdvPage() {
   const change = method === 'cash' && givenN > 0 ? r2(Math.max(givenN - total, 0)) : 0;
 
   const clearSale = () => {
-    setCart([]); setCustomer(null); setCustTerm(''); setNewCust(null); setNote('');
-    setDiscount(''); setShipping(''); setInst(1); setGiven(''); setToExp(false);
+    setCart([]); setCustomer(null); setPendingCust(null); setCustTerm(''); setNewCust(null); setNote('');
+    setDiscount(''); setShipping(''); setInst(1); setGiven(''); setToExp(false); setSearch('');
   };
 
   // ---------- cliente ----------
   const saveNewCustomer = async () => {
     if (!storeId || !newCust) return;
+    const miss = missingCustomerFields(rules, { name: newCust.name, document: newCust.document, phone: newCust.phone });
+    if (miss.length) { showError('Informe: ' + miss.map((m) => CUSTOMER_FIELD_LABEL[m]).join(', ') + '.'); return; }
+    if (net.contingency || !navigator.onLine) {
+      setPendingCust(newCust); setNewCust(null); setCustTerm('');
+      showSuccess('Cliente anotado. Os dados seguem com a venda.');
+      return;
+    }
     setCustBusy(true);
     try {
-      const c = await quickCustomer(storeId, newCust);
-      setCustomer(c); setNewCust(null); setCustTerm(''); setHits([]);
-      showSuccess('Cliente cadastrado.');
+      const { data, error } = await sb.rpc('gestor_customer_resolve', {
+        p_store: storeId, p_name: newCust.name.trim(), p_document: newCust.document.trim(), p_phone: newCust.phone.trim(),
+      });
+      if (error) throw new Error(error.message);
+      const id = (data as { id?: string | null } | null)?.id ?? null;
+      if (id) {
+        setCustomer({ id, name: newCust.name.trim(), phone: newCust.phone.trim(), document: newCust.document.trim() } as CustomerHit);
+        showSuccess('Cliente cadastrado.');
+      } else {
+        setPendingCust(newCust);
+        showSuccess('Cliente anotado na venda (sem CPF ou WhatsApp válido para cadastrar).');
+      }
+      setNewCust(null); setCustTerm(''); setHits([]);
     } catch (e) {
       showError((e as Error).message);
     } finally {
@@ -320,6 +373,7 @@ export default function PdvPage() {
     if (!channel) { showError('Escolha a loja da venda.'); return; }
     if (cart.length === 0) { showError('Venda sem produto.'); return; }
     if (disc > subtotal) { showError('Desconto maior que o subtotal.'); return; }
+    if (disc > maxD + 0.005) { showError(`Desconto acima do limite permitido (${brl(maxD)}).`); return; }
     if (total <= 0) { showError('O total da venda deve ser maior que zero.'); return; }
     if (!method) { showError('Escolha a forma de pagamento.'); return; }
     if (method === 'cash' && given.trim() && givenN < total) { showError('O valor recebido é menor que o total.'); return; }
@@ -328,6 +382,15 @@ export default function PdvPage() {
       if (!v) { showError('Produto removido. Refaça a venda.'); return; }
       if (l.qty > stockOf(v)) { showError(`Estoque insuficiente para ${l.name}.`); return; }
     }
+
+    const extra = pendingCust
+      ? '[Cliente novo para cadastrar] ' + [
+        pendingCust.name.trim(),
+        pendingCust.document.trim() && 'CPF ' + pendingCust.document.trim(),
+        pendingCust.phone.trim() && 'WhatsApp ' + pendingCust.phone.trim(),
+      ].filter(Boolean).join(' | ')
+      : '';
+    const saleNote = [note.trim(), extra].filter(Boolean).join('\n') || null;
 
     setBusy(true);
     try {
@@ -342,9 +405,9 @@ export default function PdvPage() {
           ...(method === 'cash' ? { cash_given: givenN > 0 ? givenN : total } : {}),
         }],
         sendToExpedition: toExp,
-        note: note.trim() || null,
+        note: saleNote,
         idemKey: idem.current,
-            warehouseId: warehouse,
+        warehouseId: warehouse,
         channel,
         origin,
       });
@@ -353,7 +416,11 @@ export default function PdvPage() {
         number: res.number,
         date: new Date(),
         company,
-        customer: customer ? { name: customer.name, phone: customer.phone, document: customer.document } : null,
+        customer: customer
+          ? { name: customer.name, phone: customer.phone, document: customer.document }
+          : pendingCust
+            ? { name: pendingCust.name, phone: pendingCust.phone || null, document: pendingCust.document || null }
+            : null,
         items: cart.map((l) => ({ name: l.name, sku: l.sku, qty: l.qty, unit: l.price })),
         subtotal, discount: disc, shipping: ship, total, interest: Number(res.interest_total || 0),
         payment: {
@@ -363,10 +430,10 @@ export default function PdvPage() {
           change: Number(res.change_amount || 0),
         },
         note: note.trim(),
-      });
+      } as Receipt);
       setDoneInfo({ queued: !!res.queued, provisional: res.provisional ?? null });
-          if (res.queued) showSuccess(`Venda salva neste aparelho (${res.provisional ?? 'pendente'}). Será enviada quando a conexão voltar.`);
-          else showSuccess(`Venda registrada #${String(res.number).padStart(4, '0')}`);
+      if (res.queued) showSuccess(`Venda salva neste aparelho (${res.provisional ?? 'pendente'}). Será enviada quando a conexão voltar.`);
+      else showSuccess(`Venda registrada #${String(res.number).padStart(4, '0')}`);
       idem.current = newSaleKey();
       clearSale();
       void load().then(() => setTick((t) => t + 1));
@@ -401,275 +468,336 @@ export default function PdvPage() {
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <SllPageHeader title="PDV" subtitle="Venda rápida de balcão. A baixa de estoque e o pedido entram no Gestor na hora." className="mb-0" />
+  const req = rules.customer_required;
+  const star = (on: boolean) => (on ? ' *' : '');
 
-      {net.contingency ? (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">
-              <span className="flex items-center gap-2">
-                <WifiOff size={16} />
-                {net.manual
-                  ? 'Modo offline manual ligado: as vendas ficam salvas neste aparelho e sobem quando você voltar ao online.'
-                  : 'Sem conexão com o servidor: as vendas ficam salvas neste aparelho e sobem sozinhas quando a conexão voltar.'}
-              </span>
-              {net.manual ? (
-                <button type="button" onClick={() => net.setManual(false)} className={sllBtnGhost}><Wifi size={14} /> Voltar ao online</button>
-              ) : (
-                <button type="button" onClick={() => void net.check()} className={sllBtnGhost}>Testar conexão</button>
-              )}
-            </div>
-          ) : (
-            <div className="flex justify-end">
-              <button type="button" onClick={() => net.setManual(true)} className="cursor-pointer text-[11px] font-medium text-slate-400 hover:text-[color:var(--sll-b-brand)]">
-                Internet instável? Usar modo offline
-              </button>
-            </div>
+  const customerBox = (
+    <Card title="Cliente (opcional)">
+      {customer ? (
+        <div className="flex items-center justify-between gap-2 rounded-xl bg-[color:var(--sll-b-brand-soft)] px-3 py-2">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-slate-800 dark:text-white">{customer.name}</p>
+            <p className="text-[11px] text-slate-500">{[customer.document, customer.phone].filter(Boolean).join(' · ') || 'Sem documento ou telefone'}</p>
+          </div>
+          <button type="button" title="Trocar cliente" onClick={() => setCustomer(null)} className={qtyBtn}><X size={14} /></button>
+        </div>
+      ) : pendingCust ? (
+        <div className="flex items-center justify-between gap-2 rounded-xl bg-amber-50 px-3 py-2 dark:bg-amber-950/30">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-slate-800 dark:text-white">{pendingCust.name}</p>
+            <p className="text-[11px] text-amber-700 dark:text-amber-300">Cliente novo: os dados seguem com a venda</p>
+          </div>
+          <button type="button" title="Remover" onClick={() => setPendingCust(null)} className={qtyBtn}><X size={14} /></button>
+        </div>
+      ) : newCust ? (
+        <div className="space-y-2">
+          <div className="grid gap-2 sm:grid-cols-3">
+            <SllField label={'Nome' + star(req.name)}><input className={sllFieldCls} value={newCust.name} onChange={(e) => setNewCust({ ...newCust, name: e.target.value })} /></SllField>
+            <SllField label={'CPF' + star(req.cpf)}><input className={sllFieldCls} inputMode="numeric" value={newCust.document} onChange={(e) => setNewCust({ ...newCust, document: e.target.value })} /></SllField>
+            <SllField label={'WhatsApp' + star(req.whatsapp)}><input className={sllFieldCls} inputMode="tel" value={newCust.phone} onChange={(e) => setNewCust({ ...newCust, phone: e.target.value })} /></SllField>
+          </div>
+          <div className="flex gap-2">
+            <button type="button" disabled={custBusy} onClick={() => void saveNewCustomer()} className={sllBtnPrimary}>
+              {custBusy && <Loader2 size={15} className="animate-spin" />}Cadastrar cliente
+            </button>
+            <button type="button" disabled={custBusy} onClick={() => setNewCust(null)} className={sllBtnGhost}>Cancelar</button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            {net.contingency ? (
+              <p className="flex-1 self-center text-xs text-amber-700 dark:text-amber-300">Sem conexão: não há busca de clientes. Cadastre o cliente novo.</p>
+            ) : (
+              <input className={sllFieldCls} placeholder="Buscar cliente por nome, CPF ou WhatsApp..." value={custTerm} onChange={(e) => setCustTerm(e.target.value)} />
+            )}
+            <button type="button" onClick={() => setNewCust({ name: custTerm.trim(), phone: '', document: '' })} className={sllBtnGhost + ' shrink-0'}>
+              <UserPlus size={15} /> Novo
+            </button>
+          </div>
+          {hits.length > 0 && (
+            <ul className="max-h-40 divide-y divide-slate-100 overflow-auto rounded-xl border border-slate-200 dark:divide-slate-700 dark:border-slate-700">
+              {hits.map((h) => (
+                <li key={h.id}>
+                  <button type="button" onClick={() => { setCustomer(h); setHits([]); setCustTerm(''); }} className="flex w-full cursor-pointer items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <span className="truncate font-semibold">{h.name}</span>
+                    <span className="shrink-0 text-[11px] text-slate-400">{[h.document, h.phone].filter(Boolean).join(' · ')}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+
+  const productsBox = (
+    <Card title="Produtos">
+      <div className="mb-2 flex flex-wrap items-end gap-3">
+        <SllSearch value={search} onChange={setSearch} placeholder="Produto, categoria, variação ou SKU..." />
+        {mgr && (
+          <SllField label="Categoria" className="w-56">
+            <select className={sllFieldCls + ' cursor-pointer'} value={cat} onChange={(e) => setCat(e.target.value)}>
+              <option value="">Todas</option>
+              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </SllField>
+        )}
+      </div>
+      {showList && (
+        <ul className={cn('divide-y divide-slate-100 rounded-xl border border-slate-200 dark:divide-slate-700 dark:border-slate-700', !mgr && 'max-h-44 overflow-auto')}>
+          {list.slice(0, limit).map((p) => {
+            const vs = variants.get(p.id) ?? [];
+            const multi = hasRealVariants(vs);
+            const tot = vs.reduce((s, v) => s + stockOf(v), 0);
+            const isOpen = multi && open.has(p.id);
+            return (
+              <Fragment key={p.id}>
+                <li>
+                  <div
+                    className={cn('flex items-center gap-3 px-3 py-2', multi && 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800')}
+                    onClick={multi ? () => toggleOpen(p.id) : undefined}
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+                      {p.image_url ? <img src={p.image_url} alt="" className="h-full w-full object-cover" /> : <Package size={16} className="text-slate-400" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-800 dark:text-white">{p.name}</p>
+                      {!multi && vs[0] && <p className="text-[11px] text-slate-400">{vs[0].sku} · {brl(vs[0].price ?? p.price ?? 0)}</p>}
+                    </div>
+                    {mgr && <span className="hidden text-xs text-slate-500 md:block">{p.category || '-'}</span>}
+                    {multi && (isOpen ? <ChevronDown size={16} className="shrink-0 text-slate-400" /> : <ChevronRight size={16} className="shrink-0 text-slate-400" />)}
+                    <span className={cn('w-10 text-center font-mono text-xs font-bold', tot <= 0 && 'text-rose-600')}>{tot}</span>
+                    {!multi && vs[0] && (
+                      <button type="button" disabled={tot <= 0} onClick={(e) => { e.stopPropagation(); addVariant(p, vs[0]); }} className={sllBtnPrimary + ' !px-3 !py-1 !text-[11px] uppercase'}>Adicionar</button>
+                    )}
+                  </div>
+                  {isOpen && vs.map((v) => {
+                    const st = stockOf(v);
+                    return (
+                      <div key={v.id} className="flex items-center gap-3 bg-slate-50/70 py-2 pl-14 pr-3 dark:bg-slate-800/40">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{variantLabel(v)}</p>
+                          <p className="text-[11px] text-slate-400">{v.sku} · {brl(v.price ?? p.price ?? 0)}</p>
+                        </div>
+                        <span className={cn('w-10 text-center font-mono text-xs font-bold', st <= 0 && 'text-rose-600')}>{st}</span>
+                        <button type="button" disabled={st <= 0} onClick={() => addVariant(p, v)} className={sllBtnPrimary + ' !px-3 !py-1 !text-[11px] uppercase'}>Adicionar</button>
+                      </div>
+                    );
+                  })}
+                </li>
+              </Fragment>
+            );
+          })}
+          {list.length === 0 && <li className="px-3 py-6 text-center text-sm text-slate-400">Nenhum produto encontrado.</li>}
+        </ul>
+      )}
+      {showList && list.length > limit && (
+        <button type="button" onClick={() => setLimit((l) => l + PAGE)} className={sllBtnGhost + ' mt-2'}>Mostrar mais ({list.length - limit})</button>
+      )}
+    </Card>
+  );
+
+  const cartBox = (
+    <Card title={`Carrinho (${cart.reduce((s, l) => s + l.qty, 0)})`} grow={!mgr} className={cn(!mgr && 'flex-1')}>
+      {cart.length === 0 ? (
+        <p className="py-4 text-center text-sm text-slate-400">Nenhum item. Busque um produto e clique em Adicionar.</p>
+      ) : (
+        <ul className="divide-y divide-slate-100 dark:divide-slate-700">
+          {cart.map((l) => (
+            <li key={l.variantId} className="py-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">{l.name}</p>
+                  <p className="text-[11px] text-slate-400">{l.sku} · {brl(l.price)}</p>
+                </div>
+                <button type="button" title="Remover" onClick={() => setCart((p) => p.filter((x) => x.variantId !== l.variantId))} className="cursor-pointer text-slate-400 hover:text-rose-600"><Trash2 size={15} /></button>
+              </div>
+              <div className="mt-1 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => changeQty(l.variantId, -1)} className={qtyBtn}><Minus size={13} /></button>
+                  <span className="w-6 text-center font-mono text-sm font-bold">{l.qty}</span>
+                  <button type="button" onClick={() => changeQty(l.variantId, 1)} className={qtyBtn}><Plus size={13} /></button>
+                </div>
+                <span className="font-mono text-sm font-bold">{brl(l.price * l.qty)}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+
+  const adjustBox = (showDisc || showShip || showNote) ? (
+    <Card title="Ajustes">
+      <div className="space-y-2">
+        {(showDisc || showShip) && (
+          <div className={cn('grid gap-2', showDisc && showShip ? 'grid-cols-2' : 'grid-cols-1')}>
+            {showDisc && (
+              <SllField label={'Desconto (R$)' + (maxD !== Infinity ? ` · máx. ${brl(maxD)}` : '')}>
+                <input className={sllFieldCls} inputMode="decimal" placeholder="0,00" value={discount} onChange={(e) => setDiscount(e.target.value)} />
+              </SllField>
+            )}
+            {showShip && (
+              <SllField label="Frete (R$)">
+                {freeShip ? (
+                  <input className={sllFieldCls} inputMode="decimal" placeholder="0,00" value={shipping} onChange={(e) => setShipping(e.target.value)} />
+                ) : (
+                  <select className={sllFieldCls + ' cursor-pointer'} value={shipping} onChange={(e) => setShipping(e.target.value)}>
+                    <option value="">Sem frete</option>
+                    {rules.shipping_options.map((o, i) => <option key={i} value={String(o.value).replace('.', ',')}>{o.label} · {brl(o.value)}</option>)}
+                  </select>
+                )}
+              </SllField>
+            )}
+          </div>
+        )}
+        {showNote && (
+          <SllField label="Observação">
+            <textarea className={sllFieldCls} rows={mgr ? 2 : 1} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Sai no recibo" />
+          </SllField>
+        )}
+      </div>
+    </Card>
+  ) : null;
+
+  const payBox = (
+    <Card title="Forma de pagamento">
+      {!fin ? (
+        <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
+      ) : methods.length === 0 ? (
+        <p className="text-sm text-amber-700">Nenhuma forma de pagamento liberada para esta loja. Ative em Configurações › Financeiro.</p>
+      ) : (
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2">
+            {methods.map((m) => {
+              const Icon = PAY_ICON[m] ?? CreditCard;
+              return (
+                <button
+                  key={m} type="button" onClick={() => setMethod(m)}
+                  className={cn('flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border px-2 py-3 text-xs font-bold transition',
+                    method === m ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 hover:border-[color:var(--sll-b-brand)] dark:border-slate-700')}
+                >
+                  <Icon size={26} />
+                  {METHOD_LABEL[m]}
+                </button>
+              );
+            })}
+          </div>
+
+          {method === 'credit' && opts.length > 1 && (
+            <SllField label="Parcelas">
+              <select className={sllFieldCls + ' cursor-pointer'} value={inst} onChange={(e) => setInst(Number(e.target.value))}>
+                {opts.map((o) => (
+                  <option key={o.n} value={o.n} disabled={o.blocked}>
+                    {o.n}x de {brl(o.per)} {o.withInterest ? 'com juros' : 'sem juros'} · total {brl(o.total)}{o.blocked ? ' (abaixo da parcela mínima)' : ''}
+                  </option>
+                ))}
+              </select>
+            </SllField>
           )}
 
-          {source === 'cache' && (
-        <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">
+          {method === 'cash' && (
+            <SllField label="Valor recebido (R$)">
+              <input
+                className={sllFieldCls + ' !py-2 text-right font-mono !text-3xl font-extrabold text-emerald-600 dark:text-emerald-400'}
+                inputMode="decimal" placeholder={total > 0 ? String(total).replace('.', ',') : '0,00'}
+                value={given} onChange={(e) => setGiven(e.target.value)}
+              />
+            </SllField>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+
+  const totalBox = (
+    <Card title="Total">
+      <div className="rounded-xl bg-emerald-50 px-4 py-3 text-right dark:bg-emerald-950/30">
+        <p className="font-mono text-4xl font-black leading-tight text-emerald-600 dark:text-emerald-400">{brl(charged)}</p>
+        {picked && inst > 1 && <p className="text-xs text-slate-500">{inst}x de {brl(picked.per)}</p>}
+      </div>
+      <dl className="mt-2 space-y-1 text-sm">
+        <div className="flex justify-between"><dt className="text-slate-500">Subtotal</dt><dd className="font-mono">{brl(subtotal)}</dd></div>
+        {disc > 0 && <div className="flex justify-between"><dt className="text-slate-500">Desconto</dt><dd className="font-mono text-emerald-600">- {brl(disc)}</dd></div>}
+        {ship > 0 && <div className="flex justify-between"><dt className="text-slate-500">Frete</dt><dd className="font-mono">{brl(ship)}</dd></div>}
+        {interest > 0 && <div className="flex justify-between"><dt className="text-slate-500">Juros do parcelamento</dt><dd className="font-mono">{brl(interest)}</dd></div>}
+      </dl>
+      {change > 0 && (
+        <div className="mt-2 flex items-baseline justify-between rounded-xl bg-emerald-50 px-4 py-2 dark:bg-emerald-950/30">
+          <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">Troco</span>
+          <span className="font-mono text-3xl font-black text-emerald-600 dark:text-emerald-400">{brl(change)}</span>
+        </div>
+      )}
+      {mgr && (
+        <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <input type="checkbox" className="h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]" checked={toExp} onChange={(e) => setToExp(e.target.checked)} />
+          Enviar para a Expedição (retirada ou entrega depois)
+        </label>
+      )}
+      <div className="mt-3 flex gap-2">
+        <button type="button" disabled={busy} onClick={clearSale} className={sllBtnGhost + ' flex-1'}>Limpar</button>
+        <button type="button" disabled={busy || cart.length === 0} onClick={() => void finalize()} className={sllBtnPrimary + ' flex-[2] !py-3 !text-base'}>
+          {busy && <Loader2 size={15} className="animate-spin" />}Finalizar venda
+        </button>
+      </div>
+    </Card>
+  );
+
+  const picker = storeId ? (
+    <PdvChannelPicker
+      storeId={storeId} channel={channel} origin={origin} disabled={busy}
+      onChannelChange={(c, w) => { setChannel(c); setWarehouse(w); }}
+      onOriginChange={setOrigin}
+    />
+  ) : null;
+
+  return (
+    <div className={cn(mgr ? 'space-y-4' : 'flex h-full min-h-0 flex-col gap-2')}>
+      {mgr && <SllPageHeader title="PDV" subtitle="Venda rápida de balcão. A baixa de estoque e o pedido entram no Gestor na hora." className="mb-0" />}
+
+      {mgr && (net.contingency ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">
+          <span className="flex items-center gap-2">
+            <WifiOff size={16} />
+            {net.manual
+              ? 'Modo offline manual ligado: as vendas ficam salvas neste aparelho e sobem quando você voltar ao online.'
+              : 'Sem conexão com o servidor: as vendas ficam salvas neste aparelho e sobem sozinhas quando a conexão voltar.'}
+          </span>
+          {net.manual ? (
+            <button type="button" onClick={() => net.setManual(false)} className={sllBtnGhost}><Wifi size={14} /> Voltar ao online</button>
+          ) : (
+            <button type="button" onClick={() => void net.check()} className={sllBtnGhost}>Testar conexão</button>
+          )}
+        </div>
+      ) : (
+        <div className="flex justify-end">
+          <button type="button" onClick={() => net.setManual(true)} className="cursor-pointer text-[11px] font-medium text-slate-400 hover:text-[color:var(--sll-b-brand)]">
+            Internet instável? Usar modo offline
+          </button>
+        </div>
+      ))}
+
+      {source === 'cache' && (
+        <p className="rounded-xl bg-amber-50 px-4 py-1.5 text-xs font-medium text-amber-800">
           Sem conexão: usando o catálogo e o estoque salvos neste aparelho{cachedAt ? ` em ${new Date(cachedAt).toLocaleString('pt-BR')}` : ''}. Os saldos podem estar desatualizados.
         </p>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_26rem]">
-        <div className="space-y-4">
-          <Card title="Loja e origem">
-            {storeId && (
-              <PdvChannelPicker
-                storeId={storeId} channel={channel} origin={origin} disabled={busy}
-                onChannelChange={(c, w) => { setChannel(c); setWarehouse(w); }}
-                onOriginChange={setOrigin}
-              />
-            )}
-          </Card>
+      {!mgr && <div className="hidden">{picker}</div>}
 
-          <Card title="Dados do cliente (opcional)">
-            {customer ? (
-              <div className="flex items-center justify-between gap-2 rounded-xl bg-[color:var(--sll-b-brand-soft)] px-4 py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-slate-800 dark:text-white">{customer.name}</p>
-                  <p className="text-[11px] text-slate-500">{[customer.document, customer.phone].filter(Boolean).join(' · ') || 'Sem documento ou telefone'}</p>
-                </div>
-                <button type="button" title="Trocar cliente" onClick={() => setCustomer(null)} className={qtyBtn}><X size={14} /></button>
-              </div>
-            ) : newCust ? (
-              <div className="space-y-3">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <SllField label="Nome *"><input className={sllFieldCls} value={newCust.name} onChange={(e) => setNewCust({ ...newCust, name: e.target.value })} /></SllField>
-                  <SllField label="CPF"><input className={sllFieldCls} inputMode="numeric" value={newCust.document} onChange={(e) => setNewCust({ ...newCust, document: e.target.value })} /></SllField>
-                  <SllField label="WhatsApp"><input className={sllFieldCls} inputMode="tel" value={newCust.phone} onChange={(e) => setNewCust({ ...newCust, phone: e.target.value })} /></SllField>
-                </div>
-                <div className="flex gap-2">
-                  <button type="button" disabled={custBusy} onClick={() => void saveNewCustomer()} className={sllBtnPrimary}>
-                    {custBusy && <Loader2 size={15} className="animate-spin" />}Cadastrar cliente
-                  </button>
-                  <button type="button" disabled={custBusy} onClick={() => setNewCust(null)} className={sllBtnGhost}>Cancelar</button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <input className={sllFieldCls} placeholder="Buscar cliente por nome, CPF ou WhatsApp..." value={custTerm} onChange={(e) => setCustTerm(e.target.value)} />
-                  <button type="button" onClick={() => setNewCust({ name: custTerm.trim(), phone: '', document: '' })} className={sllBtnGhost + ' shrink-0'}>
-                    <UserPlus size={15} /> Novo
-                  </button>
-                </div>
-                {hits.length > 0 && (
-                  <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 dark:divide-slate-700 dark:border-slate-700">
-                    {hits.map((h) => (
-                      <li key={h.id}>
-                        <button type="button" onClick={() => { setCustomer(h); setHits([]); setCustTerm(''); }} className="flex w-full cursor-pointer items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
-                          <span className="truncate font-semibold">{h.name}</span>
-                          <span className="shrink-0 text-[11px] text-slate-400">{[h.document, h.phone].filter(Boolean).join(' · ')}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="text-[11px] text-slate-400">Sem cliente, a venda é registrada como consumidor não identificado.</p>
-              </div>
-            )}
-          </Card>
-
-          <Card title="Produtos">
-            <div className="mb-3 flex flex-wrap items-end gap-3">
-              <SllSearch value={search} onChange={setSearch} placeholder="Produto, categoria, variação ou SKU..." />
-              <SllField label="Categoria" className="w-56">
-                <select className={sllFieldCls + ' cursor-pointer'} value={cat} onChange={(e) => setCat(e.target.value)}>
-                  <option value="">Todas</option>
-                  {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </SllField>
-            </div>
-
-            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800">
-                  <tr><th className="px-3 py-2 text-left">Produto</th><th className="px-3 py-2 text-center">Categoria</th><th className="px-3 py-2 text-center">Estoque</th></tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                  {list.slice(0, limit).map((p) => {
-                    const vs = variants.get(p.id) ?? [];
-                    const multi = hasRealVariants(vs);
-                    const total0 = vs.reduce((s, v) => s + stockOf(v), 0);
-                    const isOpen = multi && open.has(p.id);
-                    return (
-                      <FragmentRow key={p.id}>
-                        <tr className={cn('transition-colors', multi && 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800')} onClick={multi ? () => toggleOpen(p.id) : undefined}>
-                          <td className="px-3 py-2">
-                            <div className="flex items-center gap-3">
-                              <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
-                                {p.image_url ? <img src={p.image_url} alt="" className="h-full w-full object-cover" /> : <Package size={16} className="text-slate-400" />}
-                              </span>
-                              <div className="min-w-0">
-                                <p className="truncate font-semibold text-slate-800 dark:text-white">{p.name}</p>
-                                {!multi && vs[0] && <p className="text-[11px] text-slate-400">{vs[0].sku} · {brl(vs[0].price ?? p.price ?? 0)}</p>}
-                              </div>
-                              {multi && (isOpen ? <ChevronDown size={16} className="shrink-0 text-slate-400" /> : <ChevronRight size={16} className="shrink-0 text-slate-400" />)}
-                            </div>
-                          </td>
-                          <td className="px-3 py-2 text-center text-xs text-slate-500">{p.category || '-'}</td>
-                          <td className="px-3 py-2 text-center">
-                            {multi ? (
-                              <span className={cn('font-mono text-xs font-bold', total0 <= 0 && 'text-rose-600')}>{total0}</span>
-                            ) : (
-                              <div className="flex items-center justify-center gap-2">
-                                <span className={cn('font-mono text-xs font-bold', total0 <= 0 && 'text-rose-600')}>{total0}</span>
-                                <button type="button" disabled={total0 <= 0} onClick={(e) => { e.stopPropagation(); addVariant(p, vs[0]); }} className={sllBtnPrimary + ' !px-3 !py-1 !text-[11px] uppercase'}>Adicionar</button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                        {isOpen && vs.map((v) => {
-                          const st = stockOf(v);
-                          return (
-                            <tr key={v.id} className="bg-slate-50/70 dark:bg-slate-800/40">
-                              <td className="py-2 pl-16 pr-3">
-                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{variantLabel(v)}</p>
-                                <p className="text-[11px] text-slate-400">{v.sku} · {brl(v.price ?? p.price ?? 0)}</p>
-                              </td>
-                              <td />
-                              <td className="px-3 py-2">
-                                <div className="flex items-center justify-center gap-2">
-                                  <span className={cn('font-mono text-xs font-bold', st <= 0 && 'text-rose-600')}>{st}</span>
-                                  <button type="button" disabled={st <= 0} onClick={() => addVariant(p, v)} className={sllBtnPrimary + ' !px-3 !py-1 !text-[11px] uppercase'}>Adicionar</button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </FragmentRow>
-                    );
-                  })}
-                  {list.length === 0 && <tr><td colSpan={3} className="px-3 py-10 text-center text-sm text-slate-400">Nenhum produto encontrado.</td></tr>}
-                </tbody>
-              </table>
-            </div>
-            {list.length > limit && (
-              <button type="button" onClick={() => setLimit((l) => l + PAGE)} className={sllBtnGhost + ' mt-3'}>Mostrar mais ({list.length - limit})</button>
-            )}
-          </Card>
+      <div className={cn(mgr ? 'grid gap-4 xl:grid-cols-[1fr_26rem]' : 'grid min-h-0 flex-1 gap-3 lg:grid-cols-[1fr_24rem]')}>
+        <div className={cn(mgr ? 'space-y-4' : 'flex min-h-0 flex-col gap-2')}>
+          {mgr && <Card title="Loja e origem">{picker}</Card>}
+          {customerBox}
+          {productsBox}
+          {cartBox}
         </div>
-
-        <div className="space-y-4">
-          <Card title={`Carrinho (${cart.reduce((s, l) => s + l.qty, 0)})`}>
-            {cart.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400">Nenhum item. Clique em Adicionar nos produtos.</p>
-            ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-slate-700">
-                {cart.map((l) => (
-                  <li key={l.variantId} className="py-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-slate-800 dark:text-white">{l.name}</p>
-                        <p className="text-[11px] text-slate-400">{l.sku} · {brl(l.price)}</p>
-                      </div>
-                      <button type="button" title="Remover" onClick={() => setCart((p) => p.filter((x) => x.variantId !== l.variantId))} className="cursor-pointer text-slate-400 hover:text-rose-600"><Trash2 size={15} /></button>
-                    </div>
-                    <div className="mt-1.5 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <button type="button" onClick={() => changeQty(l.variantId, -1)} className={qtyBtn}><Minus size={13} /></button>
-                        <span className="w-6 text-center font-mono text-sm font-bold">{l.qty}</span>
-                        <button type="button" onClick={() => changeQty(l.variantId, 1)} className={qtyBtn}><Plus size={13} /></button>
-                      </div>
-                      <span className="font-mono text-sm font-bold">{brl(l.price * l.qty)}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-3 space-y-3">
-              <SllField label="Observação">
-                <textarea className={sllFieldCls} rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Sai no recibo" />
-              </SllField>
-              <div className="grid grid-cols-2 gap-3">
-                <SllField label="Desconto (R$)"><input className={sllFieldCls} inputMode="decimal" placeholder="0,00" value={discount} onChange={(e) => setDiscount(e.target.value)} /></SllField>
-                <SllField label="Frete (R$)"><input className={sllFieldCls} inputMode="decimal" placeholder="0,00" value={shipping} onChange={(e) => setShipping(e.target.value)} /></SllField>
-              </div>
-            </div>
-          </Card>
-
-          <Card title="Forma de pagamento">
-            {!fin ? (
-              <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin text-[color:var(--sll-b-brand)]" /></div>
-            ) : methods.length === 0 ? (
-              <p className="text-sm text-amber-700">Nenhuma forma de pagamento liberada para esta loja. Ative em Configurações › Financeiro.</p>
-            ) : (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  {methods.map((m) => (
-                    <button
-                      key={m} type="button" onClick={() => setMethod(m)}
-                      className={cn('cursor-pointer rounded-xl border px-3 py-2.5 text-sm font-semibold transition',
-                        method === m ? 'border-[color:var(--sll-b-brand)] bg-[color:var(--sll-b-brand-soft)] text-[color:var(--sll-b-brand)]' : 'border-slate-200 hover:border-[color:var(--sll-b-brand)] dark:border-slate-700')}
-                    >{METHOD_LABEL[m]}</button>
-                  ))}
-                </div>
-
-                {method === 'credit' && opts.length > 1 && (
-                  <SllField label="Parcelas">
-                    <select className={sllFieldCls + ' cursor-pointer'} value={inst} onChange={(e) => setInst(Number(e.target.value))}>
-                      {opts.map((o) => (
-                        <option key={o.n} value={o.n} disabled={o.blocked}>
-                          {o.n}x de {brl(o.per)} {o.withInterest ? 'com juros' : 'sem juros'} · total {brl(o.total)}{o.blocked ? ' (abaixo da parcela mínima)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </SllField>
-                )}
-
-                {method === 'cash' && (
-                  <SllField label="Valor recebido (R$)">
-                    <input className={sllFieldCls} inputMode="decimal" placeholder={total > 0 ? String(total).replace('.', ',') : '0,00'} value={given} onChange={(e) => setGiven(e.target.value)} />
-                  </SllField>
-                )}
-              </div>
-            )}
-          </Card>
-
-          <Card title="Resumo">
-            <dl className="space-y-1.5 text-sm">
-              <div className="flex justify-between"><dt className="text-slate-500">Subtotal</dt><dd className="font-mono">{brl(subtotal)}</dd></div>
-              {disc > 0 && <div className="flex justify-between"><dt className="text-slate-500">Desconto</dt><dd className="font-mono text-emerald-600">- {brl(disc)}</dd></div>}
-              {ship > 0 && <div className="flex justify-between"><dt className="text-slate-500">Frete</dt><dd className="font-mono">{brl(ship)}</dd></div>}
-              {interest > 0 && <div className="flex justify-between"><dt className="text-slate-500">Juros do parcelamento</dt><dd className="font-mono">{brl(interest)}</dd></div>}
-              <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-extrabold dark:border-slate-700"><dt>Total</dt><dd className="font-mono">{brl(charged)}</dd></div>
-              {picked && inst > 1 && <p className="text-right text-[11px] text-slate-400">{inst}x de {brl(picked.per)}</p>}
-              {change > 0 && <div className="flex justify-between text-emerald-600"><dt>Troco</dt><dd className="font-mono font-bold">{brl(change)}</dd></div>}
-            </dl>
-            <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-              <input type="checkbox" className="h-4 w-4 cursor-pointer accent-[color:var(--sll-b-brand)]" checked={toExp} onChange={(e) => setToExp(e.target.checked)} />
-              Enviar para a Expedição (retirada ou entrega depois)
-            </label>
-            <div className="mt-4 flex gap-2">
-              <button type="button" disabled={busy} onClick={clearSale} className={sllBtnGhost + ' flex-1'}>Limpar venda</button>
-              <button type="button" disabled={busy || cart.length === 0} onClick={() => void finalize()} className={sllBtnPrimary + ' flex-[2]'}>
-                {busy && <Loader2 size={15} className="animate-spin" />}Finalizar venda
-              </button>
-            </div>
-          </Card>
+        <div className={cn(mgr ? 'space-y-4' : 'flex min-h-0 flex-col gap-2 overflow-auto')}>
+          {adjustBox}
+          {payBox}
+          {totalBox}
         </div>
       </div>
 
@@ -688,10 +816,10 @@ export default function PdvPage() {
         {done && (
           <div className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
             {doneInfo?.queued ? (
-                  <p>Venda <strong>{doneInfo.provisional ?? 'pendente'}</strong> guardada neste aparelho. O pedido e a baixa de estoque são criados quando a conexão voltar.</p>
-                ) : (
-                  <p>Pedido <strong>#{String(done.number).padStart(4, '0')}</strong> registrado.</p>
-                )}
+              <p>Venda <strong>{doneInfo.provisional ?? 'pendente'}</strong> guardada neste aparelho. O pedido e a baixa de estoque são criados quando a conexão voltar.</p>
+            ) : (
+              <p>Pedido <strong>#{String(done.number).padStart(4, '0')}</strong> registrado.</p>
+            )}
             <p>Total: <strong>{brl(done.total + done.interest)}</strong> · {done.payment.label}{done.payment.installments > 1 ? ` em ${done.payment.installments}x` : ''}</p>
             {done.payment.given != null && done.payment.change > 0 && <p>Troco: <strong>{brl(done.payment.change)}</strong></p>}
           </div>
@@ -705,9 +833,4 @@ function withPendingBanner(html: string, info: DoneInfo | null): string {
   if (!info?.queued) return html;
   const banner = `<p style="text-align:center;font-weight:bold;border:1px dashed #000;padding:4px;margin:4px 0">VENDA PENDENTE DE ENVIO<br/>${info.provisional ?? ''}</p>`;
   return /<body[^>]*>/i.test(html) ? html.replace(/<body[^>]*>/i, (m) => m + banner) : banner + html;
-}
-
-// Agrupa as linhas de um produto e das variacoes dentro do mesmo tbody
-function FragmentRow({ children }: { children: ReactNode }) {
-  return <>{children}</>;
 }
