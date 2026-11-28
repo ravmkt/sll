@@ -65,6 +65,7 @@ const GROUPS: Group[] = [
       { label: 'Usuários', to: `${BASE}/usuarios` },
       { label: 'Canais', to: `${BASE}/canais` },
       { label: 'Financeiro', to: `${BASE}/config-financeiro` },
+      { label: 'PDV', to: `${BASE}/config-pdv` },
       { label: 'Transições de status' },
       { label: 'Notas fiscais' },
       { label: 'Certificado digital' },

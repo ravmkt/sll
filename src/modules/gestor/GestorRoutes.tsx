@@ -16,6 +16,7 @@ import FinanceiroConfigPage from './pages/FinanceiroConfigPage';
 import PdvPage from './pages/PdvPage';
 import ChannelsConfigPage from './pages/ChannelsConfigPage';
 import EmpresaPage from './pages/EmpresaPage';
+import PdvConfigPage from './pages/PdvConfigPage';
 
 export default function GestorRoutes() {
   return (
@@ -38,6 +39,7 @@ export default function GestorRoutes() {
         <Route path="config-financeiro" element={<FinanceiroConfigPage />} />
         <Route path="canais" element={<ChannelsConfigPage />} />
         <Route path="empresa" element={<EmpresaPage />} />
+        <Route path="config-pdv" element={<PdvConfigPage />} />
         <Route path="pdv" element={<PdvPage />} />
         {secaoRoutes}
         <Route path="*" element={<Navigate to="/dashboard/modules/gestor" replace />} />
