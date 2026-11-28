@@ -24,7 +24,7 @@ exception when duplicate_object then null; end $$;
 create unique index if not exists gestor_pdv_settings_store_uidx on public.gestor_pdv_settings (store_id);
 
 -- gestor = dono da loja, superadmin, ou membro owner/admin ativo
-create or replace function public.gestor_is_manager(p_store uuid)
+create or replace function public.gestor_pdv_is_manager(p_store uuid)
 returns boolean language sql stable security definer set search_path to 'public' as $function$
   select auth.uid() is not null and (
     exists (select 1 from public.stores s where s.id = p_store and s.owner_user_id = auth.uid())
@@ -45,7 +45,7 @@ begin
   select * into s from public.gestor_pdv_settings where store_id = p_store;
   return jsonb_build_object(
     'store_id', p_store,
-    'is_manager', public.gestor_is_manager(p_store),
+    'is_manager', public.gestor_pdv_is_manager(p_store),
     'default_warehouse_id', s.default_warehouse_id,
     'max_interest_free', coalesce(s.max_interest_free, 1),
     'receipt_width_mm', coalesce(s.receipt_width_mm, 80),
@@ -67,7 +67,7 @@ declare
   s public.gestor_pdv_settings%rowtype;
   k text; o jsonb;
 begin
-  if not public.gestor_is_manager(p_store) then
+  if not public.gestor_pdv_is_manager(p_store) then
     raise exception 'Só o gestor pode alterar as regras do PDV';
   end if;
   if p_data is null or jsonb_typeof(p_data) <> 'object' then raise exception 'Dados inválidos'; end if;
@@ -94,7 +94,7 @@ begin
   if p_data ? 'discount_max_pct' then s.discount_max_pct := nullif(p_data->>'discount_max_pct', '')::numeric; end if;
   if p_data ? 'discount_max_value' then s.discount_max_value := nullif(p_data->>'discount_max_value', '')::numeric; end if;
   if s.discount_max_pct is not null and (s.discount_max_pct < 0 or s.discount_max_pct > 100) then
-    raise exception 'O limite em % deve ficar entre 0 e 100';
+    raise exception 'O limite em %% deve ficar entre 0 e 100';
   end if;
   if s.discount_max_value is not null and s.discount_max_value < 0 then
     raise exception 'O limite em R$ não pode ser negativo';
@@ -167,7 +167,7 @@ begin
   end if;
 
   -- regras do PDV definidas pelo gestor (o gestor não tem limite)
-  if not public.gestor_is_manager(p_store) then
+  if not public.gestor_pdv_is_manager(p_store) then
     select * into v_set from public.gestor_pdv_settings where store_id = p_store;
     select coalesce(sum((x->>'qty')::numeric * (x->>'unit_price')::numeric), 0),
            coalesce(sum(coalesce((x->>'discount')::numeric, 0)), 0)
@@ -241,10 +241,10 @@ begin
   return v_res || jsonb_build_object('stock_review', v_neg, 'cash_session_id', v_sess);
 end $function$;
 
-revoke all on function public.gestor_is_manager(uuid) from public, anon;
+revoke all on function public.gestor_pdv_is_manager(uuid) from public, anon;
 revoke all on function public.gestor_pdv_settings_get(uuid) from public, anon;
 revoke all on function public.gestor_pdv_settings_save(uuid, jsonb) from public, anon;
-grant execute on function public.gestor_is_manager(uuid) to authenticated;
+grant execute on function public.gestor_pdv_is_manager(uuid) to authenticated;
 grant execute on function public.gestor_pdv_settings_get(uuid) to authenticated;
 grant execute on function public.gestor_pdv_settings_save(uuid, jsonb) to authenticated;
 
